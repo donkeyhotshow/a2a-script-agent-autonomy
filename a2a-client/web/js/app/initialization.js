@@ -23,6 +23,12 @@
             console.log('[AppInitialization] Starting init...');
 
             try {
+                if (global.apiIntegration?.configure) {
+                    global.apiIntegration.configure({
+                        storageModeProvider: () => global.SessionStore?.getStorageMode?.()
+                    });
+                }
+
                 // Ensure header template is loaded (for Settings/Projects buttons)
                 if (global.TemplateLoader && !document.getElementById('header-container')?.innerHTML?.trim()) {
                     await global.TemplateLoader.initTaskOnly();
@@ -38,7 +44,7 @@
                 global.AppEventHandlers?.setupUI?.();
 
                 // Populate header project select (header is ready, API is set)
-                await this._populateHeaderProjectSelect?.();
+                await this.populateHeaderProjectSelect?.();
 
                 // Restore previous state (session windows + stores) before TaskFlow subscribes to SessionStore
                 await this.restoreState();
@@ -115,7 +121,7 @@
           * @param {HTMLSelectElement} sel - Select element to populate
           * @param {string} [savedId] - Previously selected project ID
           */
-         async _populateProjectSelect(sel, savedId) {
+         async populateProjectSelect(sel, savedId) {
              try {
                  if (!global.apiIntegration || typeof global.apiIntegration.getProjects !== 'function') {
                      throw new Error('[AppInitialization] apiIntegration.getProjects required');
@@ -134,11 +140,19 @@
          /**
           * Populate header #projectSelect with projects (called after init when header and API are ready)
           */
-         async _populateHeaderProjectSelect() {
+         async populateHeaderProjectSelect() {
              const sel = document.getElementById('projectSelect');
              if (!sel || sel.options.length > 1) return;
              const saved = await global.getCurrentProjectId();
-             await this._populateProjectSelect(sel, saved);
+             await this.populateProjectSelect(sel, saved);
+         },
+
+         // Backward-compatible aliases; avoid new call sites using private-style names.
+         async _populateProjectSelect(sel, savedId) {
+             return this.populateProjectSelect(sel, savedId);
+         },
+         async _populateHeaderProjectSelect() {
+             return this.populateHeaderProjectSelect();
          }
     };
 

@@ -36,6 +36,7 @@ class APIIntegration {
         this.token = null;
         /** @type {string|null} Client API prefix (e.g. /api or http://host:3001/api); null = same-origin /api/a2a/... */
         this.apiBase = null;
+        this.storageModeProvider = null;
     }
 
     /**
@@ -48,6 +49,11 @@ class APIIntegration {
         if ('apiBase' in options) {
             const s = options.apiBase == null ? '' : String(options.apiBase).trim();
             this.apiBase = s ? getApiHelpers().normalizeApiBase(s) : null;
+        }
+        if ('storageModeProvider' in options) {
+            this.storageModeProvider = typeof options.storageModeProvider === 'function'
+                ? options.storageModeProvider
+                : null;
         }
         console.log('[API] Configured token:', !!this.token, 'apiBase:', this.apiBase || '(default /api/a2a)');
         return this;
@@ -102,8 +108,7 @@ class APIIntegration {
      * Get headers for API requests (combined: base + storage mode)
      */
     _headers() {
-        const store = globalScope.SessionStore;
-        const storageMode = store && typeof store.getStorageMode === 'function' ? store.getStorageMode() : undefined;
+        const storageMode = this.storageModeProvider ? this.storageModeProvider() : undefined;
         return getApiHelpers().buildFetchHeaders({ token: this.token, storageMode });
     }
 
@@ -144,6 +149,17 @@ class APIIntegration {
             body: JSON.stringify(params)
         });
         return raw?.session ?? raw?.data ?? raw;
+    }
+
+    /**
+     * Create session and return raw envelope response.
+     * Use this when callers need serverResponse/async metadata.
+     */
+    async createSessionEnvelope(params = {}) {
+        return this._fetch('sessions', {
+            method: 'POST',
+            body: JSON.stringify(params)
+        });
     }
 
     // Normalization delegated to shared helper (_normalizeSessionResponse)
@@ -192,6 +208,19 @@ class APIIntegration {
             method: 'DELETE'
         });
         return { success: res != null };
+    }
+
+    /**
+     * Submit next step result for a session.
+     */
+    async submitSessionResult(sessionId, result) {
+        if (!sessionId) {
+            throw new Error('submitSessionResult: sessionId is required');
+        }
+        return this._fetch(`sessions/${encodeURIComponent(sessionId)}/next`, {
+            method: 'POST',
+            body: JSON.stringify({ result })
+        });
     }
 
 

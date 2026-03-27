@@ -59,6 +59,7 @@
         async setActiveSession(sessionId) {
             const next = sessionId == null || sessionId === '' ? null : sessionId;
             activeSessionId = next;
+            global.WindowRegistry?.setActiveSessionId?.(next);
             if (next) {
                 await writeActiveSessionId(next);
             } else if (ActiveSessionStorage?.clearActiveSessionId) {

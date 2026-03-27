@@ -15,7 +15,8 @@ This file provides guidance to agents when working with code in this repository.
 9. [Common Issues and Solutions](#common-issues-and-solutions)
 10. [Architecture decision records (ADRs)](#architecture-decision-records-adrs)
 11. [Server interrupt loop](#server-interrupt-loop)
-12. [Extending LLM actions](#extending-llm-actions)
+12. [Router (Keyword-Based)](#router-keyword-based)
+13. [Extending LLM actions](#extending-llm-actions)
 
 ---
 
@@ -151,6 +152,29 @@ request.json → server-transforms-request.json → response.json
 ### Server interrupt loop
 
 After the response transform, if transform output includes **`interrupt`**, the agent processor may run **extra** LLM work (compress history, `thinking` slot, another full request?LLM?response cycle) before responding. The client only receives the **final** `execute` / context. Full spec: [`a2a-server/docs/SERVER-INTERRUPT-LOOP.md`](a2a-server/docs/SERVER-INTERRUPT-LOOP.md). ADR: [`docs/adr/ADR-0029-server-interrupt-loop.md`](docs/adr/ADR-0029-server-interrupt-loop.md). Example sim notes: [`simulations/agent-auto-ai/6/interrupt.md`](simulations/agent-auto-ai/6/interrupt.md).
+
+### Router (Keyword-Based)
+
+Router определяет какой режим работы выбрать на основе запроса пользователя. С версии 2.0 использует **keyword-based routing** вместо LLM transform:
+
+1. **При наличии keyword совпадений** — используются найденные actions как choices
+2. **Без совпадений** — используются дефолтные choices (dialog, agent, task-decomposition)
+
+**Режимы работы:**
+- `dialog`: Для обычных вопросов и общения
+- `agent`: Для работы с кодом (поиск, редактирование, команды)
+- `task-decomposition`: Для сложных задач требующих планирования
+
+**Fallback Choices:**
+```json
+[
+  { "id": "dialog", "label": "AI діалог з користувачем", "description": "..." },
+  { "id": "agent", "label": "Agent (універсальний режим)", "description": "..." },
+  { "id": "task-decomposition", "label": "Декомпозиція задачі", "description": "..." }
+]
+```
+
+См. [`a2a-server/docs/Router.md`](a2a-server/docs/Router.md) для полной документации.
 
 ### Extending LLM actions
 

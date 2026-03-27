@@ -28,6 +28,10 @@
         );
     }
 
+    function getPanelsGateway() {
+        return global.TaskFlowPanelGateway || null;
+    }
+
     /**
      * Убедиться что есть выбор проекта
      * @param {Object} TaskFlow - Main TaskFlow instance
@@ -36,9 +40,9 @@
         const sel = document.getElementById('projectSelect');
         if (!sel || sel.options.length > 1) return;
 
-        const populator = global.AppInitialization?._populateProjectSelect;
+        const populator = global.AppInitialization?.populateProjectSelect;
         if (typeof populator !== 'function') {
-            console.warn('[TaskFlow] AppInitialization._populateProjectSelect missing, skipping project list refresh');
+            console.warn('[TaskFlow] AppInitialization.populateProjectSelect missing, skipping project list refresh');
             return;
         }
 
@@ -68,11 +72,11 @@
      */
     function setupPanelAutoOpen(TaskFlow) {
         // Check if auto-open is needed
-        const pm = global.PanelManager;
-        if (!pm) return;
+        const panels = getPanelsGateway();
+        if (!panels) return;
 
         // Check if panel already exists
-        let panel = pm.get('task-flow-panel');
+        let panel = panels.getPanel?.('task-flow-panel');
         if (!panel) {
             // Don't auto-create, wait for user action
             return;
@@ -113,8 +117,7 @@
         if (store && typeof store.on === 'function') {
             store.on('execute', (execute) => {
                 if (TaskFlow.panelId) {
-                    const pm = global.PanelManager;
-                    const panel = pm?.get(TaskFlow.panelId);
+                    const panel = getPanelsGateway()?.getPanel?.(TaskFlow.panelId);
                     if (panel && TaskFlow._lastResponse) {
                         const content = panel.getContentEl();
                         if (content) {

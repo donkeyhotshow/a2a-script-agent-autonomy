@@ -14,30 +14,16 @@
      }
 
     /**
-     * Resolve the SessionStore for a given session (falls back to active session or global store)
+     * Resolve SessionStore via shared resolver.
      * @param {string|null} sessionId
      * @returns {Object|null}
      */
     function resolveStore(sessionId = null) {
-        const registry = global.WindowRegistry;
-        const resolvedSessionId = sessionId ?? global.SessionManager?.getActiveSessionId?.() ?? null;
-
-        if (resolvedSessionId) {
-            if (!registry || typeof registry.getSessionStore !== 'function') {
-                throw new Error('[TaskFlow] WindowRegistry unavailable while resolving session store for ' + resolvedSessionId);
-            }
-            const windowStore = registry.getSessionStore(resolvedSessionId);
-            if (!windowStore) {
-                throw new Error('[TaskFlow] SessionStore instance not found for session ' + resolvedSessionId);
-            }
-            return windowStore;
+        const resolver = global.SessionStoreResolver;
+        if (!resolver || typeof resolver.resolve !== 'function') {
+            throw new Error('[TaskFlow] SessionStoreResolver is unavailable');
         }
-
-        if (!global.SessionStore) {
-            throw new Error('[TaskFlow] Global SessionStore is not initialized');
-        }
-
-        return global.SessionStore;
+        return resolver.resolve(sessionId);
     }
 
     // Export

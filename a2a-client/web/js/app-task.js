@@ -40,11 +40,14 @@
         
         console.log('[AppTask] appendWebScriptOnce available, loading core modules...');
         
-        // Core modules (needed for window management)
+        // Core modules loaded in deterministic order.
+        // WindowState has strict predecessors and must always be loaded last in this chain.
         const coreModules = [
             'js/app/windows/window-registry.js',
             'js/app/windows/window-position.js',
             'js/app/windows/window-events.js',
+            'js/app/windows/window-session-gateway.js',
+            'js/app/windows/window-recovery.js',
             'js/app/windows/window-state.js'
         ];
 
@@ -59,23 +62,33 @@
             'js/app/taskbar-manager.js'
         ];
 
-        const allModules = [...coreModules, ...appModules];
-        const n = allModules.length;
-        
         global._appModuleLoadErrors = [];
-        
-        Promise.all(
-            allModules.map(function (rel) {
-                return global.appendWebScriptOnce(rel, {
-                    onload: function () {
-                        console.log('[AppTask] Module loaded: ' + rel);
-                    }
-                }).catch(function (err) {
-                    console.error('[AppTask] Failed to load module: ' + rel, err);
-                    global._appModuleLoadErrors.push(rel);
+
+        function loadModuleSequentially(rel) {
+            return global.appendWebScriptOnce(rel, {
+                onload: function () {
+                    console.log('[AppTask] Module loaded: ' + rel);
+                }
+            }).catch(function (err) {
+                console.error('[AppTask] Failed to load module: ' + rel, err);
+                global._appModuleLoadErrors.push(rel);
+            });
+        }
+
+        function loadModulesSequentially(list) {
+            return list.reduce(function (chain, rel) {
+                return chain.then(function () {
+                    return loadModuleSequentially(rel);
                 });
+            }, Promise.resolve());
+        }
+
+        loadModulesSequentially(coreModules)
+            .then(function () {
+                return loadModulesSequentially(appModules);
             })
-        ).then(function () {
+            .then(function () {
+            const n = coreModules.length + appModules.length;
             if (global._appModuleLoadErrors.length) {
                 console.error('[AppTask] Module load finished with errors:', global._appModuleLoadErrors);
             } else {

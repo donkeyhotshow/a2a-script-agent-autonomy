@@ -3,20 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <script>
-        (function () {
-            var CLIENT_API_KEY = 'a2a_clientApiUrl';
-            try {
-                var stored = localStorage.getItem(CLIENT_API_KEY);
-                if (stored === '[object Object]' || (typeof stored === 'string' && stored.indexOf('[object') !== -1)) {
-                    console.warn('[A2A] Corrupted API URL in localStorage, reset to /api');
-                    localStorage.setItem(CLIENT_API_KEY, '/api');
-                }
-            } catch (e) {
-                console.warn('[A2A] localStorage unavailable (private mode or blocked):', e);
-            }
-        })();
-    </script>
     <title>A2A Script Agent - Task</title>
     <base id="app-base" href="/">
     <script>
@@ -114,6 +100,7 @@
 <!-- apiIntegration is loaded via defer script below -->
 <script type="module" src="js/install-normalizers.mjs"></script>
 <script defer src="js/session-store.js"></script>
+<script defer src="js/session-store-resolver.js"></script>
 <script defer src="js/task-flow/utils.js"></script>
 
 <!-- 4. Simplified Panel System -->
@@ -129,6 +116,7 @@
 <!-- Modular TaskFlow -->
 <script defer src="js/task-flow/render.js"></script>
 <script defer src="js/task-flow/loader.js"></script>
+<script defer src="js/task-flow/panel-gateway.js"></script>
 <script defer src="js/task-flow/tasks.js"></script>
 <script defer src="js/task-flow/messages.js"></script>
 <script defer src="js/task-flow/init.js"></script>

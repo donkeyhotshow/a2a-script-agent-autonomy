@@ -192,13 +192,17 @@
         setupStorageModeToggle() {
             const storageSelect = document.getElementById('storageModeSelect');
             if (!storageSelect) return;
+            const storageKey = 'a2a_storage_mode';
+            const modeStorage = global.StorageAPI?.config;
 
             // Load saved storage mode: project (.a2a/sessions) vs storage (a2a-client/storage/sessions or A2A_CLIENT_STORAGE_DIR)
             let savedMode = null;
             try {
-                savedMode = localStorage.getItem('a2a_storage_mode');
+                if (modeStorage?.getItemSync) {
+                    savedMode = modeStorage.getItemSync(storageKey);
+                }
             } catch (e) {
-                console.warn('[AppTask] localStorage unavailable for storage mode:', e);
+                console.warn('[AppTask] StorageAPI.config.getItemSync unavailable for storage mode:', e);
             }
             const validModes = ['project', 'storage'];
             if (savedMode && validModes.includes(savedMode)) {
@@ -218,7 +222,15 @@
 
             storageSelect.addEventListener('change', (e) => {
                 const mode = e.target.value;
-                localStorage.setItem('a2a_storage_mode', mode);
+                try {
+                    if (modeStorage?.setItem) {
+                        void modeStorage.setItem(storageKey, mode);
+                    } else if (modeStorage?.setItemSync) {
+                        modeStorage.setItemSync(storageKey, mode);
+                    }
+                } catch (saveErr) {
+                    console.warn('[AppTask] Failed to persist storage mode via StorageAPI:', saveErr);
+                }
                 if (global.SessionStore && typeof global.SessionStore.setStorageMode === 'function') {
                     global.SessionStore.setStorageMode(mode);
                 } else {
@@ -294,7 +306,7 @@
 
                 const grid = content.querySelector('#projectsGrid');
 
-                if (grid) global.AppUIManagers?._loadProjectsIntoGrid?.(grid);
+                if (grid) global.AppUIManagers?.loadProjectsIntoGrid?.(grid);
 
                 content.addEventListener('click', (e) => {
 

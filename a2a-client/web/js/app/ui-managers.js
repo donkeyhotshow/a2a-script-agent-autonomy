@@ -13,12 +13,12 @@
              const sel = document.getElementById('projectSelect');
              if (sel) {
                  const saved = await global.getCurrentProjectId();
-                 await global.AppInitialization._populateProjectSelect(sel, saved);
+                 await global.AppInitialization?.populateProjectSelect?.(sel, saved);
              }
             const taskbarContent = global.resolveTaskbarContentEl?.();
             if (taskbarContent && global.TaskbarManager) await global.TaskbarManager.refreshTaskbar(taskbarContent);
             const grid = document.getElementById('projectsGrid');
-            if (grid) await this._loadProjectsIntoGrid(grid);
+            if (grid) await this.loadProjectsIntoGrid(grid);
         },
 
 
@@ -26,7 +26,7 @@
         /**
          * Fetch projects from API and render into grid
          */
-        async _loadProjectsIntoGrid(gridEl) {
+        async loadProjectsIntoGrid(gridEl) {
             // No loading indicator - show empty while fetching
             try {
                 // Direct call to apiIntegration.getProjects()
@@ -48,7 +48,12 @@
                 console.error('[AppTask] Failed to load projects:', e);
                 gridEl.innerHTML = '<p class="projects-error">Could not load projects. Check API URL in Settings.</p>';
             }
-        }
+        },
+
+        // Backward-compatible alias; avoid new call sites using private-style name.
+        async _loadProjectsIntoGrid(gridEl) {
+            return this.loadProjectsIntoGrid(gridEl);
+        },
     };
 
     // Export

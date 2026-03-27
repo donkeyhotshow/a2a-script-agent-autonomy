@@ -44,6 +44,7 @@ export function createSessionRoutes({ cwd }) {
                     }
                     const d = JSON.parse(body);
                     const title = d.title || 'New Session';
+                    const task = d.task; // Capture task from request body
                     const sessionId = d.id || `sess_${Date.now()}`;
                     const session = {
                         id: sessionId,
@@ -59,7 +60,10 @@ export function createSessionRoutes({ cwd }) {
                                 step: 1
                             }
                         ],
-                        context: { execution: { action: 'task', step: 'new' } },
+                        context: { 
+                            execution: { action: 'task', step: 'new' },
+                            ...(task ? { task } : {}) // Include task in context if provided
+                        },
                         // Initial execute until user submits; after POST /next use GET /sessions/:id (ack-only /next)
                         execute: {
                             message: 'What would you like me to do?',

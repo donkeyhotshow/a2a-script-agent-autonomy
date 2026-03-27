@@ -15,6 +15,10 @@
      const setupLoaderListener = global.TaskFlowLoader?.setupLoaderListener;
      const escapeHtml = global.escapeHtml;
 
+    function getPanelsGateway() {
+        return global.TaskFlowPanelGateway || null;
+    }
+
     /**
      * Общая функция отправки и обработки результата
      * Используется sendChoice и sendMessageResult
@@ -204,10 +208,11 @@
         store?.reset();
 
         // Check if task panel already exists
-        const pm = global.PanelManager;
-        if (TaskFlow.panelId && pm?.get(TaskFlow.panelId)) {
-            pm.bringToFront(TaskFlow.panelId);
-            const panel = pm.get(TaskFlow.panelId);
+        const panels = getPanelsGateway();
+        const existingPanel = panels?.getPanel?.(TaskFlow.panelId);
+        if (TaskFlow.panelId && existingPanel) {
+            panels?.bringToFront?.(TaskFlow.panelId);
+            const panel = existingPanel;
             if (panel) {
                 TaskFlow.panel = panel;
                 const content = panel.getContentEl();
@@ -218,7 +223,7 @@
         } else {
             // Create task panel - no preloader
             const contentHTML = '';
-            TaskFlow.panel = pm?.open('task', {
+            TaskFlow.panel = panels?.openTaskPanel?.({
                 title: 'Task Flow',
                 content: contentHTML,
                 fixed: TaskFlow.fixed
@@ -266,14 +271,11 @@
         try {
             // New protocol: send task directly in session creation
             const api = global.apiIntegration;
-            if (!api?._fetch) {
-                throw new Error('apiIntegration not available');
+            if (typeof api?.createSessionEnvelope !== 'function') {
+                throw new Error('apiIntegration.createSessionEnvelope is required');
             }
             const payload = { projectId, task, title: task.slice(0, 50) };
-            const sessionRes = await api._fetch('sessions', {
-                method: 'POST',
-                body: JSON.stringify(payload)
-            });
+            const sessionRes = await api.createSessionEnvelope(payload);
 
             // Vite: { success, session }; SDK: { success, data }; legacy: flat
             const sessionData = sessionRes?.session || sessionRes?.data || sessionRes;
@@ -338,8 +340,7 @@
             if (store && typeof store.on === 'function') {
                 store.on('execute', (execute) => {
                     if (TaskFlow.panelId) {
-                        const pm = global.PanelManager;
-                        const panel = pm?.get(TaskFlow.panelId);
+                        const panel = getPanelsGateway()?.getPanel?.(TaskFlow.panelId);
                         if (panel) {
                             const content = panel.getContentEl();
                             if (content) {

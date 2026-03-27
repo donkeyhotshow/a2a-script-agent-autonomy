@@ -13,8 +13,8 @@
 (function (global) {
     'use strict';
 
-    if (typeof global.resolveStore !== 'function') {
-        throw new Error('[ActionExecutor] Load js/task-flow/utils.js before action-executor.js');
+    if (typeof global.resolveSessionStore !== 'function') {
+        throw new Error('[ActionExecutor] Load js/session-store-resolver.js before action-executor.js');
     }
 
     const POLL_INTERVAL =
@@ -81,11 +81,12 @@
      * @returns {Promise<Object>} ответ сервера
      */
     async function submit(sessionId, result, storeOverride) {
-        const store = storeOverride || global.resolveStore(sessionId);
-        const data = await global.apiIntegration._fetch(`sessions/${encodeURIComponent(sessionId)}/next`, {
-            method: 'POST',
-            body: JSON.stringify({ result })
-        });
+        const store = storeOverride || global.resolveSessionStore(sessionId);
+        const submitFn = global.apiIntegration?.submitSessionResult;
+        if (typeof submitFn !== 'function') {
+            throw new Error('[ActionExecutor] apiIntegration.submitSessionResult is required');
+        }
+        const data = await submitFn.call(global.apiIntegration, sessionId, result);
         
         // Каноничный формат: только asyncPending (устарел promiseId)
         const asyncPending = !!data?.asyncPending;
@@ -114,7 +115,7 @@
      * @param {string|null} promiseId - ID промиса (nullable для session-scoped)
      */
     function startPromisePolling(sessionId, promiseId) {
-        const store = global.resolveStore(sessionId);
+        const store = global.resolveSessionStore(sessionId);
         const sessionScoped = !promiseId;
 
         if (store?.startPromisePolling) {
@@ -138,13 +139,6 @@
                 pullSessionSnapshot(sessionId, store).then(() => {
                     store.setPromisePending?.(false);
                     // stopLoader вызывается явным образом из task-flow модулей
-                    global.apiIntegration?.emit?.('promiseResolved', {
-                        sessionId,
-                        promiseId: data.promiseId ?? promiseId ?? null,
-                        sessionScoped: !!data.sessionScoped,
-                        result: data.result,
-                        execute: data.execute,
-                    });
                 });
             };
 
@@ -153,12 +147,6 @@
                 clearPromiseListeners(listenerKey);
                 store.setPromisePending?.(false);
                 // stopLoader вызывается явным образом из task-flow модулей
-                global.apiIntegration?.emit?.('promiseError', {
-                    sessionId,
-                    promiseId: data.promiseId ?? promiseId ?? null,
-                    sessionScoped: !!data.sessionScoped,
-                    error: data.error || 'Promise failed',
-                });
             };
 
             store.on?.('promiseResolved', onResolved);

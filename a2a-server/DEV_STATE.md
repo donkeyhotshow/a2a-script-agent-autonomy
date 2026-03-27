@@ -1,6 +1,24 @@
-# DEV_STATE - a2a-server
+# DEV_STATE - a2a-server (2026-03-27)
 
-> Серверная часть: Request Processing, Storage, AI Integration
+> Серверная часть: Request Processing, Router, Transform (STATELESS)
+
+---
+
+## ⚠️ КРИТИЧЕСКИЕ ИЗМЕНЕНИЯ
+
+### A2A Server ТЕПЕРЬ STATELESS
+
+**Убрано:**
+- ❌ Хранение сессий на сервере
+- ❌ Компонент `neurons` (устарел)
+- ❌ Сложная система состояний
+
+**Добавлено:**
+- ✅ Stateless обработка запросов
+- ✅ Контекст передаётся в каждом запросе
+- ✅ Keyword-based routing (вместо LLM)
+
+---
 
 ## Подсистемы проекта
 
@@ -11,67 +29,170 @@
 
 ---
 
-## Серверные проблемы
+## Архитектура
 
-### 1. Request Processing
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Client    │────▶│ a2a-server  │────▶│   Proxy     │────▶│   Ollama    │
+│  (HTTP/WS)  │     │  :3000     │     │  :11434    │     │   :11435    │
+└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
+                            │
+                            │ (STATELESS - no session storage)
+                            ▼
+                     ┌─────────────┐
+                     │  Transform  │
+                     │   Pipeline   │
+                     └─────────────┘
+```
 
-#### API Endpoints
+---
+
+## API Endpoints
 
 | Метод | Маршрут | Описание |
 |-------|---------|----------|
 | GET | `/health` | Liveness probe |
 | GET | `/api/v1/health` | Detailed health |
-| POST | `/api/v1/requests` | Создать запрос |
-| GET | `/api/v1/requests/:promiseId/status` | Статус запроса |
-| POST | `/api/v1/invoke` | Универсальный endpoint для invoke |
+| POST | `/api/v1/invoke` | **Главный endpoint** - обработка запросов |
+| GET | `/api/v1/requests/:promiseId` | Статус запроса |
+| GET | `/api/v1/requests/:promiseId/result` | Результат запроса |
 | GET/POST/PUT/DELETE | `/api/v1/storage/:namespace/:key` | Storage API |
 | DELETE | `/api/v1/storage/:namespace` | Очистка namespace |
 | GET | `/api/v1/storage/:namespace/keys` | Список ключей |
 | GET | `/metrics` | Prometheus метрики |
-| GET | `/api/v1/queue/metrics` | Метрики очереди |
 
-#### Важные исправления
-
-1. **A2A Server endpoints:** `/invoke` → `/api/v1/invoke`
-2. **Invoke service:** Исправлен приоритет result в `invoke.service.ts`
+**ВАЖНО**: Используйте `/api/v1/invoke`, а не `/invoke`!
 
 ---
 
-### 2. Session Management
+## Request Processing (Новый формат)
 
-#### Формат хранения
+### Request Processors
+
+Система использует специализированные процессоры для разных типов запросов:
+
+| Процессор | Назначение | Файл |
+|-----------|------------|------|
+| **dialog-request-processor** | LLM диалог с пользователем | [dialog-request-processor.ts](src/services/core/request-processor/dialog-request-processor.ts) |
+| **action-request-processor** | Agent действия (код, файлы, команды) | [action-request-processor.ts](src/services/core/request-processor/action-request-processor.ts) |
+| **form-request-processor** | Формы, выборы, ввод данных | [form-request-processor.ts](src/services/core/request-processor/form-request-processor.ts) |
+| **simulation-request-processor** | Golden тестирование | [simulation-request-processor.ts](src/services/core/request-processor/simulation-request-processor.ts) |
+
+### Invoke Flow
 
 ```
-a2a-client/storage/sessions/{sessionId}/
-├── 1/
-│   ├── client-result.json      # Ввод пользователя
-│   ├── request-to-server.json # Запрос к A2A Server
-│   ├── server-response.json   # Ответ сервера
-│   ├── server-promise.json   # Статус промиса
-│   └── messages.json          # История сообщений
-├── 2/
-│   └── ...
-└── ...
+POST /api/v1/invoke
+    │
+    ▼
+invoke.service.ts
+    │
+    ▼
+requestService.create() → promiseId
+    │
+    ▼
+request-processor.service.ts (router)
+    │
+    ├──▶ dialog-request-processor (LLM)
+    ├──▶ action-request-processor (tools)
+    ├──▶ form-request-processor (forms)
+    └──▶ simulation-request-processor (tests)
 ```
-
-#### Очистка сессий
-
-| Компонент | Место хранения | Очистка |
-|-----------|---------------|---------|
-| Сессии пользователей | PostgreSQL (таблица sessions) | Не реализована |
-| История запросов | PostgreSQL (таблица requests) | Не реализована |
-| Логи запросов | Файловая система | Не реализована |
-
-**Рекомендуемые действия:**
-- TTL для сессий (старше N дней)
-- Очистка истории (архивирование или удаление)
-- Ротация логов
 
 ---
 
-### 3. AI Integration
+## Router (Keyword-Based)
 
-#### Интеграция с AI Hub
+### Конфигурация
+
+| Файл | Назначение |
+|------|------------|
+| [src/config/router-static.ts](src/config/router-static.ts) | Обработка маршрутизации |
+| [../../shared/router-static-choices.json](../../shared/router-static-choices.json) | Статические варианты выбора |
+
+### Режимы работы
+
+| ID | Label | Description |
+|----|-------|-------------|
+| `dialog` | AI діалог з користувачем | Вільний текстовий діалог з моделлю |
+| `agent` | Agent (універсальний режим) | Агент з інструментами |
+| `task-decomposition` | Декомпозиція задачі | Розбиття задачі на підзадачі |
+| `fix-vue-imports` | Виправлення Vue imports | Скриптований сценарій |
+| `fix-laravel-namespaces-and-uses` | Laravel: namespace та use | PHP namespace скрипт |
+
+---
+
+## Transform Pipeline
+
+Система трансформации запросов и ответов:
+
+| Файл | Назначение |
+|------|------------|
+| [transform/pipeline.ts](src/transform/pipeline.ts) | Главный pipeline |
+| [transform/operations.ts](src/transform/operations.ts) | Операции трансформации |
+| [transform/materialize-result-for-llm.ts](src/transform/materialize-result-for-llm.ts) | Подготовка результата для LLM |
+
+### Server Transform файлы
+
+Для каждого шага создаются:
+- `server-transforms-request.json` - трансформация запроса
+- `server-transforms-response.json` - трансформация ответа
+
+---
+
+## Контекст (Новые поля)
+
+### Обязательные поля
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `version` | string | Версия протокола |
+| `session_id` | string | ID сессии (обязательно) |
+
+### Новые поля (New Protocol)
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| `execution` | object | { action, step, progress, status } |
+| `history` | array | История выполнения действий |
+| `workbench` | object | Рабочее состояние: sections, batch, slots |
+
+---
+
+## Action-Key Shape (ОБЯЗАТЕЛЬНО)
+
+### Execute формат
+
+```json
+{
+  "execute": {
+    "script": { "input": {...}, "output": "...", "code": "..." },
+    "read-file": { "path": "..." },
+    "write-file": { "path": "...", "content": "..." },
+    "rag-search": { "query": "..." },
+    "execute-command": { "command": "..." },
+    "form": { "input": [...], "title": "...", "choices": [...] }
+  }
+}
+```
+
+### Result формат
+
+```json
+{
+  "result": {
+    "script": { "output": "..." },
+    "read-file": { "path": "...", "content": "..." },
+    "write-file": { "path": "...", "success": true },
+    "rag-search": { "results": [...], "files": [...] },
+    "message": "...",
+    "choice": "..."
+  }
+}
+```
+
+---
+
+## AI Integration
 
 | Параметр | Значение |
 |----------|----------|
@@ -79,28 +200,22 @@ a2a-client/storage/sessions/{sessionId}/
 | OLLAMA_MODEL | qwen3:8b |
 | LLM_PROVIDER | ollama |
 
-#### Потоки данных
+### Потоки данных
 
-**Синхронный запрос (без LLM):**
+**Синхронный запрос (DEFAULT_SYNC_MODE=1):**
 ```
-Client → POST /api/v1/requests → a2a-server → (neuron processing) → response
+Client → POST /api/v1/invoke → a2a-server → response (sync: true)
 ```
 
-**Асинхронный запрос (с LLM):**
+**Асинхронный запрос:**
 ```
-Client → POST /api/v1/requests → a2a-server → AI_HUB_URL (proxy) → Ollama
-                                          ↓
-                               Создание promise
-                                          ↓
-                          a2a-server возвращает promiseId
-                                          ↓
-                             Proxy Daemon (polling every 4s)
-                                          ↓
-                          GET /promises/pending → Находит тикет
-                                          ↓
-                          POST /promise/<id>/execute → Ollama
-                                          ↓
-                          Результат сохраняется в файл
+Client → POST /api/v1/invoke → a2a-server → promiseId
+                                              │
+                                              ▼
+                              AI Hub Proxy + Daemon
+                                              │
+                                              ▼
+Client ← GET /requests/:promiseId/result ← a2a-server
 ```
 
 ---
@@ -113,6 +228,7 @@ Client → POST /api/v1/requests → a2a-server → AI_HUB_URL (proxy) → Ollam
 | AI_HUB_URL | URL прокси | http://localhost:11434 |
 | OLLAMA_MODEL | Модель Ollama | qwen3:8b |
 | SKIP_AUTH | Пропустить авторизацию | 1 |
+| DEFAULT_SYNC_MODE | Синхронный режим | 1 |
 | RATE_LIMIT_WINDOW_MS | Окно rate limiting (мс) | 60000 |
 | RATE_LIMIT_MAX_REQUESTS | Макс. запросов в окне | 200 |
 | LOG_LEVEL | Уровень логирования | info |
@@ -120,72 +236,46 @@ Client → POST /api/v1/requests → a2a-server → AI_HUB_URL (proxy) → Ollam
 
 ---
 
-## Возможные будущие проблемы
-
-### 1. Проблемы с базой данных
-
-| Проблема | Описание | Решение |
-|----------|----------|---------|
-| PostgreSQL недоступна | Запросы завершаются с ошибкой | Health check, retry |
-| Миграции БД | При обновлении возможны проблемы | Версионирование миграций |
-| Переполнение таблиц | Таблицы могут переполняться | Индексы, партиционирование |
-
-### 2. Проблемы с производительностью
-
-| Проблема | Описание | Решение |
-|----------|----------|---------|
-| Высокая нагрузка | Большое количество запросов | Rate limiting, queue |
-| Блокировка I/O | Синхронные операции | Async/await |
-| Утечки памяти | Увеличивается потребление | Регулярный перезапуск |
-
-### 3. Проблемы с аутентификацией
-
-| Проблема | Описание | Решение |
-|----------|----------|---------|
-| JWT истечение | Токены истекают | Auto-refresh token |
-| Skip Auth в продакшене | Опасен в production | Проверка окружения |
-| CORS проблемы | Ограничения браузеров | Правильная настройка CORS |
-
----
-
 ## Тестирование
-
-### Проверка сервисов
 
 ```bash
 # Тест 1: Проверка a2a-server
 curl -s http://localhost:3000/health
-# Результат: {"status":"ok","timestamp":"2026-03-06T12:10:00.897Z","version":"1.0.0"}
+# Результат: {"status":"ok","mode":"stateless","version":"..."}
 
-# Тест 2: Создание запроса
-curl -s -X POST http://localhost:3000/api/v1/requests \
-  -H "Content-Type: application/json" \
-  -H "x-skip-auth: true" \
-  -d '{"message":"Hello","context":{},"sessionId":"test-session-1"}'
-
-# Тест 3: Invoke
+# Тест 2: Invoke (sync)
 curl -s -X POST http://localhost:3000/api/v1/invoke -H "Content-Type: application/json" \
-  -d '{"task":"Привет, как дела?"}'
+  -d '{"task":"Привет","sync":true}'
+# Результат: {"success":true,"data":{"sync":true,"execute":{...}}}
+
+# Тест 3: Invoke (async)
+curl -s -X POST http://localhost:3000/api/v1/invoke -H "Content-Type: application/json" \
+  -d '{"task":"Проанализируй код"}'
+# Результат: {"success":true,"data":{"promiseId":"prom_...","status":"pending"}}
 ```
 
 ---
 
-## Архитектура
+## Что было убрано
 
-```
-┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Client    │────▶│ a2a-server  │────▶│   Proxy     │────▶│   Ollama    │
-│  (HTTP/WS)  │     │  :3000     │     │  :11434    │     │   :11435    │
-└─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘
-                            │                   │
-                            │                   │
-                     ┌──────┴──────┐    ┌──────┴──────┐
-                     │   Database  │    │   Daemon    │
-                     │ PostgreSQL  │    │ (built-in)  │
-                     │   :5433     │    │ polling     │
-                     └─────────────┘    └─────────────┘
-```
+| Компонент | Причина | Альтернатива |
+|-----------|---------|--------------|
+| Neurons | Устарел, сложная архитектура | action-request-processor |
+| LLM Router Transform | Медленный, дорогой | keyword-based routing |
+| Server session storage | Масштабируемость | Client API storage |
+| scripts/prod-test.js | Удалён | direct-tests/run-checks.ps1 |
+| scripts/dev-launch.js | Удалён | Ручной запуск сервисов |
+| scripts/orchestrator.js | Удалён | - |
+| scripts/generate-* | Удалён | - |
 
 ---
 
-*Обновлено: 2026-03-24*
+## Ссылки
+
+- [Спецификация протокола](../docs/new-request-flow/PROTOCOL.md)
+- [Архитектура](../docs/new-request-flow/ARCHITECTURE.md)
+- [AGENTS.md](../AGENTS.md)
+
+---
+
+*Обновлено: 2026-03-27*

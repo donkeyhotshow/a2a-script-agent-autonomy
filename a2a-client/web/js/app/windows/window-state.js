@@ -3,7 +3,6 @@
  */
 (function (global) {
     'use strict';
-    const RESTORE_WINDOW_CONCURRENCY = 5;
     let _zTop = 1000;
     let _cubeIndex = 0;
 
@@ -13,6 +12,12 @@
 
     if (!global.WindowPosition) {
         throw new Error('[WindowState] Load js/app/windows/window-position.js before window-state.js');
+    }
+    if (!global.WindowSessionGateway) {
+        throw new Error('[WindowState] Load js/app/windows/window-session-gateway.js before window-state.js');
+    }
+    if (!global.WindowRecovery) {
+        throw new Error('[WindowState] Load js/app/windows/window-recovery.js before window-state.js');
     }
 
     const WindowState = {
@@ -314,7 +319,6 @@
                     existingPanel.minimize();
                 } else {
                     existingPanel.restore();
-                    global.PanelManager?.bringToFront(existingPanel.id);
                 }
             } else {
                 // Create new window
@@ -322,80 +326,7 @@
             }
 
             // Update active session
-            if (global.SessionManager) {
-                global.SessionManager.setActiveSession(sessionId);
-            }
-        },
-
-        /**
-         * Load session data from API
-         * @private
-         */
-        async _loadSessionData(sessionId) {
-            const projectId = await global.getCurrentProjectId() || global.SessionStore?.projectId || null;
-            const api = global.apiIntegration;
-            
-            if (!api?.getSession) {
-                throw new Error('[WindowState] apiIntegration.getSession is required');
-            }
-
-            try {
-                const sessionData = await api.getSession(sessionId, {
-                    projectId: projectId || undefined,
-                    includeContext: true
-                });
-                return sessionData;
-            } catch (err) {
-                const loadErr = new Error('[WindowState] Failed to load session data');
-                loadErr.cause = err;
-                throw loadErr;
-            }
-        },
-
-        /**
-         * Hydrate store with session data (now uses normalized response from apiIntegration)
-         * @private
-         */
-        _hydrateStore(store, sessionData, sessionId) {
-            if (!store || !sessionData) {
-                return;
-            }
-
-            store.setAwaitingSessionVerify(true);
-            if (typeof store.startLoader === 'function') {
-                store.startLoader(sessionId);
-            }
-
-            const dataSid = global.resolveSessionIdFromPayload?.(sessionData);
-            if (dataSid) {
-                store.setSession(dataSid, sessionData.projectId);
-            }
-
-             // Messages - already normalized in apiIntegration.getSession (guaranteed to be array)
-             store.initMessages(Array.isArray(sessionData.messages) ? sessionData.messages : []);
-
-            // Context - already normalized in apiIntegration.getSession (guaranteed to be object)
-            if (sessionData.context != null) {
-                store.setContext(sessionData.context);
-            }
-
-            // Execute - already normalized in apiIntegration.getSession (can be null)
-            store.setExecute(sessionData.execute);
-
-            // Status - already normalized in apiIntegration.getSession
-            if (sessionData.status !== undefined) {
-                store.setStatus(sessionData.status);
-            }
-
-            const Ex = global.ActionExecutor;
-            if (Ex && typeof Ex.bootstrapSessionUi === 'function') {
-                void Ex.bootstrapSessionUi(sessionId, store);
-            } else {
-                store.setAwaitingSessionVerify(false);
-                if (typeof store.stopLoader === 'function') {
-                    store.stopLoader(sessionId);
-                }
-            }
+            registry.setActiveSessionId?.(sessionId);
         },
 
         /**
@@ -407,9 +338,7 @@
 
             // Set active session on focus
             panel.container.addEventListener('mousedown', () => {
-                if (global.SessionManager) {
-                    global.SessionManager.setActiveSession(sessionId);
-                }
+                registry.setActiveSessionId?.(sessionId);
             });
 
             // Close button handler
@@ -450,7 +379,10 @@
                 const size = savedState?.size || { width: 800, height: 600 };
 
                 // Load session data
-                const sessionData = await this._loadSessionData(sessionId);
+                const currentProjectId = await global.getCurrentProjectId?.();
+                const sessionData = await global.WindowSessionGateway.loadSessionData(sessionId, {
+                    projectId: currentProjectId || null
+                });
                 if (!sessionData) {
                     throw new Error(`[WindowState] Session ${sessionId} not found`);
                 }
@@ -473,11 +405,11 @@
                     this._attachWindowHandlers(panel, sessionId, registry, positionModule);
 
                     // Create SessionStore instance
-                    const store = this._createSessionStore(sessionId);
+                    const store = global.WindowSessionGateway.createSessionStore(sessionId);
                     panel._sessionStore = store;
 
                     // Hydrate store with data
-                    this._hydrateStore(store, sessionData, sessionId);
+                    global.WindowSessionGateway.hydrateStore(store, sessionData, sessionId);
 
                     // Render content
                     const contentEl = panel.getContentEl();
@@ -492,38 +424,6 @@
                 console.error('[WindowState] Failed to create session window:', error);
                 global.ErrorHandler?.handle(error, { action: 'createSessionWindow', sessionId });
             }
-        },
-
-        /**
-         * Create session store instance (SessionStoreClass is now required)
-         * @private
-         */
-        _createSessionStore(sessionId) {
-            const StoreClass = window.SessionStoreClass || global.SessionStoreClass;
-            const storeOpts = global.SessionStoreWebDefaults;
-
-            if (!StoreClass) {
-                throw new Error('[WindowState] SessionStoreClass is required (load session-store.js)');
-            }
-
-            if (!storeOpts) {
-                throw new Error('[WindowState] SessionStoreWebDefaults missing (load session-store.js)');
-            }
-
-            const store = new StoreClass({
-                storageBase: storeOpts.storageBase,
-                storageMode: storeOpts.storageMode
-            });
-
-            if (!store) {
-                const errMsg = '[WindowState] Failed to create SessionStore instance';
-                console.error(errMsg, { sessionId });
-                throw new Error(errMsg);
-            }
-
-            console.log('[WindowState] SessionStore instance created for', sessionId);
-            store.reset(sessionId);
-            return store;
         },
 
         /**
@@ -552,78 +452,14 @@
             
             const ids = Array.from(sessionWindows.keys());
             ids.forEach(sessionId => this.closeSessionWindow(sessionId));
-            if (global.SessionManager) global.SessionManager.setActiveSession(null);
+            registry.setActiveSessionId?.(null);
         },
 
         /**
          * Restore session windows from saved state
          */
         async restoreSessionWindows() {
-            const registry = global.WindowRegistry;
-            if (!registry) return;
-
-            let savedWindows = [];
-            try {
-                savedWindows = await registry.loadSessionWindowsState();
-            } catch (error) {
-                console.error('[WindowState] Failed to load saved windows list:', error);
-                global.ErrorHandler?.handle(error, { action: 'restoreSessionWindows.loadState' });
-                return;
-            }
-            if (!Array.isArray(savedWindows) || savedWindows.length === 0) {
-                return;
-            }
-
-            const queue = savedWindows.slice();
-            let restoreFailures = 0;
-            while (queue.length > 0) {
-                const batch = queue.splice(0, RESTORE_WINDOW_CONCURRENCY);
-                const results = await Promise.allSettled(
-                    batch.map((sessionId) => this._restoreSavedWindow(sessionId))
-                );
-                restoreFailures += results.filter((r) => r.status === 'rejected').length;
-            }
-            if (restoreFailures > 0) {
-                global.ErrorHandler?.handle(
-                    new Error(`[WindowState] Failed to restore ${restoreFailures} window(s)`),
-                    { action: 'restoreSessionWindows.summary', restoreFailures }
-                );
-            }
-        },
-
-        async _restoreSavedWindow(sessionId) {
-            try {
-                const sessionExists = await this.checkSessionExists(sessionId);
-                if (sessionExists) {
-                    await this.createSessionWindow(sessionId);
-                }
-            } catch (error) {
-                console.error('[WindowState] Failed to restore window:', sessionId, error);
-                global.ErrorHandler?.handle(error, { action: 'restoreSavedWindow', sessionId });
-            }
-        },
-
-        /**
-         * Check if session exists via Client API
-         */
-        async checkSessionExists(sessionId) {
-            if (!sessionId) {
-                throw new Error('[WindowState] sessionId is required for checkSessionExists');
-            }
-            if (!global.apiIntegration) {
-                throw new Error('[WindowState] apiIntegration is required for checkSessionExists');
-            }
-            try {
-                const projectId = await global.getCurrentProjectId();
-                const session = await global.apiIntegration.getSession(
-                    sessionId,
-                    projectId ? { projectId } : {}
-                );
-                return !!global.resolveSessionIdFromPayload?.(session);
-            } catch (e) {
-                global.ErrorHandler?.handle(e, { action: 'checkSessionExists', sessionId });
-                throw e;
-            }
+            return global.WindowRecovery.restoreSessionWindows((sessionId) => this.createSessionWindow(sessionId));
         },
 
     };

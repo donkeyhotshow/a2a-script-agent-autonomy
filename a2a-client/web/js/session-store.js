@@ -241,6 +241,15 @@
     // === Global exports - BACKWARD COMPATIBLE ===
     global.SessionStoreWebDefaults = WEB_SESSION_STORE_OPTIONS;
     global.SessionStoreClass = SessionStore;
+    global.SessionStoreFactory = global.SessionStoreFactory || {
+        create: function (options) {
+            var merged = Object.assign({}, WEB_SESSION_STORE_OPTIONS, options || {});
+            return new SessionStore(merged);
+        },
+        getDefaults: function () {
+            return Object.assign({}, WEB_SESSION_STORE_OPTIONS);
+        }
+    };
     global.SessionStore = new SessionStore({
         storageBase: WEB_SESSION_STORE_OPTIONS.storageBase,
         storageMode: WEB_SESSION_STORE_OPTIONS.storageMode

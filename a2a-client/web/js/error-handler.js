@@ -36,13 +36,22 @@
         
         // Event listeners
         _listeners: new Map(),
+        _sessionErrorSink: null,
 
         /**
          * Initialize error handler
          */
         init(options = {}) {
             Object.assign(this.config, options);
+            if (typeof options.sessionErrorSink === 'function') {
+                this._sessionErrorSink = options.sessionErrorSink;
+            }
             console.log('[ErrorHandler] Initialized');
+            return this;
+        },
+
+        setSessionErrorSink(sink) {
+            this._sessionErrorSink = typeof sink === 'function' ? sink : null;
             return this;
         },
 
@@ -616,20 +625,22 @@
         _pushSessionMessage(message, meta = {}) {
             if (!message) return;
 
-            const sessionId = meta?.sessionId
-                || meta?.context?.sessionId
-                || meta?.context?.session_id
-                || global.SessionManager?.getActiveSessionId?.();
-
-            const store = sessionId
-                ? global.WindowRegistry?.getSessionStore?.(sessionId) || global.SessionStore
-                : global.SessionStore;
-
             const err = new Error(message);
             if (meta && typeof meta === 'object') {
                 Object.assign(err, meta);
             }
 
+            const sink = this._sessionErrorSink || global.sessionErrorSink;
+            if (typeof sink === 'function') {
+                try {
+                    sink(err, meta);
+                    return;
+                } catch (sinkErr) {
+                    console.warn('[ErrorHandler] sessionErrorSink failed:', sinkErr);
+                }
+            }
+
+            const store = global.SessionStore;
             if (store?.setError) {
                 store.setError(err);
                 return;

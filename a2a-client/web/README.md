@@ -72,7 +72,7 @@ web/
 2. `js/install-normalizers.mjs` — предоставляет `global.Normalizers` до создания `SessionStore`.
 3. `js/daemons/*` (emitter, dialog-loader, dialog-promise-poll) — устанавливают `global.__a2aDaemons`.
 4. `js/session-data.js`, `js/app/project-manager.js`, `js/session-store.js` — зависят от предыдущих шагов.
-5. `js/app/windows/window-events.js`, `js/app/windows/window-position.js` — подключаются до `js/app/windows/window-state.js`, т.к. последнему требуется registries/handlers.
+5. `js/app/windows/window-events.js`, `js/app/windows/window-position.js`, `js/app/windows/window-session-gateway.js`, `js/app/windows/window-recovery.js` — подключаются до `js/app/windows/window-state.js`, т.к. последнему требуются handlers + gateways.
 
 Если порядок нарушен, публичные объекты `WindowState`, `SessionStore` и другие вызовут исключение при инициализации.
 

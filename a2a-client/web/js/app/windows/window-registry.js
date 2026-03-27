@@ -8,6 +8,7 @@
 
     // Track opened session windows
     const sessionWindows = new Map(); // sessionId -> panel
+    let activeSessionId = null;
 
     const WindowRegistry = {
         /**
@@ -46,6 +47,14 @@
             return Array.from(sessionWindows.keys());
         },
 
+        getActiveSessionId() {
+            return activeSessionId;
+        },
+
+        setActiveSessionId(sessionId) {
+            activeSessionId = sessionId == null || sessionId === '' ? null : String(sessionId);
+        },
+
         /**
          * Save session windows state
          */
@@ -53,7 +62,7 @@
             try {
                 const state = {
                     windows: Array.from(sessionWindows.keys()),
-                    active: global.SessionManager?.getActiveSessionId(),
+                    active: activeSessionId,
                     timestamp: Date.now()
                 };
                 await StorageAPI.ui.setItem(SESSION_WINDOWS_KEY, JSON.stringify(state));
@@ -70,9 +79,7 @@
                 const saved = await StorageAPI.ui.getItem(SESSION_WINDOWS_KEY);
                 if (!saved) return [];
                 const state = typeof saved === 'string' ? JSON.parse(saved) : saved;
-                if (global.SessionManager) {
-                    global.SessionManager.setActiveSession(state.active != null ? state.active : null);
-                }
+                activeSessionId = state?.active != null ? String(state.active) : null;
                 const windows = state.windows;
                 if (!Array.isArray(windows)) {
                     throw new Error('[WindowRegistry] saved state missing windows array');
@@ -100,5 +107,10 @@
 
     // Export
     global.WindowRegistry = WindowRegistry;
+
+    // Register window-backed store lookup in shared resolver (if available).
+    global.SessionStoreResolver?.registerProvider?.('window-registry', (sessionId) =>
+        WindowRegistry.getSessionStore(sessionId)
+    );
 
 })(typeof window !== 'undefined' ? window : globalThis);

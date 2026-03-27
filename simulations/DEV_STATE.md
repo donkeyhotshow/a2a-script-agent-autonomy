@@ -1,8 +1,18 @@
-# DEV_STATE - simulations (2026-03-24)
+# DEV_STATE - simulations (2026-03-27)
 
-## Симуляции проекта
+## ⚠️ КРИТИЧЕСКИЕ ИЗМЕНЕНИЯ
 
-### Структура симуляций
+### Симуляции и новый формат
+
+Симуляции обновлены для поддержки **нового формата протокола**:
+- Action-key shape для execute/result
+- Context fields: execution, history, workbench
+- Step-based storage
+- Server transforms (server-transforms-request.json, server-transforms-response.json)
+
+---
+
+## Структура симуляций
 
 Симуляции организованы по типам задач и сценариям использования:
 
@@ -15,37 +25,115 @@
 | **Initialization** | `init/`                                | Инициализация системы        |
 | **Orchestration**  | `orchestrator-dialog/`                 | Оркестрация компонентов      |
 
-### Формат симуляций
+---
+
+## Формат симуляций (НОВЫЙ)
+
+### Обязательные файлы
 
 Каждая симуляция содержит:
 
-- `request.json` - Входные данные
-- `request.md` - Человеко-читаемая версия запроса
-- `response.md` - Ответ от AI
-- `analysis.md` - Анализ результатов (опционально)
+| Файл | Назначение | Формат |
+|------|------------|--------|
+| `request.json` | Входные данные | Server invoke request schema |
+| `request.md` | Человеко-читаемая версия запроса | Markdown с JSON embedded |
+| `response.json` | Ответ от сервера | action-key shape (execute + context + result) |
+| `response.md` | Человеко-читаемая версия ответа | Markdown с JSON embedded |
 
-### Ключевые симуляции
+### Дополнительные файлы
 
-#### AI Action симуляции
+| Файл | Назначение |
+|------|------------|
+| `server-transforms-request.json` | Трансформация запроса |
+| `server-transforms-response.json` | Трансформация ответа |
+| `received.json` | Web execute DTO (form/message/attachments) |
+| `interrupt.md` | Server interrupt loop documentation |
+| `N-sub-M/` folders | Server interrupt loop steps |
+
+### Action-Key Shape (ОБЯЗАТЕЛЬНО)
+
+```json
+{
+  "execute": {
+    "form": { "title": "...", "choices": [...] },
+    "script": { "input": {...}, "code": "..." },
+    "read-file": { "path": "..." },
+    "rag-search": { "query": "..." }
+  },
+  "context": {
+    "version": "...",
+    "session_id": "...",
+    "execution": { "action": "...", "step": "...", "progress": 0 },
+    "history": [...],
+    "workbench": { "sections": {...} }
+  },
+  "result": {
+    "choice": "dialog",
+    "message": "..."
+  }
+}
+```
+
+---
+
+## Ключевые симуляции
+
+### AI Action симуляции
 
 - **auto-ai**: Базовый AI action flow
 - **agent-coder-smart**: Продвинутый кодогенератор (legacy: coder-smart)
 - **agent-analyze**: Анализ кода и архитектуры (legacy `analyze/` → `agent-analyze/`)
 
-#### Code симуляции
+### Code симуляции
 
 - **coder**: Генерация кода
 - **fix-vue-imports**: Исправление импортов Vue
 - **fix-vue-imports-batched**: Пакетная обработка
 
-### Статус и использование
+---
+
+## Валидация симуляций
+
+### sim-lint
+
+Проверка формата симуляций:
+```bash
+npm run sim:lint -- --all --json
+cd a2a-server && npm run sim:lint -- --all --json
+```
+
+### sim-validate
+
+Валидация конкретной симуляции:
+```bash
+npm run sim:validate -- --sim <name> --json
+cd a2a-server && npm run sim:validate -- --sim <name> --json
+```
+
+---
+
+## Статус и использование
 
 - **Количество симуляций:** 15+ активных
-- **Последнее обновление:** 2026-03-24
+- **Последнее обновление:** 2026-03-27
 - **Использование:** Golden standard тестирования
 - **Обновление:** Регулярно синхронизируются с кодом
 - **Приоритет:** Поддержание актуальности симуляций
 
-### Общая архитектура системы
+---
+
+## Общая архитектура системы
 
 Общая архитектура системы описана в [`DEV_STATE.md`](../DEV_STATE.md).
+
+---
+
+## Ссылки
+
+- [Спецификация протокола](../docs/new-request-flow/PROTOCOL.md)
+- [Simulation Format](../docs/new-request-flow/SIMULATION-FORMAT.md)
+- [SCHEMA.md](../docs/new-request-flow/SCHEMAS.md)
+
+---
+
+*Обновлено: 2026-03-27*
