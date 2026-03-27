@@ -12,8 +12,8 @@ import {
     toPublicSession,
     getActiveAsyncWork,
     attachPromiseMeta,
-} from './utils/web-session-dto.js';
-import { buildWebExecute } from './utils/web-execute-dto.js';
+} from './utils/session-projection-dto.js';
+import { buildExecuteProjection } from './utils/execute-projection-dto.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import { chainSyncInvokesForAgentTools } from './utils/agent-rag-chain.js';
 import { isPromisePollComplete } from '../storage/promise-status.js';
@@ -120,7 +120,7 @@ function runViteClientPromisePoll({
                 const statusStr = normalizedStatus.status;
                 const asyncPending = normalizedStatus.asyncPending;
                 const webExecute = promiseStatus.execute
-                    ? buildWebExecute(promiseStatus.execute)
+                    ? buildExecuteProjection(promiseStatus.execute)
                     : null;
                 const payload = includePromiseIdInBody
                     ? {
@@ -255,7 +255,7 @@ export function createStepRoutes({ cwd }) {
                 if (!data?.execute) return { step: stepNum, data };
                 return {
                     step: stepNum,
-                    data: { ...data, execute: buildWebExecute(data.execute) },
+                    data: { ...data, execute: buildExecuteProjection(data.execute) },
                 };
             });
             res.setHeader('Content-Type', 'application/json');

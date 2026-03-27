@@ -152,8 +152,7 @@ cd a2a-client && npm test
 
 ## Ссылки
 
-- [AGENTS.md](AGENTS.md) - Правила работы агентов
-- [OPERATIONAL_PROTOCOL.md](OPERATIONAL_PROTOCOL.md) - Регламент работы (Simple → Complex)
+- [AGENTS.md](AGENTS.md) - Правила работы агентов, включая Operational Protocol
 - [docs/new-request-flow/PROTOCOL.md](docs/new-request-flow/PROTOCOL.md) - Протокол
 - [a2a-server/docs/production/FULL_LAUNCH_PLAN.md](a2a-server/docs/production/FULL_LAUNCH_PLAN.md) - Полный план запуска
 - [simulations/SCHEMA.md](simulations/SCHEMA.md) - Симуляции
@@ -163,7 +162,7 @@ cd a2a-client && npm test
 ## Известные проблемы
 
 - `sim:validate` часто возвращает `valid` вместе с warning (`Optional file not found`) — это contract debt, не “clean” статус.
-- В таблице подсистем есть ссылка на `ai-integration/DEV_STATE.md`, но файл отсутствует в текущем workspace.
+- [ИСПРАВЛЕНО] В таблице подсистем была ссылка на `ai-integration/DEV_STATE.md`, но файл отсутствовал - создан.
 
 ---
 
@@ -209,7 +208,7 @@ cd a2a-client && npm test
 - [x] Проверка работы Polling с новыми логами в консоли.
 
 ### Фаза 5: Production Readiness
-- [x] Сборка фронтенда: `cd a2a-client && npm run build` - **исправлено**.
+- [x] Сборка фронтенда: `cd a2a-client && npm run build` - **исправлено** (picomatch установлен).
 - [x] Проверка `SKIP_AUTH=0` (безопасность).
 - [x] Финальный `health-check` всей цепочки.
 - [x] E2E тестирование: сессия → диалог → agent mode (Ollama работает).
@@ -218,10 +217,19 @@ cd a2a-client && npm test
 
 ## Технический долг и новые задачи
 
+### Alternatives Migration Plan (cross-repo execution)
+- [ ] **A-01 session-storage-layout**: freeze canonical session layout (step dirs only), define allowed exceptions, and document migration path for legacy artifacts.
+- [ ] **A-02 golden-simulations**: set a single repo-wide quality gate (`valid` vs `clean`) and align CI commands/reporting to that gate.
+- [ ] **A-03 upstream-service-urls**: standardize service URL env matrix for dev/CI/prod (`A2A_SERVER_URL`, `AI_HUB_URL`, Ollama/Meili ports).
+- [ ] **A-04 workspace-rag-packaging**: choose one packaging strategy for workspace RAG (`file:` vs registry vs git) and pin owner + rollout steps.
+- [ ] **A-05 simulations-base-path**: decide default vs override behavior (`SIMULATIONS_PATH`) and sync scripts/docs with chosen mode.
+- [ ] **A-06 ts-module-policy**: lock NodeNext import policy (`.js` suffix) as enforced convention across server/client packages.
+- [ ] **A-07 llm-pipeline-modes**: define production mode set (dialog/agent/task-decomposition/auto-ai) with explicit enable criteria.
+
 ### Refactoring (Moderate)
 - [ ] `list-directory`: Перейти на нативный `readdir({recursive: true})` (Node.js 20+).
-- [ ] `list-directory`: Заменить самодельный regex на `picomatch` для полноценной поддержки glob.
-- [ ] `list-directory`: Добавить параметры `maxDepth` и `limit` для предотвращения перегрузки.
+- [x] `list-directory`: Заменить самодельный regex на `picomatch` для полноценной поддержки glob.
+- [x] `list-directory`: Добавить параметры `maxDepth` и `limit` для предотвращения перегрузки.
 
 ### AI Integration & Architecture (Complex)
 - [x] Документировать REST-поток тикетов (`/promises/pending` -> `/promise/<id>/execute`) - см. `ai-integration/docs/AI-INTEGRATION-UI.md`
@@ -237,3 +245,25 @@ cd a2a-client && npm test
 ---
 
 *Обновлено: 2026-03-27*
+
+### Session Notes (2026-03-27)
+- [x] Root `request.md` duplicate source identified: request transform runtime defaulted output writes to repo root.
+- [x] Normalized transform runtime with dedicated `outputDir` option; dialog request transforms now write generated markdown to temp dir only.
+
+### Session Notes (2026-03-27) - Продолжение
+- [x] Проверены health checks: Ollama (11435), AI Hub (11434), A2A Server (3000), Vite/Client API (5173)
+- [x] Проверено наличие ai-integration/DEV_STATE.md - файл существует
+- [x] Добавлены параметры maxDepth и limit в list-directory action
+- [x] Проверена корректность ссылки в таблице подсистем (ai-integration)
+- [x] Unit tests: 437 passed
+- [x] Simulations lint: 89 passed
+- [x] E2E тест: полный цикл dialog работает
+- [x] E2E тест: полный цикл dialog работает
+
+### Session Notes (2026-03-27) - Client Session Modernization
+- [x] Added unified projection modules: `session-projection-dto.js`, `execute-projection-dto.js`.
+- [x] Added deterministic timeline builder `message-timeline.js` with explicit source order.
+- [x] Migrated Vite routes to projection modules; kept `web-*dto.js` as compatibility bridges.
+- [x] Switched web hydration defaults to projected payload (`includeContext` only by explicit debug request).
+- [x] Added modernization task docs under `tasks/00` ... `tasks/05`.
+- [x] Validation: unit tests pass; `sim:lint --all` pass; `sim:validate --sim agent-coder/3` pass.

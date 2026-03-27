@@ -67,7 +67,19 @@ Rules:
 
 ```json
 {
-  "context": null,
+  "context": {
+  "execution": {
+    "action": "agent",
+    "step": "3"
+  },
+  "history": [
+    {
+      "message": "як працює система авторизації?",
+      "role": "user"
+    }
+  ],
+  "task": "допоможи розібратись з кодом"
+},
   "workbench": null,
   "ragResults": null
 }

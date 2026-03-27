@@ -1,5 +1,10 @@
 /**
- * Re-export shared Web UI execute DTO (see `shared/web-execute-dto.mjs`).
+ * @deprecated Use execute-projection-dto.js.
+ * Kept as compatibility bridge while imports are migrated.
  */
-
-export { buildWebExecute, sanitizeApiRecordExecuteFields } from '../../../shared/web-execute-dto.mjs';
+export {
+    buildExecuteProjection,
+    buildWebExecute,
+    sanitizeApiRecordExecuteFields,
+    sanitizeExecuteProjectionFields,
+} from './execute-projection-dto.js';

@@ -21,6 +21,12 @@ import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
 
 type DialogHistoryEntry = { role: string; message: string };
 
+async function createDialogTransformOutputDir(): Promise<string> {
+    const {mkdtemp} = await import('fs/promises');
+    const {tmpdir} = await import('os');
+    return mkdtemp(path.join(tmpdir(), 'a2a-dialog-transform-'));
+}
+
 /** Single-key `execute` payloads that must pass through to the client (tool rounds). */
 export const DIALOG_TOOL_EXECUTE_KEYS = [
     'rag-search',
@@ -541,8 +547,9 @@ async function processDialogResponseWithInterruptLoop(
 
         workingCtx = nextCtx;
 
+        const outputDir = await createDialogTransformOutputDir();
         const requestTransformResult = await runPromptsTransform(
-            promptsPath, activeSchemaName, workingCtx, 'request', {forceServerTransforms: true}
+            promptsPath, activeSchemaName, workingCtx, 'request', {forceServerTransforms: true, outputDir}
         );
         if (!requestTransformResult.success) {
             return {
@@ -663,8 +670,9 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
             }
 
             // 1. Request transforms → request.md (use server-transforms; dialog-request.json is form-only)
+            const outputDir = await createDialogTransformOutputDir();
             const requestTransformResult = await runPromptsTransform(
-                this.promptsTransformsPath, schemaName, ctx, 'request', {forceServerTransforms: true}
+                this.promptsTransformsPath, schemaName, ctx, 'request', {forceServerTransforms: true, outputDir}
             );
             if (!requestTransformResult.success) {
                 return {outcome: 'failed', error: requestTransformResult.error || 'Request transform failed'} as ProcessResult;

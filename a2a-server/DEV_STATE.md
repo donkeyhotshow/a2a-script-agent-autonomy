@@ -140,6 +140,17 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 
 ## Задачи (Next Tasks)
 
+### Alternatives Migration Plan (server scope)
+- [ ] **S-01 server-prompt-transforms**: lock transform loading mode (bundled defaults vs `PROMPTS_TRANSFORMS_PATH`) and add startup diagnostics.
+- [ ] **S-02 server-action-registry-bootstrap**: decide fail-fast vs lenient startup when action markdown loading fails; encode as policy + tests.
+- [ ] **S-03 server-requests-storage**: define default/override storage path behavior (`REQUESTS_STORAGE_PATH`) and retention/cleanup policy.
+- [ ] **S-04 server-llm-hub-polling**: standardize `LLM_POLL_*`/`POLL_*` defaults and timeout budget for daemon processing.
+- [ ] **S-05 server-filesystem-sandbox**: freeze cwd/tmp/home allowlist policy for file actions and expose clear error messages.
+- [ ] **S-06 server-error-detail-level**: finalize production error redaction policy (`NODE_ENV`) and keep stack traces in dev only.
+- [ ] **S-07 server-background-processor**: set and verify `REQUEST_PROCESSOR_INTERVAL_MS` target based on queue latency SLO.
+- [ ] **S-08 server-logging**: unify `LOG_LEVEL`/`LOG_FORMAT` and Winston rotation/boot-clean strategy; add acceptance checks.
+- [ ] **S-09 agent-rag-chain-limits**: set safe defaults for `A2A_AGENT_RAG_CHAIN_MAX` + project path envs and verify fallback behavior.
+
 ### Высокий приоритет (Phase 2-3)
 - [x] Аудит всех процессоров на `Action-Key Shape`.
 - [x] Проверка `request-processor.service.ts` - логика переключения на `agent` при наличии ключевых слов.
@@ -161,3 +172,7 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 ---
 
 *Обновлено: 2026-03-27*
+
+### Session Notes (2026-03-27)
+- [x] Removed root-level `request.md` side-effect for dialog flow by routing render output to temp transform directory.
+- [x] Added transform runtime support for separate template `baseDir` and artifact `outputDir` to avoid workspace pollution.

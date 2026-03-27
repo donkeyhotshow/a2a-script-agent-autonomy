@@ -65,7 +65,7 @@ import x from '@/services/x.js'
 - Markdown fixtures must match transforms ? when regenerating `request.md`/`response.md` (or other markdown fixtures), keep their embedded JSON aligned with the actual `request.json`/`response.json` outputs: switch to `context.workbench`, keep the single-action `execute` and action-key shaped `result`, and sort/object-serialize fields so the examples stay deterministic after running transforms.
 
 ### Operational Protocol & Dev Files
-- **OPERATIONAL_PROTOCOL.md** - All work must follow the [OPERATIONAL_PROTOCOL.md](OPERATIONAL_PROTOCOL.md). This is a mandatory requirement for bringing the project to production.
+- **Operational Protocol** is now integrated directly in section 14 of this document. All work must follow the [Operational Protocol](#operational-protocol-critical) to bring the project to production.
 - **Simple to Complex** - Tasks must be performed in phases: Environment -> Validation -> Integration -> E2E -> Production.
 - **DEV_STATE.md** - Every session and agent MUST maintain the `DEV_STATE.md` file in the root and/or relevant module directory. Always update it before starting and after finishing a task. "Убираем ненужное всегда, двигаемся вперед всегда".
 
@@ -672,4 +672,88 @@ DEFAULT_SYNC_MODE=1
 - **Client API:** http://localhost:5173/api/a2a
 - **AI Hub:** http://localhost:11434
 - **Ollama:** http://localhost:11435
+
+---
+
+## Operational Protocol (Critical)
+
+This section defines the mandatory operational protocol for all AI agents working in this repository. All work must follow these rules to bring the project to production.
+
+### 1. Core Principles
+
+1.  **Sequential Progress (Simple to Complex)**: It is forbidden to move to complex integration tasks without confirming the basic components are working.
+2.  **Dev-File First**: Every action should start with analyzing `DEV_STATE.md` and end with updating it.
+3.  **Evidence-Based**: The step completion report must contain logs, test results, or command outputs.
+4.  **Strict AGENTS.md Compliance**: All technical rules (Action-Key Shape, Stateless, NodeNext imports) are law.
+
+---
+
+### 2. DEV_STATE.md Protocol
+
+Files `DEV_STATE.md` (in root and each module) are the "external memory" of the project.
+
+**Rules:**
+- **Before task**: Check the relevance of `DEV_STATE.md`. If it's outdated — update it first.
+- **During task**: If new insights or problems are found — record them in the `Known Issues` section.
+- **After task**:
+    - Remove completed items.
+    - Update the date in the header.
+    - Add the next logical step in `Next Steps`.
+- **Cleanliness**: "Always remove unnecessary stuff". Don't turn the file into a log dump. Only structure, statuses, and critical facts.
+
+---
+
+### 3. Execution Phases (Simple to Complex)
+
+Any work on "bringing to production" must follow this hierarchy:
+
+#### Phase 1: Environment Foundation
+- [ ] Check ports (`11435`, `11434`, `3000`, `5173`).
+- [ ] Check Ollama and models availability.
+- [ ] Check environment variables (ENCRYPTION_KEY, AI_HUB_URL).
+- **Result**: All `curl /health` return `ok`.
+
+#### Phase 2: Component Validation
+- [ ] Run module unit tests (`npm run test`).
+- [ ] Check linting (`npm run lint`).
+- **Result**: 0 errors in basic code.
+
+#### Phase 3: Integration Logic (Simulations)
+- [ ] Run `npm run sim:lint`.
+- [ ] Run `npm run sim:validate` for target scenarios.
+- **Result**: Protocol logic (Action-Key, Transforms) confirmed by "golden" tests.
+
+#### Phase 4: End-to-End
+- [ ] Start the entire system via `start-all.bat` / `start-all.sh`.
+- [ ] Check session creation via Client API.
+- [ ] Check LLM response in Web UI.
+- **Result**: Project works "as a whole".
+
+#### Phase 5: Production Readiness
+- [ ] Check logging and error handling.
+- [ ] Remove dev stubs (`SKIP_AUTH=1`, etc.).
+- [ ] Final test run.
+
+---
+
+### 4. Agent Interaction Rules
+
+- **Confirmation**: Before starting Phase N, agent must confirm that Phase N-1 is passed and stable.
+- **No Drifting**: If user asks to "do production", agent must answer: *"I start with Phase 1 (Environment), according to Operational Protocol"*.
+- **Task Pruning**: Small tasks are solved immediately. Large ones — decomposed in `DEV_STATE.md`.
+- **Atomic Commits**: File changes must be atomic and correspond to the current step.
+
+---
+
+### 5. Mandatory Checklist
+
+Agent must run this checklist before each user response:
+1. Do I use Action-Key Shape in JSON? (see AGENTS.md)
+2. Did I update `DEV_STATE.md`?
+3. Is my current action "simple" or am I trying to skip phases?
+4. Do my imports follow the `.js` rule (NodeNext)?
+
+---
+
+*Note: This Operational Protocol is integrated from the former OPERATIONAL_PROTOCOL.md file.*
 

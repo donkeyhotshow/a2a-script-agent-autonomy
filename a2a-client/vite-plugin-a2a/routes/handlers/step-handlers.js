@@ -4,7 +4,7 @@
  */
 
 import { isValidSessionId } from '../middleware/validators.js';
-import { buildWebExecute } from '../utils/web-execute-dto.js';
+import { buildExecuteProjection } from '../utils/execute-projection-dto.js';
 import {
     listNewSteps,
     loadNewStep,
@@ -49,7 +49,7 @@ export function handleStepDetail(sessionId, stepNum, cwd) {
     const step = loadNewStep(cwd, sessionId, stepNum);
     if (!step) throw new Error('Step not found');
     if (!step.execute) return step;
-    return { ...step, execute: buildWebExecute(step.execute) };
+    return { ...step, execute: buildExecuteProjection(step.execute) };
 }
 
 export async function handlePostStep(sessionId, body, cwd) {

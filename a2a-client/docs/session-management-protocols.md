@@ -33,6 +33,12 @@ Client must then:
 1. Poll `/sessions/{id}/async` while `asyncPending = true`
 2. Re-read `/sessions/{id}` for the latest `execute/context/messages`
 
+## Canonical vs UI Projection
+
+- **Canonical session state**: step artifacts (`request-to-server.json`, `server-response.json`, `client-result.json`, `messages.json`) remain source-of-truth.
+- **UI projection**: web responses expose projected `execute` and hide internal action payloads by default.
+- **Debug-only full payload**: use `?includeContext=1` when raw canonical context is required.
+
 ## Step-File Source of Truth
 
 Session state is reconstructed from step folders:

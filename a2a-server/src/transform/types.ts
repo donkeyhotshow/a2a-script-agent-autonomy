@@ -291,6 +291,8 @@ export interface TransformContext {
   $out: Record<string, unknown>;
   /** Base directory for file operations */
   baseDir?: string;
+  /** Output directory for generated artifacts (defaults to baseDir) */
+  outputDir?: string;
   /** File system operations */
   fs?: TransformFileSystem;
 }
@@ -324,6 +326,8 @@ export interface TransformResult {
 export interface TransformOptions {
   /** Base directory for file operations */
   baseDir?: string;
+  /** Output directory for generated files (e.g. request.md) */
+  outputDir?: string;
   /** Custom file system implementation */
   fs?: TransformFileSystem;
   /** Template renderer function */

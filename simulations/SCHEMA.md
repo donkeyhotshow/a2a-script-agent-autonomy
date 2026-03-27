@@ -62,7 +62,7 @@ Canonical files (Web ↔ Client API и Client API ↔ Server ↔ LLM):
   `list-directory`, `grep-search`, `file-exists`, `edit-patch`, `run-script`); the Web layer exposes `message`, optional
   `llmMessage`, optional `attachments` (`readFiles`, `writtenFiles`, `ragQuery`, `shellCommand`, `listDirectoryPath`,
   grep fields, `fileExistsPath`, `editPatchPath`, `runScriptId`, `pendingClientAction`), and keeps `form` when present.
-  Implementation: `a2a-client/vite-plugin-a2a/routes/utils/web-execute-dto.js` (`buildWebExecute`), SDK
+  Implementation: `a2a-client/vite-plugin-a2a/routes/utils/execute-projection-dto.js` (`buildExecuteProjection`), SDK
   `packages/sdk/src/server/lib/web-execute-dto.ts`. Debug: `GET /sessions/:id?includeContext=1` returns unsanitized
   session data.
 

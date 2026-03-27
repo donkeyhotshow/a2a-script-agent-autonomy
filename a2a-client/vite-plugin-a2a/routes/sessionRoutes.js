@@ -11,7 +11,7 @@ import {
     collectSessionMessagesFlat,
     attachPromiseMeta,
     toPublicSession,
-} from './utils/web-session-dto.js';
+} from './utils/session-projection-dto.js';
 
 const API_PREFIX = '/api/a2a';
 

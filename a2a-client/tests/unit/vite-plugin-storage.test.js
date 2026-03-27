@@ -25,7 +25,8 @@ import {
   loadRequestToServer,
   loadStepFile,
 } from '../../vite-plugin-a2a/storage/newSessions.js';
-import { getActiveAsyncWork } from '../../vite-plugin-a2a/routes/utils/web-session-dto.js';
+import { getActiveAsyncWork } from '../../vite-plugin-a2a/routes/utils/session-projection-dto.js';
+import { collectSessionMessagesFlat } from '../../vite-plugin-a2a/routes/utils/message-timeline.js';
 
 let testDir;
 
@@ -128,6 +129,24 @@ describe('newSessions storage', () => {
     const hit = getActiveAsyncWork(cwd, sid);
     expect(hit?.stepNum).toBe(2);
     expect(hit?.promiseId).toBe('prom_x');
+    deleteNewSession(cwd, sid);
+  });
+
+  it('collectSessionMessagesFlat keeps deterministic source order per step', () => {
+    const sid = 'sess_timeline_order';
+    saveNewStep(cwd, sid, 1, {
+      execute: { message: 'exec msg' },
+      messages: [{ role: 'assistant', content: 'step msg' }],
+      context: { history: [{ role: 'assistant', message: 'history msg' }] },
+    });
+    saveClientResult(cwd, sid, 1, { result: { message: 'user msg' } });
+    const { messages } = collectSessionMessagesFlat(cwd, sid);
+    expect(messages.map((m) => `${m.source}:${m.content}`)).toEqual([
+      'history:history msg',
+      'execute:exec msg',
+      'step-messages:step msg',
+      'client-result:user msg',
+    ]);
     deleteNewSession(cwd, sid);
   });
 

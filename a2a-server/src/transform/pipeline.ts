@@ -39,6 +39,7 @@ export async function runTransformPipeline(
     input,
     $out,
     baseDir: options.baseDir,
+    outputDir: options.outputDir,
     fs: options.fs || createDefaultFileSystem()
   };
   

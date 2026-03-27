@@ -374,7 +374,8 @@ async function applyRenderMarkdown(
   const rendered = renderTemplateSimple(template, resolvedData);
   
   // Write output file
-  const outputPath = path.resolve(baseDir, outputFile);
+  const outputBaseDir = context.outputDir || baseDir;
+  const outputPath = path.resolve(outputBaseDir, outputFile);
   
   if (context.fs) {
     await context.fs.writeFile(outputPath, rendered);

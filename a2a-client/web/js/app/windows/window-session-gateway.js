@@ -21,9 +21,10 @@
             }
 
             try {
+                const includeContext = options.includeDebugContext === true;
                 return await api.getSession(sessionId, {
                     projectId: projectId || undefined,
-                    includeContext: true
+                    includeContext
                 });
             } catch (err) {
                 const loadErr = new Error('[WindowSessionGateway] Failed to load session data');

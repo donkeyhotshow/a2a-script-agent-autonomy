@@ -208,7 +208,7 @@
 
         var sessionData;
         try {
-            sessionData = await api.getSession(sessionId, { includeContext: true });
+            sessionData = await api.getSession(sessionId, { includeContext: false });
         } catch (err) {
             var fetchErr = new Error('[SessionStore] restoreAndReconnect failed to fetch saved session');
             fetchErr.cause = err;

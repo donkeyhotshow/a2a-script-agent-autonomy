@@ -7,6 +7,7 @@
 import {logger} from '../../utils/logger.js';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import picomatch from 'picomatch';
 
 export interface ReadFileActionInput {
     filePath: string;
@@ -33,6 +34,8 @@ export interface ListDirActionInput {
     dirPath: string;
     recursive?: boolean;
     pattern?: string; // glob pattern
+    maxDepth?: number; // maximum recursion depth
+    limit?: number; // maximum number of entries to return
 }
 
 export interface ReadFileActionOutput {
@@ -73,6 +76,7 @@ export interface ListDirActionOutput {
         size: number;
         modifiedAt: Date;
     }>;
+    truncated?: boolean; // true if results were limited by maxDepth or limit
     error?: string;
 }
 
@@ -304,6 +308,8 @@ export async function executeListDirectory(
     logger.info('[list-directory] Executing', {
         dirPath: input.dirPath,
         recursive: input.recursive,
+        maxDepth: input.maxDepth,
+        limit: input.limit,
     });
 
     try {
@@ -319,11 +325,29 @@ export async function executeListDirectory(
         }
 
         const files: ListDirActionOutput['files'] = [];
+        let reachedLimit = false;
 
-        const readDir = async (dir: string, baseDir: string): Promise<void> => {
+        const readDir = async (dir: string, baseDir: string, currentDepth: number): Promise<void> => {
+            // Check maxDepth limit
+            if (input.maxDepth !== undefined && currentDepth > input.maxDepth) {
+                return;
+            }
+
+            // Check limit
+            if (input.limit !== undefined && files.length >= input.limit) {
+                reachedLimit = true;
+                return;
+            }
+
             const entries = await fs.readdir(dir, {withFileTypes: true});
 
             for (const entry of entries) {
+                // Check limit after each entry
+                if (input.limit !== undefined && files.length >= input.limit) {
+                    reachedLimit = true;
+                    break;
+                }
+
                 const entryPath = path.join(dir, entry.name);
                 const relativePath = path.relative(baseDir, entryPath);
 
@@ -348,21 +372,23 @@ export async function executeListDirectory(
 
                 // Recurse if directory and recursive mode
                 if (entry.isDirectory() && input.recursive) {
-                    await readDir(entryPath, baseDir);
+                    await readDir(entryPath, baseDir, currentDepth + 1);
                 }
             }
         };
 
-        await readDir(fullPath, fullPath);
+        await readDir(fullPath, fullPath, 0);
 
         logger.info('[list-directory] Directory listed', {
             dirPath: input.dirPath,
             fileCount: files.length,
+            reachedLimit,
         });
 
         return {
             success: true,
             files,
+            truncated: reachedLimit,
         };
     } catch (error) {
         logger.error('[list-directory] Execution failed', {error: String(error)});

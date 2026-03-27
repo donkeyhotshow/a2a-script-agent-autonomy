@@ -5,12 +5,13 @@ Checkpoint: agent mode in `a2a-client/web` against the Vite **storage-mode** Cli
 ## Principles
 
 1. **Transport ids stay server-side** — The browser does not need A2A `promiseId` to poll. The Client API resolves the active in-flight step and calls A2A internally.
-2. **Web state is semantic** — UI and `SessionStore` react to `asyncPending`, `promiseStatus`, `execute`, `messages`, and loader flags, not to opaque backend ids.
+2. **Web state is semantic** — UI and `SessionStore` react to `asyncPending`, `promiseStatus`, projected `execute`, `messages`, and loader flags, not to opaque backend ids.
 3. **Ack + hydrate** — `POST .../next` returns a minimal ack; full state comes from `GET .../sessions/:id`.
+4. **Canonical + projection split** — step files stay canonical; API response for web uses a deterministic UI projection.
 
 ## `execute` shape for the browser (Web DTO)
 
-`GET /api/a2a/sessions/{id}` (and related routes that use the public session DTO) return **`execute` sanitized for the UI**: raw protocol actions such as `rag-search`, `read-file`, `write-file`, `script`, `execute-command`, `list-directory`, `grep-search`, `file-exists`, `edit-patch`, and `run-script` are **removed** and replaced with:
+`GET /api/a2a/sessions/{id}` (and related routes that use the public session DTO) return **projected `execute` for the UI**: raw protocol actions such as `rag-search`, `read-file`, `write-file`, `script`, `execute-command`, `list-directory`, `grep-search`, `file-exists`, `edit-patch`, and `run-script` are **removed** and replaced with:
 
 - **`execute.message`** — status text (and optional **`execute.llmMessage`**).
 - **`execute.form`** — unchanged when the server sent a form.
@@ -28,7 +29,7 @@ Checkpoint: agent mode in `a2a-client/web` against the Vite **storage-mode** Cli
 | `grepPattern` | `string` | Search pattern from `grep-search` |
 | `pendingClientAction`| `string` | Label of the hidden action (`script`, `run-script`, etc.) |
 
-The **server protocol** and simulation **`response.json`** still use a **single action key** under `execute`, and any **`result`** (if present) must follow the **action-key shape** (e.g., `{ "read-file": { ... } }`). Goldens for **`received.json`** match this Web DTO (see `simulations/SCHEMA.md`). With **`?includeContext=1`**, the session payload may include full internal `context` (including **`workbench.sections`**) for debugging; prefer not to rely on raw `execute` keys in the UI.
+The **server protocol** and simulation **`response.json`** still use a **single action key** under `execute`, and any **`result`** (if present) must follow the **action-key shape** (e.g., `{ "read-file": { ... } }`). Goldens for **`received.json`** match this projection DTO (see `simulations/SCHEMA.md`). With **`?includeContext=1`**, the session payload may include full internal `context` (including **`workbench.sections`**) for debugging; normal web flow should not depend on raw canonical keys.
 
 ## HTTP (storage mode)
 
@@ -55,6 +56,10 @@ The **server protocol** and simulation **`response.json`** still use a **single 
 - **`action-executor.js`** — `submit` → if `asyncPending`, starts polling via `GET .../async` (storage mode). Non-storage mode may still poll by `promiseId` if the Client API has no `/async` route.
 - **`session-data.js`** — `createSessionStoreCore()` функция в runtime state
 - **`window-state.js`** — On window open, if `asyncPending`, resumes polling without reading a promise id from the API payload.
+
+Projection helpers are implemented in:
+- `a2a-client/vite-plugin-a2a/routes/utils/session-projection-dto.js`
+- `a2a-client/vite-plugin-a2a/routes/utils/execute-projection-dto.js`
 
 ## Loader
 

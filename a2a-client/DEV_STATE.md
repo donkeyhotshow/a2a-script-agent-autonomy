@@ -153,6 +153,13 @@ SKIP_AUTH=1
 
 ## Задачи (Next Tasks)
 
+### Alternatives Migration Plan (client scope)
+- [ ] **C-01 client-filesystem-root**: choose and document canonical `A2A_CLIENT_STORAGE_DIR` strategy (repo-local vs home) for dev and CI.
+- [ ] **C-02 session-storage-layout**: formalize step-folder invariants (`client-result`, `request-to-server`, `server-response`, `messages`) and recovery rules.
+- [ ] **C-03 sdk-http-limits**: define default CORS/rate-limit/file-cap profile for standalone SDK mode and add contract tests.
+- [ ] **C-04 golden-simulations**: add client-focused simulation checklist for sanitized web DTOs (`execute` must stay web-safe).
+- [ ] **C-05 simulations-base-path**: align client test tooling with selected simulations path strategy (`SIMULATIONS_PATH` override support).
+
 ### Высокий приоритет (Phase 2-3)
 - [x] Проверка ESM `import http` в `stepRoutes.js`.
 - [x] Аудит `toWebExecute` - убедиться, что клиентские данные (`rag-search`, `read-file`) не просачиваются в JSON.
@@ -194,3 +201,19 @@ SKIP_AUTH=1
 ---
 
 *Обновлено: 2026-03-27*
+
+## 2026-03-27 Client Session Modernization (in progress)
+
+### Completed now
+- Added `vite-plugin-a2a/routes/utils/session-projection-dto.js` (canonical -> UI projection boundary).
+- Added `vite-plugin-a2a/routes/utils/execute-projection-dto.js` and compatibility re-exports in legacy `web-execute-dto.js`.
+- Added deterministic timeline utility `vite-plugin-a2a/routes/utils/message-timeline.js`.
+- Migrated imports in session/step routes and step handlers to projection modules.
+- Updated web hydration defaults in `web/js/session-store.js` and `web/js/app/windows/window-session-gateway.js`.
+- Added task documents under `tasks/00-05` with atomic actions and reasons.
+- Updated docs for canonical/projection split (`docs/WEB_UI_PROTOCOL.md`, `docs/session-management-protocols.md`, `simulations/SCHEMA.md`).
+
+### Verification
+- `npx vitest run tests/unit/vite-plugin-storage.test.js tests/unit/web-execute-dto.test.mjs` -> pass.
+- `npm run sim:lint -- --all --json` -> pass.
+- `npm run sim:validate -- --sim agent-coder/3 --json` -> pass.
