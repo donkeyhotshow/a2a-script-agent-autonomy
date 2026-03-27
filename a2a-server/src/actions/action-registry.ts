@@ -5,6 +5,7 @@
  */
 
 import * as path from 'path';
+import {access} from 'fs/promises';
 import {ActionDefinition, ActionMatch} from './types.js';
 import {parseAllActionsFromDirectory} from './action-parser.js';
 import {logger} from '../utils/logger.js';
@@ -38,14 +39,17 @@ export class ActionRegistry {
 
     async loadFromDirectory(dirPath?: string): Promise<void> {
         const directoryPath = dirPath || this.defaultDirectory;
+        const policy = getBootstrapPolicy();
         logger.info(`[ActionRegistry] Loading actions from: ${directoryPath}`);
         try {
             this.actions.clear();
+            if (policy === 'fail-fast') {
+                await access(directoryPath);
+            }
             const mdActions = await parseAllActionsFromDirectory(directoryPath);
             for (const action of mdActions) this.actions.set(action.id, action);
             logger.info(`[ActionRegistry] Loaded ${this.actions.size} actions`);
         } catch (error) {
-            const policy = getBootstrapPolicy();
             logger.error(`[ActionRegistry] Error loading actions:`, error);
 
             if (policy === 'fail-fast') {

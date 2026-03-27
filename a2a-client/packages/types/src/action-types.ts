@@ -90,8 +90,6 @@ export interface ScriptAction {
   code: string;
   /** Programming language */
   language?: 'javascript' | 'typescript';
-  /** Sandbox type */
-  sandbox?: 'vm2' | 'node';
   /** Input parameters for the script */
   input?: Record<string, unknown>;
   /** Output (optional, for streaming) */

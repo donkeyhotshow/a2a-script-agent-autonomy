@@ -3,10 +3,10 @@
 /**
  * CLI для валидаций и проверки симуляций протокола
  *
- * Модульная структура:
+ * Модульная структура (`scripts/sim-validate/`):
  * - scanner.ts    - сканирование симуляций
  * - validators.ts - валидация по схемам
- * - reporters.ts  - генерация отчётов
+ * - reporters.ts  - отчёты и `main()`
  *
  * Использование:
  *   npm run sim:validate <sim-dir> [options]
@@ -26,6 +26,6 @@
  *   npm run sim:validate -- --sim agent-coder/3 --json
  */
 
-// Запускаем main из reporters
-import {main} from './reporters.js';
+import {main} from './sim-validate/reporters.js';
+
 main();

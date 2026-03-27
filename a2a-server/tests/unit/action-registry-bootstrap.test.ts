@@ -1,4 +1,4 @@
-import {describe, it, expect} from 'vitest';
+import {describe, it, expect, afterEach} from 'vitest';
 import {ActionRegistry} from '../../src/actions/action-registry.js';
 
 describe('ActionRegistry bootstrap policy', () => {
@@ -30,5 +30,5 @@ describe('ActionRegistry bootstrap policy', () => {
 
         await expect(registry.loadFromDirectory()).rejects.toBeDefined();
     });
-}
+});
 

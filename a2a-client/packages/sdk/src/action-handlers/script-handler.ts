@@ -38,18 +38,20 @@ export async function handleScriptAction(
                 actionType: 'script',
                 result: {
                     script: {
+                        exitCode: 1,
                         error: execResult.error
                     }
                 }
             };
         }
-        
+
         return {
             handled: true,
             actionType: 'script',
             result: {
                 script: {
-                    output: execResult.data
+                    output: execResult.data,
+                    exitCode: 0
                 }
             }
         };
@@ -59,6 +61,7 @@ export async function handleScriptAction(
             actionType: 'script',
             result: {
                 script: {
+                    exitCode: 1,
                     error: err instanceof Error ? err.message : String(err)
                 }
             }

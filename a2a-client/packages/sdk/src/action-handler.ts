@@ -195,61 +195,6 @@ export async function handleExecuteAction(
     return result;
 }
 
-/**
- * Legacy compatibility: handleActionResponse (deprecated, use handleExecuteAction)
- * @deprecated Use handleExecuteAction instead
- */
-export async function handleActionResponse(
-    response: {
-        action?: { currentStep?: { id?: string; code?: string } };
-        execute?: { script?: { code?: string } };
-        context?: { session_id?: string };
-    },
-    options: HandleActionOptions = {} as HandleActionOptions
-): Promise<HandleActionResult> {
-    // Support both new execute.script format and legacy action.currentStep format
-    const stepInfo = extractStepInfo(response);
-    
-    if (!stepInfo || !stepInfo.code || !stepInfo.sessionId) {
-        // Try new format
-        return handleExecuteAction(response, options);
-    }
-
-    if (!options.executeScript || typeof options.sendContinue !== 'function') {
-        return { handled: false, error: 'executeScript and sendContinue required' };
-    }
-
-    const context = {
-        sessionId: stepInfo.sessionId,
-        stepId: stepInfo.stepId,
-        projectPath: options.projectPath
-    };
-
-    let stepResult: unknown;
-    try {
-        const execResult = await options.executeScript(stepInfo.code, {}, {
-            workingDir: options.projectPath,
-            sessionId: stepInfo.sessionId,
-            stepId: stepInfo.stepId
-        });
-        
-        if (!execResult.success && execResult.error) {
-            throw new Error(execResult.error);
-        }
-        stepResult = execResult.data;
-    } catch (err) {
-        return { handled: true, error: err instanceof Error ? err.message : String(err) };
-    }
-
-    const result = {
-        script: {
-            output: stepResult
-        }
-    };
-
-    const nextResponse = await options.sendContinue(stepInfo.sessionId, result);
-    return { handled: true, result, nextResponse };
-}
 
 /**
  * Extract step info from response (supports both legacy action.currentStep and new execute.script formats)

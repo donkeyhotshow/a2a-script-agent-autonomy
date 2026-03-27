@@ -323,10 +323,3 @@ function sortKeys(value: unknown): unknown {
   }
   return value;
 }
-
-function truncateToMaxChars(text: string, maxChars: number, suffix: string): string {
-  if (text.length <= maxChars) return text;
-  const suf = suffix;
-  if (suf.length >= maxChars) return text.slice(0, maxChars);
-  return text.slice(0, maxChars - suf.length) + suf;
-}

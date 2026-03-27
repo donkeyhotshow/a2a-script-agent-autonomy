@@ -2,11 +2,11 @@
  * Registry: types, constants, and lint rules for simulation validation
  */
 
-import {existsSync, readFileSync} from 'node:fs';
+import {existsSync, readdirSync} from 'node:fs';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
-import {INTERNAL_CLIENT_ACTION_KEYS} from '../../shared/internal-client-action-keys.mjs';
-import {VALID_EXECUTE_KEYS} from '../src/actions/action-validator.js';
+import {INTERNAL_CLIENT_ACTION_KEYS} from '../../../shared/internal-client-action-keys.mjs';
+import {VALID_EXECUTE_KEYS} from '../../src/actions/action-validator.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = join(__filename, '..');
@@ -15,7 +15,7 @@ const __dirname = join(__filename, '..');
 // Константы
 // ============================================
 
-export const SIMULATIONS_DIR = join(__dirname, '..', '..', 'simulations');
+export const SIMULATIONS_DIR = join(__dirname, '..', '..', '..', 'simulations');
 /** Ephemeral capture from sim:run / invoke scripts — not a committed golden (see .gitignore). */
 export const SIMULATION_INVOKE_CAPTURE = 'invoke-capture.json';
 export const FORBIDDEN_STEP_JSON = new Set(['server-response.json']);
@@ -201,7 +201,7 @@ export function lintExecuteStructure(data: any, filePath: string): LintError[] {
             });
         }
         for (const key of executeKeys) {
-            if (!VALID_EXECUTE_TYPES.includes(key)) {
+            if (!(VALID_EXECUTE_TYPES as readonly string[]).includes(key)) {
                 errors.push({
                     path: `${filePath}/execute.${key}`,
                     message: `Unknown execute type: '${key}'. Valid types: ${VALID_EXECUTE_TYPES.join(', ')}`,

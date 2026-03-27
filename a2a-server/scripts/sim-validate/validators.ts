@@ -7,14 +7,19 @@
 
 import {readFileSync, existsSync} from 'node:fs';
 import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
 import Ajv, {ErrorObject} from 'ajv';
 import addFormats from 'ajv-formats';
+import {noLlmStepTransformContractWarnings} from '../sim-contract/step-transform-rules.js';
 
 // ============================================
 // Константы
 // ============================================
 
-export const SCHEMAS_DIR = join(import.meta.url, '..', '..', 'docs', 'new-request-flow', 'json-schemas');
+const __dirname = join(fileURLToPath(import.meta.url), '..');
+
+/** Repo root `docs/new-request-flow/json-schemas` (three levels up: sim-validate → scripts → a2a-server → repo). */
+export const SCHEMAS_DIR = join(__dirname, '..', '..', '..', 'docs', 'new-request-flow', 'json-schemas');
 
 // ============================================
 // AJV setup
@@ -59,6 +64,8 @@ export interface ValidateOptions {
     normalize: boolean;
     /** If true, server-transforms-*.json are only checked for valid JSON + fromFile fixtures (ops drift faster than schema). */
     lenientTransforms: boolean;
+    /** UA-S-02: emit SCHEMA.md no-LLM step transform warnings (optional; legacy goldens may not pass). */
+    stepContractChecks: boolean;
 }
 
 // ============================================
@@ -517,6 +524,10 @@ export function validateSimulation(simPath: string, simName: string, opts: Valid
         for (const w of fixtureWarnings) {
             result.warnings.push(w);
         }
+    }
+
+    if (opts.stepContractChecks) {
+        result.warnings.push(...noLlmStepTransformContractWarnings(simPath));
     }
 
     return result;

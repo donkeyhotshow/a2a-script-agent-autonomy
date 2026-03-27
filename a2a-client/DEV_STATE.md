@@ -153,7 +153,7 @@ SKIP_AUTH=1
 
 ## Известные проблемы
 
-- В `packages/execution/src/script-runner/index.ts` унифицированы формы `execute.script` (code, language, sandbox) и `result["script"]` (output, exitCode, error) — C-08.
+- В `packages/execution/src/script-runner/index.ts` унифицированы формы `execute.script` (code, language; runner/sandbox внутренние) и `result["script"]` (output, exitCode, error) — C-08.
 
 ---
 
@@ -203,7 +203,7 @@ SKIP_AUTH=1
 - [ ] Добавить client-ориентированные roadmap-сценарии в симуляции: paginated RAG в UI, очередь `read-file` с корректными attachments, human-gate после N единиц работы.
 
 ### Client Runtime Debt (Code)
-- [x] **C-08**: [P2] Unified Execute Script API — define canonical forms for `execute.script` (code, language, sandbox) and `result["script"]` (output, exitCode, error) in `packages/execution/src/script-runner/index.ts`.
+- [x] **C-08**: [P2] Unified Execute Script API — canonical `execute.script` (code, language) and `result["script"]` (output, exitCode, error); sandbox is runner-internal only (`packages/execution`, `script-handler`).
 - [x] **C-09**: [P1] Remove Auth Bypass — implement full JWT validation in `packages/sdk/src/server/server/middleware/auth.ts`: read JWT_SECRET, validate Bearer token, allow bypass only with SKIP_AUTH=1.
 - [ ] Интегрировать script-runner с `createExecuteCode` и согласовать sandbox/config (ссылка в TODO на Task 39).
 - [ ] Убрать временный bypass в `packages/sdk/src/server/server/middleware/auth.ts` (`allow all requests`) и включить полноценную auth-проверку по окружению.
@@ -272,10 +272,11 @@ SKIP_AUTH=1
 
 ### Code Cleanup Discovery Plan (Client: where/how)
 - [x] **CCP-C-01 where-to-scan**: Primary folders зафиксированы (`web/js/`, `vite-plugin-a2a/routes/`, `vite-plugin-a2a/routes/utils/`, `packages/sdk/src/server/server/routes/`); стартовый scan выполнен, hotspots покрываются задачами `LF-C-*`, `RF-C-*` и `CCP-C-02..05`.
-- [ ] **CCP-C-02 how-to-find**: Look for duplicate logic by searching repeated responsibility keywords (`projection`, `dto`, `poll`, `session`, `execute`) across those folders.
+- [x] **CCP-C-02 signal-set (CDM-02)**: (1) duplicate adapters, (2) legacy compatibility bridges, (3) dead exports, (4) unused route branches, (5) overlapping DTO/projection builders. **How:** ripgrep across CCP-C-01 folders: `projection`, `dto`, `poll`, `session`, `execute`, `re-export`, `compat`, `deprecated`; cross-check `packages/*/src/index.ts` and vite route registration.
+- [x] **CDM-03 evidence format**: Each cleanup candidate must be recorded as one row: `path` · `why redundant` · `usage proof` (imports/tests) · `safe removal check` (commands to run before delete).
 - [ ] **CCP-C-03 bridge-detection**: Identify temporary compatibility bridges/re-exports and mark removal owner + deadline.
 - [ ] **CCP-C-04 dead-path-check**: For each candidate, verify import/use coverage in tests before deletion.
-- [ ] **CCP-C-05 safe-remove-gate**: Removal only after `npm test`, `sim:lint`, and targeted fixture tests pass.
+- [ ] **CCP-C-05 safe-remove-gate (CDM-04)**: Removal only after `npm test`, `sim:lint`, and targeted fixture tests pass.
 
 ## 2026-03-27 SDK HTTP Limits (C-03)
 

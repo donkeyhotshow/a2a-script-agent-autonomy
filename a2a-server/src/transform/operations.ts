@@ -21,39 +21,55 @@ import {
   extractJsonFromMarkdown,
   renderTemplateSimple
 } from './operations/json-path.js';
-import { shouldSkipDuplicateUserHistoryAppend } from './operations/value-helpers.js';
+import {
+  shouldSkipDuplicateUserHistoryAppend,
+  truncateToMaxChars,
+} from './operations/value-helpers.js';
 import type {
   TransformContext,
   TransformStep,
-  TransformFileSystem,
   CopyOperation,
   SetOperation,
   AppendToArrayOperation,
   ParseJsonFromMdOperation,
   RenderMarkdownOperation,
-  SwitchOperation,
-  ApplyScratchpadOpsOperation,
-  ApplyWorkbenchSectionOpsOperation,
   TruncateSectionOperation,
-  PickContextOperation,
-  DropOperation,
-  TruncateHistoryOperation,
-  IncludeIfOperation,
-  PickFilesOperation,
-  MergeFilesToContextOperation,
-  MergeWorkbenchSectionsOperation,
-  SummarizeFilesOperation,
-  ForEachOperation,
-  ScratchpadOpCommand
 } from './types.js';
+
+import {
+  applyPickContext,
+  applyDrop,
+  applyTruncateHistory,
+  applyIncludeIf,
+  applyPickFiles,
+  applyMergeWorkbenchSections,
+  applyMergeFilesToContext,
+  applySummarizeFiles,
+  applyForEach,
+  applyScratchpadOps,
+  applyWorkbenchSectionOps,
+  applySwitch,
+} from './operations/transform-groups.js';
 
 // Re-export from submodules
 export { query, set as jsonPathSet, resolveTemplates, extractJsonFromMarkdown, renderTemplateSimple } from './operations/json-path.js';
 export { shouldSkipDuplicateUserHistoryAppend } from './operations/value-helpers.js';
 export { createDefaultFileSystem } from './operations/transform-groups.js';
 
-// Re-export group operations
-export { applyPickContext, applyDrop, applyTruncateHistory, applyIncludeIf, applyPickFiles, applyMergeWorkbenchSections, applyMergeFilesToContext, applySummarizeFiles, applyForEach, applyScratchpadOps, applyWorkbenchSectionOps, applySwitch } from './operations/transform-groups.js';
+export {
+  applyPickContext,
+  applyDrop,
+  applyTruncateHistory,
+  applyIncludeIf,
+  applyPickFiles,
+  applyMergeWorkbenchSections,
+  applyMergeFilesToContext,
+  applySummarizeFiles,
+  applyForEach,
+  applyScratchpadOps,
+  applyWorkbenchSectionOps,
+  applySwitch,
+};
 
 /**
  * Apply a single transform operation
@@ -378,35 +394,4 @@ async function applyTruncateSection(
     }
     jsonPathSet(context.$out, pathStr, next);
   }
-}
-
-// Import truncateToMaxChars from value-helpers
-import { truncateToMaxChars as truncFn } from './operations/value-helpers.js';
-function truncateToMaxChars(text: string, maxChars: number, suffix: string): string {
-  return truncFn(text, maxChars, suffix);
-}
-
-/**
- * Create a default file system implementation
- */
-export function createDefaultFileSystem(): TransformFileSystem {
-  return {
-    async readFile(filePath: string, encoding: BufferEncoding = 'utf-8'): Promise<string> {
-      return fs.readFile(filePath, encoding);
-    },
-    async writeFile(filePath: string, content: string): Promise<void> {
-      // Ensure directory exists
-      const dir = path.dirname(filePath);
-      await fs.mkdir(dir, { recursive: true });
-      await fs.writeFile(filePath, content, 'utf-8');
-    },
-    async exists(filePath: string): Promise<boolean> {
-      try {
-        await fs.access(filePath);
-        return true;
-      } catch {
-        return false;
-      }
-    }
-  };
 }

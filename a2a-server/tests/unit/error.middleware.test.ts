@@ -7,6 +7,7 @@ import {Request, Response, NextFunction} from 'express';
 import {
     AppError,
     errorHandler,
+    exposeErrorDetailsToClient,
     notFound,
     validationError,
     unauthorized,
@@ -58,13 +59,15 @@ describe('Error Middleware', () => {
             errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
 
             expect(mockRes.status).toHaveBeenCalledWith(401);
-            expect(mockRes.json).toHaveBeenCalledWith({
-                success: false,
-                error: {
-                    code: 'AUTH_001',
-                    message: 'Unauthorized',
-                },
-            });
+            expect(mockRes.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                    error: expect.objectContaining({
+                        code: 'AUTH_001',
+                        message: 'Unauthorized',
+                    }),
+                })
+            );
         });
 
         it('should handle AppError with details', () => {
@@ -72,14 +75,16 @@ describe('Error Middleware', () => {
 
             errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
 
-            expect(mockRes.json).toHaveBeenCalledWith({
-                success: false,
-                error: {
-                    code: 'VALIDATION_001',
-                    message: 'Validation failed',
-                    details: {field: 'email'},
-                },
-            });
+            expect(mockRes.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                    error: expect.objectContaining({
+                        code: 'VALIDATION_001',
+                        message: 'Validation failed',
+                        details: {field: 'email'},
+                    }),
+                })
+            );
         });
 
         it('should handle unknown errors with 500', () => {
@@ -88,13 +93,15 @@ describe('Error Middleware', () => {
             errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
 
             expect(mockRes.status).toHaveBeenCalledWith(500);
-            expect(mockRes.json).toHaveBeenCalledWith({
-                success: false,
-                error: {
-                    code: 'INTERNAL_ERROR',
-                    message: 'An unexpected error occurred',
-                },
-            });
+            expect(mockRes.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                    error: expect.objectContaining({
+                        code: 'INTERNAL_ERROR',
+                        message: 'Unknown error',
+                    }),
+                })
+            );
         });
 
         it('should handle error with explicit 400 status', () => {
@@ -175,6 +182,70 @@ describe('Error Middleware', () => {
 
                 expect(error.message).toBe('Admin access required');
             });
+        });
+    });
+
+    describe('exposeErrorDetailsToClient', () => {
+        afterEach(() => {
+            vi.unstubAllEnvs();
+        });
+
+        it('should be true when NODE_ENV is not production', () => {
+            vi.stubEnv('NODE_ENV', 'test');
+            expect(exposeErrorDetailsToClient()).toBe(true);
+        });
+
+        it('should be false in production unless A2A_ERROR_EXPOSE_DETAILS is set', () => {
+            vi.stubEnv('NODE_ENV', 'production');
+            expect(exposeErrorDetailsToClient()).toBe(false);
+        });
+
+        it('should be true in production when A2A_ERROR_EXPOSE_DETAILS=1', () => {
+            vi.stubEnv('NODE_ENV', 'production');
+            vi.stubEnv('A2A_ERROR_EXPOSE_DETAILS', '1');
+            expect(exposeErrorDetailsToClient()).toBe(true);
+        });
+    });
+
+    describe('errorHandler production responses', () => {
+        beforeEach(() => {
+            vi.stubEnv('NODE_ENV', 'production');
+            delete process.env.A2A_ERROR_EXPOSE_DETAILS;
+        });
+
+        afterEach(() => {
+            vi.unstubAllEnvs();
+        });
+
+        it('should redact unknown error message and omit stack from JSON', () => {
+            const error = new Error('Secret internals');
+
+            errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
+
+            expect(mockRes.json).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    success: false,
+                    error: expect.objectContaining({
+                        code: 'INTERNAL_ERROR',
+                        message: 'An unexpected error occurred',
+                    }),
+                })
+            );
+            const payload = (mockRes.json as ReturnType<typeof vi.fn>).mock.calls[0][0] as {
+                error: Record<string, unknown>;
+            };
+            expect(payload.error.stack).toBeUndefined();
+        });
+
+        it('should omit stack from AppError JSON in production', () => {
+            const error = new AppError('AUTH_001', 'Unauthorized', 401);
+
+            errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
+
+            const payload = (mockRes.json as ReturnType<typeof vi.fn>).mock.calls[0][0] as {
+                error: Record<string, unknown>;
+            };
+            expect(payload.error.stack).toBeUndefined();
         });
     });
 });

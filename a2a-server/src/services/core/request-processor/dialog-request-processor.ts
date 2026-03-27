@@ -14,14 +14,15 @@ import {logger} from '../../../utils/logger.js';
 import {getPromptsTransformsPath} from '../../../transform/index.js';
 import type {RequestContext, ProcessResult} from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
-import {GrayRoomOrchestrator} from './gray-room-orchestrator.js';
-
-// Re-export из normalization
-export {
+import {GrayRoomOrchestrator, isDialogToolExecutePayload} from './gray-room-orchestrator.js';
+import {
     resolveTransformSchema,
     normalizeContext,
     extractSchemaName
 } from './normalization.js';
+
+export {isDialogToolExecutePayload};
+export {resolveTransformSchema, normalizeContext, extractSchemaName};
 
 // Re-export из llm-orchestration
 export {
@@ -59,8 +60,6 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
     }
 
     canProcess(request: RequestContext): boolean {
-        // Импортируем динамически для избежания циклических зависимостей
-        const {resolveTransformSchema} = require('./normalization.js');
         return resolveTransformSchema(request.context) !== null;
     }
 
@@ -70,7 +69,6 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
 
     protected async doProcess(request: RequestContext): Promise<ProcessResult> {
         const {promiseId, context, message: requestMessage} = request;
-        const {normalizeContext, resolveTransformSchema, extractSchemaName} = await import('./normalization.js');
         const {executeLlmCall} = await import('./llm-orchestration.js');
 
         const ctx = normalizeContext(context, requestMessage);

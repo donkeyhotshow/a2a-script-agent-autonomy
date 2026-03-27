@@ -5,6 +5,15 @@ import {AppError} from '../types/errors.js';
 
 export {AppError};
 
+/** HTTP responses: omit stacks and raw internal messages in production unless explicitly overridden (staging/debug). */
+export function exposeErrorDetailsToClient(): boolean {
+    const raw = process.env.A2A_ERROR_EXPOSE_DETAILS;
+    if (raw === '1' || raw?.toLowerCase() === 'true') {
+        return true;
+    }
+    return process.env.NODE_ENV !== 'production';
+}
+
 // Simple error response helpers
 export const notFound = (resource: string = 'Resource') => new AppError('NOT_FOUND', `${resource} not found`, 404);
 export const validationError = (field: string, reason: string) =>
@@ -28,14 +37,14 @@ export function errorHandler(
     res: Response,
     _next: NextFunction
 ): void {
-    const isProduction = process.env.NODE_ENV === 'production';
+    const exposeClient = exposeErrorDetailsToClient();
 
     if (err instanceof AppError) {
         logger.error('Application error', {
             code: err.code,
             message: err.message,
             statusCode: err.statusCode,
-            ...(isProduction ? {} : {stack: err.stack}),
+            stack: err.stack,
         });
 
         const errorPayload: Record<string, unknown> = {
@@ -45,7 +54,7 @@ export function errorHandler(
         if (err.details !== undefined) {
             errorPayload.details = err.details;
         }
-        if (!isProduction && err.stack) {
+        if (exposeClient && err.stack) {
             errorPayload.stack = err.stack;
         }
 
@@ -70,11 +79,11 @@ export function errorHandler(
         success: false,
         error: {
             code: 'INTERNAL_ERROR',
-            message: isProduction ? 'An unexpected error occurred' : err.message,
+            message: exposeClient ? err.message : 'An unexpected error occurred',
         },
     };
 
-    if (!isProduction && err.stack) {
+    if (exposeClient && err.stack) {
         (response.error as Record<string, unknown>).stack = err.stack;
     }
 

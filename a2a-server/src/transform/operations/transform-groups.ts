@@ -13,14 +13,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import {
-  query,
-  set as jsonPathSet,
-  resolveTemplates,
-  extractJsonFromMarkdown,
-  renderTemplateSimple
-} from './json-path.js';
-import { shouldSkipDuplicateUserHistoryAppend } from './value-helpers.js';
+import {query, set as jsonPathSet} from './json-path.js';
 import type {
   TransformContext,
   TransformStep,

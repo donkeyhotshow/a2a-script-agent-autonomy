@@ -13,7 +13,6 @@
 export interface ExecuteScript {
     code: string;
     language?: 'javascript' | 'typescript';
-    sandbox?: 'vm2' | 'node';
     /** Input parameters for the script */
     input?: Record<string, unknown>;
 }

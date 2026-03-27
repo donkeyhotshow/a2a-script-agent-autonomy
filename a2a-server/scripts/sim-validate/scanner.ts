@@ -1,21 +1,20 @@
 #!/usr/bin/env tsx
 
 /**
- * Scanner - сканирование симуляций для валидации
- * Часть модульной структуры sim-validate
+ * Scanner — simulation discovery for sim-validate CLI
  */
 
 import {existsSync, readdirSync} from 'node:fs';
 import {join} from 'node:path';
+import {fileURLToPath} from 'node:url';
+
+const __dirname = join(fileURLToPath(import.meta.url), '..');
+
+/** Repo-root `simulations/` (three levels up from this file: sim-validate → scripts → a2a-server → repo). */
+export const SIMULATIONS_DIR = join(__dirname, '..', '..', '..', 'simulations');
 
 // ============================================
-// Константы
-// ============================================
-
-export const SIMULATIONS_DIR = join(import.meta.url, '..', '..', 'simulations');
-
-// ============================================
-// Типы
+// Types
 // ============================================
 
 export interface CliArgs {
@@ -26,10 +25,12 @@ export interface CliArgs {
     help: boolean;
     /** If true, validate raw JSON only (no fixture normalization). */
     strict: boolean;
+    /** SCHEMA.md no-LLM step transform contract (optional warnings). */
+    stepContract: boolean;
 }
 
 // ============================================
-// Scanner: получение списка всех симуляций
+// Scanner: list simulations
 // ============================================
 
 export function getAllSimulations(): {path: string; name: string}[] {
@@ -43,7 +44,6 @@ export function getAllSimulations(): {path: string; name: string}[] {
 
     for (const entry of entries) {
         if (entry.isDirectory()) {
-            // Проверяем поддиректории (например, agent-coder/3)
             const subDir = join(SIMULATIONS_DIR, entry.name);
             const subEntries = readdirSync(subDir, {withFileTypes: true});
 
@@ -57,7 +57,6 @@ export function getAllSimulations(): {path: string; name: string}[] {
                 });
             }
 
-            // Также добавляем директории верхнего уровня если в них есть JSON файлы
             const mainSimPath = join(SIMULATIONS_DIR, entry.name);
             if (
                 existsSync(join(mainSimPath, 'request.json')) &&
@@ -75,7 +74,7 @@ export function getAllSimulations(): {path: string; name: string}[] {
 }
 
 // ============================================
-// CLI интерфейс
+// CLI
 // ============================================
 
 export function parseArgs(): CliArgs {
@@ -102,6 +101,7 @@ export function parseArgs(): CliArgs {
         verbose: args.includes('--verbose') || args.includes('-v'),
         help: args.includes('--help') || args.includes('-h'),
         strict: args.includes('--strict'),
+        stepContract: args.includes('--step-contract'),
     };
 }
 
@@ -117,6 +117,7 @@ export function printHelp() {
   --json, -j         Вывод в формате JSON
   --verbose, -v      Подробный вывод
   --strict           Без нормализации (сырой JSON против схемы)
+  --step-contract    Доп. предупреждения: no-LLM шаги и server-transforms-*.json (см. simulations/SCHEMA.md)
   --help, -h         Показать эту справку
 
 По умолчанию request/response нормализуются: снимаются promiseId/даты, обёртка success/data,

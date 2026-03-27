@@ -216,16 +216,6 @@ export function loadNewSession(cwd, sessionId) {
  * @deprecated Since 2026-03-27 - Use step-based storage instead. Will be removed in next release cycle.
  * @see docs/new-request-flow/PROTOCOL.md#session-storage
  */
-export function saveNewSession(cwd, session) {
-   // DEPRECATED: session.json is no longer written
-   // All session state is now derived from step files
-   // This function is kept for backward compatibility but does nothing
-   // Session is reconstructed from: server-response.json + messages.json files
-   const dir = getNewSessionDir(cwd, session.id);
-   ensureDir(dir);
-   // NOOP: We no longer write session.json
-   // The session is reconstructed from the highest step with server-response.json
-}
 
 export function saveNewStep(cwd, sessionId, stepNum, stepData) {
   const stepDir = getNewStepDir(cwd, sessionId, stepNum);

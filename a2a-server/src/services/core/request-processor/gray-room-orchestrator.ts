@@ -265,6 +265,20 @@ export const DIALOG_TOOL_EXECUTE_KEYS = [
     'script',
 ] as const;
 
+/** True when `execute` is a single allowed dialog tool key (tool round, not form/chat). */
+export function isDialogToolExecutePayload(
+    execute: Record<string, unknown> | null | undefined
+): boolean {
+    if (!execute || typeof execute !== 'object' || Array.isArray(execute)) {
+        return false;
+    }
+    const keys = Object.keys(execute);
+    if (keys.length !== 1) {
+        return false;
+    }
+    return (DIALOG_TOOL_EXECUTE_KEYS as readonly string[]).includes(keys[0]!);
+}
+
 export interface GrayRoomOptions {
     maxInterruptTurns?: number;
     aiHubUrl?: string;

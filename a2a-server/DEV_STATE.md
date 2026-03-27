@@ -171,11 +171,11 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 
 ## Архитектура скриптов (LF-S-04)
 
-**sim-lint разделён на модули:**
-- `scripts/registry.ts` - типы, константы, lint правила
-- `scripts/runners.ts` - запуск проверок файлов и симуляций
-- `scripts/reporters.ts` - генерация отчётов, CLI интерфейс
-- `scripts/sim-lint.ts` - точка входа (импортирует registry, runners, reporters)
+**sim-lint разделён на модули (`scripts/sim-lint/`):**
+- `registry.ts` — типы, константы, lint правила (`SIMULATIONS_DIR` = repo-root `simulations/`)
+- `runners.ts` — запуск проверок файлов и симуляций
+- `reporters.ts` — генерация отчётов, CLI args/help
+- `scripts/sim-lint.ts` — точка входа (`import './sim-lint/registry.js'` и т.д.)
 
 **Верификация:** `npm run sim:lint -- --help`
 
@@ -183,11 +183,11 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 
 ## Архитектура скриптов (LF-S-03)
 
-**sim-validate разделён на модули:**
-- `scripts/scanner.ts` - сканирование симуляций, CLI-интерфейс
-- `scripts/validators.ts` - валидация JSON по схемам, нормализация
-- `scripts/reporters.ts` - генерация отчётов, main()
-- `scripts/sim-validate.ts` - точка входа (импортирует reporters)
+**sim-validate разделён на модули (`scripts/sim-validate/`):**
+- `scanner.ts` — сканирование симуляций, CLI args/help
+- `validators.ts` — валидация JSON по схемам, нормализация (repo-root `docs/new-request-flow/json-schemas`)
+- `reporters.ts` — вывод + `main()`
+- `scripts/sim-validate.ts` — точка входа (`import './sim-validate/reporters.js'`)
 
 **Верификация:** `npm run sim:validate -- --help`
 
@@ -220,7 +220,7 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [x] **S-02 server-action-registry-bootstrap**: decide fail-fast vs lenient startup when action markdown loading fails; encode as policy + tests.
 - [x] **S-03 server-requests-storage**: define default/override storage path behavior (`REQUESTS_STORAGE_PATH`) and retention/cleanup policy.
 - [x] **S-04 server-llm-hub-polling**: standardize `LLM_POLL_*`/`POLL_*` defaults and timeout budget for daemon processing. Defaults documented in `.env.example`, implementation in `src/daemon/llm-hub-poll.ts` with 1h default / 24h cap aligned to ai-integration `PROMISE_TTL_SECONDS`.
-- [ ] **S-06 server-error-detail-level**: finalize production error redaction policy (`NODE_ENV`) and keep stack traces in dev only.
+- [x] **S-06 server-error-detail-level**: Production JSON responses omit stacks and genericize unknown `Error` messages; `exposeErrorDetailsToClient()` / `A2A_ERROR_EXPOSE_DETAILS`; server logs always include stacks. See `.env.example` and `src/middleware/error.middleware.ts`.
 - [x] **S-07 server-background-processor**: add `REQUEST_PROCESSOR_INTERVAL_MS` config (default 5000ms), env variable support, and latency metrics via `/metrics` endpoint.
 - [x] **S-08 server-logging**: unify `LOG_LEVEL`/`LOG_FORMAT` and Winston rotation/boot-clean strategy; add acceptance checks.
 - [x] **S-09 agent-rag-chain-limits**: set safe defaults for `A2A_AGENT_RAG_CHAIN_MAX` + project path envs and verify fallback behavior.
@@ -233,7 +233,7 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [x] Очистка `storage/requests` (удалить старые файлы).
 
 ### Simulation Contract & Docs (Complex)
-- [ ] Выравнять серверный контракт transforms: для no-LLM шагов определить строгое правило по `server-transforms-request.json` и привести к нему `sim:validate`/`sim-lint` сообщения.
+- [ ] Выравнять серверный контракт transforms: для no-LLM шагов определить строгое правило по `server-transforms-request.json` и привести к нему `sim:validate`/`sim-lint` сообщения. *(Частично: см. UA-S-02 — `--step-contract` + `scripts/sim-contract/step-transform-rules.ts`; sim-lint сообщения ещё не унифицированы.)*
 - [ ] Добавить в процессоры явную диагностику contract warnings (не только `valid`): чтобы в CI видно было “warning debt” по конкретному simulation step.
 - [ ] Уточнить server policy для сокращённых golden-наборов: в каких action/step допускается отсутствие transform-файлов и где это фиксируется в документации.
 - [ ] Добавить server-centric симуляции устойчивости: paginated `rag-search` drain, очередь `read-file` с накоплением в `context.files`, human-gate переходы между `execution.step`.
@@ -245,14 +245,15 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [x] **LF-S-02**: Decompose `src/services/core/request-processor/dialog-request-processor.ts` (~781) into normalization.ts, llm-orchestration.ts, response-path.ts + index re-export.
 - [x] **LF-S-03**: Decompose `scripts/sim-validate.ts` (~810) into scanner, validators, and report formatters.
 - [x] **LF-S-04**: Decompose `scripts/sim-lint.ts` (~718) into lint rule registry + rule runners + reporters.
-- [ ] **LF-S-05**: Decompose `src/transform/pipeline.ts` (~481) into pipeline stages, error mapping, and pipeline context utilities.
-- [ ] **LF-S-06**: Decompose `src/actions/handlers/file-operations.ts` (~432) into read/list/write operation handlers with strict security wrappers.
+- [x] **LF-S-05**: Decompose `src/transform/pipeline.ts` (~481) into `src/transform/pipeline/{run,load,file-runner,prompts,validate}.ts` + barrel `pipeline.ts` (see `tasks/lf-s-05-decompose-pipeline.md`).
+- [x] **LF-S-06**: Decompose `src/actions/handlers/file-operations.ts` into `file-operations/{types,security,read-file,write-file,file-exists,list-directory}.ts` + barrel (see `tasks/lf-s-06-decompose-file-operations.md`).
+- [x] **LF-S-07**: `operations.ts` must **import** transform-group handlers for `applyOperation()` dispatch, not only re-export (see `tasks/lf-s-07-operations-transform-groups-dispatch.md`).
 
 ### Redundant Functionality Detection & Cleanup
 - [x] **RF-S-01 inventory**: Inventory overlapping server paths (transforms, action handlers, request processors) with duplicate responsibilities.
 - [x] **RF-S-02 rule-of-one-owner**: For each responsibility, keep exactly one owner module and mark others as deprecation targets.
 - [x] **RF-S-03 remove-dead-branches**: Remove unreachable/deprecated code paths after test + simulation confirmation.
-- [ ] **RF-S-04 cleanup-gate**: Cleanup accepted only when `sim:lint`, `sim:validate`, and unit tests remain green.
+- [x] **RF-S-04 cleanup-gate**: `npm run gate:cleanup` (a2a-server) = `vitest` + structural `sim:lint.valid` && `sim:validate.valid` (warnings allowed). Stricter debt gate: `npm run sim:quality` (requires `warnings == 0`).
 
 ### Redundancy Review Decisions (2026-03-27)
 - **Single-owner mapping confirmed (keep):** request processor selection stays in `request-processor.service.ts`; dialog orchestration remains in `dialog-request-processor.ts`; no duplicate active owner found for these responsibilities.
@@ -265,15 +266,20 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
   - `operations/value-helpers.ts` - Value helpers (shouldSkipDuplicateUserHistoryAppend, truncateToMaxChars)
   - `operations/transform-groups.ts` - Transform groups (applyPickContext, applyDrop, applyPickFiles, etc.)
   - `operations.ts` - Re-exports all from submodules + core operations (copy, set, append-to-array, parse-json-from-md, render-markdown, truncate-section, switch)
+  - **Fix (2026-03-27, tracked as LF-S-07):** `applyPickContext`, `applySwitch`, and other `transform-groups` handlers must be **imported** into `operations.ts` for `applyOperation()` dispatch; `export { … } from './transform-groups.js'` alone does not create local bindings (runtime `ReferenceError` / `applySwitch is not defined`). `tests/transform-runtime.test.ts` now fully passes (31/31).
 - [x] **LF-S-02**: Decomposed `src/services/core/request-processor/dialog-request-processor.ts` (~201 lines) into:
   - `normalization.ts` - нормализация входных данных (resolveTransformSchema, normalizeContext, extractSchemaName)
   - `llm-orchestration.ts` - оркестрация LLM вызовов (executeLlmCall, runRequestTransforms, initLlmPromise, recoverLlmPromise)
   - `response-path.ts` - обработка путей ответа (recoverDialogFromLlmPromise, canRecoverFromLlmPromise, getLlmPromiseId)
   - `dialog-request-processor.ts` - Re-exports + основной класс
+- [x] **LF-S-05**: `src/transform/pipeline.ts` → `pipeline/run.ts`, `load.ts`, `file-runner.ts`, `prompts.ts` (schema maps + `getPromptsTransformsPath` → `a2a-server/prompts/transforms`), `validate.ts`; public API unchanged.
+- [x] **LF-S-06**: `handlers/file-operations.ts` → `handlers/file-operations/*.ts` (types, `validatePath`, per-action executors); exports unchanged for `handlers/index.ts`.
+- [x] **Stabilization (2026-03-27):** `dialog-request-processor.ts` — `canProcess` used `require('./normalization.js')` (ESLint `@typescript-eslint/no-var-requires`). Replaced with static import; `normalization.ts` does not import the processor, so no circular dependency.
+- [x] **Stabilization (2026-03-27):** ESLint **0 warnings** on `src/**/*.ts`: removed unused `path` import in `index.ts`; trimmed `operations.ts` type imports; removed dead `truncateToMaxChars` copy in `json-path.ts`; trimmed unused json-path/value-helpers imports in `transform-groups.ts`.
 
 ### Unusual Findings Alignment (Server/Contracts)
 - [ ] **UA-S-01 interrupt-trace-contract**: Verify and document one canonical contract for interrupt trace placement (`context.workbench.slots.interruptTrace`) across server transforms and client projection.
-- [ ] **UA-S-02 no-llm-vs-llm-step-rules**: Tighten and centralize rules for required transform files on no-LLM vs LLM steps to reduce interpretation drift in simulations.
+- [x] **UA-S-02 no-llm-vs-llm-step-rules** (2026-03-27): Canonical rules live in `scripts/sim-contract/step-transform-rules.ts` (aligned with `simulations/SCHEMA.md`). **Optional** CLI: `npm run sim:validate -- --step-contract` (with `--sim` or `--all`) emits extra warnings for no-LLM steps missing `server-transforms-request.json` or incorrectly keeping `server-transforms-response.json` without `response.md`. Default validate unchanged (legacy goldens retain warning debt until fixed).
 
 ### Gray Room / Planned Sub-Requests (Server-Orchestrated)
 - [ ] **GR-S-01 concept-boundary**: Зафиксировать, что gray room = серия спланированных LLM-подзапросов, выполняемых *на сервере* после основного шага, без новых client steps; работают только через `context.workbench`/`context.history` и соблюдают Action-Key Shape. Уточнить, что это надстройка над уже реализованным interrupt loop в `DialogRequestProcessor`, а не параллельный механизм.
@@ -302,7 +308,8 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 
 ### Code Cleanup Discovery Plan (Server: where/how)
 - [x] **CCP-S-01 where-to-scan**: Primary folders for cleanup scans зафиксированы: `src/transform/`, `src/services/core/request-processor/`, `src/actions/handlers/`, `scripts/`.
-- [ ] **CCP-S-02 how-to-find**: Search for overlapping operations/validators/reporters and duplicate path-specific branches.
-- [ ] **CCP-S-03 deprecation-check**: Identify legacy branches still referenced by comments/docs but no longer used by runtime flow.
-- [ ] **CCP-S-04 safe-remove-gate**: Removal only after `npm run test`, `sim:lint`, `sim:validate` pass.
+- [x] **CCP-S-02 signal-set (CDM-02)**: (1) duplicate adapters, (2) legacy compatibility bridges, (3) dead exports, (4) unused route branches, (5) overlapping DTO builders. **How:** overlapping operations/validators/reporters and duplicate path-specific branches in `src/transform/`, `src/actions/handlers/`, `src/services/`; ripgrep `deprecated`, `compat`, `re-export`, `legacy`.
+- [x] **CDM-03 evidence format**: Each cleanup candidate must be recorded as one row: `path` · `why redundant` · `usage proof` · `safe removal check` (e.g. `npm run test`, `npm run sim:lint`).
+- [x] **CCP-S-03 deprecation-check** (2026-03-27): Ripgrep on `src/**/*.ts` for `deprecated|legacy|compat` (case-insensitive). **Still intentional (keep):** `transform-execute-validator.ts` rejects legacy bare `{content}` / `{results}` result blobs (runtime validation, not dead code). `request-processor.interfaces.ts` exports `ActionRequest` (comment: legacy shape); **no** internal `import type { ActionRequest }` — reserved for external/compat; do not delete without semver note. `request-processor.service.ts` re-export comment for types. `invoke.service.ts` / `sessions.routes.ts` comments describe compatibility behavior, not unused branches. **No** `deprecated`/`@deprecated` runtime branches found that are safe to remove in this pass.
+- [x] **CCP-S-04 safe-remove-gate (CDM-04)**: Use `npm run gate:cleanup` (tests + `sim:lint.valid` + `sim:validate.valid`). Stricter removals: `npm run sim:quality` when warning debt is zero.
 

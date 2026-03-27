@@ -14,6 +14,7 @@
                     "sim:lint:all":  "npm --prefix a2a-server run sim:lint:all --",
                     "sim:validate":  "npm --prefix a2a-server run sim:validate --",
                     "sim:quality":  "npm --prefix a2a-server run sim:quality",
+                    "gate:cleanup":  "npm --prefix a2a-server run gate:cleanup",
                     "tester":  "cd a2a-client/tester && npm run start",
                     "tester:install":  "cd a2a-client/tester && npm install",
                     "tester:test":  "cd a2a-client/tester && npm test"

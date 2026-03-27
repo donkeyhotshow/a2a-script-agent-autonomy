@@ -17,8 +17,6 @@ import {
     lintFirstResponse,
     lintDirectoryStructure,
     lintRequiredFiles,
-    SIMULATIONS_DIR,
-    getAllSimulations,
 } from './registry.js';
 
 // ============================================

@@ -236,19 +236,6 @@ export const SESSION_STATUS = {
     CANCELLED: 'CANCELLED',       // Отменено (new protocol: 'cancelled')
 };
 
-/**
- * Legacy session status (for backwards compatibility)
- * @deprecated Since 2026-03-27 - Use SESSION_STATUS instead. Will be removed in next release cycle.
- * @see docs/new-request-flow/PROTOCOL.md#sessionstatus
- */
-export const LEGACY_SESSION_STATUS = {
-    PENDING: 'PENDING',
-    READY: 'READY',
-    IN_PROGRESS: 'IN_PROGRESS',
-    COMPLETED: 'COMPLETED',
-    FAILED: 'FAILED',
-    CANCELLED: 'CANCELLED',
-};
 
 /**
  * Session action types

@@ -253,10 +253,10 @@ cd a2a-client && npm test
 - [x] **CM-09**: Run docs encoding/terminology cleanup pass (mixed glyph artifacts, mixed-language drift) in high-impact protocol docs (`AGENTS.md`, Web protocol docs, simulation workflow docs).
 
 ### Code Cleanup Discovery Map (Where/How to Search)
-- [ ] **CDM-01 scope-map**: Each module keeps a target list of folders for cleanup scans (hotspots only, no broad random search).
-- [ ] **CDM-02 signal-set**: Search signals: duplicate adapters, legacy compatibility bridges, dead exports, unused route branches, overlapping DTO builders.
-- [ ] **CDM-03 evidence-format**: For every cleanup candidate, record: `path`, `why redundant`, `usage proof`, `safe removal check`.
-- [ ] **CDM-04 acceptance-gate**: Candidate can be removed only if module tests + simulation checks stay green.
+- [x] **CDM-01 scope-map**: Each module keeps a target list of folders for cleanup scans (hotspots only, no broad random search). Completed 2026-03-27 — see `CCP-C-01`, `CCP-S-01`, `CCP-AI-01` in module `DEV_STATE.md` files.
+- [x] **CDM-02 signal-set**: Search signals зафиксированы в каждом модуле (`CCP-C-02`, `CCP-S-02`, `CCP-AI-02`): duplicate adapters, legacy compatibility bridges, dead exports, unused route branches, overlapping DTO builders (2026-03-27).
+- [x] **CDM-03 evidence-format**: For every cleanup candidate, record: `path`, `why redundant`, `usage proof`, `safe removal check` — documented per module (2026-03-27).
+- [x] **CDM-04 acceptance-gate**: Removal only after module tests + simulation checks stay green — enforced via `CCP-C-05`, `CCP-S-04`, `CCP-AI-05` in module `DEV_STATE.md` (2026-03-27).
 
 ### Module Task Sources (No Duplication in Root)
 - Client execution backlog: [`a2a-client/DEV_STATE.md`](a2a-client/DEV_STATE.md)
@@ -268,6 +268,13 @@ cd a2a-client && npm test
 
 ## 2026-03-27 Updates
 
+- [x] **CDM-01** scope-map: all modules have `CCP-*-01 where-to-scan` in their `DEV_STATE.md`.
+- [x] **CDM-02** signal-set: canonical five signals + module-specific ripgrep hints in `CCP-*-02` lines.
+- [x] **CDM-03** evidence-format: four required fields per candidate in each module `DEV_STATE.md`.
+- [x] **CDM-04** acceptance-gate: aligned with `CCP-*-05` / `CCP-S-04` safe-remove gates per module.
+- [x] **LF-S-03** (`a2a-server`): `sim-validate` split into `scripts/sim-validate/{scanner,validators,reporters}.ts`; fixed repo-root paths for `simulations/` and `docs/…/json-schemas`.
+
+- [x] **C-08** unified execute script API: public `execute.script` without `sandbox`; `result.script` includes `exitCode` in SDK handler paths (`a2a-client`).
 - [x] Completed client task `C-03 sdk-http-limits` in `a2a-client` with standalone SDK defaults and env-overridable profile (CORS, rate-limit, file-cap) plus contract tests.
 - [x] **CM-10**: Stabilize `session-index.json` and remove complex fallback in `newSessions.js` (Phase 2).
 - [x] **CM-11**: Implement common Gray Room Orchestrator and move it out of specific processor.
