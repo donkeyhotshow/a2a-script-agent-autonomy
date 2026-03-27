@@ -18,6 +18,7 @@ This file provides guidance to agents when working with code in this repository.
 12. [Router (Keyword-Based)](#router-keyword-based)
 13. [Extending LLM actions](#extending-llm-actions)
 14. [Operational Protocol (Critical)](#operational-protocol-critical)
+15. [State Document Map (Quick Links)](#state-document-map-quick-links)
 
 ---
 
@@ -67,7 +68,8 @@ import x from '@/services/x.js'
 ### Operational Protocol & Dev Files
 - **Operational Protocol** is now integrated directly in section 14 of this document. All work must follow the [Operational Protocol](#operational-protocol-critical) to bring the project to production.
 - **Simple to Complex** - Tasks must be performed in phases: Environment -> Validation -> Integration -> E2E -> Production.
-- **DEV_STATE.md** - Every session and agent MUST maintain the `DEV_STATE.md` file in the root and/or relevant module directory. Always update it before starting and after finishing a task. "Убираем ненужное всегда, двигаемся вперед всегда".
+- **DEV_STATE.md** - Every session and agent MUST maintain the `DEV_STATE.md` file in the root and/or relevant module directory. Always update it before starting and after finishing a task. "??????? ???????? ??????, ????????? ?????? ??????".
+- **Cross-links required** - Keep root and module state files mutually linked for fast navigation and consistent status control.
 
 ---
 
@@ -132,22 +134,22 @@ LLM controls `context.execution.step`, server persists via transforms. Prompt fo
 
 - `context.history` - Array of execution records
 - `context.execution` - Current state: `{ action, step, progress }`
-- `context.workbench` - Structured working state (`sections`, optional `batch`, optional `slots`). LLM can update **`workbench.sections`** (merge) and **`workbench_ops`** (short set/append/remove commands); see [`a2a-server/prompts/auto-ai-request.md`](a2a-server/prompts/auto-ai-request.md) and [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md) �2c.
+- `context.workbench` - Structured working state (`sections`, optional `batch`, optional `slots`). LLM can update **`workbench.sections`** (merge) and **`workbench_ops`** (short set/append/remove commands); see [`a2a-server/prompts/auto-ai-request.md`](a2a-server/prompts/auto-ai-request.md) and [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md) ?2c.
 - `context.session_id` - Session identifier for tracking
 
 ### Simulation Pipeline
 
 ```
 # With LLM:
-request.json → server-transforms-request.json → request.md → [LLM] → response.md → server-transforms-response.json → response.json
+request.json ? server-transforms-request.json ? request.md ? [LLM] ? response.md ? server-transforms-response.json ? response.json
 
 # Without LLM (server builds execute directly):
-request.json → server-transforms-request.json → response.json
+request.json ? server-transforms-request.json ? response.json
 ```
 
 **Important:** Even when `response.md` is absent (no LLM call), the server **always** applies transforms:
-- `server-transforms-request.json` — required to transform request into execute
-- `server-transforms-response.json` — NOT needed (server builds response directly)
+- `server-transforms-request.json` ? required to transform request into execute
+- `server-transforms-response.json` ? NOT needed (server builds response directly)
 
 **Server-side LLM request prep** (before `request.md` is built): `result` is folded into `context.history`; `flowControlHint` is chosen from `context.execution.action` + `step`; `workbench` is normalized (see LLM-REQUEST-PREP). **After** the model turn, response transforms may merge **`workbench.sections`** and apply **`workbench_ops`** into `context.workbench`. See [`a2a-server/docs/LLM-REQUEST-PREP.md`](a2a-server/docs/LLM-REQUEST-PREP.md).
 
@@ -161,26 +163,26 @@ request.json → server-transforms-request.json → response.json
 
 ### Router (Keyword-Based)
 
-Router определяет какой режим работы выбрать на основе запроса пользователя. С версии 2.0 использует **keyword-based routing** вместо LLM transform:
+Router ?????????? ????? ????? ?????? ??????? ?? ?????? ??????? ????????????. ? ?????? 2.0 ?????????? **keyword-based routing** ?????? LLM transform:
 
-1. **При наличии keyword совпадений** — используются найденные actions как choices
-2. **Без совпадений** — используются дефолтные choices (dialog, agent, task-decomposition)
+1. **??? ??????? keyword ??????????** ? ???????????? ????????? actions ??? choices
+2. **??? ??????????** ? ???????????? ????????? choices (dialog, agent, task-decomposition)
 
-**Режимы работы:**
-- `dialog`: Для обычных вопросов и общения
-- `agent`: Для работы с кодом (поиск, редактирование, команды)
-- `task-decomposition`: Для сложных задач требующих планирования
+**?????? ??????:**
+- `dialog`: ??? ??????? ???????? ? ???????
+- `agent`: ??? ?????? ? ????? (?????, ??????????????, ???????)
+- `task-decomposition`: ??? ??????? ????? ????????? ????????????
 
 **Fallback Choices:**
 ```json
 [
-  { "id": "dialog", "label": "AI діалог з користувачем", "description": "..." },
-  { "id": "agent", "label": "Agent (універсальний режим)", "description": "..." },
-  { "id": "task-decomposition", "label": "Декомпозиція задачі", "description": "..." }
+  { "id": "dialog", "label": "AI ?????? ? ????????????", "description": "..." },
+  { "id": "agent", "label": "Agent (????????????? ?????)", "description": "..." },
+  { "id": "task-decomposition", "label": "???????????? ??????", "description": "..." }
 ]
 ```
 
-См. [`a2a-server/docs/Router.md`](a2a-server/docs/Router.md) для полной документации.
+??. [`a2a-server/docs/Router.md`](a2a-server/docs/Router.md) ??? ?????? ????????????.
 
 ### Extending LLM actions
 
@@ -693,8 +695,8 @@ This section defines the mandatory operational protocol for all AI agents workin
 Files `DEV_STATE.md` (in root and each module) are the "external memory" of the project.
 
 **Rules:**
-- **Before task**: Check the relevance of `DEV_STATE.md`. If it's outdated — update it first.
-- **During task**: If new insights or problems are found — record them in the `Known Issues` section.
+- **Before task**: Check the relevance of `DEV_STATE.md`. If it's outdated ? update it first.
+- **During task**: If new insights or problems are found ? record them in the `Known Issues` section.
 - **After task**:
     - Remove completed items.
     - Update the date in the header.
@@ -740,7 +742,7 @@ Any work on "bringing to production" must follow this hierarchy:
 
 - **Confirmation**: Before starting Phase N, agent must confirm that Phase N-1 is passed and stable.
 - **No Drifting**: If user asks to "do production", agent must answer: *"I start with Phase 1 (Environment), according to Operational Protocol"*.
-- **Task Pruning**: Small tasks are solved immediately. Large ones — decomposed in `DEV_STATE.md`.
+- **Task Pruning**: Small tasks are solved immediately. Large ones ? decomposed in `DEV_STATE.md`.
 - **Atomic Commits**: File changes must be atomic and correspond to the current step.
 
 ---
@@ -756,4 +758,17 @@ Agent must run this checklist before each user response:
 ---
 
 *Note: This Operational Protocol is integrated from the former OPERATIONAL_PROTOCOL.md file.*
+
+---
+
+## State Document Map (Quick Links)
+
+Use these links during every iteration to keep state synchronized:
+
+- Root state: [`DEV_STATE.md`](DEV_STATE.md)
+- Client state: [`a2a-client/DEV_STATE.md`](a2a-client/DEV_STATE.md)
+- Server state: [`a2a-server/DEV_STATE.md`](a2a-server/DEV_STATE.md)
+- AI integration state: [`ai-integration/DEV_STATE.md`](ai-integration/DEV_STATE.md)
+- Simulation contract: [`simulations/SCHEMA.md`](simulations/SCHEMA.md)
+- Operational rules: [`AGENTS.md`](AGENTS.md)
 

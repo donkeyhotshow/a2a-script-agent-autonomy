@@ -5,6 +5,14 @@
 
 ---
 
+## Scope Boundary
+
+- Этот файл хранит только client-специфичные архитектуру, риски, задачи и историю изменений.
+- Кросс-модульные решения/зависимости ведутся только в root: [`../DEV_STATE.md`](../DEV_STATE.md).
+- Не дублировать здесь server/ai-integration backlog; хранить только ссылки на них при необходимости.
+
+---
+
 ## Архитектура
 
 **Client API** - хранит сессии и управляет состоянием:
@@ -53,6 +61,7 @@ a2a-client/storage/sessions/{sessionId}/
 ```
 
 **Важно:** Нет root `session.json` - состояние определяется последним шагом.
+**Важно (3-й участник диалога):** история должна явно поддерживать роль `system` (auto-responses из Red Room) наравне с `user` и `assistant`; рендер и хранение не должны терять эти сообщения.
 
 ---
 
@@ -152,11 +161,21 @@ SKIP_AUTH=1
 
 ---
 
+## State Governance (Inherited from Root)
+
+- Этот файл является source of truth для client-состояния и должен обновляться после каждого значимого действия.
+- Каждая задача обязана иметь статус (`[ ]` / `[x]`) и проверяемый критерий завершения.
+- После завершения задач: cleanup устаревших пунктов, фиксация решений/ограничений, план следующих шагов.
+- Неопределенности фиксируются явно как risks/questions.
+- Приоритет: завершение начатого -> стабилизация -> production readiness.
+
+---
+
 ## Задачи (Next Tasks)
 
 ### Alternatives Migration Plan (client scope)
 - [ ] **C-01 client-filesystem-root**: choose and document canonical `A2A_CLIENT_STORAGE_DIR` strategy (repo-local vs home) for dev and CI.
-- [ ] **C-02 session-storage-layout**: formalize step-folder invariants (`client-result`, `request-to-server`, `server-response`, `messages`) and recovery rules.
+- [ ] **C-02 session-storage-layout**: formalize step-folder invariants (`client-result`, `request-to-server`, `server-response`, `messages`) and recovery rules, including explicit persistence rules for `system` role messages (Red Room auto-responses).
 - [ ] **C-03 sdk-http-limits**: define default CORS/rate-limit/file-cap profile for standalone SDK mode and add contract tests.
 - [ ] **C-04 golden-simulations**: add client-focused simulation checklist for sanitized web DTOs (`execute` must stay web-safe).
 - [ ] **C-05 simulations-base-path**: align client test tooling with selected simulations path strategy (`SIMULATIONS_PATH` override support).
@@ -181,6 +200,43 @@ SKIP_AUTH=1
 - [ ] Закрыть `TODO(Task-04)` в `packages/execution/src/script-runner/index.ts`: унифицировать `execute.script` API и форму `result["script"]`.
 - [ ] Интегрировать script-runner с `createExecuteCode` и согласовать sandbox/config (ссылка в TODO на Task 39).
 - [ ] Убрать временный bypass в `packages/sdk/src/server/server/middleware/auth.ts` (`allow all requests`) и включить полноценную auth-проверку по окружению.
+
+### Large File Decomposition (400-500+ lines)
+- [ ] **LF-C-01**: Decompose `vite-plugin-a2a/routes/stepRoutes.js` (~719) into `step-routes-read.js`, `step-routes-write.js`, and shared middleware/util layer.
+- [ ] **LF-C-02**: Decompose `web/js/task-flow/render.js` (~1421) into focused render modules (`render-message`, `render-form`, `render-layout`, `render-state`).
+- [ ] **LF-C-03**: Decompose `packages/sdk/src/server/server/routes/sessions.ts` (~1033) into route groups (session read, session mutation, async/promise endpoints).
+- [ ] **LF-C-04**: Decompose `packages/rag/src/searcher/rag-searcher.ts` (~836) into query planner, chunk pipeline, ranking pipeline, and output shaping.
+- [ ] **LF-C-05**: Decompose `web/js/error-handler.js` (~772) into classification, UI mapping, telemetry/logging, and recovery actions.
+- [ ] **LF-C-06**: Decompose `vite-plugin-a2a/routes/utils/agent-rag-chain.js` (~566) into chain steps + guards + depth policy helpers.
+
+### Session Clarity Alignment (based on simulations/dialog + simulations/agent-auto-ai)
+- [ ] **SC-01 session-view-model**: Introduce `session-view-model.js` as single adapter from `received.json` shapes to UI state (`choice-form`, `input-form`, `message+form`, `message-only`, `completed`).
+- [ ] **SC-02 session-stage-machine**: Add explicit `session-stage-machine.js` (`routing`, `dialog-input`, `agent-tool-loop`, `awaiting-async`, `completed`) driven by `execute` + `context.execution`.
+- [ ] **SC-03 history-projection-boundary**: Add `history-projection.js` that accepts only canonical server payload (`context.history`, `context.files`, `workbench`) and emits deterministic timeline records with mandatory support for `system` role entries.
+- [ ] **SC-04 project-daemon-registry**: Mirror daemon clarity pattern for sessions via `session-background-registry.js` keyed by `projectId + sessionId` (pollers, timers, status).
+- [ ] **SC-06 web-dto-contract-tests**: Add tests from simulation fixtures (`dialog/*/received.json`, `agent-auto-ai/*/received.json`) to validate all supported execute variants in one matrix.
+- [ ] **SC-07 step-routes-split-by-flow**: Split `stepRoutes.js` by flow ownership: `router-flow`, `dialog-flow`, `agent-flow`, `async-flow`, then keep one composition root.
+- [ ] **SC-08 session-read-model-doc**: Add `docs/SESSION-READ-MODEL.md` with mapping: simulation artifact -> client store field -> renderer behavior.
+- [ ] **SC-09 system-message-policy**: Define and implement Web UI policy for `system` messages (Red Room auto-responses): rendering style, ordering in timeline, and non-lossy persistence in `messages.json`.
+
+### Session Clarity Rollout Order
+- [ ] **SCR-1**: Implement `SC-01` + `SC-02` first (no UI redesign; behavior-preserving).
+- [ ] **SCR-2**: Implement `SC-04` to make per-project/per-session background processes explicit.
+- [ ] **SCR-3**: Implement `SC-03` only (keep UI minimal; no new visualization features).
+- [ ] **SCR-4**: Lock with `SC-06` fixture matrix tests and update docs (`SC-08`).
+
+### Redundant Functionality Detection & Cleanup
+- [ ] **RF-C-01 inventory**: Build inventory of session-related modules and mark overlap (same responsibility implemented in 2+ places).
+- [ ] **RF-C-02 usage-evidence**: For each candidate, confirm runtime usage via imports/routes/tests before removal.
+- [ ] **RF-C-03 delete-plan**: Create per-item removal plan (what to delete, what remains as single owner module).
+- [ ] **RF-C-04 compatibility-window**: Keep temporary bridges max 1 release cycle; then remove legacy aliases/wrappers.
+- [ ] **RF-C-05 done-criteria**: Cleanup is done only if behavior is unchanged and simulation fixture matrix stays green.
+
+### Unusual Findings Alignment (Client)
+- [ ] **UA-C-01 polling-contract-drift**: Align documented async polling contracts between Vite Client API (`/api/a2a/sessions/:id/async`) and SDK async path variants (`/async/status/:promiseId`) to one canonical integration guide + compatibility matrix.
+- [ ] **UA-C-02 debug-context-guard**: Define strict rule for `?includeContext=1` usage (debug-only), add tests that UI runtime does not depend on raw `context.workbench` fields.
+- [ ] **UA-C-03 tri-role-render-tests**: Add fixture tests proving timeline/render/storage support for `user`, `assistant`, and `system` (Red Room auto-response) roles without loss/reordering.
+- [ ] **UA-C-04 web-protocol-doc-cleanup**: Normalize `WEB_UI_PROTOCOL.md` wording (remove ambiguous/partial lines, keep one-term glossary for Red Room/Gray Room/Agent loop).
 
 ---
 

@@ -183,6 +183,36 @@ cd a2a-client && npm test
 - **Aging control:** задачи без обновления >14 дней переносить в отдельный backlog-блок с причиной блокировки.
 - **Consistency check:** минимум раз в неделю сверять `DEV_STATE.md` ↔ `docs/DEV_STATE.md` ↔ `simulations/DEV_STATE.md`.
 
+## State Governance Protocol (Mandatory)
+
+Этот root `DEV_STATE.md` и связанные state-файлы являются источником истины для текущего состояния разработки.
+
+### AI Role (combined)
+- System architect
+- Task manager
+- Executor
+- State controller
+
+### Mandatory Responsibilities
+- **State updates:** после каждого значимого действия обновлять состояние, помечать завершенное как `DONE`, удалять/архивировать устаревшее, фиксировать решения и ограничения.
+- **Task management:** поддерживать активные задачи, автоматически создавать следующие задачи, декомпозировать крупные, отмечать зависимости/приоритеты, фиксировать или устранять блокеры.
+- **Closed loop execution:** всегда идти по циклу: analyze state -> execute max possible -> update state -> cleanup -> plan next -> milestone readiness check -> repeat.
+- **State transitions:** переходы между state-документами допускаются только с фиксацией, обоснованием и отражением в source+target документах.
+- **Parallel state tracks:** допускается параллельная работа по нескольким state-документам с синхронизацией shared решений и без логических конфликтов.
+- **Maturity stages:** продвигать систему через `prototype -> alpha -> beta -> release-candidate -> production` с явными критериями и фиксацией переходов.
+
+### Strict Rules
+- Никаких абстрактных рассуждений без отражения в state.
+- Никаких задач без статуса.
+- Никаких завершений без фиксации.
+- Любая неопределенность фиксируется как риск или вопрос.
+
+### Priority Policy
+- 1) Завершение начатого.
+- 2) Стабилизация системы.
+- 3) Подготовка к production.
+- Эстетика/рефакторинг допускаются только если ускоряют production readiness.
+
 ---
 
 ## Roadmap (Simple → Complex)
@@ -245,60 +275,60 @@ cd a2a-client && npm test
 
 ---
 
-## Следующие задачи (Backlog)
+## Следующие задачи (Backlog, Cross-Module Only)
 
-### Client-Specific (a2a-client)
-- [ ] **C-01**: Choose and document canonical `A2A_CLIENT_STORAGE_DIR` strategy (repo-local vs home) for dev and CI.
-- [ ] **C-02**: Formalize step-folder invariants (`client-result`, `request-to-server`, `server-response`, `messages`) and recovery rules.
-- [ ] **C-03**: Define default CORS/rate-limit/file-cap profile for standalone SDK mode.
-- [ ] **C-04**: Add client-focused simulation checklist for sanitized web DTOs.
-- [ ] **C-05**: Align client test tooling with selected simulations path strategy (`SIMULATIONS_PATH` override).
+### Cross-Module Coordination
+- [ ] **CM-01**: Keep root/module state hierarchy clean: root stores only cross-module risks, decisions, and dependencies; implementation details stay in module `DEV_STATE.md`.
+- [ ] **CM-02**: Align simulation quality gate across modules (`valid` vs `clean`) and publish one acceptance rule for CI.
+- [ ] **CM-03**: Verify production env matrix consistency across client/server/ai-integration (`A2A_SERVER_URL`, `AI_HUB_URL`, auth flags, polling budgets).
+- [ ] **CM-04**: Track stage transition criteria (`beta` -> `release-candidate`) using aggregated evidence from all module states.
+- [ ] **CM-05**: Track client session-clarity alignment with simulation contracts (`simulations/dialog`, `simulations/agent-auto-ai`) and ensure no Web DTO regressions.
+- [ ] **CM-06**: Run quarterly cross-module redundancy review (duplicate abstractions, dead adapters, obsolete compatibility layers) and publish removal decisions in module states.
+- [ ] **CM-07**: Enforce tri-role dialogue contract (`user`/`assistant`/`system`) across client session storage and Web rendering; `system` messages represent Red Room auto-responses and must be preserved end-to-end.
+- [ ] **CM-08**: Remove duplicate/overlapping root session notes blocks and keep only cross-module facts in root history.
+- [ ] **CM-09**: Run docs encoding/terminology cleanup pass (mixed glyph artifacts, mixed-language drift) in high-impact protocol docs (`AGENTS.md`, Web protocol docs, simulation workflow docs).
 
-### Server-Specific (a2a-server)
-- [ ] **S-01**: Lock transform loading mode (bundled vs `PROMPTS_TRANSFORMS_PATH`) and add startup diagnostics.
-- [ ] **S-02**: Decide fail-fast vs lenient startup when action markdown loading fails.
-- [ ] **S-03**: Define default/override storage path behavior (`REQUESTS_STORAGE_PATH`).
-- [ ] **S-04**: Standardize `LLM_POLL_*` defaults and timeout budget for daemon processing.
-- [ ] **S-05**: Freeze cwd/tmp/home allowlist policy for file actions.
-- [ ] **S-06**: Finalize production error redaction policy (`NODE_ENV`).
-- [ ] **S-07**: Set and verify `REQUEST_PROCESSOR_INTERVAL_MS` target based on queue latency SLO.
-- [ ] **S-08**: Unify `LOG_LEVEL`/`LOG_FORMAT` and Winston rotation/boot-clean strategy.
-- [ ] **S-09**: Set safe defaults for `A2A_AGENT_RAG_CHAIN_MAX` + project path envs.
+### Module Task Sources (No Duplication in Root)
+- Client execution backlog: [`a2a-client/DEV_STATE.md`](a2a-client/DEV_STATE.md)
+- Server execution backlog: [`a2a-server/DEV_STATE.md`](a2a-server/DEV_STATE.md)
+- AI integration execution backlog: [`ai-integration/DEV_STATE.md`](ai-integration/DEV_STATE.md)
 
-### AI Integration
-- [ ] Очистка `proxy_logs` (база `pending` тикетов).
-- [ ] Проверка тайм-аутов Ollama в `proxy/config.py`.
-- [ ] Убедиться, что daemon не падает при отсутствии коннекта.
-- [ ] Добавить `Ollama status check` в `health` endpoint.
-- [ ] Кэширование: проверить `storage/cache` на утечки.
+---
 
-*Обновлено: 2026-03-27 15:42**
-в 
-### Session Notes (2026-03-27)
-- [x] Root `request.md` duplicate source identified: request transform runtime defaulted output writes to repo root.
-- [x] Normalized transform runtime with dedicated `outputDir` option; dialog request transforms now write generated markdown to temp dir only.
+## Session Notes (Root, Cross-Module Only)
 
-### Session Notes (2026-03-27) - Продолжение
-- [x] Проверены health checks: Ollama (11435), AI Hub (11434), A2A Server (3000), Vite/Client API (5173)
-- [x] Проверено наличие ai-integration/DEV_STATE.md - файл существует
-- [x] Добавлены параметры maxDepth и limit в list-directory action
-- [x] Проверена корректность ссылки в таблице подсистем (ai-integration)
-- [x] Unit tests: 437 passed
-- [x] Simulations lint: 89 passed
-- [x] E2E тест: полный цикл dialog работает
-- [x] E2E тест: полный цикл dialog работает
+### 2026-03-27
+- [x] Root `request.md` output side-effect removed by transform runtime `outputDir` isolation.
+- [x] State governance policy integrated and synchronized across module state files.
+- [x] Root backlog normalized to cross-module ownership; module-specific tasks moved to module `DEV_STATE.md` files.
 
-### Session Notes (2026-03-27) - Client Session Modernization
-- [x] Added unified projection modules: `session-projection-dto.js`, `execute-projection-dto.js`.
-- [x] Added deterministic timeline builder `message-timeline.js` with explicit source order.
-- [x] Migrated Vite routes to projection modules; kept `web-*dto.js` as compatibility bridges.
-- [x] Switched web hydration defaults to projected payload (`includeContext` only by explicit debug request).
-- [x] Added modernization task docs under `tasks/00` ... `tasks/05`.
-- [x] Validation: unit tests pass; `sim:lint --all` pass; `sim:validate --sim agent-coder/3` pass.
+*Обновлено: 2026-03-27*
 
-### Session Notes (2026-03-27) - Technical Debt Cleanup
-- [x] **A-01 to A-07**: Все задачи Alternatives Migration Plan закрыты (A-01 session storage, A-02 golden simulations, A-03 upstream URLs, A-04 workspace RAG, A-05 simulations base path, A-06 TS module policy, A-07 LLM pipeline modes).
-- [x] **list-directory**: Переход на нативный readdir с maxDepth и limit.
-- [x] **Simulation Contract**: Зафиксирован baseline (valid + 0 warnings = clean), добавлены roadmap link, синхронизированы state-документы модулей.
-- [x] **AI Integration**: Создан `ai-integration/DEV_STATE.md`.
-- [x] Добавлен backlog с Client-Specific (C-01 to C-05) и Server-Specific (S-01 to S-09) задачами.
+### Session Notes (2026-03-27) - Client Session Systems
+- [x] Проверены tasks 00-05: все задачи модернизации системы сессий завершены
+- [x] Валидация: 437 unit tests passed, 89 simulations valid
+- [x] Создан план модернизации: [tasks/simulation-upgrade-plan.md](tasks/simulation-upgrade-plan.md)
+- [x] Симуляции уже соответствуют новой структуре (projection DTO, workbench, interruptTrace)
+
+### Session Notes (2026-03-27) - Session Storage Deep Analysis
+- [x] Проведен глубокий анализ системы хранения сессий
+- [x] Выявлены проблемы: 1) слишком много файлов, 2) дублирование, 3) context - black box, 4) нет единого состояния, 5) agent/dialog mixing
+- [x] Создан анализ: [tasks/session-storage-analysis.md](tasks/session-storage-analysis.md)
+- [x] **Решение принято:** Step-based storage сохраняется
+- [x] **Предложено:** Добавить session-index.json + mode flag для упрощения восстановления
+
+### Session Notes (2026-03-27) - Client Session Systems
+- [x] Проверены tasks 00-05: все задачи модернизации системы сессий завершены
+- [x] Валидация: 437 unit tests passed, 89 simulations valid
+- [x] Создан план модернизации: [tasks/simulation-upgrade-plan.md](tasks/simulation-upgrade-plan.md)
+- [x] Симуляции уже соответствуют новой структуре (projection DTO, workbench, interruptTrace)
+
+### Session Notes (2026-03-27) - Session Documentation
+- [x] Создана комплексная документация: [docs/SESSION-SYSTEMS-OVERVIEW.md](docs/SESSION-SYSTEMS-OVERVIEW.md)
+  - Promise System (async LLM)
+  - Red Room (client auto-response)
+  - Gray Room (server-only chain)
+  - Agent Mode (workbench)
+  - UI Updates (dialog sections)
+  - Session Storage (step folders)
+- [x] Созданы задачи по улучшению: tasks/06-session-architecture-clarity.md, tasks/08-async-polling-url-matrix.md

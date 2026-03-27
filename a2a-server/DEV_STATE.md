@@ -5,6 +5,14 @@
 
 ---
 
+## Scope Boundary
+
+- Этот файл хранит только server-специфичные архитектуру, риски, задачи и историю изменений.
+- Кросс-модульные решения/зависимости ведутся только в root: [`../DEV_STATE.md`](../DEV_STATE.md).
+- Не дублировать здесь client/ai-integration backlog; хранить только ссылки на них при необходимости.
+
+---
+
 ## Текущая архитектура
 
 **Stateless server** - не хранит сессии, только обрабатывает запросы:
@@ -139,6 +147,16 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 
 ---
 
+## State Governance (Inherited from Root)
+
+- Этот файл является source of truth для server-состояния и обновляется после каждого значимого действия.
+- Все задачи ведутся только со статусами и проверяемыми критериями.
+- После выполнения: фиксировать фактическое состояние, удалять неактуальное, добавлять следующий исполнимый шаг.
+- Блокеры фиксируются явно; при возможности устраняются в текущем цикле.
+- Приоритет: завершение начатого -> стабилизация -> production readiness.
+
+---
+
 ## Задачи (Next Tasks)
 
 ### Alternatives Migration Plan (server scope)
@@ -169,6 +187,24 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [ ] Добавить server-centric симуляции устойчивости: paginated `rag-search` drain, очередь `read-file` с накоплением в `context.files`, human-gate переходы между `execution.step`.
 - [ ] Сверить реализацию и протокол по `scan-directory`: в docs есть открытые TODO (glob/grouping/cache), нужно либо реализовать, либо явно ограничить контракт и схемы.
 - [ ] Разделить в `sim-validate` два режима отчётности: structural validity и contract completeness (чтобы optional-missing не терялся в общем `valid`).
+
+### Large File Decomposition (400-500+ lines)
+- [ ] **LF-S-01**: Decompose `src/transform/operations.ts` (~897) into grouped operation modules + shared JsonPath/value helpers.
+- [ ] **LF-S-02**: Decompose `src/services/core/request-processor/dialog-request-processor.ts` (~781) into request normalization, LLM step orchestration, and finalize response path.
+- [ ] **LF-S-03**: Decompose `scripts/sim-validate.ts` (~810) into scanner, validators, and report formatters.
+- [ ] **LF-S-04**: Decompose `scripts/sim-lint.ts` (~718) into lint rule registry + rule runners + reporters.
+- [ ] **LF-S-05**: Decompose `src/transform/pipeline.ts` (~481) into pipeline stages, error mapping, and pipeline context utilities.
+- [ ] **LF-S-06**: Decompose `src/actions/handlers/file-operations.ts` (~432) into read/list/write operation handlers with strict security wrappers.
+
+### Redundant Functionality Detection & Cleanup
+- [ ] **RF-S-01 inventory**: Inventory overlapping server paths (transforms, action handlers, request processors) with duplicate responsibilities.
+- [ ] **RF-S-02 rule-of-one-owner**: For each responsibility, keep exactly one owner module and mark others as deprecation targets.
+- [ ] **RF-S-03 remove-dead-branches**: Remove unreachable/deprecated code paths after test + simulation confirmation.
+- [ ] **RF-S-04 cleanup-gate**: Cleanup accepted only when `sim:lint`, `sim:validate`, and unit tests remain green.
+
+### Unusual Findings Alignment (Server/Contracts)
+- [ ] **UA-S-01 interrupt-trace-contract**: Verify and document one canonical contract for interrupt trace placement (`context.workbench.slots.interruptTrace`) across server transforms and client projection.
+- [ ] **UA-S-02 no-llm-vs-llm-step-rules**: Tighten and centralize rules for required transform files on no-LLM vs LLM steps to reduce interpretation drift in simulations.
 
 ---
 
