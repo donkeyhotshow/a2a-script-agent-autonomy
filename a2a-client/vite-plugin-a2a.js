@@ -52,7 +52,8 @@ export default function vitePluginA2a() {
             }
             if (fs.existsSync(sharedPath)) {
                 server.middlewares.use('/shared', (req, res, next) => {
-                    const filePath = path.join(sharedPath, req.url.split('?')[0]);
+                    const subPath = req.url.split('?')[0].replace(/^\//, '');
+                    const filePath = path.join(sharedPath, subPath);
                     if (fs.existsSync(filePath) && fs.statSync(filePath).isFile()) {
                         const ext = path.extname(filePath);
                         const contentTypes = {

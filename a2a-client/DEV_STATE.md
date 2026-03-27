@@ -130,7 +130,6 @@ npm run sim:validate -- --sim <name> --json
 
 ```bash
 PORT=5173           # Vite port
-WS_PORT=3002        # WebSocket
 DEFAULT_SYNC_MODE=1
 SKIP_AUTH=1
 ```
@@ -139,10 +138,8 @@ SKIP_AUTH=1
 
 ## Известные проблемы
 
-### Promise Polling не завершается
-
-**Файлы для проверки:**
-- [vite-plugin-a2a/routes/stepRoutes.js](vite-plugin-a2a/routes/stepRoutes.js)
+- В `packages/sdk/src/server/server/middleware/auth.ts` есть временный bypass (`allow all requests`) до полной auth-реализации.
+- В `packages/execution/src/script-runner/index.ts` открыты `TODO(Task-04)` по унификации `execute.script`/`result["script"]`.
 
 ---
 
@@ -151,6 +148,48 @@ SKIP_AUTH=1
 - [docs/new-request-flow/PROTOCOL.md](docs/new-request-flow/PROTOCOL.md) - Протокол
 - [AGENTS.md](AGENTS.md) - Правила работы
 - [docs/LOADER-BEHAVIOR.md](docs/LOADER-BEHAVIOR.md) - Поведение лоадера
+
+---
+
+## Задачи (Next Tasks)
+
+### Высокий приоритет (Phase 2-3)
+- [x] Проверка ESM `import http` в `stepRoutes.js`.
+- [x] Аудит `toWebExecute` - убедиться, что клиентские данные (`rag-search`, `read-file`) не просачиваются в JSON.
+- [x] Очистка `storage/sessions` (удалить тестовые сессии).
+
+### Средний приоритет (Phase 4-5)
+- [x] Сборка фронтенда: `npm run build`.
+- [x] Smoke-тест: сессия → диалог → завершение (Ollama работает).
+- [x] Проверка `LOADER-BEHAVIOR` (минимальное время 5 сек).
+
+### Simulation Contract & Docs (Complex)
+- [ ] Добавить client-specific checklist для `received.json`: в `execute` допускаются только web-safe поля (`message`/`form`/attachments), tool-actions (`read-file`, `rag-search`, `write-file`, `run-script`) должны оставаться вне `execute`.
+- [ ] Завести отдельный контроль для `buildWebExecute` / `toWebExecute`: golden-проверки на sanitized DTO и отсутствие регрессий по loader/async полям в web-ответе.
+- [ ] Формализовать требования к шагам хранения в `a2a-client/storage/sessions/*`: соответствие пары `response.json` ↔ `received.json` и явные причины, если в симуляции неполный pipeline.
+- [ ] Добавить client-ориентированные roadmap-сценарии в симуляции: paginated RAG в UI, очередь `read-file` с корректными attachments, human-gate после N единиц работы.
+
+### Client Runtime Debt (Code)
+- [ ] Закрыть `TODO(Task-04)` в `packages/execution/src/script-runner/index.ts`: унифицировать `execute.script` API и форму `result["script"]`.
+- [ ] Интегрировать script-runner с `createExecuteCode` и согласовать sandbox/config (ссылка в TODO на Task 39).
+- [ ] Убрать временный bypass в `packages/sdk/src/server/server/middleware/auth.ts` (`allow all requests`) и включить полноценную auth-проверку по окружению.
+
+---
+
+## 2026-03-27 Обновления
+
+### Исправления
+- ✅ Исправлен `vite.config.prod.ts`: удалены несуществующие Vue компоненты
+- ✅ Заменён `minify: 'terser'` на `minify: 'esbuild'`
+- ✅ Сборка проходит успешно
+- ✅ Очищены тестовые сессии
+
+### E2E Тестирование
+- ✅ Ollama запущен и работает (порт 11435)
+- ✅ Создание сессии → работает
+- ✅ Отправка сообщения → async mode → работает
+- ✅ Polling `/async` endpoint → работает
+- ✅ Выбор agent mode → работает
 
 ---
 

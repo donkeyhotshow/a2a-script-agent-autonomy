@@ -53,6 +53,7 @@
     "jsonpath-plus": "^10.4.0",
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
+    "picomatch": "^4.0.4",
     "simple-git": "^3.22.1",
     "uuid": "^9.0.1",
     "vm2": "^3.10.5",

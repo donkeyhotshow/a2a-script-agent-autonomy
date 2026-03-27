@@ -16,7 +16,7 @@
 
 ## Структура симуляций
 
-Каждая симуляция содержит обязательные файлы:
+Канонический pipeline содержит до 8 файлов (в зависимости от шага):
 - `request.json` - входные данные (schema invoke)
 - `request.md` - читаемая версия запроса
 - `response.json` - ответ сервера (action-key shape)
@@ -64,6 +64,18 @@ npm run sim:validate -- --sim <name> --json
 - Последнее обновление: 2026-03-27
 - Активные сценарии: 89 корней шагов/сценариев
 - Использование: golden standard + sim:lint/sim:validate
+- Есть warning debt в `sim:validate` (optional files not found), несмотря на общий статус `valid`
+- Требуется регулярная чистка: неактуальные исключения по file-set должны удаляться после нормализации сценариев
+
+---
+
+## Задачи (Next Tasks)
+
+- [ ] Развести в документе два уровня качества: `valid` и `clean` (без warning) для `sim:validate`.
+- [ ] Пройтись по сценариям с массовыми warning и зафиксировать по каждому: добавляем missing transform-файлы или документируем исключение.
+- [ ] Добавить недостающие roadmap-сценарии из `simulations/SCHEMA.md`: paginated `rag-search`, очередь `read-file`, human-gate после N шагов.
+- [ ] Проверить и обновить ссылки/описания, чтобы `simulations/DEV_STATE.md` не конфликтовал с `simulations/SCHEMA.md`.
+- [ ] Для сценариев без markdown-этапов (без LLM) явно маркировать expected file set, чтобы отсутствие `request.md/response.md` не воспринималось как дефект.
 
 ---
 

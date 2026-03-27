@@ -138,4 +138,26 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 
 ---
 
+## Задачи (Next Tasks)
+
+### Высокий приоритет (Phase 2-3)
+- [x] Аудит всех процессоров на `Action-Key Shape`.
+- [x] Проверка `request-processor.service.ts` - логика переключения на `agent` при наличии ключевых слов.
+- [x] Загрузка всех симуляций и проверка `received.json`.
+- [x] Полный прогон `npm run sim:validate`.
+
+### Средний приоритет (Phase 4-5)
+- [x] Логирование: добавить `sessionId` во все логи процессоров.
+- [ ] Очистка `storage/requests` (удалить старые файлы).
+
+### Simulation Contract & Docs (Complex)
+- [ ] Выравнять серверный контракт transforms: для no-LLM шагов определить строгое правило по `server-transforms-request.json` и привести к нему `sim:validate`/`sim-lint` сообщения.
+- [ ] Добавить в процессоры явную диагностику contract warnings (не только `valid`): чтобы в CI видно было “warning debt” по конкретному simulation step.
+- [ ] Уточнить server policy для сокращённых golden-наборов: в каких action/step допускается отсутствие transform-файлов и где это фиксируется в документации.
+- [ ] Добавить server-centric симуляции устойчивости: paginated `rag-search` drain, очередь `read-file` с накоплением в `context.files`, human-gate переходы между `execution.step`.
+- [ ] Сверить реализацию и протокол по `scan-directory`: в docs есть открытые TODO (glob/grouping/cache), нужно либо реализовать, либо явно ограничить контракт и схемы.
+- [ ] Разделить в `sim-validate` два режима отчётности: structural validity и contract completeness (чтобы optional-missing не терялся в общем `valid`).
+
+---
+
 *Обновлено: 2026-03-27*

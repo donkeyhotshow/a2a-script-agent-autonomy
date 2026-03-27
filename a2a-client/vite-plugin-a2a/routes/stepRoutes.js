@@ -19,6 +19,7 @@ import { chainSyncInvokesForAgentTools } from './utils/agent-rag-chain.js';
 import { isPromisePollComplete } from '../storage/promise-status.js';
 
 import fs from 'fs';
+import http from 'http';
 import { normalizePromisePollStatus, validateClientResultPayload } from '../../shared/client-api-envelope.mjs';
 import { getA2aServerBaseUrl } from '../../shared/a2a-server-base.js';
 
@@ -43,7 +44,6 @@ function runViteClientPromisePoll({
     }
 
     const a2aServerUrl = getA2aServerBaseUrl();
-    const xhr = require('http');
     const urlObj = new URL(`${a2aServerUrl}/api/v1/requests/${promiseId}/result`);
 
     const reqOptions = {
@@ -54,10 +54,11 @@ function runViteClientPromisePoll({
         headers: { 'Content-Type': 'application/json' },
     };
 
-    const xhrReq = xhr.request(reqOptions, (xhrRes) => {
+    const xhrReq = http.request(reqOptions, (xhrRes) => {
         let data = '';
         xhrRes.on('data', (chunk) => (data += chunk));
         xhrRes.on('end', () => {
+            console.log(`[VitePlugin-Poll] Status [${xhrRes.statusCode}] for promise [${promiseId}]`);
             try {
                 if (!data || data.trim() === '') {
                     throw new Error('Empty response from A2A server');
@@ -79,6 +80,7 @@ function runViteClientPromisePoll({
                         promiseStatus?.result?.message ||
                         promiseStatus?.message ||
                         null;
+                    console.log(`[VitePlugin-Poll] COMPLETED promise [${promiseId}] at step [${currentStep}]. msg:`, assistantMessage);
                     if (assistantMessage) {
                         session.messages = session.messages || [];
                         session.messages.push({
@@ -351,7 +353,6 @@ export function createStepRoutes({ cwd }) {
                     const stepDir = stepHandlers.getNewStepDir(cwd, sessionId, nextStepNum);
                     if (!fs.existsSync(stepDir)) fs.mkdirSync(stepDir, { recursive: true });
 
-                    const xhr = require('http');
                     const a2aServerUrl = getA2aServerBaseUrl();
                     const urlObj = new URL(`${a2aServerUrl}/api/v1/invoke`);
 
@@ -366,10 +367,11 @@ export function createStepRoutes({ cwd }) {
                         headers: { 'Content-Type': 'application/json' }
                     };
 
-                    const xhrReq = xhr.request(reqOptions, (xhrRes) => {
+                    const xhrReq = http.request(reqOptions, (xhrRes) => {
                         let data = '';
                         xhrRes.on('data', (chunk) => (data += chunk));
                         xhrRes.on('end', async () => {
+                            console.log(`[VitePlugin-Invoke] Response [${xhrRes.statusCode}] from A2A Server`);
                             try {
                                 console.log('[VitePlugin] A2A response:', xhrRes.statusCode, 'data:', data.substring(0, 200));
                                 let parseErrMsg = null;

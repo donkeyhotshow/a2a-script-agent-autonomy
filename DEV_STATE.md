@@ -162,14 +162,77 @@ cd a2a-client && npm test
 
 ## Известные проблемы
 
-### Promise Polling не завершается
+- `sim:validate` часто возвращает `valid` вместе с warning (`Optional file not found`) — это contract debt, не “clean” статус.
+- В таблице подсистем есть ссылка на `ai-integration/DEV_STATE.md`, но файл отсутствует в текущем workspace.
 
-**Симптомы:**
-- Promise остается в статусе "pending" в `server-promise.json`
-- A2A Server уже вернул результат, но Client API не видит завершения
+---
 
-**Файлы для проверки:**
-- [`a2a-client/vite-plugin-a2a/routes/stepRoutes.js`](a2a-client/vite-plugin-a2a/routes/stepRoutes.js) - логика polling
+## DEV_STATE Usage Rules
+
+- **Source of truth:** каждый модуль ведет свой `DEV_STATE.md`; root фиксирует только кросс-модульные риски, решения и зависимости.
+- **When to update:** обновлять в начале и в конце каждой рабочей сессии, плюс при любом изменении статуса риска/задачи.
+- **Task quality:** каждая задача должна быть проверяемой (что сделать, где, как проверить), без общих формулировок.
+- **Status model:** использовать два уровня качества для симуляций: `valid` (структурно) и `clean` (без warnings).
+- **Ownership:** у каждой P0/P1 задачи должен быть владелец (модуль) и целевой этап (Phase / milestone).
+
+## DEV_STATE Hygiene & Cleanup Requirements
+
+- **Mandatory cleanup:** удалять устаревшие/дублирующие пункты после закрытия, не оставлять “мертвые” roadmap-элементы.
+- **No contradiction:** нельзя одновременно держать “No active problems” и открытый технический долг в том же файле.
+- **Link integrity:** каждая ссылка на модульный state-файл должна вести на существующий файл.
+- **Aging control:** задачи без обновления >14 дней переносить в отдельный backlog-блок с причиной блокировки.
+- **Consistency check:** минимум раз в неделю сверять `DEV_STATE.md` ↔ `docs/DEV_STATE.md` ↔ `simulations/DEV_STATE.md`.
+
+---
+
+## Roadmap (Simple → Complex)
+
+### Фаза 1: Окружение (Simple)
+- [x] Проверка портов (`11435`, `11434`, `3000`, `5173`).
+- [x] Валидация `ENCRYPTION_KEY` (строго 32 символа) во всех `.env`.
+- [x] Проверка доступности моделей в Ollama (`qwen3:8b`).
+
+### Фаза 2: Валидация компонентов (Moderate)
+- [x] Исправление `ReferenceError: require` в `stepRoutes.js`.
+- [x] Исправление путей `/shared` в `vite-plugin-a2a.js`.
+- [x] Запуск unit-тестов сервера: `cd a2a-server && npm run test`.
+- [x] Запуск unit-тестов клиента: `cd a2a-client && npm run test`.
+
+### Фаза 3: Протокол и Симуляции (Complex)
+- [x] Аудит симуляций на соответствие `Action-Key Shape` (никаких `content` в корне `result`).
+- [x] Очистка `received.json` от клиентских ключей (`read-file`, `rag-search` и т.д. запрещены в `execute`).
+- [x] Полный прогон: `npm run sim:validate -- --all --json`.
+
+### Фаза 4: Сквозное тестирование (E2E)
+- [x] Ручной Smoke-тест: Создание сессии → Диалог → Обработка ответа.
+- [x] Проверка сохранения шагов в `storage/sessions` (stateless-режим).
+- [x] Проверка работы Polling с новыми логами в консоли.
+
+### Фаза 5: Production Readiness
+- [x] Сборка фронтенда: `cd a2a-client && npm run build` - **исправлено**.
+- [x] Проверка `SKIP_AUTH=0` (безопасность).
+- [x] Финальный `health-check` всей цепочки.
+- [x] E2E тестирование: сессия → диалог → agent mode (Ollama работает).
+
+---
+
+## Технический долг и новые задачи
+
+### Refactoring (Moderate)
+- [ ] `list-directory`: Перейти на нативный `readdir({recursive: true})` (Node.js 20+).
+- [ ] `list-directory`: Заменить самодельный regex на `picomatch` для полноценной поддержки glob.
+- [ ] `list-directory`: Добавить параметры `maxDepth` и `limit` для предотвращения перегрузки.
+
+### AI Integration & Architecture (Complex)
+- [x] Документировать REST-поток тикетов (`/promises/pending` -> `/promise/<id>/execute`) - см. `ai-integration/docs/AI-INTEGRATION-UI.md`
+- [ ] Восстановить/создать `ai-integration/DEV_STATE.md` и синхронизировать ссылку в таблице подсистем (сейчас ссылка есть, файла в workspace нет).
+
+### Simulation Contract & Docs (Complex)
+- [ ] Зафиксировать единый cross-repo baseline: что считаем “clean” для симуляций на уровне репозитория (`valid + 0 warnings` vs `valid + warnings`) и вынести это в единое правило для всех `DEV_STATE.md`.
+- [ ] Добавить агрегированный отчёт по долгам симуляций в root: топ-папки с warning-уровнем (например `orchestrator-dialog`, `phpunit-deprecations`, `task-decomposition`) и план снижения по итерациям.
+- [ ] Утвердить policy для golden-симуляций на уровне монорепо: полный pipeline или документированное исключение с owner/причиной/сроком.
+- [ ] Привязать roadmap из `simulations/SCHEMA.md` к межмодульным milestone (client + server): paginated RAG, read-file queue, human-gate chunking.
+- [ ] Синхронизировать state-документы модулей (`docs/DEV_STATE.md`, `simulations/DEV_STATE.md`, `a2a-client/DEV_STATE.md`, `a2a-server/DEV_STATE.md`) по единому шаблону статуса: Risks, Warning Debt, Next Tasks.
 
 ---
 

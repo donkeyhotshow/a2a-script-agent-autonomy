@@ -284,15 +284,33 @@
         // Canonical dialog contract: execute.form.textarea + execute.message (message shown via history, input stays open)
         // execute.form.choices: choice buttons
         // execute.message (+ optional llmMessage, attachments): Client API sanitizes rag-search/read-file into these
-        if (execute.form) {
-            return renderForm(contentEl, execute.form, executionStepHtml, progressBarHtml, completionBannerHtml, resultHtml, taskFlowRef, store);
-        }
+        // Logic:
+        // - If form.choices exists → always show choice form (user needs to select option)
+        // - If form.textarea/input[] exists → always show input form (user needs to enter data)
+        // - If only message → show message (response from LLM, no input needed)
         const attHtml = renderAttachmentsBlock(execute.attachments);
         const mainText = messageBodyText(execute.message);
         const llmText = messageBodyText(execute.llmMessage);
         const hasMain = mainText.trim().length > 0;
         const hasLlm = llmText.trim().length > 0;
-        if (hasMain || hasLlm || attHtml) {
+        const hasMessage = hasMain || hasLlm;
+        const hasForm = execute.form && typeof execute.form === 'object';
+
+        // Check what type of form we have
+        const formChoices = hasForm ? (execute.form.choices || execute.form.meta?.routerChoices) : null;
+        const hasChoices = Array.isArray(formChoices) && formChoices.length > 0;
+        const hasTextarea = hasForm && execute.form.textarea && typeof execute.form.textarea === 'object';
+        const hasInputs = hasForm && (Array.isArray(execute.form.input) || Array.isArray(execute.form.inputs));
+        const isInputForm = hasTextarea || hasInputs;
+
+        // Form should show when:
+        // - choices exist (user must select option)
+        // - input form exists (user must enter data)
+        if (hasChoices || isInputForm) {
+            return renderForm(contentEl, execute.form, executionStepHtml, progressBarHtml, completionBannerHtml, resultHtml, taskFlowRef, store);
+        }
+        // Message: show when there's actual message content (response from LLM)
+        else if (hasMain || hasLlm || attHtml) {
             return renderWebExecuteMessage(
                 contentEl,
                 execute,

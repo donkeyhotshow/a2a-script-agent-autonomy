@@ -8,7 +8,8 @@ export { databaseConfigSchema, type DatabaseConfig } from './database.schema.js'
 export { aiConfigSchema, type AIConfig } from './ai.schema.js';
 export { securityConfigSchema, type SecurityConfig } from './security.schema.js';
 
-// TODO: Add remaining schemas (server, proxy, etc.) in next batch
+
+// Barrel exports for port, database, ai, and security schemas
 
 import { z } from 'zod';
 
