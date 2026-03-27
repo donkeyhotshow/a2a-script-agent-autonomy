@@ -180,8 +180,8 @@ SKIP_AUTH=1
 ## Задачи (Next Tasks)
 
 ### Alternatives Migration Plan (client scope)
-- [ ] **C-01 client-filesystem-root**: choose and document canonical `A2A_CLIENT_STORAGE_DIR` strategy (repo-local vs home) for dev and CI.
-- [ ] **C-02 session-storage-layout**: formalize step-folder invariants (`client-result`, `request-to-server`, `server-response`, `messages`) and recovery rules, including explicit persistence rules for `system` role messages (Red Room auto-responses).
+- [x] **C-01 client-filesystem-root**: choose and document canonical `A2A_CLIENT_STORAGE_DIR` strategy (repo-local vs home) for dev and CI. See [`docs/C-01-storage-strategy.md`](docs/C-01-storage-strategy.md).
+- [x] **C-02 session-storage-layout**: formalize step-folder invariants (`client-result`, `request-to-server`, `server-response`, `messages`) and recovery rules, including explicit persistence rules for `system` role messages (Red Room auto-responses).
 - [x] **C-03 sdk-http-limits**: define default CORS/rate-limit/file-cap profile for standalone SDK mode and add contract tests.
 - [x] **C-04 golden-simulations**: add client-focused simulation checklist for sanitized web DTOs (`execute` must stay web-safe).
 - [x] **C-05 simulations-base-path**: align client test tooling with selected simulations path strategy (`SIMULATIONS_PATH` override support).
@@ -227,7 +227,7 @@ SKIP_AUTH=1
 
 ### Session Clarity Alignment (based on simulations/dialog + simulations/agent-auto-ai)
 - [x] **SC-01 session-view-model**: Introduce `session-view-model.js` as single adapter from `received.json` shapes to UI state (`choice-form`, `input-form`, `message+form`, `message-only`, `completed`).
-- [ ] **SC-02 session-stage-machine**: Add explicit `session-stage-machine.js` (`routing`, `dialog-input`, `agent-tool-loop`, `awaiting-async`, `completed`) driven by `execute` + `context.execution`.
+- [x] **SC-02 session-stage-machine**: Add explicit `session-stage-machine.js` (`routing`, `dialog-input`, `agent-tool-loop`, `awaiting-async`, `completed`) driven by `execute` + `context.execution` + `asyncPending` (tests: `tests/unit/session-stage-machine.test.mjs`).
 - [x] **SC-03 history-projection-boundary**: Add `history-projection.js` that accepts only canonical server payload (`context.history`, `context.files`, `workbench`) and emits deterministic timeline records with mandatory support for `system` role entries.
 - [x] **SC-04 project-daemon-registry**: Mirror daemon clarity pattern for sessions via `session-background-registry.js` keyed by `projectId + sessionId` (pollers, timers, status).
 - [x] **SC-06 web-dto-contract-tests**: Add tests from simulation fixtures (`dialog/*/received.json`, `agent-auto-ai/*/received.json`) to validate all supported execute variants in one matrix.
@@ -236,7 +236,7 @@ SKIP_AUTH=1
 - [x] **SC-09 system-message-policy**: Define and implement Web UI policy for `system` messages (Red Room auto-responses): rendering style, ordering in timeline, and non-lossy persistence in `messages.json`.
 
 ### Session Clarity Rollout Order
-- [ ] **SCR-1**: Implement `SC-01` + `SC-02` first (no UI redesign; behavior-preserving).
+- [x] **SCR-1**: Implement `SC-01` + `SC-02` first (no UI redesign; behavior-preserving).
 - [ ] **SCR-2**: Implement `SC-04` to make per-project/per-session background processes explicit.
 - [x] **SCR-3**: Implement `SC-03` only (keep UI minimal; no new visualization features).
 - [x] **SCR-4**: Lock with `SC-06` fixture matrix tests and update docs (`SC-08`).

@@ -1,68 +1,33 @@
-# Запуск системы a2a-script-agent
+# System Startup Guide
 
-## Обзор архитектуры
+## Architecture
 
-Система состоит из следующих компонентов:
+| Component | Port | Role |
+|-----------|------|------|
+| Web Browser | 5173 | UI |
+| a2a-client SDK | 3001 | Client API |
+| a2a-server | 3000 | Main Server |
+| ai-integration | 11434 | AI Proxy |
+| Ollama | 11435 | LLM |
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Web Browser                             │
-│                   (http://localhost:5173)                    │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-        ┌─────────────▼─────────────┐
-        │   a2a-client (SDK)        │
-        │   Client Server           │
-        │   Port: 3001             │
-        └─────────────┬─────────────┘
-                      │
-        ┌─────────────▼─────────────┐
-        │   a2a-server              │
-        │   Main Server             │
-        │   Port: 3000             │
-        └─────────────┬─────────────┘
-                      │
-        ┌─────────────▼─────────────┐
-        │   ai-integration          │
-        │   AI Proxy                │
-        │   Port: 11434             │
-        └─────────────┬─────────────┘
-                      │
-        ┌─────────────▼─────────────┐
-        │   Ollama                  │
-        │   LLM Service             │
-        │   Port: 11435            │
-        └───────────────────────────┘
-```
+---
 
-## Быстрый запуск
+## Quick Start
 
 ### Windows
-
 ```bash
-# Запуск всех сервисов
-start-all.bat
-
-# Остановка всех сервисов
-kill-all.bat
-
-# Тест рестарта
-test-restart.bat
+start-all.bat    # Start all services
+kill-all.ps1     # Stop all services
 ```
 
 ### Linux/Mac
-
 ```bash
-# Запуск всех сервисов
-bash start-all.sh
-
-# Остановка
-pkill -f "ollama"
-pkill -f "uvicorn"
-pkill -f "node"
+bash start-all.sh    # Start all services
 ```
 
-## Ручной запуск
+---
+
+## Manual Startup (Sequential)
 
 ### 1. Ollama (LLM)
 

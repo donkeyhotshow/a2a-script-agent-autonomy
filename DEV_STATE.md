@@ -1,11 +1,10 @@
-# DEV_STATE - Общее состояние проекта (2026-03-27, verified)
+# DEV_STATE - 2026-03-27 (verified)
 
-> Текущее состояние системы для работы до продакшена.
-> Методика: работаем по методике с дев файлами - пишем дев файл всегда, убираем ненужное всегда, двигаемся вперед всегда
+Current system state for production work. Methodology: always write DEV_STATE, always clean, always move forward.
 
 ---
 
-## ⚠️ КРИТИЧЕСКИЕ ИЗМЕНЕНИЯ
+## CRITICAL CHANGES
 
 ### 1. A2A Server - STATELESS
 
@@ -19,152 +18,115 @@
 - Конфигурация: [`shared/router-static-choices.json`](shared/router-static-choices.json)
 - Обработка: [`a2a-server/src/config/router-static.ts`](a2a-server/src/config/router-static.ts)
 
-### 3. Action-Key Shape (ОБЯЗАТЕЛЬНО)
+### 3. Action-Key Shape (MANDATORY)
 
 ```json
-// ✅ Правильно:
+// CORRECT:
 { "execute": { "script": { ... } } }
 { "result": { "read-file": { "path": "...", "content": "..." } } }
 
-// ❌ Неправильно:
+// INCORRECT:
 { "execute": { "action": "read-file", "file": "..." } }
 { "result": { "content": "..." } }
 ```
 
 ---
 
-## Архитектура системы
+## System Architecture
 
 ```
-┌──────────────────┐     ┌────────────────┐     ┌─────────────┐     ┌─────────────┐
-│   Web UI :5173   │────▶│ Client API     │────▶│ A2A Server  │────▶│ AI Hub      │
-│   (Vite + API)   │     │ :5173/api/a2a  │     │ :3000       │     │ :11434      │
-└──────────────────┘     └───────┬────────┘     └──────┬──────┘     └──────┬──────┘
-                                 │                    │                   │
-                                 ▼                    │                   ▼
-                        ┌───────────────┐            │             ┌─────────────┐
-                        │   storage/    │            │             │   Ollama    │
-                        │  (sessions)   │            │             │   :11435    │
-                        └───────────────┘            │             └─────────────┘
-                                                   │
-                                              (stateless)
+Web UI (5173) → Client API (5173/api/a2a) → A2A Server (3000, stateless) → AI Hub (11434)
+Session Storage ← Client API ← Ollama (11435)
 ```
 
 ---
 
 ## Ports
 
-| Порт | Компонент | Описание |
-|------|-----------|----------|
-| 11435 | Ollama | Локальная LLM |
-| 11434 | AI Integration | Прокси / promise → Ollama |
-| 3000 | a2a-server | A2A API сервер (stateless) |
-| 5173 | Vite Dev | Web UI + Client API |
+| Port | Component | Role |
+|------|-----------|------|
+| 11435 | Ollama | Local LLM |
+| 11434 | AI Integration | Proxy to Ollama |
+| 3000 | a2a-server | API server (stateless) |
+| 5173 | Vite | Web UI + Client API |
 
 ---
 
-## Переменные окружения
+## Environment Variables
 
-```bash
-# Development
+```
 SKIP_AUTH=1
-ENCRYPTION_KEY=12345678901234567890123456789012
-JWT_SECRET=12345678901234567890123456789012
+ENCRYPTION_KEY=<32-char>
+JWT_SECRET=<32-char-min>
 DEFAULT_SYNC_MODE=1
 ```
 
 ---
 
-## Быстрый старт
-
-### Windows
+## Quick Start
 
 ```bash
-# Запуск всех компонентов
 start-all.bat
-
-# Проверка
 curl http://localhost:3000/health
 curl http://localhost:5173/api/a2a/projects
-```
-
-### Docker (AI Integration)
-
-```bash
-cd ai-integration
-docker-compose up -d
+cd ai-integration && docker-compose up -d
 ```
 
 ---
 
-## Подсистемы
+## Subsystems
 
-| Подсистема | Описание | Файл состояния | Документация |
-|------------|----------|----------------|--------------|
-| **a2a-client** | Web UI, Client API, Session Storage | [`a2a-client/DEV_STATE.md`](a2a-client/DEV_STATE.md) | [`a2a-client/docs/*`](a2a-client/docs/) |
-| **a2a-server** | Request Processing, Router, Transform | [`a2a-server/DEV_STATE.md`](a2a-server/DEV_STATE.md) | [`a2a-server/docs/*`](a2a-server/docs/) |
-| **ai-integration** | AI Proxy, Ollama, Promises, Daemon | [`ai-integration/DEV_STATE.md`](ai-integration/DEV_STATE.md) | [`ai-integration/docs/*`](ai-integration/docs/) |
-
----
-
-## AI-Integration Work Lock
-
-- Статус: **BLOCKED**.
-- Все execution-задачи по `ai-integration` ведутся только в [`ai-integration/DEV_STATE.md`](ai-integration/DEV_STATE.md).
-- Работы по `ai-integration` не запускать до завершения активных задач в [`a2a-client/DEV_STATE.md`](a2a-client/DEV_STATE.md) и [`a2a-server/DEV_STATE.md`](a2a-server/DEV_STATE.md).
+| Module | State | Docs |
+|--------|-------|------|
+| a2a-client | [DEV_STATE.md](a2a-client/DEV_STATE.md) | [docs/](a2a-client/docs/) |
+| a2a-server | [DEV_STATE.md](a2a-server/DEV_STATE.md) | [docs/](a2a-server/docs/) |
+| ai-integration | [DEV_STATE.md](ai-integration/DEV_STATE.md) | [docs/](ai-integration/docs/) |
 
 ---
 
-## Проверка работоспособности
+## Work Locks
+
+| Lock | Status | Note |
+|------|--------|------|
+| ai-integration execution | BLOCKED | Tasks only in [ai-integration/DEV_STATE.md](ai-integration/DEV_STATE.md) |
+| Unblock when | — | a2a-client and a2a-server tasks completed |
+
+---
+
+## Health Checks
 
 ```bash
-# Server (stateless)
-curl http://localhost:3000/health
-# {"status":"ok","mode":"stateless"}
-
-# AI Integration
-curl http://localhost:11434/health
-
-# Ollama
-curl http://localhost:11435/api/tags
-
-# Client API (Vite proxy)
-curl http://localhost:5173/api/a2a/projects
+curl http://localhost:3000/health              # A2A Server
+curl http://localhost:11434/health             # AI Integration
+curl http://localhost:11435/api/tags           # Ollama
+curl http://localhost:5173/api/a2a/projects    # Client API
 ```
 
 ---
 
-## Тестирование
-
-### Simulations (from repo root)
+## Testing
 
 ```bash
-# Lint
+# Simulations
 npm run sim:lint -- --all --json
-
-# Validate
 npm run sim:validate -- --all --json
-```
 
-### Unit tests
-
-```bash
-# a2a-server
+# Unit tests
 cd a2a-server && npm run test
-
-# a2a-client
 cd a2a-client && npm test
 ```
 
 ---
 
-## Ссылки
+## References
 
-- [AGENTS.md](AGENTS.md) - Правила работы агентов, включая Operational Protocol
-- [docs/new-request-flow/PROTOCOL.md](docs/new-request-flow/PROTOCOL.md) - Протокол
-- [a2a-server/docs/production/FULL_LAUNCH_PLAN.md](a2a-server/docs/production/FULL_LAUNCH_PLAN.md) - Полный план запуска
-- [simulations/SCHEMA.md](simulations/SCHEMA.md) - Симуляции
-- **Модульные DEV_STATE:** [a2a-client/DEV_STATE.md](a2a-client/DEV_STATE.md), [a2a-server/DEV_STATE.md](a2a-server/DEV_STATE.md), [ai-integration/DEV_STATE.md](ai-integration/DEV_STATE.md) — каждый должен содержать ссылки на свою документацию
+| Document | Purpose |
+|----------|---------|
+| [AGENTS.md](AGENTS.md) | Agent rules, Operational Protocol |
+| [DOCUMENTATION-MACHINE-READABLE.md](docs/DOCUMENTATION-MACHINE-READABLE.md) | Doc standards |
+| [simulations/SCHEMA.md](simulations/SCHEMA.md) | Simulation contract |
+| [docs/ENV-MATRIX.md](docs/ENV-MATRIX.md) | Environment matrix |
+| Module DEV_STATE | [a2a-client](a2a-client/DEV_STATE.md), [a2a-server](a2a-server/DEV_STATE.md), [ai-integration](ai-integration/DEV_STATE.md) |
 
 ---
 
@@ -192,35 +154,28 @@ cd a2a-client && npm test
 - **Aging control:** задачи без обновления >14 дней переносить в отдельный backlog-блок с причиной блокировки.
 - **Consistency check:** минимум раз в неделю сверять `DEV_STATE.md` ↔ `docs/DEV_STATE.md` ↔ `simulations/DEV_STATE.md`.
 
-## State Governance Protocol (Mandatory)
+## Governance
 
-Этот root `DEV_STATE.md` и связанные state-файлы являются источником истины для текущего состояния разработки.
+**Responsibilities:**
+- Update state after each significant action
+- Mark complete, archive stale, lock decisions
+- Closed-loop: analyze → execute → update → cleanup → plan → check readiness → repeat
+- Document transitions with justification
+- Sync parallel tracks (no logic conflicts)
+- Track maturity: prototype → alpha → beta → release-candidate → production
 
-### AI Role (combined)
-- System architect
-- Task manager
-- Executor
-- State controller
+**Strict Rules:**
+- No abstract reasoning without state entry
+- Every task has status
+- Every completion is recorded
+- Every uncertainty logged as risk/question
 
-### Mandatory Responsibilities
-- **State updates:** после каждого значимого действия обновлять состояние, помечать завершенное как `DONE`, удалять/архивировать устаревшее, фиксировать решения и ограничения.
-- **Task management:** поддерживать активные задачи, автоматически создавать следующие задачи, декомпозировать крупные, отмечать зависимости/приоритеты, фиксировать или устранять блокеры.
-- **Closed loop execution:** всегда идти по циклу: analyze state -> execute max possible -> update state -> cleanup -> plan next -> milestone readiness check -> repeat.
-- **State transitions:** переходы между state-документами допускаются только с фиксацией, обоснованием и отражением в source+target документах.
-- **Parallel state tracks:** допускается параллельная работа по нескольким state-документам с синхронизацией shared решений и без логических конфликтов.
-- **Maturity stages:** продвигать систему через `prototype -> alpha -> beta -> release-candidate -> production` с явными критериями и фиксацией переходов.
+**Priority:**
+1. Complete started work
+2. Stabilize system
+3. Prepare for production
 
-### Strict Rules
-- Никаких абстрактных рассуждений без отражения в state.
-- Никаких задач без статуса.
-- Никаких завершений без фиксации.
-- Любая неопределенность фиксируется как риск или вопрос.
 
-### Priority Policy
-- 1) Завершение начатого.
-- 2) Стабилизация системы.
-- 3) Подготовка к production.
-- Эстетика/рефакторинг допускаются только если ускоряют production readiness.
 
 
 

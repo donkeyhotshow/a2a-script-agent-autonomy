@@ -1,53 +1,45 @@
 # A2A Script Agent
 
-## 📌 New Developments (2026-03-20)
+**Status: 2026-03-27 (Production Readiness Phase)**
 
-- Transition to **stateless A2A Server** (no server-side session storage)
-- Implementation of **keyword-based routing** (replacing LLM router)
-- Mandatory **action-key shape** for all `execute` and `result` objects
-- Introduction of **context fields**: `execution`, `history`, `workbench`
-- New **step-based session storage** in Client API (numbered folders)
-- Adoption of **DEV_STATE methodology**:
-  - Always write/update DEV_STATE file before and after work
-  - Keep only necessary information for current work toward production
-  - Remove unnecessary or outdated information regularly
-  - Always move forward with progress
+## Key Changes (2026-03-20)
 
-## 🚀 Quick Start (Unified Orchestrator)
+| Change | Impact |
+|--------|--------|
+| Stateless A2A Server | No server-side session storage |
+| Keyword-based routing | Replaces LLM router |
+| Action-key shape | Mandatory for execute/result |
+| Context fields | execution, history, workbench |
+| Step-based storage | Numbered folders in Client API |
+| DEV_STATE methodology | Always update before/after work |
 
-The project now uses a unified orchestrator to manage all services with health gating and graceful shutdown.
+---
+
+## Quick Start
 
 ```bash
-# 1. Setup environment
-copy .env.example .env
-# Edit .env and set your secrets
+# 1. Setup
+cp .env.example .env
+# Edit .env with your secrets
 
-# 2. Install dependencies
+# 2. Install
 npm install
 cd a2a-server && npm install && cd ..
 cd a2a-client && npm install && cd ..
 
-# 3. Start all services
+# 3. Run
 npm run dev
 ```
 
-### Available Commands
+---
 
-| Command | Description |
-|---------|-------------|
+## Commands
+
+| Command | Purpose |
+|---------|---------|
 | `npm run dev` | Start all services (Server + Client + Infrastructure) |
-
-### Alternative: Standardized Start/Stop Scripts
-
-For environments without npm orchestrator or when you need direct process control, use the standardized scripts that implement **dual verification** (port + process checks):
-
-**Windows:**
-```powershell
-# Start all services with pre-flight cleanup
-.\start-all.bat
-
-# Stop all services with dual verification
-.\kill-all.ps1
+| `bash start-all.sh` (Linux/Mac) | Manual start with verification |
+| `.\start-all.bat` (Windows) | Manual start with verification |
 ```
 
 **Linux/macOS:**

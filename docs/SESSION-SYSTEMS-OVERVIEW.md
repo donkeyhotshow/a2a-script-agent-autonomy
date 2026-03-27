@@ -1,83 +1,53 @@
 # Session Systems Overview
 
-> Комплексная документация по всем системам, связанным с сессиями: от промисов до UI.
+Comprehensive documentation of session-related systems: promises, async processing, UI.
 
 ## Architecture Layers
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                        WEB UI (:5173)                           │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌────────────────┐ │
-│  │  TaskFlow       │  │  SessionStore   │  │  WindowState   │ │
-│  │  (render.js)   │  │  (global state) │  │  (per-window)  │ │
-│  └────────┬────────┘  └────────┬────────┘  └───────┬────────┘ │
-│           │                    │                  │          │
-│           └────────────────────┼──────────────────┘          │
-│                                ▼                              │
-│                    ┌─────────────────────┐                  │
-│                    │  SessionStoreResolver │                  │
-│                    │  (provider pattern)  │                  │
-│                    └─────────────────────┘                  │
-└────────────────────────────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌────────────────────────────────────────────────────────────────┐
-│                    Client API / Vite Plugin                    │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
-│  │ Session Routes  │  │  Step Routes    │  │ Projections  │ │
-│  │ (GET/POST)     │  │  (/next, /async)│  │ (DTOs)       │ │
-│  └─────────────────┘  └─────────────────┘  └──────────────┘ │
-│                                │                              │
-│                    ┌───────────┴───────────┐                 │
-│                    │   Step Handlers      │                 │
-│                    │   (file I/O)         │                 │
-│                    └─────────────────────┘                 │
-└────────────────────────────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌────────────────────────────────────────────────────────────────┐
-│                       A2A Server (:3000)                        │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
-│  │  Invoke Handler │  │   Router        │  │ Transforms   │ │
-│  │  (sync/async)  │  │  (dialog/agent) │  │ (workbench)  │ │
-│  └─────────────────┘  └─────────────────┘  └──────────────┘ │
-└────────────────────────────────────────────────────────────────┘
-                                 │
-                                 ▼
-┌────────────────────────────────────────────────────────────────┐
-│                     AI Integration (:11434)                     │
-│  ┌─────────────────┐  ┌─────────────────┐  ┌──────────────┐ │
-│  │  Promise Routes │  │   Daemon        │  │   Ollama     │ │
-│  │  (async exec)  │  │  (background)   │  │  (LLM)       │ │
-│  └─────────────────┘  └─────────────────┘  └──────────────┘ │
-└────────────────────────────────────────────────────────────────┘
+Web UI (5173)
+  ├─ TaskFlow (render.js)
+  ├─ SessionStore (global state)
+  └─ WindowState (per-window)
+         ↓
+Client API (Vite Plugin)
+  ├─ Session Routes (GET/POST)
+  ├─ Step Routes (/next, /async)
+  └─ Step Handlers (file I/O)
+         ↓
+A2A Server (3000)
+  ├─ Invoke Handler (sync/async)
+  ├─ Router (dialog/agent)
+  └─ Transforms (workbench)
+         ↓
+AI Integration (11434)
+  ├─ Promise Routes (async exec)
+  ├─ Daemon (background)
+  └─ Ollama (LLM)
 ```
 
 ---
 
-## 1. Promise System (Async LLM Processing)
+## Promise System (Async LLM Processing)
 
-### Overview
-Когда LLM запрос требует длительной обработки, сервер возвращает `promiseId`. Клиент опрашивает статус до завершения.
+Long-running LLM requests return `promiseId`. Client polls for completion.
 
 ### Flow
 
 ```
-Client API                    A2A Server                AI Integration
-    │                            │                           │
-    │ POST /invoke              │                           │
-    │──────────────────────────>│                           │
-    │                           │ POST /prompt              │
-    │                           │─────────────────────────>│
-    │                           │<─────────────────────────│
-    │{promiseId:"prom_xxx"}    │                           │
-    │<──────────────────────────│                           │
-    │                           │                           │
-    │ GET /async               │                           │
-    │──────────────────────────>│                           │
-    │                           │  GET /promise/prom_xxx/status
-    │                           │──────────────────────────>│
-    │                           │<──────────────────────────│
+Client API → A2A Server → AI Integration
+  POST /invoke with task
+    ↓
+  Server returns promiseId (no result yet)
+    ↓
+  Client polls GET /async (every 2s)
+    ↓
+  Server checks promise status via AI Integration
+    ↓
+  When ready: response with execute/context/result
+    ↓
+  Client renders
+```
     │{status:"processing"}    │                           │
     │<──────────────────────────│                           │
     │                           │                           │

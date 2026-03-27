@@ -19,35 +19,30 @@ Client/UI   Client API      Server/Core       LLM/External AI
    │<───────────│                │                  │
 ```
 
-## Core Terms
+## Core Concepts
 
-### Normal Cycle
-
-Standard user message flow:
-
-1. User sends input.
-2. Client API forwards request to server.
-3. Server prepares request and calls LLM when needed.
-4. Server returns final response.
-5. Client renders response.
+| Concept | Definition |
+|---------|-----------|
+| Normal Cycle | User input through server (with optional LLM) and back to client |
+| Red Room | Client auto-replies to tool execute; no user input required |
+| Gray Room | Server substeps before final client response |
+| Black Room | Future proxy optimization (not active) |
 
 ### Red Room
 
-Automatic response path for tool execution:
-
-- Trigger: server asks for a tool action (not direct user text input).
-- Behavior: client sends auto-result for requested `execute` tool.
-- Then: full normal cycle continues with the new result as input.
-- Meaning: direct operational path for automatic tools.
+Client auto-replies to tool `execute` (no user input):
+- Trigger: Server asks for tool action
+- Behavior: Client sends auto-result
+- Next: Full cycle continues with result
+- Meaning: Direct operational path for automatic tools
 
 ### Gray Room
 
-Server-only substep chain (`N-sub-M` in simulations; **`interrupt`** in transforms) for extra LLM/transform work **before** the client sees the final answer:
-
-- Trigger: response transform emits **`interrupt`** (see [`a2a-server/docs/GRAY-ROOM.md`](../a2a-server/docs/GRAY-ROOM.md)).
-- Behavior: server runs compress / thinking / re-LLM substeps; client gets **one** outward response when the chain ends.
-- Constraint: no extra client `/next` for gray substeps (unlike red room).
-- Former doc name: “server interrupt loop” — [redirect stub](../a2a-server/docs/SERVER-INTERRUPT-LOOP.md) points to the gray room spec.
+Server-driven LLM/transform substeps before final client response:
+- Trigger: Response transform emits `interrupt`
+- Behavior: Server runs compress/thinking/re-LLM substeps
+- Result: Client gets one response when chain ends
+- Constraint: No extra `/next` calls for substeps (unlike red room)
 
 ### Black Room
 

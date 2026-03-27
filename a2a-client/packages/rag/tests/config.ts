@@ -13,7 +13,12 @@
  */
 
 import path from 'path';
+import { fileURLToPath } from 'url';
 import type {TestConfig, TestEnvironmentConfig} from './types.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 /**
  * Get environment variable with fallback
@@ -41,7 +46,8 @@ function envNumber(key: keyof TestEnvironmentConfig, defaultValue: number): numb
 /**
  * Base directory for the RAG package
  */
-export const RAG_PACKAGE_DIR = path.resolve(process.cwd(), 'a2a-client/packages/rag');
+export const RAG_PACKAGE_DIR = path.resolve(__dirname, '..');
+
 
 /**
  * Default test configuration
@@ -49,7 +55,8 @@ export const RAG_PACKAGE_DIR = path.resolve(process.cwd(), 'a2a-client/packages/
  */
 export const DEFAULT_CONFIG: TestConfig = {
   testDataDir: env('TEST_DATA_DIR', path.join(RAG_PACKAGE_DIR, 'test-data')),
-  outputDir: env('TEST_OUTPUT_DIR', path.join(RAG_PACKAGE_DIR, 'test-data/output')),
+  outputDir: env('TEST_OUTPUT_DIR', path.join(RAG_PACKAGE_DIR, 'test-results/functional')),
+
   
   thresholds: {
     searchTimeMs: envNumber('THRESHOLD_SEARCH_TIME_MS', 100),
