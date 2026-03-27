@@ -6,6 +6,8 @@
  (function (global) {
      'use strict';
 
+    const escapeHtml = global.escapeHtml;
+
     function formatLastError(err) {
         if (err == null) return '';
         if (typeof err === 'string') return err;
@@ -722,7 +724,7 @@
             return;
         }
 
-        if (storeState.promisePending) {
+        if (global.getTaskFlowPanelViewState?.(storeState)?.isWaiting) {
             const historyHtml = renderMessageHistory(contentEl, effectiveStore);
             contentEl.innerHTML = historyHtml;
             // Skip inline loader - use window-events.js spinner instead
@@ -750,11 +752,13 @@
             choices = rawChoices;
         }
         const hasChoices = Boolean(choices && choices.length > 0);
-        // Canonical dialog schema: use form.textarea
+        // Canonical dialog schema: form.textarea; protocol also allows form.input[]
         let inputFields = [];
         if (form && typeof form === 'object') {
             if (form.textarea && typeof form.textarea === 'object' && form.textarea.name) {
                 inputFields = [form.textarea];
+            } else if (Array.isArray(form.input) && form.input.length > 0) {
+                inputFields = form.input;
             }
         }
 

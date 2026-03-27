@@ -27,6 +27,23 @@
             }
         },
 
+        /** Stored URL after `normalizeStoredClientApiUrl` (html-utils.js). */
+        async getNormalizedStoredClientApiUrl() {
+            const raw = await this.getStoredClientApiUrl();
+            if (typeof global.normalizeStoredClientApiUrl === 'function') {
+                return global.normalizeStoredClientApiUrl(raw);
+            }
+            return String(raw || '').replace(/\/?$/, '');
+        },
+
+        /** Apply stored Client API base to `apiIntegration` when non-empty. */
+        async applyStoredClientApiToIntegration() {
+            const base = await this.getNormalizedStoredClientApiUrl();
+            if (base && global.apiIntegration) {
+                global.apiIntegration.configure({ apiBase: base });
+            }
+        },
+
         /**
          * Set stored client API URL - uses file-based storage only
          */
@@ -90,7 +107,7 @@
                     if (global.PanelManager) global.PanelManager.close('task-flow-panel');
                     if (global.SessionStore?.reset) global.SessionStore.reset();
                     // Refresh taskbar for new project (direct call after reset completes)
-                    const taskbarContent = document.querySelector('.taskbar-content');
+                    const taskbarContent = global.resolveTaskbarContentEl?.();
                     if (taskbarContent && global.TaskbarManager) {
                         global.TaskbarManager.refreshTaskbar(taskbarContent);
                     }

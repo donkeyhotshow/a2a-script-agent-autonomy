@@ -50,8 +50,12 @@ export async function saveServerResponse(
     stepNum: number,
     data: Record<string, unknown>
 ): Promise<void> {
+    const { messages, ...rest } = data;
     const file = path.join(getStepDir(sessionId, stepNum), 'server-response.json');
-    await writeJsonFile(file, data);
+    await writeJsonFile(file, rest);
+    if (Array.isArray(messages)) {
+        await saveMessages(sessionId, stepNum, messages);
+    }
 }
 
 export async function saveMessages(

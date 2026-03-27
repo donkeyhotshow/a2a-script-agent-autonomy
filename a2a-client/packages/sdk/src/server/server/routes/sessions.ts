@@ -22,17 +22,16 @@ import {
 } from '../../services/step-storage.js';
 import {getStorageDir} from '../../services/storage.js';
 import {serverFetch, getServerBaseUrl} from '../../services/index.js';
-import {
-    applyAgentRagChainAfterSyncInvoke,
-    extractExecuteFromEnvelope,
-} from '../../lib/agent-rag-chain.js';
+import {applyAgentRagChainAfterSyncInvoke} from '../../lib/agent-rag-chain.js';
+import {extractA2aExecute} from '../../lib/a2a-invoke-builders.js';
 import { pickInvokeContextPatch } from '../../lib/context-invoke-patch.js';
 import { buildWebExecute, sanitizeApiRecordExecuteFields } from '../../lib/web-execute-dto.js';
 import { buildInitialInvokeRequestBody } from '../../../lib/first-invoke-payload.js';
 import {
     normalizePromisePollStatus,
+    parseA2aInvokeResponse,
     validateClientResultPayload,
-} from '../../../../../../../shared/client-api-envelope.mjs';
+} from '../../../client-api-envelope.js';
 
 function getStepNum(session: { metadata?: Record<string, unknown> }): number {
     const n = session.metadata?.stepNum;
@@ -46,26 +45,6 @@ function setStepNum(sessionId: string, stepNum: number): void {
             metadata: { ...s.metadata, stepNum },
         });
     }
-}
-
-/** Normalize A2A POST /api/v1/invoke JSON (top-level or `{ success, data }`). */
-function unwrapA2aInvokeBody(serverResponse: Record<string, unknown> | null): {
-    data: Record<string, unknown> | undefined;
-    promiseId: string | null;
-    execute: unknown;
-    context: unknown;
-} {
-    if (!serverResponse || typeof serverResponse !== 'object') {
-        return { data: undefined, promiseId: null, execute: null, context: null };
-    }
-    const data = serverResponse.data as Record<string, unknown> | undefined;
-    const promiseId =
-        (typeof serverResponse.promiseId === 'string' ? serverResponse.promiseId : null) ??
-        (typeof data?.promiseId === 'string' ? data.promiseId : null) ??
-        null;
-    const execute = serverResponse.execute ?? data?.execute ?? null;
-    const context = serverResponse.context ?? data?.context ?? null;
-    return { data, promiseId, execute, context };
 }
 
 /** Match Vite `toPublicSession(..., false)` — omit context in JSON. */
@@ -127,7 +106,7 @@ async function invokeAndPersistContinuation(params: {
             });
             return null;
         }
-        const unwrapped = unwrapA2aInvokeBody(serverResponse as Record<string, unknown>);
+        const unwrapped = parseA2aInvokeResponse(serverResponse as Record<string, unknown>);
         promiseId = unwrapped.promiseId;
         if (promiseId) {
             await saveServerPromise(sessionId, nextStep, {
@@ -191,7 +170,7 @@ async function persistSyncThenRagChain(
     if (out.finalStep > startStep) {
         setStepNum(sessionId, out.finalStep);
         sessionService.updateSessionContext(sessionId, out.finalContext);
-        const fe = extractExecuteFromEnvelope(out.finalResponse);
+        const fe = extractA2aExecute(out.finalResponse);
         if (fe) {
             sessionService.updateSession(sessionId, {currentExecute: fe});
         }
@@ -263,7 +242,7 @@ router.post('/', async (req: Request, res: Response) => {
                 serverResponse = await upstream.json().catch(() => null);
 
                 if (upstream.ok && serverResponse) {
-                    const unwrapped = unwrapA2aInvokeBody(serverResponse as Record<string, unknown>);
+                    const unwrapped = parseA2aInvokeResponse(serverResponse as Record<string, unknown>);
                     if (unwrapped.promiseId) {
                         await saveServerPromise(sessionId, 1, {
                             promiseId: unwrapped.promiseId,
@@ -739,10 +718,13 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
             { source: 'user-result' }
         );
 
+        // Extract message from result for the request body
+        const messageText = result?.message || result?.choice || '';
+
         const nextStep = stepNum + 1;
         // Для последующих запросов нужен task в context или на верхнем уровне
         const requestBody = {
-            task: message, // Добавляем task на верхний уровень
+            task: messageText, // Используем messageText из result
             context: {
                 version: '2.0',
                 session_id: sessionId,

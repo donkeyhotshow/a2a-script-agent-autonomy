@@ -208,82 +208,49 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
             taskText: taskText.substring(0, 50)
         });
 
-        // Use transform schema for routing - all requests go through router transform
-        // 1. candidates = actionRegistry.findActions(task) - collect for transform context
+        // Use keyword-based routing - skip LLM transform
+        // Find matching actions based on task keywords
         const keywordMatches = actionRegistry.findAction(taskText);
         const candidates = keywordMatches.filter(m => m.matchScore >= 0.3);
         const actionsToUse: ActionDefinition[] = candidates.map(m => m.action);
 
-        // 2. ctx.availableActions = actionsToUse // inject into context for transform
-        //    run DialogRequestProcessor with transformSchema = 'router'
-        const enrichedCtx = {
-            ...ctx,
-            availableActions: actionsToUse.map(action => ({
+        // Build choices from keyword matches
+        let rankedChoices: Array<{id: string, label: string, description: string}> = [];
+        
+        if (actionsToUse.length > 0) {
+            // Use keyword-matched actions as choices, sorted by score
+            rankedChoices = actionsToUse.map(action => ({
                 id: action.id,
-                title: action.title,
-                description: action.description
-            }))
-        };
-
-        try {
-            // Run the router transform pipeline via DialogRequestProcessor
-            const routerRequestContext = {
-                ...enrichedCtx,
-                transformSchema: 'router' // This will trigger the router transform
-            };
-            
-            const routerRequest = {
-                context: routerRequestContext,
-                codeBlocks: [],
-                promiseId: promiseId + '-router' // Generate a unique promiseId for the router step
-            };
-            
-            // Process the router request through the dialog/request processor (which handles transforms)
-            const routerResult = await dialogRequestProcessor.process(routerRequest);
-            const routerIssues = validateRouterResultShape(routerResult);
-            if (routerIssues.length > 0) {
-                if (shouldEnforceTransformStrictMode()) {
-                    const codes = routerIssues.map((i) => i.code).join(', ');
-                    throw new Error(`Router transform contract violation: ${codes}`);
-                }
-                logger.warn('[ActionRequestProcessor] Router transform validation warnings', {
-                    issues: routerIssues.map((i) => i.code),
-                });
-            }
-            
-            if (routerResult.outcome === 'completed' && routerResult.execute?.form?.choices) {
-                // Extract the ranked choices from the router result
-                const rankedChoices = routerResult.execute.form.choices;
-                logger.info('[ActionRequestProcessor] Router transform completed, returning ranked choices', {
-                    rankedChoiceCount: rankedChoices.length
-                });
-                return {
-                    outcome: 'action_proposal',
-                    context: {
-                        execution: {
-                            action: 'task',
-                            step: 'router'
-                        },
-                        task: taskText
-                    },
-                    execute: {
-                        form: buildRouterForm(rankedChoices)
-                    }
-                };
-            }
-            
-            // Router transform failed - throw error, no fallback
-            logger.error('[ActionRequestProcessor] Router transform failed', {
-                outcome: routerResult.outcome,
-                hasFormChoices: !!routerResult.execute?.form?.choices
+                label: action.title || action.id,
+                description: action.description || ''
+            }));
+            logger.info('[ActionRequestProcessor] Found keyword-matched actions', {
+                count: rankedChoices.length,
+                actionIds: rankedChoices.map(c => c.id)
             });
-            throw new Error(`Router transform failed: outcome=${routerResult.outcome}`);
-        } catch (error) {
-            logger.error('[ActionRequestProcessor] Router transform threw error', {
-                error: error instanceof Error ? error.message : String(error)
-            });
-            throw error;
+        } else {
+            // No keyword matches - use default fallback choices
+            logger.info('[ActionRequestProcessor] No keyword matches, using default choices');
+            rankedChoices = [
+                { id: 'dialog', label: 'AI діалог з користувачем', description: 'Вільний текстовий діалог з моделлю без інструментів коду.' },
+                { id: 'agent', label: 'Agent (універсальний режим)', description: 'Агент з інструментами: пошук по коду, файли, команди.' },
+                { id: 'task-decomposition', label: 'Декомпозиція задачі', description: 'Розбиття задачі на підзадачі та план виконання.' }
+            ];
         }
+        
+        return {
+            outcome: 'action_proposal',
+            context: {
+                execution: {
+                    action: 'task',
+                    step: 'router'
+                },
+                task: taskText
+            },
+            execute: {
+                form: buildRouterForm(rankedChoices)
+            }
+        };
     }
 }
 export const actionRequestProcessor = new ActionRequestProcessor();

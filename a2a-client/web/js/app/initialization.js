@@ -30,11 +30,7 @@
 
                 // Initialize managers
                 await global.ProjectManager?.init();
-                // Apply stored Client API URL for operations requiring Client API server
-                const base = global.normalizeStoredClientApiUrl?.(
-                    await global.ProjectManager?.getStoredClientApiUrl?.()
-                );
-                if (base && global.apiIntegration) global.apiIntegration.configure({ apiBase: base });
+                await global.ProjectManager?.applyStoredClientApiToIntegration?.();
                 await global.SessionManager?.init();
                 global.TaskbarManager?.init();
 

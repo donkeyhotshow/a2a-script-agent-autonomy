@@ -4,51 +4,10 @@
  */
 
 import { unwrapA2aInvokeBody } from '../../../shared/client-api-envelope.mjs';
+import { pickInvokeContextPatch } from '../../../shared/context-invoke-patch.mjs';
+import { extractA2aExecute, mergeResponseContext } from '../../../shared/a2a-invoke-builders.mjs';
 
-/**
- * Whitelist context fields from invoke responses (keep in sync with
- * packages/sdk/src/server/lib/context-invoke-patch.ts).
- * @param {unknown} src
- * @returns {Record<string, unknown>}
- */
-export function pickInvokeContextPatch(src) {
-    if (!src || typeof src !== 'object' || Array.isArray(src)) {
-        return {};
-    }
-    const o = src;
-    const out = {};
-    if (typeof o.task === 'string' && o.task.length > 0) {
-        out.task = o.task;
-    }
-    if (o.execution && typeof o.execution === 'object' && !Array.isArray(o.execution)) {
-        out.execution = o.execution;
-    }
-    if (Array.isArray(o.history)) {
-        out.history = o.history;
-    }
-    if (o.files && typeof o.files === 'object' && !Array.isArray(o.files)) {
-        out.files = o.files;
-    }
-    if (o.scratchpad && typeof o.scratchpad === 'object' && !Array.isArray(o.scratchpad)) {
-        out.scratchpad = o.scratchpad;
-    }
-    if (o.workbench !== undefined) {
-        out.workbench = o.workbench;
-    }
-    if (o.ragResults !== undefined) {
-        out.ragResults = o.ragResults;
-    }
-    if (typeof o.version === 'string') {
-        out.version = o.version;
-    }
-    if (o.vite_config && typeof o.vite_config === 'object' && !Array.isArray(o.vite_config)) {
-        out.vite_config = o.vite_config;
-    }
-    if (o.aliases && typeof o.aliases === 'object' && !Array.isArray(o.aliases)) {
-        out.aliases = o.aliases;
-    }
-    return out;
-}
+export { pickInvokeContextPatch, extractA2aExecute, mergeResponseContext };
 
 /**
  * A2A Server wraps payloads as { success: true, data: { execute, context, ... } }.
@@ -56,15 +15,6 @@ export function pickInvokeContextPatch(src) {
  */
 export function unwrapA2aResponse(serverResponse) {
     return unwrapA2aInvokeBody(serverResponse);
-}
-
-/**
- * Resolve execute for Client API / UI — checks envelope .data.execute and legacy paths.
- */
-export function extractA2aExecute(serverResponse) {
-    const inner = unwrapA2aResponse(serverResponse);
-    if (!inner) return null;
-    return inner.execute ?? inner.result?.execute ?? null;
 }
 
 function historyEntryUserText(entry) {
@@ -93,40 +43,6 @@ export function mergeDialogHistoryForInvoke(mergedContext, effectiveTask) {
         h[h.length - 1] = { role: 'user', message: effectiveTask };
         mergedContext.history = h;
     }
-}
-
-/**
- * Merge response context from multiple sources
- * @param sessionId - session identifier (adds session_id if missing)
- * @param fallbackContext - base context object
- * @param serverResponse - server response (extracts context)
- * @returns merged context object
- */
-export function mergeResponseContext(sessionId, fallbackContext = {}, serverResponse = null) {
-    const base = { ...(fallbackContext || {}) };
-    const inner = unwrapA2aResponse(serverResponse);
-
-    if (serverResponse?.context) {
-        Object.assign(base, pickInvokeContextPatch(serverResponse.context));
-    }
-
-    if (inner?.context) {
-        Object.assign(base, pickInvokeContextPatch(inner.context));
-    }
-
-    if (serverResponse?.result?.context) {
-        Object.assign(base, pickInvokeContextPatch(serverResponse.result.context));
-    }
-
-    if (inner?.result?.context) {
-        Object.assign(base, pickInvokeContextPatch(inner.result.context));
-    }
-
-    if (sessionId && !base.session_id) {
-        base.session_id = sessionId;
-    }
-
-    return base;
 }
 
 /**

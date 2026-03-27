@@ -6,59 +6,11 @@ import { RAGSearcher } from '@a2a/rag';
 import { saveRequestToServer, saveServerResponse } from '../services/step-storage.js';
 import { serverFetch, getServerBaseUrl } from '../services/upstream.service.js';
 import { loadProjects } from '../services/projects.service.js';
-import { pickInvokeContextPatch } from './context-invoke-patch.js';
+import { extractA2aExecute, mergeResponseContext } from './a2a-invoke-builders.js';
+import { parseA2aInvokeResponse } from '../../client-api-envelope.js';
+import { getMaxRagChainDepth } from '../../../../../shared/agent-rag-chain-depth.mjs';
 
-function unwrapA2aInvokeBody(serverResponse: Record<string, unknown> | null): {
-    data: Record<string, unknown> | undefined;
-    promiseId: string | null;
-} {
-    if (!serverResponse || typeof serverResponse !== 'object') {
-        return { data: undefined, promiseId: null };
-    }
-    const data = serverResponse.data as Record<string, unknown> | undefined;
-    const promiseId =
-        (typeof serverResponse.promiseId === 'string' ? serverResponse.promiseId : null) ??
-        (typeof data?.promiseId === 'string' ? data.promiseId : null) ??
-        null;
-    return { data, promiseId };
-}
-
-export function extractExecuteFromEnvelope(serverResponse: Record<string, unknown> | null): Record<string, unknown> | null {
-    const { data } = unwrapA2aInvokeBody(serverResponse);
-    if (!data) return null;
-    const result = data.result as Record<string, unknown> | undefined;
-    const ex = (data.execute ?? result?.execute) as Record<string, unknown> | undefined;
-    return ex && typeof ex === 'object' ? ex : null;
-}
-
-function mergeInvokeContext(
-    sessionId: string,
-    base: Record<string, unknown>,
-    serverResponse: Record<string, unknown>
-): Record<string, unknown> {
-    const out = { ...base };
-    const { data } = unwrapA2aInvokeBody(serverResponse);
-    if (!data) {
-        out.session_id = sessionId;
-        return out;
-    }
-    if (data.context && typeof data.context === 'object') {
-        Object.assign(out, pickInvokeContextPatch(data.context));
-    }
-    const res = data.result as Record<string, unknown> | undefined;
-    if (res?.context && typeof res.context === 'object') {
-        Object.assign(out, pickInvokeContextPatch(res.context));
-    }
-    out.session_id = sessionId;
-    return out;
-}
-
-export function getMaxRagChainDepth(): number {
-    const v = process.env.A2A_AGENT_RAG_CHAIN_MAX;
-    if (v === '0' || v === 'false') return 0;
-    const n = parseInt(v ?? '8', 10);
-    return Number.isFinite(n) && n >= 0 ? n : 8;
-}
+export { extractA2aExecute as extractExecuteFromEnvelope };
 
 async function defaultProjectPath(): Promise<string> {
     const projects = await loadProjects();
@@ -120,7 +72,7 @@ export async function applyAgentRagChainAfterSyncInvoke(options: {
     let depth = 0;
 
     while (depth < max) {
-        const ex = extractExecuteFromEnvelope(lastResp);
+        const ex = extractA2aExecute(lastResp);
         const ragPayload = ex?.['rag-search'] as Record<string, unknown> | undefined;
         if (!ragPayload || typeof ragPayload.query !== 'string' || !ragPayload.query.trim()) {
             break;
@@ -146,7 +98,7 @@ export async function applyAgentRagChainAfterSyncInvoke(options: {
             break;
         }
 
-        const { promiseId, data } = unwrapA2aInvokeBody(json);
+        const { promiseId, data } = parseA2aInvokeResponse(json);
         if (promiseId) {
             console.log('[SDK] Chained invoke returned promiseId — stopping RAG chain');
             lastResp = json;
@@ -159,8 +111,10 @@ export async function applyAgentRagChainAfterSyncInvoke(options: {
 
         await saveServerResponse(sessionId, stepNum, { step: stepNum, ...data });
         lastResp = json;
-        ctx = mergeInvokeContext(sessionId, ctx, json);
+        ctx = mergeResponseContext(sessionId, ctx, json);
     }
 
     return { finalStep: stepNum, finalResponse: lastResp, finalContext: ctx };
 }
+
+export { getMaxRagChainDepth };

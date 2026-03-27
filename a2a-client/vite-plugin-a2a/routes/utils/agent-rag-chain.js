@@ -15,6 +15,7 @@ import { promises as fsp } from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
 import { extractA2aExecute, mergeResponseContext, buildStepRecord } from './builders.js';
+import { getMaxRagChainDepth } from '../../../shared/agent-rag-chain-depth.mjs';
 import { getProjectPathForSessions } from '../../storage/projectSessions.js';
 import * as stepHandlers from '../handlers/step-handlers.js';
 import { resolveUnderProjectRoot } from '../../../packages/execution/src/path-sandbox.js';
@@ -39,7 +40,10 @@ const CHAINABLE_CLIENT_TOOLS = new Set([
 function postInvokeJson(a2aServerUrl, body) {
     const payload = JSON.stringify(body);
     return new Promise((resolve, reject) => {
-        const urlObj = new URL(`${a2aServerUrl.replace(/\/$/, '')}/api/v1/invoke`);
+        const base = String(a2aServerUrl || '')
+            .replace(/\/$/, '')
+            .replace(/\/api\/v1$/i, '');
+        const urlObj = new URL(`${base}/api/v1/invoke`);
         const req = http.request(
             {
                 hostname: urlObj.hostname,
@@ -75,12 +79,7 @@ function postInvokeJson(a2aServerUrl, body) {
     });
 }
 
-export function getMaxRagChainDepth() {
-    const v = process.env.A2A_AGENT_RAG_CHAIN_MAX ?? process.env.A2A_AGENT_TOOL_CHAIN_MAX;
-    if (v === '0' || v === 'false') return 0;
-    const n = parseInt(v ?? '8', 10);
-    return Number.isFinite(n) && n >= 0 ? n : 8;
-}
+export { getMaxRagChainDepth };
 
 /** @alias getMaxRagChainDepth */
 export function getMaxAgentToolChainDepth() {

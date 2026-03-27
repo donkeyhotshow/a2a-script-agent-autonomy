@@ -96,12 +96,10 @@ export function saveNewStep(cwd, sessionId, stepNum, stepData) {
   const messages = Array.isArray(stepData.messages) ? stepData.messages : [];
   const {messages: _m, ...rest} = stepData;
   const metaFile = path.join(stepDir, 'server-response.json');
-  const payload = {
-    ...rest,
-    messages,
-  };
-  // Note: step number is derived from folder path, not stored in JSON
-  fs.writeFileSync(metaFile, JSON.stringify(payload, null, 2));
+  const messagesFile = path.join(stepDir, 'messages.json');
+  // Protocol snapshot matches simulations (response.json): no `messages` in server-response.json
+  fs.writeFileSync(metaFile, JSON.stringify(rest, null, 2));
+  fs.writeFileSync(messagesFile, JSON.stringify(messages, null, 2));
   const promiseFile = path.join(stepDir, 'server-promise.json');
   if (fs.existsSync(promiseFile)) {
     try {

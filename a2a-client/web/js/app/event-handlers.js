@@ -245,14 +245,9 @@
 
             if (type === 'settings') {
 
-                global.ProjectManager?.getStoredClientApiUrl?.().then((url) => {
-
-                    const normalized = global.normalizeStoredClientApiUrl?.(url);
-
+                global.ProjectManager?.getNormalizedStoredClientApiUrl?.().then((normalized) => {
                     const input = content.querySelector('#settingsApiUrl');
-
                     if (input) input.value = normalized != null && normalized !== '' ? String(normalized) : '';
-
                 });
 
                 content.querySelector('#cancelSettings')?.addEventListener('click', () => panel.close());
@@ -271,7 +266,7 @@
 
                     }
 
-                    const base = String(url).replace(/\/?$/, '');
+                    const base = global.normalizeStoredClientApiUrl?.(url) ?? '';
 
                     if (!base) {
 

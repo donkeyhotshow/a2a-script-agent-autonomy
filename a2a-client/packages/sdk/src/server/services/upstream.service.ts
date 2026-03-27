@@ -18,6 +18,13 @@ import('node-fetch').then(module => {
     fetch = globalThis.fetch;
 });
 
+/** Strip trailing slash and accidental `/api/v1` so `.../api/v1` + `/api/v1/invoke` does not double the path. */
+export function normalizeA2aServerBaseUrl(serverBaseUrl: string): string {
+    return String(serverBaseUrl || '')
+        .replace(/\/?$/, '')
+        .replace(/\/api\/v1$/i, '');
+}
+
 /**
  * Fetch from the server with authentication
  */
@@ -32,7 +39,7 @@ export async function serverFetch(
     if (cfg.token) headers['Authorization'] = `Bearer ${cfg.token}`;
     if (body != null) headers['Content-Type'] = 'application/json';
 
-    const url = `${serverBaseUrl.replace(/\/?$/, '')}${pathName}`;
+    const url = `${normalizeA2aServerBaseUrl(serverBaseUrl)}${pathName}`;
     
     const fetchFn = await import('node-fetch');
     return fetchFn.default(url, {
@@ -47,5 +54,5 @@ export async function serverFetch(
  */
 export async function getServerBaseUrl(): Promise<string> {
     const cfg = await loadConfig();
-    return cfg.serverUrl.replace(/\/?$/, '');
+    return normalizeA2aServerBaseUrl(cfg.serverUrl);
 }

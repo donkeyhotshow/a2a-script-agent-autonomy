@@ -117,7 +117,7 @@
             const _updateCubeDot = () => {
                 const store = panel._sessionStore;
                 const st = store?.getState?.() || {};
-                const pending = st.promisePending ?? false;
+                const pending = global.getTaskFlowPanelViewState?.(st)?.isWaiting ?? false;
                 const status  = st.status ?? 'idle';
                 const dot = cube.querySelector('.pui-window-cube-dot');
                 if (!dot) return;
@@ -361,7 +361,12 @@
                 return;
             }
 
-            const dataSid = sessionData.id || sessionData.sessionId;
+            store.setAwaitingSessionVerify(true);
+            if (typeof store.startLoader === 'function') {
+                store.startLoader(sessionId);
+            }
+
+            const dataSid = global.resolveSessionIdFromPayload?.(sessionData);
             if (dataSid) {
                 store.setSession(dataSid, sessionData.projectId);
             }
@@ -382,13 +387,14 @@
                 store.setStatus(sessionData.status);
             }
 
-            // Async pending - already normalized in apiIntegration.getSession
-            if (sessionData.asyncPending) {
-                store.setPromisePending(true);
-                if (typeof store.startLoader === 'function') {
-                    store.startLoader(sessionId);
+            const Ex = global.ActionExecutor;
+            if (Ex && typeof Ex.bootstrapSessionUi === 'function') {
+                void Ex.bootstrapSessionUi(sessionId, store);
+            } else {
+                store.setAwaitingSessionVerify(false);
+                if (typeof store.stopLoader === 'function') {
+                    store.stopLoader(sessionId);
                 }
-                this._resumeSessionAsyncPolling(sessionId, store);
             }
         },
 
@@ -613,56 +619,12 @@
                     sessionId,
                     projectId ? { projectId } : {}
                 );
-                return !!(session && (session.id || session.sessionId));
+                return !!global.resolveSessionIdFromPayload?.(session);
             } catch (e) {
                 global.ErrorHandler?.handle(e, { action: 'checkSessionExists', sessionId });
                 throw e;
             }
         },
-
-        /**
-         * After reload: one-shot check then session-scoped polling (GET .../sessions/:id/async).
-         */
-        _resumeSessionAsyncPolling(sessionId, store) {
-            if (!sessionId || !store) return;
-            const Ex = global.ActionExecutor;
-            if (!Ex?.checkSessionAsync || !Ex?.startPromisePolling || !Ex?.pullSessionSnapshot) {
-                console.warn('[WindowState] ActionExecutor missing; cannot attach async polling');
-                return;
-            }
-            (async () => {
-                try {
-                    const chk = await Ex.checkSessionAsync(sessionId);
-                    const terminalOk =
-                        chk &&
-                        (chk.completed === true ||
-                            chk.status === 'completed' ||
-                            chk.status === 'done' ||
-                            chk.status === 'idle' ||
-                            chk.execute != null);
-                    if (terminalOk) {
-                        await Ex.pullSessionSnapshot(sessionId, store);
-                        store.setPromisePending(false);
-                        if (typeof store.stopLoader === 'function') {
-                            store.stopLoader(sessionId);
-                        }
-                        return;
-                    }
-                    if (chk && (chk.status === 'failed' || chk.status === 'error')) {
-                        store.setPromisePending(false);
-                        if (typeof store.stopLoader === 'function') {
-                            store.stopLoader(sessionId);
-                        }
-                        return;
-                    }
-                    Ex.startPromisePolling(sessionId, null);
-                } catch (e) {
-                    console.error('[WindowState] Async bootstrap error:', e);
-                    Ex.startPromisePolling(sessionId, null);
-                }
-            })();
-        },
-
 
     };
 

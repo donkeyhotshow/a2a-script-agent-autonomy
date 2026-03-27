@@ -53,8 +53,10 @@ export function validateDialogExecuteShape(execute: ProcessResult['execute'] | u
             message: 'Dialog execute shape is neither chat form nor single tool action',
         });
     }
-    // For chat Pattern-A turns, form means we must have `execute.message`.
-    if (hasForm && !hasMessage) {
+    // Router / routing forms use `form.choices` only (no assistant line) — do not require execute.message.
+    const formObj = hasForm ? (ex['form'] as Record<string, unknown>) : undefined;
+    const isRouterChoicesForm = Boolean(formObj && Array.isArray(formObj['choices']));
+    if (hasForm && !hasMessage && !isRouterChoicesForm) {
         issues.push({
             code: 'DIALOG_EXECUTE_MESSAGE_MISSING',
             message: 'Dialog chat response has form but no execute.message',

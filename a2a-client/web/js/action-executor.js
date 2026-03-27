@@ -211,6 +211,71 @@
         return global.apiIntegration.checkSessionAsync(sessionId);
     }
 
+    /**
+     * After hydrate / reload: GET .../sessions/:id/async then refresh snapshot or attach polling.
+     * Clears `awaitingSessionVerify` so the task-flow panel can show form only when idle.
+     */
+    async function bootstrapSessionUi(sessionId, store) {
+        if (!sessionId || !store) return;
+        const startSessionScopedPolling = () => {
+            try {
+                startPromisePolling(sessionId, null);
+            } catch (pollErr) {
+                console.error('[ActionExecutor] bootstrapSessionUi start polling failed:', pollErr);
+                store.setPromisePending?.(false);
+                store.stopLoader?.(sessionId);
+            }
+        };
+        if (!global.apiIntegration?.checkSessionAsync) {
+            try {
+                await pullSessionSnapshot(sessionId, store);
+            } catch (e) {
+                console.error('[ActionExecutor] bootstrapSessionUi no-async check fallback:', e);
+            }
+            store.setAwaitingSessionVerify?.(false);
+            store.stopLoader?.(sessionId);
+            return;
+        }
+        try {
+            const chk = await checkSessionAsync(sessionId);
+            const terminalOk =
+                chk &&
+                (chk.completed === true ||
+                    chk.status === 'completed' ||
+                    chk.status === 'done' ||
+                    chk.status === 'idle' ||
+                    chk.execute != null);
+            if (terminalOk) {
+                await pullSessionSnapshot(sessionId, store);
+                store.setPromisePending?.(false);
+                store.stopLoader?.(sessionId);
+                store.setAwaitingSessionVerify?.(false);
+                return;
+            }
+            if (chk && (chk.status === 'failed' || chk.status === 'error')) {
+                try {
+                    await pullSessionSnapshot(sessionId, store);
+                } catch (e2) {
+                    console.error('[ActionExecutor] bootstrapSessionUi failed-state pull:', e2);
+                }
+                store.setPromisePending?.(false);
+                store.stopLoader?.(sessionId);
+                store.setAwaitingSessionVerify?.(false);
+                return;
+            }
+            store.setPromisePending?.(true);
+            startSessionScopedPolling();
+            store.setAwaitingSessionVerify?.(false);
+        } catch (e) {
+            console.error('[ActionExecutor] bootstrapSessionUi:', e);
+            // Network/transport errors during async bootstrap should not unblock input.
+            // Keep waiting and continue session-scoped polling until we get a terminal state.
+            store.setPromisePending?.(true);
+            startSessionScopedPolling();
+            store.setAwaitingSessionVerify?.(false);
+        }
+    }
+
      // Экспорт модуля
      const ActionExecutor = {
          submit,
@@ -219,6 +284,7 @@
          startPromisePolling,
          pullSessionSnapshot,
          checkSessionAsync,
+         bootstrapSessionUi,
          POLL_INTERVAL
      };
 

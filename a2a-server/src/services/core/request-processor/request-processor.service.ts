@@ -131,21 +131,56 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
 
         // Handle AI-Actions continuation (form choice -> LLM processing)
         if (result.outcome === 'ai_action_ready' && result.aiActions?.action) {
+            if (context['ai_action'] === true) {
+                logger.warn('[RequestProcessor] Prevented recursive AI-action follow-up loop', {
+                    promiseId,
+                    action: result.aiActions.action,
+                });
+                await requestService.updateStatus(
+                    promiseId,
+                    'failed',
+                    {
+                        outcome: 'failed',
+                        error: 'Recursive ai_action_ready detected for follow-up request',
+                    }
+                );
+                return {
+                    ...result,
+                    outcome: 'failed',
+                    error: 'Recursive ai_action_ready detected for follow-up request',
+                };
+            }
             logger.info('[RequestProcessor] AI-Action ready, creating LLM follow-up request', {
                 promiseId,
                 action: result.aiActions.action
             });
 
             // Create new request for neuron processor with LLM
+            const followUpContext: Record<string, unknown> = {
+                ...context,
+                action: result.aiActions.action,
+                ai_action: true,
+                previousChoice: result.selection,
+                task: message ?? (context['task'] as string | undefined) ?? result.aiActions.action,
+            };
+            // Prevent form re-entry loop: follow-up LLM request must not carry stale choice/form payload.
+            delete followUpContext['result'];
+            delete followUpContext['choice_id'];
+            delete followUpContext['selected_choice'];
+            delete followUpContext['form_id'];
+            delete followUpContext['form_data'];
+            delete followUpContext['form_submission'];
+
+            const followUpExecution = (followUpContext['execution'] as Record<string, unknown> | undefined) ?? {};
+            followUpContext['execution'] = {
+                ...followUpExecution,
+                action: result.aiActions.action,
+                step: 'start',
+            };
+
             const followUpRequest = await requestService.create({
                 clientId: promiseId, // Link to original
-                context: {
-                    ...context,
-                    action: result.aiActions.action,
-                    ai_action: true,
-                    previousChoice: result.selection,
-                    task: message ?? (context['task'] as string | undefined) ?? result.aiActions.action,
-                },
+                context: followUpContext,
                 message: message ?? `AI-Action: ${result.aiActions.action}`,
             });
 

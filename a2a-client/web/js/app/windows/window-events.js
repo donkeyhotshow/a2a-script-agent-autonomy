@@ -4,6 +4,24 @@
 (function (global) {
     'use strict';
 
+    function hasPendingClientAction(execute) {
+        if (!execute || typeof execute !== 'object') return false;
+        const pending = execute.attachments && execute.attachments.pendingClientAction;
+        if (typeof pending === 'string' && pending.trim()) return true;
+        return !!(
+            execute.script ||
+            execute['rag-search'] ||
+            execute['read-file'] ||
+            execute['write-file'] ||
+            execute['execute-command'] ||
+            execute['list-directory'] ||
+            execute['grep-search'] ||
+            execute['file-exists'] ||
+            execute['edit-patch'] ||
+            execute['run-script']
+        );
+    }
+
     const WindowEvents = {
         /**
          * Render session content in panel
@@ -39,22 +57,17 @@
                 // Use renderExecute to render full panel (history + execute + input)
                 // renderExecute renders the complete content: history + execute block + input area
                  const refreshContent = () => {
-                     // Helper functions to extract state values with fallbacks
-                     const getExecute = (state) => state.execute ?? state._state?.execute;
-                     const getContext = (state) => state.context ?? state._state?.context ?? {};
-                     const getPromisePending = (state) => state.promisePending ?? state.core?.promise?.isPending ?? state.promise?.isPending ?? false;
-                     
-                     // Get all store data in single call for efficiency
                      const st = store.getState?.() || {};
-                     const execute = getExecute(st);
-                     const context = getContext(st);
-                     const promisePending = getPromisePending(st);
-                     const hasActionableForm = global.executeHasActionableForm?.(execute);
-                     const inputBlocked = typeof st.isInputBlocked === 'function' && st.isInputBlocked();
-                     const isWaiting = !!promisePending || (!hasActionableForm && inputBlocked);
+                     const { execute, context, isWaiting } = global.getTaskFlowPanelViewState(st);
 
                     // Task-flow UI (form/message/actions) only when server/store set execute; never synthetic { form: pendingForm }
-                    if (execute && !isWaiting) {
+                    const shouldRenderPendingExecute =
+                        !!execute &&
+                        (!isWaiting ||
+                            global.executeHasActionableForm?.(execute) ||
+                            hasPendingClientAction(execute));
+
+                    if (shouldRenderPendingExecute) {
                         Render.renderExecute(contentEl, execute, { execute, context, store }, store, taskFlowRef);
                     } else {
                         const waitBlock = isWaiting
@@ -92,6 +105,7 @@
                      store.on?.('message', debouncedRefresh),
                      store.on?.('execute', debouncedRefresh),
                      store.on?.('promisePending', debouncedRefresh),
+                     store.on?.('awaitingSessionVerify', debouncedRefresh),
                      store.on?.('error', debouncedRefresh)
                  ].filter(Boolean);
 

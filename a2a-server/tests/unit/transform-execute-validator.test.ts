@@ -52,6 +52,16 @@ describe('validateDialogExecuteShape', () => {
         } as any);
         expect(issues.some((i) => i.code === 'DIALOG_EXECUTE_MESSAGE_MISSING')).toBe(true);
     });
+
+    it('accepts router form with choices and no execute.message', () => {
+        const issues = validateDialogExecuteShape({
+            form: {
+                title: 'Pick mode',
+                choices: [{id: 'dialog', label: 'Dialog', description: 'd'}],
+            },
+        } as any);
+        expect(issues).toHaveLength(0);
+    });
 });
 
 describe('validateFormChoiceProcessResult', () => {

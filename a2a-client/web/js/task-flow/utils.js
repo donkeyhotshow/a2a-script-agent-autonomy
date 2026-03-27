@@ -7,14 +7,10 @@
     'use strict';
 
      /**
-      * Получить ID проекта
+      * Получить ID проекта (делегирует html-utils getProjectIdSync)
       */
      function getProjectId() {
-         const sel = document.getElementById('projectSelect');
-         if (sel?.value) return sel.value;
-         const pm = window.ProjectManager;
-         if (pm?.getLastSelectedProjectId) return pm.getLastSelectedProjectId() || null;
-         return null;
+         return global.getProjectIdSync?.() ?? null;
      }
 
     /**

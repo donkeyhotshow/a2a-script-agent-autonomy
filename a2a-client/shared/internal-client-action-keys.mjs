@@ -1,6 +1,6 @@
 /**
  * Single source of truth: keys stripped from Web DTO `execute` (buildWebExecute).
- * Consumers: sim-lint RECEIVED_EXECUTE_CLIENT_ONLY_KEYS, Vite web-execute-dto.js, SDK web-execute-dto.ts.
+ * Consumers: sim-lint RECEIVED_EXECUTE_CLIENT_ONLY_KEYS, shared/web-execute-dto.mjs (Vite + SDK re-exports).
  */
 export const INTERNAL_CLIENT_ACTION_KEYS = Object.freeze([
     'rag-search',

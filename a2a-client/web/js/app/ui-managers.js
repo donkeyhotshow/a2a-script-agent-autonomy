@@ -15,7 +15,7 @@
                  const saved = await global.getCurrentProjectId();
                  await global.AppInitialization._populateProjectSelect(sel, saved);
              }
-            const taskbarContent = document.querySelector('.taskbar-content');
+            const taskbarContent = global.resolveTaskbarContentEl?.();
             if (taskbarContent && global.TaskbarManager) await global.TaskbarManager.refreshTaskbar(taskbarContent);
             const grid = document.getElementById('projectsGrid');
             if (grid) await this._loadProjectsIntoGrid(grid);

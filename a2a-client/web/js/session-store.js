@@ -141,7 +141,7 @@
               return Promise.reject(new Error('[SessionStore] apiIntegration.createSession not available'));
           }
           return api.createSession({ title }).then(function(session) {
-              var sid = session && (session.id || session.sessionId);
+              var sid = global.resolveSessionIdFromPayload?.(session);
               if (sid) self.core.setSession(sid, session.projectId);
               self.core.setExecute(session.execute || null);
               self.core.emit('sessionCreated', session);
@@ -163,7 +163,7 @@
     // Delegate methods on prototype - defined once, shared across all instances
     var coreDelegateMethods = [
         'getState', 'setSession', 'reset', 'setExecute', 'pushMessage', 'setError', 'clearLastError',
-        'on', 'setPromisePending', 'isWaitingForInput', 'isInputBlocked',
+        'on', 'off', 'setPromisePending', 'setAwaitingSessionVerify', 'isWaitingForInput', 'isInputBlocked',
         'startLoader', 'stopLoader', 'getLoaderState',
         'setPromiseId', 'startPromisePolling', 'stopPromisePolling'
     ];
@@ -198,7 +198,7 @@
             throw fetchErr;
         }
 
-        var sid = sessionData?.id || sessionData?.sessionId;
+        var sid = global.resolveSessionIdFromPayload?.(sessionData);
         if (!sid) {
             var sidErr = new Error('[SessionStore] restoreAndReconnect: missing session id in response');
             this.setError?.(sidErr);
@@ -206,6 +206,10 @@
         }
 
         this.reset(sid, sessionData.projectId || null);
+        this.setAwaitingSessionVerify(true);
+        if (typeof this.startLoader === 'function') {
+            this.startLoader(sid);
+        }
         this.setSession(sid, sessionData.projectId || null);
         if (sessionData.status) {
             this.setStatus(sessionData.status);
@@ -218,6 +222,15 @@
         }
         if (sessionData.execute) {
             this.setExecute(sessionData.execute);
+        }
+        var Ex = global.ActionExecutor;
+        if (Ex && typeof Ex.bootstrapSessionUi === 'function') {
+            await Ex.bootstrapSessionUi(sid, this);
+        } else {
+            this.setAwaitingSessionVerify(false);
+            if (typeof this.stopLoader === 'function') {
+                this.stopLoader(sid);
+            }
         }
         return true;
     };

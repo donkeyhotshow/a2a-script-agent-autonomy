@@ -63,7 +63,7 @@
                 // Canonical session creation path.
                 const session = await global.apiIntegration.createSession({ projectId, title });
                 
-                const sessionId = session?.id || session?.sessionId;
+                const sessionId = global.resolveSessionIdFromPayload?.(session);
                 if (!sessionId) {
                     throw new Error('Failed to get session ID from response');
                 }
@@ -75,7 +75,7 @@
                 if (global.SessionManager?.setActiveSession) global.SessionManager.setActiveSession(sessionId);
 
                 // Refresh taskbar to show new session
-                const taskbarContent = global.SessionManager?.getTaskbarContentEl?.() || document.querySelector('.taskbar-content');
+                const taskbarContent = global.resolveTaskbarContentEl?.();
                 if (taskbarContent && global.TaskbarManager) {
                     await global.TaskbarManager.refreshTaskbar(taskbarContent);
                 }

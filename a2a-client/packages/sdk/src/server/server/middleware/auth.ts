@@ -41,7 +41,7 @@ export function createAuthMiddleware(options: AuthMiddlewareOptions = {}) {
     
     return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
         // Skip authentication in development mode or if explicitly set
-        if (skipAuth || config.nodeEnv === 'development') {
+        if (skipAuth || config.skipAuth) {
             next();
             return;
         }
@@ -74,3 +74,7 @@ export function createAuthMiddleware(options: AuthMiddlewareOptions = {}) {
  * Default auth middleware instance
  */
 export default createAuthMiddleware();
+
+// Export for routes/index.ts compatibility
+export const authMiddleware = createAuthMiddleware();
+export const sessionMiddleware = createAuthMiddleware();

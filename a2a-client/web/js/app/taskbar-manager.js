@@ -196,7 +196,7 @@
          * Create session button
          */
         createSessionButton(session) {
-            const sessionId = session && (session.id || session.sessionId);
+            const sessionId = global.resolveSessionIdFromPayload?.(session);
             const btn = document.createElement('button');
             btn.className = 'taskbar-session-btn';
             btn.dataset.sessionId = sessionId || '';
@@ -240,7 +240,7 @@
         * Update off-screen indicators with state comparison
         */
        updateOffScreenIndicators() {
-           const taskbar = document.querySelector('.taskbar-content');
+           const taskbar = global.resolveTaskbarContentEl?.();
            if (!taskbar) return;
 
            const sessionsWrapper = taskbar.querySelector('.taskbar-sessions-wrapper');

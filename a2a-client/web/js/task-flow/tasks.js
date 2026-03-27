@@ -77,29 +77,23 @@
              }
 
             if (isAsync) {
-                // For async flow: wait for promise to resolve before hiding loader
-                 if (store && typeof store.once === 'function') {
-                     store.once('promiseResolved', (data) => {
-                         hideLoader?.(TaskFlow);
-                         const exec = data.execute ?? data.result?.execute;
-                         if (exec) {
-                             Render.renderExecute(contentEl, exec, { execute: exec, sessionId, projectId }, null, TaskFlow);
-                             const statusEl = contentEl?.querySelector('.task-flow-status');
-                             if (statusEl) statusEl.textContent = 'Processing complete';
-                         }
-                     });
-                 } else if (store && typeof store.on === 'function') {
-                     const unsubscribe = store.on('promiseResolved', (data) => {
-                         unsubscribe();
-                         hideLoader?.(TaskFlow);
-                         const exec = data.execute ?? data.result?.execute;
-                         if (exec) {
-                             Render.renderExecute(contentEl, exec, { execute: exec, sessionId, projectId }, null, TaskFlow);
-                             const statusEl = contentEl?.querySelector('.task-flow-status');
-                             if (statusEl) statusEl.textContent = 'Processing complete';
-                         }
-                     });
-                 }
+                const onPromiseResolved = (data) => {
+                    hideLoader?.(TaskFlow);
+                    const exec = data.execute ?? data.result?.execute;
+                    if (exec) {
+                        Render.renderExecute(contentEl, exec, { execute: exec, sessionId, projectId }, null, TaskFlow);
+                        const statusEl = contentEl?.querySelector('.task-flow-status');
+                        if (statusEl) statusEl.textContent = 'Processing complete';
+                    }
+                };
+                if (store && typeof store.once === 'function') {
+                    store.once('promiseResolved', onPromiseResolved);
+                } else if (store && typeof store.on === 'function') {
+                    const unsubscribe = store.on('promiseResolved', (data) => {
+                        unsubscribe();
+                        onPromiseResolved(data);
+                    });
+                }
             } else {
                 // Sync flow: hide loader immediately
                 hideLoader?.(TaskFlow);
@@ -283,7 +277,7 @@
 
             // Vite: { success, session }; SDK: { success, data }; legacy: flat
             const sessionData = sessionRes?.session || sessionRes?.data || sessionRes;
-            const sessionId = sessionData?.id || sessionData?.sessionId;
+            const sessionId = global.resolveSessionIdFromPayload?.(sessionData);
             const serverResponse = sessionRes?.serverResponse;
 
             if (!sessionId) {
@@ -306,21 +300,39 @@
 
             const normalizedResponse = serverResponse?.data ?? serverResponse;
             let syncExecute = normalizedResponse?.execute;
+            let snap = null;
 
-            if (!syncExecute && global.apiIntegration?.getSession) {
-                const snap = await global.apiIntegration.getSession(sessionId);
-                syncExecute = snap?.execute;
+            if (global.apiIntegration?.getSession) {
+                snap = await global.apiIntegration.getSession(sessionId);
+                if (!syncExecute) {
+                    syncExecute = snap?.execute;
+                }
             }
 
-             if (syncExecute) {
-                 Render.renderExecute(contentEl, syncExecute, { execute: syncExecute, context: normalizedResponse?.context, sessionId, projectId }, null, TaskFlow);
-                 const statusEl = contentEl?.querySelector('.task-flow-status');
-                 if (statusEl) statusEl.textContent = 'Received response';
-                 hideLoader?.(TaskFlow);
-             } else {
+            if ((normalizedResponse?.asyncPending || snap?.asyncPending) && store) {
+                store.setAwaitingSessionVerify?.(true);
+                store.setPromisePending?.(true);
+                const Ex = global.ActionExecutor;
+                if (Ex?.bootstrapSessionUi) {
+                    await Ex.bootstrapSessionUi(sessionId, store);
+                } else if (Ex?.startPromisePolling) {
+                    Ex.startPromisePolling(sessionId, null);
+                    store.setAwaitingSessionVerify?.(false);
+                } else {
+                    store.setAwaitingSessionVerify?.(false);
+                }
+            }
+
+            const waiting = global.getTaskFlowPanelViewState?.(store?.getState?.() || {})?.isWaiting;
+            if (syncExecute && !waiting) {
+                Render.renderExecute(contentEl, syncExecute, { execute: syncExecute, context: normalizedResponse?.context, sessionId, projectId }, null, TaskFlow);
+                const statusEl = contentEl?.querySelector('.task-flow-status');
+                if (statusEl) statusEl.textContent = 'Received response';
+                hideLoader?.(TaskFlow);
+            } else {
                  const statusEl = contentEl?.querySelector('.task-flow-status');
                  if (statusEl) statusEl.textContent = 'Waiting for response...';
-             }
+            }
 
             // Listen for execute events from SessionStore
             if (store && typeof store.on === 'function') {

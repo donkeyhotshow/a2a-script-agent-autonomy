@@ -7,7 +7,7 @@
  * Зависит от:
  * - global.__a2aDaemons (dialog-loader, dialog-promise)
  * - global.Normalizers (normalizeMessage, MAX_MESSAGES)
- * - global.executeHasActionableForm (html-utils.js)
+ * - global.executeHasActionableForm, global.resolveSessionIdFromPayload (html-utils.js)
  */
 
 (function (global) {
@@ -18,7 +18,7 @@
     if (!D || typeof D.createDialogLoader !== 'function' || typeof D.createDialogPromise !== 'function' || typeof D.createEventEmitter !== 'function') {
         throw new Error('[SessionData] Load js/daemons/emitter.js, dialog-loader.js, dialog-promise-poll.js before session-data.js');
     }
-    if (typeof global.executeHasActionableForm !== 'function') {
+    if (typeof global.executeHasActionableForm !== 'function' || typeof global.resolveSessionIdFromPayload !== 'function') {
         throw new Error('[SessionData] Load js/html-utils.js before session-data.js');
     }
     const createDialogLoader = D.createDialogLoader;
@@ -49,6 +49,8 @@
             pendingForm: null,
             lastError: null,
             promisePending: false,
+            /** True until GET .../async bootstrap finishes (reload: hide form until poll). */
+            awaitingSessionVerify: false,
             _waitIndicatorActive: false
         };
         // Use centralized event emitter from daemons
@@ -114,9 +116,15 @@
                     status: state.status,
                     pendingForm: state.pendingForm,
                     lastError: state.lastError,
-                    promisePending: loaderState.promisePending,
+                    awaitingSessionVerify: state.awaitingSessionVerify,
+                    promisePending: !!(loaderState.promisePending || state.promisePending),
                     loaderActive: loaderState.active,
-                    isInputBlocked: state.promisePending || state.status === 'processing' || !!nullLoader?.isActive
+                    isInputBlocked:
+                        loaderState.promisePending ||
+                        state.promisePending ||
+                        state.status === 'processing' ||
+                        !!nullLoader?.isActive ||
+                        state.awaitingSessionVerify
                 }; 
             },
             
@@ -152,8 +160,15 @@
                     promise.isPending ||
                     state.promisePending ||
                     state.status === 'processing' ||
-                    !!getLoader(null)?.isActive
+                    !!getLoader(null)?.isActive ||
+                    state.awaitingSessionVerify
                 );
+            },
+
+            setAwaitingSessionVerify: function(v) {
+                state.awaitingSessionVerify = !!v;
+                emitter.emit('awaitingSessionVerify', state.awaitingSessionVerify);
+                return this;
             },
 
             // Loader - per-session
@@ -190,6 +205,7 @@
                 state.pendingForm = null;
                 state.lastError = null;
                  state.promisePending = false;
+                 state.awaitingSessionVerify = false;
                  state._waitIndicatorActive = false;
                  promise.reset();
                  emitter.emit('reset', this.getState());
@@ -304,7 +320,7 @@
             },
 
             createSession: function(session) {
-                var sid = session.id || session.sessionId;
+                var sid = global.resolveSessionIdFromPayload?.(session);
                 if (!sid) {
                     console.error('[SessionData] createSession: No session ID');
                     return;

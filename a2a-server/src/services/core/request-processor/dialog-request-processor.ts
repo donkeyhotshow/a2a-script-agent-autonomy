@@ -162,7 +162,13 @@ async function runResponseTransformWithOutput(
         const responseTransformResult = await runPromptsTransform(
             promptsPath, schemaName, responseData, 'response', {baseDir: tempDir, forceServerTransforms: true}
         );
-        const output = responseTransformResult.success ? responseTransformResult.output : responseData;
+        if (!responseTransformResult.success) {
+            logger.error('[DialogRequestProcessor] Response transform pipeline failed', {
+                error: responseTransformResult.error ?? 'unknown',
+            });
+            return null;
+        }
+        const output = responseTransformResult.output;
         const rawOutput = output as Record<string, unknown>;
 
         // Use execute directly from transform output. Dialog chat turns must include `execute.message`.

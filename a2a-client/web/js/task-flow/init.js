@@ -10,6 +10,24 @@
     const Render = global.TaskFlowRender;
     const resolveStore = global.resolveStore;
 
+    function hasPendingClientAction(execute) {
+        if (!execute || typeof execute !== 'object') return false;
+        const pending = execute.attachments && execute.attachments.pendingClientAction;
+        if (typeof pending === 'string' && pending.trim()) return true;
+        return !!(
+            execute.script ||
+            execute['rag-search'] ||
+            execute['read-file'] ||
+            execute['write-file'] ||
+            execute['execute-command'] ||
+            execute['list-directory'] ||
+            execute['grep-search'] ||
+            execute['file-exists'] ||
+            execute['edit-patch'] ||
+            execute['run-script']
+        );
+    }
+
     /**
      * Убедиться что есть выбор проекта
      * @param {Object} TaskFlow - Main TaskFlow instance
@@ -63,18 +81,34 @@
         TaskFlow.panelId = 'task-flow-panel';
         TaskFlow.panel = panel;
 
-         // Render the execute state
-         const contentEl = panel.getContentEl();
-         if (contentEl && TaskFlow._lastResponse) {
-             Render.renderExecute(contentEl, TaskFlow._lastResponse.execute, TaskFlow._lastResponse, null, TaskFlow);
-         }
-
         let store;
         try {
             store = resolveStore(TaskFlow._sessionId);
         } catch (e) {
             console.warn('[TaskFlow] Panel auto-open skipped (no SessionStore):', e?.message || e);
             return;
+        }
+        // Render only when panel is not blocked by async/wait gate.
+        const contentEl = panel.getContentEl();
+        if (contentEl && TaskFlow._lastResponse) {
+            const st = store?.getState?.() || {};
+            const waiting = global.getTaskFlowPanelViewState?.(st)?.isWaiting;
+            const execute = TaskFlow._lastResponse.execute;
+            const forceRenderPendingExecute =
+                !!execute &&
+                (global.executeHasActionableForm?.(execute) || hasPendingClientAction(execute));
+            if (!waiting || forceRenderPendingExecute) {
+                Render.renderExecute(contentEl, TaskFlow._lastResponse.execute, TaskFlow._lastResponse, null, TaskFlow);
+            } else {
+                contentEl.innerHTML = `
+                    <div class="session-content">
+                        ${Render.renderMessageHistory(contentEl, store)}
+                        <div class="task-flow-sending" style="margin-top:0.75rem">
+                            <p class="task-flow-status">Waiting for server / LLM…</p>
+                        </div>
+                    </div>
+                `;
+            }
         }
         if (store && typeof store.on === 'function') {
             store.on('execute', (execute) => {
