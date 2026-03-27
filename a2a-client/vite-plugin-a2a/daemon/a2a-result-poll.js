@@ -7,9 +7,10 @@
  */
 
 import { isPromisePollComplete } from '../storage/promise-status.js';
+import { getA2aServerBaseUrl } from '../../shared/a2a-server-base.js';
 
 function defaultBaseUrl() {
-    return process.env.A2A_SERVER_URL || 'http://localhost:3000';
+    return getA2aServerBaseUrl();
 }
 
 /** @param {{ data?: { status?: string, execute?: unknown } }} pollJson */

@@ -11,10 +11,9 @@
         return;
     }
 
-    const helpers = global.__A2AApiHelpers || {};
-    const pollMs = helpers.DEFAULT_POLL_INTERVAL ?? root.timingMs('PROMISE_POLL_INTERVAL');
-    const isResolved = helpers.isPromiseResolved;
-    const isFailed = helpers.isPromiseFailed;
+    const pollMs =
+        (global.__A2AApiHelpers && global.__A2AApiHelpers.DEFAULT_POLL_INTERVAL) ??
+        root.timingMs('PROMISE_POLL_INTERVAL');
 
     root.createDialogPromise = function createDialogPromise() {
         let promiseId = null;
@@ -61,16 +60,32 @@
                 this._stopPolling();
                 const tick = async () => {
                     try {
+                        const H = global.__A2AApiHelpers || {};
+                        const isResolvedFn = H.isPromiseResolved;
+                        const isFailedFn = H.isPromiseFailed;
                         // For session-scoped, call checkFn without arguments
                         const result = sessionScoped ? await checkFn() : await checkFn(promiseId);
                         if (!result) return;
-                        if (isResolved ? isResolved(result) : result && (result.completed || result.status === 'completed' || result.status === 'done' || result.status === 'idle' || result.execute != null)) {
+                        if (
+                            typeof isResolvedFn === 'function'
+                                ? isResolvedFn(result)
+                                : result &&
+                                  (result.completed ||
+                                      result.status === 'completed' ||
+                                      result.status === 'done' ||
+                                      result.status === 'idle' ||
+                                      result.execute != null)
+                        ) {
                             this._stopPolling();
                             this.setPending(false);
                             this.setStatus('completed');
                             emitter.emit('resolved', { promiseId, sessionScoped, result: result.result, execute: result.execute });
                         }
-                        if (isFailed ? isFailed(result) : result && (result.status === 'failed' || result.status === 'error')) {
+                        if (
+                            typeof isFailedFn === 'function'
+                                ? isFailedFn(result)
+                                : result && (result.status === 'failed' || result.status === 'error')
+                        ) {
                             console.log('[DialogPromise] Failed state detected');
                             this._stopPolling();
                             this.setPending(false);

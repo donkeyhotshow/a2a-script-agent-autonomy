@@ -69,8 +69,13 @@
              Render.renderExecute(contentEl, TaskFlow._lastResponse.execute, TaskFlow._lastResponse, null, TaskFlow);
          }
 
-        // Integrate with SessionStore events (replaces SessionManager events)
-        const store = resolveStore(TaskFlow._sessionId);
+        let store;
+        try {
+            store = resolveStore(TaskFlow._sessionId);
+        } catch (e) {
+            console.warn('[TaskFlow] Panel auto-open skipped (no SessionStore):', e?.message || e);
+            return;
+        }
         if (store && typeof store.on === 'function') {
             store.on('execute', (execute) => {
                 if (TaskFlow.panelId) {

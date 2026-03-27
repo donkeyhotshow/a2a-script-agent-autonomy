@@ -16,11 +16,11 @@ import {
 import { buildWebExecute } from './utils/web-execute-dto.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import { chainSyncInvokesForAgentTools } from './utils/agent-rag-chain.js';
-import { getNewStepDir, loadNewSession, loadNewStep, loadServerPromise, loadServerResponse, saveClientResult, saveNewStep, saveNewSession, saveRequestToServer, saveServerPromise, saveServerResponse, listNewSteps, getNewSessionLatestStep, loadStepFile } from '../storage/newSessions.js';
 import { isPromisePollComplete } from '../storage/promise-status.js';
 
 import fs from 'fs';
-import { normalizePromisePollStatus, validateClientResultPayload } from '../../../shared/client-api-envelope.mjs';
+import { normalizePromisePollStatus, validateClientResultPayload } from '../../shared/client-api-envelope.mjs';
+import { getA2aServerBaseUrl } from '../../shared/a2a-server-base.js';
 
 const API_PREFIX = '/api/a2a';
 
@@ -36,13 +36,13 @@ function runViteClientPromisePoll({
     res,
     includePromiseIdInBody,
 }) {
-    const session = loadNewSession(cwd, sessionId);
+    const session = stepHandlers.loadNewSession(cwd, sessionId);
     if (!session) {
         res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
         return;
     }
 
-    const a2aServerUrl = process.env.A2A_SERVER_URL || 'http://localhost:3000';
+    const a2aServerUrl = getA2aServerBaseUrl();
     const xhr = require('http');
     const urlObj = new URL(`${a2aServerUrl}/api/v1/requests/${promiseId}/result`);
 
@@ -65,13 +65,13 @@ function runViteClientPromisePoll({
                 const rawResponse = JSON.parse(data);
                 const promiseStatus = rawResponse.success ? rawResponse.data : rawResponse;
 
-                const existingPromise = loadServerPromise(cwd, sessionId, currentStep);
+                const existingPromise = stepHandlers.loadServerPromise(cwd, sessionId, currentStep);
                 const updatedPromise = {
                     ...existingPromise,
                     ...promiseStatus,
                     checkedAt: new Date().toISOString(),
                 };
-                saveServerPromise(cwd, sessionId, currentStep, updatedPromise);
+                stepHandlers.saveServerPromise(cwd, sessionId, currentStep, updatedPromise);
 
                 if (isPromisePollComplete(promiseStatus)) {
                     const assistantMessage =
@@ -96,7 +96,7 @@ function runViteClientPromisePoll({
                         fallbackContext: session.context || {},
                     });
                     if (stepRecord) {
-                        saveServerResponse(cwd, sessionId, currentStep, stepRecord);
+                        stepHandlers.saveServerResponse(cwd, sessionId, currentStep, stepRecord);
                     }
 
                     if (promiseStatus.execute) session.execute = promiseStatus.execute;
@@ -104,7 +104,7 @@ function runViteClientPromisePoll({
                     session.promiseId = null;
                     session.status = 'completed';
                     session.updatedAt = new Date().toISOString();
-                    saveNewSession(cwd, session);
+                    stepHandlers.saveNewSession(cwd, session);
                 }
 
                 const normalizedStatus = normalizePromisePollStatus(promiseStatus);
@@ -215,12 +215,12 @@ export function createStepRoutes({ cwd }) {
                 res.writeHead(400).end(JSON.stringify({ error: 'Invalid session ID' }));
                 return;
             }
-            const session = loadNewSession(cwd, sessionId);
+            const session = stepHandlers.loadNewSession(cwd, sessionId);
             if (!session) {
                 res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
                 return;
             }
-            const latestStepNum = getNewSessionLatestStep(cwd, sessionId);
+            const latestStepNum = stepHandlers.getNewSessionLatestStep(cwd, sessionId);
             const includeContext = url.searchParams.get('includeContext') === '1';
             attachPromiseMeta(cwd, sessionId, session);
             const response = {
@@ -240,21 +240,16 @@ export function createStepRoutes({ cwd }) {
                 return;
             }
             const fromStep = parseInt(historyMatch[2], 10);
-            const session = loadNewSession(cwd, sessionId);
+            const session = stepHandlers.loadNewSession(cwd, sessionId);
             if (!session) {
                 res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
                 return;
             }
             console.log('[stepRoutes] history handler - cwd:', cwd, 'sessionId:', sessionId);
-            if (typeof listNewSteps !== 'function') {
-                console.error('[stepRoutes] listNewSteps not defined!');
-                res.writeHead(500).end(JSON.stringify({ error: 'listNewSteps unavailable' }));
-                return;
-            }
-            const allSteps = listNewSteps(cwd, sessionId);
+            const allSteps = stepHandlers.listNewSteps(cwd, sessionId);
             const stepsFrom = allSteps.filter((s) => s >= fromStep);
             const history = stepsFrom.map((stepNum) => {
-                const data = loadNewStep(cwd, sessionId, stepNum);
+                const data = stepHandlers.loadNewStep(cwd, sessionId, stepNum);
                 if (!data?.execute) return { step: stepNum, data };
                 return {
                     step: stepNum,
@@ -282,14 +277,14 @@ export function createStepRoutes({ cwd }) {
                     // Support both "result" and "task" in request body
                     
                     // First load session to get current step
-                    const session = loadNewSession(cwd, sessionId);
+                    const session = stepHandlers.loadNewSession(cwd, sessionId);
                     if (!session) {
                         res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
                         return;
                     }
                     
                     // Check if previous step has choices (select/radio form)
-                    const prevStepData = loadServerResponse(cwd, sessionId, session.currentStep || 1);
+                    const prevStepData = stepHandlers.loadServerResponse(cwd, sessionId, session.currentStep || 1);
                     const hasChoices = prevStepData?.execute?.form?.choices && prevStepData.execute.form.choices.length > 0;
                     
                     // If previous step had choices, use { choice: value } format, otherwise use { message: value }.
@@ -308,9 +303,9 @@ export function createStepRoutes({ cwd }) {
                     const currentStep = session.currentStep || 1;
                     const nextStepNum = currentStep + 1;
                     console.log('[VitePlugin] Saving client-result for step:', nextStepNum, 'data:', { result: submitResult });
-                    saveClientResult(cwd, sessionId, nextStepNum, { result: submitResult });
+                    stepHandlers.saveClientResult(cwd, sessionId, nextStepNum, { result: submitResult });
                     console.log('[VitePlugin] Successfully saved client-result for step:', nextStepNum);
-                    const previousStepData = loadServerResponse(cwd, sessionId, currentStep);
+                    const previousStepData = stepHandlers.loadServerResponse(cwd, sessionId, currentStep);
                     const previousContext = previousStepData?.context || {};
                     console.log('[VitePlugin] Previous step context:', previousContext);
 
@@ -351,13 +346,13 @@ export function createStepRoutes({ cwd }) {
                         result: submitResult
                     };
 
-                    saveRequestToServer(cwd, sessionId, nextStepNum, requestToServer);
+                    stepHandlers.saveRequestToServer(cwd, sessionId, nextStepNum, requestToServer);
 
-                    const stepDir = getNewStepDir(cwd, sessionId, nextStepNum);
+                    const stepDir = stepHandlers.getNewStepDir(cwd, sessionId, nextStepNum);
                     if (!fs.existsSync(stepDir)) fs.mkdirSync(stepDir, { recursive: true });
 
                     const xhr = require('http');
-                    const a2aServerUrl = process.env.A2A_SERVER_URL || 'http://localhost:3000';
+                    const a2aServerUrl = getA2aServerBaseUrl();
                     const urlObj = new URL(`${a2aServerUrl}/api/v1/invoke`);
 
                     let serverResponse = null;
@@ -394,7 +389,7 @@ export function createStepRoutes({ cwd }) {
                                             status: 'pending',
                                             submittedAt: new Date().toISOString()
                                         };
-                                        saveServerPromise(cwd, sessionId, nextStepNum, promiseData);
+                                        stepHandlers.saveServerPromise(cwd, sessionId, nextStepNum, promiseData);
                                     } else if (xhrRes.statusCode >= 200 && xhrRes.statusCode < 300) {
                                         console.log('[VitePlugin] Sync invoke response');
                                         serverResponse = a2aData;
@@ -423,7 +418,7 @@ export function createStepRoutes({ cwd }) {
                                     }
                                     session.promiseId = promiseData.promiseId;
                                     session.context = mergedContext;
-                                    saveNewSession(cwd, session);
+                                    stepHandlers.saveNewSession(cwd, session);
 
                                     res.setHeader('Content-Type', 'application/json');
                                     res.end(
@@ -506,10 +501,10 @@ export function createStepRoutes({ cwd }) {
                                             fallbackContext: mergedContext
                                         });
                                         if (stepRecord) {
-                                            saveServerResponse(cwd, sessionId, nextStepNum, stepRecord);
+                                            stepHandlers.saveServerResponse(cwd, sessionId, nextStepNum, stepRecord);
                                         }
                                     } else {
-                                        saveNewStep(cwd, sessionId, nextStepNum, {
+                                        stepHandlers.saveNewStep(cwd, sessionId, nextStepNum, {
                                             step: nextStepNum,
                                             execute: null,
                                             messages: session.messages || [],
@@ -548,7 +543,7 @@ export function createStepRoutes({ cwd }) {
                                     session.execute = finalExecute;
                                 }
 
-                                saveNewSession(cwd, session);
+                                stepHandlers.saveNewSession(cwd, session);
 
                                 res.setHeader('Content-Type', 'application/json');
                                 if (!hasServer) {
@@ -584,7 +579,7 @@ export function createStepRoutes({ cwd }) {
                             console.error('[vite-plugin-a2a] A2A Server request failed:', e.message);
                             session.currentStep = nextStepNum;
                             session.updatedAt = new Date().toISOString();
-                            saveNewSession(cwd, session);
+                            stepHandlers.saveNewSession(cwd, session);
 
                             res.setHeader('Content-Type', 'application/json');
                             res.writeHead(503);
@@ -626,7 +621,7 @@ export function createStepRoutes({ cwd }) {
                 res.writeHead(400).end(JSON.stringify({ error: 'Invalid session ID' }));
                 return;
             }
-            if (!loadNewSession(cwd, sessionId)) {
+            if (!stepHandlers.loadNewSession(cwd, sessionId)) {
                 res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
                 return;
             }
@@ -665,21 +660,16 @@ export function createStepRoutes({ cwd }) {
                 return;
             }
 
-            const session = loadNewSession(cwd, sessionId);
+            const session = stepHandlers.loadNewSession(cwd, sessionId);
             if (!session) {
                 res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
                 return;
             }
 
-            if (typeof listNewSteps !== 'function') {
-                console.error('[stepRoutes] listNewSteps not defined in promise handler!');
-                res.writeHead(500).end(JSON.stringify({ error: 'listNewSteps unavailable' }));
-                return;
-            }
-            const allSteps = listNewSteps(cwd, sessionId);
+            const allSteps = stepHandlers.listNewSteps(cwd, sessionId);
             let promiseStepNum = null;
             for (const stepNum of allSteps) {
-                const promiseData = loadServerPromise(cwd, sessionId, stepNum);
+                const promiseData = stepHandlers.loadServerPromise(cwd, sessionId, stepNum);
                 if (promiseData?.promiseId === promiseId) {
                     promiseStepNum = stepNum;
                     break;
@@ -711,7 +701,7 @@ export function createStepRoutes({ cwd }) {
                 return;
             }
 
-            const data = loadStepFile(cwd, sessionId, stepNum, filename);
+            const data = stepHandlers.loadStepFile(cwd, sessionId, stepNum, filename);
             if (!data) {
                 res.writeHead(404).end(JSON.stringify({ error: 'File not found' }));
                 return;

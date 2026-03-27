@@ -13,7 +13,7 @@
  * Note: runtime uses "-to-server" suffix to distinguish client→server from server→client.
  */
 
-import { listNewSteps, loadNewStep, loadStepFile, loadServerPromise } from '../../storage/newSessions.js';
+import * as stepHandlers from '../handlers/step-handlers.js';
 import { isActivePromiseStatus } from '../../storage/promise-status.js';
 import { buildWebExecute } from './web-execute-dto.js';
 
@@ -24,9 +24,9 @@ import { buildWebExecute } from './web-execute-dto.js';
  * @returns {{ stepNum: number, promiseId: string, serverPromise: object } | null}
  */
 export function getActiveAsyncWork(cwd, sessionId) {
-    const steps = listNewSteps(cwd, sessionId);
+    const steps = stepHandlers.listNewSteps(cwd, sessionId);
     for (const stepNum of steps) {
-        const serverPromise = loadServerPromise(cwd, sessionId, stepNum);
+        const serverPromise = stepHandlers.loadServerPromise(cwd, sessionId, stepNum);
         if (serverPromise?.promiseId && isActivePromiseStatus(serverPromise.status)) {
             return { stepNum, promiseId: serverPromise.promiseId, serverPromise };
         }
@@ -40,7 +40,7 @@ export function getActiveAsyncWork(cwd, sessionId) {
  * which chronologically follows the assistant turn — so messages.json must come before client-result.
  */
 export function collectSessionMessagesFlat(cwd, sessionId) {
-    const steps = listNewSteps(cwd, sessionId);
+    const steps = stepHandlers.listNewSteps(cwd, sessionId);
     const allMessages = [];
     const seenSlots = new Set();
     const stepMessageSlotKey = (stepNum, role, content) => {
@@ -51,7 +51,7 @@ export function collectSessionMessagesFlat(cwd, sessionId) {
     };
 
     for (const stepNum of steps) {
-        const stepData = loadNewStep(cwd, sessionId, stepNum);
+        const stepData = stepHandlers.loadNewStep(cwd, sessionId, stepNum);
 
         // First, extract messages from context.history (dialog mode stores messages here)
         if (stepData?.context?.history && Array.isArray(stepData.context.history)) {
@@ -94,7 +94,7 @@ export function collectSessionMessagesFlat(cwd, sessionId) {
             }
         }
 
-        const clientResult = loadStepFile(cwd, sessionId, stepNum, 'client-result.json');
+        const clientResult = stepHandlers.loadStepFile(cwd, sessionId, stepNum, 'client-result.json');
         if (clientResult?.result?.message) {
             const msgContent = clientResult.result.message;
             const slot = stepMessageSlotKey(stepNum, 'user', msgContent);

@@ -71,7 +71,7 @@ describe('newSessions storage', () => {
     const stepData = {
       step: 1,
       title: 'Test',
-      execute: { form: { input: { name: 'task' } } },
+      execute: { form: { input: [{ name: 'task' }] } },
       messages: [{ role: 'user', content: 'hello' }],
       context: {},
     };

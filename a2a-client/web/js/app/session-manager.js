@@ -57,13 +57,40 @@
          * Set active session
          */
         async setActiveSession(sessionId) {
-            activeSessionId = sessionId;
-            await writeActiveSessionId(sessionId);
+            const next = sessionId == null || sessionId === '' ? null : sessionId;
+            activeSessionId = next;
+            if (next) {
+                await writeActiveSessionId(next);
+            } else if (ActiveSessionStorage?.clearActiveSessionId) {
+                await ActiveSessionStorage.clearActiveSessionId();
+            }
 
             // Update UI indicators
-            this.updateActiveSessionUI(sessionId);
+            this.updateActiveSessionUI(next);
 
-            console.log('[SessionManager] Active session changed:', sessionId);
+            console.log('[SessionManager] Active session changed:', next);
+        },
+
+        /**
+         * Clear active session if Client API returns 404 for it (e.g. storage deleted server-side).
+         */
+        async reconcileActiveSessionWithServer() {
+            const id = activeSessionId;
+            if (!id || typeof global.apiIntegration?.sessionExistsOnServer !== 'function') {
+                return;
+            }
+            try {
+                const exists = await global.apiIntegration.sessionExistsOnServer(id);
+                if (!exists) {
+                    console.warn('[SessionManager] Active session not on server, clearing:', id);
+                    await this.setActiveSession(null);
+                    if (global.WindowRegistry?.saveSessionWindowsState) {
+                        await global.WindowRegistry.saveSessionWindowsState();
+                    }
+                }
+            } catch (e) {
+                console.warn('[SessionManager] Active session reconciliation failed:', e);
+            }
         },
 
         /**
@@ -213,6 +240,7 @@
         async init() {
             activeSessionId = await readActiveSessionId();
             console.log('[SessionManager] Initialized, active session:', activeSessionId);
+            await this.reconcileActiveSessionWithServer();
         }
     };
 

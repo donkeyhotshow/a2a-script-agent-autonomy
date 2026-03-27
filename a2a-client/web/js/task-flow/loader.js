@@ -21,7 +21,13 @@
      */
     function setupLoaderListener(TaskFlow, sessionId = null) {
         const targetSessionId = sessionId || TaskFlow._sessionId;
-        const store = resolveStore(targetSessionId);
+        let store;
+        try {
+            store = resolveStore(targetSessionId);
+        } catch (e) {
+            console.warn('[TaskFlow] Loader listener skipped:', e?.message || e);
+            return;
+        }
         if (!store || typeof store.on !== 'function') {
             return;
         }
@@ -51,8 +57,12 @@
     function showLoader(TaskFlow, sessionId = null) {
         const targetSessionId = sessionId || TaskFlow._sessionId || 'global';
         
-        // Try to use SessionStore for loader management
-        const store = resolveStore(TaskFlow._sessionId);
+        let store;
+        try {
+            store = resolveStore(TaskFlow._sessionId);
+        } catch {
+            store = null;
+        }
         if (store && typeof store.startLoader === 'function') {
             store.startLoader();
             return;
@@ -75,8 +85,12 @@
     function hideLoader(TaskFlow, sessionId = null) {
         const targetSessionId = sessionId || TaskFlow._sessionId || 'global';
         
-        // Try to use SessionStore for loader management
-        const store = resolveStore(TaskFlow._sessionId);
+        let store;
+        try {
+            store = resolveStore(TaskFlow._sessionId);
+        } catch {
+            store = null;
+        }
         if (store && typeof store.stopLoader === 'function') {
             store.stopLoader();
             return;

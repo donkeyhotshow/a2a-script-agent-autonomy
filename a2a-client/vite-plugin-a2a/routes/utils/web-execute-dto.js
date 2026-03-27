@@ -3,7 +3,7 @@
  * and surface user-facing fields: message, optional llmMessage, attachments.
  */
 
-import {INTERNAL_CLIENT_ACTION_KEYS} from '../../../../shared/internal-client-action-keys.mjs';
+import {INTERNAL_CLIENT_ACTION_KEYS} from '../../../shared/internal-client-action-keys.mjs';
 
 const INTERNAL_CLIENT_ACTION_KEYS_SET = new Set(INTERNAL_CLIENT_ACTION_KEYS);
 

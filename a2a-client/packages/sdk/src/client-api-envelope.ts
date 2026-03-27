@@ -7,7 +7,7 @@
 export {
     unwrapEnvelope,
     unwrapA2aInvokeBody,
-} from '../../../../shared/client-api-envelope.mjs';
+} from '../../../shared/client-api-envelope.mjs';
 
 /** @deprecated Use unwrapA2aInvokeBody */
-export { unwrapA2aInvokeBody as unwrapA2aSuccessPayload } from '../../../../shared/client-api-envelope.mjs';
+export { unwrapA2aInvokeBody as unwrapA2aSuccessPayload } from '../../../shared/client-api-envelope.mjs';

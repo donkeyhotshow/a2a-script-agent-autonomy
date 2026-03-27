@@ -3,7 +3,7 @@
  * Extracted pure functions from stepRoutes.js
  */
 
-import { unwrapA2aInvokeBody } from '../../../../shared/client-api-envelope.mjs';
+import { unwrapA2aInvokeBody } from '../../../shared/client-api-envelope.mjs';
 
 /**
  * Whitelist context fields from invoke responses (keep in sync with

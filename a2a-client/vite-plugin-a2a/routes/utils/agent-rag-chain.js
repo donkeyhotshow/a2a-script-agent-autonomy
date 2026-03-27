@@ -16,7 +16,7 @@ import path from 'path';
 import { pathToFileURL } from 'url';
 import { extractA2aExecute, mergeResponseContext, buildStepRecord } from './builders.js';
 import { getProjectPathForSessions } from '../../storage/projectSessions.js';
-import { saveRequestToServer, saveServerResponse, getNewStepDir } from '../../storage/newSessions.js';
+import * as stepHandlers from '../handlers/step-handlers.js';
 import { resolveUnderProjectRoot } from '../../../packages/execution/src/path-sandbox.js';
 import { runClientExecuteCommand } from '../../../packages/execution/src/run-agent-command.js';
 import { runClientEditPatch } from '../../../packages/execution/src/run-agent-edit-patch.js';
@@ -522,11 +522,11 @@ export async function chainSyncInvokesForAgentTools({
         stepNum += 1;
         const nextBody = { context: ctx, result: { [toolOut.key]: toolOut.value } };
 
-        const stepDir = getNewStepDir(cwd, sessionId, stepNum);
+        const stepDir = stepHandlers.getNewStepDir(cwd, sessionId, stepNum);
         if (!fs.existsSync(stepDir)) {
             fs.mkdirSync(stepDir, { recursive: true });
         }
-        saveRequestToServer(cwd, sessionId, stepNum, nextBody);
+        stepHandlers.saveRequestToServer(cwd, sessionId, stepNum, nextBody);
 
         let parsed;
         let statusCode;
@@ -558,7 +558,7 @@ export async function chainSyncInvokesForAgentTools({
             fallbackContext: ctx,
         });
         if (stepRecord) {
-            saveServerResponse(cwd, sessionId, stepNum, stepRecord);
+            stepHandlers.saveServerResponse(cwd, sessionId, stepNum, stepRecord);
         }
     }
 

@@ -3,18 +3,9 @@
  * Extracted from stepRoutes.js
  */
 
-export { getStorageMode } from '../../utils/server.js';
+import { loadNewSession } from '../../storage/newSessions.js';
 
-/**
- * Check if session ID is valid format
- * @param sessionId - session identifier to validate
- * @returns true if valid
- */
-export function isValidSessionId(sessionId) {
-  // Original implementation from stepRoutes.js
-  // Add regex/pattern validation here if needed
-  return typeof sessionId === 'string' && sessionId.length > 0 && !sessionId.includes('..');
-}
+export { getStorageMode, isValidSessionId } from '../../utils/server.js';
 
 
 /**
@@ -44,8 +35,6 @@ export function validateStepPostBody(body) {
  * @returns true if session directory exists
  */
 export function sessionExists(cwd, sessionId) {
-  // Check if session directory exists
-  const { loadNewSession } = require('../../storage/newSessions.js');
   const session = loadNewSession(cwd, sessionId);
   return session !== null;
 }

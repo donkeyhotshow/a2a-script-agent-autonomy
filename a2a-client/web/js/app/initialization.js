@@ -44,13 +44,12 @@
                 // Populate header project select (header is ready, API is set)
                 await this._populateHeaderProjectSelect?.();
 
-                // Initialize TaskFlow once from canonical startup.
+                // Restore previous state (session windows + stores) before TaskFlow subscribes to SessionStore
+                await this.restoreState();
+
                 if (global.TaskFlow?.init) {
                     global.TaskFlow.init();
                 }
-
-                // Restore previous state
-                await this.restoreState();
 
                 console.log('[AppTask] Initialization complete');
             } catch (error) {
@@ -83,6 +82,8 @@
 
             // Restore session windows
             await global.WindowState?.restoreSessionWindows();
+
+            await global.SessionManager?.reconcileActiveSessionWithServer?.();
 
             // Ensure taskbar is visible
             global.TaskbarManager?.ensureTaskbar();

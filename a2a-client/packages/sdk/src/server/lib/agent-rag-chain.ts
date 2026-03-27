@@ -138,7 +138,7 @@ export async function applyAgentRagChainAfterSyncInvoke(options: {
         const body = { context: ctx, result: { 'rag-search': ragResult } };
         await saveRequestToServer(sessionId, stepNum, { step: stepNum, ...body });
 
-        const upstream = await serverFetch('POST', serverBase, '/invoke', body);
+        const upstream = await serverFetch('POST', serverBase, '/api/v1/invoke', body);
         const json = (await upstream.json().catch(() => null)) as Record<string, unknown> | null;
 
         if (!json || !upstream.ok) {

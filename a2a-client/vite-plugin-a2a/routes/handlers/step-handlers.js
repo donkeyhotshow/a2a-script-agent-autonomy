@@ -22,6 +22,23 @@ import {
     getNewSessionLatestStep,
 } from '../../storage/newSessions.js';
 
+export {
+    loadNewSession,
+    saveNewSession,
+    getNewStepDir,
+    listNewSteps,
+    loadNewStep,
+    saveNewStep,
+    saveServerResponse,
+    saveServerPromise,
+    saveClientResult,
+    saveRequestToServer,
+    loadServerResponse,
+    loadServerPromise,
+    loadStepFile,
+    getNewSessionLatestStep,
+};
+
 export function handleListSteps(sessionId, cwd) {
     if (!isValidSessionId(sessionId)) throw new Error('Invalid session ID');
     return listNewSteps(cwd, sessionId);
@@ -41,22 +58,3 @@ export async function handlePostStep(sessionId, body, cwd) {
     void cwd;
     throw new Error('POST /sessions/:id/steps is deprecated. Use POST /sessions/:id/next.');
 }
-
-// Re-export fs utils for stepUtils.js
-export {
-    loadNewSession,
-    saveNewSession,
-    getNewStepDir,
-    listNewSteps,
-    loadNewStep,
-    saveNewStep,
-    saveServerResponse,
-    saveServerPromise,
-    saveClientResult,
-    saveRequestToServer,
-    loadServerResponse,
-    loadServerPromise,
-    loadStepFile,
-    getNewSessionLatestStep,
-} from '../../storage/newSessions.js';
-

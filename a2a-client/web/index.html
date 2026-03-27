@@ -96,6 +96,9 @@
 
 <!-- ===== New Unified Architecture ===== -->
 
+<!-- Shared fetch/session helpers (must run before deferred api-integration.js) -->
+<script type="module" src="../shared/api-helpers.js"></script>
+
 <!-- 0. Storage API -->
 <script src="js/storage.js"></script>
 <script src="js/active-session-storage.js"></script>
@@ -119,7 +122,6 @@
 <!-- 6. CLI Command Handler -->
 
 <!-- ===== Application Modules ===== -->
-<script type="module" src="../shared/api-helpers.js"></script>
 <script defer src="js/template-loader.js"></script>
 <script defer src="js/api-integration.js"></script>
 <script defer src="js/action-executor.js"></script>

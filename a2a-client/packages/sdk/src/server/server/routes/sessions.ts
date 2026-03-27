@@ -118,7 +118,7 @@ async function invokeAndPersistContinuation(params: {
             step: nextStep,
             ...requestBody,
         });
-        const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
+        const upstream = await serverFetch('POST', serverBase, '/api/v1/invoke', requestBody);
         serverResponse = await upstream.json().catch(() => null);
         if (!upstream.ok || !serverResponse) {
             res.status(upstream.status >= 400 ? upstream.status : 502).json({
@@ -259,7 +259,7 @@ router.post('/', async (req: Request, res: Response) => {
                     ...requestBody,
                 });
 
-                const upstream = await serverFetch('POST', serverBase, '/invoke', requestBody);
+                const upstream = await serverFetch('POST', serverBase, '/api/v1/invoke', requestBody);
                 serverResponse = await upstream.json().catch(() => null);
 
                 if (upstream.ok && serverResponse) {
@@ -740,7 +740,9 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
         );
 
         const nextStep = stepNum + 1;
+        // Для последующих запросов нужен task в context или на верхнем уровне
         const requestBody = {
+            task: message, // Добавляем task на верхний уровень
             context: {
                 version: '2.0',
                 session_id: sessionId,

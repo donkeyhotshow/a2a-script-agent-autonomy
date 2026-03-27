@@ -13,45 +13,23 @@
  */
 
 const globalScope = typeof window !== 'undefined' ? window : globalThis;
-const sharedApiHelpers = globalScope.__A2AApiHelpers || {};
-const {
-    normalizeApiBase: helperNormalizeApiBase,
-    buildClientA2aUrl: helperBuildClientA2aUrl,
-    buildFetchHeaders: helperBuildFetchHeaders,
-    normalizeSessionResponse: helperNormalizeSessionResponse,
-    normalizeSessionsList: helperNormalizeSessionsList
-} = sharedApiHelpers;
 
-const normalizeApiBaseHelper = helperNormalizeApiBase || function (raw) {
-    const str = String(raw || '').trim();
-    if (!str) return '/api';
-    return str.replace(/\/$/, '');
-};
-
-const buildA2aUrlHelper = function (apiBase, resourcePath) {
-    if (typeof helperBuildClientA2aUrl === 'function') {
-        return helperBuildClientA2aUrl(apiBase, resourcePath);
+function getApiHelpers() {
+    const H = globalScope.__A2AApiHelpers;
+    if (
+        !H ||
+        typeof H.normalizeApiBase !== 'function' ||
+        typeof H.buildClientA2aUrl !== 'function' ||
+        typeof H.buildFetchHeaders !== 'function' ||
+        typeof H.normalizeSessionResponse !== 'function' ||
+        typeof H.normalizeSessionsList !== 'function'
+    ) {
+        throw new Error(
+            '[api-integration] Load a2a-client/shared/api-helpers.js before api-integration.js (see web/index.html)'
+        );
     }
-    const path = String(resourcePath || '').replace(/^\//, '');
-    if (!apiBase) {
-        return `/api/a2a/${path}`;
-    }
-    const base = String(apiBase).replace(/\/?$/, '');
-    return `${base}/a2a/${path}`;
-};
-
-const buildFetchHeadersHelper = function (token, storageMode) {
-    if (typeof helperBuildFetchHeaders === 'function') {
-        return helperBuildFetchHeaders({ token, storageMode });
-    }
-    const headers = { 'Content-Type': 'application/json' };
-    if (token) headers['Authorization'] = `Bearer ${token}`;
-    if (storageMode) headers['X-Storage-Mode'] = storageMode;
-    return headers;
-};
-
-const _normalizeSessionResponse = helperNormalizeSessionResponse;
-const _normalizeSessionsList = helperNormalizeSessionsList;
+    return H;
+}
 
 class APIIntegration {
     constructor() {
@@ -69,14 +47,14 @@ class APIIntegration {
         }
         if ('apiBase' in options) {
             const s = options.apiBase == null ? '' : String(options.apiBase).trim();
-            this.apiBase = s ? normalizeApiBaseHelper(s) : null;
+            this.apiBase = s ? getApiHelpers().normalizeApiBase(s) : null;
         }
         console.log('[API] Configured token:', !!this.token, 'apiBase:', this.apiBase || '(default /api/a2a)');
         return this;
     }
 
     _clientA2aUrl(resourcePath) {
-        return buildA2aUrlHelper(this.apiBase, resourcePath);
+        return getApiHelpers().buildClientA2aUrl(this.apiBase, resourcePath);
     }
 
     /**
@@ -126,7 +104,7 @@ class APIIntegration {
     _headers() {
         const store = globalScope.SessionStore;
         const storageMode = store && typeof store.getStorageMode === 'function' ? store.getStorageMode() : undefined;
-        return buildFetchHeadersHelper(this.token, storageMode);
+        return getApiHelpers().buildFetchHeaders({ token: this.token, storageMode });
     }
 
     /**
@@ -136,7 +114,7 @@ class APIIntegration {
      * @returns {Promise<Object>} Parsed JSON response
      */
     async _fetch(path, opts = {}) {
-        const url = buildA2aUrlHelper(this.apiBase, path);
+        const url = this._clientA2aUrl(path);
         const headers = { ...this._headers(), ...opts.headers };
         const res = await fetch(url, { ...opts, headers });
         if (!res.ok) {
@@ -150,7 +128,7 @@ class APIIntegration {
      */
     async getSessions(projectId = null) {
         const raw = await this._fetch('sessions');
-        const normalized = typeof _normalizeSessionsList === 'function' ? _normalizeSessionsList(raw, projectId) : [];
+        const normalized = getApiHelpers().normalizeSessionsList(raw, projectId);
         if (!Array.isArray(normalized)) {
             throw new Error('getSessions: response must be an array or contain sessions/data array');
         }
@@ -182,15 +160,29 @@ class APIIntegration {
         const raw = await this._fetch(`sessions/${encodeURIComponent(sessionId)}${q}`);
         console.log('[API] getSession response:', sessionId, 'asyncPending:', raw?.asyncPending, 'status:', raw?.status);
         
-        const normalized =
-            typeof _normalizeSessionResponse === 'function' ? _normalizeSessionResponse(raw) : null;
+        const normalized = getApiHelpers().normalizeSessionResponse(raw);
         if (!normalized) {
             throw new Error('getSession: unexpected response shape');
         }
         return normalized;
     }
 
-
+    /**
+     * True if GET sessions/:id succeeds (session present on Client API).
+     * Used to drop stale UI active-session when folders/API no longer have the session.
+     */
+    async sessionExistsOnServer(sessionId) {
+        if (!sessionId) return false;
+        try {
+            const url = this._clientA2aUrl(`sessions/${encodeURIComponent(sessionId)}`);
+            const res = await fetch(url, { headers: this._headers() });
+            if (res.status === 404) return false;
+            if (!res.ok) return true;
+            return true;
+        } catch {
+            return true;
+        }
+    }
 
     /**
      * Delete session (uses Vite plugin)

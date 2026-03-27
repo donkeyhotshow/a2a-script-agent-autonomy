@@ -1,0 +1,14 @@
+{
+  "step": 2,
+  "context": {
+    "version": "2.0",
+    "session_id": "test_1774571706161",
+    "execution": {
+      "action": "continue",
+      "step": "next"
+    }
+  },
+  "result": {
+    "message": "Привет"
+  }
+}

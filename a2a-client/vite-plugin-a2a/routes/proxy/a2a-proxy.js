@@ -3,8 +3,9 @@
  */
 
 import { pollA2ARequestResult } from '../../daemon/a2a-result-poll.js';
+import { getA2aServerBaseUrl } from '../../../shared/a2a-server-base.js';
 
-const A2A_URL = process.env.A2A_SERVER_URL || 'http://localhost:3000';
+const A2A_URL = getA2aServerBaseUrl();
 
 export async function proxyToA2AServer(requestBody) {
     try {

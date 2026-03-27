@@ -108,10 +108,10 @@ $result3 = Invoke-PollResult -PromiseId $prom3
 if ($result3.outcome -eq "failed") { Fail "Step 3 failed: $($result3.error)" }
 Ok "Step 3 completed (outcome: $($result3.outcome))"
 
-# Step 4: message "Дякую!" -> expect completed
-Write-Step 4 "Send message 'Дякую!' -> expect completed"
+# Step 4: message "Thanks!" -> expect completed
+Write-Step 4 "Send message 'Thanks!' -> expect completed"
 
-$body4 = '{"result":{"message":"Дякую!"}}'
+$body4 = '{"result":{"message":"Thanks!"}}'
 $r4 = Invoke-RestMethod -Uri "$ClientUrl/api/sessions/$sessionId/next" -Method POST -Body $body4 -Headers $SessionHeader -TimeoutSec 15
 
 $prom4 = $r4.promiseId
