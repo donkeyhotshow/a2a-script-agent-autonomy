@@ -17,6 +17,7 @@ This file provides guidance to agents when working with code in this repository.
 11. [Gray room](#gray-room)
 12. [Router (Keyword-Based)](#router-keyword-based)
 13. [Extending LLM actions](#extending-llm-actions)
+14. [Operational Protocol (Critical)](#operational-protocol-critical)
 
 ---
 
@@ -62,6 +63,11 @@ import x from '@/services/x.js'
 - `npm run sim:lint -- --all --json` (from repo root; forwards to [`a2a-server/package.json`](a2a-server/package.json)) or `cd a2a-server && npm run sim:lint -- --all --json`
 - `npm run sim:validate -- --sim <name> --json` (same; replace `<name>` with the simulation you touched) or `cd a2a-server && npm run sim:validate -- --sim <name> --json`
 - Markdown fixtures must match transforms ? when regenerating `request.md`/`response.md` (or other markdown fixtures), keep their embedded JSON aligned with the actual `request.json`/`response.json` outputs: switch to `context.workbench`, keep the single-action `execute` and action-key shaped `result`, and sort/object-serialize fields so the examples stay deterministic after running transforms.
+
+### Operational Protocol & Dev Files
+- **OPERATIONAL_PROTOCOL.md** - All work must follow the [OPERATIONAL_PROTOCOL.md](OPERATIONAL_PROTOCOL.md). This is a mandatory requirement for bringing the project to production.
+- **Simple to Complex** - Tasks must be performed in phases: Environment -> Validation -> Integration -> E2E -> Production.
+- **DEV_STATE.md** - Every session and agent MUST maintain the `DEV_STATE.md` file in the root and/or relevant module directory. Always update it before starting and after finishing a task. "Убираем ненужное всегда, двигаемся вперед всегда".
 
 ---
 

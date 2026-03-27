@@ -1,6 +1,7 @@
 # DEV_STATE - Общее состояние проекта (2026-03-27)
 
 > Текущее состояние системы для работы до продакшена.
+> Методика: работаем по методике с дев файлами - пишем дев файл всегда, убираем ненужное всегда, двигаемся вперед всегда
 
 ---
 
@@ -152,6 +153,7 @@ cd a2a-client && npm test
 ## Ссылки
 
 - [AGENTS.md](AGENTS.md) - Правила работы агентов
+- [OPERATIONAL_PROTOCOL.md](OPERATIONAL_PROTOCOL.md) - Регламент работы (Simple → Complex)
 - [docs/new-request-flow/PROTOCOL.md](docs/new-request-flow/PROTOCOL.md) - Протокол
 - [a2a-server/docs/production/FULL_LAUNCH_PLAN.md](a2a-server/docs/production/FULL_LAUNCH_PLAN.md) - Полный план запуска
 - [simulations/SCHEMA.md](simulations/SCHEMA.md) - Симуляции

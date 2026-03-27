@@ -1,5 +1,18 @@
 # A2A Script Agent
 
+## 📌 New Developments (2026-03-27)
+
+- Transition to **stateless A2A Server** (no server-side session storage)
+- Implementation of **keyword-based routing** (replacing LLM router)
+- Mandatory **action-key shape** for all `execute` and `result` objects
+- Introduction of **context fields**: `execution`, `history`, `workbench`
+- New **step-based session storage** in Client API (numbered folders)
+- Adoption of **DEV_STATE methodology**:
+  - Always write/update DEV_STATE file before and after work
+  - Keep only necessary information for current work toward production
+  - Remove unnecessary or outdated information regularly
+  - Always move forward with progress
+
 ## 🚀 Quick Start (Unified Orchestrator)
 
 The project now uses a unified orchestrator to manage all services with health gating and graceful shutdown.
