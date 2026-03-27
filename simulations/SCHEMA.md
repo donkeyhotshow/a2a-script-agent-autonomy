@@ -67,6 +67,25 @@ Canonical files (Web ↔ Client API и Client API ↔ Server ↔ LLM):
   `a2a-client/docs/GOLDEN-SIMULATIONS-CHECKLIST.md`. Debug: `GET /sessions/:id?includeContext=1` returns unsanitized
   session data.
 
+### Workbench example (agent simulations)
+
+For agent flows, keep `context.workbench.sections` as an object in `response.json`:
+
+```json
+{
+  "context": {
+    "workbench": {
+      "sections": {
+        "scratchpad": { "listed_src": true },
+        "files": { "src/app.js": "..." }
+      }
+    }
+  }
+}
+```
+
+Gray-room substeps (`N-sub-M`) should also include `context.workbench.slots.interruptTrace` in `response.json`.
+
 Not every step has all 8 files: steps without LLM **always require** `server-transforms-*.json` (or fallback to base transforms from `prompts/transforms/`); steps with LLM add the `.md` files; transform docs describe server logic even when LLM is not used.
 
 > **Critical:** Even when `response.md` is absent (no LLM call), the server **must** apply transforms. The pipeline is:
@@ -302,6 +321,14 @@ current `action/step` to the LLM.
 ## JSON
 
 - No trailing commas. Valid JSON only.
+
+## Practical validation commands
+
+Run from `a2a-server`:
+
+- `npm run sim:lint -- --all --json`
+- `npm run sim:validate -- --all --json`
+- `npm run sim:workbench:validate -- --json`
 
 ## Context fields (canonical)
 

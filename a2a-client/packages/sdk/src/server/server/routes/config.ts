@@ -74,6 +74,7 @@ router.get('/', (req: AuthenticatedRequest, res: Response) => {
                 rateLimitWindow: config.rateLimitWindow,
                 rateLimitMax: config.rateLimitMax
             },
+            sdkHttpLimits: config.sdkHttpLimits,
             
             // Timestamp
             timestamp: new Date().toISOString()

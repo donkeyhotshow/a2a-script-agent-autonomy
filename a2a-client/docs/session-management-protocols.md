@@ -33,6 +33,66 @@ Client must then:
 1. Poll `/sessions/{id}/async` while `asyncPending = true`
 2. Re-read `/sessions/{id}` for the latest `execute/context/messages`
 
+## Lifecycle Diagrams (with storage interactions)
+
+### Create -> Next -> Async Polling -> Final Hydrate
+
+```text
+Browser/UI                      Client API (/api/a2a/*)                     Storage (step files)
+----------                      -----------------------                      --------------------
+POST /sessions  ------------->  create session id                    --->    create sessions/{sid}/
+GET /sessions/{sid} <--------   return initial snapshot              <---    READ highest completed step (if any)
+
+POST /sessions/{sid}/next ---->  accept user input
+                                 WRITE {N}/client-result.json   --->        user result for step N
+                                 WRITE {N}/request-to-server.json --->      invoke payload for step N
+                                 invoke A2A server
+                                 if async:
+                                   WRITE {N}/server-promise.json --->       { promiseId, status: pending }
+                                 else:
+                                   WRITE {N}/server-response.json --->       final execute/context/result
+                                   WRITE {N}/messages.json        --->       step message slice
+<---- ack { accepted, step, asyncPending }
+
+GET /sessions/{sid}/async ---->  READ active {N}/server-promise.json --->   pending promise metadata
+                                 poll upstream result
+                                 when completed:
+                                   DELETE {N}/server-promise.json --->       clear pending marker
+                                   WRITE  {N}/server-response.json --->      finalized step output
+                                   WRITE  {N}/messages.json        --->      finalized messages
+<---- { asyncPending: false, promiseStatus: completed }
+
+GET /sessions/{sid} <---------   READ highest completed step + merge messages
+                                 READ {1..N}/messages.json         --->      rebuild timeline
+                                 READ {N}/server-response.json     --->      execute/context projection
+```
+
+### Recovery Path: Reload -> Restore -> Async Resume
+
+```text
+Browser reload                  Client API/session loader                      Storage (step files)
+--------------                  -------------------------                      --------------------
+Page open ------------------->  GET /sessions/{sid}
+                                scan step folders for latest state
+                                READ highest {K}/server-response.json --->    authoritative execute/context
+                                READ {1..K}/messages.json            --->     rebuild conversation
+<---------------------------   return session snapshot + asyncPending/promiseStatus
+
+if asyncPending = true:
+  start polling loop -------->  GET /sessions/{sid}/async
+                                READ pending {K+1}/server-promise.json --->  detect in-flight step
+                                poll upstream status
+                                if still pending: keep as-is
+                                if completed:
+                                  DELETE {K+1}/server-promise.json --->      remove pending file
+                                  WRITE  {K+1}/server-response.json --->      persist final step
+                                  WRITE  {K+1}/messages.json        --->      persist messages
+<---------------------------   return completed async state
+
+final hydrate -------------->   GET /sessions/{sid}
+                                READ highest completed response + merged messages
+```
+
 ## Canonical vs UI Projection
 
 - **Canonical session state**: step artifacts (`request-to-server.json`, `server-response.json`, `client-result.json`, `messages.json`) remain source-of-truth.
@@ -84,6 +144,7 @@ This flow must preserve normal step numbering and artifact guarantees.
 ## Related Docs
 
 - [WEB_UI_PROTOCOL.md](./WEB_UI_PROTOCOL.md)
+- [SESSION-STORE-ARCHITECTURE.md](./SESSION-STORE-ARCHITECTURE.md)
 - [SESSION-STORAGE.md](./SESSION-STORAGE.md)
 - [api-client-server-logic.md](./api-client-server-logic.md)
 - [api-testing-plan.md](./api-testing-plan.md)

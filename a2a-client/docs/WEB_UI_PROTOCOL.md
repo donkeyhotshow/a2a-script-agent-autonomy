@@ -43,13 +43,104 @@ The **server protocol** and simulation **`response.json`** still use a **single 
 | GET | `/api/a2a/sessions/{id}/latest` | Step summary; nested `session` uses same public DTO as GET session |
 | GET | `/api/a2a/sessions/{id}/messages` | Delta messages; includes `asyncPending` (not `promiseId`) |
 
-### Async polling URL matrix (three families)
+## Lifecycle diagrams (web + storage)
 
-| Consumer | Base URL | Poll / status route | Notes |
-|----------|----------|---------------------|--------|
-| **A2A Server** (invoke result) | `A2A_SERVER_URL` (e.g. `http://localhost:3000`) | `GET /api/v1/requests/:promiseId/result` and `/status` | Full protocol; `result` includes filtered `context` + `execute` (see server `requests.routes`). |
-| **Vite Client API / Web UI** | Origin + `/api/a2a` | `GET /api/a2a/sessions/:id/async` (preferred); legacy `GET .../promise/:promiseId` | Session-centric; no `promiseId` required in UI JSON; ADR-0028 Client API vs raw A2A. |
-| **SDK `AsyncClient`** | `httpClient` base (often Client API or custom) | `GET /async/status/:promiseId` (relative to base) | **Not** the same path as Vite `/async`; wire `httpClient` to the service that implements `/async/status/*` or map to A2A `/api/v1/requests/.../result` in integrations. |
+### Happy path: create -> next -> async polling
+
+```text
+Web UI                   Client API routes                             Session storage writes/reads
+------                   -----------------                             ----------------------------
+create session
+POST /sessions ------->  sessionRoutes:create                      ->  create `sessions/{sid}/`
+GET  /sessions/{sid} <-  sessionRoutes:get                         <-  READ latest response + messages (if present)
+
+send input
+POST /sessions/{sid}/next
+  ---------------------> stepRoutes:next
+                         WRITE `{N}/client-result.json`
+                         WRITE `{N}/request-to-server.json`
+                         invoke A2A
+                         async ? WRITE `{N}/server-promise.json`
+                               : WRITE `{N}/server-response.json` + `{N}/messages.json`
+<---------------------  ack `{ accepted, step, asyncPending }`
+
+while asyncPending=true
+GET /sessions/{sid}/async
+  ---------------------> stepRoutes:async
+                         READ `{N}/server-promise.json`
+                         pending ? keep file
+                                 : DELETE promise + WRITE response/messages
+<---------------------  `{ asyncPending, promiseStatus }`
+
+hydrate UI
+GET /sessions/{sid} ---> sessionRoutes:get
+<---------------------  projected execute/messages/context
+                         READ highest completed `server-response.json`
+                         READ merged `{1..N}/messages.json`
+```
+
+### Recovery path: reload -> restore -> async resume
+
+```text
+Web UI reload            Client API/session load                         Session storage reads/writes
+-------------            -----------------------                         ----------------------------
+page reload ---------->  GET /sessions/{sid}
+                         derive state from step artifacts
+                         READ highest completed `{K}/server-response.json`
+                         READ `{1..K}/messages.json`
+<----------------------  returns session + `asyncPending` flag
+
+if asyncPending:
+resume poll ---------->  GET /sessions/{sid}/async
+                         READ in-flight `{K+1}/server-promise.json`
+                         if complete:
+                           DELETE `{K+1}/server-promise.json`
+                           WRITE  `{K+1}/server-response.json`
+                           WRITE  `{K+1}/messages.json`
+<----------------------  async status update for UI
+
+final restore -------->  GET /sessions/{sid}
+<----------------------  stable snapshot for renderer/session store
+```
+
+### Async polling URL matrix (A2A Server, Vite Client API, SDK AsyncClient)
+
+| Consumer | Base URL | Poll / status route | Full example URL | Notes |
+|----------|----------|---------------------|------------------|--------|
+| **A2A Server** (raw invoke result API) | `A2A_SERVER_URL` (e.g. `http://localhost:3000`) | `GET /api/v1/requests/:promiseId/result` | `http://localhost:3000/api/v1/requests/prom_123/result` | Canonical server async endpoint; promise-id based transport flow. |
+| **Vite Client API / Web UI** (storage mode) | Browser origin + `/api/a2a` (e.g. `http://localhost:5173/api/a2a`) | Preferred: `GET /sessions/:sessionId/async`; legacy: `GET /sessions/:sessionId/promise/:promiseId` | `http://localhost:5173/api/a2a/sessions/sess_123/async` | Session-centric web flow; UI should poll by session and read `asyncPending`/`promiseStatus` from DTO. |
+| **SDK `AsyncClient`** | `httpClient` base of SDK integration | `GET /async/status/:promiseId` (relative to SDK base) | `http://localhost:3001/async/status/prom_123` | SDK contract path is integration-defined and may differ from Vite route layout; adapters can map this to server `/api/v1/requests/:promiseId/result`. |
+
+#### Example snippets by consumer
+
+**A2A Server (direct polling):**
+
+```text
+GET http://localhost:3000/api/v1/requests/prom_123/result
+```
+
+**Vite Client API (web polling, preferred):**
+
+```text
+GET http://localhost:5173/api/a2a/sessions/sess_123/async
+```
+
+**Vite Client API (legacy/debug):**
+
+```text
+GET http://localhost:5173/api/a2a/sessions/sess_123/promise/prom_123
+```
+
+**SDK AsyncClient (integration route):**
+
+```text
+GET http://localhost:3001/async/status/prom_123
+```
+
+Compatibility rule:
+- Web UI + `SessionStore` use `/api/a2a/sessions/:id/async` as default polling route.
+- Raw server integrations can poll `/api/v1/requests/:promiseId/result`.
+- SDK integrations must document where `/async/status/:promiseId` is implemented (native route or adapter mapping).
 
 ## Browser modules
 

@@ -10,6 +10,14 @@ Golden fixtures for the Web ↔ Client API ↔ Server ↔ LLM contract.
 - **SDK / Web shapes:** [`CLIENT-SDK-IDEAL.md`](./CLIENT-SDK-IDEAL.md).
 - **Dialog file workflow:** [`dialog/WORKFLOW.md`](./dialog/WORKFLOW.md).
 
+## Validation Commands
+
+Run from `a2a-server`:
+
+- `npm run sim:lint -- --all --json`
+- `npm run sim:validate -- --all --json`
+- `npm run sim:workbench:validate -- --json`
+
 ## Quality Gate (CI acceptance rule)
 
 - `valid` = structural pass (`sim:lint` + `sim:validate` are valid).

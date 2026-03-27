@@ -10,7 +10,6 @@
  */
 
 import express, { type Application, type Request, type Response } from 'express';
-import cors from 'cors';
 import { fileURLToPath } from 'node:url';
 
 // Import services from ./services
@@ -45,6 +44,12 @@ import {
 
 // Import setupRoutes function separately
 import { setupRoutes } from './server/routes/index.js';
+import {
+    buildStandaloneCorsOptions,
+    createStandaloneRateLimitMiddleware,
+    getStandaloneHttpLimitsProfile,
+    standaloneCors,
+} from './server/http-limits.js';
 
 // Re-export services for external use
 export {
@@ -85,12 +90,18 @@ let app: Application | null = null;
  */
 export function createApp(): Application {
     const expressApp = express();
+    const httpLimits = getStandaloneHttpLimitsProfile();
 
     // CORS middleware
-    expressApp.use(cors());
+    if (httpLimits.cors.enabled) {
+        expressApp.use(standaloneCors(buildStandaloneCorsOptions(httpLimits)));
+    }
 
     // JSON middleware
-    expressApp.use(express.json({ limit: '50mb' }));
+    expressApp.use(express.json({ limit: httpLimits.fileCap.maxBodyBytes }));
+
+    // Basic in-memory rate limit for standalone mode
+    expressApp.use(createStandaloneRateLimitMiddleware(httpLimits));
 
     // Logging middleware
     expressApp.use((req: Request, res: Response, next) => {

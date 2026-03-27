@@ -24,6 +24,7 @@ const toStringArray = (env: string | undefined, fallback: string[]): string[] =>
 
 const PORT = toNumber(process.env.PORT, 3001);
 const HOST = process.env.HOST || 'localhost';
+const SDK_HTTP_FILE_CAP_BYTES = toNumber(process.env.SDK_HTTP_FILE_CAP_BYTES, 5 * 1024 * 1024);
 
 export interface ApiServerConfig {
     port: number;
@@ -61,6 +62,15 @@ export interface ApiServerConfig {
     rateLimitMax: number;
 
     defaultSyncMode: boolean;
+    sdkHttpLimits: {
+        corsEnabled: boolean;
+        corsOrigin: string[];
+        corsMethods: string[];
+        rateLimitEnabled: boolean;
+        rateLimitWindowMs: number;
+        rateLimitMax: number;
+        fileCapBytes: number;
+    };
 }
 
 export const config: ApiServerConfig = {
@@ -102,6 +112,18 @@ export const config: ApiServerConfig = {
     rateLimitMax: toNumber(process.env.RATE_LIMIT_MAX, 100),
 
     defaultSyncMode: toBoolean(process.env.DEFAULT_SYNC_MODE, false),
+    sdkHttpLimits: {
+        corsEnabled: toBoolean(process.env.SDK_HTTP_CORS_ENABLED, true),
+        corsOrigin: toStringArray(process.env.SDK_HTTP_CORS_ORIGIN, ['*']),
+        corsMethods: toStringArray(
+            process.env.SDK_HTTP_CORS_METHODS,
+            ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+        ),
+        rateLimitEnabled: toBoolean(process.env.SDK_HTTP_RATE_LIMIT_ENABLED, true),
+        rateLimitWindowMs: toNumber(process.env.SDK_HTTP_RATE_LIMIT_WINDOW_MS, 60 * 1000),
+        rateLimitMax: toNumber(process.env.SDK_HTTP_RATE_LIMIT_MAX, 120),
+        fileCapBytes: Math.max(1024, SDK_HTTP_FILE_CAP_BYTES),
+    },
 };
 
 export default config;

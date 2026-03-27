@@ -9,10 +9,12 @@ This folder is now focused on:
 ## Read These First
 
 - [WEB_UI_PROTOCOL.md](./WEB_UI_PROTOCOL.md) - source of truth for Web UI contract
+- [SESSION-STORE-ARCHITECTURE.md](./SESSION-STORE-ARCHITECTURE.md) - three-tier store model and usage decision tree
 - [GOLDEN-SIMULATIONS-CHECKLIST.md](./GOLDEN-SIMULATIONS-CHECKLIST.md) - client checklist for sanitized `received.json` Web DTO
 - [SESSION-STORAGE.md](./SESSION-STORAGE.md) - session file layout and step lifecycle
 - [RED-ROOM.md](./RED-ROOM.md) - auto-execute cycle contract
 - [GRAY-ROOM.md](./GRAY-ROOM.md) - server-only substeps (client view)
+- [../../docs/SESSION-SYSTEMS-OVERVIEW.md](../../docs/SESSION-SYSTEMS-OVERVIEW.md) - cross-system session architecture map
 - [api-client-server-logic.md](./api-client-server-logic.md) - request/response flow per step
 - [api-testing-plan.md](./api-testing-plan.md) - practical verification checklist
 - [tester/API.md](./tester/API.md) - tester endpoints

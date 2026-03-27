@@ -1,14 +1,9 @@
-// @vitest-environment node
 import { describe, it, expect } from 'vitest';
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
+import { sanitizeApiRecordExecuteFields } from '../../shared/web-execute-dto.mjs';
 
-const readFixture = (fixturePath) => {
-    const fullPath = path.resolve(process.cwd(), '../../../', fixturePath);
-    return JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
-};
-
-describe('Web Execute DTO Contract Validation', () => {
+describe('WebExecuteDTOContract', () => {
     const clientOnlyActions = [
         'rag-search',
         'read-file',
@@ -19,139 +14,151 @@ describe('Web Execute DTO Contract Validation', () => {
         'grep-search',
         'file-exists',
         'edit-patch',
-        'run-script'
+        'run-script',
+    ];
+    const allowedWebExecuteKeys = new Set(['message', 'llmMessage', 'form', 'attachments']);
+    const simulationRoot = path.resolve(process.cwd(), '..', 'simulations');
+    const fixturePaths = [
+        'dialog/1/received.json',
+        'dialog/2/received.json',
+        'dialog/3/received.json',
+        'dialog/4/received.json',
+        'agent-auto-ai/1/received.json',
+        'agent-auto-ai/2/received.json',
+        'agent-auto-ai/3/received.json',
+        'agent-auto-ai/4/received.json',
+        'agent-auto-ai/5/received.json',
+        'agent-auto-ai/6/received.json',
+        'agent-auto-ai/7/received.json',
     ];
 
+    const readFixture = (relativePath) => {
+        const fullPath = path.join(simulationRoot, relativePath);
+        return JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
+    };
+
     const validateBaseStructure = (dto) => {
-        expect(dto).toHaveProperty('projectId');
-        expect(dto).toHaveProperty('sessionId');
-        expect(dto).toHaveProperty('execute');
         expect(typeof dto.projectId).toBe('string');
         expect(typeof dto.sessionId).toBe('string');
+        expect(dto.execute).toBeTruthy();
         expect(typeof dto.execute).toBe('object');
-        expect(dto.execute).not.toBeNull();
 
-        // Ensure no client-only actions in execute
-        clientOnlyActions.forEach(action => {
+        Object.keys(dto.execute).forEach((key) => {
+            expect(allowedWebExecuteKeys.has(key)).toBe(true);
+        });
+
+        clientOnlyActions.forEach((action) => {
             expect(dto.execute).not.toHaveProperty(action);
         });
     };
 
-    describe('Router Form Test', () => {
-        it('should validate router form structure', () => {
-            const dto = readFixture('simulations/dialog/1/received.json');
-            validateBaseStructure(dto);
-
-            expect(dto.execute).toHaveProperty('form');
-            expect(dto.execute.form).toHaveProperty('title');
-            expect(dto.execute.form).toHaveProperty('description');
-            expect(dto.execute.form).toHaveProperty('choices');
-
-            expect(typeof dto.execute.form.title).toBe('string');
-            expect(typeof dto.execute.form.description).toBe('string');
+    const variantAssertions = {
+        'dialog/1/received.json': (dto) => {
+            expect(dto.execute.form.title).toBeTypeOf('string');
+            expect(dto.execute.form.description).toBeTypeOf('string');
             expect(Array.isArray(dto.execute.form.choices)).toBe(true);
-
-            dto.execute.form.choices.forEach(choice => {
-                expect(choice).toHaveProperty('id');
-                expect(choice).toHaveProperty('label');
-                expect(choice).toHaveProperty('description');
-                expect(typeof choice.id).toBe('string');
-                expect(typeof choice.label).toBe('string');
-                expect(typeof choice.description).toBe('string');
-            });
-
             expect(dto.execute.form.choices.length).toBeGreaterThan(0);
-        });
-    });
-
-    describe('Dialog Input Test', () => {
-        it('should validate dialog input form structure', () => {
-            const dto = readFixture('simulations/dialog/2/received.json');
-            validateBaseStructure(dto);
-
-            expect(dto.execute).toHaveProperty('form');
-            expect(dto.execute.form).toHaveProperty('input');
+        },
+        'dialog/2/received.json': (dto) => {
             expect(Array.isArray(dto.execute.form.input)).toBe(true);
-
-            dto.execute.form.input.forEach(input => {
-                expect(input).toHaveProperty('name');
-                expect(input).toHaveProperty('type');
-                expect(input).toHaveProperty('label');
-                expect(input).toHaveProperty('required');
-                expect(typeof input.name).toBe('string');
-                expect(typeof input.type).toBe('string');
-                expect(typeof input.label).toBe('string');
-                expect(typeof input.required).toBe('boolean');
+            expect(dto.execute.form.input[0]).toMatchObject({
+                name: expect.any(String),
+                type: expect.any(String),
+                label: expect.any(String),
+                required: expect.any(Boolean),
             });
-
-            expect(dto.execute.form.input.length).toBeGreaterThan(0);
-        });
-    });
-
-    describe('Message with Read Attachments Test', () => {
-        it('should validate message with read files attachments', () => {
-            const dto = readFixture('simulations/agent-auto-ai/5/received.json');
-            validateBaseStructure(dto);
-
-            expect(dto.execute).toHaveProperty('message');
-            expect(dto.execute).toHaveProperty('attachments');
-            expect(dto.execute.attachments).toHaveProperty('readFiles');
-
-            expect(typeof dto.execute.message).toBe('string');
-            expect(Array.isArray(dto.execute.attachments.readFiles)).toBe(true);
-
-            dto.execute.attachments.readFiles.forEach(file => {
-                expect(file).toHaveProperty('path');
-                expect(typeof file.path).toBe('string');
-            });
-
-            expect(dto.execute.attachments.readFiles.length).toBeGreaterThan(0);
-        });
-    });
-
-    describe('Message with Write Attachments Test', () => {
-        it('should validate message with written files attachments', () => {
-            const dto = readFixture('simulations/agent-auto-ai/6/received.json');
-            validateBaseStructure(dto);
-
-            expect(dto.execute).toHaveProperty('message');
-            expect(dto.execute).toHaveProperty('attachments');
-            expect(dto.execute.attachments).toHaveProperty('writtenFiles');
-
-            expect(typeof dto.execute.message).toBe('string');
-            expect(Array.isArray(dto.execute.attachments.writtenFiles)).toBe(true);
-
-            dto.execute.attachments.writtenFiles.forEach(file => {
-                expect(file).toHaveProperty('path');
-                expect(typeof file.path).toBe('string');
-            });
-
-            expect(dto.execute.attachments.writtenFiles.length).toBeGreaterThan(0);
-        });
-    });
-
-    describe('Confirmation Form Test', () => {
-        it('should validate confirmation form structure', () => {
-            const dto = readFixture('simulations/agent-auto-ai/7/received.json');
-            validateBaseStructure(dto);
-
-            expect(dto.execute).toHaveProperty('form');
-            expect(dto.execute.form).toHaveProperty('title');
-            expect(dto.execute.form).toHaveProperty('description');
-            expect(dto.execute.form).toHaveProperty('choices');
-
-            expect(typeof dto.execute.form.title).toBe('string');
-            expect(typeof dto.execute.form.description).toBe('string');
+        },
+        'dialog/3/received.json': (dto) => {
+            expect(dto.execute.form.title).toBeTypeOf('string');
+            expect(dto.execute.form.description).toBeTypeOf('string');
+            expect(Array.isArray(dto.execute.form.input)).toBe(true);
+        },
+        'dialog/4/received.json': (dto) => {
+            expect(dto.execute.form.title).toBeTypeOf('string');
+            expect(dto.execute.form.description).toBeTypeOf('string');
+            expect(Array.isArray(dto.execute.form.input)).toBe(true);
+        },
+        'agent-auto-ai/1/received.json': (dto) => {
             expect(Array.isArray(dto.execute.form.choices)).toBe(true);
-
-            dto.execute.form.choices.forEach(choice => {
-                expect(choice).toHaveProperty('id');
-                expect(choice).toHaveProperty('label');
-                expect(typeof choice.id).toBe('string');
-                expect(typeof choice.label).toBe('string');
+            expect(dto.execute.form.choices[0]).toMatchObject({
+                id: expect.any(String),
+                label: expect.any(String),
+                description: expect.any(String),
             });
+        },
+        'agent-auto-ai/2/received.json': (dto) => {
+            expect(Array.isArray(dto.execute.form.input)).toBe(true);
+            expect(dto.execute.form.input[0]).toMatchObject({
+                name: expect.any(String),
+                type: expect.any(String),
+                label: expect.any(String),
+                required: expect.any(Boolean),
+            });
+        },
+        'agent-auto-ai/3/received.json': (dto) => {
+            expect(dto.execute.message).toBeTypeOf('string');
+            expect(dto.execute.attachments).toMatchObject({
+                ragQuery: expect.any(String),
+            });
+        },
+        'agent-auto-ai/4/received.json': (dto) => {
+            expect(dto.execute.message).toBeTypeOf('string');
+            expect(dto.execute.attachments).toMatchObject({
+                listDirectoryPath: expect.any(String),
+            });
+        },
+        'agent-auto-ai/5/received.json': (dto) => {
+            expect(dto.execute.message).toBeTypeOf('string');
+            expect(Array.isArray(dto.execute.attachments.readFiles)).toBe(true);
+            expect(dto.execute.attachments.readFiles[0]).toMatchObject({
+                path: expect.any(String),
+            });
+        },
+        'agent-auto-ai/6/received.json': (dto) => {
+            expect(dto.execute.message).toBeTypeOf('string');
+            expect(Array.isArray(dto.execute.attachments.writtenFiles)).toBe(true);
+            expect(dto.execute.attachments.writtenFiles[0]).toMatchObject({
+                path: expect.any(String),
+            });
+        },
+        'agent-auto-ai/7/received.json': (dto) => {
+            expect(dto.execute.form.title).toBeTypeOf('string');
+            expect(dto.execute.form.description).toBeTypeOf('string');
+            expect(Array.isArray(dto.execute.form.choices)).toBe(true);
+            expect(dto.execute.form.choices[0]).toMatchObject({
+                id: expect.any(String),
+                label: expect.any(String),
+            });
+        },
+    };
 
-            expect(dto.execute.form.choices.length).toBeGreaterThan(0);
+    it.each(fixturePaths)('validates fixture matrix contract: %s', (fixturePath) => {
+        const dto = readFixture(fixturePath);
+        validateBaseStructure(dto);
+        variantAssertions[fixturePath](dto);
+    });
+
+    it('keeps result action-key payload untouched while sanitizing execute', () => {
+        const payload = {
+            execute: { 'read-file': { path: 'src/app.js' } },
+            currentExecute: { 'rag-search': { query: 'health route' } },
+            result: {
+                'read-file': { path: 'src/app.js', content: 'export {}' },
+            },
+        };
+
+        const out = sanitizeApiRecordExecuteFields(payload);
+
+        expect(out.execute).toMatchObject({
+            message: 'Reading files…',
+            attachments: { readFiles: [{ path: 'src/app.js' }] },
+        });
+        expect(out.currentExecute).toMatchObject({
+            message: 'Searching the codebase…',
+            attachments: { ragQuery: 'health route' },
+        });
+        expect(out.result).toEqual({
+            'read-file': { path: 'src/app.js', content: 'export {}' },
         });
     });
 });

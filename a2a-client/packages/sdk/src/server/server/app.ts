@@ -6,7 +6,12 @@
  */
 
 import express from 'express';
-import cors from 'cors';
+import {
+    buildStandaloneCorsOptions,
+    createStandaloneRateLimitMiddleware,
+    getStandaloneHttpLimitsProfile,
+    standaloneCors,
+} from './http-limits.js';
 
 export interface AppOptions {
     port: number;
@@ -34,13 +39,18 @@ export class ExpressAppManager {
      * Setup middleware
      */
     private setupMiddleware(): void {
+        const httpLimits = getStandaloneHttpLimitsProfile();
+
         // CORS
-        if (this.options.enableCORS !== false) {
-            this.app.use(cors());
+        if (this.options.enableCORS !== false && httpLimits.cors.enabled) {
+            this.app.use(standaloneCors(buildStandaloneCorsOptions(httpLimits)));
         }
 
         // JSON parsing
-        this.app.use(express.json({limit: '50mb'}));
+        this.app.use(express.json({ limit: httpLimits.fileCap.maxBodyBytes }));
+
+        // Basic in-memory rate limit for standalone mode
+        this.app.use(createStandaloneRateLimitMiddleware(httpLimits));
 
         // Logging middleware
         if (this.options.enableLogging !== false) {

@@ -8,6 +8,16 @@ import { buildExecuteProjection } from './execute-projection-dto.js';
 import { collectSessionMessagesFlat } from './message-timeline.js';
 import { deriveSessionStage } from './session-stage-machine.js';
 
+function debugProjectionLog(event, payload) {
+    if (process.env.A2A_SESSION_DTO_DEBUG !== '1') return;
+    try {
+        // Keep logs shape-only to avoid leaking full context payloads.
+        console.debug(`[session-projection-dto] ${event}`, payload);
+    } catch {
+        // Never fail projection on debug logging.
+    }
+}
+
 /**
  * In-flight async work: first step with an active server-promise.json (pending/processing).
  */
@@ -61,6 +71,12 @@ export function toPublicSession(session, includeContext = false) {
         asyncPending: base.asyncPending,
         status: base.status ?? null,
     });
+    debugProjectionLog('toPublicSession', {
+        includeContext: false,
+        asyncPending: base.asyncPending,
+        stage: base.stage,
+        executeKeys: base.execute && typeof base.execute === 'object' ? Object.keys(base.execute) : [],
+    });
     return base;
 }
 
@@ -92,6 +108,11 @@ export function toPublicNextResponse(response, includeContext = false) {
     if (!includeContext) {
         delete out.context;
     }
+    debugProjectionLog('toPublicNextResponse', {
+        includeContext,
+        hasSession: !!out.session,
+        executeKeys: out.execute && typeof out.execute === 'object' ? Object.keys(out.execute) : [],
+    });
     return out;
 }
 

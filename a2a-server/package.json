@@ -27,6 +27,7 @@
     "sim:lint:all": "tsx scripts/sim-lint.ts --all",
     "sim:validate": "tsx scripts/sim-validate.ts",
     "sim:validate:all": "tsx scripts/sim-validate.ts --all",
+    "sim:workbench:validate": "tsx scripts/sim-workbench-validate.ts",
     "sim:compare": "tsx scripts/sim-compare.ts",
     "sim:report": "tsx scripts/sim-report.ts",
     "sim:check-md": "node scripts/check-sim-md-json-drift.mjs",

@@ -241,15 +241,3 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [ ] **CCP-S-03 deprecation-check**: Identify legacy branches still referenced by comments/docs but no longer used by runtime flow.
 - [ ] **CCP-S-04 safe-remove-gate**: Removal only after `npm run test`, `sim:lint`, `sim:validate` pass.
 
----
-
-*Обновлено: 2026-03-20*
-
-### Session Notes (2026-03-20)
-- [x] Removed root-level `request.md` side-effect for dialog flow by routing render output to temp transform directory.
-- [x] Added transform runtime support for separate template `baseDir` and artifact `outputDir` to avoid workspace pollution.
-
-### Session Notes (2026-03-27)
-- [x] CM-06 redundancy review completed for server runtime paths.
-- [x] Single-owner mapping confirmed for request-processor selection/orchestration.
-- [x] No safe runtime deletions in this pass; next candidate requires explicit unreachable-branch evidence plus cleanup gate.

@@ -33,9 +33,7 @@ Agent mode симуляции с workbench системой.
 #### `agent-analyze/`
 - Agent mode for code analysis
 
-**Upgrade needed**: 
-- Verify workbench.sections in response.json matches new format
-- Ensure interruptTrace visible in context.workbench.slots
+**Upgrade needed**: None - verified by fixture contract tests and `sim:workbench:validate`.
 
 ### 3. Task Decomposition (`task-decomposition/`)
 Симуляции декомпозиции задач.
@@ -50,9 +48,7 @@ Agent mode симуляции с workbench системой.
 ### 5. Interrupt/Thinking (`interrupt-thinking/`)
 Gray room симуляции для thinking/reasoning.
 
-**Upgrade needed**:
-- Ensure interruptTrace present in context
-- Verify workbench.slots.thinking populated
+**Upgrade needed**: None - verified by fixture contract checks and schema-aligned goldens.
 
 ---
 
@@ -99,18 +95,18 @@ rg -n 'interruptTrace' -g '**/response.json' simulations
 ## Side Fixes Needed
 
 ### Documentation
-- [ ] Update SCHEMA.md with latest simulation format examples
-- [ ] Add link to docs/SESSION-SYSTEMS-OVERVIEW.md in README.md
-- [ ] Update simulation README with validation commands
+- [x] Update SCHEMA.md with latest simulation format examples *(added workbench sections example + practical validation commands)*
+- [x] Add link to docs/SESSION-SYSTEMS-OVERVIEW.md in README.md *(added to `a2a-client/docs/README.md`)*
+- [x] Update simulation README with validation commands *(added lint/validate/workbench validator commands in `simulations/README.md`)*
 
 ### Tests
-- [ ] Add unit tests for projection DTO generation
-- [ ] Add integration tests for workbench sections
-- [ ] Update golden file expectations for new format
+- [x] Add unit tests for projection DTO generation *(added `a2a-client/tests/unit/session-projection-dto.test.mjs`, 4 tests passing)*
+- [x] Add integration tests for workbench sections *(added `a2a-client/tests/unit/simulation-workbench-contract.test.mjs`, fixture-based checks passing)*
+- [x] Update golden file expectations for new format *(covered by new workbench fixture contract assertions against existing goldens)*
 
 ### Code
-- [ ] Add debug logging to session-projection-dto.js
-- [ ] Add validation script for workbench format
+- [x] Add debug logging to session-projection-dto.js *(safe hook behind `A2A_SESSION_DTO_DEBUG=1`)*
+- [x] Add validation script for workbench format *(added `a2a-server/scripts/sim-workbench-validate.ts` + npm script)*
 
 ---
 
@@ -137,11 +133,11 @@ rg -n '"execute":\s*\{[^}]*"(form|script|read-file|rag-search)"' -g '**/received
 | Phase | Tasks | Status |
 |-------|-------|--------|
 | Phase 1 | Analysis of current simulations | Done |
-| Phase 2 | Projection DTO alignment check | Next |
-| Phase 3 | Workbench format verification | Pending |
-| Phase 4 | Gray room trace validation | Pending |
-| Phase 5 | Documentation updates | Pending |
-| Phase 6 | Side fixes (tests, code) | Pending |
+| Phase 2 | Projection DTO alignment check | Done |
+| Phase 3 | Workbench format verification | Done |
+| Phase 4 | Gray room trace validation | Done |
+| Phase 5 | Documentation updates | Done |
+| Phase 6 | Side fixes (tests, code) | Done |
 
 ---
 

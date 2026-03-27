@@ -182,7 +182,7 @@ SKIP_AUTH=1
 ### Alternatives Migration Plan (client scope)
 - [ ] **C-01 client-filesystem-root**: choose and document canonical `A2A_CLIENT_STORAGE_DIR` strategy (repo-local vs home) for dev and CI.
 - [ ] **C-02 session-storage-layout**: formalize step-folder invariants (`client-result`, `request-to-server`, `server-response`, `messages`) and recovery rules, including explicit persistence rules for `system` role messages (Red Room auto-responses).
-- [ ] **C-03 sdk-http-limits**: define default CORS/rate-limit/file-cap profile for standalone SDK mode and add contract tests.
+- [x] **C-03 sdk-http-limits**: define default CORS/rate-limit/file-cap profile for standalone SDK mode and add contract tests.
 - [x] **C-04 golden-simulations**: add client-focused simulation checklist for sanitized web DTOs (`execute` must stay web-safe).
 - [x] **C-05 simulations-base-path**: align client test tooling with selected simulations path strategy (`SIMULATIONS_PATH` override support).
 
@@ -198,7 +198,7 @@ SKIP_AUTH=1
 
 ### Simulation Contract & Docs (Complex)
 - [x] Добавить client-specific checklist для `received.json`: в `execute` допускаются только web-safe поля (`message`/`form`/attachments), tool-actions (`read-file`, `rag-search`, `write-file`, `run-script`) должны оставаться вне `execute`.
-- [ ] Завести отдельный контроль для `buildWebExecute` / `toWebExecute`: golden-проверки на sanitized DTO и отсутствие регрессий по loader/async полям в web-ответе.
+- [x] Завести отдельный контроль для `buildWebExecute` / `toWebExecute`: golden-проверки на sanitized DTO и отсутствие регрессий по loader/async полям в web-ответе. *(2026-03-27: `tests/unit/session-projection-dto.test.mjs` + `tests/unit/simulation-workbench-contract.test.mjs`)*
 - [ ] Формализовать требования к шагам хранения в `a2a-client/storage/sessions/*`: соответствие пары `response.json` ↔ `received.json` и явные причины, если в симуляции неполный pipeline.
 - [ ] Добавить client-ориентированные roadmap-сценарии в симуляции: paginated RAG в UI, очередь `read-file` с корректными attachments, human-gate после N единиц работы.
 
@@ -206,6 +206,16 @@ SKIP_AUTH=1
 - [ ] Закрыть `TODO(Task-04)` в `packages/execution/src/script-runner/index.ts`: унифицировать `execute.script` API и форму `result["script"]`.
 - [ ] Интегрировать script-runner с `createExecuteCode` и согласовать sandbox/config (ссылка в TODO на Task 39).
 - [ ] Убрать временный bypass в `packages/sdk/src/server/server/middleware/auth.ts` (`allow all requests`) и включить полноценную auth-проверку по окружению.
+
+### SC-09 System Message Policy (Implemented 2026-03-27)
+- [x] **SC-09 system-message-policy**: Define and implement Web UI policy for `system` messages (Red Room auto-responses):
+  - **Rendering**: CSS `.task-flow-message.system` with orange accent border (#ff9800), light orange background (#fff3e0), robot emoji 🤖 prefix (see `a2a-client/web/css/components/task-flow.css:200-214`)
+  - **Role display**: "System" label in role header (see `a2a-client/web/js/task-flow/render.js:170-171`)
+  - **Filtering**: Telemetry-only errors (metadata.type === 'error' || severity in {'error','warning'}) hidden from timeline but stored (see `isSystemErrorChatMessage()` in `render.js:43-48`)
+  - **Ordering**: Chronological sequence from step slices, no reordering of system relative to user/assistant (see `applyServerMessages()` in `session-data.js:325-336`)
+  - **Persistence**: All roles preserved in messages.json slice per step, non-lossy across refresh/async (see `normalizeMessage()` in `normalizers.js:28-40`)
+  - **Tests**: Fixture tests in `tests/unit/history-projection.test.mjs`, `tests/unit/session-store.test.ts`
+  - **Documentation**: `docs/WEB_UI_PROTOCOL.md:159-169`
 
 ### Large File Decomposition (400-500+ lines)
 - [ ] **LF-C-01**: Decompose `vite-plugin-a2a/routes/stepRoutes.js` (~719) into `step-routes-read.js`, `step-routes-write.js`, and shared middleware/util layer.
@@ -245,7 +255,7 @@ SKIP_AUTH=1
 - **RF-C-01 inventory published:** session-module overlap inventory and consolidation candidates documented in `docs/SESSION-REDUNDANCY-INVENTORY.md`.
 
 ### Unusual Findings Alignment (Client)
-- [ ] **UA-C-01 polling-contract-drift**: Align documented async polling contracts between Vite Client API (`/api/a2a/sessions/:id/async`) and SDK async path variants (`/async/status/:promiseId`) to one canonical integration guide + compatibility matrix.
+- [x] **UA-C-01 polling-contract-drift**: Align documented async polling contracts between Vite Client API (`/api/a2a/sessions/:id/async`) and SDK async path variants (`/async/status/:promiseId`) to one canonical integration guide + compatibility matrix.
 - [ ] **UA-C-02 debug-context-guard**: Define strict rule for `?includeContext=1` usage (debug-only), add tests that UI runtime does not depend on raw `context.workbench` fields.
 - [ ] **UA-C-03 tri-role-render-tests**: Add fixture tests proving timeline/render/storage support for `user`, `assistant`, and `system` (Red Room auto-response) roles without loss/reordering.
 - [ ] **UA-C-04 web-protocol-doc-cleanup**: Normalize `WEB_UI_PROTOCOL.md` wording (remove ambiguous/partial lines, keep one-term glossary for Red Room/Gray Room/Agent loop).
@@ -257,85 +267,10 @@ SKIP_AUTH=1
 - [ ] **CCP-C-04 dead-path-check**: For each candidate, verify import/use coverage in tests before deletion.
 - [ ] **CCP-C-05 safe-remove-gate**: Removal only after `npm test`, `sim:lint`, and targeted fixture tests pass.
 
----
+## 2026-03-27 SDK HTTP Limits (C-03)
 
-## 2026-03-20 Session Storage Improvements (P1 + P2)
+- Completed `tasks/00-c-03-sdk-http-limits.md`.
+- Added standalone SDK HTTP limits profile (`cors`, in-memory `rateLimit`, `fileCap`) with env overrides in `packages/sdk/src/server/server/http-limits.ts`.
+- Wired profile into standalone server path in `packages/sdk/src/server/index.ts` and `packages/sdk/src/server/server/app.ts`.
+- Added contract tests in `packages/sdk/src/server/server/http-limits.test.ts`.
 
-## 2026-03-27 Session Clarity Alignment (CM-05)
-
-### Completed now
-- Fixed simulation fixture base path in `tests/unit/web-execute-dto-contract.test.mjs` (`../` from `a2a-client` root) to avoid out-of-repo resolution.
-- Verified session clarity adapters/tests against `simulations/dialog` and `simulations/agent-auto-ai` fixture shapes.
-
-### Verification
-- `npx vitest run tests/unit/web-execute-dto-contract.test.mjs tests/unit/session-view-model.test.mjs tests/unit/history-projection.test.mjs` -> 17 passed.
-- Server simulation validation passed for `dialog/1`, `dialog/2`, `agent-auto-ai/5`, `agent-auto-ai/6`, `agent-auto-ai/7`.
-
-### Implementation Complete
-- **P1: session-index.json** - lightweight index for fast session recovery
-  - Added `loadSessionIndex()` and `saveSessionIndex()` functions
-  - Updated `loadNewSession()` to use fast path with index fallback
-  - Stores: `sessionId`, `currentStep`, `mode`, `createdAt`, `updatedAt`, `status`, `promiseId`, `promiseStatus`, `steps[]`
-  - Enables page refresh resilience (async state preservation)
-  - Enables auto-mode polling without Web UI
-
-- **P2: mode derivation** - derive session mode from context.execution.action
-  - Added `deriveSessionMode(session)` function
-  - Mode derived from: `context.execution.action` (explicit) or `workbench` presence (fallback)
-  - Applied in both fast-path and fallback loadNewSession()
-
-### Files Modified
-- [`vite-plugin-a2a/storage/newSessions.js`](vite-plugin-a2a/storage/newSessions.js)
-  - Added: `deriveSessionMode()`, `loadSessionIndex()`, `saveSessionIndex()`
-  - Updated: `saveNewStep()` to call `saveSessionIndex()`
-  - Updated: `saveServerPromise()` to update index async state
-  - Updated: `loadNewSession()` with fast path using index
-
-### Verification
-- Backward compatible (fallback to step-scanning if no index)
-- Async state (promiseId/promiseStatus) persisted in index
-- Mode correctly derived from context.execution.action
-- Manual verification of implementation completed
-
----
-
-## 2026-03-20 Обновления
-
-### Исправления
-- ✅ Исправлен `vite.config.prod.ts`: удалены несуществующие Vue компоненты
-- ✅ Заменён `minify: 'terser'` на `minify: 'esbuild'`
-- ✅ Сборка проходит успешно
-- ✅ Очищены тестовые сессии
-
-### E2E Тестирование
-- ✅ Ollama запущен и работает (порт 11435)
-- ✅ Создание сессии → работает
-- ✅ Отправка сообщения → async mode → работает
-- ✅ Polling `/async` endpoint → работает
-- ✅ Выбор agent mode → работает
-
----
-
-*Обновлено: 2026-03-20, verified P1+P2*
-
-## 2026-03-20 Client Session Modernization (completed)
-
-### Completed now
-- Added `vite-plugin-a2a/routes/utils/session-projection-dto.js` (canonical -> UI projection boundary).
-- Added `vite-plugin-a2a/routes/utils/execute-projection-dto.js` and shared Web DTO projection boundary.
-- Added deterministic timeline utility `vite-plugin-a2a/routes/utils/message-timeline.js`.
-- Migrated imports in session/step routes and step handlers to projection modules.
-- Updated web hydration defaults in `web/js/session-store.js` and `web/js/app/windows/window-session-gateway.js`.
-- Added task documents under `tasks/00-05` with atomic actions and reasons.
-- Updated docs for canonical/projection split (`docs/WEB_UI_PROTOCOL.md`, `docs/session-management-protocols.md`, `simulations/SCHEMA.md`).
-
-### Verification
-- `npx vitest run tests/unit/vite-plugin-storage.test.js tests/unit/web-execute-dto.test.mjs` -> pass.
-- `npm run sim:lint -- --all --json` -> pass.
-- `npm run sim:validate -- --sim agent-coder/3 --json` -> pass.
-
-## 2026-03-27 Redundancy Review (CM-06)
-
-- Completed quarterly client-side redundancy scan for session/read-model paths.
-- Confirmed keep decision for projection adapters (`shared` implementation + package/runtime boundary wrappers).
-- Removed stale legacy compatibility note for `web-execute-dto.js` from this state file.

@@ -172,6 +172,7 @@ cd a2a-client && npm test
 
 - `sim:validate` часто возвращает `valid` вместе с warning (`Optional file not found`) — это contract debt, не “clean” статус.
 - [ИСПРАВЛЕНО] В таблице подсистем была ссылка на `ai-integration/DEV_STATE.md`, но файл отсутствовал - создан.
+- [2026-03-27] Завершен блок `tasks/simulation-upgrade-plan.md` (docs/tests/code): добавлен `sim:workbench:validate`, обновлены `simulations/SCHEMA.md` и `simulations/README.md`, добавлены unit/integration checks в `a2a-client/tests/unit/*`.
 
 ---
 
@@ -221,38 +222,7 @@ cd a2a-client && npm test
 - 3) Подготовка к production.
 - Эстетика/рефакторинг допускаются только если ускоряют production readiness.
 
----
 
-## Roadmap (Simple → Complex)
-
-### Фаза 1: Окружение (Simple)
-- [x] Проверка портов (`11435`, `11434`, `3000`, `5173`).
-- [x] Валидация `ENCRYPTION_KEY` (строго 32 символа) во всех `.env`.
-- [x] Проверка доступности моделей в Ollama (`qwen3:8b`).
-
-### Фаза 2: Валидация компонентов (Moderate)
-- [x] Исправление `ReferenceError: require` в `stepRoutes.js`.
-- [x] Исправление путей `/shared` в `vite-plugin-a2a.js`.
-- [x] Запуск unit-тестов сервера: `cd a2a-server && npm run test`.
-- [x] Запуск unit-тестов клиента: `cd a2a-client && npm run test`.
-
-### Фаза 3: Протокол и Симуляции (Complex)
-- [x] Аудит симуляций на соответствие `Action-Key Shape` (никаких `content` в корне `result`).
-- [x] Очистка `received.json` от клиентских ключей (`read-file`, `rag-search` и т.д. запрещены в `execute`).
-- [x] Полный прогон: `npm run sim:validate -- --all --json`.
-
-### Фаза 4: Сквозное тестирование (E2E)
-- [x] Ручной Smoke-тест: Создание сессии → Диалог → Обработка ответа.
-- [x] Проверка сохранения шагов в `storage/sessions` (stateless-режим).
-- [x] Проверка работы Polling с новыми логами в консоли.
-
-### Фаза 5: Production Readiness
-- [x] Сборка фронтенда: `cd a2a-client && npm run build` - **исправлено** (picomatch установлен).
-- [x] Проверка `SKIP_AUTH=0` (безопасность).
-- [x] Финальный `health-check` всей цепочки.
-- [x] E2E тестирование: сессия → диалог → agent mode (Ollama работает).
-
----
 
 ## Технический долг и новые задачи
 
@@ -305,23 +275,7 @@ cd a2a-client && npm test
 
 ---
 
-## Session Notes (Root, Cross-Module Only)
+## 2026-03-27 Updates
 
-### 2026-03-27
-- [x] CM-05 completed: client session-clarity alignment confirmed via fixture matrix tests and targeted simulation validation (`dialog/1-2`, `agent-auto-ai/5-7`).
+- [x] Completed client task `C-03 sdk-http-limits` in `a2a-client` with standalone SDK defaults and env-overridable profile (CORS, rate-limit, file-cap) plus contract tests.
 
-### 2026-03-20
-- [x] Root `request.md` output side-effect removed by transform runtime `outputDir` isolation.
-- [x] State governance policy integrated and synchronized across module state files.
-- [x] Root backlog normalized to cross-module ownership; module-specific tasks moved to module `DEV_STATE.md` files.
-- [x] Root note cleanup done: duplicate/overlapping session-note blocks removed; client-specific history stays in `a2a-client/DEV_STATE.md`.
-- [x] CM-01 completed: removed module-implementation backlog items from root and kept module task ownership in module `DEV_STATE.md` files.
-- [x] CM-06 completed: quarterly cross-module redundancy review done; decisions synced in `a2a-client/DEV_STATE.md` and `a2a-server/DEV_STATE.md`.
-
-### 2026-03-27
-- [x] CM-04 completed: published cross-module stage transition criteria and readiness dashboard in `docs/STAGE-TRANSITION-CRITERIA.md`.
-- [x] Transition rule formalized: stage decisions use aggregated evidence from root, client, server, and ai-integration state files.
-- [x] CM-02 completed: unified simulation gate documented as `clean = valid + 0 warnings`.
-- [x] CI acceptance rule aligned to one command: `npm run sim:quality` (`a2a-server/scripts/sim-quality-gate.ts`).
- 
-*Обновлено: 2026-03-27, hierarchy cleanup verified*
