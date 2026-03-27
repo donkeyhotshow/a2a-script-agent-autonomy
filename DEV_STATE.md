@@ -1,4 +1,4 @@
-# DEV_STATE - Общее состояние проекта (2026-03-27)
+# DEV_STATE - Общее состояние проекта (2026-03-27, verified)
 
 > Текущее состояние системы для работы до продакшена.
 > Методика: работаем по методике с дев файлами - пишем дев файл всегда, убираем ненужное всегда, двигаемся вперед всегда
@@ -293,8 +293,8 @@ cd a2a-client && npm test
 - [ ] **CM-09**: Run docs encoding/terminology cleanup pass (mixed glyph artifacts, mixed-language drift) in high-impact protocol docs (`AGENTS.md`, Web protocol docs, simulation workflow docs).
 
 ### Client Session Storage Improvements (P1-P2)
-- [ ] **P1: Implement session-index.json** - lightweight index for fast session recovery, stores promiseId/promiseStatus for page refresh resilience, supports auto-mode polling without Web UI
-- [ ] **P2: Add mode derivation** - derive session mode (dialog/agent) from `context.execution.action` or `workbench` presence
+- [x] **P1: Implement session-index.json** - lightweight index for fast session recovery, stores promiseId/promiseStatus for page refresh resilience, supports auto-mode polling without Web UI ✓ verified
+- [x] **P2: Add mode derivation** - derive session mode (dialog/agent) from `context.execution.action` or `workbench` presence ✓ verified
 
 ### Code Cleanup Discovery Map (Where/How to Search)
 - [ ] **CDM-01 scope-map**: Each module keeps a target list of folders for cleanup scans (hotspots only, no broad random search).
@@ -321,5 +321,9 @@ cd a2a-client && npm test
 - [x] Updated session-storage-analysis.md with implementation details for session-index.json and mode derivation.
 - [x] Added P1/P2 tasks to DEV_STATE.md: session-index.json + mode derivation.
 - [x] Added critical scenarios to plan: (1) Web UI page refresh resilience, (2) Auto mode with client API polling without Web UI.
+- [x] **Implemented session-index.json (P1)**: Fast session recovery with async state preservation. Added `loadSessionIndex()`, `saveSessionIndex()`, updated `loadNewSession()` with fast path.
+- [x] **Implemented mode derivation (P2)**: Added `deriveSessionMode()` function, derives mode from `context.execution.action` or `workbench` presence.
+- [x] Updated a2a-client/DEV_STATE.md and root DEV_STATE.md with completed P1/P2 tasks.
+- [x] **Verified implementation**: Code reviewed and verified in `a2a-client/vite-plugin-a2a/storage/newSessions.js`
  
-*Обновлено: 2026-03-27*
+*Обновлено: 2026-03-27, verified P1+P2*

@@ -1,4 +1,4 @@
-# DEV_STATE - a2a-client (2026-03-27)
+# DEV_STATE - a2a-client (2026-03-27, verified)
 
 Текущее состояние подсистемы a2a-client (Web UI + Client API).
 > Методика: работаем по методике с дев файлами - пишем дев файл всегда, убираем ненужное всегда, двигаемся вперед всегда
@@ -253,6 +253,36 @@ SKIP_AUTH=1
 
 ---
 
+## 2026-03-27 Session Storage Improvements (P1 + P2)
+
+### Implementation Complete
+- **P1: session-index.json** - lightweight index for fast session recovery
+  - Added `loadSessionIndex()` and `saveSessionIndex()` functions
+  - Updated `loadNewSession()` to use fast path with index fallback
+  - Stores: `sessionId`, `currentStep`, `mode`, `createdAt`, `updatedAt`, `status`, `promiseId`, `promiseStatus`, `steps[]`
+  - Enables page refresh resilience (async state preservation)
+  - Enables auto-mode polling without Web UI
+
+- **P2: mode derivation** - derive session mode from context.execution.action
+  - Added `deriveSessionMode(session)` function
+  - Mode derived from: `context.execution.action` (explicit) or `workbench` presence (fallback)
+  - Applied in both fast-path and fallback loadNewSession()
+
+### Files Modified
+- [`vite-plugin-a2a/storage/newSessions.js`](vite-plugin-a2a/storage/newSessions.js)
+  - Added: `deriveSessionMode()`, `loadSessionIndex()`, `saveSessionIndex()`
+  - Updated: `saveNewStep()` to call `saveSessionIndex()`
+  - Updated: `saveServerPromise()` to update index async state
+  - Updated: `loadNewSession()` with fast path using index
+
+### Verification
+- Backward compatible (fallback to step-scanning if no index)
+- Async state (promiseId/promiseStatus) persisted in index
+- Mode correctly derived from context.execution.action
+- Manual verification of implementation completed
+
+---
+
 ## 2026-03-27 Обновления
 
 ### Исправления
@@ -270,7 +300,7 @@ SKIP_AUTH=1
 
 ---
 
-*Обновлено: 2026-03-27*
+*Обновлено: 2026-03-27, verified P1+P2*
 
 ## 2026-03-27 Client Session Modernization (completed)
 
