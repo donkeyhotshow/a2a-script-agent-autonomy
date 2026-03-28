@@ -1,0 +1,11 @@
+{
+  "cycles": [
+    {
+      "timestamp": "2026-03-28T23:45:36.091Z",
+      "cycleTime": 0.004,
+      "taskSuccessRate": 0,
+      "errorRate": 0,
+      "pendingQueueAge": 0
+    }
+  ]
+}

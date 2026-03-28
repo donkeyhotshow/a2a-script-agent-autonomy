@@ -4,7 +4,7 @@ Current system state: **РЕЖИМ 1 - Work**
 
 Methodology: always write DEV_STATE, always clean, always move forward.
 
-**Operator control plane:** human or Cursor drives the running stack via **curl** / Client API, not the browser; see `docs/OPERATOR-CURL.md`.
+**Operator control plane:** IDE agent treats the running stack as a **sub-agent** (HTTP / Client API, not browser)—see `START-PROMPT-UNLIM.md`, `docs/OPERATOR-CURL.md`.
 
 ---
 
@@ -47,6 +47,7 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 | 5 | **Многоагентная оркестрация (10 ролей)** | 1 | **Выполнено** |
 | 6 | **Старт помощник** | 1 | **Выполнено** |
 | 7 | **START-PROMPT-UNLIM.md (Kilo Оркестратор)** | 1 | **Выполнено** |
+| 8 | **Kilo Оркестратор (orchestrator)** | 1 | **Активно** |
 
 ---
 
@@ -57,6 +58,37 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 | Port mismatch (5175 vs 5173) | Исправлена конфигурация в vite.config.js (WEB_PORT вместо PORT) | Исправлено |
 
 ---
+
+## Kilo Оркестратор - Реализация
+
+### Файл: [`kilo-orchestrator.cjs`](kilo-orchestrator.cjs)
+
+**Назначение:** Бесконечное создание подзадач для обработки входящих задач. Каждая подзадача работает по METHODOLOGY-AGENT-SCRIPT.md.
+
+**Алгоритм:**
+1. Получить задачу от пользователя
+2. Создать подзадачу (такую же, как входящая)
+3. Подзадача работает по METHODOLOGY-AGENT-SCRIPT.md
+4. Повторить с шага 1 (бесконечно)
+
+**Компоненты:**
+- `ApiClient` — HTTP клиент для Client API (порт 5173) и A2A Server (порт 3000)
+- `TaskManager` — управление задачами в `tasks/pending/` и `tasks/archive/`
+- `MetricsManager` — запись метрик цикла в `runtime/metrics.json`
+- `HealthChecker` — проверка доступности сервисов
+- `SubTask` — подзадача с режимами Work (mode1) и Debug (mode2)
+
+**Режимы:**
+- **Режим 1 (Work):** task-add → task-execute → task-cleanup
+- **Режим 2 (Debug):** Диагностика и отладка проблем
+
+**CLI использование:**
+```bash
+node kilo-orchestrator.js --task "Прочитай README.md"
+node kilo-orchestrator.js --task "Проанализируй логи" --project system
+```
+
+**Критерий остановки:** Оркестратор работает бесконечно. Остановка только вручную (Ctrl+C).
 
 ## Задача 4: Вариант 6 (Гибридный) — Трансмутация
 
