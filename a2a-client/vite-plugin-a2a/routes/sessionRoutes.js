@@ -103,6 +103,175 @@ export function createSessionRoutes({ cwd }) {
             return;
         }
 
+        // Handle task-add and task-execute
+        if (req.method === 'POST' && p === '/sessions/task-add') {
+           console.log('[SessionRoutes] Handling task-add request');
+           let body = '';
+           req.on('data', (c) => (body += c));
+           req.on('end', () => {
+               try {
+                   if (!body || body.trim() === '') {
+                       throw new Error('Empty request body');
+                   }
+                   const d = JSON.parse(body);
+                   const title = d.title || 'New Session';
+                   const task = d.task; // Capture task from request body
+                   const projectId = d.projectId; // Capture projectId from request body
+                   const sessionId = d.id || `sess_${Date.now()}`;
+                   const session = {
+                       id: sessionId,
+                       title,
+                       createdAt: new Date().toISOString(),
+                       updatedAt: new Date().toISOString(),
+                       status: 'created',
+                       currentStep: 1,
+                       messages: [
+                           {
+                               role: 'assistant',
+                               content: 'What would you like me to do?',
+                               step: 1
+                           }
+                       ],
+                       context: {
+                           execution: { action: 'task', step: 'new' },
+                           ...(task ? { task } : {}),
+                           ...(projectId ? { projectId } : {})
+                       },
+                       // Initial execute until user submits; after POST /next use GET /sessions/:id (ack-only /next)
+                       execute: {
+                           message: 'What would you like me to do?',
+                           form: {
+                               input: [
+                                   {
+                                       name: 'task',
+                                       type: 'text',
+                                       label: 'Enter your task',
+                                       required: true
+                                   }
+                               ]
+                           }
+                       }
+                   };
+
+                   if (storageMode === 'project') {
+                       const projectPath = getProjectPathForSessions(cwd);
+                       saveSession(projectPath, session);
+                   } else {
+                       saveNewSession(cwd, session);
+                       saveNewStep(cwd, sessionId, 1, {
+                           step: 1,
+                           title,
+                           execute: session.execute,
+                           messages: session.messages || [],
+                           context: session.context
+                       });
+                   }
+
+                   res.setHeader('Content-Type', 'application/json');
+                   res.end(JSON.stringify({ success: true, session: toPublicSession(session, false) }));
+               } catch (e) {
+                   res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
+               }
+           });
+           return;
+       }
+
+       // Handle POST /sessions/:id/next
+       const nextMatch = p.match(/^\/sessions\/([^/]+)\/next$/);
+       if (req.method === 'POST' && nextMatch) {
+           const sessionId = nextMatch[1];
+           console.log(`[SessionRoutes] Handling POST /next for session ${sessionId}`);
+           let body = '';
+           req.on('data', (c) => (body += c));
+           req.on('end', () => {
+               try {
+                   if (!body || body.trim() === '') {
+                       throw new Error('Empty request body');
+                   }
+                   const d = JSON.parse(body);
+                   // For now, we just acknowledge the result and return success
+                   // In a real implementation, we would update the session with the result
+                   res.setHeader('Content-Type', 'application/json');
+                   res.end(JSON.stringify({ success: true }));
+               } catch (e) {
+                   res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
+               }
+           });
+           return;
+       }
+
+        if (req.method === 'POST' && p === '/sessions/task-execute') {
+           console.log('[SessionRoutes] Handling task-execute request');
+           let body = '';
+           req.on('data', (c) => (body += c));
+           req.on('end', () => {
+               try {
+                   if (!body || body.trim() === '') {
+                       throw new Error('Empty request body');
+                   }
+                   const d = JSON.parse(body);
+                   const title = d.title || 'New Session';
+                   const task = d.task; // Capture task from request body
+                   const projectId = d.projectId; // Capture projectId from request body
+                   const sessionId = d.id || `sess_${Date.now()}`;
+                   const session = {
+                       id: sessionId,
+                       title,
+                       createdAt: new Date().toISOString(),
+                       updatedAt: new Date().toISOString(),
+                       status: 'created',
+                       currentStep: 1,
+                       messages: [
+                           {
+                               role: 'assistant',
+                               content: 'What would you like me to do?',
+                               step: 1
+                           }
+                       ],
+                       context: {
+                           execution: { action: 'task', step: 'new' },
+                           ...(task ? { task } : {}),
+                           ...(projectId ? { projectId } : {})
+                       },
+                       // Initial execute until user submits; after POST /next use GET /sessions/:id (ack-only /next)
+                       execute: {
+                           message: 'What would you like me to do?',
+                           form: {
+                               input: [
+                                   {
+                                       name: 'task',
+                                       type: 'text',
+                                       label: 'Enter your task',
+                                       required: true
+                                   }
+                               ]
+                           }
+                       }
+                   };
+
+                   if (storageMode === 'project') {
+                       const projectPath = getProjectPathForSessions(cwd);
+                       saveSession(projectPath, session);
+                   } else {
+                       saveNewSession(cwd, session);
+                       saveNewStep(cwd, sessionId, 1, {
+                           step: 1,
+                           title,
+                           execute: session.execute,
+                           messages: session.messages || [],
+                           context: session.context
+                       });
+                   }
+
+                   res.setHeader('Content-Type', 'application/json');
+                   res.end(JSON.stringify({ success: true, session: toPublicSession(session, false) }));
+               } catch (e) {
+                   res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
+               }
+           });
+           return;
+       }
+
         const sessionMessagesMatch = p.match(/^\/sessions\/([^/]+)\/messages$/);
         if (req.method === 'GET' && sessionMessagesMatch) {
             const sessionId = sessionMessagesMatch[1];
