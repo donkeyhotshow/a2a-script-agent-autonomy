@@ -22,6 +22,9 @@ import {
     getNewSessionLatestStep,
 } from '../../storage/newSessions.js';
 
+// Re-export isValidSessionId for external usage
+export { isValidSessionId };
+
 export {
     loadNewSession,
     saveNewSession,
@@ -50,5 +53,73 @@ export function handleStepDetail(sessionId, stepNum, cwd) {
     if (!step) throw new Error('Step not found');
     if (!step.execute) return step;
     return { ...step, execute: buildExecuteProjection(step.execute) };
+}
+
+/**
+ * Build step record from promise status (for async flow completion).
+ * @param {Object} params - Parameters
+ * @param {string} params.sessionId - Session ID
+ * @param {number} params.stepNum - Step number
+ * @param {Object} params.serverResponse - Server response/promise status
+ * @param {Array} params.messages - Messages array
+ * @param {Object} params.fallbackContext - Fallback context
+ * @returns {Object} Step record
+ */
+export function buildStepRecordFromPromise({ sessionId, stepNum, serverResponse, messages, fallbackContext }) {
+    if (!serverResponse) return null;
+    
+    const stepRecord = {
+        step: stepNum,
+        timestamp: new Date().toISOString(),
+    };
+    
+    // Copy execute from promise status if present
+    if (serverResponse.execute) {
+        stepRecord.execute = serverResponse.execute;
+    }
+    
+    // Copy result if present
+    if (serverResponse.result) {
+        stepRecord.result = serverResponse.result;
+    }
+    
+    // Merge context from server response or fallback
+    const ctx = serverResponse.context || fallbackContext || {};
+    if (Object.keys(ctx).length > 0) {
+        stepRecord.context = ctx;
+    }
+    
+    // Include messages if provided
+    if (messages && messages.length > 0) {
+        stepRecord.messages = messages;
+    }
+    
+    return stepRecord;
+}
+
+/**
+ * Get active async work for a session (for polling status).
+ * @param {string} cwd - Working directory
+ * @param {string} sessionId - Session ID
+ * @returns {Object|null} Active async work info or null
+ */
+export function getActiveAsyncWork(cwd, sessionId) {
+    const steps = listNewSteps(cwd, sessionId);
+    for (const stepNum of steps) {
+        const serverPromise = loadServerPromise(cwd, sessionId, stepNum);
+        if (serverPromise?.promiseId) {
+            const isPending = serverPromise.status === 'processing' || 
+                             serverPromise.status === 'pending' ||
+                             serverPromise.status === 'waiting';
+            if (isPending) {
+                return {
+                    step: stepNum,
+                    promiseId: serverPromise.promiseId,
+                    status: serverPromise.status
+                };
+            }
+        }
+    }
+    return null;
 }
 

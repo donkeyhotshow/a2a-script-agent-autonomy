@@ -109,6 +109,37 @@ export function saveSessionIndex(cwd, sessionId, stepData) {
   fs.writeFileSync(indexPath, JSON.stringify(index, null, 2));
 }
 
+/**
+ * Save session (legacy compatibility) - wraps step-based storage.
+ * @param {string} cwd - Working directory
+ * @param {Object} session - Session object with id, title, currentStep, context, etc.
+ */
+export function saveNewSession(cwd, session) {
+  // Save session using step-based storage (modern approach)
+  // The session object contains id, title, currentStep, context, etc.
+  const sessionId = session.id;
+  const stepNum = session.currentStep || 1;
+  
+  // If session has context, save it as a step
+  if (session.context) {
+    const stepData = {
+      step: stepNum,
+      context: session.context,
+      title: session.title,
+      status: session.status || 'active'
+    };
+    saveNewStep(cwd, sessionId, stepNum, stepData);
+  }
+  
+  // Always update session index for fast recovery
+  saveSessionIndex(cwd, sessionId, {
+    step: stepNum,
+    context: session.context,
+    title: session.title,
+    status: session.status
+  });
+}
+
 export function getNewSessionsDir(cwd) {
   return path.join(getStorageRoot(), 'sessions');
 }
