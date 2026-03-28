@@ -1,6 +1,6 @@
 # DEV_STATE - 2026-03-28 (v2 - meta-prompt)
 
-Current system state: **РЕЖИМ 2 - Отладка**
+Current system state: **РЕЖИМ 1 - Work**
 
 Methodology: always write DEV_STATE, always clean, always move forward.
 
@@ -38,10 +38,18 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 
 | # | Задача | Режим | Статус |
 |------|-------|------|-------|
-| 1 | Диагностика диалога | 2 | В.progress |
+| 1 | Диагностика диалога | 2 | Выполнено |
 | 2 | Сохранять состояние | 2 | Готово |
-| 3 | Переработка концепции Gray Room (серой комнаты) | 1 | Ожидает |
+| 3 | Переработка концепции Gray Room (серой комнаты) | 1 | В процессе |
 | 4 | **Вариант 6: Гибридное улучшение** | 1 | Запланировано |
+
+---
+
+### Диагностика диалога: Результаты
+
+| Проблема | Решение | Статус |
+|----------|---------|--------|
+| Port mismatch (5175 vs 5173) | Исправлена конфигурация в vite.config.js (WEB_PORT вместо PORT) | Исправлено |
 
 ---
 
@@ -65,26 +73,65 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 
 ---
 
-## ⚠️ ВАЖНО: Gray Room - Требует переработки
+## ⚠️ Gray Room - Анализ и Переработка
 
-**Проблема:** Текущая интерпретация "Gray Room" в документации неверна по словам автора. Требуется переработка концепции.
+### Найденная документация
 
-**Где описано (текущее):**
-- [`docs/WORKFLOW.md`](docs/WORKFLOW.md) - определение Gray Room
-- [`AGENTS.md`](AGENTS.md) строка 210 - Gray Room как "Server-side interrupt loop"
-- [`GLOSSARY.md`](GLOSSARY.md) строка 14 - определение термина
-- [`docs/SESSION-SYSTEMS-OVERVIEW.md`](docs/SESSION-SYSTEMS-OVERVIEW.md) - секция о комнатах
-- [`docs/adr/ADR-0029-server-interrupt-loop.md`](docs/adr/ADR-0029-server-interrupt-loop.md) - ADR о серверном цикле прерываний
+| Компонент | Файл | Текущее определение |
+|-----------|------|---------------------|
+| WORKFLOW | docs/WORKFLOW.md | "Server-driven LLM/transform substep chain before final client response" |
+| AGENTS | AGENTS.md (строка 210) | "Server-side interrupt loop after response transform" |
+| GLOSSARY | GLOSSARY.md (строка 14) | "Server-side interrupt loop after response transform" |
+| SESSION-SYSTEMS | docs/SESSION-SYSTEMS-OVERVIEW.md | "interrupt (gray room trigger)" |
+| ADR | docs/adr/ADR-0029-server-interrupt-loop.md | "server-side interrupt loop (dialog / transform processor)" |
+| GRAY-ROOM | a2a-server/docs/GRAY-ROOM.md | Подробная документация (242 строки) - "product name for server-only extra work" |
+
+### Реализация в коде
+
+| Файл | Роль |
+|------|------|
+| [`gray-room-orchestrator.ts`](a2a-server/src/services/core/request-processor/gray-room-orchestrator.ts) | Основная реализация: GrayRoomOrchestrator.runLoop() |
+| [`interrupt-trace-contract.ts`](a2a-server/src/transform/interrupt-trace-contract.ts) | Контракт для данных interruptTrace и grayRoom |
+| [`dialog-request-processor.ts`](a2a-server/src/services/core/request-processor/dialog-request-processor.ts) | Интеграция с DialogRequestProcessor |
+| [`render-layout.js`](a2a-client/web/js/task-flow/render-layout.js) | UI отображение grayRoom и interruptTrace |
+
+### Выявленные несоответствия и недостатки
+
+1. **Терминология "трансмутация"** - DEV_STATE.md упоминает альтернативное название из proposals, но документация не связывает эти термины
+2. **Упрощённое определение в AGENTS.md и GLOSSARY.md** - Акцент только на "interrupt loop", хотя Gray Room включает множество механизмов:
+   - `compress_history` - сжатие истории
+   - `thinking` - структурированное мышление
+   - `auto_rag_page` - RAG поиск
+   - `auto_read_file` - автоматическое чтение файлов
+   - `clarify` - уточнение
+3. **Название vs реализация** - Внутреннее имя кода "Interrupt loop" vs продуктовое название "Gray Room" - возможно слишком сильное связываение
+4. **DEV_STATE_COMPLETION_PLAN.md** (строка 89) - содержит пометку "не 'interrupt loop', а что-то другое" без уточнения
+
+### Рекомендуемые исправления
+
+**1. GLOSSARY.md** - Расширить определение:
+```diff
+- | **Gray Room** | Server-side interrupt loop after response transform |
++ | **Gray Room** | Серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту |
+```
+
+**2. AGENTS.md строка 210** - Аналогичное расширение
+
+**3. WORKFLOW.md** - Добавить детали о возможностях gray room
+
+**4. DEV_STATE.md** - Уточнить связь с трансмутацией (если это альтернативное название)
+
+### Результат анализа
+
+- **Документация**: Существует подробная документация в a2a-server/docs/GRAY-ROOM.md (242 строки), но краткая документация (GLOSSARY, AGENTS) слишком упрощена
+- **Реализация**: Полностью соответствует подробной документации, все механизмы реализованы
+- **Несоответствие**: Краткая документация не отражает полный функционал gray room
 
 **Что нужно сделать:**
-- [ ] Уточнить правильную интерпретацию Gray Room
-- [ ] Обновить документацию согласно новому пониманию
-- [ ] Проверить соответствие реализации в коде
-- [ ] Синхронизировать изменения во всех модулях (a2a-client, a2a-server)
-
-**Связанные модули:**
-- a2a-client/DEV_STATE.md
-- a2a-server/DEV_STATE.md
+- [x] Проанализировать документацию и код
+- [ ] Обновить краткую документацию (GLOSSARY.md, AGENTS.md, WORKFLOW.md)
+- [ ] Уточнить связь с трансмутацией
+- [ ] Синхронизировать изменения во всех модулях
 
 ---
 

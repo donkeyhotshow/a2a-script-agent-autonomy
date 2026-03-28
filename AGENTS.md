@@ -207,7 +207,7 @@ See [docs/adr/README.md](docs/adr/README.md) for full index:
 | **Action-Key Shape** | Single action type per execute/result object |
 | **Workbench** | Structured state in `context.workbench.sections` |
 | **Promise** | Async request ID for polling long-running work |
-| **Gray Room** | Server-side interrupt loop after response transform |
+| **Gray Room** | Серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту |
 | **Router** | Keyword-based routing (dialog/agent/task-decomposition) |
 | **Sync Mode** | Immediate execute response (no promiseId) |
 | **Web DTO** | Client-sanitized execute (only form, not tool calls) |

@@ -54,7 +54,11 @@ Future smart loop inside `ai-integration` proxy:
 ## Phrase Mapping
 
 - **"normal cycle"** -> regular message flow.
-- **"red room"** -> client auto-replies to tool `execute`, then full cycle.
-- **"gray room"** -> server-driven LLM/transform substep chain before final client response.
-- **"black room"** -> future proxy intelligence loop (not active now).
+- **"red room"** -> Client auto-replies to tool `execute`, then full cycle.
+- **"gray room"** -> Серверная цепочка LLM-вызовов перед возвратом клиенту: compress_history (сжатие истории), thinking (структурированное мышление), auto_rag_page (RAG поиск), auto_read_file (авто-чтение файлов), clarify (уточнение).
+- **"black room"** -> (Planned) `ai-integration` proxy loop.
+
+## Related Documentation
+- [`a2a-server/docs/GRAY-ROOM.md`](../../a2a-server/docs/GRAY-ROOM.md) - Подробная документация (242 строки)
+- [`docs/adr/ADR-0029-server-interrupt-loop.md`](adr/ADR-0029-server-interrupt-loop.md) - ADR решения
 

@@ -11,7 +11,7 @@
 | **Auto mode** | Behavior when `execute` requires no user input (no form.input/form.choices); UI creates system messages and can continue automatically |
 | **Workbench** | Structured state in `context.workbench.sections` |
 | **Action-Key Shape** | Single action type per execute/result: `{ "execute": { "script": {...} } }` |
-| **Gray Room** | Server-side interrupt loop after response transform |
+| **Gray Room** | Серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту |
 | **Router** | Keyword-based routing (dialog/agent/task-decomposition) |
 | **Sync Mode** | Immediate execute response (no promiseId) |
 | **Web DTO** | Client-sanitized execute (form only, not raw tool calls) |

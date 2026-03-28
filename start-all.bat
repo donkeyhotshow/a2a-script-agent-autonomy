@@ -13,7 +13,7 @@ set OLLAMA_PORT=11435
 set PROXY_PORT=11434
 set SERVER_PORT=3000
 set CLIENT_API_PORT=3001
-set WEB_UI_PORT=5173
+set WEB_PORT=5173
 set OLLAMA_MODELS=C:\Users\dev\Desktop\.ollama
 set EXIT_CODE=0
 
@@ -36,7 +36,7 @@ REM ==========================================
 echo.
 echo [Step 2/8] Verifying all ports are free...
 set PORTS_OK=1
-for %%p in (%OLLAMA_PORT% %PROXY_PORT% %SERVER_PORT% %CLIENT_API_PORT% %WEB_UI_PORT%) do (
+for %%p in (%OLLAMA_PORT% %PROXY_PORT% %SERVER_PORT% %CLIENT_API_PORT% %WEB_PORT%) do (
     call :verify_port_free %%p 10
     if errorlevel 1 (
         echo   [ERROR] Port %%p still occupied
@@ -95,7 +95,7 @@ REM ==========================================
 REM Step 8: Start web-ui
 REM ==========================================
 echo.
-echo [Step 8/8] Starting web-ui on port %WEB_UI_PORT%...
+echo [Step 8/8] Starting web-ui on port %WEB_PORT%...
 call scripts\start-web-ui.bat 2>&1
 :web_ui_done
 
@@ -108,7 +108,7 @@ call :verify_and_capture_pid %OLLAMA_PORT% OLLAMA_PID "Ollama"
 call :verify_and_capture_pid %PROXY_PORT% AI_INTEGRATION_PID "ai-integration"
 call :verify_and_capture_pid %SERVER_PORT% A2A_SERVER_PID "a2a-server"
 call :verify_and_capture_pid %CLIENT_API_PORT% CLIENT_API_PID "client-api"
-call :verify_and_capture_pid %WEB_UI_PORT% WEB_UI_PID "web-ui"
+call :verify_and_capture_pid %WEB_PORT% WEB_UI_PID "web-ui"
 
 REM ==========================================
 REM Summary
@@ -121,7 +121,7 @@ echo   - Ollama:       http://localhost:%OLLAMA_PORT%
 echo   - ai-integration: http://localhost:%PROXY_PORT% (API proxy)
 echo   - a2a-server:   http://localhost:%SERVER_PORT%
 echo   - client-api:   http://localhost:%CLIENT_API_PORT%
-echo   - web-ui:       http://localhost:%WEB_UI_PORT%
+echo   - web-ui:       http://localhost:%WEB_PORT%
 echo.
 echo Saved PIDs in %PID_FILE%:
 type %PID_FILE%

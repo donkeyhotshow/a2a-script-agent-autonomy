@@ -10,7 +10,7 @@ OLLAMA_PORT=11435
 PROXY_PORT=11434
 SERVER_PORT=3000
 CLIENT_API_PORT=3001
-WEB_UI_PORT=5173
+WEB_PORT=5173
 OLLAMA_MODELS='/home/dev/.ollama'
 PID_FILE='.pids.txt'
 
@@ -100,7 +100,7 @@ echo ""
 log STEP "Step 2/8" "Verifying all ports are free..."
 
 PORTS_OK=1
-for port in $OLLAMA_PORT $PROXY_PORT $SERVER_PORT $CLIENT_API_PORT $WEB_UI_PORT; do
+for port in $OLLAMA_PORT $PROXY_PORT $SERVER_PORT $CLIENT_API_PORT $WEB_PORT; do
     if check_port_free "$port" 10; then
         log OK "Port $port verified free"
     else
@@ -232,7 +232,7 @@ fi
 # Step 8: Start web-ui
 # ==========================================
 echo ""
-log STEP "Step 8/8" "Starting web-ui on port $WEB_UI_PORT..."
+log STEP "Step 8/8" "Starting web-ui on port $WEB_PORT..."
 
 cd a2a-client
 npm run dev &
@@ -241,7 +241,7 @@ cd ..
 sleep 5
 
 # Verify web-ui started
-WEB_CHECK_PID=$(get_pid_on_port $WEB_UI_PORT)
+WEB_CHECK_PID=$(get_pid_on_port $WEB_PORT)
 if [[ -n "$WEB_CHECK_PID" ]]; then
     echo "WEB_UI_PID=$WEB_CHECK_PID" >> "$PID_FILE"
     log OK "web-ui started (PID: $WEB_CHECK_PID)"
@@ -261,7 +261,7 @@ echo "  - Ollama:       http://localhost:$OLLAMA_PORT"
 echo "  - ai-integration: http://localhost:$PROXY_PORT (API proxy)"
 echo "  - a2a-server:   http://localhost:$SERVER_PORT"
 echo "  - client-api:   http://localhost:$CLIENT_API_PORT"
-echo "  - web-ui:       http://localhost:$WEB_UI_PORT"
+echo "  - web-ui:       http://localhost:$WEB_PORT"
 
 echo ""
 echo "Saved PIDs in $PID_FILE:"
