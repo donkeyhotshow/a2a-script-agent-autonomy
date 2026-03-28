@@ -1,8 +1,5 @@
 # tasks/
 
-Handoff between agent sessions. See `methodology/session-roles.md`.
+Optional local samples or scratch payloads—not the primary stability or control story.
 
-- **`pending/`** — Session type 2 pulls work only from here.
-- **`archive/`** — Session type 2 moves completed task files here.
-
-Session type 1 (orchestrator) adds new tasks to `pending/` when blocked; Session type 2 executes and archives.
+Operator flow (human / Cursor, **curl**, system prompts): **`docs/OPERATOR-CURL.md`**.

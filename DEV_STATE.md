@@ -4,7 +4,7 @@ Current system state: **РЕЖИМ 1 - Work**
 
 Methodology: always write DEV_STATE, always clean, always move forward.
 
-**Agent sessions:** two strict roles (orchestrator vs executor), handoff via `tasks/` — see `methodology/session-roles.md`.
+**Operator control plane:** human or Cursor drives the running stack via **curl** / Client API, not the browser; see `docs/OPERATOR-CURL.md`.
 
 ---
 

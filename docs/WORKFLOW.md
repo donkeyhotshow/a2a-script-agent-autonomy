@@ -2,6 +2,8 @@
 
 This document defines the base linear flow and operational terms used in the project.
 
+**Operator control plane:** the live agent is normally driven with **HTTP** (e.g. **`curl`** against the Client API), not the browser UI. Same sequence works as step-by-step instructions for Cursor. See [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md).
+
 ## Flow Diagram
 
 ```
