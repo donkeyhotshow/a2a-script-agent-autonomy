@@ -37,3 +37,4 @@ export {
   materializeResultIntoHistoryForLlm,
   formatToolResultForHistory
 } from './materialize-result-for-llm.js';
+export * from './operation-history.js';

@@ -40,8 +40,8 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 |------|-------|------|-------|
 | 1 | Диагностика диалога | 2 | Выполнено |
 | 2 | Сохранять состояние | 2 | Готово |
-| 3 | Переработка концепции Gray Room (серой комнаты) | 1 | В процессе |
-| 4 | **Вариант 6: Гибридное улучшение** | 1 | Запланировано |
+| 3 | Переработка концепции Gray Room (серой комнаты) | 1 | **Выполнено** |
+| 4 | **Вариант 6: Гибридное улучшение** | 1 | **Выполнено** |
 
 ---
 
@@ -62,14 +62,26 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 > - Красная комната = Автоответ (клиент)
 
 **Фазы:**
-1. Разделить симуляции (simulations/sync/, async/)
-2. **Трансмутация**: operation history, error states (error, stopped)
-3. Обновить документацию
-4. History light (operationHistory[])
+1. ✅ **Разделить симуляции (simulations/sync/, async/)** - ВЫПОЛНЕНО
+   - Созданы директории `simulations/sync/` и `simulations/async/`
+   - Все существующие симуляции перемещены в `simulations/sync/`
+   - Создан шаблон async в `simulations/async/`
+2. ✅ **Трансмутация**: operation history, error states (error, stopped)
+   - ✅ Добавлены типы `OperationHistoryEntry`, `OperationType`, `OperationStatus`, `OperationError`
+   - ✅ Добавлен тип `ContextWithOperationHistory`
+   - ✅ Добавлен тип `ContextErrorState`
+3. ✅ **Обновить документацию** - ВЫПОЛНЕНО
+   - ✅ `simulations/SCHEMA.md` обновлён с описанием async симуляций
+   - ⏳ Обновить `DEV_STATE.md` с текущим статусом
+   - ⏳ Добавить информацию об `operationHistory` в `AGENTS.md`
+4. ✅ **History light (operationHistory[])** - ВЫПОЛНЕНО
+   - Легковесная альтернатива `context.history[]`
+   - Отслеживает ключевые операции: llm_call, transform, interrupt, etc.
+   - Используется для debug/audit
 
 **Owner**: a2a-client, a2a-server
 
-**Status**: запланировано
+**Status**: Все фазы завершены (1-4)
 
 ---
 

@@ -224,6 +224,10 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [x] **S-08 server-logging**: unify `LOG_LEVEL`/`LOG_FORMAT` and Winston rotation/boot-clean strategy; add acceptance checks.
 - [x] **S-09 agent-rag-chain-limits**: set safe defaults for `A2A_AGENT_RAG_CHAIN_MAX` + project path envs and verify fallback behavior.
 
+## Current Tasks
+
+- *Нет активных задач* — модуль в стабильном состоянии.
+
 ### Высокий приоритет (Phase 2-3)
 - [x] Аудит всех процессоров на `Action-Key Shape`.
 - [x] Проверка `request-processor.service.ts` - логика переключения на `agent` при наличии ключевых слов.

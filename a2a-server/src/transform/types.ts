@@ -9,6 +9,113 @@
 import type { JSONValue } from 'jsonify';
 
 /**
+ * Operation history entry - represents a single operation in the execution trace.
+ * Used for debugging, audit trails, and gray room trace.
+ */
+export interface OperationHistoryEntry {
+  /** Unique identifier for this operation */
+  id: string;
+  /** Timestamp when operation started */
+  timestamp: string;
+  /** Type of operation */
+  operationType: OperationType;
+  /** Human-readable description */
+  description?: string;
+  /** Operation status */
+  status: OperationStatus;
+  /** Input data snapshot */
+  input?: Record<string, unknown>;
+  /** Output data snapshot */
+  output?: Record<string, unknown>;
+  /** Error details if failed */
+  error?: OperationError;
+  /** Duration in milliseconds */
+  duration?: number;
+  /** Nested operations (for composite operations) */
+  children?: OperationHistoryEntry[];
+}
+
+/**
+ * Types of operations tracked in history
+ */
+export type OperationType = 
+  | 'llm_call'
+  | 'transform'
+  | 'interrupt'
+  | 'compress_history'
+  | 'auto_read_file'
+  | 'auto_rag_page'
+  | 'thinking'
+  | 'clarify'
+  | 'request_build'
+  | 'response_build'
+  | 'tool_execution'
+  | 'file_operation'
+  | 'rag_search'
+  | 'gray_room_operation';
+
+/**
+ * Status of an operation
+ */
+export type OperationStatus = 
+  | 'pending'
+  | 'running'
+  | 'completed'
+  | 'failed'
+  | 'skipped';
+
+/**
+ * Error information for failed operations
+ */
+export interface OperationError {
+  /** Error code */
+  code: string;
+  /** Error message */
+  message: string;
+  /** Stack trace */
+  stack?: string;
+  /** Related context */
+  context?: Record<string, unknown>;
+}
+
+/**
+ * Extended context with operation history
+ */
+export interface ContextWithOperationHistory {
+  /** Flat history array (existing) */
+  history: Record<string, unknown>[];
+  /** Structured operation history for debugging/audit */
+  operationHistory: OperationHistoryEntry[];
+  /** Current execution state */
+  execution: {
+    /** Current step number */
+    step: number;
+    /** Current operation ID */
+    operationId?: string;
+    /** Progress percentage */
+    progress?: number;
+  };
+}
+
+/**
+ * Error state for context
+ */
+export interface ContextErrorState {
+  /** Error code */
+  code: string;
+  /** Error message */
+  message: string;
+  /** Timestamp of error */
+  timestamp: string;
+  /** Whether error is recoverable */
+  recoverable: boolean;
+  /** Retry count if recoverable */
+  retryCount?: number;
+  /** Max retries allowed */
+  maxRetries?: number;
+}
+
+/**
  * Interrupt directive — emitted by response transform to trigger a server-side
  * additional LLM call before returning to the client.
  */

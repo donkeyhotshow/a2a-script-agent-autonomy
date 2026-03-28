@@ -55,7 +55,7 @@ Future smart loop inside `ai-integration` proxy:
 
 - **"normal cycle"** -> regular message flow.
 - **"red room"** -> Client auto-replies to tool `execute`, then full cycle.
-- **"gray room"** -> Серверная цепочка LLM-вызовов перед возвратом клиенту: compress_history (сжатие истории), thinking (структурированное мышление), auto_rag_page (RAG поиск), auto_read_file (авто-чтение файлов), clarify (уточнение).
+- **"gray room"** (Трансмутация) -> Серверная цепочка LLM-вызовов перед возвратом клиенту: compress_history (сжатие истории), thinking (структурированное мышление), auto_rag_page (RAG поиск), auto_read_file (авто-чтение файлов), clarify (уточнение).
 - **"black room"** -> (Planned) `ai-integration` proxy loop.
 
 ## Related Documentation

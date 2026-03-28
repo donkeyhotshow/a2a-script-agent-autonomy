@@ -183,6 +183,10 @@ SKIP_AUTH=1
 - Основные цели модуля закрыты, детали выполненных пунктов переносим в `docs/TASKS-COMPLETED.md`.
 - В этом файле остаются только активные риски/следующие шаги (в коде, если появятся).
 - Текущее состояние: готово к поддержке и проверкам, без лишних “перечень выполнено” блоков.
+## Current Tasks
+
+- *Нет активных задач* — модуль в стабильном состоянии.
+
 ### Large File Decomposition (400-500+ lines)
 - [x] **LF-C-01**: Decompose `vite-plugin-a2a/routes/stepRoutes.js` (~719) into `step-routes-read.js`, `step-routes-write.js`, and shared middleware/util layer.
 - [x] **LF-C-02**: Decompose `web/js/task-flow/render.js` (~1421) into focused render modules (`render-message`, `render-form`, `render-layout`, `render-state`).

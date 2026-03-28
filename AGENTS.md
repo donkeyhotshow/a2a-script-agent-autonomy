@@ -69,6 +69,7 @@ Enable sync with `DEFAULT_SYNC_MODE=1` or request `sync: true`.
 - `context.execution` — current state (action, step, progress)
 - `context.workbench` — structured state (`sections`, optional `batch`, optional `slots`)
 - `context.session_id` — session identifier
+- `context.operationHistory[]` — lightweight operation tracking (llm_call, transform, interrupt, etc.) for debug/audit
 
 ### Simulation Pipeline
 ```
@@ -207,10 +208,11 @@ See [docs/adr/README.md](docs/adr/README.md) for full index:
 | **Action-Key Shape** | Single action type per execute/result object |
 | **Workbench** | Structured state in `context.workbench.sections` |
 | **Promise** | Async request ID for polling long-running work |
-| **Gray Room** | Серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту |
+| **Gray Room** (Трансмутация) | Серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту |
 | **Router** | Keyword-based routing (dialog/agent/task-decomposition) |
 | **Sync Mode** | Immediate execute response (no promiseId) |
 | **Web DTO** | Client-sanitized execute (only form, not tool calls) |
+| **operationHistory** | Легковесный трек операций (llm_call, transform, interrupt) для debug/audit |
 
 ---
 

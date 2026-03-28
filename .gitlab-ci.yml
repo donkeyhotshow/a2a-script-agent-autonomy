@@ -24,6 +24,21 @@ documentation-check:
     - merge_requests
   allow_failure: true
 
+# System validation stage
+validation:
+  stage: documentation-check
+  image: node:$NODE_VERSION
+  before_script:
+    - npm ci
+  script:
+    - echo "🔍 Running system validation..."
+    - node scripts/validate-system.js --lint
+  only:
+    - main
+    - develop
+    - merge_requests
+  allow_failure: true
+
 # Main documentation workflow stage
 documentation-workflow:
   stage: documentation-workflow

@@ -28,6 +28,10 @@ When improving the client, upgrade the matching `received.json` / `response.json
 Simulations describe the **sync request-response contract** (client.json → received.json). Runtime systems add promise
 handling on top; that logic is outside simulation scope.
 
+> **Async simulations:** See `simulations/async/` directory for full async protocol simulations including `promiseId`
+lifecycle, polling patterns, and `execute.wait` handling. Sync simulations in `simulations/sync/` cover the immediate
+request-response contract.
+
 > **Примечание о context:** Поля внутри `context` курируются системой. Стандартные поля: `execution`, `history`,
 > `files`, `scratchpad`, `scratchpad_ops`, `workbench`. Остальные (`vite_config`, `aliases` и т.д.) — свободный формат.
 
