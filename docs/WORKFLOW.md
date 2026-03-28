@@ -4,6 +4,8 @@ This document defines the base linear flow and operational terms used in the pro
 
 **Operator control plane:** the live stack is used as a **sub-agent**—called with **HTTP** (e.g. **`curl`** on the Client API), not the browser UI; the IDE agent is the caller. See [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) and [`START-PROMPT-UNLIM.md`](../START-PROMPT-UNLIM.md).
 
+**Empty task queue:** **not** “nothing to do.” Prune root/module [`DEV_STATE.md`](../DEV_STATE.md), discover work (code, sims, risks), write tasks into `DEV_STATE` / `tasks/pending/`. See [`AGENTS.md`](../AGENTS.md) — **“Empty queue — mandatory”** (under Quick Reference) + DEV_STATE Protocol — and [`methodology/tasks.md`](../methodology/tasks.md).
+
 ## Flow Diagram
 
 ```

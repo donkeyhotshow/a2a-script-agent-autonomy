@@ -1,10 +1,18 @@
-# DEV_STATE - 2026-03-28 (v2 - meta-prompt)
+# DEV_STATE - 2026-03-29 (v2 - meta-prompt)
 
 Current system state: **РЕЖИМ 1 - Work**
 
 Methodology: always write DEV_STATE, always clean, always move forward.
 
+**Idle queue:** “Nothing to execute” / empty queue **means** this maintenance step — **not** stopping. *Why repeated:* empty backlog **reads** as “finished”; protocol says it **starts** prune → discover → write. **prune** root/module `DEV_STATE.md`, **discover** work, **record** tasks (`DEV_STATE`, `tasks/pending/`). See `AGENTS.md` (DEV_STATE Protocol), `methodology/tasks.md`, `START-PROMPT-UNLIM.md` (шаг 4 Work).
+
 **Operator control plane:** IDE agent treats the running stack as a **sub-agent** (HTTP / Client API, not browser)—see `START-PROMPT-UNLIM.md`, `docs/OPERATOR-CURL.md`.
+
+---
+
+## 2026-03-29 — Idle-queue protocol (docs)
+
+- Same rule everywhere: empty `tasks/pending/` **triggers** prune → discover → write, **not** stop. Rationale in `AGENTS.md` (DEV_STATE Protocol + **“Empty queue — mandatory”** block under Quick Reference, checklist item 5); anti-pattern in `methodology/tasks.md`; pointers in `docs/WORKFLOW.md`, `methodology/INDEX.md`, `START-PROMPT-UNLIM.md` (режим 1, шаг 4).
 
 ---
 
@@ -47,7 +55,7 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 | 5 | **Многоагентная оркестрация (10 ролей)** | 1 | **Выполнено** |
 | 6 | **Старт помощник** | 1 | **Выполнено** |
 | 7 | **START-PROMPT-UNLIM.md (Kilo Оркестратор)** | 1 | **Выполнено** |
-| 8 | **Kilo Оркестратор (orchestrator)** | 1 | **Активно** |
+| 8 | **Kilo Оркестратор (orchestrator)** | 1 | **Выполнено** |
 
 ---
 

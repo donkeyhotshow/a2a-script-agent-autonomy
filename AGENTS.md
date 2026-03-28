@@ -11,6 +11,17 @@ Guidance for agents working in this repository.
 | Test DB | `a2a_test` (not `a2a_server`) |
 | Action-Key Shape | ONE action per execute/result |
 | DEV_STATE | Always update before/after tasks |
+| **No actionable work** | **Not** “done”: empty queue **triggers** maintenance — prune `DEV_STATE` (root + modules), discover work, write tasks — see DEV_STATE Protocol (why below) |
+
+### Empty queue — mandatory (not optional)
+
+**Default human/agent misread:** “nothing in the queue” = work finished = stop. **In this repo that is wrong.**
+
+1. **Prune** — Trim root and module `DEV_STATE.md` and any checklists: drop completed items, duplicates, noise.
+2. **Discover** — Scan code, simulations, risks, backlog for real, testable work.
+3. **Write** — Add concrete tasks to `DEV_STATE` and `tasks/pending/` as needed, **then** continue the normal execute cycle.
+
+Stopping with an empty queue **without** (1)–(3) is a protocol violation. Full rationale: [DEV_STATE Protocol](#dev-state-protocol); task wording: [methodology/tasks.md](methodology/tasks.md).
 
 ---
 
@@ -229,6 +240,9 @@ See [docs/adr/README.md](docs/adr/README.md) for full index:
 - No abstract statements; all tasks testable
 - Remove completed; no dead roadmap items
 - Tasks >14 days old → backlog with blocker reason
+- **Idle queue (explicit):** **If** there is no actionable work — empty `tasks/pending/`, nothing to execute, checklists done — **then** do **not** treat that as “done for the day”. **First** prune root and module `DEV_STATE.md` (remove done items, duplicates, noise). **Then** discover new work (code, sims, risks, backlog) and **write** concrete testable tasks into the same files and `tasks/` as needed. **Then** resume the normal task cycle.
+
+**Why this must be spelled out:** An empty backlog **feels** like closure (“nothing left to run”), but here it is a **state transition** into prune → discover → write. Without that rule, agents default to stopping; the protocol overrides that default.
 
 See [DEV_STATE.md](DEV_STATE.md) and [docs/DOCUMENTATION-MACHINE-READABLE.md](docs/DOCUMENTATION-MACHINE-READABLE.md).
 
@@ -251,6 +265,7 @@ Confirm previous phase passed and is stable.
 2. DEV_STATE updated?
 3. Current action "simple" or skipping phases?
 4. Imports follow `.js` rule (NodeNext)?
+5. If there was **no** pending work: did you **prune → discover → write** (see “Empty queue” above), not stop idle?
 
 ---
 

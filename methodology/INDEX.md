@@ -37,7 +37,7 @@
 
 1. Прочитать `methodology/transitions.md` — определить текущий режим.
 2. Проверить `/tasks/pending/`.
-3. Если очереди нет — работаем в режиме 1, ожидаем сигнала, поддерживаем idle.
+3. Если очереди нет — **не** считать это «концом работы» и **не ждать сигнала**: idle-протокол — `methodology/tasks.md`; в `AGENTS.md` сразу под Quick Reference блок **«Empty queue — mandatory»** и чеклист п.5 — почистить `DEV_STATE`, найти работу, записать задачи, затем снова шаг 2.
 4. Если очередь есть — выбираем первую задачу с тэгом `priority`.
 5. Формируем Prompt: `description`, `inputs`, `criteria`.
 6. Уточняем `relations`: `relatedIssues`, `owner`, `module`.
