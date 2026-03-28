@@ -37,15 +37,15 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 ## ТЕКУЩИЕ ЗАДАЧИ
 
 | # | Задача | Режим | Статус |
-|------|-------|------|-------|
+|---|--------|-------|--------|
 | 1 | Диагностика диалога | 2 | Выполнено |
-| 2 | Сохранять состояние | 2 | Готово |
+| 2 | Сохранять состояние | 2 | Выполнено |
 | 3 | Переработка концепции Gray Room (серой комнаты) | 1 | **Выполнено** |
 | 4 | **Вариант 6: Гибридное улучшение** | 1 | **Выполнено** |
 
 ---
 
-### Диагностика диалога: Результаты
+## Диагностика диалога: Результаты
 
 | Проблема | Решение | Статус |
 |----------|---------|--------|
@@ -53,7 +53,7 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 
 ---
 
-### Задача 4: Вариант 6 (Гибридный) — Трансмутация
+## Задача 4: Вариант 6 (Гибридный) — Трансмутация
 
 **Описание**: [proposals/04-transmutation-protocol/README.md](proposals/04-transmutation-protocol/README.md)
 
@@ -72,8 +72,8 @@ Methodology: always write DEV_STATE, always clean, always move forward.
    - ✅ Добавлен тип `ContextErrorState`
 3. ✅ **Обновить документацию** - ВЫПОЛНЕНО
    - ✅ `simulations/SCHEMA.md` обновлён с описанием async симуляций
-   - ⏳ Обновить `DEV_STATE.md` с текущим статусом
-   - ⏳ Добавить информацию об `operationHistory` в `AGENTS.md`
+   - ✅ Обновить `DEV_STATE.md` с текущим статусу
+   - ✅ Добавить информацию об `operationHistory` в `AGENTS.md`
 4. ✅ **History light (operationHistory[])** - ВЫПОЛНЕНО
    - Легковесная альтернатива `context.history[]`
    - Отслеживает ключевые операции: llm_call, transform, interrupt, etc.
@@ -116,7 +116,7 @@ Methodology: always write DEV_STATE, always clean, always move forward.
    - `auto_rag_page` - RAG поиск
    - `auto_read_file` - автоматическое чтение файлов
    - `clarify` - уточнение
-3. **Название vs реализация** - Внутреннее имя кода "Interrupt loop" vs продуктовое название "Gray Room" - возможно слишком сильное связываение
+3. **Название vs реализация** - Внутреннее имя кода "Interrupt loop" vs продуктовое название "Gray Room" - возможно слишком сильное связывание
 4. **DEV_STATE_COMPLETION_PLAN.md** (строка 89) - содержит пометку "не 'interrupt loop', а что-то другое" без уточнения
 
 ### Рекомендуемые исправления
@@ -141,9 +141,9 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 
 **Что нужно сделать:**
 - [x] Проанализировать документацию и код
-- [ ] Обновить краткую документацию (GLOSSARY.md, AGENTS.md, WORKFLOW.md)
-- [ ] Уточнить связь с трансмутацией
-- [ ] Синхронизировать изменения во всех модулях
+- [x] Обновить краткую документацию (GLOSSARY.md, AGENTS.md, WORKFLOW.md)
+- [x] Уточнить связь с трансмутацией
+- [x] Синхронизировать изменения во всех модулях
 
 ---
 
@@ -298,6 +298,8 @@ cd a2a-client && npm test
 - **Status model:** использовать два уровня качества для симуляций: `valid` (структурно) и `clean` (без warnings).
 - **Ownership:** у каждой P0/P1 задачи должен быть владелец (модуль) и целевой этап (Phase / milestone).
 
+---
+
 ## DEV_STATE Hygiene & Cleanup Requirements
 
 - **Mandatory cleanup:** удалять устаревшие/дублирующие пункты после закрытия, не оставлять “мертвые” roadmap-элементы.
@@ -305,6 +307,8 @@ cd a2a-client && npm test
 - **Link integrity:** каждая ссылка на модульный state-файл должна вести на существующий файл. Все DEV_STATE файлы должны быть пролинкованы между собой и с документацией (AGENTS.md, SCHEMA.md, docs/*).
 - **Aging control:** задачи без обновления >14 дней переносить в отдельный backlog-блок с причиной блокировки.
 - **Consistency check:** минимум раз в неделю сверять `DEV_STATE.md` ↔ `docs/DEV_STATE.md` ↔ `simulations/DEV_STATE.md`.
+
+---
 
 ## Governance
 
@@ -327,9 +331,7 @@ cd a2a-client && npm test
 2. Stabilize system
 3. Prepare for production
 
-
-
-
+---
 
 ## Технический долг и новые задачи
 
@@ -399,10 +401,8 @@ cd a2a-client && npm test
 - [x] **CDM-03** evidence-format: four required fields per candidate in each module `DEV_STATE.md`.
 - [x] **CDM-04** acceptance-gate: aligned with `CCP-*-05` / `CCP-S-04` safe-remove gates per module.
 - [x] **LF-S-03** (`a2a-server`): `sim-validate` split into `scripts/sim-validate/{scanner,validators,reporters}.ts`; fixed repo-root paths for `simulations/` and `docs/…/json-schemas`.
-
 - [x] **C-08** unified execute script API: public `execute.script` without `sandbox`; `result.script` includes `exitCode` in SDK handler paths (`a2a-client`).
 - [x] Completed client task `C-03 sdk-http-limits` in `a2a-client` with standalone SDK defaults and env-overridable profile (CORS, rate-limit, file-cap) plus contract tests.
 - [x] **CM-10**: Stabilize `session-index.json` and remove complex fallback in `newSessions.js` (Phase 2).
 - [x] **CM-11**: Implement common Gray Room Orchestrator and move it out of specific processor.
 - [x] **CM-12**: Add retention policy scripts for sessions and requests.
-
