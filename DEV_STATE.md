@@ -1,6 +1,90 @@
-# DEV_STATE - 2026-03-27 (verified)
+# DEV_STATE - 2026-03-28 (v2 - meta-prompt)
 
-Current system state for production work. Methodology: always write DEV_STATE, always clean, always move forward.
+Current system state: **РЕЖИМ 2 - Отладка**
+
+Methodology: always write DEV_STATE, always clean, always move forward.
+
+---
+
+## 2026-03-28 v2.0 updates (Мета-уровень)
+
+### 1. Методология 2.0 (Мета-протокол)
+
+Создан документ [`METHODOLOGY-AGENT-SCRIPT.md`](METHODOLOGY-AGENT-SCRIPT.md) v2.0:
+- Два режима: Рабочий (1) и Отладка (2)
+- Три типа сессий:
+  - task-cleanup: Очистка выполненных задач
+  - task-add: Добавление задач
+  - task-execute: Выполнение задач
+- Требование автономности
+- AI спрашивает режим при старте
+
+### 2. Поддержка внешних путей проектов
+
+- Переменная `A2A_CLIENT_PROJECTS_PATH`
+- Пример: [`client-projects.example.json`](client-projects.example.json)
+
+### 3. Debug скрипт
+
+[`debug-save-page-state.js`](debug-save-page-state.js):
+- Сохраняет состояние страницы
+- Перехватывает network requests
+- Логирует ошибки console
+- Сохраняет в localStorage
+
+---
+
+## ТЕКУЩИЕ ЗАДАЧИ
+
+| # | Задача | Режим | Статус |
+|------|-------|------|-------|
+| 1 | Диагностика диалога | 2 | В.progress |
+| 2 | Сохранять состояние | 2 | Готово |
+| 3 | Переработка концепции Gray Room (серой комнаты) | 1 | Ожидает |
+| 4 | **Вариант 6: Гибридное улучшение** | 1 | Запланировано |
+
+---
+
+### Задача 4: Вариант 6 (Гибридный) — Трансмутация
+
+**Описание**: [proposals/04-transmutation-protocol/README.md](proposals/04-transmutation-protocol/README.md)
+
+> **Терминология:**
+> - Серая комната = Трансмутация
+> - Красная комната = Автоответ (клиент)
+
+**Фазы:**
+1. Разделить симуляции (simulations/sync/, async/)
+2. **Трансмутация**: operation history, error states (error, stopped)
+3. Обновить документацию
+4. History light (operationHistory[])
+
+**Owner**: a2a-client, a2a-server
+
+**Status**: запланировано
+
+---
+
+## ⚠️ ВАЖНО: Gray Room - Требует переработки
+
+**Проблема:** Текущая интерпретация "Gray Room" в документации неверна по словам автора. Требуется переработка концепции.
+
+**Где описано (текущее):**
+- [`docs/WORKFLOW.md`](docs/WORKFLOW.md) - определение Gray Room
+- [`AGENTS.md`](AGENTS.md) строка 210 - Gray Room как "Server-side interrupt loop"
+- [`GLOSSARY.md`](GLOSSARY.md) строка 14 - определение термина
+- [`docs/SESSION-SYSTEMS-OVERVIEW.md`](docs/SESSION-SYSTEMS-OVERVIEW.md) - секция о комнатах
+- [`docs/adr/ADR-0029-server-interrupt-loop.md`](docs/adr/ADR-0029-server-interrupt-loop.md) - ADR о серверном цикле прерываний
+
+**Что нужно сделать:**
+- [ ] Уточнить правильную интерпретацию Gray Room
+- [ ] Обновить документацию согласно новому пониманию
+- [ ] Проверить соответствие реализации в коде
+- [ ] Синхронизировать изменения во всех модулях (a2a-client, a2a-server)
+
+**Связанные модули:**
+- a2a-client/DEV_STATE.md
+- a2a-server/DEV_STATE.md
 
 ---
 
@@ -67,6 +151,8 @@ SKIP_AUTH=1
 ENCRYPTION_KEY=<32-char>
 JWT_SECRET=<32-char-min>
 DEFAULT_SYNC_MODE=1
+A2A_CLIENT_PROJECTS_PATH=<path-to-projects-json>  # Внешние проекты
+A2A_PROJECT_PATH=<path>  # Путь проекта для агента
 ```
 
 ---
