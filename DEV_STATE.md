@@ -4,6 +4,8 @@ Current system state: **РЕЖИМ 1 - Work**
 
 Methodology: always write DEV_STATE, always clean, always move forward.
 
+**Agent sessions:** two strict roles (orchestrator vs executor), handoff via `tasks/` — see `methodology/session-roles.md`.
+
 ---
 
 ## 2026-03-28 v2.0 updates (Мета-уровень)
@@ -42,6 +44,9 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 | 2 | Сохранять состояние | 2 | Выполнено |
 | 3 | Переработка концепции Gray Room (серой комнаты) | 1 | **Выполнено** |
 | 4 | **Вариант 6: Гибридное улучшение** | 1 | **Выполнено** |
+| 5 | **Многоагентная оркестрация (10 ролей)** | 1 | **Выполнено** |
+| 6 | **Старт помощник** | 1 | **Выполнено** |
+| 7 | **START-PROMPT-UNLIM.md (Kilo Оркестратор)** | 1 | **Выполнено** |
 
 ---
 

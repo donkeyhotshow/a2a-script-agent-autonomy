@@ -31,6 +31,14 @@
 - Implementation: `methodology/implementation.md`.
 - Tasks: `methodology/tasks.md`.
 - Improvements: `methodology/improvements.md`.
+- **Два типа сессий агента (строго):** `methodology/session-roles.md` — не смешивать в одном чате.
+
+### 2.1 Два типа сессий (handoff через `tasks/`)
+
+| Тип | Обязанности | Завершение сессии |
+|-----|-------------|-------------------|
+| **1 — Orchestrator** | Старт через `.bat`; управление только **Client API** (не веб-UI); итерация до рабочей системы по задачам | При блокерах — новые документы в `tasks/`, затем **стоп** |
+| **2 — Executor** | **Только** файлы из `tasks/` (например `tasks/pending/`) | После выполнения — перенос в `tasks/archive/`, затем **стоп** |
 
 ## 3. Цикл A2A — шаг за шагом
 
@@ -186,6 +194,7 @@
 
 ## 14. References
 
+- `methodology/session-roles.md`
 - `methodology/mode1.md`
 - `methodology/mode2.md`
 - `methodology/transitions.md`

@@ -1,6 +1,9 @@
 # Методология агент-скрипта
 
 Главный метапромпт и обзор рабочих процессов теперь находятся в `methodology/INDEX.md` (≈300 строк).  
+
+**Два строгих типа сессий агента:** `methodology/session-roles.md` (тип 1: батник + Client API; тип 2: только `tasks/` → `tasks/archive/`).
+
 Дополнительные подробности разделены на:
 - `methodology/mode1.md`
 - `methodology/mode2.md`
