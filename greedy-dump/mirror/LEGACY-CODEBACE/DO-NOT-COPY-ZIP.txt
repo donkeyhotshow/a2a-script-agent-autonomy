@@ -1,0 +1,4 @@
+LEGACY-CODEBACE.zip (~466 MB) lives only at:
+  C:\workspace\domain-platform\markdown-pipeline-automator\work\LEGACY-CODEBACE.zip
+
+Unpack outside the repo or reference by path when a task needs a file from the archive.

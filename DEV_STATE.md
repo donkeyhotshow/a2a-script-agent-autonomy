@@ -4,6 +4,14 @@ Current system state: **Performing idle queue protocol: prune → discover → w
 
 ---
 
+## Greedy dump (branch `greedy-dump`) — 2026-03-29
+
+- **Source:** `C:\workspace\domain-platform\markdown-pipeline-automator\work` (originals unchanged).
+- **In-repo:** `greedy-dump/` — task tree, `STATE.md`, `docs/DOCUMENTS-STATE.md`, lightweight `mirror/**` stubs (no 466 MB zip).
+- **Pending:** `tasks/pending/greedy-dump-integration.md` — queue scripts into `a2a-server` actions per folder tasks.
+
+---
+
 ## Fixes Applied (2026-03-29)
 
 ### Simulation Tests Fix (2026-03-29 03:16-03:18)
