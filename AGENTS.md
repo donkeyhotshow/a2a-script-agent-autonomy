@@ -15,6 +15,7 @@ Guidance for agents working in this repository.
 | Action-Key Shape | ONE action per execute/result |
 | DEV_STATE | Always update before/after tasks |
 | **No actionable work** | **Not** “done”: empty queue **triggers** maintenance — prune `DEV_STATE` (root + modules), discover work, write tasks — see DEV_STATE Protocol (why below) |
+| **Why iteration stops** | Misreads vs mitigations — [Why iteration stops](#why-iteration-stops-misreads-and-mitigations) |
 
 ### Empty queue — mandatory (not optional)
 
@@ -88,6 +89,26 @@ You still run **`/next`** + poll **`/async`** afterward; the two-beat router may
 Implementation: [`session-create-initial.js`](a2a-client/vite-plugin-a2a/routes/utils/session-create-initial.js) (also `POST .../sessions/task-add` and `.../task-execute`).
 
 Operator narrative and curl: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
+
+### Why iteration stops (misreads and mitigations)
+
+Two surfaces: **IDE / Cursor agent** (edits repo, runs tools) vs **Client API session driver** (curl or script hitting `/api/a2a/*`). Same repo traps; mitigations differ by who owns the loop.
+
+| Trap | IDE / Cursor agent | Client API driver |
+|------|--------------------|------------------|
+| Empty queue = “finished” | **Do not** exit. Prune → discover → write tasks (`DEV_STATE`, `tasks/pending/`), then continue. | If you only drive HTTP, still **do not** treat “no local tickets” as done when the assignment is stack verification—follow project idle protocol or explicit checklist. |
+| Vague / one-line user prompt | **Not** one-shot permission. Iterate until criteria met or log a **blocker** with evidence. | Same: complete **`/next` + poll `/async`** (and re-hydrate session), not a single POST. |
+| Wrong router beat | Read `GET …/sessions/{id}`; send **`message`** / `task` as text when there are **no** `form.choices`; send **`choice`** / `task` as **choice `id`** when choices exist. | Scripted rule: after each response, **inspect** `execute.form`; branch body shape before next `/next`. |
+| Stopped after `/next` ack | N/A | Poll **`GET …/async`** until final; **`GET …/sessions/{id}`** if unsure. |
+| Raw `invoke` only | Prefer Client API for session persistence; use server direct only as **documented** workaround. | Default path: **`POST /sessions`** → `/next` → `/async`, not `POST /api/v1/invoke` alone. |
+| Stack / promise pending | Diagnose ports (`AGENTS.md` Debugging), retry with backoff; log env (Ollama, AI hub). | Same; do not declare failure on first `pending`. |
+| 401 / 400 (auth, `ENCRYPTION_KEY`) | Fix `.env` (32-char key, `JWT_SECRET`); retry. | Same. |
+| “Need more context” loop-killer | State assumptions, proceed, verify; don’t halt on questions unless the user must decide. | Seed **`mode: "agent"`** + concrete **`task`** on create when allowed. |
+| No definition of done | Add tests, checklist, or sim run before declaring complete. | Use [`a2a-client/docs/api-testing-plan.md`](a2a-client/docs/api-testing-plan.md) for manual Client API depth. |
+| `DEV_STATE` stale | Update before/after work so the next pass sees real queue state. | When fixing stack behavior, record in `DEV_STATE` / tasks for follow-up agents. |
+| Golden sim / action-key failures | Fix shape (one action key per `execute`/`result`); re-run `sim:lint` / `sim:validate`. | N/A unless authoring sims. |
+
+Driver-oriented step list: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) → *Driver checklist (anti-stop)*.
 
 ---
 
@@ -359,4 +380,5 @@ Confirm previous phase passed and is stable.
 | [docs/DOCUMENTATION-MACHINE-READABLE.md](docs/DOCUMENTATION-MACHINE-READABLE.md) | Doc standards |
 | [simulations/SCHEMA.md](simulations/SCHEMA.md) | Simulation contract |
 | [docs/ENV-MATRIX.md](docs/ENV-MATRIX.md) | Environment matrix |
+| [docs/agent-iteration-traps.md](docs/agent-iteration-traps.md) | Why iteration stops (low-context); mitigations (Cursor vs Client API driver) |
 | Module state files | [a2a-client/DEV_STATE.md](a2a-client/DEV_STATE.md), [a2a-server/DEV_STATE.md](a2a-server/DEV_STATE.md), [ai-integration/DEV_STATE.md](ai-integration/DEV_STATE.md) |

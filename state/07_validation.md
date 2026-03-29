@@ -8,3 +8,7 @@
 - Document any disputes between roles and their resolution
 - Track changes made during critique cycles
 - Ensure no requirement was compromised
+
+---
+
+**Pipeline:** [← Documentation](06_documentation.md) · [Index](README.md) · [Next: Final →](08_final.md)

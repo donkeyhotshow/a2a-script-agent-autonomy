@@ -22,6 +22,10 @@
 
 ---
 
+## 2026-03-29 — E2E deduplication
+
+- Removed redundant Playwright specs: `tests/e2e/cross-browser-matrix.spec.ts`, `dialog-flow.spec.ts`, `services.spec.ts` (overlap with `parallel-browser-test.spec.ts`, `tests/integration/dialog-flow.test.mjs`, `web-ui-smoke-api.spec.ts`). Firefox/WebKit/viewport-meta checks live at the end of `parallel-browser-test.spec.ts`.
+
 ## 2026-03-29 — Router choice ids + docs sync
 
 - Канон fallback **`choices[].id`** на сервере: **`dialog`**, **`agent`**, **`task-decomposition`** — root **`shared/router-static-choices.json`**. Промпты: **`START-PROMPT-UNLIM.md`**, **`AGENTS.md`**. Тест контракта **`task`→`choice`**: `tests/unit/step-routes-submit-result.test.mjs`. **`docs/WEB_UI_PROTOCOL.md`**, **`packages/sdk/README.md`**, **`docs/new-request-flow/SESSION-FLOW.md`** (секция *Два удара*).

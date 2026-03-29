@@ -32,7 +32,7 @@
 - Tasks: `methodology/tasks.md`.
 - Improvements: `methodology/improvements.md`.
 - Оператор (человек или Cursor) управляет **запущенным агентом** через **HTTP/curl**, не через веб-UI как основной контур: `docs/OPERATOR-CURL.md`.
-- **Единый ручной контур:** **`POST /api/a2a/sessions`**, затем **`/next`** + poll **`/async`**; типичный UX — **два удара**: текст направления работы, потом **`choice`** по списку роутера (Агент / …). См. `AGENTS.md` → *Unified manual path* и *Router dialog (two beats)*.
+- **Единый ручной контур:** **`POST /api/a2a/sessions`**, затем **`/next`** + poll **`/async`**; типичный UX — **два удара**: текст направления работы, потом **`choice`** по списку роутера (Агент / …). См. `AGENTS.md` → *Unified manual path* и *Router dialog (two beats)*. Таблица «почему оборвали итерацию» и чеклист драйвера: `AGENTS.md` → *Why iteration stops*; `docs/OPERATOR-CURL.md` → *Driver checklist (anti-stop)*.
 - **Сессии, E2E, «режим agent»:** жизненный цикл сессии и шаги на диске — у **Client API** (в dev по умолчанию `http://localhost:5173/api/a2a/*`); **не** путать с одним лишь `POST /api/v1/invoke` на `:3000`. Альтернатива — standalone SDK (тот же контракт, другой порт): [ADR-0028](../docs/adr/ADR-0028-client-api-deployment-modes.md). **Agent** на старте — поля **`mode` / `execution`** в теле создания сессии; далее — `context.execution` / workbench.
 - Оркестратор ADR ↔ код (очередь ADR, отдельный state-файл, один целевой проект, тот же Client API): `methodology/adr-compliance-orchestrator.md`; указатель в `docs/adr/README.md` (раздел Tooling).
 

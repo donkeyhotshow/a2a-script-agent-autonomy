@@ -20,3 +20,7 @@
 - Each role reads previous state files
 - Generates/updates its corresponding state file
 - Triggers next role automatically
+
+---
+
+**Pipeline:** [← Requirements](02_requirements.md) · [Index](README.md) · [Next: Optimization →](04_optimization.md)

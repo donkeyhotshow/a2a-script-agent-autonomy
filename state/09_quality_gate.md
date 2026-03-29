@@ -21,3 +21,7 @@ Status: APPROVED
 - Implement meta-controller.ts in a2a-server/src/
 - Add role definitions to action registry
 - Integrate with existing session management
+
+---
+
+**Pipeline:** [← Final](08_final.md) · [Index](README.md)

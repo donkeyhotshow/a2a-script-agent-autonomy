@@ -8,3 +8,7 @@
 - Flag conflicting requirements between 02_requirements.md and 03_implementation.md
 - Identify gaps between strategy and execution
 - Ensure all roles have addressed previous critiques
+
+---
+
+**Pipeline:** [← Optimization](04_optimization.md) · [Index](README.md) · [Next: Documentation →](06_documentation.md)

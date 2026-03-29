@@ -4,7 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 const PROJECT_ROOT = path.join(process.cwd(), '..');
-const SIM_DIR = path.join(PROJECT_ROOT, 'simulations', 'agent-coder', '3');
+const SIM_DIR = path.join(PROJECT_ROOT, 'simulations', 'sync', 'agent-coder', '3');
 const PROMPTS_TRANSFORMS = getPromptsTransformsPath();
 
 describe('Transform Pipeline Runtime', () => {

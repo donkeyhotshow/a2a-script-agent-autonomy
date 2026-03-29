@@ -8,3 +8,7 @@
 - Merge similar critique points from multiple roles
 - Consolidate overlapping validation checks
 - Streamline state file updates (append-only where possible)
+
+---
+
+**Pipeline:** [← Implementation](03_implementation.md) · [Index](README.md) · [Next: Audit →](05_audit.md)

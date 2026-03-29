@@ -106,14 +106,20 @@ export function saveSessionIndex(cwd, sessionId, stepData) {
   }
   
   // Check for pending async state
-  const promiseData = loadServerPromise(cwd, sessionId, stepData.step);
-  if (promiseData?.promiseId) {
-    index.promiseId = promiseData.promiseId;
-    index.promiseStatus = promiseData.status;
-  } else if (!promiseData) {
-    // Clear async state if no pending promise
-    index.promiseId = null;
-    index.promiseStatus = null;
+  // Priority: use stepData.promiseId if provided, otherwise try loadServerPromise
+  if (stepData.promiseId) {
+    index.promiseId = stepData.promiseId;
+    index.promiseStatus = stepData.promiseStatus || 'pending';
+  } else {
+    const promiseData = loadServerPromise(cwd, sessionId, stepData.step);
+    if (promiseData?.promiseId) {
+      index.promiseId = promiseData.promiseId;
+      index.promiseStatus = promiseData.status;
+    } else if (!promiseData) {
+      // Clear async state if no pending promise
+      index.promiseId = null;
+      index.promiseStatus = null;
+    }
   }
   
   // Determine status from latest step
@@ -151,7 +157,9 @@ export function saveNewSession(cwd, session) {
     step: stepNum,
     context: session.context,
     title: session.title,
-    status: session.status
+    status: session.status,
+    promiseId: session.promiseId || null,
+    promiseStatus: session.promiseStatus || null
   });
 }
 

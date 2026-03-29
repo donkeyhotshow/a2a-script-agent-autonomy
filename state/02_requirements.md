@@ -14,3 +14,7 @@
 - NodeNext module resolution with .js imports
 - Test DB: a2a_test
 - ENCRYPTION_KEY: 32 characters
+
+---
+
+**Pipeline:** [← Architecture](01_architecture.md) · [Index](README.md) · [Next: Implementation →](03_implementation.md)

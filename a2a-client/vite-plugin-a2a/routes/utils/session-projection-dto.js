@@ -93,7 +93,9 @@ export function toMinimalNextAck({ success, step, promiseId, error }) {
         accepted: true,
         step,
         asyncPending,
+        ...(promiseId ? { promiseId } : {}),
     };
+
 }
 
 export function toPublicNextResponse(response, includeContext = false) {

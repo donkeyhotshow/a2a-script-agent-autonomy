@@ -4,6 +4,13 @@
  */
 
 import {describe, it, expect, beforeEach, vi} from 'vitest';
+import {RAGIndexer} from '../../src/indexer.js';
+import {RAGSearcher} from '../../src/searcher.js';
+import {ChunkManager} from '../../src/chunk-manager.js';
+import {BM25} from '../../src/bm25.js';
+import {HybridSearch} from '../../src/hybrid-search.js';
+import {Reranker} from '../../src/reranker.js';
+import {QueryUnderstanding} from '../../src/query-understanding.js';
 
 // Mock dependencies
 vi.mock('meilisearch', () => ({
@@ -17,10 +24,17 @@ describe('@a2a/rag', () => {
 
     describe('RAGIndexer', () => {
         describe('constructor', () => {
-            it('should create indexer with config - STUB', () => {
-                // TODO: Implement test
-                // Should initialize Meilisearch client
-                expect(true).toBe(true);
+            it('should create indexer with config', () => {
+                const config = {
+                    projectPath: '/tmp/test-project',
+                    includePatterns: ['**/*.js'],
+                    excludePatterns: ['node_modules/**']
+                };
+                const indexer = new RAGIndexer(config);
+                expect(indexer).toBeDefined();
+                expect(indexer.projectPath).toBe('/tmp/test-project');
+                expect(indexer.includePatterns).toEqual(['**/*.js']);
+                expect(indexer.excludePatterns).toEqual(['node_modules/**']);
             });
         });
 

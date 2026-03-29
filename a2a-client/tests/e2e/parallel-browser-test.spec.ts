@@ -297,3 +297,36 @@ function generatePerformanceRecommendations(results: BrowserTestResult[]): strin
 
   return recommendations;
 }
+
+/** Migrated from removed cross-browser-matrix.spec.ts — not covered by the BROWSER_MATRIX smoke loop. */
+test.describe('Browser-specific behaviors', () => {
+  test('Firefox - WebGL support', async ({ page, browserName }) => {
+    test.skip(browserName !== 'firefox', 'Firefox-specific test');
+    await page.goto('http://localhost:5173', { timeout: 30000 });
+    const hasWebGL = await page.evaluate(() => {
+      try {
+        const canvas = document.createElement('canvas');
+        return !!(canvas.getContext('webgl') || canvas.getContext('experimental-webgl'));
+      } catch {
+        return false;
+      }
+    });
+    expect(hasWebGL).toBe(true);
+  });
+
+  test('WebKit - Touch events', async ({ page, browserName }) => {
+    test.skip(browserName !== 'webkit', 'WebKit-specific test');
+    await page.goto('http://localhost:5173', { timeout: 30000 });
+    await page.setViewportSize({ width: 375, height: 667 });
+    const touchSupported = await page.evaluate(() => {
+      return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    });
+    expect(touchSupported).toBe(true);
+  });
+
+  test('Mobile browsers - Viewport meta tag', async ({ page }) => {
+    await page.goto('http://localhost:5173', { timeout: 30000 });
+    const viewportMeta = page.locator('meta[name="viewport"]');
+    await expect(viewportMeta).toHaveAttribute('content', /width=device-width/);
+  });
+});

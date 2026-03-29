@@ -14,3 +14,7 @@ User Input → Meta-Controller → Role Execution → State Files → Convergenc
 - Reuse existing A2A server action system
 - Leverage session storage pattern from a2a-client
 - Integrate with existing logging/metrics utilities
+
+---
+
+**Pipeline:** [← Scope](00_scope.md) · [Index](README.md) · [Next: Requirements →](02_requirements.md)

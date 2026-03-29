@@ -39,53 +39,53 @@ interface SimulationConfig {
  * Available simulations for testing
  */
 const SIMULATIONS: SimulationConfig[] = [
-    // Actions (server-driven, synchronous)
+    // Actions (server-driven, synchronous) - in simulations/sync/
     {
-        name: 'fix-vue-imports',
+        name: 'sync/fix-vue-imports',
         steps: 5,
         responseType: 'action_executing',
         isAiAction: false
     },
     {
-        name: 'fix-vue-imports-decline',
+        name: 'sync/fix-vue-imports-decline',
         steps: 6,
         responseType: 'action_executing',
         isAiAction: false
     },
     {
-        name: 'fix-laravel-namespaces-and-uses',
+        name: 'sync/fix-laravel-namespaces-and-uses',
         steps: 6,
         responseType: 'action_executing',
         isAiAction: false
     },
     {
-        name: 'phpunit-deprecations',
+        name: 'sync/phpunit-deprecations',
         steps: 5,
         responseType: 'action_executing',
         isAiAction: false
     },
     {
-        name: 'task-decomposition',
+        name: 'sync/task-decomposition',
         steps: 9,
         responseType: 'action_proposal',
         isAiAction: false
     },
     
-    // AI-Actions (LLM-driven, async)
+    // AI-Actions (LLM-driven, async) - in simulations/sync/ (legacy structure)
     {
-        name: 'dialog',
+        name: 'sync/dialog',
         steps: 6,
         responseType: 'action_proposal',
         isAiAction: true
     },
     {
-        name: 'agent-coder',
+        name: 'sync/agent-coder',
         steps: 10,
         responseType: 'action_proposal',
         isAiAction: true
     },
     {
-        name: 'agent-coder-smart',
+        name: 'sync/agent-coder-smart',
         steps: 9,
         responseType: 'action_proposal',
         isAiAction: true
@@ -108,19 +108,38 @@ function findSimulationDirs(baseDir: string): string[] {
             if (!stat.isDirectory()) continue;
             
             const legacyRequestPath = join(fullPath, 'request.json');
+            
             if (existsSync(legacyRequestPath)) {
+                
                 dirs.push(fullPath);
                 continue;
             }
             
-            // Step format: simulations/<name>/<step>/request.json
+            // Step format: simulations/<category>/<name>/<step>/request.json
+            
             const stepEntries = readdirSync(fullPath);
+            
             for (const step of stepEntries) {
                 const stepPath = join(fullPath, step);
                 const stepStat = statSync(stepPath);
                 if (!stepStat.isDirectory()) continue;
+                
                 if (existsSync(join(stepPath, 'request.json'))) {
+                    
                     dirs.push(stepPath);
+                    continue;
+                }
+                // Check deeper nesting (simulations/<category>/<name>/<step>/request.json)
+                const deepEntries = readdirSync(stepPath);
+                for (const deep of deepEntries) {
+                    const deepPath = join(stepPath, deep);
+                    const deepStat = statSync(deepPath);
+                    if (!deepStat.isDirectory()) continue;
+                    if (existsSync(join(deepPath, 'request.json'))) {
+                        
+                        dirs.push(fullPath); // Push the parent (sim name), not the step
+                        break;
+                    }
                 }
             }
         }

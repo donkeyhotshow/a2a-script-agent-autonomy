@@ -39,7 +39,35 @@ Full endpoint table: root **`AGENTS.md`** (Client API section).
 
 Exact shapes: root **`AGENTS.md`** → *Unified manual path* → *Router dialog (two beats)*; fallback router **`id`** values: **`dialog`**, **`agent`**, **`task-decomposition`** — [`shared/router-static-choices.json`](../shared/router-static-choices.json). Or copy a capture under `a2a-client/storage/sessions/`.
 
+## Driver checklist (anti-stop)
+
+Use this as a **literal** loop for curl or scripts so a low-context prompt does not become a single-shot HTTP trace.
+
+1. **`POST /api/a2a/sessions`** — optional: `mode: "agent"`, `task`, `projectId` (see root **`AGENTS.md`**).
+2. **`GET /api/a2a/sessions/{id}`** — if `execute.form.choices` → next body uses **`result.choice`** (or `{ "task": "<id>" }`); else **`result.message`** / `{ "task": "<free text>" }`.
+3. **`POST /api/a2a/sessions/{id}/next`** with the body from step 2.
+4. **`GET /api/a2a/sessions/{id}/async`** — repeat until not pending / you have a settled `execute` (re-**GET session** if ambiguous).
+5. If still stuck, re-run step 2; if Client API returns empty execute but you have `promiseId`, see *Direct A2A Server invoke (workaround)* below.
+6. Do **not** treat “I sent one `/next`” as done; parity with the web UI is **next + poll until settled**.
+
+Narrative table of common “why iteration stopped” traps and mitigations (IDE vs driver): root **`AGENTS.md`** → *Why iteration stops (misreads and mitigations)*.
+
 **Why this is easy to miss:** Three processes are all called “server” in conversation — **Vite+Client API** (sessions), **standalone SDK** (same contract, optional port), **A2A Server** (invoke only). **Agent** is not `?mode=agent`; it is whatever the session’s **`context.execution`** / workbench shows after your Client API calls. Canonical table and full explanation: root **`AGENTS.md`** → *Sessions, tests, and agent mode*.
+
+## Direct A2A Server invoke (workaround)
+
+When Client API `/async` returns empty `execute`, use direct server polling:
+
+```bash
+# 1. After /next returns promiseId
+PROMISE_ID="prom_XXX"
+
+# 2. Poll server directly
+curl http://localhost:3000/api/v1/requests/$PROMISE_ID/result
+# Returns: {"execute":{"form":{...}}, "context":{...}}
+```
+
+---
 
 ## Stability (where to invest)
 
@@ -52,3 +80,30 @@ Flaky or vague agent behavior is addressed mainly **inside the system**, not by 
 ## Relation to `docs/WORKFLOW.md`
 
 `WORKFLOW.md` describes the **logical** pipeline (Client API ↔ Server ↔ LLM). This document fixes the **operator interface**: **HTTP + curl**, human or Cursor, **not** the browser as the control plane.
+
+---
+
+## Direct A2A Server invoke (alternative method)
+
+When Client API sessions do not return execute results correctly, you can call **A2A Server directly** using `POST /api/v1/invoke`:
+
+```bash
+# 1. Direct invoke (bypasses session handling)
+curl -X POST http://localhost:3000/api/v1/invoke \
+  -H "Content-Type: application/json" \
+  -d '{"context":{"execution":{"action":"dialog","step":"new"},"task":"Your task here"},"task":"Your task here"}'
+
+# Returns: {"success":true,"data":{"promiseId":"prom_XXX","status":"pending",...}}
+
+
+# 2. Poll for result
+curl http://localhost:3000/api/v1/requests/{promiseId}/result
+# Returns: {"success":true,"data":{"status":"completed","execute":{...},"context":{...}}}
+```
+
+**Key differences from Client API sessions:**
+- No session state management
+- Direct call to A2A Server (`:3000`), not Client API (`:5173`)
+- Returns router choices directly in sync/async mode
+
+**Note:** The Client API session flow is being improved to return execute results correctly. This direct invoke method is a temporary workaround.
