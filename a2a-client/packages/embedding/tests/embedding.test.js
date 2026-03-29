@@ -9,7 +9,7 @@ describe('EmbeddingClient', () => {
         test('should use ollama as default provider', () => {
             const client = new EmbeddingClient();
             expect(client.provider).toBe('ollama');
-            expect(client.baseUrl).toBe('http://localhost:11434');
+            expect(client.baseUrl).toBe('http://localhost:11435');
             expect(client.model).toBe('nomic-embed-text');
         });
 
@@ -105,13 +105,13 @@ describe('EmbeddingClient', () => {
         test('should return cache statistics', () => {
             const client = new EmbeddingClient({provider: 'mock', model: 'nomic-embed-text'});
             const stats = client.getCacheStats();
-            expect(stats).toEqual({
+            expect(stats).toMatchObject({
                 size: 0,
                 provider: 'mock',
                 model: 'nomic-embed-text',
-                dimension: 768,
-                baseUrl: 'http://localhost:11434'
+                dimension: 768
             });
+            expect(stats.baseUrl).toBeUndefined();
         });
     });
 

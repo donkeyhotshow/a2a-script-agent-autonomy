@@ -1,6 +1,6 @@
 # DEV_STATE - 2026-03-29 (v2 - meta-prompt)
 
-Current system state: **Idle - queue empty, maintenance required**
+Current system state: **In progress — manual agent verification via Client API** (session **`agent`**, document/task-driven flow); orchestrator alignment landed 2026-03-29; **idle queue** still means prune → discover → write per protocol
 
 Methodology: always write DEV_STATE, always clean, always move forward.
 
@@ -10,13 +10,52 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 
 ---
 
+## 2026-03-29 — Client API manual test prompts (anti–single-step reports)
+
+- **Problem:** Operators declared “full verification” after health + one create/next/async.
+- **Docs:** `START-PROMPT-UNLIM.md` (Work mode + *Ручные испытания* + invalid-report rule + examples), `a2a-client/docs/api-testing-plan.md` (invalid report + Red Room five-stage table + extra turns to reach tool `execute`), `methodology/tasks.md`, `methodology/orchestrator-api-exploit.md`, `methodology/INDEX.md`, `METHODOLOGY-AGENT-SCRIPT.md`.
+
 ## 2026-03-29 — Idle-queue protocol (docs)
 
 - Same rule everywhere: empty `tasks/pending/` **triggers** prune → discover → write, **not** stop. Rationale in `AGENTS.md` (DEV_STATE Protocol + **“Empty queue — mandatory”** block under Quick Reference, checklist item 5); anti-pattern in `methodology/tasks.md`; pointers in `docs/WORKFLOW.md`, `methodology/INDEX.md`, `START-PROMPT-UNLIM.md` (режим 1, шаг 4).
 
+## 2026-03-29 — Low-context user prompt: keep iterating (docs)
+
+- **`AGENTS.md`:** after *Empty queue* — minimal/vague user message is **not** a stop signal; router stuck → fix `message`/`choice` via `GET …/sessions/{id}`, do not halt.
+- **`START-PROMPT-UNLIM.md`:** new section *Итеративность при слабом или пустом промпте пользователя*; *Важные замечания* bullet cross-link.
+- **`methodology/INDEX.md`:** §3 step 3 — short prompt does not cancel idle/iterate protocol; link to `START-PROMPT-UNLIM.md`.
+
 ## 2026-03-29 — Windows stack restart (docs)
 
 - Documented: operators/agents refresh the live stack with **`start-all.bat`** (repo root) only—not per-package `npm run dev`. Touches `AGENTS.md` (Quick Reference + **Live stack restart**), `docs/SYSTEM_STARTUP.md`, `README.md` (**Live stack: start and restart** section + Quick Start / Commands), `a2a-server/README.md`, `ai-integration/README.md`, `a2a-client/README.md` (new), `a2a-client/web/README.md`, `a2a-client/packages/sdk/README.md`, `start-all.bat` header, `START-PROMPT-UNLIM.md`, this **Quick Start** note.
+
+## 2026-03-29 — Client API / invoke / agent mode (discoverability)
+
+- **AGENTS.md:** Quick Reference row + section **Sessions, tests, and agent mode (where to send HTTP)** — sessions and operator tests hit **Client API** (`5173` + `/api/a2a/*`); SDK alternate [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md); **agent** is **context**, not a URL flag; links ADR-0030, `WEB_UI_PROTOCOL`, `OPERATOR-CURL`.
+- **README.md:** **Testing** intro paragraph (same facts); port table — **5173** hosts Web UI + Client API; **3001** labeled optional SDK only.
+- **docs/OPERATOR-CURL.md:** short “why easy to miss” paragraph + anchor link to **AGENTS.md**.
+
+## 2026-03-29 — Router IDs + SESSION-FLOW + SDK + test
+
+- **`shared/router-static-choices.json`** зафиксирован как канон fallback **`id`**: `dialog` \| `agent` \| `task-decomposition`; **`AGENTS.md`**, **`START-PROMPT-UNLIM.md`** (пример `choice: "agent"`).
+- **`docs/new-request-flow/SESSION-FLOW.md`:** секция *Два удара*, пути `/api/a2a/sessions`, пример choices / invoke уточнён.
+- **`a2a-client/docs/WEB_UI_PROTOCOL.md`**, **`a2a-client/packages/sdk/README.md`:** два шага + `result` / перегрузка `task`.
+- **`a2a-client/tests/unit/step-routes-submit-result.test.mjs`:** контракт `buildSubmitResult`.
+
+## 2026-03-29 — Router dialog (two beats) in agent docs
+
+- **`AGENTS.md`:** подсекция **Router dialog (two beats)** — сначала направление работы (`message` / `task`), затем выбор из **`execute.form.choices`** (`result.choice` / `task` как id); цитаты из `step-routes-router-flow.js`, `session-stage-machine.js`. **`docs/OPERATOR-CURL.md`**, **`START-PROMPT-UNLIM.md`**, **`methodology/INDEX.md`** согласованы.
+
+## 2026-03-29 — Unified manual path (AGENTS + Client API)
+
+- **`AGENTS.md`:** секция **Unified manual path (Client API)** — единый контур после ручного `start-all`: `POST /sessions` + **`mode: "agent"`** + **`task`** → `next` / poll `async`; пример JSON; ссылка на `session-create-initial.js`.
+- **Код:** `a2a-client/vite-plugin-a2a/routes/utils/session-create-initial.js` + использование в `sessionRoutes.js` (`/sessions`, `task-add`, `task-execute`); unit-тест `a2a-client/tests/unit/session-create-initial.test.mjs`.
+- **`START-PROMPT-UNLIM.md`:** пример создания сессии с `"mode": "agent"`.
+
+## 2026-03-29 — Methodology / prompts (Client API clarity)
+
+- **`methodology/INDEX.md`:** bullet under §2 (сессии / agent / ADR-0028); §7 Data flows — полный цикл `sessions` → `next` → `async` → proxy `invoke`.
+- **`METHODOLOGY-AGENT-SCRIPT.md`**, **`methodology/orchestrator-api-exploit.md`**, **`START-PROMPT-UNLIM.md`**, **`methodology/adr-compliance-orchestrator.md`:** перекрёстные ссылки и уточнения (Client API как основной контур сессий; `:3000` stateless; agent в контексте).
 
 ## 2026-03-29 — Doc accuracy (orchestrator / health / ports)
 
@@ -25,6 +64,26 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 ## 2026-03-29 — ADR compliance orchestrator (methodology)
 
 - Canonical doc: **`methodology/adr-compliance-orchestrator.md`** — Client API **battle test** (ADR-scoped code work via API), **session vs state file** table, curated `queue` (no implicit full `docs/adr` scan), **`displayWindow`** for minimal UI order, per-ADR **full-scope** verification before `completedAdrs`, orchestrator **bound to one `projectRoot`**. Cross-links: **`AGENTS.md`** (ADRs section), **`docs/adr/README.md`** (Tooling), **`methodology/orchestrator-api-exploit.md`**, **`methodology/INDEX.md`**, **`METHODOLOGY-AGENT-SCRIPT.md`**.
+- **Code (2026-03-29):** Vite Client API **`sessionRoutes`**: `POST /sessions` (+ task-add/task-execute) accepts **`projectId` / `projectRoot`** for **`x-storage-mode: project`** → `resolveSessionProjectPath`; **`GET`/`DELETE` `/sessions/:id`** optional **`?projectId=`** + scan registered projects if missing on default root; **`POST .../next`** defers to **`stepRoutes`** (invoke) instead of ack-only stub. Tests: **`a2a-client/tests/unit/project-sessions-resolve.test.mjs`**.
+
+## 2026-03-29 — Manual agent check (Client API + `agent` session)
+
+- **Started:** Hands-on validation of the **agent** pipeline through **Vite Client API** (`POST /api/a2a/sessions`, `POST .../next`, poll `GET .../async`), with a session/task grounded in **repo documents** (ADR queue / orchestrator task text / session flow—same intent as prior “задача в документах” notes).
+- **Methodology (mandatory refs):** [`METHODOLOGY-AGENT-SCRIPT.md`](METHODOLOGY-AGENT-SCRIPT.md), [`methodology/INDEX.md`](methodology/INDEX.md), [`methodology/orchestrator-api-exploit.md`](methodology/orchestrator-api-exploit.md) (API session loop), [`methodology/adr-compliance-orchestrator.md`](methodology/adr-compliance-orchestrator.md) (state file + ADR battle test via Client API), [`START-PROMPT-UNLIM.md`](START-PROMPT-UNLIM.md) (operator / orchestrator mode), [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md), [`methodology/tasks.md`](methodology/tasks.md) (idle queue wording), [`docs/new-request-flow/SESSION-FLOW.md`](docs/new-request-flow/SESSION-FLOW.md) (session stages / agent path).
+
+## 2026-03-29 — Execution protocol & hygiene (tracked for task runs)
+
+Cross-cutting rules and doc debt so **empty queue**, **imports/shape**, **startup**, **env**, **sims**, **Gray Room terminology**, and **state aging** do not silently stall the cycle. Agents/humans: treat rows as **acceptance checks** before closing work; owners extend docs/CI where noted.
+
+| ID | Risk if ignored | Canonical refs | Action (documentation / execution) |
+|----|-----------------|----------------|-------------------------------------|
+| **EH-01** | “Queue empty” stops work instead of maintenance | `AGENTS.md` (Empty queue — mandatory, DEV_STATE Protocol), `methodology/tasks.md`, `START-PROMPT-UNLIM.md` | On idle queue: **prune** root + module `DEV_STATE.md`, **discover** work, **write** tasks (`tasks/` as needed). Do not treat empty `tasks/pending/` as done. |
+| **EH-02** | Broken NodeNext + sim/API drift | `AGENTS.md` (Imports, Action-Key Shape), ADR action-key docs | Enforce **one** action key per `execute`/`result`; **`.js` suffix** on imports (NodeNext). Code review + sim lint catch regressions. |
+| **EH-03** | Zombie processes, port conflicts, flaky local/CI | `AGENTS.md` (Live stack restart), `docs/SYSTEM_STARTUP.md`, root `start-all.bat` | Full/partial restarts: **`start-all.bat`** (repo root) only—not per-package `npm run dev`. |
+| **EH-04** | Tests/sims fail, server won’t start | `AGENTS.md` (Testing, ENV), `docs/ENV-MATRIX.md`, root `DEV_STATE` | **`ENCRYPTION_KEY`** exactly 32 chars; **`JWT_SECRET`** ≥32; test DB **`a2a_test`** (not `a2a_server`). |
+| **EH-05** | “Valid but not clean” sims without roadmap | `simulations/SCHEMA.md`, sim scripts, module `DEV_STATE` warning debt | Track **`sim:validate`** warning *Optional file not found* (and similar): document in SCHEMA + root/module state until **clean** or explicit waiver with owner. |
+| **EH-06** | Wrong mental model of server pipeline | `AGENTS.md` (Gray Room / interrupt), `docs/adr/README.md` (ADR-0029), `docs/new-request-flow/*` | Align **interrupt loop** vs **Gray Room** in one short canonical paragraph + cross-links so onboarding and checks match step order. |
+| **EH-07** | Stale tasks, ownerless debt | `DEV_STATE.md` (DEV_STATE Protocol, aging) | **Sync** root ↔ module states after task batches; items **>14 days** → backlog with blocker/owner (no silent rot). |
 
 ---
 
@@ -70,6 +129,8 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 | 8 | **Kilo Оркестратор (orchestrator)** | 1 | **Выполнено** |
 | 9 | Создание промпта для оркестратора эксплуатации через API | 1 | Выполнено |
 |10 | Записать новые ADR (action-key shape, port manager, стандарты директорий, @a2a/protocol) | 1 | Выполнено |
+|11 | **SIM-VALIDATE-01**: Исправить валидатор симуляций — исправление ожидаемой структуры папок (step-based vs flat) | 1 | **Выполнено** 2026-03-29 |
+|12 | **TERMINOLOGY-01**: Очистка терминологии "трансмутация" — удалить или формализовать как устаревший алиас | 2 | **Выполнено** 2026-03-29 |
 
 ---
 
@@ -80,10 +141,6 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 | Port mismatch (5175 vs 5173) | Исправлена конфигурация в vite.config.js (WEB_PORT вместо PORT) | Исправлено |
 
 ---
-
-## Kilo / orchestrator (documentation only)
-
-**Repo fact:** There is no `kilo-orchestrator.cjs` or `kilo-orchestrator.js` in this tree. Operator/orchestrator behavior is described in **`START-PROMPT-UNLIM.md`**, **`methodology/orchestrator-api-exploit.md`**, and **`METHODOLOGY-AGENT-SCRIPT.md`** (modes, Client API usage). Use **`tasks/pending/`** / **`tasks/archive/`** and **`runtime/metrics.json`** where those paths exist; health: A2A Server `GET /health` (3000), AI Hub `GET /health` (11434); Vite dev Client API has no dedicated `/health`—use e.g. **`GET /api/a2a/projects`** on the web dev port (default 5173).
 
 ## Задача 4: Вариант 6 (Гибридный) — Трансмутация
 

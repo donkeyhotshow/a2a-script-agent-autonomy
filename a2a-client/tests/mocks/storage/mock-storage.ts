@@ -157,12 +157,12 @@ export class MockStorage {
      * Notify all listeners of storage change
      */
     private notifyListeners(key: string, oldValue: string | null, newValue: string | null): void {
+        // Omit storageArea: jsdom rejects non-Storage values; listeners only need key/values.
         const event = new StorageEvent('storage', {
-            key,
-            oldValue,
-            newValue,
-            storageArea: this as any,
-            url: 'http://localhost'
+            key: key ?? undefined,
+            oldValue: oldValue ?? undefined,
+            newValue: newValue ?? undefined,
+            url: 'http://localhost/'
         });
 
         const listeners = this.listeners.get('storage');

@@ -1,0 +1,27 @@
+{
+  "tasks": [
+    {
+      "id": "SIM-VALIDATE-01",
+      "title": "Fix Simulation Validator",
+      "description": "Simulation validator (sim:validate) reports all 18 simulations as invalid because it expects flat folder structure with request.json, response.json directly in simulation root, but actual simulations use step-based folder structure (e.g., agent-analyze/4/)",
+      "priority": "HIGH",
+      "category": "contract-debt",
+      "owner": "TBD",
+      "expectedOutcome": "Either fix validator to handle step-based simulations OR document the expected structure mismatch with owner assignment",
+      "status": "completed"
+    },
+    {
+      "id": "TERMINOLOGY-01",
+      "title": "Clean up \"трансмутация\" terminology",
+      "description": "The term \"трансмутация\" appears in DEV_STATE.md as an alias for \"Gray Room\" but is not used in protocol (only in markdown docs). Need to either remove it or formalize as deprecated alias.",
+      "priority": "LOW",
+      "category": "documentation",
+      "owner": "TBD",
+      "expectedOutcome": "Consistent terminology - canonical term should be \"Gray Room\"",
+      "status": "completed"
+    }
+  ],
+  "created": "2026-03-29T00:56:16.299Z",
+  "source": "orchestrator-discover-phase",
+  "archived": "2026-03-29T01:15:49.425Z"
+}

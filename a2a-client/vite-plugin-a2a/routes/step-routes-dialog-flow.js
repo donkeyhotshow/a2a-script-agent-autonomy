@@ -1,5 +1,6 @@
 import fs from 'fs';
 import http from 'http';
+import pathMod from 'path';
 
 import {
     mergeResponseContext,
@@ -14,8 +15,10 @@ import * as stepHandlers from './handlers/step-handlers.js';
 import { getA2aServerBaseUrl } from '../../shared/a2a-server-base.js';
 import { buildSubmitResult, validateSubmitResult } from './step-routes-router-flow.js';
 import { maybeChainAgentTools } from './step-routes-agent-flow.js';
+import { loadSession, saveSession, resolveProjectPathForApi } from '../storage/projectSessions.js';
+import { registerStepSessionsParent } from '../storage/newSessions.js';
 
-export function handleNextStep({ cwd, path, req, res }) {
+export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' }) {
     const nextMatch = path.match(/^\/sessions\/([^/]+)\/next$/);
     if (!(req.method === 'POST' && nextMatch)) {
         return false;
@@ -33,14 +36,49 @@ export function handleNextStep({ cwd, path, req, res }) {
         try {
             const d = JSON.parse(body || '{}');
 
-            const session = stepHandlers.loadNewSession(cwd, sessionId);
-            if (!session) {
-                res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
-                return;
+            const projectPath =
+                storageMode === 'project'
+                    ? resolveProjectPathForApi(cwd, sessionId, {
+                          projectId: d.projectId,
+                          projectRoot: d.projectRoot,
+                      })
+                    : null;
+            if (storageMode === 'project') {
+                if (!projectPath) {
+                    res.writeHead(404).end(
+                        JSON.stringify({ error: 'Session not found (unknown project)' })
+                    );
+                    return;
+                }
+                const stepsParent = pathMod.join(projectPath, '.a2a', 'session-steps');
+                fs.mkdirSync(stepsParent, { recursive: true });
+                registerStepSessionsParent(sessionId, stepsParent);
+                const unreg = () => registerStepSessionsParent(sessionId, null);
+                res.once('finish', unreg);
+                res.once('close', unreg);
+            }
+
+            let session;
+            if (projectPath) {
+                session = loadSession(projectPath, sessionId);
+                if (!session) {
+                    registerStepSessionsParent(sessionId, null);
+                    res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
+                    return;
+                }
+            } else {
+                session = stepHandlers.loadNewSession(cwd, sessionId);
+                if (!session) {
+                    res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
+                    return;
+                }
             }
 
             const currentStep = session.currentStep || 1;
-            const prevStepData = stepHandlers.loadServerResponse(cwd, sessionId, currentStep);
+            let prevStepData = stepHandlers.loadServerResponse(cwd, sessionId, currentStep);
+            if (!prevStepData && projectPath && currentStep === 1) {
+                prevStepData = { context: session.context, execute: session.execute };
+            }
             const hasChoices =
                 prevStepData?.execute?.form?.choices && prevStepData.execute.form.choices.length > 0;
 
@@ -197,6 +235,7 @@ export function handleNextStep({ cwd, path, req, res }) {
                             }
                             session.promiseId = promiseData.promiseId;
                             session.context = mergedContext;
+                            if (projectPath) saveSession(projectPath, session);
                             stepHandlers.saveNewSession(cwd, session);
 
                             res.setHeader('Content-Type', 'application/json');
@@ -322,6 +361,7 @@ export function handleNextStep({ cwd, path, req, res }) {
                             session.execute = finalExecute;
                         }
 
+                        if (projectPath) saveSession(projectPath, session);
                         stepHandlers.saveNewSession(cwd, session);
 
                         res.setHeader('Content-Type', 'application/json');
@@ -361,6 +401,7 @@ export function handleNextStep({ cwd, path, req, res }) {
                     console.error('[vite-plugin-a2a] A2A Server request failed:', e.message);
                     session.currentStep = nextStepNum;
                     session.updatedAt = new Date().toISOString();
+                    if (projectPath) saveSession(projectPath, session);
                     stepHandlers.saveNewSession(cwd, session);
 
                     res.setHeader('Content-Type', 'application/json');

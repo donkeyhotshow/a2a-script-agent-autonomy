@@ -1,14 +1,15 @@
 import { SessionStorage } from '../session-storage';
 import fs from 'fs/promises';
 import path from 'path';
+import os from 'os';
 
 describe('SessionStorage', () => {
   let sessionStorage: SessionStorage;
   let tempDir: string;
 
   beforeEach(async () => {
-    // Create temporary directory for testing
-    tempDir = path.join(__dirname, 'temp-test-' + Date.now());
+    // Unique dir per run (parallel vitest workers can collide on Date.now() under __dirname).
+    tempDir = await fs.mkdtemp(path.join(os.tmpdir(), 'a2a-session-storage-test-'));
     sessionStorage = new SessionStorage(tempDir);
     await sessionStorage.initialize();
   });

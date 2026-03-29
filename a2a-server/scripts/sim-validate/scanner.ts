@@ -47,25 +47,54 @@ export function getAllSimulations(): {path: string; name: string}[] {
             const subDir = join(SIMULATIONS_DIR, entry.name);
             const subEntries = readdirSync(subDir, {withFileTypes: true});
 
+            const stepDirRe = /^\d+$/;
             const substepDirRe = /^\d+-sub-\d+$/;
+
             for (const subEntry of subEntries) {
                 if (!subEntry.isDirectory()) continue;
-                if (substepDirRe.test(subEntry.name)) continue;
-                simulations.push({
-                    path: join(subDir, subEntry.name),
-                    name: `${entry.name}/${subEntry.name}`
-                });
-            }
+                if (substepDirRe.test(subEntry.name)) continue; // Skip "3-sub-1"
 
-            const mainSimPath = join(SIMULATIONS_DIR, entry.name);
-            if (
-                existsSync(join(mainSimPath, 'request.json')) &&
-                existsSync(join(mainSimPath, 'response.json'))
-            ) {
-                simulations.push({
-                    path: mainSimPath,
-                    name: entry.name
-                });
+                const simBaseDir = join(subDir, subEntry.name);
+                const simBaseEntries = readdirSync(simBaseDir, {withFileTypes: true});
+
+                // Check if this simulation has step folders (numeric directories like "1", "2", "3")
+                let hasStepFolders = false;
+                for (const stepEntry of simBaseEntries) {
+                    if (!stepEntry.isDirectory()) continue;
+                    if (stepDirRe.test(stepEntry.name)) {
+                        hasStepFolders = true;
+                        // This is a step folder (e.g., "1", "4", "7")
+                        simulations.push({
+                            path: join(simBaseDir, stepEntry.name),
+                            name: `${entry.name}/${subEntry.name}/${stepEntry.name}`
+                        });
+                    }
+                }
+
+                // If no step folders, add as legacy nested simulation or flat structure
+                if (!hasStepFolders) {
+                    // Check if flat structure (request.json/response.json at base)
+                    if (
+                        existsSync(join(simBaseDir, 'request.json')) &&
+                        existsSync(join(simBaseDir, 'response.json'))
+                    ) {
+                        simulations.push({
+                            path: simBaseDir,
+                            name: `${entry.name}/${subEntry.name}`
+                        });
+                    }
+                    // Else: legacy nested structure - add sub-subdirectories
+                    else {
+                        for (const nestedEntry of simBaseEntries) {
+                            if (!nestedEntry.isDirectory()) continue;
+                            if (substepDirRe.test(nestedEntry.name)) continue;
+                            simulations.push({
+                                path: join(simBaseDir, nestedEntry.name),
+                                name: `${entry.name}/${subEntry.name}/${nestedEntry.name}`
+                            });
+                        }
+                    }
+                }
             }
         }
     }

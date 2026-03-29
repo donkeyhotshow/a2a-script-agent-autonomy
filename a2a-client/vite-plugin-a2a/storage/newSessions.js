@@ -3,6 +3,20 @@ import path from 'path';
 import { getStorageRoot, ensureDir } from './root.js';
 import { isRemovablePromiseBesideResponse } from './promise-status.js';
 
+/** When set, step files for this session live under `${parent}/${sessionId}/…` (project storage mode). */
+const stepSessionsParentBySessionId = new Map();
+
+export function registerStepSessionsParent(sessionId, absoluteParentDirOrNull) {
+  if (!sessionId) return;
+  if (absoluteParentDirOrNull == null) stepSessionsParentBySessionId.delete(sessionId);
+  else stepSessionsParentBySessionId.set(sessionId, path.resolve(absoluteParentDirOrNull));
+}
+
+/** Test / recovery: in-process Map must not leak across Vitest files. */
+export function clearStepSessionsParentRegistry() {
+  stepSessionsParentBySessionId.clear();
+}
+
 /**
  * Derive session mode from session data.
  * @param {Object} session - Session object with context
@@ -51,6 +65,7 @@ export function loadSessionIndex(cwd, sessionId) {
  */
 export function saveSessionIndex(cwd, sessionId, stepData) {
   const sessionDir = getNewSessionDir(cwd, sessionId);
+  ensureDir(sessionDir);
   const indexPath = path.join(sessionDir, 'session-index.json');
   
   const index = loadSessionIndex(cwd, sessionId) || {
@@ -145,7 +160,9 @@ export function getNewSessionsDir(cwd) {
 }
 
 export function getNewSessionDir(cwd, sessionId) {
-  return path.join(getNewSessionsDir(cwd), sessionId);
+  const parent = stepSessionsParentBySessionId.get(sessionId);
+  const base = parent ?? getNewSessionsDir(cwd);
+  return path.join(base, sessionId);
 }
 
 export function getNewStepDir(cwd, sessionId, stepNum) {

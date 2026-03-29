@@ -8,6 +8,19 @@
 > **Транспорт:** Web ↔ Client API ↔ Server — **async flow с `promiseId`**. Server возвращает `promiseId`,
 > Client API опрашивает статус до `completed`.
 
+## Два удара: направление работы → выбор роутера
+
+Актуальная модель для **Vite Client API** (`/api/a2a/*`) и операторов по HTTP (см. корневой **`AGENTS.md`**: *Unified manual path*, *Router dialog (two beats)*):
+
+1. **`POST /api/a2a/sessions`** — создать сессию (локально); опционально `task`, `mode`, `projectId` / `projectRoot`.
+2. **Первый `POST /api/a2a/sessions/:id/next`** — **направление работы**: `result.message` или сокращённо поле **`task`** как **свободный текст** (пока нет `execute.form.choices` на предыдущем шаге).
+3. Client API вызывает **`POST /api/v1/invoke`**; сервер (keyword-router) часто возвращает **`execute.form.choices`**.
+4. **Второй `POST .../next`** — выбор варианта: **`result.choice`** = **`id`** из `choices` (то же поле **`task`** интерпретируется как **id выбора**, если на шаге уже были choices — см. `buildSubmitResult` в `vite-plugin-a2a/routes/step-routes-router-flow.js`).
+
+Типовые **`id`** при отсутствии keyword-match: **`dialog`**, **`agent`**, **`task-decomposition`** — см. **[`shared/router-static-choices.json`](../../shared/router-static-choices.json)** и fallback в [`action-request-processor.ts`](../../a2a-server/src/services/core/request-processor/action-request-processor.ts). При совпадении ключевых слов в тексте задачи список может быть другим (например `fix-vue-imports`).
+
+Ниже в ASCII-диаграммах исторически встречается префикс `/api/sessions` — для dev-стека замените на **`/api/a2a/sessions`**.
+
 ## Обзор
 
 Сессия представляет собой контекст выполнения задачи пользователя. Сессия проходит через несколько состояний от создания
@@ -64,7 +77,7 @@
 │     └─────────────────────────────────────────────┘                │
 │                              │                                      │
 │                              ▼                                      │
-│  2. POST /api/sessions                                            │
+│  2. POST /api/a2a/sessions                                         │
 │     {                                                              │
 │       projectId: "proj_123",                                       │
 │       task: "виправити імпорти у vue компонентах"                  │
@@ -85,11 +98,8 @@
 │       context: { task: "виправити імпорти..." }                   │
 │     }                                                              │
 │                                                                      │
-│  5. Отправить запрос на SERVER:                                    │
-│     POST /api/v1/invoke                                            │
-│     {                                                              │
-│       task: "виправити імпорти..."                                 │
-│     }                                                              │
+│  5. Обычно после первого POST .../next (не обязательно на create):  │
+│     POST /api/v1/invoke { context, result } (см. stepRoutes)        │
 └─────────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
@@ -97,20 +107,21 @@
 │                       SERVER                                        │
 │                                                                      │
 │  6. Обработать запрос                                              │
-│  7. Вернуть form.choices (канон по simulations/SCHEMA.md):        │
+│  7. Вернуть form.choices — пример при keyword-match (Vue):         │
 │     {                                                              │
-│       context: { task: "виправити імпорти..." },                   │
+│       context: { task: "...", execution: { action: "task",          │
+│         step: "router" } },                                        │
 │       execute: {                                                   │
 │         form: {                                                    │
 │           title: "Оберіть спосіб виконання",                       │
 │           choices: [                                               │
-│             { id: "fix-vue-imports", label: "Виправити імпорти" }, │
-│             { id: "auto-ai", label: "AI Action Generator" },       │
-│             { id: "task-decomposition", label: "Декомпозиція задачі" }│
+│             { id: "fix-vue-imports", label: "...", description: "" }│
 │           ]                                                        │
 │         }                                                          │
 │       }                                                            │
 │     }                                                              │
+│     Или fallback без match: id dialog | agent | task-decomposition  │
+│     (shared/router-static-choices.json)                            │
 └─────────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
@@ -161,7 +172,7 @@
 │     └─────────────────────────────────────────────────────────┘   │
 │                              │                                      │
 │                              ▼                                      │
-│  2. POST /api/sessions/:sessionId/action                           │
+│  2. POST /api/a2a/sessions/:sessionId/next (или SDK: .../action)   │
 │     {                                                              │
 │       selectedAction: "fix-vue-imports"                             │
 │     }                                                              │
@@ -216,7 +227,7 @@
 │     [Далее ▶]                                                       │
 │                              │                                      │
 │                              ▼                                      │
-│  2. POST /api/sessions/:sessionId/next                             │
+│  2. POST /api/a2a/sessions/:sessionId/next                         │
 │     {                                                              │
 │       mode: "manual"                                               │
 │     }                                                              │
@@ -306,7 +317,7 @@
 │     [Авто ▶▶]                                                      │
 │                              │                                      │
 │                              ▼                                      │
-│  2. POST /api/sessions/:sessionId/next                             │
+│  2. POST /api/a2a/sessions/:sessionId/next                         │
 │     {                                                              │
 │       mode: "auto"                                                  │
 │     }                                                              │
@@ -387,7 +398,7 @@
 │     [Отменить ✕]                                                    │
 │                              │                                      │
 │                              ▼                                      │
-│  2. POST /api/sessions/:sessionId/cancel                           │
+│  2. POST /api/a2a/sessions/:sessionId/cancel (если реализовано)      │
 └─────────────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
@@ -522,27 +533,42 @@
 
 ### Web → Client API
 
-| Метод    | Путь                       | Описание         |
-|----------|----------------------------|------------------|
-| `POST`   | `/api/sessions`            | Создать сессию   |
-| `GET`    | `/api/sessions`            | Список сессий    |
-| `GET`    | `/api/sessions/:id`        | Получить сессию  |
-| `POST`   | `/api/sessions/:id/action` | Выбрать действие |
-| `POST`   | `/api/sessions/:id/next`   | Следующий шаг    |
-| `POST`   | `/api/sessions/:id/cancel` | Отменить         |
-| `DELETE` | `/api/sessions/:id`        | Удалить сессию   |
+| Метод    | Путь                                              | Описание |
+|----------|---------------------------------------------------|----------|
+| `GET`    | `/api/a2a/projects`                               | Список проектов |
+| `POST`   | `/api/a2a/sessions`                                 | Создать сессию |
+| `GET`    | `/api/a2a/sessions`                               | Список сессий |
+| `GET`    | `/api/a2a/sessions/:id`                           | Получить сессию |
+| `PUT`    | `/api/a2a/sessions/:id`                           | Обновить сессию |
+| `POST`   | `/api/a2a/sessions/:id/next`                      | Сообщение / следующий шаг (invoke; см. реализацию) |
+| `GET`    | `/api/a2a/sessions/:id/async`                     | Опрос async (предпочтительно) |
+| `GET`    | `/api/a2a/sessions/:id/promise/:promiseId`        | Опрос promise (legacy) |
+| `DELETE` | `/api/a2a/sessions/:id`                           | Удалить сессию |
+
+Выбор действия из формы и пошаговый обмен делаются через **`POST .../next`** с телом, согласованным с A2A ( `context`, `result`, `task` — см. `PROTOCOL.md` и step routes), а не отдельным ресурсом `/action`.
 
 ---
 
-## Ключевые изменения терминологии
+## Терминология (канон и совместимость)
 
-| Старое (неправильно) | Новое (правильно)  |
-|----------------------|--------------------|
-| `proposedActions`    | `actions`          |
-| `subActions`         | `steps`            |
-| `actionId`           | `action`           |
-| `currentActionId`    | `execution.step`   |
-| `executingAction`    | `execute`          |
-| `subActionResult`    | `result`           |
-| `currentSubAction`   | `currentStepIndex` |
-| `promiseId`          | Используется для async AI-запросов (см. `PROTOCOL.md`)
+**Канон A2A** (симуляции, сервер, `AGENTS.md`, [ADR-0031](../adr/ADR-0031-action-key-shape.md)):
+
+| Термин | Смысл |
+|--------|--------|
+| `execute` | Один ключ действия (action-key shape): что клиент должен выполнить дальше |
+| `result` | Один ключ действия: ответ клиента по текущему шагу |
+| `context.execution.action` | Идентификатор текущего действия |
+| `context.execution.step` | Идентификатор текущего шага внутри действия |
+| `execute.form.choices` | Первый ответ роутера: варианты выбора; `choices[].id` = id действия |
+| `promiseId` | Асинхронный invoke: опрос до готовности результата (см. `PROTOCOL.md`) |
+
+**Legacy / внутренние форматы** (ещё встречаются в коде или старых типах — не смешивать с каноном протокола):
+
+| Имя | Где / зачем |
+|-----|----------------|
+| `actions[]`, `fallbackActions[]` в теле ответа | Старый первый ответ; для новых сценариев — `execute.form.choices` + `result.choice` |
+| `proposedActions`, `executingAction`, `nextSteps`, `actionId` в unified / VueFlow (`@a2a/json`) | Устаревшие типы и mapper для графа; предпочтительно опираться на `execute` / `result` |
+| `dsl`, `dslScript` на действии | Старый способ описания скрипта; канон — `execute.script` с `input` / `output` / `code` |
+| «subActions» как отдельное поле протокола | В каноне шаги задаются определением действия и `context.execution.step`, не отдельным массивом в запросе |
+
+Шаги в UI-хранилище сессии (номер папки шага, `currentStep` в Client API) — это **артефакт клиента**, не то же самое, что `execution.step` на сервере.

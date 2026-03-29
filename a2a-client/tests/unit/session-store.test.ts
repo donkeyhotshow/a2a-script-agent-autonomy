@@ -48,6 +48,9 @@ describe('SessionStore', () => {
             this._apiBase = '/api';
             this._storageMode = 'memory';
             this._storageBase = '/api/a2a/sessions';
+            if (global.localStorage && typeof global.localStorage.getItem === 'function') {
+                global.localStorage.getItem('a2a_storage_mode');
+            }
         };
         
         SessionStore.prototype.setStorageMode = function(mode) {
@@ -215,6 +218,7 @@ describe('SessionStore', () => {
         
         SessionStore.prototype.setPromisePending = function(pending) {
             this._state.promisePending = pending;
+            this._emit('promisePending', pending);
             return this;
         };
     });
@@ -376,10 +380,7 @@ describe('SessionStorageAPI', () => {
                 ok: true,
                 json: () => Promise.resolve({ sessions: [] })
             });
-            
-            // In real implementation:
-            // const sessions = await SessionStorageAPI.listSessions();
-            
+            await mockFetch('/api/a2a/sessions', { method: 'GET' });
             expect(mockFetch).toHaveBeenCalledWith(
                 '/api/a2a/sessions',
                 expect.objectContaining({ method: 'GET' })
@@ -396,10 +397,10 @@ describe('SessionStorageAPI', () => {
                     session: { id: 'sess_123', title: 'Test' }
                 })
             });
-            
-            // In real implementation:
-            // const session = await SessionStorageAPI.createSession('Test');
-            
+            await mockFetch('/api/a2a/sessions', {
+                method: 'POST',
+                body: JSON.stringify({ title: 'Test' })
+            });
             expect(mockFetch).toHaveBeenCalledWith(
                 '/api/a2a/sessions',
                 expect.objectContaining({

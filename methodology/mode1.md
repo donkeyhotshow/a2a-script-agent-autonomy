@@ -23,7 +23,7 @@
   curl http://localhost:5173/api/a2a/sessions/task-cleanup
   curl -X POST http://localhost:5173/api/a2a/sessions/{id}/next \
     -H "Content-Type: application/json" \
-    -d '{"result":{"script":{"output":"task verified"}}}'
+    -d "{\"result\":{\"script\":{\"output\":\"task verified\"}}}"
   ```
 - Выполняется после каждой серии `task-execute`.
 
@@ -90,6 +90,8 @@
   - Отправляем уведомление через `logs/archive/alerts`.
 
 ## Примеры
+
+> **Важно**: Тестировать только полный цикл agent mode — от создания сессии до завершения задачи. Без использования других action (dialog, task-decomposition).
 
 - Пример Рабочей задачи: `README.md` → `TOC` → `diff`.
 - Пример диагностической задачи: `asyncPending` остаётся true, polling зависает на 5 минут.

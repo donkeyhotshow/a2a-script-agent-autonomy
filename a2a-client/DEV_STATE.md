@@ -1,7 +1,8 @@
-# DEV_STATE - a2a-client (2026-03-27, verified)
+# DEV_STATE - a2a-client (2026-03-29, manual agent / Client API check in progress)
 
-Текущее состояние подсистемы a2a-client (Web UI + Client API).
-> Методика: работаем по методике с дев файлами - пишем дев файл всегда, убираем ненужное всегда, двигаемся вперед всегда
+Текущее состояние подсистемы a2a-client (Web UI + Client API). **2026-03-29:** идёт **ручная проверка агента** через Client API — сессия в режиме **`agent`**, задача/контекст из **документов** (как в ранее описанном сценарии).
+> Методика (обязательные ссылки): [`METHODOLOGY-AGENT-SCRIPT.md`](../METHODOLOGY-AGENT-SCRIPT.md), [`methodology/INDEX.md`](../methodology/INDEX.md), [`methodology/orchestrator-api-exploit.md`](../methodology/orchestrator-api-exploit.md), [`methodology/adr-compliance-orchestrator.md`](../methodology/adr-compliance-orchestrator.md), [`START-PROMPT-UNLIM.md`](../START-PROMPT-UNLIM.md), [`docs/OPERATOR-CURL.md`](../docs/OPERATOR-CURL.md), [`methodology/tasks.md`](../methodology/tasks.md), [`docs/new-request-flow/SESSION-FLOW.md`](../docs/new-request-flow/SESSION-FLOW.md)
+> Работа с дев-файлами: пишем `DEV_STATE` всегда, убираем лишнее, двигаемся вперёд
 
 ---
 
@@ -11,6 +12,8 @@
 - Кросс-модульные решения/зависимости ведутся только в root: [`../DEV_STATE.md`](../DEV_STATE.md).
 - Не дублировать здесь server/ai-integration backlog; хранить только ссылки на них при необходимости.
 
+**Execution protocol (root):** при выполнении задач соблюдать кросс-репозиторные правила **EH-01…EH-07** в [`../DEV_STATE.md`](../DEV_STATE.md) (2026-03-29 — *Execution protocol & hygiene*): пустая очередь → prune/discover/write; action-key + `.js` импорты; `start-all.bat`; env/БД для тестов; долг sim warnings; терминология Gray Room; aging DEV_STATE.
+
 ## AI-Integration Work Lock
 
 - Status: **UNBLOCKED (2026-03-27)**.
@@ -18,6 +21,14 @@
 - ai-integration tasks can now proceed.
 
 ---
+
+## 2026-03-29 — Router choice ids + docs sync
+
+- Канон fallback **`choices[].id`** на сервере: **`dialog`**, **`agent`**, **`task-decomposition`** — root **`shared/router-static-choices.json`**. Промпты: **`START-PROMPT-UNLIM.md`**, **`AGENTS.md`**. Тест контракта **`task`→`choice`**: `tests/unit/step-routes-submit-result.test.mjs`. **`docs/WEB_UI_PROTOCOL.md`**, **`packages/sdk/README.md`**, **`docs/new-request-flow/SESSION-FLOW.md`** (секция *Два удара*).
+
+## 2026-03-29 — Unified manual path (create session)
+
+- **`POST /api/a2a/sessions`** (и `task-add` / `task-execute`): тело может задавать **`mode`** (`agent` \| `dialog` \| `task-decomposition`) или **`execution.action`** / **`execution.step`** — см. `vite-plugin-a2a/routes/utils/session-create-initial.js`, тесты `tests/unit/session-create-initial.test.mjs`. Нормативка для агентов: root **`AGENTS.md`** → *Unified manual path (Client API)*.
 
 ## Архитектура
 
@@ -48,6 +59,10 @@
 | POST | `/api/a2a/sessions/:id/next` | Отправить сообщение |
 | GET | `/api/a2a/sessions/:id/async` | Polling async результата |
 | GET | `/api/a2a/daemon/stats` | Статистика daemon |
+
+**2026-03-29 (project storage + orchestrator alignment):** `POST /sessions` (and task-add / task-execute) with `x-storage-mode: project` resolve via `projectId` / `projectRoot`, persist **`context.projectRoot`** (absolute), and store step artifacts under **`<project>/.a2a/session-steps/<sessionId>/`**. `GET`/`DELETE`/`PUT /sessions/:id` support **`?projectId=`** or **`?projectRoot=`**; `PUT` body may include **`projectRoot`**. With **`x-storage-mode: project`**, `stepRoutes` runs **`/next`**, **`/async`**, **`/promise/...`**, and router routes (steps, latest, history, step files) using the same project resolution. ADR state file helpers: [adrComplianceState.js](vite-plugin-a2a/storage/adrComplianceState.js); [projectSessions.js](vite-plugin-a2a/storage/projectSessions.js) adds **`resolveProjectPathForApi`**. **`registerStepSessionsParent`** Map cleared via **`clearStepSessionsParentRegistry`** for tests.
+
+**2026-03-29 (manual agent E2E):** Проверка **agent**-цепочки вручную через эндпоинты выше; методика — те же ссылки, что в шапке файла и в [`../DEV_STATE.md`](../DEV_STATE.md) (раздел *Manual agent check*).
 
 ---
 

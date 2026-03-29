@@ -47,23 +47,33 @@ Same router is mounted at multiple prefixes:
 
 ## Протокол
 
-### Формат запроса (Web → SDK)
+Семантика как у **Vite plugin** (`/api/a2a/*`): два шага — сначала **текст задачи**, потом **`choice`** по списку роутера. Подробно: корневой **`AGENTS.md`** → *Router dialog (two beats)*.
 
-**Начало диалога (task):**
+### Формат запроса (Web → SDK / Vite)
+
+**Первый ход (направление работы)** — предпочтительно обёртка `result` (как на Vite):
+
 ```json
 {
-  "task": "описание задачи",
+  "result": { "message": "описание задачи" },
   "projectId": "id проекта"
 }
 ```
 
-**Выбор варианта (choice):**
+Сокращение: **`task`** как строка = то же, что `result.message`, пока на предыдущем шаге **не** было `execute.form.choices`.
+
+**Второй ход (после роутера)** — `id` из `execute.form.choices` (типовой fallback на сервере: `dialog`, `agent`, `task-decomposition` — см. [`shared/router-static-choices.json`](../../../shared/router-static-choices.json)):
+
 ```json
 {
-  "choice": "id выбранного варианта",
+  "result": { "choice": "agent" },
   "projectId": "id проекта"
 }
 ```
+
+Сокращение: поле **`task`** со значением **`id`** выбора, если предыдущий шаг уже показывал **choices** (как `buildSubmitResult` в `vite-plugin-a2a`).
+
+Legacy / отдельный маршрут SDK: `POST .../action` с телом `{ "choice": "..." }` — см. `sessions-async.ts`.
 
 ### Формат ответа (SDK → Web)
 
@@ -73,15 +83,18 @@ Same router is mounted at multiple prefixes:
   "sessionId": "sess_1700000000000",
   "execute": {
     "form": {
-      "title": "Выберите действие",
+      "title": "Оберіть спосіб виконання",
       "choices": [
-        { "id": "dialog", "label": "AI диалог" },
-        { "id": "auto-ai", "label": "Auto AI" }
+        { "id": "dialog", "label": "AI діалог з користувачем", "description": "..." },
+        { "id": "agent", "label": "Agent (універсальний режим)", "description": "..." },
+        { "id": "task-decomposition", "label": "Декомпозиція задачі", "description": "..." }
       ]
     }
   }
 }
 ```
+
+При keyword-match набор `id` может включать, например, **`fix-vue-imports`** (см. серверный router).
 
 **Форма ввода (execute.form):**
 ```json

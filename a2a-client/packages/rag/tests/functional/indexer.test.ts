@@ -236,8 +236,7 @@ describe('RAG Indexer Functional Tests', () => {
         includePatterns: ['**/*.ts', '**/*.js', '**/*.php', '**/*.vue', '**/*.md'],
       });
 
-      // The index should be loaded when accessing indexer.index
-      const loadedIndex = await (newIndexer as any).loadIndex?.() || newIndexer.index;
+      const loadedIndex = await newIndexer.indexProject(false);
 
       expect(loadedIndex).toBeDefined();
       expect(loadedIndex.files).toBeDefined();

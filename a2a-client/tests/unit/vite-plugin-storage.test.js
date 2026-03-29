@@ -2,7 +2,7 @@
  * Unit tests for vite-plugin-a2a storage modules
  */
 
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
@@ -24,6 +24,7 @@ import {
   saveRequestToServer,
   loadRequestToServer,
   loadStepFile,
+  clearStepSessionsParentRegistry,
 } from '../../vite-plugin-a2a/storage/newSessions.js';
 import { getActiveAsyncWork } from '../../vite-plugin-a2a/routes/utils/session-projection-dto.js';
 import { collectSessionMessagesFlat } from '../../vite-plugin-a2a/routes/utils/message-timeline.js';
@@ -45,6 +46,10 @@ afterAll(() => {
 describe('newSessions storage', () => {
   const cwd = testDir;
   const sessionId = 'sess_test_123';
+
+  beforeEach(() => {
+    clearStepSessionsParentRegistry();
+  });
 
   it('getNewSessionsDir returns sessions path', () => {
     const dir = getNewSessionsDir(cwd);

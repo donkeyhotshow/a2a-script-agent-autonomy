@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Integration Tests for Dialog Flow
  * Tests complete interaction: SessionStore ↔ API ↔ Storage
  * 
@@ -88,12 +88,11 @@ describe('Dialog Flow Integration', () => {
                 title: 'Test Session',
                 execute: {
                     form: {
-                        input: {
-                            name: 'task',
-                            label: 'Enter your task'
-                        }
-                    }
-                }
+                        input: [
+                            { name: 'task', type: 'text', label: 'Enter your task', required: true },
+                        ],
+                    },
+                },
             });
             
             expect(session.id).toBe('sess_test_001');
@@ -144,18 +143,17 @@ describe('Dialog Flow Integration', () => {
                 id: 'sess_form_input',
                 execute: {
                     form: {
-                        input: {
-                            name: 'task',
-                            label: 'Enter your task'
-                        }
-                    }
-                }
+                        input: [
+                            { name: 'task', type: 'text', label: 'Enter your task', required: true },
+                        ],
+                    },
+                },
             });
             
             // Should require user input
             const hasForm = session.execute?.form?.input;
             expect(hasForm).toBeDefined();
-            expect(hasForm.name).toBe('task');
+            expect(hasForm[0].name).toBe('task');
             
             // After user submits, should proceed to next step
             store.updateSession(session.id, {
@@ -554,12 +552,11 @@ describe('End-to-End Integration Scenarios', () => {
                 title: 'Journey Session',
                 execute: {
                     form: {
-                        input: {
-                            name: 'task',
-                            label: 'What would you like to do?'
-                        }
-                    }
-                }
+                        input: [
+                            { name: 'task', type: 'text', label: 'What would you like to do?', required: true },
+                        ],
+                    },
+                },
             });
             
             expect(session.execute.form.input[0].name).toBe('task');

@@ -77,7 +77,7 @@ describe('stepRoutes composition root', () => {
         expect(next).not.toHaveBeenCalled();
     });
 
-    it('calls next when storage mode is not storage', () => {
+    it('calls next when storage mode is unknown (not storage or project)', () => {
         mockedGetStorageMode.mockReturnValue('memory');
         const middleware = createStepRoutes({ cwd: '/tmp/project' });
         const next = vi.fn();
@@ -89,5 +89,18 @@ describe('stepRoutes composition root', () => {
         expect(mockedHandleRouterFlow).not.toHaveBeenCalled();
         expect(mockedHandleNextStep).not.toHaveBeenCalled();
         expect(mockedHandleAsyncFlow).not.toHaveBeenCalled();
+    });
+
+    it('runs handler chain when storage mode is project', () => {
+        mockedGetStorageMode.mockReturnValue('project');
+        mockedHandleRouterFlow.mockReturnValue(true);
+        const middleware = createStepRoutes({ cwd: '/tmp/project' });
+        const next = vi.fn();
+        const { req, res } = createReqRes('/api/a2a/sessions/sess_1/latest');
+
+        middleware(req, res, next);
+
+        expect(mockedHandleRouterFlow).toHaveBeenCalledTimes(1);
+        expect(next).not.toHaveBeenCalled();
     });
 });

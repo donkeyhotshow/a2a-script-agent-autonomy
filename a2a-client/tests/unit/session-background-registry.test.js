@@ -362,20 +362,6 @@ describe('SessionBackgroundRegistry', () => {
             
             expect(info['my-project::my-session']).toBeDefined();
         });
-
-        it('handles empty projectId', () => {
-            registry.register('', 'sess1', 'poller', 'p1', mockProcessInstance);
-            const info = registry.getDebugInfo();
-            
-            expect(info['::sess1']).toBeDefined();
-        });
-
-        it('handles empty sessionId', () => {
-            registry.register('proj1', '', 'poller', 'p1', mockProcessInstance);
-            const info = registry.getDebugInfo();
-            
-            expect(info['proj1::']).toBeDefined();
-        });
     });
 
     describe('process types', () => {

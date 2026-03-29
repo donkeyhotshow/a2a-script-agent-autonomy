@@ -191,6 +191,16 @@ export class MockA2AServer {
     }
 
     /**
+     * Simulate SSE stream for a session (test helper).
+     */
+    async *handleSSE(sessionId: string): AsyncGenerator<Record<string, unknown>> {
+        const messages = this.sessions.get(sessionId) ?? [];
+        for (const msg of messages) {
+            yield msg as Record<string, unknown>;
+        }
+    }
+
+    /**
      * Get mock fetch function for use with vitest
      */
     getMockFetchFn(): typeof fetch {
@@ -199,6 +209,7 @@ export class MockA2AServer {
         return async (url: string, options: RequestInit = {}): Promise<Response> => {
             const urlObj = new URL(url);
             const pathname = urlObj.pathname;
+            const method = (options.method || 'GET').toUpperCase();
 
             let response: A2AResponse;
             let status = 200;
@@ -206,12 +217,12 @@ export class MockA2AServer {
 
             try {
                 // POST /api/v1/invoke
-                if (options.method === 'POST' && pathname === '/api/v1/invoke') {
+                if (method === 'POST' && pathname === '/api/v1/invoke') {
                     const body = options.body ? JSON.parse(options.body as string) : {};
                     response = await self.handleInvoke(body);
                 }
                 // GET /api/v1/requests/:id/status
-                else if (options.method === 'GET' && pathname.match(/^\/api\/v1\/requests\/[^/]+\/status$/)) {
+                else if (method === 'GET' && pathname.match(/^\/api\/v1\/requests\/[^/]+\/status$/)) {
                     const promiseId = pathname.split('/')[4];
                     response = await self.handleStatus(promiseId);
                 }

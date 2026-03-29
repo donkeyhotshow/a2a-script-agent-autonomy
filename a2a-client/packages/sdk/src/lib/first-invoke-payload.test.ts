@@ -11,7 +11,7 @@ const simulationsBasePath = process.env.SIMULATIONS_PATH || join(repoRoot, 'simu
 describe('first-invoke-payload (T003)', () => {
     it('matches simulations/agent/1 execution pattern', () => {
         const golden = JSON.parse(
-            readFileSync(join(simulationsBasePath, 'agent/1/request.json'), 'utf-8')
+            readFileSync(join(simulationsBasePath, 'sync', 'agent', '1', 'request.json'), 'utf-8')
         ) as { context: { execution: { action: string; step: string } } };
 
         expect(ROUTER_NEW_TASK_EXECUTION).toEqual(golden.context.execution);

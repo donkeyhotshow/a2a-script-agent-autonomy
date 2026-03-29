@@ -32,11 +32,14 @@ Full endpoint table: root **`AGENTS.md`** (Client API section).
 
 | Step | Meaning |
 |------|--------|
-| Create session | `POST /api/a2a/sessions` |
-| Send user turn | `POST /api/a2a/sessions/{id}/next` with body your app expects |
-| Wait / fetch result | `GET .../async` (repeat until done) |
+| Create session | `POST /api/a2a/sessions` (optional `task`, `mode`, `projectId`, …) |
+| First user turn | Usually **free text** — direction of work: `POST …/next` with `result.message` **or** shorthand `{ "task": "<natural language>" }` when the session is **not** showing router **choices** |
+| Router turn | When `GET …/sessions/{id}` shows `execute.form.choices`, next `POST …/next` must send **`result.choice`** = a choice **`id`** (shorthand: `{ "task": "<choice id>" }` — same field name, different meaning) |
+| Wait / fetch result | `GET .../async` (repeat until done); hydrate session between turns if unsure |
 
-Exact JSON shapes depend on your client payload conventions; use an existing session capture under `a2a-client/storage/sessions/` as a template if needed.
+Exact shapes: root **`AGENTS.md`** → *Unified manual path* → *Router dialog (two beats)*; fallback router **`id`** values: **`dialog`**, **`agent`**, **`task-decomposition`** — [`shared/router-static-choices.json`](../shared/router-static-choices.json). Or copy a capture under `a2a-client/storage/sessions/`.
+
+**Why this is easy to miss:** Three processes are all called “server” in conversation — **Vite+Client API** (sessions), **standalone SDK** (same contract, optional port), **A2A Server** (invoke only). **Agent** is not `?mode=agent`; it is whatever the session’s **`context.execution`** / workbench shows after your Client API calls. Canonical table and full explanation: root **`AGENTS.md`** → *Sessions, tests, and agent mode*.
 
 ## Stability (where to invest)
 
@@ -44,7 +47,7 @@ Flaky or vague agent behavior is addressed mainly **inside the system**, not by 
 
 - **Server prompts and transforms** — `a2a-server/prompts/` (e.g. `dialog-request.md`, `agent-request.md`, `router-request.md`), plus pipelines under `a2a-server/prompts/transforms/`.
 - **Gray Room / interrupt behavior** — `a2a-server/docs/GRAY-ROOM.md`, orchestration code under `a2a-server/src/`.
-- **Operator** uses **curl** to **verify** end-to-end behavior after changes (health + session flow).
+- **Operator** uses **curl** to **verify** end-to-end behavior after changes. **Not sufficient:** health + a single happy-path `sessions` → `next` → `async`. **Normative checklist:** [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md) (session artifacts, ack/async, **Red Room** tool cycle when the task calls for it). Orchestrator-style prompts: [`START-PROMPT-UNLIM.md`](../START-PROMPT-UNLIM.md) → *Ручные испытания Client API*.
 
 ## Relation to `docs/WORKFLOW.md`
 

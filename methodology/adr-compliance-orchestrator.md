@@ -6,6 +6,7 @@ Progress is **resumable** via a **dedicated state file** (separate from A2A sess
 
 ## Why this is not obvious
 
+- **Sessions vs invoke vs agent:** one-page split in root **`AGENTS.md`** (*Sessions, tests, and agent mode*), plus [ADR-0028](../docs/adr/ADR-0028-client-api-deployment-modes.md) and [ADR-0030](../docs/adr/ADR-0030-unified-agent-mode.md).
 - Default docs emphasize simulations, unit tests, health curls, and generic “tasks.” They rarely say in one place: **orchestration for ADR compliance is driven through the Client API** (`sessions`, `next`, async poll), with prompts scoped to “make the codebase match ADR *X*.”
 - Readers often equate “testing” with `sim:lint` / `npm test` only. **Battle testing** here means the full path Client → Server → LLM/tools → local edits, with **explicit ADR-backed goals**.
 - **Session JSON** (under `a2a-client/storage/sessions/…`) holds conversation steps; it is **not** the right single source for “ADR queue + per-ADR phase + completed set.” Without a called-out **external state file**, restarts lose orchestration position and people assume every run must **glob or list all** `docs/adr/` files.
@@ -79,4 +80,4 @@ Repeat until `queue` is drained and each ADR has passed your completion criteria
 
 ## Implementation note
 
-This document is **normative for methodology** only. The repository may not yet ship a binary that writes this JSON; agents and humans should still follow the contract when building or running an ADR compliance driver.
+This document is **normative for methodology** only. A **reference driver** may still be a separate script that reads/writes the state JSON; the **Vite Client API** (`a2a-client/vite-plugin-a2a`) supports **step 1** alignment: `POST /api/a2a/sessions` (and task-add / task-execute) accept **`projectId`** and **`projectRoot`** (must match a path registered in client `projects.json`) when using **`x-storage-mode: project`**, and persist **`context.projectRoot`** as the resolved absolute path. **`GET`/`DELETE` `/sessions/:id`** accept optional **`?projectId=`** or **`?projectRoot=`** (same registration rules; `projectRoot` wins when both are sent). **`PUT`** body may include **`projectRoot`** to locate the session. Default state file path helper: **`.a2a/adr-compliance-state.json`** under that project (`a2a-client/vite-plugin-a2a/storage/adrComplianceState.js`). **`POST .../next`** is handled by the invoke/step pipeline (not a no-op stub) so operators and orchestrators share the same path as the UI.

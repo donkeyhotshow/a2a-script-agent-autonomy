@@ -2,13 +2,14 @@
  * Tests for ChunkManager
  */
 
-const {ChunkManager} = require('../src/chunk-manager');
+import {ChunkManager} from '../src/chunk-manager.js';
 
 describe('ChunkManager', () => {
     let chunkManager;
 
     beforeEach(() => {
-        chunkManager = new ChunkManager({});
+        // Regex expectations below; AST path emits different chunk `type` values.
+        chunkManager = new ChunkManager({ useAST: false });
     });
 
     describe('chunkFile', () => {
@@ -181,9 +182,11 @@ Route::post('/users', 'UserController@store');
         test('should extract service container bindings', () => {
             const content = `
 <?php
+use Illuminate\\Support\\Facades\\App;
 $app->bind('App\\Services\\UserService', function($app) {
     return new UserService();
 });
+App::make('App\\Services\\UserService');
       `;
             const chunks = chunkManager.chunkFile('AppServiceProvider.php', content, '.php');
 

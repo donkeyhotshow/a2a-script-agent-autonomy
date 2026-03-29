@@ -20,12 +20,25 @@ import {
     attachPromiseMeta,
     toPublicSession,
 } from './utils/session-projection-dto.js';
+import { pickInitialExecution } from './utils/session-create-initial.js';
 
 const API_PREFIX = '/api/a2a';
 
-function locateProjectModeSession(cwd, sessionId, queryProjectId) {
-    if (queryProjectId) {
-        const projectPath = resolveSessionProjectPath(cwd, { projectId: queryProjectId });
+/**
+ * @param {string} cwd
+ * @param {string} sessionId
+ * @param {{ projectId?: string | null, projectRoot?: string | null }} [q]
+ */
+function locateProjectModeSession(cwd, sessionId, q = {}) {
+    const qRoot = typeof q.projectRoot === 'string' && q.projectRoot.trim() ? q.projectRoot.trim() : '';
+    const qPid = typeof q.projectId === 'string' && q.projectId.trim() ? q.projectId.trim() : '';
+    if (qRoot) {
+        const projectPath = resolveSessionProjectPath(cwd, { projectRoot: qRoot });
+        const session = loadSession(projectPath, sessionId);
+        return { session, projectPath };
+    }
+    if (qPid) {
+        const projectPath = resolveSessionProjectPath(cwd, { projectId: qPid });
         const session = loadSession(projectPath, sessionId);
         return { session, projectPath };
     }
@@ -35,6 +48,14 @@ function locateProjectModeSession(cwd, sessionId, queryProjectId) {
     const found = findSessionProjectPath(cwd, sessionId);
     if (!found) return { session: null, projectPath: primary };
     return { session: loadSession(found, sessionId), projectPath: found };
+}
+
+/** Persist resolved root so ADR state file `projectRoot` can align (orchestrator step 1). */
+function projectStorageContextFields(projectId, resolvedProjectPath) {
+    return {
+        ...(projectId ? { projectId } : {}),
+        projectRoot: resolvedProjectPath,
+    };
 }
 
 export function createSessionRoutes({ cwd }) {
@@ -70,6 +91,7 @@ export function createSessionRoutes({ cwd }) {
                     const projectId = typeof d.projectId === 'string' ? d.projectId.trim() : '';
                     const projectRoot = typeof d.projectRoot === 'string' ? d.projectRoot.trim() : '';
                     const sessionId = d.id || `sess_${Date.now()}`;
+                    const initialExec = pickInitialExecution(d);
                     const session = {
                         id: sessionId,
                         title,
@@ -85,11 +107,11 @@ export function createSessionRoutes({ cwd }) {
                             }
                         ],
                         context: { 
-                            execution: { action: 'task', step: 'new' },
+                            execution: initialExec,
                             ...(task ? { task } : {}),
                             ...(projectId ? { projectId } : {}),
                         },
-                        // Initial execute until user submits; after POST /next use GET /sessions/:id (ack-only /next)
+                        // After POST /next (stepRoutes), poll GET /sessions/:id or .../async
                         execute: {
                             message: 'What would you like me to do?',
                             form: {
@@ -107,6 +129,10 @@ export function createSessionRoutes({ cwd }) {
 
                     if (storageMode === 'project') {
                         const projectPath = resolveSessionProjectPath(cwd, { projectId, projectRoot });
+                        session.context = {
+                            ...session.context,
+                            ...projectStorageContextFields(projectId, projectPath),
+                        };
                         saveSession(projectPath, session);
                     } else {
                         saveNewSession(cwd, session);
@@ -141,8 +167,10 @@ export function createSessionRoutes({ cwd }) {
                    const d = JSON.parse(body);
                    const title = d.title || 'New Session';
                    const task = d.task; // Capture task from request body
-                   const projectId = d.projectId; // Capture projectId from request body
+                   const projectId = typeof d.projectId === 'string' ? d.projectId.trim() : '';
+                   const projectRoot = typeof d.projectRoot === 'string' ? d.projectRoot.trim() : '';
                    const sessionId = d.id || `sess_${Date.now()}`;
+                   const initialExec = pickInitialExecution(d);
                    const session = {
                        id: sessionId,
                        title,
@@ -158,11 +186,11 @@ export function createSessionRoutes({ cwd }) {
                            }
                        ],
                        context: {
-                           execution: { action: 'task', step: 'new' },
+                           execution: initialExec,
                            ...(task ? { task } : {}),
                            ...(projectId ? { projectId } : {})
                        },
-                       // Initial execute until user submits; after POST /next use GET /sessions/:id (ack-only /next)
+                       // After POST /next (stepRoutes), poll GET /sessions/:id or .../async
                        execute: {
                            message: 'What would you like me to do?',
                            form: {
@@ -179,7 +207,11 @@ export function createSessionRoutes({ cwd }) {
                    };
 
                    if (storageMode === 'project') {
-                       const projectPath = getProjectPathForSessions(cwd);
+                       const projectPath = resolveSessionProjectPath(cwd, { projectId, projectRoot });
+                       session.context = {
+                           ...session.context,
+                           ...projectStorageContextFields(projectId, projectPath),
+                       };
                        saveSession(projectPath, session);
                    } else {
                        saveNewSession(cwd, session);
@@ -201,29 +233,11 @@ export function createSessionRoutes({ cwd }) {
            return;
        }
 
-       // Handle POST /sessions/:id/next
-       const nextMatch = p.match(/^\/sessions\/([^/]+)\/next$/);
-       if (req.method === 'POST' && nextMatch) {
-           const sessionId = nextMatch[1];
-           console.log(`[SessionRoutes] Handling POST /next for session ${sessionId}`);
-           let body = '';
-           req.on('data', (c) => (body += c));
-           req.on('end', () => {
-               try {
-                   if (!body || body.trim() === '') {
-                       throw new Error('Empty request body');
-                   }
-                   const d = JSON.parse(body);
-                   // For now, we just acknowledge the result and return success
-                   // In a real implementation, we would update the session with the result
-                   res.setHeader('Content-Type', 'application/json');
-                   res.end(JSON.stringify({ success: true }));
-               } catch (e) {
-                   res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
-               }
-           });
-           return;
-       }
+        // POST /sessions/:id/next — handled by stepRoutes (invoke + step artifacts); do not short-circuit here.
+        const nextMatch = p.match(/^\/sessions\/([^/]+)\/next$/);
+        if (req.method === 'POST' && nextMatch) {
+            return next();
+        }
 
         if (req.method === 'POST' && p === '/sessions/task-execute') {
            console.log('[SessionRoutes] Handling task-execute request');
@@ -237,8 +251,10 @@ export function createSessionRoutes({ cwd }) {
                    const d = JSON.parse(body);
                    const title = d.title || 'New Session';
                    const task = d.task; // Capture task from request body
-                   const projectId = d.projectId; // Capture projectId from request body
+                   const projectId = typeof d.projectId === 'string' ? d.projectId.trim() : '';
+                   const projectRoot = typeof d.projectRoot === 'string' ? d.projectRoot.trim() : '';
                    const sessionId = d.id || `sess_${Date.now()}`;
+                   const initialExec = pickInitialExecution(d);
                    const session = {
                        id: sessionId,
                        title,
@@ -254,11 +270,11 @@ export function createSessionRoutes({ cwd }) {
                            }
                        ],
                        context: {
-                           execution: { action: 'task', step: 'new' },
+                           execution: initialExec,
                            ...(task ? { task } : {}),
                            ...(projectId ? { projectId } : {})
                        },
-                       // Initial execute until user submits; after POST /next use GET /sessions/:id (ack-only /next)
+                       // After POST /next (stepRoutes), poll GET /sessions/:id or .../async
                        execute: {
                            message: 'What would you like me to do?',
                            form: {
@@ -275,7 +291,11 @@ export function createSessionRoutes({ cwd }) {
                    };
 
                    if (storageMode === 'project') {
-                       const projectPath = getProjectPathForSessions(cwd);
+                       const projectPath = resolveSessionProjectPath(cwd, { projectId, projectRoot });
+                       session.context = {
+                           ...session.context,
+                           ...projectStorageContextFields(projectId, projectPath),
+                       };
                        saveSession(projectPath, session);
                    } else {
                        saveNewSession(cwd, session);
@@ -355,9 +375,18 @@ export function createSessionRoutes({ cwd }) {
                     return;
                 }
                 const includeContext = includeContextRaw === '1';
-                const session = storageMode === 'project'
-                    ? loadSession(getProjectPathForSessions(cwd), sessionId)
-                    : loadNewSession(cwd, sessionId);
+                let session = null;
+                if (storageMode === 'project') {
+                    const qPid = url.searchParams.get('projectId')?.trim() || '';
+                    const qRoot = url.searchParams.get('projectRoot')?.trim() || '';
+                    const { session: s } = locateProjectModeSession(cwd, sessionId, {
+                        projectId: qPid || null,
+                        projectRoot: qRoot || null,
+                    });
+                    session = s;
+                } else {
+                    session = loadNewSession(cwd, sessionId);
+                }
                 if (!session) {
                     res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
                     return;
@@ -386,10 +415,26 @@ export function createSessionRoutes({ cwd }) {
                             throw new Error('Empty request body');
                         }
                         const d = JSON.parse(body);
-                        const projectPath = storageMode === 'project' ? getProjectPathForSessions(cwd) : null;
-                        const existing = storageMode === 'project'
-                            ? loadSession(projectPath, sessionId)
-                            : loadNewSession(cwd, sessionId);
+                        let projectPath = null;
+                        let existing = null;
+                        if (storageMode === 'project') {
+                            const qPid =
+                                typeof d.projectId === 'string' && d.projectId.trim()
+                                    ? d.projectId.trim()
+                                    : null;
+                            const qRoot =
+                                typeof d.projectRoot === 'string' && d.projectRoot.trim()
+                                    ? d.projectRoot.trim()
+                                    : null;
+                            const located = locateProjectModeSession(cwd, sessionId, {
+                                projectId: qPid,
+                                projectRoot: qRoot,
+                            });
+                            existing = located.session;
+                            projectPath = located.projectPath;
+                        } else {
+                            existing = loadNewSession(cwd, sessionId);
+                        }
                         if (!existing) {
                             res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
                             return;
@@ -420,7 +465,17 @@ export function createSessionRoutes({ cwd }) {
 
             if (req.method === 'DELETE') {
                 if (storageMode === 'project') {
-                    deleteSession(getProjectPathForSessions(cwd), sessionId);
+                    const qPid = url.searchParams.get('projectId')?.trim() || '';
+                    const qRoot = url.searchParams.get('projectRoot')?.trim() || '';
+                    const { session: s, projectPath } = locateProjectModeSession(
+                        cwd,
+                        sessionId,
+                        {
+                            projectId: qPid || null,
+                            projectRoot: qRoot || null,
+                        }
+                    );
+                    if (s) deleteSession(projectPath, sessionId);
                 } else {
                     deleteNewSession(cwd, sessionId);
                 }

@@ -15,19 +15,19 @@ export function createStepRoutes({ cwd }) {
         const p = url.pathname.slice(API_PREFIX.length);
         const storageMode = getStorageMode(req);
 
-        if (storageMode !== 'storage') {
+        if (storageMode !== 'storage' && storageMode !== 'project') {
             return next();
         }
 
-        if (handleRouterFlow({ cwd, path: p, req, res, url })) {
+        if (handleRouterFlow({ cwd, path: p, req, res, url, storageMode })) {
             return;
         }
 
-        if (handleNextStep({ cwd, path: p, req, res })) {
+        if (handleNextStep({ cwd, path: p, req, res, storageMode })) {
             return;
         }
 
-        if (handleAsyncFlow({ cwd, url, path: p, req, res })) {
+        if (handleAsyncFlow({ cwd, url, path: p, req, res, storageMode })) {
             return;
         }
 

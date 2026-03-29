@@ -1,3 +1,5 @@
+import fs from 'fs';
+import pathMod from 'path';
 import http from 'http';
 
 import { buildExecuteProjection } from './utils/execute-projection-dto.js';
@@ -5,6 +7,37 @@ import { isPromisePollComplete } from '../storage/promise-status.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import { getA2aServerBaseUrl } from '../../shared/a2a-server-base.js';
 import { normalizePromisePollStatus } from '../../shared/client-api-envelope.mjs';
+import { resolveProjectPathForApi, loadSession, saveSession } from '../storage/projectSessions.js';
+import { registerStepSessionsParent } from '../storage/newSessions.js';
+
+function projectSessionStepsParent(projectPath) {
+    return pathMod.join(projectPath, '.a2a', 'session-steps');
+}
+
+function beginProjectStepContextAsync(cwd, sessionId, url, storageMode) {
+    if (storageMode !== 'project') {
+        return { projectPath: null, cleanup: () => {}, notFound: false };
+    }
+    const projectPath = resolveProjectPathForApi(cwd, sessionId, {
+        projectId: url.searchParams.get('projectId'),
+        projectRoot: url.searchParams.get('projectRoot'),
+    });
+    if (!projectPath) {
+        return { projectPath: null, cleanup: () => {}, notFound: true };
+    }
+    const parent = projectSessionStepsParent(projectPath);
+    fs.mkdirSync(parent, { recursive: true });
+    registerStepSessionsParent(sessionId, parent);
+    return { projectPath, cleanup: () => registerStepSessionsParent(sessionId, null), notFound: false };
+}
+
+function loadSessionForAsync(cwd, sessionId, projectPath) {
+    let session = stepHandlers.loadNewSession(cwd, sessionId);
+    if (!session && projectPath) {
+        session = loadSession(projectPath, sessionId);
+    }
+    return session;
+}
 
 function runViteClientPromisePoll({
     cwd,
@@ -14,8 +47,9 @@ function runViteClientPromisePoll({
     requestUrl,
     res,
     includePromiseIdInBody,
+    projectPath,
 }) {
-    const session = stepHandlers.loadNewSession(cwd, sessionId);
+    const session = loadSessionForAsync(cwd, sessionId, projectPath);
     if (!session) {
         res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
         return;
@@ -87,6 +121,7 @@ function runViteClientPromisePoll({
                     session.promiseId = null;
                     session.status = 'completed';
                     session.updatedAt = new Date().toISOString();
+                    if (projectPath) saveSession(projectPath, session);
                     stepHandlers.saveNewSession(cwd, session);
                 }
 
@@ -133,7 +168,7 @@ function runViteClientPromisePoll({
     xhrReq.end();
 }
 
-export function handleAsyncFlow({ cwd, url, path, req, res }) {
+export function handleAsyncFlow({ cwd, url, path, req, res, storageMode = 'storage' }) {
     const asyncMatch = path.match(/^\/sessions\/([^/]+)\/async$/);
     if (req.method === 'GET' && asyncMatch) {
         const sessionId = asyncMatch[1];
@@ -141,12 +176,28 @@ export function handleAsyncFlow({ cwd, url, path, req, res }) {
             res.writeHead(400).end(JSON.stringify({ error: 'Invalid session ID' }));
             return true;
         }
-        if (!stepHandlers.loadNewSession(cwd, sessionId)) {
+        const { projectPath, cleanup, notFound } = beginProjectStepContextAsync(
+            cwd,
+            sessionId,
+            url,
+            storageMode
+        );
+        if (notFound) {
+            res.writeHead(404).end(JSON.stringify({ error: 'Session not found (unknown project)' }));
+            return true;
+        }
+        const unreg = () => cleanup();
+        res.once('finish', unreg);
+        res.once('close', unreg);
+
+        if (!loadSessionForAsync(cwd, sessionId, projectPath)) {
+            cleanup();
             res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
             return true;
         }
         const hit = stepHandlers.getActiveAsyncWork(cwd, sessionId);
         if (!hit) {
+            cleanup();
             res.setHeader('Content-Type', 'application/json');
             res.end(
                 JSON.stringify({
@@ -167,6 +218,7 @@ export function handleAsyncFlow({ cwd, url, path, req, res }) {
             requestUrl: url,
             res,
             includePromiseIdInBody: false,
+            projectPath,
         });
         return true;
     }
@@ -180,8 +232,23 @@ export function handleAsyncFlow({ cwd, url, path, req, res }) {
             return true;
         }
 
-        const session = stepHandlers.loadNewSession(cwd, sessionId);
+        const { projectPath, cleanup, notFound } = beginProjectStepContextAsync(
+            cwd,
+            sessionId,
+            url,
+            storageMode
+        );
+        if (notFound) {
+            res.writeHead(404).end(JSON.stringify({ error: 'Session not found (unknown project)' }));
+            return true;
+        }
+        const unreg = () => cleanup();
+        res.once('finish', unreg);
+        res.once('close', unreg);
+
+        const session = loadSessionForAsync(cwd, sessionId, projectPath);
         if (!session) {
+            cleanup();
             res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
             return true;
         }
@@ -211,6 +278,7 @@ export function handleAsyncFlow({ cwd, url, path, req, res }) {
             requestUrl: url,
             res,
             includePromiseIdInBody: true,
+            projectPath,
         });
         return true;
     }

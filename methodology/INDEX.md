@@ -32,13 +32,15 @@
 - Tasks: `methodology/tasks.md`.
 - Improvements: `methodology/improvements.md`.
 - Оператор (человек или Cursor) управляет **запущенным агентом** через **HTTP/curl**, не через веб-UI как основной контур: `docs/OPERATOR-CURL.md`.
+- **Единый ручной контур:** **`POST /api/a2a/sessions`**, затем **`/next`** + poll **`/async`**; типичный UX — **два удара**: текст направления работы, потом **`choice`** по списку роутера (Агент / …). См. `AGENTS.md` → *Unified manual path* и *Router dialog (two beats)*.
+- **Сессии, E2E, «режим agent»:** жизненный цикл сессии и шаги на диске — у **Client API** (в dev по умолчанию `http://localhost:5173/api/a2a/*`); **не** путать с одним лишь `POST /api/v1/invoke` на `:3000`. Альтернатива — standalone SDK (тот же контракт, другой порт): [ADR-0028](../docs/adr/ADR-0028-client-api-deployment-modes.md). **Agent** на старте — поля **`mode` / `execution`** в теле создания сессии; далее — `context.execution` / workbench.
 - Оркестратор ADR ↔ код (очередь ADR, отдельный state-файл, один целевой проект, тот же Client API): `methodology/adr-compliance-orchestrator.md`; указатель в `docs/adr/README.md` (раздел Tooling).
 
 ## 3. Цикл A2A — шаг за шагом
 
 1. Прочитать `methodology/transitions.md` — определить текущий режим.
 2. Проверить `/tasks/pending/`.
-3. Если очереди нет — **не** считать это «концом работы» и **не ждать сигнала**: idle-протокол — `methodology/tasks.md`; в `AGENTS.md` сразу под Quick Reference блок **«Empty queue — mandatory»** и чеклист п.5 — почистить `DEV_STATE`, найти работу, записать задачи, затем снова шаг 2.
+3. Если очереди нет — **не** считать это «концом работы» и **не ждать сигнала**: idle-протокол — `methodology/tasks.md`; в `AGENTS.md` сразу под Quick Reference блок **«Empty queue — mandatory»** и чеклист п.5 — почистить `DEV_STATE`, найти работу, записать задачи, затем снова шаг 2. **Короткий или пустой запрос пользователя** не отменяет это: нет явного «стоп» / «один шаг» — продолжать итерации по протоколу (см. **`START-PROMPT-UNLIM.md`** → *Итеративность при слабом или пустом промпте пользователя*).
 4. Если очередь есть — выбираем первую задачу с тэгом `priority`.
 5. Формируем Prompt: `description`, `inputs`, `criteria`.
 6. Уточняем `relations`: `relatedIssues`, `owner`, `module`.
@@ -70,7 +72,7 @@
 1. Синхронизировать `PORT`, `SKIP_AUTH`, `DEFAULT_SYNC_MODE`.
 2. Проверять `/tasks/templates/` на релевантные шаблоны.
 3. Создавать `task` с `description`, `inputs`, `acceptanceCriteria`.
-4. Запускать `task-execute`, сохранять `traceId`.
+4. Запускать `task-execute`, сохранять `traceId`. Ручная проверка сессий: **не** останавливаться на первом успешном цикле — [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md), [`START-PROMPT-UNLIM.md`](../START-PROMPT-UNLIM.md) → *Ручные испытания Client API*. Для испытаний — **поднять агентскую сессию через Client API** (`POST /sessions` + `mode: "agent"` + `task`, далее `/next` + `/async`); при ошибках — **создавать задачи** в `tasks/pending/` и править `DEV_STATE`, чтобы **другие** сессии агента подхватили фиксы/проверки, а не только «дожимать» ту же сессию.
 5. Сохранять результаты в `/logs/archive/`.
 6. Запускать `task-cleanup` после серии.
 7. Обновлять статус в `/runtime/status.json`.
@@ -115,7 +117,7 @@
 
 ## 7. Data flows
 
-- Client → `/api/a2a/sessions/task-execute` → Server → AI (Ollama) → Logs.
+- Типичный цикл сессии: Client API → `POST /api/a2a/sessions` → `POST /api/a2a/sessions/{id}/next` → poll `GET /api/a2a/sessions/{id}/async` → `GET …/sessions/{id}` для финала → внутри плагин/SDK проксирует **A2A Server** `POST /api/v1/invoke` (`:3000`) → AI Hub / Ollama → ответы и шаги в `a2a-client/storage/sessions/`. **Испытания** этого контура: чеклист + Red Room §5 в [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md), не «один happy-path». Дополнительно (если включено в клиенте): `POST /api/a2a/sessions/task-execute` и аналоги task-add.
 - Diagnostics → `methodology/mode2.md` → `/logs/archive/debug` → `pending`.
 - Transitions (mode switch) recorded via `methodology/transitions.md`.
 - Implementation details in `methodology/implementation.md`.

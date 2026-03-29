@@ -137,11 +137,8 @@ describe('SessionStore - Auto-Responses', () => {
         it('should require user input when form.input is present', () => {
             const execute = {
                 form: {
-                    input: {
-                        name: 'task',
-                        label: 'Enter your task'
-                    }
-                }
+                    input: [{ name: 'task', type: 'text', label: 'Enter your task', required: true }],
+                },
             };
             
             // When form.input is present, client should NOT auto-continue

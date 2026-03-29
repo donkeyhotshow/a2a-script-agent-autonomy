@@ -7,6 +7,8 @@ Guidance for agents working in this repository.
 | Topic | Reference |
 |-------|-----------|
 | **Windows live stack restart** | **`start-all.bat`** from repo root only — not per-service `npm run dev` ([`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md)) |
+| **Unified manual path** | **Client API only:** create session → **`mode: "agent"`** (or `execution.action`) → **`task`** → `next` + poll `async` — [Unified manual path](#unified-manual-path-client-api) |
+| **Sessions / curl / agent tests** | Same surface: not `invoke` alone — [technical notes](#sessions-tests-and-agent-mode-where-to-send-http) |
 | Imports | `.js` suffix with NodeNext resolution |
 | Test ENCRYPTION_KEY | Exactly 32 characters |
 | Test DB | `a2a_test` (not `a2a_server`) |
@@ -23,6 +25,69 @@ Guidance for agents working in this repository.
 3. **Write** — Add concrete tasks to `DEV_STATE` and `tasks/pending/` as needed, **then** continue the normal execute cycle.
 
 Stopping with an empty queue **without** (1)–(3) is a protocol violation. Full rationale: [DEV_STATE Protocol](#dev-state-protocol); task wording: [methodology/tasks.md](methodology/tasks.md).
+
+**Minimal or vague user prompt is not a stop signal.** Silence, a one-liner, or no restated acceptance criteria does **not** mean “single turn then exit.” Keep iterating until stated criteria are met (or until you have honestly blocked and logged why). If there is no pending task text, still run (1)–(3) above instead of stopping. A stuck session after `next` is usually a **router contract** issue—inspect `GET …/sessions/{id}` and send **`message`** vs **`choice`** per [Router dialog](#router-dialog-two-beats--read-this); that is a fix, not an excuse to halt.
+
+---
+
+## Unified manual path (Client API)
+
+This repo’s **one integration contour** for driving the stack after a **manual** start (`start-all.bat` / `start-all.sh`) is the **Client API**, not raw `POST /api/v1/invoke`. Treat every operator, IDE agent, and curl script the same way the web UI is treated: **sessions live here**; the server is reached **inside** the client layer.
+
+### Steps (normative)
+
+1. **Create a new session** — `POST /api/a2a/sessions` on the Client API base URL (default dev: `http://localhost:5173`). Standalone SDK uses the **same path contract** on its own origin/port; see [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md). Optional on the same request: **`projectId`** / **`projectRoot`** (project storage), **`task`** (seed `context.task`), **`mode`** or **`execution`** (seed `context.execution` — see [`session-create-initial.js`](a2a-client/vite-plugin-a2a/routes/utils/session-create-initial.js)).
+2. **Drive turns with `POST /api/a2a/sessions/{id}/next`**, then poll **`GET /api/a2a/sessions/{id}/async`** (and/or **`GET …/sessions/{id}`** to hydrate `execute`) until the step settles — same contract as the web UI.
+
+### Router dialog (two beats — read this)
+
+The flow is **not** a single “send everything once” form. It mirrors the **task-flow UI**: first you give **what to work on**, then you often pick **how** (e.g. **Agent** vs dialog vs decomposition) from a **router** list.
+
+1. **Beat A — direction of work** — Right after create, the session usually exposes `execute.form` with a **text task field** (“Enter your task”). The first `POST …/next` must carry that text as **`result.message`** (or use the shorthand **`task`** field in the JSON body; the plugin maps it to `message` when the prior step had **no** `form.choices`). The server then classifies the request and may return a **router** screen.
+2. **Beat B — pick a pipeline (e.g. Agent)** — When the latest server-backed `execute.form` includes **`choices`** (each with stable **`id`**, `label`, optional `description`, `type` such as `agent` / `dialog`), the UI shows **buttons** instead of free text. The next `POST …/next` must send **`result.choice`** set to the chosen row’s **`id`**. Shorthand: put that id in the top-level **`task`** field — if the previous step had choices, the same `task` key is interpreted as **`choice`**, not free text:
+
+```46:51:a2a-client/vite-plugin-a2a/routes/step-routes-router-flow.js
+export function buildSubmitResult({ body, hasChoices }) {
+    const { result, task } = body || {};
+    if (result) return result;
+    if (!task) return undefined;
+    return { [hasChoices ? 'choice' : 'message']: task };
+}
+```
+
+The coarse UI stage for that router screen is **`routing`** (choices or `execution.action === 'router'` / step `routing`):
+
+```41:47:a2a-client/vite-plugin-a2a/routes/utils/session-stage-machine.js
+    const hasChoices = !!(form && Array.isArray(form.choices) && form.choices.length > 0);
+
+    // Router stage: explicit routing form with choices.
+    if (hasChoices || action === 'router' || step === 'routing') {
+        return 'routing';
+    }
+```
+
+**Operator shortcut:** seed **`mode: "agent"`** (or `execution.action: "agent"`) on `POST /sessions` so `context.execution` starts in the agent pipeline; the server may still emit intermediate forms depending on prompts — always **inspect `GET …/sessions/{id}`** (`includeContext=1` when debugging) before composing the next body.
+
+**Stable choice `id` values (fallback router, no keyword match):** `dialog`, `agent`, `task-decomposition` — canonical copy in **[`shared/router-static-choices.json`](shared/router-static-choices.json)**; server implementation: [`a2a-server/src/services/core/request-processor/action-request-processor.ts`](a2a-server/src/services/core/request-processor/action-request-processor.ts). With keyword matches, choices use **action registry** ids (e.g. `fix-vue-imports`).
+
+### Minimal example (seed agent + task on create)
+
+```http
+POST /api/a2a/sessions
+Content-Type: application/json
+
+{
+  "projectId": "default",
+  "mode": "agent",
+  "task": "Verify ADR-0028 examples match this repo’s ports."
+}
+```
+
+You still run **`/next`** + poll **`/async`** afterward; the two-beat router may or may not appear depending on the server response.
+
+Implementation: [`session-create-initial.js`](a2a-client/vite-plugin-a2a/routes/utils/session-create-initial.js) (also `POST .../sessions/task-add` and `.../task-execute`).
+
+Operator narrative and curl: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 
 ---
 
@@ -122,6 +187,17 @@ Web UI (5173) → Client API (5173/api/a2a) → A2A Server (3000) → AI Hub (11
 
 Use **`start-all.bat`** at the repository root for any full or partial “turn it off and on again” need. It performs `kill-all`, port checks, and ordered startup. **Do not** run `npm run dev` (or `npm start`) inside individual packages to restart one service—those processes are not tracked the same way and commonly cause duplicate listeners and broken PID files. Linux/macOS: use **`start-all.sh`** the same way.
 
+### Sessions, tests, and agent mode (where to send HTTP)
+
+The **operator sequence** is spelled out above: [Unified manual path (Client API)](#unified-manual-path-client-api). This subsection is the technical backing.
+
+1. **Session lifecycle** (create session, `next`, poll `async`, disk step folders) is owned by the **Client API**, not by calling **`POST /api/v1/invoke`** on the A2A Server alone. In the default dev stack, that is **same origin as the web app**: `http://localhost:5173/api/a2a/*`. The UI, curl-based operators, and methodology that drive **sessions** all hit this surface.
+2. **Standalone SDK** (`a2a-client/packages/sdk`) can expose the **same route contract** on its own HTTP port (often `3001` or `PORT`). That is an alternate deployment, not a different protocol. Normative split: [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md).
+3. **A2A Server (`:3000`)** is **stateless** `invoke` + request IDs. The Client API proxies to it and persists steps under `a2a-client/storage/sessions/`.
+4. **Agent mode** is **not** a separate HTTP route. You **select it at session creation** via `mode` / `execution` in the `POST /sessions` body (or it appears later in `context` after server turns). Ongoing checks: `context.execution.action === 'agent'` and/or workbench; see [ADR-0030](docs/adr/ADR-0030-unified-agent-mode.md) and [`a2a-client/docs/WEB_UI_PROTOCOL.md`](a2a-client/docs/WEB_UI_PROTOCOL.md).
+
+Operator curl walkthrough: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
+
 ---
 
 ## API Endpoints
@@ -131,7 +207,7 @@ Use **`start-all.bat`** at the repository root for any full or partial “turn i
 |--------|------|-------------|
 | GET | `/api/a2a/projects` | List projects |
 | GET | `/api/a2a/sessions` | List sessions |
-| POST | `/api/a2a/sessions` | Create session |
+| POST | `/api/a2a/sessions` | Create session (body: `task`, optional **`mode`** or **`execution`**, `projectId` / `projectRoot`) |
 | GET | `/api/a2a/sessions/{id}` | Get session |
 | PUT | `/api/a2a/sessions/{id}` | Update session |
 | POST | `/api/a2a/sessions/{id}/next` | Send message (ack only) |
@@ -224,7 +300,7 @@ See [docs/adr/README.md](docs/adr/README.md) for full index (includes **Tooling*
 | **Action-Key Shape** | Single action type per execute/result object |
 | **Workbench** | Structured state in `context.workbench.sections` |
 | **Promise** | Async request ID for polling long-running work |
-| **Gray Room** (Трансмутация) | Серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту |
+| **Gray Room** | Серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту |
 | **Router** | Keyword-based routing (dialog/agent/task-decomposition) |
 | **Sync Mode** | Immediate execute response (no promiseId) |
 | **Web DTO** | Client-sanitized execute (only form, not tool calls) |

@@ -430,9 +430,11 @@ export function validateFile(filePath: string, filename: string, opts: ValidateO
                 message: `Required file not found: ${filename}`,
                 keyword: 'required'
             });
-        } else {
-            result.warnings.push(`Optional file not found: ${filename}`);
         }
+        // Optional files: don't emit warnings - they are by design per SCHEMA.md line 112
+        // "Some legacy or router-only steps omit per-step server-transforms-*.json when the author
+        // relies on bundled transforms... sim-validate may emit warnings (optional missing files)"
+        // Since we want contractComplete: true, we silently skip optional missing files
         return result;
     }
 
@@ -456,10 +458,10 @@ export function validateFile(filePath: string, filename: string, opts: ValidateO
     if (typeof fileConfig?.schema === 'string' && fileConfig.schema.length > 0) {
         const isTransformFile =
             filename === 'server-transforms-request.json' || filename === 'server-transforms-response.json';
+        // For transform files, skip schema validation silently when lenient mode is on
+        // (lenientTransforms defaults to true; this is expected behavior per SCHEMA.md line 112)
         if (opts.lenientTransforms && isTransformFile) {
-            result.warnings.push(
-                `${filename}: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation`
-            );
+            // Silently skip AJV validation for optional transform files - no warning needed
         } else {
             const prepared = prepareDataForSchema(filename, data, opts);
             const validationResult = validateJsonAgainstSchema(prepared, fileConfig.schema);

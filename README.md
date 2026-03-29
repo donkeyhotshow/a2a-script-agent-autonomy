@@ -95,8 +95,8 @@ These scripts follow the pattern from `docs/troubleshooting/standardize-stop-scr
 │                        PORTS                                 │
 ├─────────────────────────────────────────────────────────────┤
 │  3000* │ A2A Server API    │ Node.js + Express (3000-3010) │
-│  3001* │ Client API        │ Node.js + WebSocket (3001-3011)│
-│  5173* │ Web UI            │ Vite + Vue (5173-5183)        │
+│  3001* │ SDK Client API (optional) │ Standalone session server if used; default dev uses **5173** + `/api/a2a` |
+│  5173* │ Web UI + Client API │ Vite + Vue; **session HTTP API** lives here as `/api/a2a/*` |
 │  5432* │ PostgreSQL        │ pgvector extension (5432-5442)│
 │  6379* │ Redis             │ Caching & queues (6379-6389)  │
 │ 11434* │ AI Hub Proxy        │ Python Flask (11434-11444)   │
@@ -145,6 +145,8 @@ The orchestrator also runs the `kill-all` cleanup automatically every time it in
 See [System Startup Documentation](docs/SYSTEM_STARTUP.md) for details.
 
 ### Testing
+
+**Sessions and E2E / operator flows:** Exercises that create a **session**, send turns, or poll **async** should target the **Client API** — default dev base `http://localhost:5173` and paths `/api/a2a/*` (same as the web UI). The A2A Server on `:3000` is **`/api/v1/invoke`** only (stateless). **Agent mode** is reflected in **session `context`** (e.g. `execution.action`), not a separate HTTP route. Details: root [`AGENTS.md`](AGENTS.md) (“Sessions, tests, and agent mode”), [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md), [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 
 - **Health checks by stack part** (no service startup): [scripts/direct-tests/run-checks.ps1](scripts/direct-tests/run-checks.ps1) — `.\scripts\direct-tests\run-checks.ps1 -Scope LLM | ServerLLM | ClientServer | ClientServerLLM | WebClient | WebClientServer | Full`. See [scripts/direct-tests/README.md](scripts/direct-tests/README.md).
 - **Level 1–3 suite**: `.\scripts\tests\run-all.ps1` — see [scripts/tests/README.md](scripts/tests/README.md).

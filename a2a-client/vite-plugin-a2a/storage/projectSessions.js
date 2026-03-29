@@ -2,12 +2,12 @@ import fs from 'fs';
 import path from 'path';
 import { loadProjects } from './projects.js';
 
-function normalizeProjectPath(p) {
+export function normalizeProjectPath(p) {
   if (typeof p !== 'string' || !p.trim()) return '';
   return path.resolve(p.trim());
 }
 
-function projectPathsEqual(a, b) {
+export function projectPathsEqual(a, b) {
   const na = normalizeProjectPath(a);
   const nb = normalizeProjectPath(b);
   if (!na || !nb) return false;
@@ -113,4 +113,34 @@ export function deleteSession(projectPath, sessionId) {
 
 export function getProjectPathForSessions(cwd) {
   return resolveSessionProjectPath(cwd, {});
+}
+
+/**
+ * Resolve project root for Client API calls that carry optional projectId / projectRoot (body or query).
+ * Falls back to scanning registered projects for a session file.
+ */
+export function resolveProjectPathForApi(cwd, sessionId, sources = {}) {
+  const projectRoot =
+    typeof sources.projectRoot === 'string' && sources.projectRoot.trim()
+      ? sources.projectRoot.trim()
+      : '';
+  const projectId =
+    typeof sources.projectId === 'string' && sources.projectId.trim()
+      ? sources.projectId.trim()
+      : '';
+  if (projectRoot) {
+    try {
+      return resolveSessionProjectPath(cwd, { projectRoot });
+    } catch {
+      return null;
+    }
+  }
+  if (projectId) {
+    try {
+      return resolveSessionProjectPath(cwd, { projectId });
+    } catch {
+      return null;
+    }
+  }
+  return findSessionProjectPath(cwd, sessionId);
 }

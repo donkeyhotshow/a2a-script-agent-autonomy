@@ -17,7 +17,7 @@ describe('WebExecuteDTOContract', () => {
         'run-script',
     ];
     const allowedWebExecuteKeys = new Set(['message', 'llmMessage', 'form', 'attachments']);
-    const simulationRoot = path.resolve(process.cwd(), '..', 'simulations');
+    const simulationRoot = path.resolve(process.cwd(), '..', 'simulations', 'sync');
     const fixturePaths = [
         'dialog/1/received.json',
         'dialog/2/received.json',

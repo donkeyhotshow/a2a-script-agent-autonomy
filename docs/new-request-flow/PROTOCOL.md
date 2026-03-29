@@ -709,15 +709,25 @@ interface Step {
 
 ## Ключевые термины
 
-| Старое (неправильно)   | Новое (правильно)                                |
-|------------------------|--------------------------------------------------|
-| `proposedActions`      | `actions`                                        |
-| `subActions`           | `steps`                                          |
-| `actionId` (в actions) | `action`                                         |
-| `currentActionId`      | `execution.step`                                 |
-| `executingAction`      | `execute`                                        |
-| `dsl` + `dslScript`    | `script` с `input`, `output`, `code`             |
-| -                      | `promiseId` - используется для async AI запросов |
+См. также [ADR-0031](../adr/ADR-0031-action-key-shape.md).
+
+**Канон протокола**
+
+| Термин | Смысл |
+|--------|--------|
+| `execute` / `result` | Ровно один ключ действия в каждом объекте (action-key shape) |
+| `context.execution.action` | Текущее действие |
+| `context.execution.step` | Текущий шаг внутри действия |
+| `execute.form.choices` | Первый ответ: список маршрутов; ответ пользователя — `result.choice` (или иной ключ формы в рамках action-key shape) |
+| `promiseId` | Идентификатор долгого запроса к серверу; опрос до завершения |
+
+**Legacy / совместимость** (допустимо в старых ответах или в `@a2a/json` для VueFlow; новые симуляции и сервер — на каноне выше)
+
+| Имя | Примечание |
+|-----|------------|
+| `actions[]`, `fallbackActions[]` | См. выше: legacy первый ответ; канон — `execute.form.choices` |
+| `proposedActions`, `executingAction`, поля `actionId` в unified-типах | Не путать с именем действия в `context.execution`; для графа/старого парсера |
+| `dsl`, `dslScript` | Заменены каноническим `execute.script` |
 
 ---
 
