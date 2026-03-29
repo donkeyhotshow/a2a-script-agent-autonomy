@@ -46,6 +46,16 @@ Recommended sections:
 - `ADR-0028-client-api-deployment-modes.md` - Vite `/api/a2a` on 5173 vs standalone SDK Client API (e.g. 3001); same server contract
 - `ADR-0029-server-interrupt-loop.md` - Optional extra LLM turns after response transform (`interrupt` on `$out`); client sees final result only
 - `ADR-0030-unified-agent-mode.md` - Unified Agent mode replacing multiple LLM pipeline actions (golden dirs: `agent-analyze`, `agent-coder`, `agent-auto-ai`, etc.)
+- `ADR-0031-action-key-shape.md` - Enforce action-key shape for every `execute`/`result` across server, client, simulations, and scripts
+- `ADR-0032-port-management-execution.md` - Standardize dynamic port allocation, locking, conflict detection, and cleanup via `scripts/port-manager.js`
+- `ADR-0033-standard-extensions-structure.md` - Plan for single-extension sources, consistent handler/service naming, and cleaned server directories per the refactoring plan
+- `ADR-0034-protocol-consolidation.md` - Propose `@a2a/protocol`, canonical docs/actions layout, and a config map to consolidate shared types
+
+## Tooling: ADR compliance via Client API
+
+To **stress the live stack** (not only sims/unit tests), an orchestrator can drive the same **Client API** as the UI (`POST /sessions`, `POST /sessions/{id}/next`, `GET /sessions/{id}/async`) with tasks like “align code with ADR-00xx.”
+
+Use a **separate state file** (curated ADR **queue**, current ADR, **per-ADR phase/progress**, completed set) keyed to **one target project** — do not rescan the whole ADR directory every run or rely on session JSON alone for long queues. Full contract: [`methodology/adr-compliance-orchestrator.md`](../../methodology/adr-compliance-orchestrator.md).
 
 ## Related (not ADRs)
 

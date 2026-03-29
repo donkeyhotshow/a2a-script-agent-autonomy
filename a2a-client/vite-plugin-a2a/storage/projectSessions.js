@@ -2,6 +2,69 @@ import fs from 'fs';
 import path from 'path';
 import { loadProjects } from './projects.js';
 
+function normalizeProjectPath(p) {
+  if (typeof p !== 'string' || !p.trim()) return '';
+  return path.resolve(p.trim());
+}
+
+function projectPathsEqual(a, b) {
+  const na = normalizeProjectPath(a);
+  const nb = normalizeProjectPath(b);
+  if (!na || !nb) return false;
+  if (process.platform === 'win32') {
+    return na.toLowerCase() === nb.toLowerCase();
+  }
+  return na === nb;
+}
+
+/**
+ * Resolve filesystem root for session JSON in project storage mode.
+ * @param {string} cwd - Vite / client workspace root
+ * @param {{ projectId?: string, projectRoot?: string }} [opts]
+ * @returns {string} Absolute project path
+ */
+export function resolveSessionProjectPath(cwd, opts = {}) {
+  const projects = loadProjects(cwd);
+  const projectId = typeof opts.projectId === 'string' ? opts.projectId.trim() : '';
+  const projectRootRaw = typeof opts.projectRoot === 'string' ? opts.projectRoot.trim() : '';
+
+  if (projectRootRaw) {
+    const hit = projects.find((p) => p.path && projectPathsEqual(p.path, projectRootRaw));
+    if (!hit) {
+      throw new Error(
+        `[projectSessions] projectRoot does not match any registered project path: ${projectRootRaw}`
+      );
+    }
+    return normalizeProjectPath(hit.path);
+  }
+
+  if (projectId) {
+    const hit = projects.find((p) => p.id === projectId);
+    if (!hit?.path) {
+      throw new Error(`[projectSessions] Unknown projectId: ${projectId}`);
+    }
+    return normalizeProjectPath(hit.path);
+  }
+
+  const fallback = projects.find((p) => p.path) || projects[0] || { path: cwd };
+  return normalizeProjectPath(fallback?.path || cwd);
+}
+
+/**
+ * Locate which registered project holds this session (flat .a2a/sessions/{id}.json).
+ * @param {string} cwd
+ * @param {string} sessionId
+ * @returns {string|null} Absolute project path
+ */
+export function findSessionProjectPath(cwd, sessionId) {
+  for (const p of loadProjects(cwd)) {
+    if (!p.path) continue;
+    const abs = normalizeProjectPath(p.path);
+    if (loadSession(abs, sessionId)) return abs;
+  }
+  return null;
+}
+
 export function getSessionsDir(projectPath) {
   return path.join(projectPath, '.a2a', 'sessions');
 }
@@ -49,7 +112,5 @@ export function deleteSession(projectPath, sessionId) {
 }
 
 export function getProjectPathForSessions(cwd) {
-  const projects = loadProjects(cwd);
-  const proj = projects.find((p) => p.path) || projects[0] || {path: cwd};
-  return proj?.path || cwd;
+  return resolveSessionProjectPath(cwd, {});
 }

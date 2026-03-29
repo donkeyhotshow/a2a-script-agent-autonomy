@@ -2,6 +2,8 @@
 
 Stateless A2A backend for invoke processing, routing, transforms, and async promise polling.
 
+> **Coordinated live stack:** To start or restart the full system, use **`.\start-all.bat`** (Windows) or **`./start-all.sh`** (Linux/macOS) from the **repository root** only — not `npm run dev` in this folder. Per-folder dev servers bypass shared kill/port/PID handling and cause duplicate processes.
+
 ## Current Architecture
 
 - Runtime: Node.js 20+, TypeScript, Express

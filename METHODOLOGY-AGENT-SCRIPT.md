@@ -12,5 +12,6 @@
 - `methodology/implementation.md`
 - `methodology/tasks.md`
 - `methodology/improvements.md`
+- `methodology/adr-compliance-orchestrator.md` — очередь ADR + отдельный state-файл + Client API для боевой проверки (см. `docs/adr/README.md` → Tooling)
 
 Для новых сценариев добавляйте файлы в `methodology/`, стараясь держать каждый вспомогательный файл в пределах 100-150 строк.

@@ -2,6 +2,8 @@
 
 Веб-интерфейс для взаимодействия с A2A Server через Client API Server.
 
+**Live stack:** Full-system start/restart is only from the repository root (`.\start-all.bat` / `./start-all.sh`), not from this folder alone.
+
 ## Требования к документации (machine-readable)
 
 Все документы в этом проекте должны быть адаптированы под **машинное чтение** (парсинг и/или индексация RAG-системой). **Чтение человеком не требуется.**
@@ -136,7 +138,7 @@ Primary paths used by this tree: **`/api/a2a/projects`**, **`/api/a2a/sessions`*
 ## Требования
 
 - Node.js 18+
-- Client API Server (порт 3001, проксирует запросы A2A Server на 3000)
+- Dev: Vite (default **5173**) + **vite-plugin-a2a** — Client API under `/api/a2a`; A2A Server stays on **3000** (called from the plugin). Standalone SDK server may use another port — see [`docs/CLIENT_API_WEB_SDK.md`](../docs/CLIENT_API_WEB_SDK.md).
 - Meilisearch на порту 7700 (для RAG)
 
 ## A2A Protocol & Implementation

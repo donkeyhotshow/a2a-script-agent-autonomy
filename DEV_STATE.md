@@ -1,6 +1,6 @@
 # DEV_STATE - 2026-03-29 (v2 - meta-prompt)
 
-Current system state: **РЕЖИМ 1 - Work**
+Current system state: **Idle - queue empty, maintenance required**
 
 Methodology: always write DEV_STATE, always clean, always move forward.
 
@@ -13,6 +13,18 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 ## 2026-03-29 — Idle-queue protocol (docs)
 
 - Same rule everywhere: empty `tasks/pending/` **triggers** prune → discover → write, **not** stop. Rationale in `AGENTS.md` (DEV_STATE Protocol + **“Empty queue — mandatory”** block under Quick Reference, checklist item 5); anti-pattern in `methodology/tasks.md`; pointers in `docs/WORKFLOW.md`, `methodology/INDEX.md`, `START-PROMPT-UNLIM.md` (режим 1, шаг 4).
+
+## 2026-03-29 — Windows stack restart (docs)
+
+- Documented: operators/agents refresh the live stack with **`start-all.bat`** (repo root) only—not per-package `npm run dev`. Touches `AGENTS.md` (Quick Reference + **Live stack restart**), `docs/SYSTEM_STARTUP.md`, `README.md` (**Live stack: start and restart** section + Quick Start / Commands), `a2a-server/README.md`, `ai-integration/README.md`, `a2a-client/README.md` (new), `a2a-client/web/README.md`, `a2a-client/packages/sdk/README.md`, `start-all.bat` header, `START-PROMPT-UNLIM.md`, this **Quick Start** note.
+
+## 2026-03-29 — Doc accuracy (orchestrator / health / ports)
+
+- Removed references to non-existent `kilo-orchestrator.*`; aligned health checks (no Vite `/health` on 5173—use `/api/a2a/projects`); fixed web README Client API port; dropped bogus `curl …/logs/archive` on Vite from `methodology/improvements.md`; clarified `logs/archive` vs optional runbook in `methodology/orchestrator-api-exploit.md`.
+
+## 2026-03-29 — ADR compliance orchestrator (methodology)
+
+- Canonical doc: **`methodology/adr-compliance-orchestrator.md`** — Client API **battle test** (ADR-scoped code work via API), **session vs state file** table, curated `queue` (no implicit full `docs/adr` scan), **`displayWindow`** for minimal UI order, per-ADR **full-scope** verification before `completedAdrs`, orchestrator **bound to one `projectRoot`**. Cross-links: **`AGENTS.md`** (ADRs section), **`docs/adr/README.md`** (Tooling), **`methodology/orchestrator-api-exploit.md`**, **`methodology/INDEX.md`**, **`METHODOLOGY-AGENT-SCRIPT.md`**.
 
 ---
 
@@ -56,6 +68,8 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 | 6 | **Старт помощник** | 1 | **Выполнено** |
 | 7 | **START-PROMPT-UNLIM.md (Kilo Оркестратор)** | 1 | **Выполнено** |
 | 8 | **Kilo Оркестратор (orchestrator)** | 1 | **Выполнено** |
+| 9 | Создание промпта для оркестратора эксплуатации через API | 1 | Выполнено |
+|10 | Записать новые ADR (action-key shape, port manager, стандарты директорий, @a2a/protocol) | 1 | Выполнено |
 
 ---
 
@@ -67,36 +81,9 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 
 ---
 
-## Kilo Оркестратор - Реализация
+## Kilo / orchestrator (documentation only)
 
-### Файл: [`kilo-orchestrator.cjs`](kilo-orchestrator.cjs)
-
-**Назначение:** Бесконечное создание подзадач для обработки входящих задач. Каждая подзадача работает по METHODOLOGY-AGENT-SCRIPT.md.
-
-**Алгоритм:**
-1. Получить задачу от пользователя
-2. Создать подзадачу (такую же, как входящая)
-3. Подзадача работает по METHODOLOGY-AGENT-SCRIPT.md
-4. Повторить с шага 1 (бесконечно)
-
-**Компоненты:**
-- `ApiClient` — HTTP клиент для Client API (порт 5173) и A2A Server (порт 3000)
-- `TaskManager` — управление задачами в `tasks/pending/` и `tasks/archive/`
-- `MetricsManager` — запись метрик цикла в `runtime/metrics.json`
-- `HealthChecker` — проверка доступности сервисов
-- `SubTask` — подзадача с режимами Work (mode1) и Debug (mode2)
-
-**Режимы:**
-- **Режим 1 (Work):** task-add → task-execute → task-cleanup
-- **Режим 2 (Debug):** Диагностика и отладка проблем
-
-**CLI использование:**
-```bash
-node kilo-orchestrator.js --task "Прочитай README.md"
-node kilo-orchestrator.js --task "Проанализируй логи" --project system
-```
-
-**Критерий остановки:** Оркестратор работает бесконечно. Остановка только вручную (Ctrl+C).
+**Repo fact:** There is no `kilo-orchestrator.cjs` or `kilo-orchestrator.js` in this tree. Operator/orchestrator behavior is described in **`START-PROMPT-UNLIM.md`**, **`methodology/orchestrator-api-exploit.md`**, and **`METHODOLOGY-AGENT-SCRIPT.md`** (modes, Client API usage). Use **`tasks/pending/`** / **`tasks/archive/`** and **`runtime/metrics.json`** where those paths exist; health: A2A Server `GET /health` (3000), AI Hub `GET /health` (11434); Vite dev Client API has no dedicated `/health`—use e.g. **`GET /api/a2a/projects`** on the web dev port (default 5173).
 
 ## Задача 4: Вариант 6 (Гибридный) — Трансмутация
 
@@ -262,6 +249,8 @@ A2A_PROJECT_PATH=<path>  # Путь проекта для агента
 ---
 
 ## Quick Start
+
+**Windows:** (re)start the live stack only via **`start-all.bat`** at repo root — not per-folder `npm run dev` (avoids zombie processes / port clashes / bad `.pids.txt`). See [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md), [`AGENTS.md`](AGENTS.md).
 
 ```bash
 start-all.bat

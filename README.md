@@ -2,6 +2,17 @@
 
 **Status: 2026-03-27 (Production Readiness Phase)**
 
+## Live stack: start and restart
+
+| Platform | Use this from the **repository root** only |
+|----------|---------------------------------------------|
+| **Windows** | **`.\start-all.bat`** — for first start, stop, or restart of **any** service in the coordinated stack |
+| **Linux / macOS** | **`./start-all.sh`** — same rule |
+
+Do **not** use `npm run dev`, `npm start`, or equivalent **inside** `a2a-server`, `a2a-client`, `ai-integration`, or nested packages to refresh the live stack. That skips kill/port checks and PID bookkeeping and leads to duplicate listeners and broken `.pids.txt`.
+
+At the repo root on Windows, `npm run dev` is an alias for `start-all.bat` — that is the **only** npm entry point meant for whole-stack control.
+
 ## Key Changes (2026-03-20)
 
 | Change | Impact |
@@ -27,7 +38,7 @@ npm install
 cd a2a-server && npm install && cd ..
 cd a2a-client && npm install && cd ..
 
-# 3. Run
+# 3. Run (repository root only; restarts = same place — never per-package npm for the full stack)
 npm run dev
 ```
 
@@ -37,10 +48,11 @@ npm run dev
 
 | Command | Purpose |
 |---------|---------|
-| `npm run dev` | Start all services (Server + Client + Infrastructure) |
+| `npm run dev` | Start all services (Server + Client + Infrastructure); on Windows this runs `start-all.bat` |
 | `bash start-all.sh` (Linux/Mac) | Manual start with verification |
-| `.\start-all.bat` (Windows) | Manual start with verification |
-```
+| `.\start-all.bat` (Windows) | Manual start with verification (preferred explicit entry) |
+
+**Windows — restarts:** Use **only** **`.\start-all.bat`** from the repo root whenever you need to refresh the stack (one service or all). Do **not** run `npm run dev` / `npm start` inside `a2a-server`, `a2a-client`, `ai-integration`, or `packages/sdk` for that.
 
 **Linux/macOS:**
 ```bash

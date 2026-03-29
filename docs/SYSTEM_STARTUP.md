@@ -20,6 +20,8 @@ start-all.bat    # Start all services
 kill-all.ps1     # Stop all services
 ```
 
+**Restart (Windows):** To stop or refresh **any** part of the stack, use **`start-all.bat`** from the repo root again (it calls `kill-all.bat`, verifies ports, then starts everything in order). Do **not** restart individual services with `npm run dev` (or similar) inside `a2a-server`, `a2a-client`, `packages/sdk`, etc.—that leaves orphan processes, port conflicts, and a stale `.pids.txt`. See also [`AGENTS.md`](../AGENTS.md) (live stack restart).
+
 ### Linux/Mac
 ```bash
 bash start-all.sh    # Start all services
@@ -28,6 +30,8 @@ bash start-all.sh    # Start all services
 ---
 
 ## Manual Startup (Sequential)
+
+For **day-to-day restarts** on Windows, use **`start-all.bat`** only. The steps below are for **exceptional** debugging or when you intentionally run one component in isolation.
 
 ### 1. Ollama (LLM)
 

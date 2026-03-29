@@ -32,6 +32,7 @@
 - Tasks: `methodology/tasks.md`.
 - Improvements: `methodology/improvements.md`.
 - Оператор (человек или Cursor) управляет **запущенным агентом** через **HTTP/curl**, не через веб-UI как основной контур: `docs/OPERATOR-CURL.md`.
+- Оркестратор ADR ↔ код (очередь ADR, отдельный state-файл, один целевой проект, тот же Client API): `methodology/adr-compliance-orchestrator.md`; указатель в `docs/adr/README.md` (раздел Tooling).
 
 ## 3. Цикл A2A — шаг за шагом
 

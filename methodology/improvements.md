@@ -101,8 +101,6 @@
 ### API
 ```bash
 curl -X POST http://localhost:5173/api/a2a/sessions -d '{"projectId":"system","mode":"work","task":"..."}'
-curl http://localhost:5173/logs/archive/sessions/
-curl http://localhost:5173/logs/archive/debug/
 curl http://localhost:5173/api/a2a/sessions/{id}
 curl http://localhost:5173/api/a2a/sessions/{id}/async
 ```

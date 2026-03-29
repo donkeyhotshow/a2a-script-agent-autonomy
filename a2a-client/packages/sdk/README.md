@@ -1,8 +1,10 @@
-﻿# A2A Client SDK
+# A2A Client SDK
 
 ## Обзор
 
 SDK (`a2a-client/packages/sdk`) — Express API и логика сессий; клиент для A2A Server.
+
+**Live stack:** For normal full-stack development, start/restart only from the **repository root** (`.\start-all.bat` / `./start-all.sh`). The `npm start` / standalone SDK flow below is for SDK-only work, not for replacing root orchestration.
 
 **Important:** In Vite dev, the **browser usually hits `vite-plugin-a2a` first**, not this process, for `/api/a2a/*`. See [`docs/CLIENT_API_WEB_SDK.md`](../docs/CLIENT_API_WEB_SDK.md).
 

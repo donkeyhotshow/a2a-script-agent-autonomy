@@ -8,6 +8,7 @@
 
 - **Client API**: http://localhost:5173/api/a2a
 - **A2A Server**: http://localhost:3000
+- **Перезапуск стека (Windows):** только `start-all.bat` из корня репозитория; не поднимать отдельные сервисы через `npm run dev` в подпапках (`docs/SYSTEM_STARTUP.md`, `AGENTS.md`).
 - **Директория задач**: tasks/
 - **Pending задачи**: tasks/pending/
 - **Архив задач**: tasks/archive/

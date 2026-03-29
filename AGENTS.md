@@ -6,6 +6,7 @@ Guidance for agents working in this repository.
 
 | Topic | Reference |
 |-------|-----------|
+| **Windows live stack restart** | **`start-all.bat`** from repo root only — not per-service `npm run dev` ([`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md)) |
 | Imports | `.js` suffix with NodeNext resolution |
 | Test ENCRYPTION_KEY | Exactly 32 characters |
 | Test DB | `a2a_test` (not `a2a_server`) |
@@ -117,6 +118,10 @@ Web UI (5173) → Client API (5173/api/a2a) → A2A Server (3000) → AI Hub (11
 | 3000 | a2a-server | API (stateless) |
 | 5173 | Vite | Web UI + Client API |
 
+### Live stack restart (Windows)
+
+Use **`start-all.bat`** at the repository root for any full or partial “turn it off and on again” need. It performs `kill-all`, port checks, and ordered startup. **Do not** run `npm run dev` (or `npm start`) inside individual packages to restart one service—those processes are not tracked the same way and commonly cause duplicate listeners and broken PID files. Linux/macOS: use **`start-all.sh`** the same way.
+
 ---
 
 ## API Endpoints
@@ -204,7 +209,7 @@ cd a2a-client && npm test
 
 ## Architecture Decisions (ADRs)
 
-See [docs/adr/README.md](docs/adr/README.md) for full index:
+See [docs/adr/README.md](docs/adr/README.md) for full index (includes **Tooling**: orchestrated ADR compliance via Client API — [methodology/adr-compliance-orchestrator.md](methodology/adr-compliance-orchestrator.md)):
 - **ADR-0026** — Server LLM request prep (result → history)
 - **ADR-0027** — Canonical docs map
 - **ADR-0028** — Vite `/api/a2a` vs SDK Client API

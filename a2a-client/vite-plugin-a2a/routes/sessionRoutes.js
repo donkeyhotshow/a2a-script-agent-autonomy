@@ -1,4 +1,12 @@
-import { listSessions, loadSession, saveSession, deleteSession, getProjectPathForSessions } from '../storage/projectSessions.js';
+import {
+    listSessions,
+    loadSession,
+    saveSession,
+    deleteSession,
+    getProjectPathForSessions,
+    resolveSessionProjectPath,
+    findSessionProjectPath,
+} from '../storage/projectSessions.js';
 import {
     listNewSessions,
     loadNewSession,
@@ -14,6 +22,20 @@ import {
 } from './utils/session-projection-dto.js';
 
 const API_PREFIX = '/api/a2a';
+
+function locateProjectModeSession(cwd, sessionId, queryProjectId) {
+    if (queryProjectId) {
+        const projectPath = resolveSessionProjectPath(cwd, { projectId: queryProjectId });
+        const session = loadSession(projectPath, sessionId);
+        return { session, projectPath };
+    }
+    const primary = getProjectPathForSessions(cwd);
+    let session = loadSession(primary, sessionId);
+    if (session) return { session, projectPath: primary };
+    const found = findSessionProjectPath(cwd, sessionId);
+    if (!found) return { session: null, projectPath: primary };
+    return { session: loadSession(found, sessionId), projectPath: found };
+}
 
 export function createSessionRoutes({ cwd }) {
     return (req, res, next) => {
@@ -45,6 +67,8 @@ export function createSessionRoutes({ cwd }) {
                     const d = JSON.parse(body);
                     const title = d.title || 'New Session';
                     const task = d.task; // Capture task from request body
+                    const projectId = typeof d.projectId === 'string' ? d.projectId.trim() : '';
+                    const projectRoot = typeof d.projectRoot === 'string' ? d.projectRoot.trim() : '';
                     const sessionId = d.id || `sess_${Date.now()}`;
                     const session = {
                         id: sessionId,
@@ -62,7 +86,8 @@ export function createSessionRoutes({ cwd }) {
                         ],
                         context: { 
                             execution: { action: 'task', step: 'new' },
-                            ...(task ? { task } : {}) // Include task in context if provided
+                            ...(task ? { task } : {}),
+                            ...(projectId ? { projectId } : {}),
                         },
                         // Initial execute until user submits; after POST /next use GET /sessions/:id (ack-only /next)
                         execute: {
@@ -81,7 +106,7 @@ export function createSessionRoutes({ cwd }) {
                     };
 
                     if (storageMode === 'project') {
-                        const projectPath = getProjectPathForSessions(cwd);
+                        const projectPath = resolveSessionProjectPath(cwd, { projectId, projectRoot });
                         saveSession(projectPath, session);
                     } else {
                         saveNewSession(cwd, session);
