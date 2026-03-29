@@ -4,14 +4,6 @@ Current system state: **Performing idle queue protocol: prune → discover → w
 
 ---
 
-## Greedy dump (branch `greedy-dump`) — 2026-03-29
-
-- **Source:** `C:\workspace\domain-platform\markdown-pipeline-automator\work` (originals unchanged).
-- **In-repo:** `greedy-dump/` — task tree, `STATE.md`, `docs/DOCUMENTS-STATE.md`, lightweight `mirror/**` stubs (no 466 MB zip).
-- **Pending:** `tasks/pending/greedy-dump-integration.md` — queue scripts into `a2a-server` actions per folder tasks.
-
----
-
 ## Fixes Applied (2026-03-29)
 
 ### Simulation Tests Fix (2026-03-29 03:16-03:18)
@@ -105,6 +97,13 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 
 - Canonical doc: **`methodology/adr-compliance-orchestrator.md`** — Client API **battle test** (ADR-scoped code work via API), **session vs state file** table, curated `queue` (no implicit full `docs/adr` scan), **`displayWindow`** for minimal UI order, per-ADR **full-scope** verification before `completedAdrs`, orchestrator **bound to one `projectRoot`**. Cross-links: **`AGENTS.md`** (ADRs section), **`docs/adr/README.md`** (Tooling), **`methodology/orchestrator-api-exploit.md`**, **`methodology/INDEX.md`**, **`METHODOLOGY-AGENT-SCRIPT.md`**.
 - **Code (2026-03-29):** Vite Client API **`sessionRoutes`**: `POST /sessions` (+ task-add/task-execute) accepts **`projectId` / `projectRoot`** for **`x-storage-mode: project`** → `resolveSessionProjectPath`; **`GET`/`DELETE` `/sessions/:id`** optional **`?projectId=`** + scan registered projects if missing on default root; **`POST .../next`** defers to **`stepRoutes`** (invoke) instead of ack-only stub. Tests: **`a2a-client/tests/unit/project-sessions-resolve.test.mjs`**.
+
+## 2026-03-29 — greedy-dump integration (Laravel sub-agent)
+
+- **`greedy-dump/STATE.md`**: Phase 1 sorted, `laravel-agent-workspace-tools` marked **Laravel: yes**.
+- **First server action:** [`normalize-env.md`](a2a-server/src/actions/definitions/normalize-env.md) — инвентаризация `.env` ключей без секретов.
+- **Source:** `C:\workspace\domain-platform\markdown-pipeline-automator\work\priority-2\laravel-agent-workspace-tools\` — скрипты доступны для адаптации.
+- All 445 a2a-server tests pass, registry loads 19 actions.
 
 ## 2026-03-29 — Manual agent check (Client API + `agent` session)
 

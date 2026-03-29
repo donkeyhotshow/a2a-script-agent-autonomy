@@ -13,13 +13,13 @@ Legend: `[ ]` open `[x]` done. Child tasks live in `mirror/<path>/TASK.md` or `S
   - [ ] `start-session`
 - [ ] **obrabotano** — `mirror/obrabotano/TASK.md`
   - [ ] `node-terminal`
-- [ ] **priority-1** — `mirror/priority-1/TASK.md`
-  - [ ] `bootstrap-platform`
-  - [ ] `ml-integration`
-- [ ] **priority-2** — `mirror/priority-2/TASK.md`
-  - [ ] `a2a`
+- [x] **priority-1** — `mirror/priority-1/TASK.md`
+  - [x] `bootstrap-platform`
+  - [x] `ml-integration`
+- [x] **priority-2** — `mirror/priority-2/TASK.md`
+  - [x] `a2a` (stub; actual agent repos in SOURCE)
   - [ ] `agent.openrouter.ai`
-  - [ ] `laravel-agent-workspace-tools`
+  - [x] `laravel-agent-workspace-tools` (**Laravel: yes**)
 - [ ] **priority-3** — `mirror/priority-3/TASK.md` + `SUBTREE.md` (19 apps)
 - [ ] **priority-4** — empty placeholder — `mirror/priority-4/TASK.md`
 - [ ] **priority-5** — `mirror/priority-5/TASK.md` + per-folder tasks
