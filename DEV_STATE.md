@@ -1,6 +1,87 @@
-# DEV_STATE - 2026-03-29 (v2 - meta-prompt)
+# DEV_STATE - 2026-03-29 (v3 - gray-room transform fix)
 
-Current system state: **Performing idle queue protocol: prune → discover → write** (session **`agent`**, document/task-driven flow); orchestrator alignment landed 2026-03-29.
+Current system state: **gray-room response transform failure investigation**; "Response transform failed" occurs in `gray-room-orchestrator.ts` line 353 when `runResponseTransform` returns null.
+
+---
+
+## Current Investigation (2026-03-29 21:50)
+
+### Symptom: "Response transform failed"
+
+- **Root cause location:** `a2a-server/src/services/core/request-processor/gray-room-orchestrator.ts:352-353`
+- **Trigger:** `runResponseTransform` returns `null` when transform pipeline fails
+- **Transforms location:** `a2a-server/prompts/transforms/` (request/response JSON pipelines)
+- **Schema used:** Agent mode uses "coder" schema → `server-transforms-response.json`
+- **Request flow:** Client API (`POST /sessions/{id}/next`) → proxy to A2A Server (`POST /api/v1/invoke`) → gray room → transform → result
+- **Evidence:**
+  - A2A Server health: OK (port 3000)
+  - Ollama (qwen3:8b): Available (port 11435)
+  - AI Integration proxy: OK (port 11434)
+  - Session stores promiseId but request NOT found at `/api/v1/requests/{id}` → indicates Client API does NOT forward to A2A Server correctly
+
+### Hypothesis
+
+The Client API is NOT forwarding the user's message to the A2A Server. Instead of calling `POST /api/v1/invoke`, it's either:
+1. Not forwarding at all
+2. Using wrong endpoint
+3. The session context is incomplete (missing task/context properties)
+
+### CONFIRMED: Same issue in dialog mode
+
+Tested with `mode: dialog` and `task: "hello"` — same "Response transform failed" error. The promiseId is created on A2A Server but result parsing fails. This indicates:
+
+1. **Client API correctly forwards to A2A Server** - promiseId is created at `/api/v1/requests/{id}`
+2. **A2A Server processes the request** - LLM is called (see Ollama tags)
+3. **Response transform fails** - likely in the `server-transforms-response.json` pipeline
+
+### ROOT CAUSE IDENTIFIED
+
+The `server-transforms-response.json` pipeline uses `parse-json-from-md` which expects JSON in a code block (````json ... ````).
+
+**If LLM returns plain text** (not wrapped in JSON code block), the extraction returns a string instead of an object. Subsequent JSONPath operations (`$.llm.step`, `$.llm.message`, etc.) fail because the path doesn't exist on a string.
+
+**Location**: `a2a-server/src/transform/operations/json-path.ts:253-281` — `extractJsonFromMarkdown` function
+
+### Evidence
+
+The transform pipeline expects these fields from LLM response:
+- `$.llm.step`
+- `$.llm.message`
+- `$.llm.execute`
+- `$.llm.completed`
+
+If LLM returns plain text, `extractJsonFromMarkdown` returns a string, not an object with these fields.
+
+### Fix Required
+
+1. **Option A**: Update prompts (`coder-request.md`, `dialog-request.md`) to explicitly tell LLM to return JSON in a code block
+2. **Option B**: Make `server-transforms-response.json` more lenient (handle string input)
+3. **Option C**: Add more robust error handling to return partial results instead of failing completely
+
+### Next Step
+
+Fix the response transform pipeline or prompts to handle LLM responses correctly.
+
+### FIX APPLIED (2026-03-29 21:57)
+
+Applied fixes to address the root cause:
+
+1. **Updated prompts** to require JSON in code blocks:
+   - `a2a-server/prompts/coder-request.md` — added "IMPORTANT: You MUST return your response as JSON inside a code block"
+   - `a2a-server/prompts/dialog-request.md` — same added
+   - `a2a-server/prompts/agent-request.md` — same added
+
+2. **Updated server-transforms-response.json** with clearer documentation and consistent format
+
+### FIX VERIFIED (2026-03-29 22:10)
+
+**SUCCESS!** Dialog session now completes successfully:
+- Request `prom_1774821497770_adk79h35b` status: **completed**
+- LLM returned proper JSON in code block format
+- Response contains `execute.form.textarea` with Ukrainian message "Надішліть ваше повідомлення, щоб я міг допомогти вам."
+- Context includes proper history and execution state
+
+The fix is working. The response transform pipeline now successfully parses the LLM JSON response.
 
 ---
 
@@ -99,8 +180,7 @@ Methodology: always write DEV_STATE, always clean, always move forward.
 - **Code (2026-03-29):** Vite Client API **`sessionRoutes`**: `POST /sessions` (+ task-add/task-execute) accepts **`projectId` / `projectRoot`** for **`x-storage-mode: project`** → `resolveSessionProjectPath`; **`GET`/`DELETE` `/sessions/:id`** optional **`?projectId=`** + scan registered projects if missing on default root; **`POST .../next`** defers to **`stepRoutes`** (invoke) instead of ack-only stub. Tests: **`a2a-client/tests/unit/project-sessions-resolve.test.mjs`**.
 
 ## 2026-03-29 — greedy-dump integration (Laravel sub-agent)
-
-- **`greedy-dump/STATE.md`**: Phase 1 sorted, `laravel-agent-workspace-tools` marked **Laravel: yes**.
+- **`greedy-dump/STATE.md`**: Phase 1 sorted, `laravel-agent-workspace-tools` marked **Laravel: yes**, `agent.openrouter.ai` checked (no scripts folder, API integration snippets only).
 - **First server action:** [`normalize-env.md`](a2a-server/src/actions/definitions/normalize-env.md) — инвентаризация `.env` ключей без секретов.
 - **Source:** `C:\workspace\domain-platform\markdown-pipeline-automator\work\priority-2\laravel-agent-workspace-tools\` — скрипты доступны для адаптации.
 - All 445 a2a-server tests pass, registry loads 19 actions.

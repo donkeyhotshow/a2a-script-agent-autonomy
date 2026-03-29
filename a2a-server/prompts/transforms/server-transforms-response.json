@@ -39,7 +39,13 @@
   ]
 }
 /**
- * NOTE: The prompt (dialog-request.md) should instruct LLM to return Pattern A (form with textarea).
- * If LLM returns a tool (read-file, rag-search, etc.), it means the prompt wasn't followed.
- * The transform simply passes through what the LLM returned.
+ * NOTE: The prompt (coder-request.md, dialog-request.md) MUST instruct LLM to return JSON in a code block like:
+ * ```json
+ * {"step": "...", "message": "...", "execute": {...}, "completed": false}
+ * ```
+ *
+ * If LLM returns plain text (not in JSON code block), parse-json-from-md extracts the raw text,
+ * and subsequent steps will fail because $.llm.step, $.llm.message etc. won't exist.
+ *
+ * This transform uses ${...} template syntax to resolve paths in the extracted JSON.
  */

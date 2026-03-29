@@ -27,6 +27,17 @@ ${flowControlHint}
 
 ## Response Format
 
+**IMPORTANT: You MUST return your response as JSON inside a code block.**
+
+```json
+{
+  "step": "...",
+  "message": "...",
+  "execute": { ... },
+  "completed": false
+}
+```
+
 **Prefer `workbench_ops`** for small edits to `workbench.sections` so you do not resend full section text every turn.
 
 ### `workbench_ops` (optional array)

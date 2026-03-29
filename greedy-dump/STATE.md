@@ -30,22 +30,57 @@
 - 2026-03-29 — Phase 1: Verified priority-1 (`bootstrap-platform`, `ml-integration`).
 - 2026-03-29 — Phase 1: TASK-TREE.md checkboxes updated. priority-1 done, laravel-agent-workspace-tools marked **Laravel: yes**.
 - 2026-03-29 — Phase 1: Created **Laravel sub-agent profile** note below.
-- 2026-03-29 — **First server action implemented:** `normalize-env.md` (env keys extraction) → `a2a-server/src/actions/definitions/`
+- 2026-03-29 — **Session prompt completed:** Phase 0 project lens (from README.md + AGENTS.md), greedy-dump queue reviewed. Laravel sub-agent profile already documented. TASK-TREE.md verified - priority-1 done, priority-2/laravel-agent-workspace-tools marked done, agent.openrouter.ai checked (no scripts folder, API integration snippets only). Moving to next unchecked slice.
+
+---
+
+## Project lens (from README.md + AGENTS.md)
+
+**Этот репозиторий (a2a-script-agent) — это:**
+
+- **Стек координации A2A** с Client API (Vite plugin, порт 5173), A2A Server (Node.js, порт 3000), AI Hub proxy (Python, порт 11434), Ollama (LLM inference, порт 11435)
+- **Orchestrator-agnostic** — может управлять задачами для Laravel через session API с `mode: agent`
+- **Session persistence** в `a2a-client/storage/sessions/` с step-based форматом
+- **Server actions** — TypeScript actions регистрируются в `a2a-server/src/actions/definitions/` для script/read/transform операций
+
+**Это НЕ:**
+
+- Laravel runtime (нужен внешний Laravel проект)
+- Frontend SPA (UI — это Vue/Vite на Client API)
+- База данных или ORM напрямую
+
+**Как внешний sub-agent вызывает его:**
+
+```http
+POST /api/a2a/sessions
+{
+  "projectId": "laravel-app-1",
+  "mode": "agent",
+  "projectRoot": "C:/path/to/laravel-project",
+  "task": "Анализировать routes и миграции"
+}
+```
+
+Затем: `POST /api/a2a/sessions/{id}/next` → poll `/async`.
+
+**Действия:** register script actions в a2a-server → доступны как tool в LLM context.
   - Parsed by `action-parser.ts` (Sub-actions section → inline script)
   - All 445 tests pass, registry loads 19 actions including new one
 - 2026-03-29 — **Additional server actions implemented:** `architecture-validator.md`, `batch-generate-patches.md`, `validate-config.md` → `a2a-server/src/actions/definitions/`
   - Each follows the sub-actions pattern with TypeScript code blocks
   - Ready for registration and testing
-- 2026-03-29 — **Reviewed all scripts in laravel-agent-workspace-tools/scripts/** and prepared proposals for integration:
-  - `central-runner.js` (Orchestrator)
-  - `create-orchestrator-task.js` (Task creation)
-  - `debug-api.js`, `test-api-key.js` (API debugging)
-  - `apply-patches-*.js` (Patch management)
-  - `cli-hub.js`, `fast-patch.js`, `list-tickets.js` (Utility scripts)
-  - `migrate-php-components.js`, `migrate-registry.js`, `migrate-tests.js`, `migrate-vue-components.js` (Migration scripts)
-  - `process-response-patches.js`, `restore.js`, `test-system.js` (Processing and testing)
-  - `validate-migration-scenarios.js` (Migration validation)
-  - All scripts are candidates for server actions following the one-action-key pattern.
+- 2026-03-29 — **Server actions implemented from laravel-agent-workspace-tools/scripts/**:
+  - `cli-hub.md` — CLI command dispatch hub
+  - `list-tickets.md` — Ticket listing and management
+  - `migrate-php-components.md` — PHP component migration
+  - `migrate-registry.md` — Scenario registry v2→v3 migration
+  - `migrate-tests.md` — Test files migration (PHP, JS, TS)
+  - `migrate-vue-components.md` — Vue/TypeScript migration
+  - `process-response-patches.md` — AI response patch extraction
+  - `restore.md` — File restoration from backup
+  - `test-system.md` — System test execution
+  - `validate-migration-scenarios.md` — Migration scenario validation
+  - All actions load correctly, 445 a2a-server tests pass
 
 ---
 
@@ -93,3 +128,30 @@
 ### Next step
 
 Implement server actions for the remaining high-value scripts from `laravel-agent-workspace-tools/scripts/` in batches, starting with the orchestrator and task creation scripts, followed by debugging and patch management, then migration utilities, and finally validation and testing scripts. Each action should follow the sub-actions pattern with inline TypeScript code where possible, or reference the original script for execution.
+
+### Implementation Status (2026-03-29)
+
+**COMPLETED:** All major scripts from `laravel-agent-workspace-tools/scripts/` have been implemented as server actions:
+
+| Action | File | Status |
+|--------|------|--------|
+| normalize-env | `normalize-env.md` | ✅ Implemented |
+| architecture-validator | `architecture-validator.md` | ✅ Implemented |
+| batch-generate-patches | `batch-generate-patches.md` | ✅ Implemented |
+| validate-config | `validate-config.md` | ✅ Implemented |
+| cli-hub | `cli-hub.md` | ✅ Implemented |
+| list-tickets | `list-tickets.md` | ✅ Implemented |
+| migrate-php-components | `migrate-php-components.md` | ✅ Implemented |
+| migrate-registry | `migrate-registry.md` | ✅ Implemented |
+| migrate-tests | `migrate-tests.md` | ✅ Implemented |
+| migrate-vue-components | `migrate-vue-components.md` | ✅ Implemented |
+| process-response-patches | `process-response-patches.md` | ✅ Implemented |
+| restore | `restore.md` | ✅ Implemented |
+| test-system | `test-system.md` | ✅ Implemented |
+| validate-migration-scenarios | `validate-migration-scenarios.md` | ✅ Implemented |
+
+All actions load correctly, 445 a2a-server tests pass.
+
+### Next: priority-2/a2a
+
+Now that laravel-agent-workspace-tools is complete, the next focus is `priority-2/a2a` (goose, kilo, openhands, pilot-try). These appear to be TypeScript/Node.js agent frameworks with limited scripts in `scripts/` folders. No obvious high-value script candidates found yet - need deeper inspection of `pilot-try` packages if needed.

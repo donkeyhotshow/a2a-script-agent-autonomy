@@ -17,9 +17,9 @@ Legend: `[ ]` open `[x]` done. Child tasks live in `mirror/<path>/TASK.md` or `S
   - [x] `bootstrap-platform`
   - [x] `ml-integration`
 - [x] **priority-2** — `mirror/priority-2/TASK.md`
-  - [x] `a2a` (stub; actual agent repos in SOURCE)
-  - [ ] `agent.openrouter.ai`
-  - [x] `laravel-agent-workspace-tools` (**Laravel: yes**)
+   - [x] `a2a` (stub; actual agent repos in SOURCE)
+   - [x] `agent.openrouter.ai`
+   - [x] `laravel-agent-workspace-tools` (**Laravel: yes** — ✅ implemented 14 server actions)
 - [ ] **priority-3** — `mirror/priority-3/TASK.md` + `SUBTREE.md` (19 apps)
 - [ ] **priority-4** — empty placeholder — `mirror/priority-4/TASK.md`
 - [ ] **priority-5** — `mirror/priority-5/TASK.md` + per-folder tasks
