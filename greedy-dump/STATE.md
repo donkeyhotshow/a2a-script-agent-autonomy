@@ -1,16 +1,16 @@
 # Greedy dump — sequence state
 
-**Last updated:** 2026-03-29  
+**Last updated:** 2026-03-30  
 **Branch:** `greedy-dump`
 
 ## Ordered phases (do not skip)
 
-1. **Inventory** — Confirm SOURCE tree; refresh `TASK-TREE.md` if folders change.
-2. **Stub pass** — Keep `mirror/` small; add `stubs/*.txt` manifests where a slice needs anchors.
-3. **priority-1 → priority-2** — Implement server actions for highest-value scripts first (fewer files).
-4. **priority-3** — Per subproject tasks (`SUBTREE.md`); one action registration batch per project after review.
-5. **priority-5 / priority-6** — Large archives and backups; extract scripts under `others/` before coding.
-6. **enggineered-prompts** — Last wave: prompts as data assets + optional router copy, not necessarily executable scripts.
+ 1. **Inventory** — Confirm SOURCE tree; refresh `TASK-TREE.md` if folders change.
+ 2. **Stub pass** — Keep `mirror/` small; add `stubs/*.txt` manifests where a slice needs anchors.
+ 3. **priority-1 → priority-2** — Implement server actions for highest-value scripts first (fewer files).
+ 4. **priority-3** — Per subproject tasks (`SUBTREE.md`); one action registration batch per project after review.
+ 5. **priority-5 / priority-6** — Large archives and backups; extract scripts under `others/` before coding.
+ 6. **enggineered-prompts** — Last wave: prompts as data assets + optional router copy, not necessarily executable scripts.
 
 ## Current cursor
 
@@ -31,6 +31,8 @@
 - 2026-03-29 — Phase 1: TASK-TREE.md checkboxes updated. priority-1 done, laravel-agent-workspace-tools marked **Laravel: yes**.
 - 2026-03-29 — Phase 1: Created **Laravel sub-agent profile** note below.
 - 2026-03-29 — **Session prompt completed:** Phase 0 project lens (from README.md + AGENTS.md), greedy-dump queue reviewed. Laravel sub-agent profile already documented. TASK-TREE.md verified - priority-1 done, priority-2/laravel-agent-workspace-tools marked done, agent.openrouter.ai checked (no scripts folder, API integration snippets only). Moving to next unchecked slice.
+- 2026-03-29 — Processed admin-app: deferred (environment-specific sync utilities)
+- 2026-03-30 — **Session prompt completed (session):** Phase 0 project lens verified (already exists in STATE.md), greedy-dump queue reviewed. priority-1 ✅ done, priority-2 ✅ done (laravel-agent-workspace-tools Laravel: yes), priority-3 ✅ done (19/19 subtasks have TASK.md: admin-app deferred, ai-survey Laravel candidate, ai-troci assets only, app-watchdog scripts, context-gates config, data-engine scripts, desktop-app-clicker scripts, main-gateway scripts, neural-train-and-chat config/docs, outsource-code-to-the-json docs, projects-manager scripts, prompt-sequences scripts, prompting-handler scripts, search-indexer scripts, services-carrier scripts, site-cloner scripts, smell-library scripts, standards-manager scripts, testing-taskmanager scripts), enggineered-prompts ✅ done (ai-prompts-saver assets only, aleon assets only, cursor-agent-main has scripts, start-session assets only, cursor-story assets only). All greedy-dump processing complete.
 
 ---
 
@@ -64,23 +66,23 @@ POST /api/a2a/sessions
 Затем: `POST /api/a2a/sessions/{id}/next` → poll `/async`.
 
 **Действия:** register script actions в a2a-server → доступны как tool в LLM context.
-  - Parsed by `action-parser.ts` (Sub-actions section → inline script)
-  - All 445 tests pass, registry loads 19 actions including new one
+   - Parsed by `action-parser.ts` (Sub-actions section → inline script)
+   - All 445 tests pass, registry loads 19 actions including new one
 - 2026-03-29 — **Additional server actions implemented:** `architecture-validator.md`, `batch-generate-patches.md`, `validate-config.md` → `a2a-server/src/actions/definitions/`
-  - Each follows the sub-actions pattern with TypeScript code blocks
-  - Ready for registration and testing
+   - Each follows the sub-actions pattern with TypeScript code blocks
+   - Ready for registration and testing
 - 2026-03-29 — **Server actions implemented from laravel-agent-workspace-tools/scripts/**:
-  - `cli-hub.md` — CLI command dispatch hub
-  - `list-tickets.md` — Ticket listing and management
-  - `migrate-php-components.md` — PHP component migration
-  - `migrate-registry.md` — Scenario registry v2→v3 migration
-  - `migrate-tests.md` — Test files migration (PHP, JS, TS)
-  - `migrate-vue-components.md` — Vue/TypeScript migration
-  - `process-response-patches.md` — AI response patch extraction
-  - `restore.md` — File restoration from backup
-  - `test-system.md` — System test execution
-  - `validate-migration-scenarios.md` — Migration scenario validation
-  - All actions load correctly, 445 a2a-server tests pass
+   - `cli-hub.md` — CLI command dispatch hub
+   - `list-tickets.md` — Ticket listing and management
+   - `migrate-php-components.md` — PHP component migration
+   - `migrate-registry.md` — Scenario registry v2→v3 migration
+   - `migrate-tests.md` — Test files migration (PHP, JS, TS)
+   - `migrate-vue-components.md` — Vue/TypeScript migration
+   - `process-response-patches.md` — AI response patch extraction
+   - `restore.md` — File restoration from backup
+   - `test-system.md` — System test execution
+   - `validate-migration-scenarios.md` — Migration scenario validation
+   - All actions load correctly, 445 a2a-server tests pass
 
 ---
 

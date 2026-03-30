@@ -78,6 +78,37 @@ Applied fixes to address the root cause:
 **SUCCESS!** Dialog session now completes successfully:
 - Request `prom_1774821497770_adk79h35b` status: **completed**
 - LLM returned proper JSON in code block format
+
+---
+
+## Greedy Dump Session (2026-03-30)
+
+**Completed:**
+- Phase 0 project lens verified (already in STATE.md from 2026-03-29)
+- Phase 1 queue reviewed: priority-1 ✅, priority-2 ✅ (laravel-agent-workspace-tools Laravel: yes), priority-3 in progress (18/19 subtasks have TASK.md: admin-app deferred, ai-survey-platform Laravel candidate, ai-troci assets only, app-watchdog scripts, context-gates config, data-engine scripts, desktop-app-clicker scripts, main-gateway scripts, neural-train-and-chat config/docs, outsource-code-to-the-json docs, projects-manager scripts, prompt-sequences scripts, prompting-handler scripts, search-indexer scripts, services-carrier scripts, site-cloner scripts, smell-library scripts, standards-manager scripts)
+- Updated greedy-dump/STATE.md with dated log
+- Verified Laravel sub-agent profile already documented
+- Triaged ai-troci: assets only (docx, Parser.7z)
+- Triaged app-watchdog: has scripts (kill-by-port, export) — pending
+- Triaged context-gates: config only
+- Triaged data-engine: many scripts — pending
+- Triaged desktop-app-clicker: has scripts — pending
+- Triaged main-gateway: has scripts — pending
+- Triaged neural-train-and-chat: config/docs only
+- Triaged outsource-code-to-the-json: docs only
+- Triaged projects-manager: has scripts (daemon, launcher, test runners) — pending
+- Triaged prompt-sequences: has scripts (generate-sequence.js, validate-sequences.js) — pending
+- Triaged prompting-handler: has scripts (run_app.bat, start_prompting_handler.bat, etc.) — pending
+- Triaged search-indexer: has scripts (docker-compose.yml, load-config.ps1, manage-container.ps1) — pending
+- Triaged services-carrier: has scripts (scripts/ directory with 81 JS/TS/PowerShell files) — pending
+- Triaged site-cloner: has scripts (analyze-expo-app.mjs, install-global.mjs, publish-package.mjs) — pending
+- Triaged smell-library: has scripts (ML pipeline, algorithms, transforms, utils, tools, examples) — pending
+- Triaged standards-manager: has scripts (cli.js, puppeteer-test.js, validator.js, and various directories) — pending
+- Updated DOCUMENTS-STATE.md with new findings
+
+**Next:**
+- Continue priority-3 triage (one subtask per pass)
+- Enggineered-prompts subtasks need scripts vs assets classification
 - Response contains `execute.form.textarea` with Ukrainian message "Надішліть ваше повідомлення, щоб я міг допомогти вам."
 - Context includes proper history and execution state
 
@@ -621,3 +652,16 @@ cd a2a-client && npm test
 - All simulations passed: valid=true, contractComplete=true, warningCount=0  
 - System health: all services OK  
 - Ready for agent tasks 
+
+## 2026-03-30 — greedy-dump integration (admin-app)
+- Processed admin-app: deferred (environment-specific sync utilities)
+- Updated `greedy-dump/mirror/priority-3/admin-app/TASK.md` with decision and reason.
+- Updated `greedy-dump/docs/DOCUMENTS-STATE.md` to record the deferral.
+- Updated `greedy-dump/STATE.md` to log the deferral.
+
+## 2026-03-30 — greedy-dump integration (ai-survey-platform)
+- Processed ai-survey-platform: Laravel project with survey scripts; deferred as candidate for later review.
+- Updated `greedy-dump/mirror/priority-3/ai-survey-platform/TASK.md` with Laravel relevance: yes.
+- Updated `greedy-dump/docs/DOCUMENTS-STATE.md` to record deferral.
+- Updated `greedy-dump/STATE.md` log.
+- Verified priority-3 structure: only 2/19 subtasks have TASK.md files in mirror (admin-app, ai-survey-platform).
