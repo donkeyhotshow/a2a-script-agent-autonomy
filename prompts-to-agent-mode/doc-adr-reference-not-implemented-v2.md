@@ -6,7 +6,7 @@
 
 ## Agent prompt (copy)
 
-Treat as product roadmap: split into `work/tasks/` specs with acceptance tests, or explicitly mark as deferred in REFERENCE with reason. Do not leave ❌ rows implying imminent delivery without an owner.
+Treat as product roadmap: split into `tasks/` specs with acceptance tests, or explicitly mark as deferred in REFERENCE with reason. Do not leave ❌ rows implying imminent delivery without an owner.
 
 ## Completion
 

@@ -2,12 +2,12 @@
 
 ## Sources
 
-- [`work/STATE.md`](../work/STATE.md) — queue table (S9–S13, SYS); row S13 links `tasks/sync-form-choices-description.md` (**file missing**); other rows use `tasks/…` while specs live under [`work/tasks/`](../work/tasks/)
-- [`work/tasks/`](../work/tasks/) — actual task files
+- [`work/STATE.md`](../work/STATE.md) — queue table (S9–S14, SYS); rows point at `tasks/sync-*.md` etc.; most of those files are **missing** from [`tasks/`](../tasks/)
+- [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)
 
 ## Agent prompt (copy)
 
-Update `work/STATE.md` links to real paths (`work/tasks/…` or restored files). For S13: point to the commit/PR that completed form-choice descriptions, or add a one-line archive note—remove dead markdown links.
+Update `work/STATE.md`: replace dead `tasks/*.md` links with real paths (after restore from git) or with inline “done — see DEV_STATE / sims README” notes. For S13: link to the sim fixes or archive line—no broken markdown.
 
 ## Completion
 

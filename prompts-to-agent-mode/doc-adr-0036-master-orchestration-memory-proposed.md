@@ -8,7 +8,7 @@
 
 ## Agent prompt (copy)
 
-Assign reviewers or mark as exploratory; split Phase 1 into `work/tasks/*` with testable slices, or fold into existing gray-room / ADR-0035 work. Do not leave **Proposed** + **[TBD]** indefinitely without a decision record in the ADR header.
+Assign reviewers or mark as exploratory; split Phase 1 into `tasks/*` specs with testable slices, or fold into existing gray-room / ADR-0035 work. Do not leave **Proposed** + **[TBD]** indefinitely without a decision record in the ADR header.
 
 ## Completion
 

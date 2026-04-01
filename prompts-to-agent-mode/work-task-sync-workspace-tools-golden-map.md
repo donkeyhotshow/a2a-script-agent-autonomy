@@ -2,7 +2,7 @@
 
 ## Sources
 
-- [`work/tasks/sync-workspace-tools-golden-map.md`](../work/tasks/sync-workspace-tools-golden-map.md)
+- **Spec (missing on disk):** `tasks/sync-workspace-tools-golden-map.md` — see [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)
 - [`simulations/sync/agent-workspace-tools/description.md`](../simulations/sync/agent-workspace-tools/description.md)
 - [`work/STATE.md`](../work/STATE.md) — row S12
 

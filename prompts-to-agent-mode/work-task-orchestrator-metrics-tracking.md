@@ -2,7 +2,7 @@
 
 ## Sources
 
-- [`work/tasks/orchestrator-metrics-tracking.md`](../work/tasks/orchestrator-metrics-tracking.md)
+- **Spec (missing on disk):** `tasks/orchestrator-metrics-tracking.md` — see [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md); notes in root [`DEV_STATE.md`](../DEV_STATE.md)
 - [`scripts/orchestrator-metrics.js`](../scripts/orchestrator-metrics.js)
 - [`runtime/metrics.json`](../runtime/metrics.json) (generated)
 

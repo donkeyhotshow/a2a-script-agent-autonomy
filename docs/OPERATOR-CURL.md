@@ -85,7 +85,7 @@ Flaky or vague agent behavior is addressed mainly **inside the system**, not by 
 
 - **Server prompts and transforms** — `a2a-server/prompts/` (e.g. `dialog-request.md`, `agent-request.md`, `router-request.md`), plus pipelines under `a2a-server/prompts/transforms/`.
 - **Gray Room / interrupt behavior** — `a2a-server/docs/GRAY-ROOM.md`, orchestration code under `a2a-server/src/`.
-- **Operator** uses **curl** to **verify** end-to-end behavior after changes. **Not sufficient:** health + a single happy-path `sessions` → `next` → `async`. **Normative checklist:** [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md) (session artifacts, ack/async, **Red Room** tool cycle when the task calls for it). Orchestrator-style prompts: [`START-PROMPT-UNLIM.md`](../START-PROMPT-UNLIM.md) → *Ручные испытания Client API*.
+- **Operator** uses **curl** to **verify** end-to-end behavior after changes. **Not sufficient:** health + a single happy-path `sessions` → `next` → `async`. **Normative checklist:** [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md) (session artifacts, ack/async, **Red Room** tool cycle when the task calls for it). **Indexed copy-paste prompts** (seed `mode: "agent"`): [`prompts-to-agent-mode/README.md`](../prompts-to-agent-mode/README.md). Orchestrator-style prompts: [`START-PROMPT-UNLIM.md`](../START-PROMPT-UNLIM.md) → *Ручные испытания Client API*.
 
 ## Relation to `docs/WORKFLOW.md`
 

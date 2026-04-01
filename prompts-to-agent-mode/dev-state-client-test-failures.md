@@ -4,7 +4,7 @@
 
 - [`DEV_STATE.md`](../DEV_STATE.md) — **Pre-existing issues**
 - [`a2a-client/DEV_STATE.md`](../a2a-client/DEV_STATE.md) — Pre-existing Issues table
-- [`work/tasks/analyze-test-failures.md`](../work/tasks/analyze-test-failures.md) — classification (config, not code)
+- Historical spec (restore if needed): `tasks/analyze-test-failures.md` — [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)
 
 ## Agent prompt (copy)
 

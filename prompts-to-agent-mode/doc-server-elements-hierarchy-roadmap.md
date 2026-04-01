@@ -6,7 +6,7 @@
 
 ## Agent prompt (copy)
 
-Treat this file as **aspirational** unless adopted: either implement + check boxes, or move unchecked items to a tracked `work/tasks/` spec and trim the doc to current reality. Avoid stale `[ ]` that imply missing production features without owners.
+Treat this file as **aspirational** unless adopted: either implement + check boxes, or move unchecked items to a tracked `tasks/` spec and trim the doc to current reality. Avoid stale `[ ]` that imply missing production features without owners.
 
 ## Completion
 

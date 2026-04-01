@@ -72,7 +72,7 @@
 1. Синхронизировать `PORT`, `SKIP_AUTH`, `DEFAULT_SYNC_MODE`.
 2. Проверять `/tasks/templates/` на релевантные шаблоны.
 3. Создавать `task` с `description`, `inputs`, `acceptanceCriteria`.
-4. Запускать `task-execute`, сохранять `traceId`. Ручная проверка сессий: **не** останавливаться на первом успешном цикле — [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md), [`START-PROMPT-UNLIM.md`](../START-PROMPT-UNLIM.md) → *Ручные испытания Client API*. Для испытаний — **поднять агентскую сессию через Client API** (`POST /sessions` + `mode: "agent"` + `task`, далее `/next` + `/async`); при ошибках — **создавать задачи** в `tasks/pending/` и править `DEV_STATE`, чтобы **другие** сессии агента подхватили фиксы/проверки, а не только «дожимать» ту же сессию.
+4. Запускать `task-execute`, сохранять `traceId`. Ручная проверка сессий: **не** останавливаться на первом успешном цикле — [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md), [`START-PROMPT-UNLIM.md`](../START-PROMPT-UNLIM.md) → *Ручные испытания Client API*; готовые промпты — [`prompts-to-agent-mode/README.md`](../prompts-to-agent-mode/README.md). Для испытаний — **поднять агентскую сессию через Client API** (`POST /sessions` + `mode: "agent"` + `task`, далее `/next` + `/async`); при ошибках — **создавать задачи** в `tasks/pending/` и править `DEV_STATE`, чтобы **другие** сессии агента подхватили фиксы/проверки, а не только «дожимать» ту же сессию.
 5. Сохранять результаты в `/logs/archive/`.
 6. Запускать `task-cleanup` после серии.
 7. Обновлять статус в `/runtime/status.json`.

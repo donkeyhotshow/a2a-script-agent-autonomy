@@ -2,7 +2,7 @@
 
 ## Sources
 
-- [`work/tasks/analyze-test-failures.md`](../work/tasks/analyze-test-failures.md)
+- **Spec (missing on disk):** `tasks/analyze-test-failures.md` — see [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md); classification already in [`DEV_STATE.md`](../DEV_STATE.md)
 - [`a2a-client/DEV_STATE.md`](../a2a-client/DEV_STATE.md)
 
 ## Agent prompt (copy)

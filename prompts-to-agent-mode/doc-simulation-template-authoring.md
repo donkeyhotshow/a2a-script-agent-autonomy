@@ -8,7 +8,7 @@
 
 ## Agent prompt (copy)
 
-When adding a simulation, execute the template checklist step-by-step; run `sim:lint` / `sim:validate` from repo root. Tick items in the template or in a linked `work/tasks/` note for the sim name.
+When adding a simulation, execute the template checklist step-by-step; run `sim:lint` / `sim:validate` from repo root. Tick items in the template or in a linked `tasks/` note for the sim name.
 
 ## Completion
 

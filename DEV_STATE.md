@@ -2,6 +2,8 @@
 
 **Doc:** Schema-debug entry point: [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md), [`simulations/SCHEMA.md`](simulations/SCHEMA.md), [`AGENTS.md`](AGENTS.md).
 
+**Agent-mode task prompts:** [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md) — run in the live stack via Client API + seed **`mode: "agent"`** (see `AGENTS.md` *Unified manual path*).
+
 **System roadmap:** [`work/tasks/system-improvement-priorities.md`](work/tasks/system-improvement-priorities.md) (contract unification, gray room, verification pyramid, observability).
 
 **Work queue (sync sims):** S7–S12 done (2026-04-01). Осталось:

@@ -2,7 +2,7 @@
 
 ## Sources
 
-- [`work/tasks/sync-documentation-and-router-drift.md`](../work/tasks/sync-documentation-and-router-drift.md)
+- **Spec (missing on disk):** `tasks/sync-documentation-and-router-drift.md` — restore via [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) or git history
 - [`simulations/sync/agent/description.md`](../simulations/sync/agent/description.md)
 - [`shared/router-static-choices.json`](../shared/router-static-choices.json)
 - [`work/STATE.md`](../work/STATE.md) — row S10

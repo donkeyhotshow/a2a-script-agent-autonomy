@@ -2,7 +2,7 @@
 
 ## Sources
 
-- [`work/tasks/sync-step-contract-warnings.md`](../work/tasks/sync-step-contract-warnings.md)
+- **Spec (missing on disk):** `tasks/sync-step-contract-warnings.md` — see [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)
 - [`a2a-server/scripts/sim-contract/step-transform-rules.ts`](../a2a-server/scripts/sim-contract/step-transform-rules.ts)
 - [`package.json`](../package.json) / `a2a-server/package.json` — `sim:validate`, `sim:contract-report`
 

@@ -3,7 +3,7 @@
 ## Sources
 
 - [`DEV_STATE.md`](../DEV_STATE.md) — **Pre-existing issues** (periodic update)
-- [`work/tasks/orchestrator-metrics-tracking.md`](../work/tasks/orchestrator-metrics-tracking.md) — implementation notes
+- Historical spec: `tasks/orchestrator-metrics-tracking.md` — [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)
 - [`scripts/orchestrator-metrics.js`](../scripts/orchestrator-metrics.js) (if present at repo root)
 
 ## Agent prompt (copy)

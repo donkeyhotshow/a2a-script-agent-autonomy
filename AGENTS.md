@@ -8,6 +8,7 @@ Guidance for agents working in this repository.
 |-------|-----------|
 | **Windows live stack restart** | **`start-all.bat`** from repo root only — not per-service `npm run dev` ([`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md)) |
 | **Unified manual path** | **Client API only:** create session → **`mode: "agent"`** (or `execution.action`) → **`task`** → `next` + poll `async` — [Unified manual path](#unified-manual-path-client-api) |
+| **Backlog prompts (live stack)** | **[`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md)** — indexed copy-paste tasks; **must** use same Client API contour as the UI (`sessions` / `next` / `async`), not `invoke` alone |
 | **Sessions / curl / agent tests** | Same surface: not `invoke` alone — [technical notes](#sessions-tests-and-agent-mode-where-to-send-http) |
 | **Schema debugging start point** | **[`scripts/direct-tests/README.md`](scripts/direct-tests/README.md)** — reproduce shape issues here first, then sims/e2e |
 | Imports | `.js` suffix with NodeNext resolution |
@@ -385,4 +386,5 @@ Confirm previous phase passed and is stable.
 | [simulations/SCHEMA.md](simulations/SCHEMA.md) | Simulation contract |
 | [docs/ENV-MATRIX.md](docs/ENV-MATRIX.md) | Environment matrix |
 | [docs/agent-iteration-traps.md](docs/agent-iteration-traps.md) | Why iteration stops (low-context); mitigations (Cursor vs Client API driver) |
+| [prompts-to-agent-mode/README.md](prompts-to-agent-mode/README.md) | Indexed task prompts; live stack = Client API + `mode: "agent"` |
 | Module state files | [a2a-client/DEV_STATE.md](a2a-client/DEV_STATE.md), [a2a-server/DEV_STATE.md](a2a-server/DEV_STATE.md), [ai-integration/DEV_STATE.md](ai-integration/DEV_STATE.md) |

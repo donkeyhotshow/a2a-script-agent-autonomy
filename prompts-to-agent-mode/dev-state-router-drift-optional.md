@@ -4,7 +4,7 @@
 
 - [`DEV_STATE.md`](../DEV_STATE.md) — **Pending tasks** / **Work queue**: S10 router drift (optional)
 - [`work/STATE.md`](../work/STATE.md) — row S10, link to task spec
-- [`work/tasks/sync-documentation-and-router-drift.md`](../work/tasks/sync-documentation-and-router-drift.md)
+- Router drift spec: [work-task-sync-documentation-router-drift.md](work-task-sync-documentation-router-drift.md) (on-disk task `.md` missing — [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md))
 - [`shared/router-static-choices.json`](../shared/router-static-choices.json)
 
 ## Agent prompt (copy)

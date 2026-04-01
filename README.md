@@ -146,7 +146,7 @@ See [System Startup Documentation](docs/SYSTEM_STARTUP.md) for details.
 
 ### Testing
 
-**Sessions and E2E / operator flows:** Exercises that create a **session**, send turns, or poll **async** should target the **Client API** — default dev base `http://localhost:5173` and paths `/api/a2a/*` (same as the web UI). The A2A Server on `:3000` is **`/api/v1/invoke`** only (stateless). **Agent mode** is reflected in **session `context`** (e.g. `execution.action`), not a separate HTTP route. Details: root [`AGENTS.md`](AGENTS.md) (“Sessions, tests, and agent mode”), [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md), [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
+**Sessions and E2E / operator flows:** Exercises that create a **session**, send turns, or poll **async** should target the **Client API** — default dev base `http://localhost:5173` and paths `/api/a2a/*` (same as the web UI). The A2A Server on `:3000` is **`/api/v1/invoke`** only (stateless). **Agent mode** is reflected in **session `context`** (e.g. `execution.action`), not a separate HTTP route. **Indexed operator prompts:** [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md) (seed `mode: "agent"` on create). Details: root [`AGENTS.md`](AGENTS.md) (“Sessions, tests, and agent mode”), [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md), [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 
 **Schema debugging order (mandatory):** start with **[scripts/direct-tests/README.md](scripts/direct-tests/README.md#schema-debugging--start-here)** — reproduce and isolate payload-shape issues there first; escalate to session flow, then simulations, then full e2e.
 
@@ -262,6 +262,7 @@ The a2a-server component is now production-ready with:
 | Document | Purpose |
 |----------|---------|
 | [AGENTS.md](AGENTS.md) | Agent and repo conventions; API and architecture pointers |
+| [prompts-to-agent-mode/README.md](prompts-to-agent-mode/README.md) | Task prompts for the live stack — Client API + `mode: "agent"` (same as UI) |
 | [New request flow](docs/new-request-flow/) | Protocol, data flow, server architecture (canonical) |
 | [System Startup](docs/SYSTEM_STARTUP.md) | Port allocation, conflict detection, health gating |
 | [Machine-Readable Docs](docs/DOCUMENTATION-MACHINE-READABLE.md) | Documentation requirements for parsing |

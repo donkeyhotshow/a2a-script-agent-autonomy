@@ -2,7 +2,7 @@
 
 ## Sources
 
-- [`work/tasks/sync-readme-and-cli-gap.md`](../work/tasks/sync-readme-and-cli-gap.md)
+- **Spec (missing on disk):** `tasks/sync-readme-and-cli-gap.md` — see [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)
 - [`a2a-server/scripts/sim-validate/scanner.ts`](../a2a-server/scripts/sim-validate/scanner.ts)
 - [`a2a-server/scripts/sim-lint.ts`](../a2a-server/scripts/sim-lint.ts) (entry)
 - [`simulations/sync/README.md`](../simulations/sync/README.md)
