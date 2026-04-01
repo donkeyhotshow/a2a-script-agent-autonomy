@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Queue Manager - AI Proxy</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+    }
+    header {
+      background: #1e293b;
+      border-bottom: 1px solid #334155;
+      padding: 1rem 2rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .badge {
+      background: #38bdf8;
+      color: #0f172a;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+    }
+    .badge.empty { background: #64748b; }
+    main {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 2rem;
+    }
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 10px 30px rgba(15, 23, 42, 0.6);
+    }
+    .panel h2 {
+      margin: 0 0 1rem 0;
+      font-size: 1.25rem;
+      color: #f8fafc;
+    }
+    .queue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-height: 70vh;
+      overflow-y: auto;
+    }
+    .queue-item {
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 1rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .queue-item:hover {
+      border-color: #38bdf8;
+      background: #1e293b;
+    }
+    .queue-item.active {
+      border-color: #38bdf8;
+      background: #1e293b;
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3);
+    }
+    .queue-item-id {
+      font-family: monospace;
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-bottom: 0.5rem;
+    }
+    .queue-item-preview {
+      font-size: 0.875rem;
+      color: #e2e8f0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .queue-item-time {
+      font-size: 0.75rem;
+      color: #64748b;
+      margin-top: 0.25rem;
+    }
+    .status-pending {
+      display: inline-block;
+      background: #f59e0b;
+      color: #0f172a;
+      padding: 0.15rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: #64748b;
+    }
+    .prompt-box {
+      background: #0f172a;
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 1.5rem;
+      max-height: 400px;
+      overflow: auto;
+    }
+    .prompt-box pre {
+      margin: 0;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: #e2e8f0;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .section-title {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: #94a3b8;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .section-title::before {
+      content: '';
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #38bdf8;
+    }
+    .response-box {
+      background: #0f172a;
+      border: 2px solid #334155;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1rem;
+    }
+    textarea {
+      width: 100%;
+      min-height: 200px;
+      border: none;
+      background: transparent;
+      color: #e2e8f0;
+      padding: 0.5rem;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 0.95rem;
+      line-height: 1.6;
+      resize: vertical;
+    }
+    textarea:focus {
+      outline: none;
+    }
+    textarea::placeholder {
+      color: #64748b;
+    }
+    .actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 1.5rem;
+    }
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 0.875rem 1.5rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      font-size: 0.95rem;
+    }
+    button:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    button:active:not(:disabled) {
+      transform: scale(0.98);
+    }
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .btn-execute {
+      background: #22c55e;
+      color: white;
+      flex: 1;
+      min-width: 200px;
+    }
+    .btn-execute:hover:not(:disabled) {
+      background: #16a34a;
+    }
+    .btn-skip {
+      background: #f59e0b;
+      color: #0f172a;
+      flex: 1;
+      min-width: 200px;
+    }
+    .btn-skip:hover:not(:disabled) {
+      background: #d97706;
+    }
+    .btn-secondary {
+      background: #334155;
+      color: #e2e8f0;
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: #475569;
+    }
+    .message {
+      margin-top: 1rem;
+      padding: 1rem 1.25rem;
+      border-radius: 10px;
+      font-size: 0.9rem;
+    }
+    .message.success {
+      background: #166534;
+      color: #bbf7d0;
+      border: 1px solid #22c55e;
+    }
+    .message.error {
+      background: #881337;
+      color: #ffe4e6;
+      border: 1px solid #ef4444;
+    }
+    .message.info {
+      background: #1e3a8a;
+      color: #bfdbfe;
+      border: 1px solid #3b82f6;
+    }
+    .hidden {
+      display: none !important;
+    }
+    .refresh-btn {
+      background: transparent;
+      border: 1px solid #38bdf8;
+      color: #38bdf8;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+    }
+    .refresh-btn:hover:not(:disabled) {
+      background: rgba(56, 189, 248, 0.1);
+    }
+    .meta-info {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid #334155;
+    }
+    .meta-item {
+      font-size: 0.875rem;
+    }
+    .meta-label {
+      color: #64748b;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      margin-bottom: 0.25rem;
+    }
+    .meta-value {
+      color: #e2e8f0;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>
+      Queue Manager
+      <span id="queue-badge" class="badge empty">0</span>
+      <button class="refresh-btn" onclick="loadQueue()">Refresh</button>
+    </h1>
+  </header>
+
+  <main>
+    <div class="panel">
+      <h2>Pending Queue</h2>
+      <div id="queue-list" class="queue-list">
+        <div class="empty-state">Loading...</div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div id="detail-empty" class="empty-state">
+        Select a request from the queue
+      </div>
+      <div id="detail-content" class="hidden">
+        <div class="meta-info">
+          <div class="meta-item">
+            <div class="meta-label">Promise ID</div>
+            <div id="detail-id" class="meta-value">-</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Model</div>
+            <div id="detail-model" class="meta-value">-</div>
+          </div>
+          <div class="meta-item">
+            <div class="meta-label">Created</div>
+            <div id="detail-time" class="meta-value">-</div>
+          </div>
+        </div>
+
+        <div class="section-title">Prompt to be sent</div>
+        <div class="prompt-box">
+          <pre id="detail-prompt">-</pre>
+        </div>
+
+        <div class="section-title">Your Response (paste here to skip sending)</div>
+        <div class="response-box">
+          <textarea id="response-body" placeholder="Paste your response here...
+
+This will be returned as the result without sending the request to the AI.
+
+Leave empty and click 'Allow & Execute' to send the actual request."></textarea>
+        </div>
+
+        <div class="actions">
+          <button class="btn-execute" onclick="allowAndExecute()">Allow & Execute</button>
+          <button class="btn-skip" onclick="submitResponse()">Submit Response & Skip</button>
+        </div>
+
+        <div id="message" class="message info hidden"></div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    let queueData = [];
+    let selectedPromiseId = null;
+    let currentPrompt = '';
+
+    function showMessage(text, type = 'info') {
+      const msgEl = document.getElementById('message');
+      msgEl.textContent = text;
+      msgEl.className = `message ${type}`;
+      msgEl.classList.remove('hidden');
+      setTimeout(() => {
+        msgEl.classList.add('hidden');
+      }, 5000);
+    }
+
+    async function loadQueue() {
+      const listEl = document.getElementById('queue-list');
+      const badgeEl = document.getElementById('queue-badge');
+
+      try {
+        const response = await fetch('/promises/pending');
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        queueData = await response.json();
+        badgeEl.textContent = queueData.length;
+        badgeEl.className = queueData.length > 0 ? 'badge' : 'badge empty';
+
+        if (queueData.length === 0) {
+          listEl.innerHTML = '<div class="empty-state">No pending requests</div>';
+          return;
+        }
+
+        // Load details for each item to show prompt preview
+        const itemsWithPrompts = await Promise.all(
+          queueData.map(async (item) => {
+            try {
+              const resp = await fetch(`/promise/${item.promiseId}/request`);
+              if (resp.ok) {
+                const data = await resp.json();
+                const prompt = extractPrompt(data);
+                return { ...item, promptPreview: prompt.substring(0, 60) + (prompt.length > 60 ? '...' : '') };
+              }
+            } catch (e) {}
+            return { ...item, promptPreview: 'Click to view' };
+          })
+        );
+
+        listEl.innerHTML = itemsWithPrompts.map(item => {
+          const time = item.created_at ? new Date(item.created_at).toLocaleTimeString() : 'Unknown';
+          return `
+            <div class="queue-item ${item.promiseId === selectedPromiseId ? 'active' : ''}"
+                 onclick="selectPromise('${item.promiseId}')">
+              <div class="queue-item-id">${item.promiseId.substring(0, 16)}...</div>
+              <div class="queue-item-preview">${item.promptPreview || 'Click to view prompt'}</div>
+              <div class="queue-item-time">${time}</div>
+              <span class="status-pending">PENDING</span>
+            </div>
+          `;
+        }).join('');
+      } catch (error) {
+        listEl.innerHTML = `<div class="empty-state">Error: ${error.message}</div>`;
+        badgeEl.textContent = '!';
+        badgeEl.style.background = '#ef4444';
+      }
+    }
+
+    function extractPrompt(requestData) {
+      if (!requestData.body) return 'No prompt found';
+      try {
+        const body = JSON.parse(requestData.body);
+        // Try different prompt locations
+        if (body.prompt) return body.prompt;
+        if (body.messages && body.messages[0]) {
+          const msg = body.messages[0];
+          if (typeof msg === 'string') return msg;
+          if (msg.content) return msg.content;
+          if (msg.text) return msg.text;
+        }
+        if (body.input) return body.input;
+        if (body.query) return body.query;
+        // Return formatted JSON if no plain prompt found
+        return JSON.stringify(body, null, 2);
+      } catch {
+        return requestData.body;
+      }
+    }
+
+    function extractModel(requestData) {
+      if (!requestData.body) return 'unknown';
+      try {
+        const body = JSON.parse(requestData.body);
+        return body.model || 'default';
+      } catch {
+        return 'unknown';
+      }
+    }
+
+    async function selectPromise(promiseId) {
+      selectedPromiseId = promiseId;
+
+      // Update active state in list
+      document.querySelectorAll('.queue-item').forEach(el => {
+        el.classList.toggle('active', el.getAttribute('onclick').includes(promiseId));
+      });
+
+      // Show detail panel
+      document.getElementById('detail-empty').classList.add('hidden');
+      document.getElementById('detail-content').classList.remove('hidden');
+      document.getElementById('message').classList.add('hidden');
+
+      const item = queueData.find(q => q.promiseId === promiseId);
+      if (!item) return;
+
+      document.getElementById('detail-id').textContent = promiseId.substring(0, 20) + '...';
+      document.getElementById('detail-time').textContent = item.created_at
+        ? new Date(item.created_at).toLocaleString()
+        : 'Unknown';
+
+      // Load request details
+      try {
+        const response = await fetch(`/promise/${promiseId}/request`);
+        if (!response.ok) throw new Error('HTTP ' + response.status);
+
+        const requestData = await response.json();
+        currentPrompt = extractPrompt(requestData);
+        document.getElementById('detail-prompt').textContent = currentPrompt;
+        document.getElementById('detail-model').textContent = extractModel(requestData);
+      } catch (error) {
+        document.getElementById('detail-prompt').textContent = 'Error loading prompt: ' + error.message;
+        document.getElementById('detail-model').textContent = 'error';
+      }
+
+      // Clear previous response
+      document.getElementById('response-body').value = '';
+    }
+
+    async function allowAndExecute() {
+      if (!selectedPromiseId) {
+        showMessage('No request selected', 'error');
+        return;
+      }
+
+      const btn = event.target;
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = 'Sending...';
+
+      try {
+        const response = await fetch(`/promise/${selectedPromiseId}/execute`, {
+          method: 'POST'
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Execution failed');
+        }
+
+        // 202 = executing in background (non-blocking)
+        const msg = response.status === 202
+          ? 'Request sent to LLM, processing in background'
+          : `Request sent successfully (Status: ${data.result_status_code})`;
+        showMessage(msg, 'success');
+        await loadQueue();
+
+        if (queueData.length === 0) {
+          selectedPromiseId = null;
+          document.getElementById('detail-empty').classList.remove('hidden');
+          document.getElementById('detail-content').classList.add('hidden');
+        } else {
+          // Select next item
+          selectPromise(queueData[0].promiseId);
+        }
+      } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    async function submitResponse() {
+      if (!selectedPromiseId) {
+        showMessage('No request selected', 'error');
+        return;
+      }
+
+      const body = document.getElementById('response-body').value.trim();
+      if (!body) {
+        showMessage('Please enter a response', 'error');
+        return;
+      }
+
+      const btn = event.target;
+      btn.disabled = true;
+      const originalText = btn.textContent;
+      btn.textContent = 'Submitting...';
+
+      try {
+        const response = await fetch(`/promise/${selectedPromiseId}/answer`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            status_code: 200,
+            content_type: 'application/json',
+            body: body
+          })
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to submit');
+        }
+
+        showMessage('Response submitted - request skipped', 'success');
+        await loadQueue();
+
+        if (queueData.length === 0) {
+          selectedPromiseId = null;
+          document.getElementById('detail-empty').classList.remove('hidden');
+          document.getElementById('detail-content').classList.add('hidden');
+        } else {
+          selectPromise(queueData[0].promiseId);
+        }
+      } catch (error) {
+        showMessage('Error: ' + error.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
+    // Auto-refresh every 5 seconds
+    setInterval(loadQueue, 5000);
+
+    // Initial load
+    loadQueue();
+  </script>
+</body>
+</html>

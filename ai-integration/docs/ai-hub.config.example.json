@@ -1,0 +1,151 @@
+{
+  "$schema": "./ai-hub.config.schema.json",
+  "model_aliases": {
+    "qwen3:8b": "qwen3:8b",
+    "big": "qwen3:8b",
+    "small": "qwen3:8b"
+  },
+  "strict_model_aliases": false,
+  "rules": [
+    {
+      "id": "avoid_big_by_model",
+      "when": {
+        "path_regex": "^api/(generate|embeddings|chat).*$",
+        "model": [
+          "big",
+          "qwen3:8b"
+        ]
+      },
+      "then": [
+        {
+          "type": "set_model",
+          "model": "small"
+        }
+      ]
+    },
+    {
+      "id": "simulate_smoke",
+      "when": {
+        "path_regex": "^api/generate$",
+        "prompt_contains": [
+          "SIMULATE:"
+        ]
+      },
+      "then": {
+        "type": "simulate",
+        "builder": "ollama.generate",
+        "text": "SIMULATED: {prompt}",
+        "delay_ms": 50
+      }
+    },
+    {
+      "id": "script_route_and_simulate",
+      "when": {
+        "path_regex": "^api/generate$",
+        "prompt_contains": [
+          "ROUTE_AND_SIM:"
+        ]
+      },
+      "then": [
+        {
+          "type": "set_model",
+          "model": "small"
+        },
+        {
+          "type": "simulate",
+          "builder": "ollama.generate",
+          "text": "model={model}; prompt={prompt}"
+        }
+      ]
+    },
+    {
+      "id": "promise_pending_delay",
+      "when": {
+        "path_regex": "^api/generate$",
+        "prompt_contains": [
+          "PENDING_PROMISE"
+        ]
+      },
+      "then": {
+        "type": "simulate",
+        "builder": "ollama.generate",
+        "text": "PENDING SIMULATED PROMISE: {prompt}",
+        "delay_ms": 6000
+      }
+    }
+  ],
+  "virtual_models": {
+    "rnj-L": {
+      "tags": {
+        "name": "rnj-L",
+        "model": "rnj-L",
+        "modified_at": "2026-02-24T00:00:00Z",
+        "size": 5114440677,
+        "digest": "d20e29ab8d0f11423b1e8da33764c8bdafc1d0abbb9971f68edd0f6d4176435f",
+        "details": {
+          "family": "mistral",
+          "families": [
+            "mistral"
+          ],
+          "format": "gguf",
+          "parameter_size": "8x22B",
+          "quantization_level": "Q4_K_M",
+          "parent_model": ""
+        }
+      },
+      "show": {
+        "model": "rnj-L",
+        "license": "Apache-2.0",
+        "details": {
+          "family": "mistral",
+          "families": [
+            "mistral"
+          ],
+          "format": "gguf",
+          "parameter_size": "8x22B",
+          "quantization_level": "Q4_K_M",
+          "parent_model": ""
+        },
+        "parameters": "temperature 0.7\nnum_ctx 32768\nnum_predict 2048",
+        "template": "{{ .Prompt }}",
+        "modelfile": "FROM mistral\n"
+      }
+    },
+    "qwen3:8b": {
+      "tags": {
+        "name": "qwen3:8b",
+        "model": "qwen3:8b",
+        "modified_at": "2025-11-15T03:00:00Z",
+        "size": 13743895347,
+        "digest": "a36b4d8c41e1c7b3fa4d8f8b7c1a0d4b9a1e2f3c4b5d6e7f8a9b0c1d2e3f4a5b",
+        "details": {
+          "family": "qwen",
+          "families": [
+            "qwen"
+          ],
+          "format": "gguf",
+          "parameter_size": "8x32B",
+          "quantization_level": "Q5_K_M",
+          "parent_model": ""
+        }
+      },
+      "show": {
+        "model": "qwen3:8b",
+        "license": "Apache-2.0",
+        "details": {
+          "family": "qwen",
+          "families": [
+            "qwen"
+          ],
+          "format": "gguf",
+          "parameter_size": "8x32B",
+          "quantization_level": "Q5_K_M",
+          "parent_model": ""
+        },
+        "parameters": "temperature 0.5\nnum_ctx 8192\nnum_predict 2048",
+        "template": "{{ .Prompt }}",
+        "modelfile": "FROM qwen3:8b\n"
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+# Local secrets (keep .env.example tracked)
+.env
+
+# Proxy logs
+proxy_logs/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+.pytest_cache/
+venv/
+env/
+.venv/

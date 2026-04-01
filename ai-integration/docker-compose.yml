@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    container_name: ai-integration-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  ai-integration:
+    build:
+      context: .
+      target: production
+    container_name: ai-integration-proxy
+    ports:
+      - "11434:11434"
+    environment:
+      - PROXY_PORT=11434
+      - OLLAMA_HOST=http://ollama:11435
+      - STORAGE_DIR=proxy_logs
+      - LOG_LEVEL=INFO
+      - DAEMON_ENABLED=true
+      - ENABLE_CLEANUP=true
+      - PROMISE_RETENTION_DAYS=7
+      - LOG_RETENTION_DAYS=30
+    volumes:
+      - ./proxy_logs:/app/proxy_logs
+    depends_on:
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11435/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  ai-integration-dev:
+    build:
+      context: .
+      target: development
+    container_name: ai-integration-proxy-dev
+    ports:
+      - "11436:11434"
+    environment:
+      - PROXY_PORT=11434
+      - OLLAMA_HOST=http://host.docker.internal:11435
+      - STORAGE_DIR=proxy_logs
+      - LOG_LEVEL=DEBUG
+      - DAEMON_ENABLED=true
+      - ENABLE_CLEANUP=true
+    volumes:
+      - .:/app
+      - ./proxy_logs:/app/proxy_logs
+    profiles:
+      - dev
+
+volumes:
+  ollama_data:
+    driver: local

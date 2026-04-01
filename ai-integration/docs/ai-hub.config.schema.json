@@ -1,0 +1,242 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ai-integration/ai-hub.config.schema.json",
+  "title": "AI Hub Proxy Config",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "model_aliases": {
+      "type": "object",
+      "description": "alias -> canonical model name",
+      "additionalProperties": {
+        "type": "string"
+      }
+    },
+    "strict_model_aliases": {
+      "type": "boolean",
+      "default": false,
+      "description": "If true: unknown model alias => 400 unknown_model"
+    },
+    "rules": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/rule"
+      },
+      "default": []
+    },
+    "virtual_models": {
+      "type": "object",
+      "description": "Virtual Ollama models to simulate presence via /api/tags and /api/show.",
+      "additionalProperties": {
+        "$ref": "#/$defs/virtual_model"
+      },
+      "default": {}
+    }
+  },
+  "$defs": {
+    "virtual_model": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Model name as visible in /api/tags (defaults to key)."
+        },
+        "digest": {
+          "type": "string"
+        },
+        "modified_at": {
+          "type": "string",
+          "description": "ISO timestamp string."
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "tags": {
+          "type": "object",
+          "description": "Exact model entry to inject into /api/tags.models[] (merged with defaults).",
+          "additionalProperties": true
+        },
+        "show": {
+          "type": "object",
+          "description": "Exact response to return from /api/show?model=<name> (merged with defaults). You can add fields like capabilities/tools/modes here.",
+          "additionalProperties": true
+        }
+      }
+    },
+    "rule": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "when": {
+          "$ref": "#/$defs/when"
+        },
+        "then": {
+          "description": "Action object or list of actions (script).",
+          "oneOf": [
+            {
+              "$ref": "#/$defs/action"
+            },
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/action"
+              }
+            }
+          ]
+        }
+      },
+      "required": [
+        "then"
+      ]
+    },
+    "when": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "method": {
+          "description": "HTTP method match.",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "path": {
+          "type": "string",
+          "description": "Exact path match (without leading /)."
+        },
+        "path_prefix": {
+          "type": "string"
+        },
+        "path_regex": {
+          "type": "string"
+        },
+        "model": {
+          "description": "Match against requested_model OR resolved_model.",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "requested_model": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "resolved_model": {
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "prompt_contains": {
+          "description": "Any substring match (case-sensitive).",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "prompt_regex": {
+          "type": "string",
+          "description": "Regex match against prompt/messages (IGNORECASE)."
+        }
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "set_model",
+            "reroute_model",
+            "reroute",
+            "simulate"
+          ]
+        },
+        "model": {
+          "type": "string"
+        },
+        "status_code": {
+          "type": "integer",
+          "minimum": 100,
+          "maximum": 599,
+          "default": 200
+        },
+        "delay_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "default": 0
+        },
+        "headers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          }
+        },
+        "builder": {
+          "type": "string",
+          "enum": [
+            "ollama.generate",
+            "openai.chat_completions"
+          ]
+        },
+        "text": {
+          "type": "string"
+        },
+        "body": {},
+        "extra": {
+          "type": "object"
+        }
+      },
+      "required": [
+        "type"
+      ]
+    }
+  }
+}

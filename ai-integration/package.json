@@ -1,0 +1,8 @@
+{
+  "name": "ai-integration",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "cd .. && npm run dev"
+  }
+}
