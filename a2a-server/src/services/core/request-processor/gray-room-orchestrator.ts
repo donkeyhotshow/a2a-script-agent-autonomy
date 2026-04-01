@@ -8,6 +8,7 @@ import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
 import {pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
 import {validateDialogExecuteShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
+import {SafetyLayer} from '../safety-layer/SafetyLayer.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 const DEFAULT_MODEL = 'qwen3:8b';
@@ -292,6 +293,8 @@ export class GrayRoomOrchestrator {
     private aiHubUrl: string;
     private model: string;
     private promptsTransformsPath: string;
+    /** ADR-0035: Safety layer runs between extractInterrupt() and applyInterrupt() */
+    private readonly safetyLayer = new SafetyLayer();
 
     constructor(options: GrayRoomOptions) {
         this.maxInterruptTurns = options.maxInterruptTurns ?? 10;
@@ -401,6 +404,54 @@ export class GrayRoomOrchestrator {
                 );
             }
             interruptBudget--;
+
+            // ── ADR-0035: Safety Layer intercept ─────────────────────────────
+            const thinkingSlot = (rawOutput.thinking_slot ?? workingCtx.thinking_slot) as Record<string, unknown> | undefined;
+            const contextHash = (workingCtx.history_hash as string | undefined) ?? '';
+            const safetyDecision = this.safetyLayer.intercept({
+                interruptReason: interrupt.reason,
+                outcomeClass: 'partial',
+                contextHash,
+                turnId: String(turn),
+                thinkingSlot,
+                context: workingCtx,
+            }, promiseId);
+
+            if (safetyDecision.decision === 'stop') {
+                logger.error('[SafetyLayer] Context integrity violation — hard stop', {
+                    turn, reason: interrupt.reason, hash: safetyDecision.result,
+                });
+                touchGrayRoom({phase: 'completed', status: 'truncated', turn, remainingBudget: 0, lastReason: 'safety:integrity'});
+                const c = result.context as Record<string, unknown>;
+                return this.mergeTraceIntoResult(
+                    {...result, context: {...c, safety_stop: true}} as ProcessResult, trace, grayRoom
+                );
+            }
+
+            if (safetyDecision.decision === 'interrupt') {
+                logger.warn('[SafetyLayer] Loop detected — interrupt', {
+                    turn, signal: safetyDecision.signal,
+                });
+                touchGrayRoom({phase: 'completed', status: 'truncated', turn, remainingBudget: 0, lastReason: 'safety:loop'});
+                const c = result.context as Record<string, unknown>;
+                return this.mergeTraceIntoResult(
+                    {...result, context: {...c, safety_loop_signal: safetyDecision.signal}} as ProcessResult, trace, grayRoom
+                );
+            }
+
+            if (safetyDecision.decision === 'wait') {
+                logger.warn('[SafetyLayer] Confidence below gate — waiting for human', {
+                    turn, trace: safetyDecision.trace,
+                });
+                touchGrayRoom({phase: 'completed', status: 'truncated', turn, remainingBudget: 0, lastReason: 'safety:confidence'});
+                const c = result.context as Record<string, unknown>;
+                return this.mergeTraceIntoResult(
+                    {...result, context: {...c, safety_waiting_state: safetyDecision.waitingState, safety_confidence_trace: safetyDecision.trace}} as ProcessResult,
+                    trace, grayRoom
+                );
+            }
+            // safetyDecision.decision === 'continue' — fall through to applyInterrupt
+            // ── End Safety Layer ──────────────────────────────────────────────
 
             const {nextCtx, continueLoop} = await this.applyInterrupt(
                 interrupt, workingCtx, promiseId, trace

@@ -50,7 +50,8 @@ export type ArtifactType =
   | 'MEMORY_INFLUENCE' | 'DONECRITERIA_RESULT' | 'VALIDATION_SUMMARY'
   | 'BRANCH_INTEGRITY' | 'PREFLIGHT_IMPROVEMENT' | 'BLOCKER_SET'
   | 'ORCHESTRATOR_CYCLE' | 'SESSION_END_RECORD' | 'SCAN_RESULT'
-  | 'OPPORTUNITY_SET' | 'SELF_CORRECTION_ATTEMPT' | 'TOOL_AUDIT';
+  | 'OPPORTUNITY_SET' | 'SELF_CORRECTION_ATTEMPT' | 'TOOL_AUDIT'
+  | 'STEERING_DECISION' | 'LIVING_SPEC';
 
 export type ArtifactSeverity = 'info' | 'warning' | 'critical';
 
@@ -106,6 +107,17 @@ export interface Project {
   last_active: string;
 }
 
+// Inline waiting-state embedded in a Session (used when state === 'WAITING_ON_HUMAN')
+export interface WaitingStateInfo {
+  reason: string;
+  reason_code: string;
+  expires_at: string;
+  approval_type: HumanLayerApprovalType;
+  human_layer_category: string;
+  required_inputs: RequiredInput[];
+  checkpoint_id?: string;
+}
+
 export interface Session {
   session_id: string;
   project_id: string;
@@ -117,12 +129,15 @@ export interface Session {
   failure_budget: number;
   current_task?: string;
   history_hash: string;
+  branch?: string;
+  intent_locked?: boolean;
   metrics: {
     confidence: number;
     loop_rate: number;
     validation_pass_rate: number;
     tasks_completed: number;
   };
+  waiting_state?: WaitingStateInfo;
 }
 
 export interface ChatMessage {

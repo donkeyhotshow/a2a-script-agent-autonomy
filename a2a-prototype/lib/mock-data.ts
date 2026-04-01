@@ -53,6 +53,23 @@ export const MOCK_SESSIONS: Session[] = [
     current_task: 'Awaiting approval: external API call to packagist.org',
     history_hash: 'sha256:def789ghi012',
     metrics: { confidence: 0.61, loop_rate: 0.1, validation_pass_rate: 0.88, tasks_completed: 2 },
+    waiting_state: {
+      reason: 'External call to packagist.org requires operator approval',
+      reason_code: 'EXTERNAL_CALL',
+      expires_at: '2026-04-01T20:45:00Z',
+      approval_type: 'EXTERNAL_CALL',
+      human_layer_category: 'CRITICAL_PATH',
+      checkpoint_id: 'ckpt_abc2_turn_004',
+      required_inputs: [
+        { id: 'confirm_external_call', label: 'Allow packagist.org API call', type: 'confirm' },
+        {
+          id: 'cache_strategy',
+          label: 'Package cache strategy',
+          type: 'choice',
+          options: ['use-lock', 'latest-stable', 'skip-upgrade'],
+        },
+      ],
+    },
   },
   {
     session_id: 'sess_1743530400_abc3',
@@ -529,6 +546,120 @@ export const MOCK_ARTIFACTS: ArtifactBase[] = [
       trust_state: 'verified',
     },
   },
+  // ── Additional artifacts covering remaining types ──────────────────────────
+
+  {
+    artifact_id: 'STEERING_DECISION.sess_1743530400_abc1.turn_004',
+    artifact_type: 'STEERING_DECISION',
+    session_id: 'sess_1743530400_abc1',
+    turn_id: 'turn_004',
+    created_at: '2026-04-01T18:10:00Z',
+    schema_version: '2.0',
+    severity: 'info',
+    summary: 'Steering: operator injected scope constraint — limit to tests/Unit/**',
+    data: {
+      injected_by: 'operator',
+      constraint: 'Scope fix to tests/Unit/** only, do not touch tests/Feature/',
+      confidence_impact: +0.04,
+      accepted: true,
+    },
+  },
+  {
+    artifact_id: 'LIVING_SPEC.sess_1743530400_abc1.turn_005',
+    artifact_type: 'LIVING_SPEC',
+    session_id: 'sess_1743530400_abc1',
+    turn_id: 'turn_005',
+    created_at: '2026-04-01T18:15:00Z',
+    schema_version: '2.0',
+    severity: 'info',
+    summary: 'Living spec v1.2: fix PHPUnit namespace imports in 12 unit test files',
+    data: {
+      version: '1.2',
+      task_title: 'Fix PHPUnit namespace imports (Unit tests only)',
+      scope: 'tests/Unit/**',
+      donecriteria: [
+        'No deprecated PHPUnit\\Framework imports',
+        'All unit tests green after fix',
+        'No new TypeErrors introduced',
+      ],
+      constraints: ['Do not touch tests/Feature/', 'Preserve test isolation'],
+      confidence_at_synthesis: 0.84,
+    },
+  },
+  {
+    artifact_id: 'OPPORTUNITY_SET.sess_1743530400_abc1.turn_003b',
+    artifact_type: 'OPPORTUNITY_SET',
+    session_id: 'sess_1743530400_abc1',
+    turn_id: 'turn_003b',
+    created_at: '2026-04-01T18:06:00Z',
+    schema_version: '2.0',
+    severity: 'info',
+    summary: 'Opportunities: 3 improvements beyond primary task',
+    data: {
+      opportunities: [
+        { id: 'opp_001', type: 'dead_code', description: 'Remove unused TestCase imports in 4 files', effort_ms: 30000, confidence: 0.91 },
+        { id: 'opp_002', type: 'coverage_gap', description: 'Add missing edge-case tests for AuthMiddleware', effort_ms: 120000, confidence: 0.74 },
+        { id: 'opp_003', type: 'deprecation', description: 'Replace setUp/tearDown with JUnit5 lifecycle hooks', effort_ms: 45000, confidence: 0.82 },
+      ],
+      selected: ['opp_001'],
+    },
+  },
+  {
+    artifact_id: 'CONFIDENCE_TRACE.sess_1743530400_bcd2.turn_015',
+    artifact_type: 'CONFIDENCE_TRACE',
+    session_id: 'sess_1743530400_bcd2',
+    turn_id: 'turn_015',
+    created_at: '2026-03-30T13:45:00Z',
+    schema_version: '2.0',
+    severity: 'info',
+    summary: 'Confidence: 0.96 — proceed to deliver (gate: 0.80)',
+    data: {
+      routing_point: 'pre_delivery',
+      confidence: 0.96,
+      gate_threshold: 0.80,
+      decision: 'proceed',
+      recommendation: 'PROCEED',
+      signals: [
+        { source: 'LLM', value: 0.97, weight: 0.6, rationale: 'All donecriteria verified' },
+        { source: 'ValidationSummary', value: 0.94, weight: 0.4, rationale: 'Coverage 94%, 0 failures' },
+      ],
+    },
+  },
+  {
+    artifact_id: 'ORCHESTRATOR_CYCLE.sess_1743530400_bcd2.turn_016',
+    artifact_type: 'ORCHESTRATOR_CYCLE',
+    session_id: 'sess_1743530400_bcd2',
+    turn_id: 'turn_016',
+    created_at: '2026-03-30T13:47:00Z',
+    schema_version: '2.0',
+    severity: 'info',
+    summary: 'FSM: VALIDATING → DELIVERING',
+    data: {
+      previous_state: 'VALIDATING',
+      current_state: 'DELIVERING',
+      transition_reason: 'all_donecriteria_passed',
+      cycle_count: 16,
+    },
+  },
+  {
+    artifact_id: 'DONECRITERIA_RESULT.sess_1743530400_cde1.turn_002',
+    artifact_type: 'DONECRITERIA_RESULT',
+    session_id: 'sess_1743530400_cde1',
+    turn_id: 'turn_002',
+    created_at: '2026-03-28T09:30:00Z',
+    schema_version: '2.0',
+    severity: 'warning',
+    summary: 'Donecriteria synthesised: 4 criteria, 0/4 verified (session starting)',
+    data: {
+      criteria: [
+        { id: 'dc_cde1_001', description: 'Middleware passes all unit tests', verified: false },
+        { id: 'dc_cde1_002', description: 'Auth token expiry handled correctly', verified: false },
+        { id: 'dc_cde1_003', description: 'Rate limiting middleware integrated', verified: false },
+        { id: 'dc_cde1_004', description: 'CHANGELOG entry added', verified: false },
+      ],
+      all_pass: false,
+    },
+  },
 ];
 
 export const MOCK_MESSAGES: Record<string, ChatMessage[]> = {
@@ -619,6 +750,87 @@ export const MOCK_MESSAGES: Record<string, ChatMessage[]> = {
       ],
     },
   ],
+  'sess_1743530400_abc3': [
+    {
+      id: 'msg_abc3_001',
+      session_id: 'sess_1743530400_abc3',
+      role: 'operator',
+      content: 'Analyse all Vue import paths and fix missing .vue extensions.',
+      created_at: '2026-04-01T14:00:00Z',
+    },
+    {
+      id: 'msg_abc3_002',
+      session_id: 'sess_1743530400_abc3',
+      role: 'agent',
+      content: 'Scan complete. 23 files with missing .vue extension imports. Donecriteria synthesised: 5 criteria.',
+      created_at: '2026-04-01T14:10:00Z',
+      evidence_chips: [
+        { artifact_id: 'DONECRITERIA_RESULT.sess_1743530400_abc3.turn_012', artifact_type: 'DONECRITERIA_RESULT', label: 'Done Criteria', severity: 'info', value: '5 criteria' },
+      ],
+    },
+    {
+      id: 'msg_abc3_003',
+      session_id: 'sess_1743530400_abc3',
+      role: 'agent',
+      content: 'Validation in progress. Running 68 tests across 4 suites. Coverage: 94%. All 5 donecriteria passed.',
+      created_at: '2026-04-01T20:04:00Z',
+      artifact_refs: ['VALIDATION_SUMMARY.sess_1743530400_abc3.turn_013'],
+      evidence_chips: [
+        { artifact_id: 'VALIDATION_SUMMARY.sess_1743530400_abc3.turn_013', artifact_type: 'VALIDATION_SUMMARY', label: 'Validation', severity: 'info', value: '94% cov' },
+        { artifact_id: 'DONECRITERIA_RESULT.sess_1743530400_abc3.turn_012', artifact_type: 'DONECRITERIA_RESULT', label: 'DC 5/5', severity: 'info' },
+      ],
+    },
+  ],
+  'sess_1743530400_bcd2': [
+    {
+      id: 'msg_bcd2_001',
+      session_id: 'sess_1743530400_bcd2',
+      role: 'operator',
+      content: 'Fix all accessibility violations in the Button component (WCAG 2.1 AA).',
+      created_at: '2026-03-30T10:00:00Z',
+    },
+    {
+      id: 'msg_bcd2_002',
+      session_id: 'sess_1743530400_bcd2',
+      role: 'agent',
+      content: 'Memory enrichment: found 1 successful recall from proj_vue_a11y_fix. Proceeding with confidence 0.96.',
+      created_at: '2026-03-30T10:30:00Z',
+      evidence_chips: [
+        { artifact_id: 'CONFIDENCE_TRACE.sess_1743530400_bcd2.turn_015', artifact_type: 'CONFIDENCE_TRACE', label: 'Confidence', severity: 'info', value: '0.96' },
+      ],
+    },
+    {
+      id: 'msg_bcd2_003',
+      session_id: 'sess_1743530400_bcd2',
+      role: 'agent',
+      content: 'All gates passed. Creating branch feat/a11y-button-fixes and opening pull request.',
+      created_at: '2026-03-30T13:47:00Z',
+      artifact_refs: ['ORCHESTRATOR_CYCLE.sess_1743530400_bcd2.turn_016'],
+      evidence_chips: [
+        { artifact_id: 'ORCHESTRATOR_CYCLE.sess_1743530400_bcd2.turn_016', artifact_type: 'ORCHESTRATOR_CYCLE', label: 'FSM', severity: 'info', value: 'DELIVERING' },
+      ],
+    },
+  ],
+  'sess_1743530400_cde1': [
+    {
+      id: 'msg_cde1_001',
+      session_id: 'sess_1743530400_cde1',
+      role: 'operator',
+      content: 'Refactor the Laravel auth middleware to support rate limiting and token expiry.',
+      created_at: '2026-03-28T09:00:00Z',
+    },
+    {
+      id: 'msg_cde1_002',
+      session_id: 'sess_1743530400_cde1',
+      role: 'agent',
+      content: 'Synthesising task. Generating 4 donecriteria. Confidence: 0.72.',
+      created_at: '2026-03-28T09:30:00Z',
+      artifact_refs: ['DONECRITERIA_RESULT.sess_1743530400_cde1.turn_002'],
+      evidence_chips: [
+        { artifact_id: 'DONECRITERIA_RESULT.sess_1743530400_cde1.turn_002', artifact_type: 'DONECRITERIA_RESULT', label: 'Done Criteria', severity: 'warning', value: '0/4' },
+      ],
+    },
+  ],
 };
 
 export const MOCK_TASK_FLOW: Record<string, TaskFlowStep[]> = {
@@ -629,6 +841,22 @@ export const MOCK_TASK_FLOW: Record<string, TaskFlowStep[]> = {
     { step_id: 'step_004', session_id: 'sess_1743530400_abc1', phase: 'EXECUTING', label: 'Execute', description: 'Apply namespace fixes to 12 files', status: 'active', created_at: '2026-04-01T20:09:00Z', artifact_ref: 'EXECUTION_DECISION.sess_1743530400_abc1.turn_008' },
     { step_id: 'step_005', session_id: 'sess_1743530400_abc1', phase: 'VALIDATING', label: 'Validate', description: 'Run tests + donecriteria check', status: 'pending', created_at: '2026-04-01T20:10:00Z' },
     { step_id: 'step_006', session_id: 'sess_1743530400_abc1', phase: 'DELIVERING', label: 'Deliver', description: 'Create branch + PR', status: 'pending', created_at: '2026-04-01T20:10:00Z' },
+  ],
+  'sess_1743530400_abc3': [
+    { step_id: 'abc3_step_001', session_id: 'sess_1743530400_abc3', phase: 'SCANNING', label: 'Scan', description: 'Find Vue import path issues', status: 'done', created_at: '2026-04-01T14:02:00Z', duration_ms: 900 },
+    { step_id: 'abc3_step_002', session_id: 'sess_1743530400_abc3', phase: 'SYNTHESIZING', label: 'Synthesize', description: 'Generate fix task with 5 donecriteria', status: 'done', created_at: '2026-04-01T14:05:00Z', duration_ms: 750 },
+    { step_id: 'abc3_step_003', session_id: 'sess_1743530400_abc3', phase: 'ENRICHING', label: 'Enrich', description: 'Inject memory context', status: 'done', created_at: '2026-04-01T14:10:00Z', duration_ms: 500 },
+    { step_id: 'abc3_step_004', session_id: 'sess_1743530400_abc3', phase: 'EXECUTING', label: 'Execute', description: 'Fix .vue import paths in 23 files', status: 'done', created_at: '2026-04-01T14:15:00Z', duration_ms: 3200 },
+    { step_id: 'abc3_step_005', session_id: 'sess_1743530400_abc3', phase: 'VALIDATING', label: 'Validate', description: 'Run 68 tests + donecriteria', status: 'active', created_at: '2026-04-01T20:04:00Z', artifact_ref: 'VALIDATION_SUMMARY.sess_1743530400_abc3.turn_013' },
+    { step_id: 'abc3_step_006', session_id: 'sess_1743530400_abc3', phase: 'DELIVERING', label: 'Deliver', description: 'Create PR', status: 'pending', created_at: '2026-04-01T20:05:00Z' },
+  ],
+  'sess_1743530400_bcd2': [
+    { step_id: 'bcd2_step_001', session_id: 'sess_1743530400_bcd2', phase: 'SCANNING', label: 'Scan', description: 'Find a11y violations in Button component', status: 'done', created_at: '2026-03-30T10:05:00Z', duration_ms: 600 },
+    { step_id: 'bcd2_step_002', session_id: 'sess_1743530400_bcd2', phase: 'SYNTHESIZING', label: 'Synthesize', description: 'Generate WCAG 2.1 AA fix plan', status: 'done', created_at: '2026-03-30T10:10:00Z', duration_ms: 720 },
+    { step_id: 'bcd2_step_003', session_id: 'sess_1743530400_bcd2', phase: 'ENRICHING', label: 'Enrich', description: 'Memory recall: prior a11y fix', status: 'done', created_at: '2026-03-30T10:15:00Z', duration_ms: 430 },
+    { step_id: 'bcd2_step_004', session_id: 'sess_1743530400_bcd2', phase: 'EXECUTING', label: 'Execute', description: 'Apply aria-* and focus fixes', status: 'done', created_at: '2026-03-30T10:30:00Z', duration_ms: 2800 },
+    { step_id: 'bcd2_step_005', session_id: 'sess_1743530400_bcd2', phase: 'VALIDATING', label: 'Validate', description: 'Run test suite', status: 'done', created_at: '2026-03-30T13:40:00Z', artifact_ref: 'CONFIDENCE_TRACE.sess_1743530400_bcd2.turn_015', duration_ms: 1400 },
+    { step_id: 'bcd2_step_006', session_id: 'sess_1743530400_bcd2', phase: 'DELIVERING', label: 'Deliver', description: 'Create branch + PR', status: 'active', created_at: '2026-03-30T13:47:00Z' },
   ],
 };
 
@@ -644,6 +872,13 @@ export const MOCK_LOGS: Record<string, LogLine[]> = {
     { id: 'log_008', session_id: 'sess_1743530400_abc1', timestamp: '2026-04-01T20:09:02Z', severity: 'info', component: 'ToolAudit', message: 'write_file: applying fix to tests/Unit/UserTest.php' },
     { id: 'log_009', session_id: 'sess_1743530400_abc1', timestamp: '2026-04-01T20:09:05Z', severity: 'debug', component: 'DeviationTracker', message: 'Confidence shift: 0.85→0.87 (+0.02, minor)' },
   ],
+  'sess_1743530400_bcd2': [
+    { id: 'bcd2_log_001', session_id: 'sess_1743530400_bcd2', timestamp: '2026-03-30T10:05:00Z', severity: 'info', component: 'ProjectScanner', message: 'Scanning Button.vue for a11y violations...' },
+    { id: 'bcd2_log_002', session_id: 'sess_1743530400_bcd2', timestamp: '2026-03-30T10:06:00Z', severity: 'warn', component: 'A11yAuditor', message: '4 WCAG 2.1 AA violations: missing aria-label, contrast, role' },
+    { id: 'bcd2_log_003', session_id: 'sess_1743530400_bcd2', timestamp: '2026-03-30T13:40:00Z', severity: 'info', component: 'ValidationRunner', message: 'Test suite: 45/45 passed (coverage 97%)' },
+    { id: 'bcd2_log_004', session_id: 'sess_1743530400_bcd2', timestamp: '2026-03-30T13:47:00Z', severity: 'info', component: 'OrchestratorKernel', message: 'FSM: VALIDATING → DELIVERING' },
+    { id: 'bcd2_log_005', session_id: 'sess_1743530400_bcd2', timestamp: '2026-03-30T13:48:00Z', severity: 'info', component: 'PRCreator', message: 'Branch feat/a11y-button-fixes created, PR #17 opened' },
+  ],
 };
 
 export const MOCK_STORAGE: Record<string, StorageItem[]> = {
@@ -651,6 +886,7 @@ export const MOCK_STORAGE: Record<string, StorageItem[]> = {
     { name: 'PREFLIGHT_IMPROVEMENT.sess_abc1.turn_002.json', type: 'artifact', created_at: '2026-04-01T18:02:00Z', size_bytes: 1240, status: 'consumed', artifact_type: 'PREFLIGHT_IMPROVEMENT' },
     { name: 'DRYRUN_PLANGRAPH.sess_abc1.turn_001.json', type: 'artifact', created_at: '2026-04-01T18:01:00Z', size_bytes: 2100, status: 'consumed', artifact_type: 'DRYRUN_PLANGRAPH' },
     { name: 'SCAN_RESULT.sess_abc1.turn_003.json', type: 'artifact', created_at: '2026-04-01T18:05:00Z', size_bytes: 890, status: 'active', artifact_type: 'SCAN_RESULT' },
+    { name: 'LIVING_SPEC.sess_abc1.turn_005.json', type: 'artifact', created_at: '2026-04-01T18:15:00Z', size_bytes: 1140, status: 'active', artifact_type: 'LIVING_SPEC' },
     { name: 'MEMORY_INFLUENCE.sess_abc1.turn_006.json', type: 'artifact', created_at: '2026-04-01T20:07:00Z', size_bytes: 1560, status: 'active', artifact_type: 'MEMORY_INFLUENCE' },
     { name: 'CONFIDENCE_TRACE.sess_abc1.turn_007.json', type: 'artifact', created_at: '2026-04-01T20:08:00Z', size_bytes: 720, status: 'active', artifact_type: 'CONFIDENCE_TRACE' },
     { name: 'EXECUTION_DECISION.sess_abc1.turn_008.json', type: 'artifact', created_at: '2026-04-01T20:09:00Z', size_bytes: 540, status: 'active', artifact_type: 'EXECUTION_DECISION' },
@@ -658,5 +894,17 @@ export const MOCK_STORAGE: Record<string, StorageItem[]> = {
     { name: 'step-001', type: 'step', created_at: '2026-04-01T18:03:00Z', size_bytes: 2400, status: 'active' },
     { name: 'step-002', type: 'step', created_at: '2026-04-01T18:04:00Z', size_bytes: 3100, status: 'active' },
     { name: 'ckpt_abc1_turn_007', type: 'checkpoint', created_at: '2026-04-01T20:08:00Z', size_bytes: 18200, status: 'active' },
+  ],
+  'sess_1743530400_bcd2': [
+    { name: 'SCAN_RESULT.sess_bcd2.turn_001.json', type: 'artifact', created_at: '2026-03-30T10:06:00Z', size_bytes: 740, status: 'consumed', artifact_type: 'SCAN_RESULT' },
+    { name: 'CONFIDENCE_TRACE.sess_bcd2.turn_015.json', type: 'artifact', created_at: '2026-03-30T13:45:00Z', size_bytes: 720, status: 'active', artifact_type: 'CONFIDENCE_TRACE' },
+    { name: 'ORCHESTRATOR_CYCLE.sess_bcd2.turn_016.json', type: 'artifact', created_at: '2026-03-30T13:47:00Z', size_bytes: 380, status: 'active', artifact_type: 'ORCHESTRATOR_CYCLE' },
+    { name: 'ckpt_bcd2_turn_015', type: 'checkpoint', created_at: '2026-03-30T13:45:00Z', size_bytes: 15400, status: 'active' },
+  ],
+  'sess_1743530400_abc3': [
+    { name: 'DONECRITERIA_RESULT.sess_abc3.turn_012.json', type: 'artifact', created_at: '2026-04-01T20:04:00Z', size_bytes: 980, status: 'active', artifact_type: 'DONECRITERIA_RESULT' },
+    { name: 'VALIDATION_SUMMARY.sess_abc3.turn_013.json', type: 'artifact', created_at: '2026-04-01T20:05:00Z', size_bytes: 1320, status: 'active', artifact_type: 'VALIDATION_SUMMARY' },
+    { name: 'BRANCH_INTEGRITY.sess_abc3.turn_014.json', type: 'artifact', created_at: '2026-04-01T20:06:00Z', size_bytes: 560, status: 'active', artifact_type: 'BRANCH_INTEGRITY' },
+    { name: 'ckpt_abc3_turn_013', type: 'checkpoint', created_at: '2026-04-01T20:05:00Z', size_bytes: 22100, status: 'active' },
   ],
 };
