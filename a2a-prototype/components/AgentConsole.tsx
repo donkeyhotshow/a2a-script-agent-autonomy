@@ -1,7 +1,7 @@
 'use client';
 import { useState, type FC } from 'react';
 import { useQueryState } from 'nuqs';
-import type { ChatMessage } from '@/lib/types';
+import type { ChatMessage, SteeringIntent } from '@/lib/types';
 import {
   MOCK_PROJECTS,
   MOCK_SESSIONS,
@@ -22,7 +22,7 @@ import BottomPanel from './BottomPanel';
 import PreflightView from './PreflightView';
 
 type RightTab = 'taskflow' | 'evidence' | 'waiting';
-type BottomTab = 'terminal' | 'storage' | 'raw';
+type BottomTab = 'terminal' | 'storage' | 'raw' | 'steering';
 
 const AgentConsole: FC = () => {
   const [selectedProject, setSelectedProject] = useQueryState('project', { defaultValue: 'proj_001' });
@@ -31,6 +31,7 @@ const AgentConsole: FC = () => {
   const [bottomTab, setBottomTab] = useQueryState('btab', { defaultValue: 'terminal' });
   const [preflightOpen, setPreflightOpen] = useState(false);
   const [localMessages, setLocalMessages] = useState<Record<string, ChatMessage[]>>({});
+  const [steeringIntents, setSteeringIntents] = useState<SteeringIntent[]>([]);
 
   const session = MOCK_SESSIONS.find((s) => s.session_id === selectedSession) ?? MOCK_SESSIONS[0];
   const sessionArtifacts = MOCK_ARTIFACTS.filter((a) => a.session_id === selectedSession);
@@ -79,6 +80,31 @@ const AgentConsole: FC = () => {
 
   const handleBottomTabChange = (tab: BottomTab) => {
     void setBottomTab(tab);
+  };
+
+  const handleSteer = (goal: string, constraints: string[]) => {
+    const intent: SteeringIntent = {
+      id: `intent_${Date.now()}`,
+      session_id: session.session_id,
+      goal,
+      constraints,
+      submitted_at: new Date().toISOString(),
+      status: 'pending',
+    };
+    setSteeringIntents((prev) => [...prev, intent]);
+    // Also push a message into the chat
+    const sessionId = selectedSession ?? 'sess_1743530400_abc1';
+    const msg: ChatMessage = {
+      id: `msg_steer_${Date.now()}`,
+      session_id: sessionId,
+      role: 'operator',
+      content: `[Steering] ${goal}${constraints.length > 0 ? `\nConstraints: ${constraints.join(', ')}` : ''}`,
+      created_at: new Date().toISOString(),
+    };
+    setLocalMessages((prev) => ({
+      ...prev,
+      [sessionId]: [...(prev[sessionId] ?? []), msg],
+    }));
   };
 
   return (
@@ -134,6 +160,8 @@ const AgentConsole: FC = () => {
         storageItems={storageItems}
         session={session}
         artifacts={sessionArtifacts}
+        steeringIntents={steeringIntents}
+        onSteer={handleSteer}
       />
     </div>
   );

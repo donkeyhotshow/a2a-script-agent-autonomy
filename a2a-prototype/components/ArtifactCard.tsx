@@ -16,17 +16,19 @@ const SEVERITY_BADGE = {
 
 interface Props {
   artifact: ArtifactBase;
+  onInspect?: (artifact: ArtifactBase) => void;
 }
 
-const ArtifactCard: FC<Props> = ({ artifact }) => {
+const ArtifactCard: FC<Props> = ({ artifact, onInspect }) => {
   const [expanded, setExpanded] = useState(false);
   const [copied, setCopied] = useState(false);
   const sev = artifact.severity ?? 'info';
 
   const handleCopy = () => {
-    navigator.clipboard.writeText(JSON.stringify(artifact, null, 2));
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    navigator.clipboard.writeText(JSON.stringify(artifact, null, 2)).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    }).catch(() => { /* clipboard write failed — silently ignore */ });
   };
 
   return (
@@ -39,6 +41,14 @@ const ArtifactCard: FC<Props> = ({ artifact }) => {
           <span className="text-zinc-400 text-xs font-mono">{artifact.turn_id}</span>
         </div>
         <div className="flex items-center gap-1 shrink-0">
+          {onInspect && (
+            <button
+              onClick={() => onInspect(artifact)}
+              className="text-xs text-zinc-500 hover:text-zinc-300 px-1.5 py-0.5 rounded border border-zinc-700 hover:border-zinc-500 transition-colors"
+            >
+              Inspect
+            </button>
+          )}
           <button
             onClick={handleCopy}
             className="text-xs text-zinc-500 hover:text-zinc-300 px-1.5 py-0.5 rounded border border-zinc-700 hover:border-zinc-500 transition-colors"
@@ -54,7 +64,9 @@ const ArtifactCard: FC<Props> = ({ artifact }) => {
         </div>
       </div>
       <p className="text-zinc-300 text-sm mb-1">{artifact.summary}</p>
-      <p className="text-zinc-600 text-xs font-mono">{new Date(artifact.created_at).toLocaleTimeString()}</p>
+      <p className="text-zinc-600 text-xs font-mono">
+        {new Date(artifact.created_at).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' })}
+      </p>
       {expanded && (
         <pre className="mt-2 text-xs font-mono text-zinc-400 bg-zinc-900 rounded p-2 overflow-x-auto max-h-48 overflow-y-auto border border-zinc-800">
           {JSON.stringify(artifact.data, null, 2)}

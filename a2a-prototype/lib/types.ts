@@ -1,8 +1,47 @@
-// FSM States
-export type OrchestratorState =
+// 5-phase cognitive cycle (ADR-0071) — runs inside EXECUTING
+export type CognitivePhase =
+  | 'REFLECT'      // Phase 1: Analyse outcome + inject memory
+  | 'SYNTHESIZE'   // Phase 2: Generate Living Spec + done-criteria
+  | 'ENRICH'       // Phase 3: Episodic recall + TRACE_RISK critique
+  | 'PLAN'         // Phase 4: DryRun PlanGraph + confidence calibration
+  | 'EXECUTE';     // Phase 5: Tool audit + deviation monitoring
+
+// Operational FSM states (ADR-0051)
+export type OperationalState =
   | 'IDLE' | 'SCANNING' | 'SYNTHESIZING' | 'ENRICHING'
   | 'EXECUTING' | 'SELF_CORRECTING' | 'WAITING_ON_HUMAN'
   | 'VALIDATING' | 'DELIVERING' | 'STOPPED';
+
+// Combined state used across UI — cognitive phases are valid session states
+export type OrchestratorState = OperationalState | CognitivePhase;
+
+// Type guards
+export function isCognitivePhase(s: OrchestratorState): s is CognitivePhase {
+  return ['REFLECT', 'SYNTHESIZE', 'ENRICH', 'PLAN', 'EXECUTE'].includes(s as string);
+}
+
+export function isOperationalState(s: OrchestratorState): s is OperationalState {
+  return !isCognitivePhase(s);
+}
+
+// Type-safe FSM transition map (ADR-0051)
+export const FSM_TRANSITIONS: Partial<Record<OrchestratorState, OrchestratorState[]>> = {
+  IDLE:             ['SCANNING'],
+  SCANNING:         ['SYNTHESIZING', 'IDLE'],
+  SYNTHESIZING:     ['ENRICHING', 'IDLE'],
+  ENRICHING:        ['EXECUTING', 'WAITING_ON_HUMAN'],
+  EXECUTING:        ['REFLECT', 'VALIDATING', 'SELF_CORRECTING', 'WAITING_ON_HUMAN', 'STOPPED'],
+  REFLECT:          ['SYNTHESIZE'],
+  SYNTHESIZE:       ['ENRICH'],
+  ENRICH:           ['PLAN'],
+  PLAN:             ['EXECUTE', 'WAITING_ON_HUMAN'],
+  EXECUTE:          ['VALIDATING', 'SELF_CORRECTING', 'WAITING_ON_HUMAN'],
+  SELF_CORRECTING:  ['EXECUTING', 'WAITING_ON_HUMAN', 'STOPPED'],
+  WAITING_ON_HUMAN: ['EXECUTING', 'STOPPED'],
+  VALIDATING:       ['DELIVERING', 'WAITING_ON_HUMAN'],
+  DELIVERING:       ['IDLE', 'STOPPED'],
+  STOPPED:          [],
+};
 
 // Artifact types
 export type ArtifactType =
@@ -133,4 +172,20 @@ export interface StorageItem {
   status: 'active' | 'archived' | 'consumed';
   artifact_type?: ArtifactType;
   download_url?: string;
+}
+
+// Steering intent (IntentPanel / Steering tab)
+export interface SteeringIntent {
+  id: string;
+  session_id: string;
+  goal: string;
+  constraints: string[];
+  submitted_at: string;
+  status: 'pending' | 'applied' | 'rejected';
+}
+
+// AJV-validated artifact result
+export interface ArtifactValidationResult {
+  valid: boolean;
+  errors: string[];
 }

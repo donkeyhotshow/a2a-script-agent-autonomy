@@ -127,6 +127,20 @@ export const MOCK_SESSIONS: Session[] = [
     history_hash: 'sha256:vwx345yza678',
     metrics: { confidence: 0.72, loop_rate: 0.0, validation_pass_rate: 0.0, tasks_completed: 0 },
   },
+  // Cognitive cycle demo session — shows REFLECT phase (ADR-0071)
+  {
+    session_id: 'sess_1743530400_cog1',
+    project_id: 'proj_001',
+    name: 'ADR-0071 cognitive cycle demo (REFLECT)',
+    state: 'REFLECT',
+    created_at: '2026-04-01T21:00:00Z',
+    updated_at: '2026-04-01T21:10:00Z',
+    autonomy_level: 'FULL',
+    failure_budget: 5,
+    current_task: 'Reflect on previous execution outcome + inject episodic memory',
+    history_hash: 'sha256:cog001reflect',
+    metrics: { confidence: 0.83, loop_rate: 0.0, validation_pass_rate: 0.9, tasks_completed: 3 },
+  },
 ];
 
 export const MOCK_ARTIFACTS: ArtifactBase[] = [

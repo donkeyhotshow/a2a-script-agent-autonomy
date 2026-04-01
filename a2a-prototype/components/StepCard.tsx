@@ -17,7 +17,7 @@ const STATUS_ICON = {
   waiting: '⏸',
 };
 
-const PHASE_COLORS: Record<OrchestratorState, string> = {
+const PHASE_COLORS: Partial<Record<OrchestratorState, string>> = {
   IDLE: 'text-zinc-400',
   SCANNING: 'text-cyan-400',
   SYNTHESIZING: 'text-indigo-400',
@@ -28,6 +28,12 @@ const PHASE_COLORS: Record<OrchestratorState, string> = {
   VALIDATING: 'text-purple-400',
   DELIVERING: 'text-green-400',
   STOPPED: 'text-red-400',
+  // Cognitive cycle phases
+  REFLECT:    'text-violet-400',
+  SYNTHESIZE: 'text-fuchsia-400',
+  ENRICH:     'text-pink-400',
+  PLAN:       'text-rose-400',
+  EXECUTE:    'text-orange-300',
 };
 
 interface Props {
@@ -40,7 +46,7 @@ const StepCard: FC<Props> = ({ step }) => {
       <div className="flex items-center justify-between mb-1">
         <div className="flex items-center gap-2">
           <span className="font-mono text-base">{STATUS_ICON[step.status]}</span>
-          <span className={`font-mono font-semibold ${PHASE_COLORS[step.phase]}`}>{step.label}</span>
+          <span className={`font-mono font-semibold ${PHASE_COLORS[step.phase] ?? 'text-zinc-400'}`}>{step.label}</span>
         </div>
         {step.duration_ms && (
           <span className="text-zinc-600 font-mono">{step.duration_ms}ms</span>

@@ -3,7 +3,7 @@ import type { FC } from 'react';
 import type { Session, OrchestratorState } from '@/lib/types';
 import ConfidenceBadge from './ConfidenceBadge';
 
-const STATE_COLORS: Record<OrchestratorState, string> = {
+const STATE_COLORS: Partial<Record<OrchestratorState, string>> = {
   IDLE: 'bg-zinc-800 text-zinc-400 border-zinc-700',
   SCANNING: 'bg-cyan-900/50 text-cyan-400 border-cyan-800',
   SYNTHESIZING: 'bg-indigo-900/50 text-indigo-400 border-indigo-800',
@@ -14,7 +14,15 @@ const STATE_COLORS: Record<OrchestratorState, string> = {
   VALIDATING: 'bg-purple-900/50 text-purple-400 border-purple-800',
   DELIVERING: 'bg-green-900/50 text-green-400 border-green-800',
   STOPPED: 'bg-red-900/50 text-red-400 border-red-800',
+  // Cognitive cycle phases
+  REFLECT:    'bg-violet-900/50 text-violet-400 border-violet-800',
+  SYNTHESIZE: 'bg-fuchsia-900/50 text-fuchsia-400 border-fuchsia-800',
+  ENRICH:     'bg-pink-900/50 text-pink-400 border-pink-800',
+  PLAN:       'bg-rose-900/50 text-rose-400 border-rose-800',
+  EXECUTE:    'bg-orange-900/50 text-orange-400 border-orange-800',
 };
+
+const DEFAULT_STATE_COLOR = 'bg-zinc-800 text-zinc-400 border-zinc-700';
 
 interface Props {
   sessions: Session[];
@@ -44,7 +52,7 @@ const SessionList: FC<Props> = ({ sessions, selectedId, onSelect }) => {
               <ConfidenceBadge value={s.metrics.confidence} showLabel={false} />
             </div>
             <div className="flex items-center gap-1.5">
-              <span className={`px-1.5 py-0.5 rounded border text-xs font-mono ${STATE_COLORS[s.state]}`}>
+              <span className={`px-1.5 py-0.5 rounded border text-xs font-mono ${STATE_COLORS[s.state] ?? DEFAULT_STATE_COLOR}`}>
                 {s.state}
               </span>
               <span className="text-zinc-700 text-xs font-mono truncate">
