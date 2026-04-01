@@ -9,6 +9,7 @@ import { getA2aServerBaseUrl } from '../../shared/a2a-server-base.js';
 import { normalizePromisePollStatus } from '../../shared/client-api-envelope.mjs';
 import { resolveProjectPathForApi, loadSession, saveSession } from '../storage/projectSessions.js';
 import { registerStepSessionsParent } from '../storage/newSessions.js';
+import { getActiveAsyncWork } from './utils/session-projection-dto.js';
 
 function projectSessionStepsParent(projectPath) {
     return pathMod.join(projectPath, '.a2a', 'session-steps');
@@ -116,13 +117,27 @@ function runViteClientPromisePoll({
                         stepHandlers.saveServerResponse(cwd, sessionId, currentStep, stepRecord);
                     }
 
-                    if (promiseStatus.execute) session.execute = promiseStatus.execute;
+                    if (promiseStatus.execute) {
+                        session.execute = promiseStatus.execute;
+                    }
                     session.context = stepRecord?.context || session.context;
                     session.promiseId = null;
+                    session.promiseStatus = 'completed';
                     session.status = 'completed';
                     session.updatedAt = new Date().toISOString();
-                    if (projectPath) saveSession(projectPath, session);
+                    
+                    // Save session to persist execute and updated status
+                    if (projectPath) {
+                        saveSession(projectPath, session);
+                    }
                     stepHandlers.saveNewSession(cwd, session);
+                    
+                    // Also update session-index.json promise status
+                    stepHandlers.saveServerPromise(cwd, sessionId, currentStep, {
+                        promiseId: promiseId,
+                        status: 'completed',
+                        completedAt: new Date().toISOString(),
+                    });
                 }
 
                 const normalizedStatus = normalizePromisePollStatus(promiseStatus);
@@ -168,7 +183,7 @@ function runViteClientPromisePoll({
     xhrReq.end();
 }
 
-export function handleAsyncFlow({ cwd, url, path, req, res, storageMode = 'storage' }) {
+export async function handleAsyncFlow({ cwd, url, path, req, res, storageMode = 'storage' }) {
     const asyncMatch = path.match(/^\/sessions\/([^/]+)\/async$/);
     if (req.method === 'GET' && asyncMatch) {
         const sessionId = asyncMatch[1];
@@ -195,7 +210,9 @@ export function handleAsyncFlow({ cwd, url, path, req, res, storageMode = 'stora
             res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
             return true;
         }
-        const hit = stepHandlers.getActiveAsyncWork(cwd, sessionId);
+        // Use getActiveAsyncWork from session-projection-dto to also find completed async
+        // that hasn't been saved to step files yet (from session-index fallback)
+        const hit = getActiveAsyncWork(cwd, sessionId);
         if (!hit) {
             cleanup();
             res.setHeader('Content-Type', 'application/json');

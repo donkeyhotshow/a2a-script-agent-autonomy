@@ -7,6 +7,9 @@ import { isActivePromiseStatus } from '../../storage/promise-status.js';
 import { buildExecuteProjection } from './execute-projection-dto.js';
 import { collectSessionMessagesFlat } from './message-timeline.js';
 import { deriveSessionStage } from './session-stage-machine.js';
+import { getA2aServerBaseUrl } from '../../../shared/a2a-server-base.js';
+import { loadSessionIndex } from '../../storage/newSessions.js';
+import http from 'http';
 
 function debugProjectionLog(event, payload) {
     if (process.env.A2A_SESSION_DTO_DEBUG !== '1') return;
@@ -20,8 +23,16 @@ function debugProjectionLog(event, payload) {
 
 /**
  * In-flight async work: first step with an active server-promise.json (pending/processing).
+ * Also checks session-index.json for promise metadata.
+ * 
+ * IMPORTANT: When falling back to session-index.json (which may have stale 'pending' status),
+ * we must verify the actual promise status against the server. The session-index is not updated
+ * when async completes (server-promise.json is deleted but index.promiseStatus stays 'pending').
+ * 
+ * NOTE: Also checks index even when server-promise.json is missing (completed async that wasn't polled).
  */
 export function getActiveAsyncWork(cwd, sessionId) {
+    // First check step files
     const steps = stepHandlers.listNewSteps(cwd, sessionId);
     for (const stepNum of steps) {
         const serverPromise = stepHandlers.loadServerPromise(cwd, sessionId, stepNum);
@@ -29,22 +40,147 @@ export function getActiveAsyncWork(cwd, sessionId) {
             return { stepNum, promiseId: serverPromise.promiseId, serverPromise };
         }
     }
+    
+    // Fall back to checking session-index.json - but status may be stale!
+    // session-index is not updated when async completes, so we must verify with server
+    // Also check index even when server-promise.json is missing (completed async that wasn't polled)
+    const index = loadSessionIndex(cwd, sessionId);
+    if (index?.promiseId) {
+        // If status is pending/processing, verify with server
+        if (index.promiseStatus === 'pending' || index.promiseStatus === 'processing') {
+            return { 
+                stepNum: index.currentStep || 1, 
+                promiseId: index.promiseId, 
+                serverPromise: { status: index.promiseStatus || 'pending' },
+                needsServerVerification: true // Flag to force verification
+            };
+        }
+        // If index shows completed but there's no server-response with execute,
+        // we still need to return so /async can save the result
+        if (index.promiseStatus === 'completed') {
+            // Check if the latest step has the execute data
+            const latestStep = index.currentStep || 1;
+            const stepData = stepHandlers.loadNewStep(cwd, sessionId, latestStep);
+            if (!stepData?.execute?.form?.choices) {
+                // No execute in step - need to fetch result from server
+                return {
+                    stepNum: latestStep,
+                    promiseId: index.promiseId,
+                    serverPromise: { status: 'completed' },
+                    needsServerVerification: false // Already marked completed, just fetch result
+                };
+            }
+        }
+    }
+    
     return null;
 }
 
 /**
  * Pending async work metadata.
+ * Verifies the actual promise status via GET /api/v1/requests/:id/result to avoid stale pending state.
+ * 
+ * CRITICAL: When getActiveAsyncWork returns with needsServerVerification flag (from session-index fallback),
+ * we MUST verify against the server because session-index is not updated when async completes.
+ * 
+ * @param {string} cwd - Working directory
+ * @param {string} sessionId - Session ID
+ * @param {object} session - Session object to attach metadata to
+ * @param {boolean} [verifyFromServer=true] - Whether to verify promise status from A2A server (async operation)
+ * @returns {Promise<object>} Session with promise metadata attached
  */
-export function attachPromiseMeta(cwd, sessionId, session) {
+export async function attachPromiseMeta(cwd, sessionId, session, verifyFromServer = true) {
     const active = getActiveAsyncWork(cwd, sessionId);
     if (active) {
+        let promiseStatus = active.serverPromise.status;
+        let asyncPending = isActivePromiseStatus(promiseStatus);
+        
+        // Always verify if:
+        // 1. verifyFromServer is true AND
+        // 2. Either we have needsServerVerification flag (session-index fallback) OR status is pending
+        const shouldVerify = verifyFromServer && (active.needsServerVerification || promiseStatus === 'pending');
+        
+        if (shouldVerify) {
+            try {
+                const verifiedStatus = await verifyPromiseStatusAsync(active.promiseId);
+                if (verifiedStatus !== null) {
+                    promiseStatus = verifiedStatus;
+                    asyncPending = isActivePromiseStatus(verifiedStatus);
+                }
+            } catch (e) {
+                console.error('[attachPromiseMeta] Verification failed, using local status:', e.message);
+            }
+        }
+        
         session.promiseId = active.promiseId;
-        session.promiseStatus = active.serverPromise.status;
-        session.asyncPending = true;
+        session.promiseStatus = promiseStatus;
+        session.asyncPending = asyncPending;
         return session;
     }
     session.asyncPending = false;
     return session;
+}
+
+/**
+ * Verifies the current status of a promise by querying the A2A server.
+ * @param {string} promiseId - The promise ID to check
+ * @returns {Promise<string|null>} The current status or null if verification fails
+ */
+async function verifyPromiseStatusAsync(promiseId) {
+    const a2aServerUrl = getA2aServerBaseUrl();
+    const url = `${a2aServerUrl}/api/v1/requests/${promiseId}/result`;
+    console.log('[verifyPromiseStatusAsync] Checking promise:', promiseId, 'url:', url);
+    
+    try {
+        const urlObj = new URL(url);
+        const options = {
+            hostname: urlObj.hostname,
+            port: parseInt(urlObj.port, 10),
+            path: urlObj.pathname,
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 5000 // 5 second timeout
+        };
+        
+        return new Promise((resolve) => {
+            const req = http.request(options, (res) => {
+                let data = '';
+                res.on('data', (chunk) => (data += chunk));
+                res.on('end', () => {
+                    try {
+                        if (data && data.trim() !== '') {
+                            const parsed = JSON.parse(data);
+                            // The response from /api/v1/requests/:id/result wraps in { success, data }
+                            // or returns the status object directly depending on server implementation
+                            const statusObj = parsed.data || parsed;
+                            resolve(statusObj.status || null);
+                        } else {
+                            resolve(null);
+                        }
+                    } catch (e) {
+                        console.error('[verifyPromiseStatusAsync] Failed to parse response:', e.message);
+                        resolve(null);
+                    }
+                });
+            });
+            
+            req.on('error', (e) => {
+                console.error('[verifyPromiseStatusAsync] Request error:', e.message);
+                resolve(null);
+            });
+            
+            req.on('timeout', () => {
+                console.error('[verifyPromiseStatusAsync] Request timeout');
+                req.destroy();
+                resolve(null);
+            });
+            
+            req.end();
+        });
+    } catch (e) {
+        console.error('[verifyPromiseStatusAsync] Error setting up request:', e.message);
+        return null;
+    }
 }
 
 /**

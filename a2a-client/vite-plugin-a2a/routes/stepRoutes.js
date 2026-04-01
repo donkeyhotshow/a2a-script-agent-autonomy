@@ -6,7 +6,7 @@ import { handleRouterFlow } from './step-routes-router-flow.js';
 const API_PREFIX = '/api/a2a';
 
 export function createStepRoutes({ cwd }) {
-    return (req, res, next) => {
+    return async (req, res, next) => {
         if (!req.url?.startsWith(`${API_PREFIX}/sessions`)) {
             return next();
         }
@@ -19,7 +19,7 @@ export function createStepRoutes({ cwd }) {
             return next();
         }
 
-        if (handleRouterFlow({ cwd, path: p, req, res, url, storageMode })) {
+        if (await handleRouterFlow({ cwd, path: p, req, res, url, storageMode })) {
             return;
         }
 
@@ -27,7 +27,7 @@ export function createStepRoutes({ cwd }) {
             return;
         }
 
-        if (handleAsyncFlow({ cwd, url, path: p, req, res, storageMode })) {
+        if (await handleAsyncFlow({ cwd, url, path: p, req, res, storageMode })) {
             return;
         }
 

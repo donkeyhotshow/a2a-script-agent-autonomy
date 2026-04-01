@@ -59,7 +59,7 @@ function projectStorageContextFields(projectId, resolvedProjectPath) {
 }
 
 export function createSessionRoutes({ cwd }) {
-    return (req, res, next) => {
+    return async (req, res, next) => {
         if (!req.url?.startsWith(`${API_PREFIX}/sessions`)) {
             return next();
         }
@@ -233,8 +233,25 @@ export function createSessionRoutes({ cwd }) {
            return;
        }
 
-        // POST /sessions/:id/next — handled by stepRoutes (invoke + step artifacts); do not short-circuit here.
-        const nextMatch = p.match(/^\/sessions\/([^/]+)\/next$/);
+        // GET /sessions/:id - get single session
+        const sessionIdMatch = p.match(/^\/sessions\/([^\/]+)$/);
+        if (req.method === 'GET' && sessionIdMatch) {
+            const sessionId = sessionIdMatch[1];
+            if (!isValidSessionId(sessionId)) {
+                res.writeHead(400).end(JSON.stringify({ error: 'Invalid session ID' }));
+                return;
+            }
+            const { session, projectPath } = resolveSession(cwd, sessionId, url);
+            if (!session) {
+                res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
+                return;
+            }
+            const sessionWithMeta = await attachPromiseMeta(cwd, sessionId, session);
+            const publicSession = toPublicSession(sessionWithMeta, url.searchParams.get('includeContext') === '1');
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(publicSession));
+            return;
+        }
         if (req.method === 'POST' && nextMatch) {
             return next();
         }
@@ -333,7 +350,7 @@ export function createSessionRoutes({ cwd }) {
                 res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
                 return;
             }
-            attachPromiseMeta(cwd, sessionId, session);
+            await attachPromiseMeta(cwd, sessionId, session);
             const afterSeq = Math.max(0, parseInt(url.searchParams.get('afterSeq') || '0', 10) || 0);
             const limit = Math.min(200, Math.max(1, parseInt(url.searchParams.get('limit') || '50', 10) || 50));
             const withExecute = url.searchParams.get('withExecute') === '1';
@@ -394,7 +411,7 @@ export function createSessionRoutes({ cwd }) {
 
                 console.log('[SessionRoutes] GET session:', sessionId, 'storageMode:', storageMode, 'currentStep:', session.currentStep);
                 if (storageMode !== 'project') {
-                    attachPromiseMeta(cwd, sessionId, session);
+                    await attachPromiseMeta(cwd, sessionId, session);
                     console.log('[SessionRoutes] After attachPromiseMeta:', sessionId, 'promiseId:', session.promiseId);
                     const { messages, lastSeq } = collectSessionMessagesFlat(cwd, sessionId);
                     session.messages = messages;

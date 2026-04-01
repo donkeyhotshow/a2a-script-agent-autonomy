@@ -8,7 +8,7 @@
 param(
     [string]$RetryRequest,
     [string]$OllamaUrl = 'http://localhost:11435',
-    [string]$ClientUrl = 'http://localhost:3001'
+    [string]$ClientUrl = 'http://localhost:5173'
 )
 
 $ErrorActionPreference = 'Stop'
@@ -47,7 +47,7 @@ try {
 # 3. Check services
 Write-Host "`n[3] Services" -ForegroundColor Gray
 $checks = @(
-    @{ Name = "Client API"; Url = "$ClientUrl/health" }
+    @{ Name = "Client API"; Url = "$ClientUrl/api/a2a/projects" }
     @{ Name = "Server"; Url = "http://localhost:3000/health" }
 )
 foreach ($c in $checks) {

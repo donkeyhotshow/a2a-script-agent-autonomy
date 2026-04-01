@@ -58,7 +58,7 @@ export function validateSubmitResult(submitResult) {
     return null;
 }
 
-export function handleRouterFlow({ cwd, path, req, res, url, storageMode = 'storage' }) {
+export async function handleRouterFlow({ cwd, path, req, res, url, storageMode = 'storage' }) {
     const stepsListMatch = path.match(/^\/sessions\/([^/]+)\/steps$/);
     if (req.method === 'GET' && stepsListMatch) {
         const sessionId = stepsListMatch[1];
@@ -143,7 +143,7 @@ export function handleRouterFlow({ cwd, path, req, res, url, storageMode = 'stor
                 latestStepNum = session.currentStep || 1;
             }
             const includeContext = url.searchParams.get('includeContext') === '1';
-            attachPromiseMeta(cwd, sessionId, session);
+            await attachPromiseMeta(cwd, sessionId, session);
             const response = {
                 session: toPublicSession(session, includeContext),
                 latestStep: latestStepNum,

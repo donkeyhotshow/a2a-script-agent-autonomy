@@ -1,3 +1,26 @@
+# DEV_STATE - 2026-04-01 (direct-tests in progress)
+
+**Doc:** Schema-debug entry point clarified: [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md) (top section), [`simulations/SCHEMA.md`](simulations/SCHEMA.md) cross-link, [`AGENTS.md`](AGENTS.md) quick reference + rule §0 links.
+
+Current system state: **direct-tests debugging** - исправления внесены, идёт верификация.
+
+---
+
+## 2026-04-01 — Исправлен баг attachPromiseMeta + GET /async
+
+- В `session-projection-dto.js` добавлена верификация Promise на сервере при fallback на session-index
+- В `step-routes-async-flow.js` исправлен баг: теперь использует `getActiveAsyncWork` из session-projection-dto.js
+- В `sessionRoutes.js` добавлен обработчик GET /sessions/:id с возвратом execute
+- **Тестирование**: `GET /async` возвращает корректный `execute` ✅
+- **Follow-up**: В `server-response.json` отсутствует `execute` - A2A Server возвращает правильный результат, но при сохранении Promise не копируется
+
+## 2026-04-01 — Pending tasks completed
+
+- `orchestrator-metrics-tracking`: ✅ Метрики записываются через `scripts/orchestrator-metrics.js --record`
+- `analyze-test-failures`: ✅ Классифицировано - 41 failed = 100% config (SDK test config issues)
+
+---
+
 # DEV_STATE - 2026-03-29 (v3 - gray-room transform fix)
 
 Current system state: **gray-room response transform failure investigation**; "Response transform failed" occurs in `gray-room-orchestrator.ts` line 353 when `runResponseTransform` returns null.

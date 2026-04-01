@@ -1,5 +1,18 @@
 # Direct tests — centralized entry points
 
+## Schema debugging — start here
+
+**Mandatory order** (same as [`AGENTS.md`](../../AGENTS.md)): reproduce and isolate **execute/result JSON shape** problems in **`scripts/direct-tests`** first (dialog runners, `e2e-dialog-test.js`, health checks). Only after that escalate to full session flows, **`npm run sim:lint` / `sim:validate`**, or heavy e2e. This folder is the repo’s **first** stop for schema debugging — not simulations.
+
+| If you are debugging… | Use |
+|------------------------|-----|
+| Wrong `execute` / `result` keys, router beats, Client API session steps | [Dialog](#dialog), `dialog/run-dialog-direct-ollama.ps1`, `e2e-dialog-test.js` |
+| Stack reachability before deep JSON work | [run-checks.ps1](#hub-checks-by-stack-part) (`-Scope …`) |
+
+**See also:** [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) (golden sim contract — **after** direct reproduction).
+
+---
+
 Scripts that run test/check flows **directly** (no test framework). Original files stay in project folders; here are runners and index.
 
 **See also:** [scripts/tests/](../tests/README.md) (Level 1–3 suite) · [Root README — Testing](../../README.md#testing)
@@ -32,12 +45,12 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 .\scripts\direct-tests\run-checks.ps1 -Scope ClientServerLLM
 .\scripts\direct-tests\run-checks.ps1 -Scope Full
 # Override ports/URLs:
-.\scripts\direct-tests\run-checks.ps1 -Scope Full -ServerPort 3000 -ClientPort 3001 -WebPort 5173 -AiProxyUrl http://localhost:11435
+.\scripts\direct-tests\run-checks.ps1 -Scope Full -ServerPort 3000 -ClientPort 5173 -WebPort 5173 -AiProxyUrl http://localhost:11435
 ```
 
 ## Dialog
 
-**No mocks.** Requires Client API (3001) + a2a-server (3000).
+**No mocks.** Requires Client API (5173) + a2a-server (3000).
 
 ```powershell
 # Full dialog chain: task -> choices -> choice dialog -> input -> message -> message
@@ -54,7 +67,7 @@ ai-integration uses FORWARD_TIMEOUT_SECONDS=180 (set in start-ai-integration.bat
 
 | Area | Origin | Run from here |
 |------|--------|----------------|
-| **Scripts (root)** | `scripts/` | `scripts/run-*.ps1` |
+| **Scripts (root)** | `scripts/` | `scripts/run-*.ps1` (port 5173) |
 | **RAG** | `a2a-client/packages/rag/scripts/` | `rag/run-*.ps1` |
 | **SDK** | `a2a-client/packages/sdk/scripts/` | `sdk/run-*.ps1` |
 | **AI integration** | `ai-integration/scripts/` | `ai-integration/run-*.ps1` |

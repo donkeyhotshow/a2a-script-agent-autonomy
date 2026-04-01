@@ -148,9 +148,9 @@ See [System Startup Documentation](docs/SYSTEM_STARTUP.md) for details.
 
 **Sessions and E2E / operator flows:** Exercises that create a **session**, send turns, or poll **async** should target the **Client API** — default dev base `http://localhost:5173` and paths `/api/a2a/*` (same as the web UI). The A2A Server on `:3000` is **`/api/v1/invoke`** only (stateless). **Agent mode** is reflected in **session `context`** (e.g. `execution.action`), not a separate HTTP route. Details: root [`AGENTS.md`](AGENTS.md) (“Sessions, tests, and agent mode”), [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md), [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 
-**Schema debugging order (mandatory):** start with `scripts/direct-tests` to reproduce/ isolate payload-shape issues first; escalate to session flow, then simulations, then full e2e.
+**Schema debugging order (mandatory):** start with **[scripts/direct-tests/README.md](scripts/direct-tests/README.md#schema-debugging--start-here)** — reproduce and isolate payload-shape issues there first; escalate to session flow, then simulations, then full e2e.
 
-- **Health checks by stack part** (no service startup): [scripts/direct-tests/run-checks.ps1](scripts/direct-tests/run-checks.ps1) — `.\scripts\direct-tests\run-checks.ps1 -Scope LLM | ServerLLM | ClientServer | ClientServerLLM | WebClient | WebClientServer | Full`. See [scripts/direct-tests/README.md](scripts/direct-tests/README.md).
+- **Health checks by stack part** (no service startup): [scripts/direct-tests/run-checks.ps1](scripts/direct-tests/run-checks.ps1) — `.\scripts\direct-tests\run-checks.ps1 -Scope LLM | ServerLLM | ClientServer | ClientServerLLM | WebClient | WebClientServer | Full`. Full index: [scripts/direct-tests/README.md](scripts/direct-tests/README.md).
 - **Level 1–3 suite**: `.\scripts\tests\run-all.ps1` — see [scripts/tests/README.md](scripts/tests/README.md).
 
 #### Web UI Smoke Test

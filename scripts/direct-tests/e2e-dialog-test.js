@@ -6,7 +6,7 @@
  */
 
 const SERVER_URL = process.env.A2A_SERVER_URL || 'http://localhost:3000';
-const CLIENT_API_URL = process.env.CLIENT_API_URL || 'http://localhost:3001';
+const CLIENT_API_URL = process.env.CLIENT_API_URL || 'http://localhost:5173';
 
 async function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));

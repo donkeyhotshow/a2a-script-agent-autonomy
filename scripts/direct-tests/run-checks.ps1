@@ -13,7 +13,7 @@ param(
     [string]$Scope,
 
     [int]$ServerPort = 3000,
-    [int]$ClientPort = 3001,
+    [int]$ClientPort = 5173,
     [int]$WebPort = 5173,
     [string]$OllamaUrl = 'http://localhost:11435',
     [string]$AiProxyUrl = 'http://localhost:11434',
@@ -50,12 +50,12 @@ switch ($Scope) {
     }
     'ClientServer' {
         Write-Host "Client + Server" -ForegroundColor Gray
-        if (-not (Check-Url -Url "http://localhost:${ClientPort}/health" -Name "Client API")) { $failed++ }
+        if (-not (Check-Url -Url "http://localhost:${ClientPort}/api/a2a/projects" -Name "Client API")) { $failed++ }
         if (-not (Check-Url -Url "http://localhost:${ServerPort}/health" -Name "Server")) { $failed++ }
     }
     'ClientServerLLM' {
         Write-Host "Client + Server + LLM" -ForegroundColor Gray
-        if (-not (Check-Url -Url "http://localhost:${ClientPort}/health" -Name "Client API")) { $failed++ }
+        if (-not (Check-Url -Url "http://localhost:${ClientPort}/api/a2a/projects" -Name "Client API")) { $failed++ }
         if (-not (Check-Url -Url "http://localhost:${ServerPort}/health" -Name "Server")) { $failed++ }
         if (-not (Check-Url -Url "$OllamaUrl/api/tags" -Name "Ollama")) { $failed++ }
         if (-not (Check-Url -Url "$AiProxyUrl/health" -Name "AI proxy")) { $failed++ }
@@ -63,18 +63,18 @@ switch ($Scope) {
     'WebClient' {
         Write-Host "Web + Client" -ForegroundColor Gray
         if (-not (Check-Url -Url "http://localhost:${WebPort}/" -Name "Web")) { $failed++ }
-        if (-not (Check-Url -Url "http://localhost:${ClientPort}/health" -Name "Client API")) { $failed++ }
+        if (-not (Check-Url -Url "http://localhost:${ClientPort}/api/a2a/projects" -Name "Client API")) { $failed++ }
     }
     'WebClientServer' {
         Write-Host "Web + Client + Server" -ForegroundColor Gray
         if (-not (Check-Url -Url "http://localhost:${WebPort}/" -Name "Web")) { $failed++ }
-        if (-not (Check-Url -Url "http://localhost:${ClientPort}/health" -Name "Client API")) { $failed++ }
+        if (-not (Check-Url -Url "http://localhost:${ClientPort}/api/a2a/projects" -Name "Client API")) { $failed++ }
         if (-not (Check-Url -Url "http://localhost:${ServerPort}/health" -Name "Server")) { $failed++ }
     }
     'Full' {
         Write-Host "Web + Client + Server + LLM" -ForegroundColor Gray
         if (-not (Check-Url -Url "http://localhost:${WebPort}/" -Name "Web")) { $failed++ }
-        if (-not (Check-Url -Url "http://localhost:${ClientPort}/health" -Name "Client API")) { $failed++ }
+        if (-not (Check-Url -Url "http://localhost:${ClientPort}/api/a2a/projects" -Name "Client API")) { $failed++ }
         if (-not (Check-Url -Url "http://localhost:${ServerPort}/health" -Name "Server")) { $failed++ }
         if (-not (Check-Url -Url "$OllamaUrl/api/tags" -Name "Ollama")) { $failed++ }
         if (-not (Check-Url -Url "$AiProxyUrl/health" -Name "AI proxy")) { $failed++ }

@@ -3,13 +3,13 @@
     Test dialog chain via Client API -> a2a-server. No mocks.
 .DESCRIPTION
     Verifies: task -> choices -> choice dialog -> input form -> message -> message.
-    Requires: Client API (3001), a2a-server (3000) running.
+    Requires: Client API (5173), a2a-server (3000) running.
 .EXAMPLE
     .\scripts\direct-tests\test-dialog-flow.ps1
-    .\scripts\direct-tests\test-dialog-flow.ps1 -ClientPort 3001 -ServerPort 3000
+    .\scripts\direct-tests\test-dialog-flow.ps1 -ClientPort 5173 -ServerPort 3000
 #>
 param(
-    [int]$ClientPort = 3001,
+    [int]$ClientPort = 5173,
     [int]$ServerPort = 3000,
     [int]$PollIntervalSec = 2,
     [int]$MaxPolls = 30
@@ -48,7 +48,7 @@ function Invoke-PollResult {
 # Pre-flight: health checks
 Write-Host "`n=== Pre-flight ===" -ForegroundColor Cyan
 try {
-    Invoke-RestMethod -Uri "$ClientUrl/health" -TimeoutSec 5 | Out-Null
+    Invoke-RestMethod -Uri "$ClientUrl/api/a2a/projects" -TimeoutSec 5 | Out-Null
     Ok "Client API ($ClientPort)"
 } catch { Fail "Client API not reachable: $ClientUrl" }
 
@@ -101,8 +101,8 @@ Ok "execute.form.choices ($($r1b.session.execute.form.choices.Count) items)"
 # Step 2: choice "dialog" -> expect input form
 Write-Step 2 "Select choice 'dialog' -> expect input form"
 
-$body2 = '{"choice":"dialog","input":{}}'
-$r2 = Invoke-RestMethod -Uri "$ClientUrl/api/a2a/sessions/$sessionId/action" -Method POST -Body $body2 -Headers $SessionHeader -TimeoutSec 15
+$body2 = '{"result":{"choice":"dialog"}}'
+$r2 = Invoke-RestMethod -Uri "$ClientUrl/api/a2a/sessions/$sessionId/next" -Method POST -Body $body2 -Headers $SessionHeader -TimeoutSec 15
 
 $prom2 = $r2.promiseId
 if (-not $prom2) { Fail "No promiseId in step 2" }
