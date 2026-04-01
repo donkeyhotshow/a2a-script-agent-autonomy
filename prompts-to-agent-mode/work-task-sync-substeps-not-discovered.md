@@ -2,7 +2,7 @@
 
 ## Sources
 
-- **Spec (missing on disk):** `tasks/sync-substeps-not-discovered.md` — see [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)
+- **Spec:** [`tasks/sync-substeps-not-discovered.md`](../tasks/sync-substeps-not-discovered.md)
 - [`a2a-server/scripts/sim-validate/scanner.ts`](../a2a-server/scripts/sim-validate/scanner.ts)
 - [`simulations/sync/README.md`](../simulations/sync/README.md) — substeps section
 - [`work/STATE.md`](../work/STATE.md) — row S9

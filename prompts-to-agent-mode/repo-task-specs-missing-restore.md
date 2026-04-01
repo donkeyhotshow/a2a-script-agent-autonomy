@@ -1,14 +1,20 @@
-# Missing `tasks/*.md` specs (work/tasks removed)
+# Task specs still missing from `tasks/`
 
-## Sources
+## On disk today
 
-- [`work/STATE.md`](../work/STATE.md) — queue rows S7–S13 link to `tasks/sync-*.md`, `tasks/sync-form-choices-description.md`, etc.
-- Repo tree: [`tasks/`](../tasks/) currently has only [`script-dialog-agent-response-parity.md`](../tasks/script-dialog-agent-response-parity.md) + [`README.md`](../tasks/README.md) (sync-* specs absent)
-- Prompt files under this folder that still describe sync work: `work-task-sync-*.md` (their original copies lived in `work/tasks/`, directory removed)
+[`tasks/`](../tasks/) includes: `README.md`, `script-dialog-agent-response-parity.md`, `sync-documentation-and-router-drift.md`, `sync-llm-snapshot-coverage.md`, `sync-substeps-not-discovered.md`, `sync-workspace-tools-golden-map.md`, `system-improvement-priorities.md`.
+
+## Referenced but not present (restore or retarget links)
+
+- `tasks/sync-readme-and-cli-gap.md`
+- `tasks/sync-step-contract-warnings.md`
+- `tasks/sync-form-choices-description.md`
+- `tasks/analyze-test-failures.md`
+- `tasks/orchestrator-metrics-tracking.md`
 
 ## Agent prompt (copy)
 
-Either **restore** the missing `tasks/sync-*.md` (and related) from git history into `tasks/`, **or** retarget `work/STATE.md` links to surviving docs (e.g. `simulations/sync/README.md`, `DEV_STATE.md` completed bullets) and delete stale markdown links. Ensure `prompts-to-agent-mode/README.md` source column matches real paths after restore.
+Add the missing files (short done-notes + pointers to sims/code are enough) **or** update [`work/STATE.md`](../work/STATE.md) / other docs so every `tasks/*.md` link resolves. Re-scan this list after changes.
 
 ## Completion
 

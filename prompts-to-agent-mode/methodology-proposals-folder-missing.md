@@ -1,14 +1,17 @@
-# Methodology `proposals/` tree missing
+# Methodology `proposals/` (removed)
 
 ## Sources
 
-- [`methodology/tasks.md`](../methodology/tasks.md) — §Предложения по развитию links `proposals/00-comparison/README.md`
-- **Repo:** no `methodology/proposals/` (or `proposals/` at root) found
+- [`methodology/tasks.md`](../methodology/tasks.md) — § «Предложения по развитию» (formerly linked `proposals/`)
+
+## Status
+
+**`methodology/proposals/` is not in the repo.** `methodology/tasks.md` now points at `tasks/`, `docs/adr/`, and `tasks/system-improvement-priorities.md` instead of broken `proposals/` links.
 
 ## Agent prompt (copy)
 
-Restore the comparison doc(s) under `methodology/proposals/` or retarget `methodology/tasks.md` links to an existing ADR/plan. Avoid dead markdown links.
+If someone reintroduces a `proposals/` tree, add it under `methodology/proposals/` and restore links; otherwise keep `tasks.md` aligned with real paths only.
 
 ## Completion
 
-- [ ] Done
+- [x] Done (`tasks.md` retargeted)

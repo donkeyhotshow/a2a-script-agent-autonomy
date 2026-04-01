@@ -10,7 +10,7 @@
     4. Verify no matching processes remain
     5. Clear .pids.txt only after verification
 .NOTES
-    Following docs/troubleshooting/standardize-stop-scripts.md
+    See docs/SYSTEM_STARTUP.md and AGENTS.md (live stack restart)
 #>
 
 [CmdletBinding()]

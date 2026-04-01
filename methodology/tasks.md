@@ -23,7 +23,8 @@
 | 3 | Экспорт debug-состояния | To Do | Для анализа AI |
 
 ## Предложения по развитию
-**Документы:** [proposals/](proposals/)
+
+**В репозитории нет** каталога `methodology/proposals/` (исторические ссылки убраны из этого файла). Планирование: [`tasks/`](../tasks/) (в т.ч. [`tasks/system-improvement-priorities.md`](../tasks/system-improvement-priorities.md)), [`docs/adr/`](../docs/adr/), `DEV_STATE.md`.
 
 | Вариант | Описание | Сложность | Риск |
 |---------|----------|-----------|------|
@@ -31,8 +32,6 @@
 | 2 | Эволюционные улучшения | Низкая | Низкий |
 
 **Рекомендация:** выбрать вариант 2 (эволюционный подход).
-
-Подробнее: [proposals/00-comparison/README.md](proposals/00-comparison/README.md)
 
 ## План действий (режим 2)
 ```
@@ -76,7 +75,7 @@
 - Для больших багов создаём `task-series`, объединяя подзадачи через `relatedIssues`.
 
 ## Документация и ссылки
-- Храним сноски на `proposals/`, `docs/ADR-*`, `GLOSSARY.md`.
+- Храним сноски на `tasks/`, `docs/adr/`, `GLOSSARY.md`.
 - Ссылки на `methodology/mode1.md` и `mode2.md` добавляем в каждую задачу из `tasks/pending`.
 - Для важных заказов назначаем `owner` и `reviewer`, чтобы подтверждать качество.
 

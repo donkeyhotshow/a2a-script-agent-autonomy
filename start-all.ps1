@@ -11,7 +11,7 @@
     5. Capture and save PIDs
     6. Verify services are ready via health checks
 .NOTES
-    Following docs/troubleshooting/standardize-stop-scripts.md
+    See docs/SYSTEM_STARTUP.md and AGENTS.md (live stack restart)
 #>
 
 [CmdletBinding()]

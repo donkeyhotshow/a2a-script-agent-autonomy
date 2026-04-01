@@ -2,7 +2,7 @@
 
 ## Sources
 
-- **Spec (missing on disk):** `tasks/sync-llm-snapshot-coverage.md` — see [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)
+- **Spec:** [`tasks/sync-llm-snapshot-coverage.md`](../tasks/sync-llm-snapshot-coverage.md)
 - [`simulations/sync/README.md`](../simulations/sync/README.md) — LLM snapshot coverage
 - [`a2a-server/prompts/`](../a2a-server/prompts/) (templates)
 - [`work/STATE.md`](../work/STATE.md) — row S11

@@ -1,7 +1,7 @@
 @echo off
 chcp 65001 >nul
 REM start-all.bat - Standardized service startup
-REM Following docs/troubleshooting/standardize-stop-scripts.md
+REM See docs/SYSTEM_STARTUP.md and AGENTS.md (live stack restart)
 REM
 REM Pattern: 1) Call kill-all.bat to clean environment -> 2) Verify ports free -> 3) Clear .pids.txt -> 4) Start services
 REM Restart policy: for ANY service refresh, run ONLY this script from repo root — not npm run dev inside a2a-server / a2a-client / sdk / etc.

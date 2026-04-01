@@ -44,28 +44,28 @@ One file per task. Each file lists **sources** (canonical docs) and a **copy-pas
 | [work-state-02-unified-data-language.md](work-state-02-unified-data-language.md) | [`work/STATE.md`](../work/STATE.md) §2 |
 | [work-state-03-agent-modes-gray-room.md](work-state-03-agent-modes-gray-room.md) | [`work/STATE.md`](../work/STATE.md) §3 |
 | [work-state-04-gray-room-concept.md](work-state-04-gray-room-concept.md) | [`work/STATE.md`](../work/STATE.md) §4 |
-| [work-state-stale-links-and-s13.md](work-state-stale-links-and-s13.md) | [`work/STATE.md`](../work/STATE.md) queue links (`tasks/` vs `work/tasks/`, missing S13 doc) |
+| [work-state-stale-links-and-s13.md](work-state-stale-links-and-s13.md) | [`work/STATE.md`](../work/STATE.md) queue links vs real `tasks/*.md` paths ([repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)) |
 
 ## Work task specs
 
 | Prompt file | Source |
 |-------------|--------|
 | [work-task-s14-script-dialog-agent-response-parity.md](work-task-s14-script-dialog-agent-response-parity.md) | [`tasks/script-dialog-agent-response-parity.md`](../tasks/script-dialog-agent-response-parity.md) |
-| [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) | `work/STATE.md` links many `tasks/sync-*.md` files that are **missing** from [`tasks/`](../tasks/); former `work/tasks/*.md` removed — restore or fix links |
-| [work-task-sync-documentation-router-drift.md](work-task-sync-documentation-router-drift.md) | Same topic as `work/STATE` S10 — spec file missing; use prompt + [`simulations/sync/agent/description.md`](../simulations/sync/agent/description.md) |
-| [work-task-sync-substeps-not-discovered.md](work-task-sync-substeps-not-discovered.md) | `work/STATE` S9 — spec missing; see repo restore prompt |
-| [work-task-sync-llm-snapshot-coverage.md](work-task-sync-llm-snapshot-coverage.md) | `work/STATE` S11 — spec missing |
-| [work-task-sync-workspace-tools-golden-map.md](work-task-sync-workspace-tools-golden-map.md) | `work/STATE` S12 — spec missing |
-| [work-task-sync-readme-and-cli-gap.md](work-task-sync-readme-and-cli-gap.md) | spec missing |
-| [work-task-sync-step-contract-warnings.md](work-task-sync-step-contract-warnings.md) | spec missing |
-| [work-task-analyze-test-failures.md](work-task-analyze-test-failures.md) | spec missing |
-| [work-task-orchestrator-metrics-tracking.md](work-task-orchestrator-metrics-tracking.md) | spec missing |
+| [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) | Inventory of `tasks/*.md` still absent vs on disk; restore or fix [`work/STATE.md`](../work/STATE.md) links |
+| [work-task-sync-documentation-router-drift.md](work-task-sync-documentation-router-drift.md) | [`tasks/sync-documentation-and-router-drift.md`](../tasks/sync-documentation-and-router-drift.md) + [`simulations/sync/agent/description.md`](../simulations/sync/agent/description.md) (`work/STATE` S10) |
+| [work-task-sync-substeps-not-discovered.md](work-task-sync-substeps-not-discovered.md) | [`tasks/sync-substeps-not-discovered.md`](../tasks/sync-substeps-not-discovered.md) (`work/STATE` S9) |
+| [work-task-sync-llm-snapshot-coverage.md](work-task-sync-llm-snapshot-coverage.md) | [`tasks/sync-llm-snapshot-coverage.md`](../tasks/sync-llm-snapshot-coverage.md) (`work/STATE` S11) |
+| [work-task-sync-workspace-tools-golden-map.md](work-task-sync-workspace-tools-golden-map.md) | [`tasks/sync-workspace-tools-golden-map.md`](../tasks/sync-workspace-tools-golden-map.md) (`work/STATE` S12) |
+| [work-task-sync-readme-and-cli-gap.md](work-task-sync-readme-and-cli-gap.md) | No `tasks/sync-readme-and-cli-gap.md` yet — [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) |
+| [work-task-sync-step-contract-warnings.md](work-task-sync-step-contract-warnings.md) | No `tasks/sync-step-contract-warnings.md` yet — [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) |
+| [work-task-analyze-test-failures.md](work-task-analyze-test-failures.md) | No `tasks/analyze-test-failures.md` yet — [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) |
+| [work-task-orchestrator-metrics-tracking.md](work-task-orchestrator-metrics-tracking.md) | No `tasks/orchestrator-metrics-tracking.md` yet — [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) |
 
-## Broken / missing reference
+## Optional link hygiene
 
 | Prompt file | Notes |
 |-------------|--------|
-| [work-task-system-improvement-priorities-missing.md](work-task-system-improvement-priorities-missing.md) | [`DEV_STATE.md`](../DEV_STATE.md) links `work/tasks/system-improvement-priorities.md` — file absent in repo; [`work/STATE.md`](../work/STATE.md) row SYS |
+| [work-task-system-improvement-priorities-missing.md](work-task-system-improvement-priorities-missing.md) | [`tasks/system-improvement-priorities.md`](../tasks/system-improvement-priorities.md); verify no stale `work/tasks/…` links ([`work/STATE.md`](../work/STATE.md) SYS) |
 
 ## Methodology (`methodology/`)
 
@@ -107,7 +107,7 @@ One file per task. Each file lists **sources** (canonical docs) and a **copy-pas
 
 | Prompt file | Source |
 |-------------|--------|
-| [doc-readme-broken-troubleshooting-link.md](doc-readme-broken-troubleshooting-link.md) | [`README.md`](../README.md) → missing `docs/troubleshooting/standardize-stop-scripts.md` |
+| [doc-readme-broken-troubleshooting-link.md](doc-readme-broken-troubleshooting-link.md) | Regression guard: no revival of dead `docs/troubleshooting/standardize-stop-scripts.md` (canonical: `docs/SYSTEM_STARTUP.md`) |
 | [repo-tasks-pending-archive-layout.md](repo-tasks-pending-archive-layout.md) | [`START-PROMPT-UNLIM.md`](../START-PROMPT-UNLIM.md), [`methodology/orchestrator-api-exploit.md`](../methodology/orchestrator-api-exploit.md) vs actual `tasks/` tree |
 | [doc-adr-0027-planning-readme-missing.md](doc-adr-0027-planning-readme-missing.md) | [`docs/adr/ADR-0027-documentation-canonical-sources.md`](../docs/adr/ADR-0027-documentation-canonical-sources.md) |
 | [a2a-server-framework-detector-migration.md](a2a-server-framework-detector-migration.md) | [`a2a-server/docs/ADR/framework-detector-simplification.md`](../a2a-server/docs/ADR/framework-detector-simplification.md) |

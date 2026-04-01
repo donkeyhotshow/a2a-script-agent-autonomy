@@ -1,14 +1,18 @@
-# Root README: broken link to stop-script pattern doc
+# Root README: stop-script doc reference (hygiene)
 
 ## Sources
 
-- [`README.md`](../README.md) — references `docs/troubleshooting/standardize-stop-scripts.md` (lines ~75–80)
-- **Repo:** `docs/troubleshooting/` does not exist
+- [`README.md`](../README.md) — `start-all` / `kill-all` narrative and docs table
+- [`docs/SYSTEM_STARTUP.md`](../docs/SYSTEM_STARTUP.md) — canonical stack restart
+
+## Status
+
+Root previously linked `docs/troubleshooting/standardize-stop-scripts.md` (path never existed). **Fixed:** README and `start-all`/`kill-all` script headers now point at `docs/SYSTEM_STARTUP.md` + `AGENTS.md`.
 
 ## Agent prompt (copy)
 
-Add the missing doc under `docs/troubleshooting/` **or** change `README.md` to point at the real canonical file (e.g. `docs/SYSTEM_STARTUP.md`, `kill-all` / `start-all` comments). Ensure no dead link.
+Re-grep for `docs/troubleshooting/standardize-stop-scripts` after doc moves; keep a single canonical “how to restart the stack” story.
 
 ## Completion
 
-- [ ] Done
+- [x] Done (README + scripts retargeted)

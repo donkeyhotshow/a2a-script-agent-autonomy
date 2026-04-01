@@ -1,6 +1,6 @@
 #!/bin/bash
 # start-all.sh - Standardized service startup
-# Following docs/troubleshooting/standardize-stop-scripts.md
+# See docs/SYSTEM_STARTUP.md and AGENTS.md (live stack restart)
 #
 # Pattern: 1) Call kill-all.sh -> 2) Verify ports free -> 3) Clear .pids.txt -> 4) Start services
 

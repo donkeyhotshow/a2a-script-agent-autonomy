@@ -2,7 +2,7 @@
 
 ## Sources
 
-- [`work/STATE.md`](../work/STATE.md) — queue table (S9–S14, SYS); rows point at `tasks/sync-*.md` etc.; most of those files are **missing** from [`tasks/`](../tasks/)
+- [`work/STATE.md`](../work/STATE.md) — queue table (S9–S14, SYS); `tasks/*.md` links in the table should resolve (see [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) for specs intentionally not committed). Also scan root `README.md`, `methodology/tasks.md`, and shell headers for dead `docs/troubleshooting/` or `proposals/` paths.
 - [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)
 
 ## Agent prompt (copy)

@@ -76,7 +76,7 @@ start-all.bat
 kill-all.bat
 ```
 
-These scripts follow the pattern from `docs/troubleshooting/standardize-stop-scripts.md`:
+These scripts follow the port-kill / verify / PID cleanup pattern documented in [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md) and [`AGENTS.md`](AGENTS.md) (live stack restart):
 1. **Kill by port**: Find processes listening on service ports and terminate them
 2. **Verify port free**: Confirm no process remains on the port
 3. **Kill by PID/process name**: Terminate from `.pids.txt` and by executable patterns
@@ -271,7 +271,7 @@ The a2a-server component is now production-ready with:
 | [New request flow](docs/new-request-flow/) | Protocol, data flow, server architecture (canonical) |
 | [System Startup](docs/SYSTEM_STARTUP.md) | Port allocation, conflict detection, health gating |
 | [Machine-Readable Docs](docs/DOCUMENTATION-MACHINE-READABLE.md) | Documentation requirements for parsing |
-| [Troubleshooting](docs/troubleshooting/standardize-stop-scripts.md) | Standardized stop scripts guide |
+| [System Startup](docs/SYSTEM_STARTUP.md) | `start-all` / `kill-all`, ports, stack restart (canonical) |
 
 ### Documentation Requirements (Machine-Readable)
 
