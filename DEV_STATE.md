@@ -140,6 +140,11 @@ Applied fixes to address the root cause:
 - 2026-04-01 — analyze-services-carrier-scripts: 81 scripts categorized into 7 groups. 20 action candidates identified. Task archived.
 - 2026-04-01 — analyze-app-watchdog-scripts: 5 scripts analyzed. 2 portable action candidates (generate-install-config, export-application). Task archived.
 - 2026-04-01 — analyze-data-engine-scripts: 10+ scripts at root + 1 in scripts/. 3 portable action candidates (generate-cursor-rules, process-archive, check-health). Task archived.
+- 2026-04-01 — analyze-testing-taskmanager-scripts: 15 scripts analyzed. NOT PORTABLE - all depend on @libs aliases. Deferred. Task archived.
+- 2026-04-01 — analyze-standards-manager-scripts: 3 scripts analyzed. NOT PORTABLE - depends on internal src modules. Deferred. Task archived.
+- 2026-04-01 — analyze-desktop-app-clicker-scripts: 2 scripts analyzed. NOT PORTABLE - depends on @libs aliases. Deferred. Task archived.
+- 2026-04-01 — analyze-prompt-sequences-scripts: 2 scripts analyzed. PORTABLE - uses standard Node.js modules. 2 action candidates. Task archived.
+- 2026-04-01 — LLM async request `prom_1775039701778_14y75jt0y` FAILED after timeout - confirmed gray-room transform issue (DEV_STATE.md)
 - 2026-03-31 — Idle queue protocol + script verification: 200+ scripts verified. Created 3 adaptation tasks:
   - adapter-laravel-workspace-tools.md (16 scripts, Laravel)
   - analyze-services-carrier-scripts.md (81 scripts)

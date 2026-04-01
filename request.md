@@ -23,6 +23,11 @@ Use exactly one tool key in `execute`. Advance `step` when the current goal is s
 
 ## Response Format
 
+**IMPORTANT: You MUST return your response as JSON inside a code block like:**
+```json
+{...}
+```
+
 **Prefer `workbench_ops`** for small edits to `workbench.sections` so you do not resend full section text every turn.
 
 ### `workbench_ops` (optional array)
