@@ -25,7 +25,7 @@ Each step folder may contain up to the full pipeline (see [`../SCHEMA.md`](../SC
 
 | Simulation | Description |
 |------------|-------------|
-| agent | Basic agent workflow |
+| agent | Full agent execute coverage in one chain (15 steps, no LLM in fixtures); repo paths + workbench like `agent-coder-smart` |
 | agent-analyze | Agent with analysis step |
 | agent-auto-ai | Agent with auto AI |
 | agent-coder | Coding agent |
@@ -67,3 +67,13 @@ npx tsx scripts/sim-validate.ts --sim sync/dialog/1 --step-contract
 - **Sync mode:** immediate execution, no `promiseId` in goldens (see [`SCHEMA.md`](../SCHEMA.md) for async scope).
 - **Pipeline order:** `client.json` → `request.json` → … → `response.json` → `received.json` (Web DTO is derived **after** the server response).
 - **Use case:** simple operations, form interactions, deterministic scripted flows, and LLM steps where `request.md` / `response.md` are present.
+- **LLM snapshot coverage:** Not all sync simulations include `request.md` / `response.md` (LLM prompt/response pairs). Goldens without these files are **shape-only** tests — they validate execute shape and transform contracts but do not test prompt assembly, `render-markdown`, `pick-context`, or per-action request templates in `a2a-server/prompts/`. High-value flows currently lacking LLM fixtures include many `fix-vue-imports*`, `fix-laravel-*`, `phpunit-deprecations`, `resilience-contract`, `orchestrator-dialog`, and several `task-decomposition` steps.
+
+## Substeps (`N-sub-M` folders)
+
+Some sync simulations include **substep folders** (e.g., `agent-auto-ai/3-sub-1`) for server interrupt-loop goldens. These document internal server LLM/transform turns that are not exposed to the web client. Behavior:
+
+- **`sim-lint`** walks substep folders when linting the parent simulation and validates JSON there.
+- **`sim-validate`** does **not** treat substeps as standalone simulations — they are skipped in the scanner.
+- Substeps contain `request.*` / `response.*` + server-transforms but **no** `client.json` / `received.json`.
+- Documentation: see [`../SCHEMA.md`](../SCHEMA.md) section "Supplementary: server interrupt loop (optional)".

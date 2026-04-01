@@ -6,7 +6,26 @@
 
 ```json
 {
-  "message": "твоя відповідь користувачу"
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "hello world"
+      },
+      {
+        "role": "assistant",
+        "message": "hello world"
+      }
+    ]
+  },
+  "result": {
+    "message": "Дякую!"
+  }
 }
 ```
 

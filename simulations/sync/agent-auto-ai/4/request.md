@@ -36,14 +36,37 @@ Examples of possible steps (you may reuse or extend and combine them as needed):
 
 ```json
 {
-  "step": "fs_discover",
-  "message": "your immediate response to the user",
-  "execute": {
-    "rag-search": {
-      "query": ""
-    }
-  },
-  "completed": false
+  "context": {
+    "task": "Add GET /health returning JSON { ok: true }; wire the route in src/app.js.",
+    "execution": {
+      "action": "agent",
+      "step": "inspect_structure"
+    },
+    "workbench": {
+      "sections": {
+        "scratchpad": {
+          "locate_started": true,
+          "pending_rag": true
+        },
+        "files": {}
+      }
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Add GET /health returning JSON { ok: true }; wire the route in src/app.js."
+      },
+      {
+        "role": "assistant",
+        "step": "inspect_structure",
+        "message": "Running paginated RAG to find the Express entrypoint."
+      },
+      {
+        "role": "system",
+        "message": "RAG: src/app.js (page 1, pageSize 10, total 1, hasMore false)"
+      }
+    ]
+  }
 }
 ```
 

@@ -1,39 +1,37 @@
-# Async Simulation Template
+# Async simulations
 
-This directory contains async simulations that model the full A2A protocol flow including:
-- `promiseId` for long-running operations
-- Polling for async results
-- `execute.wait` state handling
+Goldens under `simulations/async/` use the **same step bundle** as sync (`client.json` → `request.json` → … → `response.json` → `received.json`). See [`../SCHEMA.md`](../SCHEMA.md): transport-only fields such as top-level `promiseId` are stripped during `sim:validate` normalization, so fixtures document **invoke-shaped** snapshots merged into session state, not the raw `{ promiseId }` ack.
+
+## Available
+
+| Simulation | Purpose |
+|------------|---------|
+| `promise-lifecycle` | Step 1: in-flight / poll semantics (`execution.step: processing`, `execute.message`). Step 2: terminal completed snapshot (`execution.status: completed`). Step 3: terminal **failed** snapshot (`execution.step` / `execution.status`: `failed`) after processing. |
 
 ## Structure
 
-Each async simulation follows the pattern:
-
 ```
 {simulation-name}/
+├── description.md
 ├── {step}/
-│   ├── client.json         # Client request (may include sync: false or expect promiseId)
-│   ├── received.json       # Server received request
-│   ├── request.json        # Request to LLM/processing
-│   ├── request.md           # Markdown for LLM
-│   ├── response.json       # Server response with promiseId
-│   ├── response.md         # LLM response markdown
-│   ├── server-transforms-request.json
-│   ├── server-transforms-response.json
-│   └── promise-poll.json   # Polling for result (async flow)
-│       └── promise-result.json  # Final result when ready
+│   ├── client.json
+│   ├── request.json
+│   ├── server-transforms-request.json   # recommended (no-LLM: copy pipeline)
+│   ├── request.md                       # optional, when the step calls the LLM
+│   ├── response.md                      # optional
+│   ├── server-transforms-response.json  # optional, with response.md
+│   ├── response.json
+│   └── received.json
 ```
 
-## Key Differences from Sync
+Optional extra JSON in a step (e.g. documenting poll payloads) is allowed if valid JSON; only canonical names are validated by `sim:validate`.
 
-| Aspect | Sync | Async |
-|--------|------|-------|
-| Response | Immediate `execute` | `promiseId` for polling |
-| Flow | client → result | client → promise → poll → result |
-| Simulation | `client.json → received.json` | Full `promiseId` lifecycle |
+## Running
 
-## Running Async Simulations
+Same as sync — scope by **step path** (from repo root):
 
 ```bash
-npm run sim:validate -- --path simulations/async/{simulation-name}
+npm run sim:lint -- --sim async/promise-lifecycle/1
+npm run sim:validate -- --sim async/promise-lifecycle/1
+npm run sim:validate -- --all
 ```

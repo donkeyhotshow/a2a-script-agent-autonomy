@@ -22,7 +22,7 @@ export function main(): void {
     let targets: {path: string; name: string}[] = [];
 
     if (args.all) {
-        targets = getAllSimulations();
+        targets = getAllSimulations(args.includeSubsteps);
     } else if (args.sim) {
         const name = args.sim.replace(/\\/g, '/');
         const path = join(SIMULATIONS_DIR, ...name.split('/').filter(Boolean));

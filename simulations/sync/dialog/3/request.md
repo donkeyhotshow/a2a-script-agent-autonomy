@@ -7,7 +7,16 @@ focused on the current task. Treat every user utterance as a request for clarifi
 
 ```json
 {
-  "message": "your reply to the user in the same language"
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    }
+  },
+  "result": {
+    "message": "hello world"
+  }
 }
 ```
 

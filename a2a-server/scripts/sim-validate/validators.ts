@@ -359,8 +359,19 @@ const FILE_TYPE_CONFIGS: {[key: string]: FileTypeConfig} = {
     'server-transforms-response.json': {schema: 'server-transform.schema.json', required: false},
 };
 
-export function detectFileType(filename: string): FileTypeConfig | null {
-    return FILE_TYPE_CONFIGS[filename] || null;
+// Substep-specific configs (server-side only, no client.json/received.json)
+const SUBSTEP_FILE_TYPE_CONFIGS: {[key: string]: FileTypeConfig} = {
+    'request.json': {schema: 'server-invoke-request.schema.json', required: true},
+    'response.json': {schema: 'server-invoke-response-execute.schema.json', required: true},
+    'client.json': {schema: null, required: false},
+    'received.json': {schema: null, required: false},
+    'server-transforms-request.json': {schema: 'server-transform.schema.json', required: false},
+    'server-transforms-response.json': {schema: 'server-transform.schema.json', required: false},
+};
+
+export function detectFileType(filename: string, isSubstep = false): FileTypeConfig | null {
+    const configs = isSubstep ? SUBSTEP_FILE_TYPE_CONFIGS : FILE_TYPE_CONFIGS;
+    return configs[filename] || null;
 }
 
 // ============================================
@@ -412,7 +423,7 @@ export function validateTransformReferencedFiles(simPath: string, transformFilen
 // File validation
 // ============================================
 
-export function validateFile(filePath: string, filename: string, opts: ValidateOptions): FileValidationResult {
+export function validateFile(filePath: string, filename: string, opts: ValidateOptions, isSubstep = false): FileValidationResult {
     const result: FileValidationResult = {
         file: filename,
         valid: true,
@@ -422,7 +433,7 @@ export function validateFile(filePath: string, filename: string, opts: ValidateO
 
     // Проверка существования файла
     if (!existsSync(filePath)) {
-        const fileConfig = detectFileType(filename);
+        const fileConfig = detectFileType(filename, isSubstep);
         if (fileConfig?.required) {
             result.valid = false;
             result.errors.push({
@@ -454,7 +465,7 @@ export function validateFile(filePath: string, filename: string, opts: ValidateO
     }
 
     // Определение типа файла и валидация
-    const fileConfig = detectFileType(filename);
+    const fileConfig = detectFileType(filename, isSubstep);
     if (typeof fileConfig?.schema === 'string' && fileConfig.schema.length > 0) {
         const isTransformFile =
             filename === 'server-transforms-request.json' || filename === 'server-transforms-response.json';
@@ -526,13 +537,17 @@ export function validateSimulation(simPath: string, simName: string, opts: Valid
     }
 
     // Валидация каждого файла
-    const requiredFiles = ['request.json', 'response.json', 'client.json', 'received.json'];
+    const isSubstep = simName.includes('-sub-');
+    // Substeps have different required files (server-side only, no client/received)
+    const requiredFiles = isSubstep
+        ? ['request.json', 'response.json']
+        : ['request.json', 'response.json', 'client.json', 'received.json'];
     const optionalFiles = ['server-transforms-request.json', 'server-transforms-response.json'];
     const allFiles = [...requiredFiles, ...optionalFiles];
 
     for (const filename of allFiles) {
         const filePath = join(simPath, filename);
-        const fileResult = validateFile(filePath, filename, opts);
+        const fileResult = validateFile(filePath, filename, opts, isSubstep);
         result.files.push(fileResult);
 
         if (!fileResult.valid) {

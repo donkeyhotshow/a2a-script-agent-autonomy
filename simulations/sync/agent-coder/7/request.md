@@ -29,14 +29,51 @@
 
 ```json
 {
-  "message": "твоя відповідь користувачу",
-  "action": "дія яку виконати",
-  "params": {
-    "query": "натуральний запит для RAG",
-    "file": "шлях до файлу",
-    "command": "команда для виконання",
-    "path": "шлях для запису",
-    "content": "вміст файлу"
+  "context": {
+    "task": "допоможи розібратись з кодом",
+    "execution": {
+      "action": "agent",
+      "step": "completed"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "як працює система авторизації?"
+      },
+      {
+        "role": "assistant",
+        "message": "Щоб відповісти на це питання, мені потрібно спочатку пошукати в коді про авторизацію.",
+        "action": "rag-search"
+      },
+      {
+        "role": "system",
+        "message": "RAG знайшов: src/auth.js, src/middleware/auth.ts, src/utils/jwt.js"
+      },
+      {
+        "role": "assistant",
+        "message": "Знайшов файли авторизації. Зараз прочитаю основний файл."
+      },
+      {
+        "role": "system",
+        "message": "Прочитано файл src/auth.js"
+      },
+      {
+        "role": "assistant",
+        "message": "Система авторизації працює наступним чином..."
+      },
+      {
+        "role": "user",
+        "message": "дякую!"
+      },
+      {
+        "role": "assistant",
+        "message": "Будь ласка! Звертайся ще, якщо будуть питання про код.",
+        "action": "completed"
+      }
+    ]
+  },
+  "result": {
+    "message": "запиши весь звіт в docs/auth-report.md"
   }
 }
 ```

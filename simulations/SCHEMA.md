@@ -19,20 +19,16 @@ Simulations are the **contract tests** for the Web + Client API: `received.json`
 
 When improving the client, upgrade the matching `received.json` / `response.json` first, then align code.
 
-## Scope: simulations vs runtime
+## Scope: sync vs async goldens
 
-**Simulations do NOT cover** promise-related flows and async infrastructure:
+- **`simulations/sync/`** — Immediate **invoke-shaped** request/response contract (no transport-only `promiseId` in
+  fixtures). Does not try to model polling or the raw `{ promiseId }` ack.
+- **`simulations/async/`** — Same per-step file bundle, but documents **async lifecycle** semantics: in-flight vs
+  terminal snapshots, `context.execution` while processing, and completed/failed/cancelled-style terminals. Transport
+  fields such as top-level `promiseId` are stripped during `sim:validate` normalization (see `async/README.md`).
 
-- `execute.wait` — loading/wait indicator while server processes
-- `promiseId` — async request polling
-- Polling, retries, timeout handling
-
-Simulations describe the **sync request-response contract** (client.json → received.json). Runtime systems add promise
-handling on top; that logic is outside simulation scope.
-
-> **Async simulations:** See `simulations/async/` directory for full async protocol simulations including `promiseId`
-lifecycle, polling patterns, and `execute.wait` handling. Sync simulations in `simulations/sync/` cover the immediate
-request-response contract.
+Runtime Client API still implements polling, retries, and `execute.wait`; goldens focus on **payload shapes** merged into
+session state, not the HTTP polling loop itself.
 
 > **Примечание о context:** Поля внутри `context` курируются системой. Стандартные поля: `execution`, `history`,
 > `files`, `scratchpad`, `scratchpad_ops`, `workbench`. Остальные (`vite_config`, `aliases` и т.д.) — свободный формат.
@@ -127,14 +123,14 @@ Examples: [`agent-auto-ai/6/interrupt.md`](agent-auto-ai/6/interrupt.md); subste
 
 | Файл                                        | Направление      | Что показывает                                                                                              |
 |---------------------------------------------|------------------|-------------------------------------------------------------------------------------------------------------|
-| `simulations/agent/1/client.json`           | Web → Client API | UI отправляет начальный `task` с `projectId`, чтобы создать сессию и показывать прогресс.                   |
-| `simulations/agent/1/received.json`         | Client API → Web | Клиент получает `execute.form.choices` (роутер: dialog, agent, task-decomposition, fix-vue-imports и т.д.). |
-| `simulations/agent-coder/2/client.json`     | Web → Client API | После выбора режима агента web отправляет `result.choice` / идентификаторы сессии.                          |
-| `simulations/agent-coder/2/received.json`   | Client API → Web | Следующий шаг agent-coder (например форма `message`).                                                       |
-| `simulations/agent-coder/1/client.json`     | Web → Client API | Начальный запрос на помощь с кодом (роутер).                                                                |
-| `simulations/agent-coder/1/received.json`   | Client API → Web | Ответ роутера с выбором режимов.                                                                            |
-| `simulations/agent-analyze/3/client.json`   | Web → Client API | Результат RAG-поиска для анализа архитектуры.                                                               |
-| `simulations/agent-analyze/3/received.json` | Client API → Web | Форма с результатами анализа и вариантами продолжения.                                                      |
+| `simulations/sync/agent/1/client.json`           | Web → Client API | UI отправляет начальный `task` с `projectId`, чтобы создать сессию и показывать прогресс.                   |
+| `simulations/sync/agent/1/received.json`         | Client API → Web | Клиент получает `execute.form.choices` (роутер: dialog, agent, task-decomposition, fix-vue-imports и т.д.). |
+| `simulations/sync/agent-coder/2/client.json`     | Web → Client API | После выбора режима агента web отправляет `result.choice` / идентификаторы сессии.                          |
+| `simulations/sync/agent-coder/2/received.json`   | Client API → Web | Следующий шаг agent-coder (например форма `message`).                                                       |
+| `simulations/sync/agent-coder/1/client.json`     | Web → Client API | Начальный запрос на помощь с кодом (роутер).                                                                |
+| `simulations/sync/agent-coder/1/received.json`   | Client API → Web | Ответ роутера с выбором режимов.                                                                            |
+| `simulations/sync/agent-analyze/3/client.json`   | Web → Client API | Результат RAG-поиска для анализа архитектуры.                                                               |
+| `simulations/sync/agent-analyze/3/received.json` | Client API → Web | Форма с результатами анализа и вариантами продолжения.                                                      |
 
 ## Request
 

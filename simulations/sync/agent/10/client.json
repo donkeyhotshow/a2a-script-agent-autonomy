@@ -1,0 +1,12 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "edit-patch": {
+      "success": true,
+      "path": "simulations/sync/agent/.e2e-fixture.md",
+      "operationsApplied": 1,
+      "linesChanged": 1
+    }
+  }
+}

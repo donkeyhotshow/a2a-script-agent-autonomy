@@ -7,10 +7,16 @@ between code and design. Always start with RAG search and use action-key respons
 
 ```json
 {
-  "message": "your observation or next step",
-  "rag-search": { "query": "" },
-  "read-file": { "path": "" },
-  "continue": {}
+  "context": {
+    "task": "аналіз",
+    "execution": {
+      "action": "agent",
+      "step": "3"
+    }
+  },
+  "result": {
+    "message": "опиши поточну архітектуру бекенду"
+  }
 }
 ```
 

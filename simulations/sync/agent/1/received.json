@@ -14,17 +14,17 @@
         {
           "id": "agent",
           "label": "Agent",
-          "description": "Universal agent: analyze, code, review — LLM decides the next action."
+          "description": "Universal agent: tools and forms."
         },
         {
           "id": "task-decomposition",
           "label": "Декомпозиція задачі",
-          "description": "Split a goal into ordered subtasks and track progress."
+          "description": "Розбиття задачі на підзадачі та план виконання."
         },
         {
           "id": "fix-vue-imports",
           "label": "Виправлення Vue imports",
-          "description": "Scripted Vue 2→3 import fixes (no LLM)."
+          "description": "Скриптований сценарій для виправлення імпортів у Vue."
         }
       ]
     }

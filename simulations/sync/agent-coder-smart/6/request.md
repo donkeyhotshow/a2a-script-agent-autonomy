@@ -9,7 +9,16 @@
 {
   "context": {
     "task": "створи задачу і виконай",
-    "execution": { "action": "agent", "step": "checklist" },
+    "execution": {
+      "action": "agent",
+      "step": "checklist"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "додати логінування в API та оновити тести"
+      }
+    ],
     "workbench": {
       "sections": {
         "section1": "додати логінування в API та оновити тести",
@@ -17,6 +26,9 @@
         "section3": "1. Переглянути існуючі маршрути API та middleware.\n2. Визначити місце підключення auth (JWT).\n3. Перевірити наявні тести для API та додати сценарії для захищених ендпоінтів."
       }
     }
+  },
+  "result": {
+    "choice": "proceed"
   }
 }
 ```

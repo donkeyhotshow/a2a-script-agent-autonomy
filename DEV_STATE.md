@@ -4,9 +4,29 @@
 
 **System roadmap:** [`work/tasks/system-improvement-priorities.md`](work/tasks/system-improvement-priorities.md) (contract unification, gray room, verification pyramid, observability).
 
-**Work queue (sync sims):** сделано: README/step-contract/form `description`/`agent/description.md` — см. `work/STATE.md` S7–S8, S13, S10 partial. Осталось: [`work/tasks/sync-substeps-not-discovered.md`](work/tasks/sync-substeps-not-discovered.md), [`work/tasks/sync-llm-snapshot-coverage.md`](work/tasks/sync-llm-snapshot-coverage.md), [`work/tasks/sync-workspace-tools-golden-map.md`](work/tasks/sync-workspace-tools-golden-map.md), опционально выравнивание роутера — [`work/tasks/sync-documentation-and-router-drift.md`](work/tasks/sync-documentation-and-router-drift.md).
+**Work queue (sync sims):** S7–S12 done (2026-04-01). Осталось:
+- S10: router drift (optional)
 
-Current system state: **Stack готов** - все сервисы работают; `sim:validate -- --all --step-contract` зелёный. Недавно: root `GET /health` включает `mode: stateless`; sync `POST /invoke` дожимает очередь и возвращает `execute`/`context`; публичный DTO сессии отдаёт slim `context.execution` (seeds); `e2e-dialog-test` follow-up допускает dialog `{message,form}` на `execute`.
+Current system state: **Stack готов** - все сервисы работают; `sim:validate -- --all --step-contract` зелёный.
+
+**Recent (simulations):** `SCHEMA.md` scope unified (sync vs `async/`); root `npm run sim:contract-report`; `async/promise-lifecycle/3` failed-terminal golden; `server-invoke-response-execute.schema.json` allows `execution.status` `failed` / `cancelled`. **`sync/agent`:** 15-step golden — усі типи `execute` для web agent у одному ланцюжку (без LLM у фікстурах), шляхи репо + workbench як `agent-coder-smart`.
+
+**Pre-existing issues (known):**
+- a2a-client test failures: 41 failed — 100% SDK config issues (not code)
+- Orchestrator metrics: требует периодического обновления
+
+**Pending tasks:**
+- S10: Router drift (optional)
+
+## Completed work/tasks (2026-04-01):
+- Analyze test failures: Classified 41 failed a2a-client tests as config/environment issues
+- Orchestrator metrics tracking: Added cycle tracking in task-execute loop
+- Sync documentation and router drift: Added description.md and updated router labels
+- Sync LLM snapshot coverage: Documented in simulations/sync/README.md
+- Sync README and CLI gap: Updated README to match SCHEMA.md
+- Sync step-contract warnings: Fixed all 47 warnings via passthrough transforms
+- Sync substeps not discovered: Extended scanner with --include-substeps flag
+- Sync workspace tools golden map: Added mapping to description.md
 
 ---
 

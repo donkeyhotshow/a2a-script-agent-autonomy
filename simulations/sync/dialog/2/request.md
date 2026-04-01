@@ -10,6 +10,9 @@
       "action": "task",
       "step": "router"
     }
+  },
+  "result": {
+    "choice": "dialog"
   }
 }
 ```

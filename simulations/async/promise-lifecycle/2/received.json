@@ -1,0 +1,7 @@
+{
+  "projectId": "golden-async-pl",
+  "sessionId": "sess-async-pl-1",
+  "execute": {
+    "message": "Async work finished (golden step 2). Prior real hop may have been promiseId-only; this is the terminal invoke-shaped snapshot merged into session."
+  }
+}

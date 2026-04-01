@@ -36,14 +36,25 @@ Examples of possible steps (you may reuse or extend and combine them as needed):
 
 ```json
 {
-  "step": "fs_discover",
-  "message": "your immediate response to the user",
-  "execute": {
-    "rag-search": {
-      "query": ""
-    }
-  },
-  "completed": false
+  "context": {
+    "task": "Add GET /health returning JSON { ok: true }; wire the route in src/app.js.",
+    "execution": {
+      "action": "agent",
+      "step": "locate_code"
+    },
+    "workbench": {
+      "sections": {
+        "scratchpad": {},
+        "files": {}
+      }
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Add GET /health returning JSON { ok: true }; wire the route in src/app.js."
+      }
+    ]
+  }
 }
 ```
 

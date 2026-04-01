@@ -9,7 +9,15 @@ Stack готов, задач нет.
 
 ---
 
-## Архитектура
+## Pre-existing Issues
+
+| Issue | Status | Notes |
+|-------|--------|-------|
+| Test failures: 41 failed | Known | 100% SDK config issues (not code). 38 files: "No test suite found", 2: "Runner config", 1: Vite transform |
+
+---
+
+## Architecture
 
 Client API - хранит сессии и управляет состоянием:
 - Step-based storage (нумерованные папки)

@@ -27,13 +27,15 @@ export interface CliArgs {
     strict: boolean;
     /** SCHEMA.md no-LLM step transform contract (optional warnings). */
     stepContract: boolean;
+    /** If true, include substep folders (e.g., "3-sub-1") in validation. */
+    includeSubsteps: boolean;
 }
 
 // ============================================
 // Scanner: list simulations
 // ============================================
 
-export function getAllSimulations(): {path: string; name: string}[] {
+export function getAllSimulations(includeSubsteps = false): {path: string; name: string}[] {
     const simulations: {path: string; name: string}[] = [];
 
     if (!existsSync(SIMULATIONS_DIR)) {
@@ -52,7 +54,7 @@ export function getAllSimulations(): {path: string; name: string}[] {
 
             for (const subEntry of subEntries) {
                 if (!subEntry.isDirectory()) continue;
-                if (substepDirRe.test(subEntry.name)) continue; // Skip "3-sub-1"
+                if (substepDirRe.test(subEntry.name)) continue; // Skip "3-sub-1" by default
 
                 const simBaseDir = join(subDir, subEntry.name);
                 const simBaseEntries = readdirSync(simBaseDir, {withFileTypes: true});
@@ -64,6 +66,13 @@ export function getAllSimulations(): {path: string; name: string}[] {
                     if (stepDirRe.test(stepEntry.name)) {
                         hasStepFolders = true;
                         // This is a step folder (e.g., "1", "4", "7")
+                        simulations.push({
+                            path: join(simBaseDir, stepEntry.name),
+                            name: `${entry.name}/${subEntry.name}/${stepEntry.name}`
+                        });
+                    }
+                    // Also include substep folders if flag is set
+                    if (includeSubsteps && substepDirRe.test(stepEntry.name)) {
                         simulations.push({
                             path: join(simBaseDir, stepEntry.name),
                             name: `${entry.name}/${subEntry.name}/${stepEntry.name}`
@@ -131,6 +140,7 @@ export function parseArgs(): CliArgs {
         help: args.includes('--help') || args.includes('-h'),
         strict: args.includes('--strict'),
         stepContract: args.includes('--step-contract'),
+        includeSubsteps: args.includes('--include-substeps'),
     };
 }
 
@@ -147,6 +157,7 @@ export function printHelp() {
   --verbose, -v      Подробный вывод
   --strict           Без нормализации (сырой JSON против схемы)
   --step-contract    Доп. предупреждения: no-LLM шаги и server-transforms-*.json (см. simulations/SCHEMA.md)
+  --include-substeps Включить подпапки substeps (например, "3-sub-1") в валидацию
   --help, -h         Показать эту справку
 
 По умолчанию request/response нормализуются: снимаются promiseId/даты, обёртка success/data,

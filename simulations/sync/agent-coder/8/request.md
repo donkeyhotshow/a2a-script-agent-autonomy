@@ -11,7 +11,19 @@
 {
   "context": {
     "task": "допоможи розібратись з кодом",
+    "execution": {
+      "action": "agent",
+      "step": "request"
+    },
     "history": [
+      {
+        "role": "user",
+        "message": "як працює система авторизації?"
+      },
+      {
+        "role": "assistant",
+        "message": "Система авторизації працює..."
+      },
       {
         "role": "user",
         "message": "запиши весь звіт в docs/auth-report.md"
@@ -24,9 +36,10 @@
     ]
   },
   "result": {
-    "success": true,
-    "path": "docs/auth-report.md",
-    "bytesWritten": 1847
+    "write-file": {
+      "path": "docs/auth-report.md",
+      "success": true
+    }
   }
 }
 ```

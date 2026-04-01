@@ -14,6 +14,7 @@
                     "sim:lint:all":  "npm --prefix a2a-server run sim:lint:all --",
                     "sim:validate":  "npm --prefix a2a-server run sim:validate --",
                     "sim:quality":  "npm --prefix a2a-server run sim:quality",
+                    "sim:contract-report":  "npm --prefix a2a-server run sim:contract-report --",
                     "gate:cleanup":  "npm --prefix a2a-server run gate:cleanup"
                 },
     "devDependencies":  {

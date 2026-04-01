@@ -31,6 +31,7 @@
     "sim:compare": "tsx scripts/sim-compare.ts",
     "sim:report": "tsx scripts/sim-report.ts",
     "sim:check-md": "node scripts/check-sim-md-json-drift.mjs",
+    "sim:check-md:fix": "node scripts/check-sim-md-json-drift.mjs --fix",
     "sim:quality": "tsx scripts/sim-quality-gate.ts",
     "sim:contract-report": "tsx scripts/sim-contract-report.ts",
     "gate:cleanup": "tsx scripts/cleanup-gate.ts"

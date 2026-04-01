@@ -21,13 +21,25 @@ Output only the steps, no extra text.
 {
   "context": {
     "task": "add auth and refactor API",
-    "execution": { "action": "task-decomposition", "step": "decompose-steps" },
+    "execution": {
+      "action": "task-decomposition",
+      "step": "decompose-steps"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "add auth and refactor API"
+      }
+    ],
     "workbench": {
       "sections": {
         "section1": "add auth and refactor API",
         "section2": "1. Add JWT auth middleware and login endpoint\n2. Protect existing API routes with auth\n3. Refactor API module structure and error handling\n4. Add integration tests for auth and protected routes"
       }
     }
+  },
+  "result": {
+    "choice": "proceed"
   }
 }
 ```

@@ -1,0 +1,23 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "grep-search": {
+      "success": true,
+      "pattern": "sim:validate",
+      "matches": [
+        {
+          "file": "simulations/sync/agent/description.md",
+          "line": 12,
+          "column": 10,
+          "content": "npm run sim:validate",
+          "match": "sim:validate"
+        }
+      ],
+      "files": [
+        "simulations/sync/agent/description.md"
+      ],
+      "total": 1
+    }
+  }
+}
