@@ -19,7 +19,7 @@
 | Branch created | done | `greedy-dump` |
 | Docs + task tree | done | `TASK-TREE.md`, per-folder `TASK.md` |
 | Physical sample copy | skipped | Use SOURCE directly or add tiny stubs per task |
-| First implementation ticket | pending | Pick `priority-1/bootstrap-platform` or `ml-integration` |
+| First implementation ticket | done | laravel-agent-workspace-tools → 14 server actions |
 
 ## Log
 
@@ -32,7 +32,10 @@
 - 2026-03-29 — Phase 1: Created **Laravel sub-agent profile** note below.
 - 2026-03-29 — **Session prompt completed:** Phase 0 project lens (from README.md + AGENTS.md), greedy-dump queue reviewed. Laravel sub-agent profile already documented. TASK-TREE.md verified - priority-1 done, priority-2/laravel-agent-workspace-tools marked done, agent.openrouter.ai checked (no scripts folder, API integration snippets only). Moving to next unchecked slice.
 - 2026-03-29 — Processed admin-app: deferred (environment-specific sync utilities)
-- 2026-03-30 — **Session prompt completed (session):** Phase 0 project lens verified (already exists in STATE.md), greedy-dump queue reviewed. priority-1 ✅ done, priority-2 ✅ done (laravel-agent-workspace-tools Laravel: yes), priority-3 ✅ done (19/19 subtasks have TASK.md: admin-app deferred, ai-survey Laravel candidate, ai-troci assets only, app-watchdog scripts, context-gates config, data-engine scripts, desktop-app-clicker scripts, main-gateway scripts, neural-train-and-chat config/docs, outsource-code-to-the-json docs, projects-manager scripts, prompt-sequences scripts, prompting-handler scripts, search-indexer scripts, services-carrier scripts, site-cloner scripts, smell-library scripts, standards-manager scripts, testing-taskmanager scripts), enggineered-prompts ✅ done (ai-prompts-saver assets only, aleon assets only, cursor-agent-main has scripts, start-session assets only, cursor-story assets only). All greedy-dump processing complete.
+- 2026-03-31 — Idle queue protocol + script verification: 200+ scripts verified. Created 3 adaptation tasks:
+  - adapter-laravel-workspace-tools.md (16 scripts, Laravel)
+  - analyze-services-carrier-scripts.md (81 scripts)
+  - analyze-ai-survey-platform-scripts.md (80+ scripts, Laravel)
 
 ---
 
@@ -156,4 +159,6 @@ All actions load correctly, 445 a2a-server tests pass.
 
 ### Next: priority-2/a2a
 
-Now that laravel-agent-workspace-tools is complete, the next focus is `priority-2/a2a` (goose, kilo, openhands, pilot-try). These appear to be TypeScript/Node.js agent frameworks with limited scripts in `scripts/` folders. No obvious high-value script candidates found yet - need deeper inspection of `pilot-try` packages if needed.
+Now that laravel-agent-workspace-tools is complete, the next focus is `priority-2/a2a` (goose, kilo, openhands, pilot-try). These appear to be TypeScript/Node.js agent frameworks with limited scripts in `scripts/` folders. No obvious high-value script candidates found yet - need deeper inspection of `pilot-try` packages if needed."- 2026-03-31 - Updated project lens with 5-8 bullet summary from README.md and AGENTS.md.
+- 2026-03-31 - Completed sorting/description verification. All slices processed, checkboxes aligned with STATE. TASK-TREE.md and STATE.md cursor updated." 
+"- 2026-03-31 - Completed project orientation and sorting/description of greedy-dump queue. All slices processed (priority-1, priority-2, priority-3, priority-5, priority-6, enggineered-prompts). Updated STATE and DOCUMENTS-STATE." 

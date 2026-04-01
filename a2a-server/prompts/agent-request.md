@@ -23,8 +23,7 @@ ${flowControlHint}
 
 ## Response Format
 
-**IMPORTANT: You MUST return your response as JSON inside a code block.**
-
+**IMPORTANT: You MUST return your response as JSON inside a code block like:**
 ```json
 {...}
 ```

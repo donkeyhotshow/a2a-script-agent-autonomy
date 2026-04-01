@@ -251,9 +251,13 @@ export function exists(obj: unknown, path: string): boolean {
  * Looks for JSON blocks (```json ... ```) or raw JSON
  */
 export function extractJsonFromMarkdown(md: string): unknown {
+  // DEBUG: Log the raw response for debugging
+  console.log('[DEBUG extractJsonFromMarkdown] Raw response:', md);
+  
   // Try to find JSON code block
   const jsonBlockMatch = md.match(/```json\s*([\s\S]*?)\s*```/);
   if (jsonBlockMatch) {
+    console.log('[DEBUG extractJsonFromMarkdown] Found JSON block');
     try {
       return JSON.parse(jsonBlockMatch[1]);
     } catch {
@@ -264,6 +268,7 @@ export function extractJsonFromMarkdown(md: string): unknown {
   // Try to find any code block
   const codeBlockMatch = md.match(/```\s*([\s\S]*?)\s*```/);
   if (codeBlockMatch) {
+    console.log('[DEBUG extractJsonFromMarkdown] Found generic code block');
     try {
       return JSON.parse(codeBlockMatch[1]);
     } catch {
@@ -272,9 +277,13 @@ export function extractJsonFromMarkdown(md: string): unknown {
   }
   
   // Try parsing the entire content as JSON
+  console.log('[DEBUG extractJsonFromMarkdown] Trying to parse as raw JSON');
   try {
-    return JSON.parse(md);
+    const parsed = JSON.parse(md);
+    console.log('[DEBUG extractJsonFromMarkdown] Raw JSON parse succeeded');
+    return parsed;
   } catch {
+    console.log('[DEBUG extractJsonFromMarkdown] Raw JSON parse failed');
     // Return the raw content if no valid JSON found
     return md;
   }

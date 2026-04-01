@@ -24,21 +24,22 @@ Repo norms that override the default “answer once and exit” habit live in [`
 |---|------|----------------|-------------------|
 | 7 | **Stack down / pending promise** | Retry with backoff; run health checks from [`AGENTS.md`](../AGENTS.md) Debugging. | Same; log `promiseId` and poll until terminal state or timeout. |
 | 8 | **Auth / env** | `JWT_SECRET` (32+ chars), `ENCRYPTION_KEY` exactly 32 chars, `SKIP_AUTH=1` in dev as documented. Fix env, retry—do not stop on first 401/400 without diagnosis. | Surface HTTP status and response body in logs. |
+| 9 | **Started from sims/e2e for schema bug** | For schema/action-key shape failures, start at `scripts/direct-tests` first, then escalate (session flow -> sims -> e2e). See [`AGENTS.md`](../AGENTS.md), [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md). | Same escalation order; avoid burning retries on high-latency e2e before direct reproduction. |
 
 ## 4. Model / behavior
 
 | # | Trap | Cursor agent | Client API driver |
 |---|------|----------------|-------------------|
-| 9 | **Over-cautious “need more context”** | Default: state assumptions, proceed; ask only when blocked. | N/A (deterministic driver). |
-| 10 | **Implicit one-response habit** | User/rules: iterate until criteria met. | Explicit loops and budgets in code. |
-| 11 | **No written criteria** | Attach tests, sim commands, or checklist to the task. | Assertions on session JSON or exit codes. |
+| 10 | **Over-cautious “need more context”** | Default: state assumptions, proceed; ask only when blocked. | N/A (deterministic driver). |
+| 11 | **Implicit one-response habit** | User/rules: iterate until criteria met. | Explicit loops and budgets in code. |
+| 12 | **No written criteria** | Attach tests, sim commands, or checklist to the task. | Assertions on session JSON or exit codes. |
 
 ## 5. Repo-specific process
 
 | # | Trap | Cursor agent | Client API driver |
 |---|------|----------------|-------------------|
-| 12 | **DEV_STATE not updated** | Update root/module [`DEV_STATE.md`](../DEV_STATE.md) before/after work so the next pass sees real queue state. | Operators document runs in DEV_STATE when relevant. |
-| 13 | **Golden sim / action-key shape** | One action key per `execute` / `result`; fix and re-run `npm run sim:lint` / `sim:validate`. See [`AGENTS.md`](../AGENTS.md) Golden Simulations, [`simulations/SCHEMA.md`](../simulations/SCHEMA.md). | Same for whoever edits sims or payloads. |
+| 13 | **DEV_STATE not updated** | Update root/module [`DEV_STATE.md`](../DEV_STATE.md) before/after work so the next pass sees real queue state. | Operators document runs in DEV_STATE when relevant. |
+| 14 | **Golden sim / action-key shape** | One action key per `execute` / `result`; fix and re-run `npm run sim:lint` / `sim:validate`. See [`AGENTS.md`](../AGENTS.md) Golden Simulations, [`simulations/SCHEMA.md`](../simulations/SCHEMA.md). | Same for whoever edits sims or payloads. |
 
 ## Quick links
 

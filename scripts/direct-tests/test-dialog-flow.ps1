@@ -57,29 +57,52 @@ try {
     Ok "a2a-server ($ServerPort)"
 } catch { Fail "a2a-server not reachable: $ServerUrl" }
 
-# Step 1: Create session with task "диалог" -> expect router (execute.form.choices)
-Write-Step 1 "Create session with task 'диалог' -> expect router"
+# Step 1: Create session (sync) -> get initial form
+Write-Step 1 "Create session -> get initial form"
 
-$body1 = '{"title":"Dialog Test","task":"диалог"}'
-$r1 = Invoke-RestMethod -Uri "$ClientUrl/api/sessions" -Method POST -Body $body1 -Headers $SessionHeader -TimeoutSec 15
+$body1 = '{"title":"Dialog Test","task":"dialog"}'
+$r1 = Invoke-RestMethod -Uri "$ClientUrl/api/a2a/sessions" -Method POST -Body $body1 -Headers $SessionHeader -TimeoutSec 15
 
-$sessionId = $r1.data.id
+$sessionId = $r1.session.id
 if (-not $sessionId) { Fail "No session id" }
 Ok "Session: $sessionId"
 
-$prom1 = $r1.serverResponse.data.promiseId
-if (-not $prom1) { Fail "No promiseId in step 1" }
+# Sync response - check session.execute for input form
+if (-not $r1.session.execute.form.input) { Fail "No execute.form.input in sync response" }
+Ok "execute.form.input found - initial form received"
 
-$result1 = Invoke-PollResult -PromiseId $prom1
-if (-not $result1.execute.form.choices) { Fail "No execute.form.choices" }
-if ($result1.execute.form.choices.Count -lt 2) { Fail "Expected at least 2 choices" }
-Ok "execute.form.choices ($($result1.execute.form.choices.Count) items)"
+# Step 1b: Send task via /next to trigger server routing
+Write-Step 1b "Send task via /next to get router"
+
+$body1b = '{"result":{"message":"dialog"}}'
+$r1b = Invoke-RestMethod -Uri "$ClientUrl/api/a2a/sessions/$sessionId/next" -Method POST -Body $body1b -Headers $SessionHeader -TimeoutSec 15
+
+# Check for async response
+$prom1b = $r1b.asyncPending
+if ($prom1b) {
+    Ok "Async pending, waiting for completion..."
+    # Wait for async to complete - poll the async endpoint
+    for ($i = 0; $i -lt 15; $i++) {
+        Start-Sleep -Seconds 2
+        $asyncCheck = Invoke-RestMethod -Uri "$ClientUrl/api/a2a/sessions/$sessionId/async" -Headers $SessionHeader -TimeoutSec 15
+        if (-not $asyncCheck.asyncPending) {
+            Ok "Async completed"
+            break
+        }
+    }
+    # Get the updated session
+    $r1b = Invoke-RestMethod -Uri "$ClientUrl/api/a2a/sessions/$sessionId" -Headers $SessionHeader -TimeoutSec 15
+}
+
+if (-not $r1b.session.execute.form.choices) { Fail "No execute.form.choices after /next" }
+if ($r1b.session.execute.form.choices.Count -lt 2) { Fail "Expected at least 2 choices" }
+Ok "execute.form.choices ($($r1b.session.execute.form.choices.Count) items)"
 
 # Step 2: choice "dialog" -> expect input form
 Write-Step 2 "Select choice 'dialog' -> expect input form"
 
 $body2 = '{"choice":"dialog","input":{}}'
-$r2 = Invoke-RestMethod -Uri "$ClientUrl/api/sessions/$sessionId/action" -Method POST -Body $body2 -Headers $SessionHeader -TimeoutSec 15
+$r2 = Invoke-RestMethod -Uri "$ClientUrl/api/a2a/sessions/$sessionId/action" -Method POST -Body $body2 -Headers $SessionHeader -TimeoutSec 15
 
 $prom2 = $r2.promiseId
 if (-not $prom2) { Fail "No promiseId in step 2" }
@@ -99,7 +122,7 @@ Ok "execute.form.input"
 Write-Step 3 "Send message 'hello world' -> expect response"
 
 $body3 = '{"result":{"message":"hello world"}}'
-$r3 = Invoke-RestMethod -Uri "$ClientUrl/api/sessions/$sessionId/next" -Method POST -Body $body3 -Headers $SessionHeader -TimeoutSec 15
+$r3 = Invoke-RestMethod -Uri "$ClientUrl/api/a2a/sessions/$sessionId/next" -Method POST -Body $body3 -Headers $SessionHeader -TimeoutSec 15
 
 $prom3 = $r3.promiseId
 if (-not $prom3) { Fail "No promiseId in step 3" }
@@ -112,7 +135,7 @@ Ok "Step 3 completed (outcome: $($result3.outcome))"
 Write-Step 4 "Send message 'Thanks!' -> expect completed"
 
 $body4 = '{"result":{"message":"Thanks!"}}'
-$r4 = Invoke-RestMethod -Uri "$ClientUrl/api/sessions/$sessionId/next" -Method POST -Body $body4 -Headers $SessionHeader -TimeoutSec 15
+$r4 = Invoke-RestMethod -Uri "$ClientUrl/api/a2a/sessions/$sessionId/next" -Method POST -Body $body4 -Headers $SessionHeader -TimeoutSec 15
 
 $prom4 = $r4.promiseId
 if (-not $prom4) { Fail "No promiseId in step 4" }

@@ -9,6 +9,7 @@ Guidance for agents working in this repository.
 | **Windows live stack restart** | **`start-all.bat`** from repo root only — not per-service `npm run dev` ([`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md)) |
 | **Unified manual path** | **Client API only:** create session → **`mode: "agent"`** (or `execution.action`) → **`task`** → `next` + poll `async` — [Unified manual path](#unified-manual-path-client-api) |
 | **Sessions / curl / agent tests** | Same surface: not `invoke` alone — [technical notes](#sessions-tests-and-agent-mode-where-to-send-http) |
+| **Schema debugging start point** | **Start with `scripts/direct-tests` first**, then escalate to sims/e2e only after a direct-test reproduction |
 | Imports | `.js` suffix with NodeNext resolution |
 | Test ENCRYPTION_KEY | Exactly 32 characters |
 | Test DB | `a2a_test` (not `a2a_server`) |
@@ -113,6 +114,9 @@ Driver-oriented step list: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) → 
 ---
 
 ## Critical Rules
+
+### 0. Schema Debugging Entry Point (MANDATORY)
+For schema-level debugging, start with `scripts/direct-tests` first. Reproduce and isolate the shape issue there before moving to session-flow checks, simulations (`sim:lint` / `sim:validate`), or full end-to-end runs.
 
 ### 1. Imports with Path Aliases
 Use `.js` extension: `import x from '@/services/x.js'` (NodeNext module resolution)

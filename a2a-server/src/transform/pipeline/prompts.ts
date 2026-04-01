@@ -94,19 +94,27 @@ async function resolveTransformFile(
   forceServerTransforms?: boolean
 ): Promise<string> {
   const candidates: string[] = [];
+  
+  // Map schema names to their transform files
+  const schemaMapping: Record<string, string> = {
+    'agent': 'agent',
+    'task-decomposition': 'task-decomposition',
+  };
+  const mappedSchema = schemaMapping[schemaName] || schemaName;
+  
   if (forceServerTransforms) {
-    if (schemaName === 'coder' && type === 'request') {
+    if (mappedSchema === 'coder' && type === 'request') {
       candidates.push(path.resolve(dir, 'coder-request.json'));
     }
-    if (schemaName === 'dialog' && type === 'response') {
+    if (mappedSchema === 'dialog' && type === 'response') {
       candidates.push(path.resolve(dir, 'dialog-llm-response.json'));
     }
     candidates.push(path.resolve(dir, `server-transforms-${type}.json`));
   } else {
     if (step !== undefined && step > 0) {
-      candidates.push(path.resolve(dir, `${schemaName}-${step}-${type}.json`));
+      candidates.push(path.resolve(dir, `${mappedSchema}-${step}-${type}.json`));
     }
-    candidates.push(path.resolve(dir, `${schemaName}-${type}.json`));
+    candidates.push(path.resolve(dir, `${mappedSchema}-${type}.json`));
     candidates.push(path.resolve(dir, `server-transforms-${type}.json`));
   }
 

@@ -26,6 +26,16 @@ This repository **is** that stack: services run, and **work is driven by HTTP**,
 2. **Talk to the Client API** on the dev server base URL (default **`http://localhost:5173`**) — same API the UI uses, but **via `curl`** (or any HTTP client).
 3. **Wait for completion** on async work: poll **`GET /api/a2a/sessions/{id}/async`** (or legacy promise URL) until the response is final — same as a user waiting for an answer.
 
+## Schema debugging first step (mandatory)
+
+Before session-level or e2e debugging, reproduce schema/shape problems in `scripts/direct-tests`.
+
+Escalation order:
+1. `scripts/direct-tests` (fast isolation of schema/action-key shape)
+2. Client API session flow (`/sessions` -> `/next` -> `/async`)
+3. Simulations (`sim:lint`, `sim:validate`)
+4. Full stack/e2e
+
 Full endpoint table: root **`AGENTS.md`** (Client API section).
 
 ## Minimal mental model

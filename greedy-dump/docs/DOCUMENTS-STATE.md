@@ -35,6 +35,7 @@
 | cursor-agent-main | `greedy-dump/mirror/enggineered-prompts/cursor-agent-main/TASK.md` | pending | Has scripts (src/index.ts, src/index.test.ts, agents/, example-task/, tests/) — TypeScript agent framework |
 | start-session | `greedy-dump/mirror/enggineered-prompts/start-session/TASK.md` | deferred | Assets only (multiple .md files: ai_adapted_prompt.md, conceptual-module-upgrade.md, etc.) — no scripts |
 | cursor-story | `greedy-dump/mirror/enggineered-prompts/cursor-story/TASK.md` | deferred | Assets only (ultra-wide-turbo-workspace-main/ directory with .txt files) — no scripts |
+| obrabotano | `greedy-dump/mirror/obrabotano/TASK.md` | deferred | Large Node.js project with many scripts; defer for now to focus on Laravel sub-agent.
 
 ## Conventions
 

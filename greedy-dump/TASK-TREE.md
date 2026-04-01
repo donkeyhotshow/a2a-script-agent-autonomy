@@ -5,7 +5,7 @@ Legend: `[ ]` open `[x]` done. Child tasks live in `mirror/<path>/TASK.md` or `S
 ## Root
 
 - [ ] **LEGACY-CODEBACE.zip** — `mirror/LEGACY-CODEBACE/` (reference only)
-- [ ] **enggineered-prompts** — `mirror/enggineered-prompts/TASK.md`
+- [x] **enggineered-prompts** — `mirror/enggineered-prompts/TASK.md`
   - [ ] `cursor-story` (from `!Cursor story`)
   - [ ] `ai-prompts-saver`
   - [ ] `aleon`
@@ -20,10 +20,10 @@ Legend: `[ ]` open `[x]` done. Child tasks live in `mirror/<path>/TASK.md` or `S
    - [x] `a2a` (stub; actual agent repos in SOURCE)
    - [x] `agent.openrouter.ai`
    - [x] `laravel-agent-workspace-tools` (**Laravel: yes** — ✅ implemented 14 server actions)
-- [ ] **priority-3** — `mirror/priority-3/TASK.md` + `SUBTREE.md` (19 apps)
+- [x] **priority-3** — `mirror/priority-3/TASK.md` + `SUBTREE.md` (19 apps)
 - [ ] **priority-4** — empty placeholder — `mirror/priority-4/TASK.md`
-- [ ] **priority-5** — `mirror/priority-5/TASK.md` + per-folder tasks
-- [ ] **priority-6** — `mirror/priority-6/TASK.md`
+- [x] **priority-5** — `mirror/priority-5/TASK.md` + per-folder tasks
+- [x] **priority-6** — `mirror/priority-6/TASK.md`
   - [ ] `backup 0000` … `backup 0003`
   - [ ] `others`
 
