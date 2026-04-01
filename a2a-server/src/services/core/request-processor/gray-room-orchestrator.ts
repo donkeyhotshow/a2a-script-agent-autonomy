@@ -8,6 +8,8 @@ import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
 import {pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
 import {validateDialogExecuteShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
+import {SafetyLayer} from '../safety-layer/SafetyLayer.js';
+import {LoopSignal} from '../safety-layer/types.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 const DEFAULT_MODEL = 'qwen3:8b';
@@ -292,12 +294,14 @@ export class GrayRoomOrchestrator {
     private aiHubUrl: string;
     private model: string;
     private promptsTransformsPath: string;
+    private safetyLayer: SafetyLayer;
 
     constructor(options: GrayRoomOptions) {
         this.maxInterruptTurns = options.maxInterruptTurns ?? 10;
         this.aiHubUrl = (options.aiHubUrl ?? process.env.AI_HUB_URL ?? DEFAULT_AI_HUB).replace(/\/$/, '');
         this.model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL;
         this.promptsTransformsPath = options.promptsTransformsPath;
+        this.safetyLayer = new SafetyLayer();
     }
 
     /**
@@ -359,6 +363,54 @@ export class GrayRoomOrchestrator {
                 kind: 'response_transform',
                 interruptReason: interrupt?.reason,
             });
+
+            // --- Safety Layer Intercept ---
+            const safetyEnabled = process.env.A2A_SAFETY_LAYER_ENABLED === '1' || process.env.A2A_SAFETY_LAYER_ENABLED === 'true';
+            if (safetyEnabled && interrupt) {
+                const outcomeClass = result.outcome || 'unknown';
+                const safetyResult = await this.safetyLayer.intercept(interrupt.reason, outcomeClass, workingCtx);
+                
+                if (safetyResult.shouldInterrupt) {
+                    const signal = safetyResult.signal;
+                    logger.warn(`Safety Layer: Intercepted loop in Gray Room. Action: ${safetyResult.action}`, { signal });
+                    
+                    // Inject signal into context for UI and logic
+                    const c = (result.context || workingCtx) as Record<string, unknown>;
+                    const wb = (c.workbench || {}) as Record<string, unknown>;
+                    const slots = (wb.slots || {}) as Record<string, unknown>;
+                    slots.safety = { lastSignal: signal };
+                    wb.slots = slots;
+                    c.workbench = wb;
+
+                    if (safetyResult.action === 'stop' || safetyResult.action === 'clarify') {
+                        touchGrayRoom({
+                            phase: 'completed',
+                            status: 'stopped',
+                            turn,
+                            remainingBudget: interruptBudget,
+                            lastReason: `safety_intercept_${safetyResult.action}`,
+                        });
+
+                        const finalResult: ProcessResult = {
+                            outcome: safetyResult.action === 'stop' ? 'failed' : 'completed',
+                            context: c,
+                            error: safetyResult.action === 'stop' ? `Critical loop detected: ${signal?.reason}` : undefined,
+                            execute: safetyResult.action === 'clarify' ? {
+                                form: {
+                                    title: 'Safety Intercept: Potential Loop',
+                                    description: `The agent is repeating the action "${signal?.reason}" (${signal?.count} times). Should it continue?`,
+                                    choices: [
+                                        { id: 'continue', label: 'Continue anyway', type: 'agent' },
+                                        { id: 'stop', label: 'Stop and let me fix it', type: 'dialog' }
+                                    ]
+                                }
+                            } : undefined
+                        };
+                        return this.mergeTraceIntoResult(finalResult, trace, grayRoom);
+                    }
+                }
+            }
+            // ------------------------------
 
             if (!interrupt) {
                 touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});

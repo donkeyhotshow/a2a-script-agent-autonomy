@@ -50,6 +50,13 @@ Recommended sections:
 - `ADR-0032-port-management-execution.md` - Standardize dynamic port allocation, locking, conflict detection, and cleanup via `scripts/port-manager.js`
 - `ADR-0033-standard-extensions-structure.md` - Plan for single-extension sources, consistent handler/service naming, and cleaned server directories per the refactoring plan
 - `ADR-0034-protocol-consolidation.md` - Propose `@a2a/protocol`, canonical docs/actions layout, and a config map to consolidate shared types
+- `ADR-0035-agentic-reasoning-safety-layer.md` - Safety Layer inside GrayRoomOrchestrator: LoopDetector (triple×3), ContextValidator (SHA256), ConfidenceTracer (LLM gate) to raise session success rate ≥85%
+- `ADR-0036-autonomous-agent-memory-orchestration.md` - A2A Autonomous Agent Master Orchestration & Memory (38 feature contracts + 2026 improvements)
+- `ADR-0037-living-specs-task-synthesis.md` - Living Specs for Task Synthesis: machine-verifiable requirements that evolve with the agent
+- `ADR-0038-multi-agent-orchestrator.md` - Multi-Agent Orchestrator: Dynamic delegation to Architect/Implementer/Reviewer specialized agents
+- `ADR-0039-a2a-registry-layer.md` - A2A Registry Layer: Stateless worker discovery and routing to scale beyond N² connectivity
+- `ADR-0040-writer-reviewer-pattern.md` - Writer/Reviewer Pattern: Strict session-level separation to eliminate confirmation bias
+- `ADR-0041-comprehensive-architectural-improvements.md` - 15 Comprehensive Architectural Improvements for A2A-Script-Agent (Multi-Agent Memory, PolicyGuard, DX)
 
 ## Tooling: ADR compliance via Client API
 
@@ -63,7 +70,7 @@ Use a **separate state file** (curated ADR **queue**, current ADR, **per-ADR pha
 
 ## Adding a new ADR
 
-1. Use the next free number: **`ADR-0030-...md`** (keep zero-padding).
+1. Use the next free number: **`ADR-0036-...md`** (keep zero-padding).
 2. Set **Status** (`proposed` → `accepted`) and **Date**.
 3. Include **Context**, **Decision**, **Consequences** (and **Related** / **Notes** if useful).
 4. Add one line to the **Index** above with a short description.
