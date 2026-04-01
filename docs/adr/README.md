@@ -51,6 +51,28 @@ Recommended sections:
 - `ADR-0033-standard-extensions-structure.md` - Plan for single-extension sources, consistent handler/service naming, and cleaned server directories per the refactoring plan
 - `ADR-0034-protocol-consolidation.md` - Propose `@a2a/protocol`, canonical docs/actions layout, and a config map to consolidate shared types
 
+## Reference bundles (large / multi-topic)
+
+These are **not** single numbered ADRs. Use them as **roadmap, audit, and feature-contract** references; normative day-to-day rules stay in [`AGENTS.md`](../../AGENTS.md) and the numbered ADRs above.
+
+| Document | Contents |
+|----------|----------|
+| [`REFERENCE-ADRs-0035-0041-consolidated.md`](./REFERENCE-ADRs-0035-0041-consolidated.md) | Draft / proposed ADR-0035+ material (safety layer, memory, multi-agent, registry, writer/reviewer, and later numbered sections) in one file. |
+| [`REFERENCE-A2A-master-specification.md`](./REFERENCE-A2A-master-specification.md) | Master spec: user journey, runtime, feature contracts, glossary, roadmap, plus embedded ADR implementation audit table. |
+
+## Curated companion docs (often useful with ADRs)
+
+| Topic | Location |
+|-------|----------|
+| Operator / Client API curl flow | [`docs/OPERATOR-CURL.md`](../OPERATOR-CURL.md) |
+| New request / protocol detail | [`docs/new-request-flow/PROTOCOL.md`](../new-request-flow/PROTOCOL.md) |
+| Schema debugging (start here) | [`scripts/direct-tests/README.md`](../../scripts/direct-tests/README.md) |
+| Simulation JSON contract | [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) |
+| Gray Room (server interrupt loop) | [`a2a-server/docs/GRAY-ROOM.md`](../../a2a-server/docs/GRAY-ROOM.md) |
+| Env matrix | [`docs/ENV-MATRIX.md`](../ENV-MATRIX.md) |
+| Terminology | [`GLOSSARY.md`](../../GLOSSARY.md) |
+| Web UI ↔ session protocol | [`a2a-client/docs/WEB_UI_PROTOCOL.md`](../../a2a-client/docs/WEB_UI_PROTOCOL.md) |
+
 ## Tooling: ADR compliance via Client API
 
 To **stress the live stack** (not only sims/unit tests), an orchestrator can drive the same **Client API** as the UI (`POST /sessions`, `POST /sessions/{id}/next`, `GET /sessions/{id}/async`) with tasks like “align code with ADR-00xx.”
@@ -63,7 +85,7 @@ Use a **separate state file** (curated ADR **queue**, current ADR, **per-ADR pha
 
 ## Adding a new ADR
 
-1. Use the next free number: **`ADR-0030-...md`** (keep zero-padding).
+1. Use the next free number after the highest **`ADR-NNNN-...md`** in this folder (next standalone slot after **0034** is **0035**, unless you only keep drafts in the reference bundle below). Keep zero-padding.
 2. Set **Status** (`proposed` → `accepted`) and **Date**.
 3. Include **Context**, **Decision**, **Consequences** (and **Related** / **Notes** if useful).
 4. Add one line to the **Index** above with a short description.

@@ -1310,7 +1310,7 @@ gantt
 ***
 
 ## 🔥 **15 Comprehensive Architectural Improvements (ADR-0041)**
-*Интегрировано 1 апреля 2026 на основе исследования лучших практик Autonomous Agents. Подробности см. в файле [ADR-0041](../../docs/adr/ADR-0041-comprehensive-architectural-improvements.md).*
+*Интегрировано 1 апреля 2026 на основе исследования лучших практик Autonomous Agents. Расширенные черновики ADR (0035+) и связанные секции: [REFERENCE-ADRs-0035-0041-consolidated.md](./REFERENCE-ADRs-0035-0041-consolidated.md).*
 
 **Ключевые векторы развития:**
 1. **Multi-Agent Orchestration & Memory:** A2A Protocol v2 (MCP-based), Многоуровневые системы памяти (PatternStore), Кросс-сессионный перенос знаний, Спекулятивное выполнение, Прунинг контекста.

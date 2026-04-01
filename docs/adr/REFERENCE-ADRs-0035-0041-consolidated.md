@@ -680,21 +680,21 @@ Introduce a **phased implementation of the 38-feature Master Specification** ext
 - **LoopDetector**: emit `LOOP_SIGNAL` on triple×3 repetition.
 - **ConfidenceGate**: structural/semantic scoring; emit `CONFIDENCE_TRACE`.
 - **Durable Waiting**: convert `clarify` into a checkpoint-backed `WAITING_STATE`.
-- [ADR-0035](./ADR-0035-agentic-reasoning-safety-layer.md) integration.
+- [ADR-0035](#adr-0035-agentic-reasoning-safety-layer) integration.
 
 #### Phase 2 — Memory & Integration (Weeks 3–4)
 - **EpisodicStore**: index `EPISODIC_ENTRY`; query `EPISODIC_RECALL_RESULT`.
 - **Lesson/Pattern Store**: detect recurring patterns; inject `MEMORY_INFLUENCE`.
-- **Living Specs**: Implementation of [ADR-0037](./ADR-0037-living-specs-task-synthesis.md).
+- **Living Specs**: Implementation of [ADR-0037](#adr-0037-living-specs-for-task-synthesis).
 
 #### Phase 3 — Multi-Agent Autonomy (Weeks 5–8)
-- **Supervisor Orchestrator**: Dynamic delegation per [ADR-0038](./ADR-0038-multi-agent-orchestrator.md).
-- **Writer/Reviewer Pattern**: Session separation per [ADR-0040](./ADR-0040-writer-reviewer-pattern.md).
+- **Supervisor Orchestrator**: Dynamic delegation per [ADR-0038](#adr-0038-multi-agent-orchestrator-with-dynamic-delegation).
+- **Writer/Reviewer Pattern**: Session separation per [ADR-0040](#adr-0040-writerreviewer-pattern-for-session-integrity).
 - **Donecriteria Gate**: Machine-verifiable validation blocking merge.
 - **Auto-Branch Lifecycle**: Isolated delivery branches.
 
 #### Phase 4 — Scale & Security (Weeks 9–10)
-- **A2A Registry**: Stateless discovery per [ADR-0039](./ADR-0039-a2a-registry-layer.md).
+- **A2A Registry**: Stateless discovery per [ADR-0039](#adr-0039-a2a-registry-layer-for-scale).
 - **Enterprise Guardrails**: Tool trust risk tiers and federated metrics.
 
 ---
@@ -714,11 +714,11 @@ Introduce a **phased implementation of the 38-feature Master Specification** ext
 
 ## Related
 
-- [A2A Master Specification](../../.agentLOGIC/A2A_Master_Specification_CLEAN.md) — Canonical reference.
-- [ADR-0035: Safety](./ADR-0035-agentic-reasoning-safety-layer.md)
-- [ADR-0037: Living Specs](./ADR-0037-living-specs-task-synthesis.md)
-- [ADR-0038/0040: Multi-Agent](./ADR-0038-multi-agent-orchestrator.md)
-- [ADR-0039: Registry](./ADR-0039-a2a-registry-layer.md)
+- [A2A Master Specification](./REFERENCE-A2A-master-specification.md) — canonical reference (feature contracts + audit table).
+- [ADR-0035: Safety](#adr-0035-agentic-reasoning-safety-layer)
+- [ADR-0037: Living Specs](#adr-0037-living-specs-for-task-synthesis)
+- [ADR-0038/0040: Multi-Agent](#adr-0038-multi-agent-orchestrator-with-dynamic-delegation)
+- [ADR-0039: Registry](#adr-0039-a2a-registry-layer-for-scale)
 
 ---
 *Version: 1.0 (Master) | Date: 2026-04-01*
