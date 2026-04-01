@@ -2,7 +2,11 @@
 
 **Doc:** Schema-debug entry point: [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md), [`simulations/SCHEMA.md`](simulations/SCHEMA.md), [`AGENTS.md`](AGENTS.md).
 
-Current system state: **Stack готов** - все сервисы работают, задач нет. Недавно: `render-markdown` — опциональный `maxChars` + env `LLM_REQUEST_MAX_CHARS` для `request.md`; схема и `work/STATE.md` обновлены.
+**System roadmap:** [`work/tasks/system-improvement-priorities.md`](work/tasks/system-improvement-priorities.md) (contract unification, gray room, verification pyramid, observability).
+
+**Work queue (sync sims):** сделано: README/step-contract/form `description`/`agent/description.md` — см. `work/STATE.md` S7–S8, S13, S10 partial. Осталось: [`work/tasks/sync-substeps-not-discovered.md`](work/tasks/sync-substeps-not-discovered.md), [`work/tasks/sync-llm-snapshot-coverage.md`](work/tasks/sync-llm-snapshot-coverage.md), [`work/tasks/sync-workspace-tools-golden-map.md`](work/tasks/sync-workspace-tools-golden-map.md), опционально выравнивание роутера — [`work/tasks/sync-documentation-and-router-drift.md`](work/tasks/sync-documentation-and-router-drift.md).
+
+Current system state: **Stack готов** - все сервисы работают; `sim:validate -- --all --step-contract` зелёный. Недавно: root `GET /health` включает `mode: stateless`; sync `POST /invoke` дожимает очередь и возвращает `execute`/`context`; публичный DTO сессии отдаёт slim `context.execution` (seeds); `e2e-dialog-test` follow-up допускает dialog `{message,form}` на `execute`.
 
 ---
 

@@ -6,7 +6,8 @@
       "choices": [
         {
           "id": "proceed",
-          "label": "Продовжити"
+          "label": "Продовжити",
+          "description": "Continue to the next step in the smart coder flow."
         }
       ]
     }

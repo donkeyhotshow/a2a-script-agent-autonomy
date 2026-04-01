@@ -8,10 +8,12 @@
  *   node scripts/direct-tests/e2e-dialog-test.js --only=invokeHello,agentSeed,clientProjects
  *
  * Env: A2A_SERVER_URL, CLIENT_API_URL
+ * Optional: REQUIRE_ASYNC_PIPELINE=1 — fail if dialog /next does not go async or no in-flight /async seen
  */
 
 const SERVER_URL = process.env.A2A_SERVER_URL || 'http://localhost:3000';
 const CLIENT_API_URL = process.env.CLIENT_API_URL || 'http://localhost:5173';
+const REQUIRE_ASYNC_PIPELINE = process.env.REQUIRE_ASYNC_PIPELINE === '1';
 
 function parseArgs(argv) {
   const list = argv.includes('--list');
@@ -37,6 +39,19 @@ function assertSingleActionKey(container, label) {
   assert(
     keys.length <= 1,
     `${label}: expected at most one action key, got [${keys.join(', ')}]`
+  );
+}
+
+/** Dialog sync execute may use legacy top-level `message` + `form` (WEB UI), not one action-type key. */
+function assertExecuteSingleKeyOrDialogMessageForm(execute, label) {
+  if (execute == null || typeof execute !== 'object') return;
+  const keys = Object.keys(execute).filter((k) => !k.startsWith('_'));
+  if (keys.length <= 1) return;
+  const s = new Set(keys);
+  if (s.size === 2 && s.has('message') && s.has('form')) return;
+  assert(
+    false,
+    `${label}: expected ≤1 action key or dialog {message,form}, got [${keys.join(', ')}]`
   );
 }
 
@@ -77,6 +92,24 @@ async function getSession(sessionId) {
     throw new Error(`Failed to get session: ${response.status}`);
   }
   return response.json();
+}
+
+/** Public session DTO (WEB_UI_PROTOCOL / SESSION-READ-MODEL — loader metadata). */
+function unwrapPublicSession(body) {
+  if (body && typeof body === 'object' && body.session) return body.session;
+  return body;
+}
+
+function assertWaitingPublicSessionShape(pub, label) {
+  assert(pub && typeof pub === 'object', `${label}: session object`);
+  assert(typeof pub.asyncPending === 'boolean', `${label}: asyncPending boolean`);
+  const ps = pub.promiseStatus;
+  assert(ps === null || typeof ps === 'string', `${label}: promiseStatus null|string`);
+  assert(!('promiseId' in pub), `${label}: promiseId must not appear on public session DTO`);
+  assert(typeof pub.stage === 'string' && pub.stage.length > 0, `${label}: stage string`);
+  if (!pub.asyncPending) {
+    assert(pub.stage !== 'awaiting-async', `${label}: stage must not be awaiting-async when idle`);
+  }
 }
 
 async function pollAsyncSettled(sessionId, maxWaitMs = 120_000, stepMs = 500) {
@@ -179,7 +212,7 @@ async function caseInvokeContextFollowupShape() {
   assert(body?.success !== false, 'follow-up invoke success');
   const data = body?.data;
   if (data?.execute && typeof data.execute === 'object') {
-    assertSingleActionKey(data.execute, 'follow-up data.execute');
+    assertExecuteSingleKeyOrDialogMessageForm(data.execute, 'follow-up data.execute');
   }
 }
 
@@ -244,11 +277,132 @@ async function caseAsyncEndpointAfterCreate() {
   assert(typeof j.asyncPending === 'boolean', 'expected asyncPending boolean');
 }
 
+/** GET /async when no in-flight promise — idle envelope (WEB_UI_PROTOCOL lifecycle). */
+async function caseWaitingAsyncIdleEnvelope() {
+  const { sessionId } = await createSession({ title: 'async idle envelope' });
+  const j = await fetchJson(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
+  assert(j.asyncPending === false, 'idle: asyncPending false');
+  assert(j.completed === true, 'idle: completed true');
+  assert(j.status === 'idle', 'idle: status idle');
+  assert(j.execute === null || j.execute === undefined, 'idle: execute absent');
+  assert(j.result === null || j.result === undefined, 'idle: result absent');
+}
+
+/** GET /sessions/:id public DTO — loader fields + no transport id (WEB_UI_PROTOCOL). */
+async function caseWaitingGetSessionSchema() {
+  const { sessionId } = await createSession({ title: 'waiting GET session' });
+  const body = await fetchJson(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}`);
+  assertWaitingPublicSessionShape(unwrapPublicSession(body), 'GET session');
+}
+
+/** GET /sessions/:id/latest — nested session matches public loader schema. */
+async function caseWaitingLatestSessionSchema() {
+  const { sessionId } = await createSession({ title: 'waiting latest' });
+  const j = await fetchJson(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/latest`);
+  assert(j.session && typeof j.session === 'object', 'latest.session object');
+  assertWaitingPublicSessionShape(j.session, 'GET latest.session');
+}
+
+/** POST /next ack — asyncPending boolean (ack + hydrate; preloader uses same flag). */
+async function caseWaitingNextAckShape() {
+  const { sessionId } = await createSession({
+    context: { execution: { action: 'dialog', step: 'init' } },
+  });
+  const ack = await sendNext(sessionId, { result: { message: 'waiting next ack probe' } });
+  assert(ack && typeof ack === 'object', 'next ack object');
+  assert(ack.success === true, 'next success');
+  assert(ack.accepted === true, 'next accepted');
+  assert(typeof ack.asyncPending === 'boolean', 'next ack asyncPending boolean');
+  if (ack.asyncPending) {
+    assert(typeof ack.promiseId === 'string' && ack.promiseId.length > 0, 'next ack promiseId when async');
+  }
+}
+
+/**
+ * Dialog /next → optional in-flight /async → settle → idle + GET session + legacy GET .../promise/:id.
+ * When stack is sync-only, passes unless REQUIRE_ASYNC_PIPELINE=1.
+ */
+async function caseWaitingAsyncPipeline() {
+  const { sessionId } = await createSession({
+    context: { execution: { action: 'dialog', step: 'init' } },
+  });
+  const ack = await sendNext(sessionId, { result: { message: 'async pipeline probe' } });
+  assert(ack.success === true, 'pipeline: next success');
+
+  if (!ack.asyncPending) {
+    if (REQUIRE_ASYNC_PIPELINE) {
+      throw new Error('REQUIRE_ASYNC_PIPELINE=1 but /next returned sync (asyncPending false)');
+    }
+    return;
+  }
+
+  const promiseId = ack.promiseId;
+  assert(typeof promiseId === 'string' && promiseId.length > 0, 'pipeline: promiseId');
+
+  let sawInFlight = false;
+  for (let i = 0; i < 40; i++) {
+    const r = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
+    assert(r.ok, `pipeline: /async ${r.status}`);
+    const j = await r.json();
+    if (j.asyncPending === true && j.status !== 'idle') {
+      sawInFlight = true;
+      assert(typeof j.status === 'string', 'pipeline: in-flight status string');
+      break;
+    }
+    if (j.asyncPending === false && j.completed === true && j.status === 'idle') {
+      break;
+    }
+    await sleep(100);
+  }
+  if (REQUIRE_ASYNC_PIPELINE && !sawInFlight) {
+    throw new Error('REQUIRE_ASYNC_PIPELINE=1 but never observed in-flight GET /async');
+  }
+
+  const settled = await pollAsyncSettled(sessionId, 120_000);
+  assert(settled != null, 'pipeline: poll settled');
+  assert(settled.asyncPending === false, 'pipeline: settled asyncPending false');
+
+  const idle = await fetchJson(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
+  assert(idle.asyncPending === false, 'pipeline: idle asyncPending');
+  assert(idle.status === 'idle', 'pipeline: idle status');
+
+  const body = await fetchJson(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}`);
+  const pub = unwrapPublicSession(body);
+  assert(pub.asyncPending === false, 'pipeline: GET session asyncPending false');
+  assert(pub.stage !== 'awaiting-async', 'pipeline: stage not awaiting-async');
+  assertWaitingPublicSessionShape(pub, 'pipeline after settle');
+
+  const prom = await fetchJson(
+    `${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/promise/${encodeURIComponent(promiseId)}`
+  );
+  assert(prom.promiseId === promiseId, 'legacy /promise: promiseId');
+  assert(typeof prom.completed === 'boolean', 'legacy /promise: completed boolean');
+  assert(typeof prom.status === 'string', 'legacy /promise: status string');
+}
+
+/** GET /messages?withExecute=1 — projected execute + loader fields (sessionRoutes). */
+async function caseWaitingMessagesWithExecute() {
+  const { sessionId } = await createSession({ title: 'messages withExecute' });
+  const j = await fetchJson(
+    `${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/messages?withExecute=1`
+  );
+  assert(j.sessionId === sessionId, 'withExecute sessionId');
+  assert(Object.prototype.hasOwnProperty.call(j, 'execute'), 'withExecute: execute key present');
+  assert(j.execute === null || typeof j.execute === 'object', 'withExecute: execute null|object');
+  assert(typeof j.asyncPending === 'boolean', 'withExecute: asyncPending');
+  const mps = j.promiseStatus;
+  assert(mps === null || typeof mps === 'string', 'withExecute: promiseStatus');
+}
+
 async function caseSessionMessagesEndpoint() {
   const { sessionId } = await createSession({ title: 'messages probe' });
   const j = await fetchJson(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/messages`);
   assert(j.sessionId === sessionId, 'messages payload sessionId');
   assert(Array.isArray(j.messages), 'expected messages array');
+  assert(typeof j.asyncPending === 'boolean', 'messages.asyncPending boolean');
+  const mps = j.promiseStatus;
+  assert(mps === null || typeof mps === 'string', 'messages.promiseStatus null|string');
+  assert(typeof j.currentStep === 'number', 'messages.currentStep number');
 }
 
 async function caseNextResultMessageShape() {
@@ -401,9 +555,39 @@ const CASE_REGISTRY = {
     desc: 'GET .../sessions/:id/async after create',
     run: caseAsyncEndpointAfterCreate,
   },
+  waitingAsyncIdle: {
+    name: 'waitingAsyncIdle',
+    desc: 'GET /async idle envelope (asyncPending, completed, status)',
+    run: caseWaitingAsyncIdleEnvelope,
+  },
+  waitingGetSession: {
+    name: 'waitingGetSession',
+    desc: 'GET session: asyncPending, promiseStatus, stage, no promiseId',
+    run: caseWaitingGetSessionSchema,
+  },
+  waitingLatest: {
+    name: 'waitingLatest',
+    desc: 'GET /latest nested session: same loader DTO',
+    run: caseWaitingLatestSessionSchema,
+  },
+  waitingNextAck: {
+    name: 'waitingNextAck',
+    desc: 'POST /next ack: asyncPending (+ promiseId if async)',
+    run: caseWaitingNextAckShape,
+  },
+  waitingAsyncPipeline: {
+    name: 'waitingAsyncPipeline',
+    desc: 'async /next → in-flight /async → settle → idle + legacy /promise (strict: REQUIRE_ASYNC_PIPELINE=1)',
+    run: caseWaitingAsyncPipeline,
+  },
+  waitingMessagesExecute: {
+    name: 'waitingMessagesExecute',
+    desc: 'GET /messages?withExecute=1 (+ loader fields)',
+    run: caseWaitingMessagesWithExecute,
+  },
   sessionMessages: {
     name: 'sessionMessages',
-    desc: 'GET .../sessions/:id/messages',
+    desc: 'GET .../messages + asyncPending/promiseStatus/currentStep',
     run: caseSessionMessagesEndpoint,
   },
   nextResultMessage: {
@@ -448,6 +632,12 @@ const DEFAULT_ORDER = [
   'nextTaskShorthand',
   'nextResultMessage',
   'asyncAfterCreate',
+  'waitingAsyncIdle',
+  'waitingGetSession',
+  'waitingLatest',
+  'waitingNextAck',
+  'waitingAsyncPipeline',
+  'waitingMessagesExecute',
   'sessionMessages',
   'getSessionIncludeContext',
   'dialogSession',

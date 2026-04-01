@@ -9,7 +9,7 @@
  * ContextManager is reset per request (resetContextManager) — no cache of context/code between iterations.
  */
 
-import {requestService, isRetryableError} from '../request/request.service.js';
+import {requestService, isRetryableError, type RequestResult} from '../request/request.service.js';
 import {logger} from '../../../utils/logger.js';
 import {requestProcessorLatencyHistogram} from '../../../utils/metrics.js';
 import type {RequestContext, ProcessResult, ProcessOutcome, Task, TaskAnalysis} from './request-processor.interfaces.js';
@@ -112,12 +112,9 @@ async function routeRequest(request: RequestContext): Promise<ProcessResult> {
 }
 
 /**
- * Process a single request
+ * Run processor for an already-claimed row (status should be `processing`).
  */
-export async function processOneRequest(): Promise<ProcessResult | null> {
-    const request = await requestService.getNextPending();
-    if (!request) return null;
-
+async function executePendingRow(request: RequestResult): Promise<ProcessResult> {
     const {promiseId, context, codeBlocks, message} = request;
 
     try {
@@ -239,6 +236,24 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
         });
         return {outcome: 'failed' as ProcessOutcome};
     }
+}
+
+/**
+ * Process a single request (queue head).
+ */
+export async function processOneRequest(): Promise<ProcessResult | null> {
+    const request = await requestService.getNextPending();
+    if (!request) return null;
+    return executePendingRow(request);
+}
+
+/**
+ * Process a specific pending request by promiseId (sync /invoke).
+ */
+export async function processRequestByPromiseId(promiseId: string): Promise<ProcessResult | null> {
+    const request = await requestService.claimPendingByPromiseId(promiseId);
+    if (!request) return null;
+    return executePendingRow(request);
 }
 
 /**

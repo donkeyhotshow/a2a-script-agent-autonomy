@@ -297,6 +297,20 @@ export class RequestService {
     }
 
     /**
+     * Claim a specific pending request (for sync /invoke — same transition as getNextPending).
+     */
+    async claimPendingByPromiseId(promiseId: string): Promise<RequestResult | null> {
+        const req = await getRequestStorage().load(promiseId);
+        if (!req || req.status !== 'pending') return null;
+        req.status = 'processing';
+        req.startedAt = new Date();
+        (req as RequestResult).retryAfter = undefined;
+        await getRequestStorage().save(req);
+        logger.info('Claimed request by promiseId', {promiseId, retryCount: req.retryCount});
+        return req;
+    }
+
+    /**
      * Get queue length
      */
     async getQueueLength(): Promise<number> {

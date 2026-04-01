@@ -7,7 +7,8 @@
       "choices": [
         {
           "id": "done",
-          "label": "OK"
+          "label": "OK",
+          "description": "Confirm completion after all batched files were processed."
         }
       ]
     }

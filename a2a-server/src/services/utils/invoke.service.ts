@@ -15,7 +15,8 @@
 import {parseContextBlock} from '../../protocol/context-parser.js';
 import type {ContextBlock, FileBlock} from '../../types/index.js';
 import {CURRENT_PROTOCOL_VERSION} from '../../protocol/versioning/protocol-versions.js';
-import {requestService} from '../core/request/request.service.js';
+import {requestService, type RequestResult} from '../core/request/request.service.js';
+import {processRequestByPromiseId} from '../core/request-processor/request-processor.service.js';
 import {trackRequestStart} from './pipeline-observability.service.js';
 
 export interface InvokeInput {
@@ -35,7 +36,66 @@ export interface InvokeResult {
     promiseId?: string;
     execute?: Record<string, unknown>;
     context?: Record<string, unknown>;
+    message?: string;
     sync?: boolean;
+}
+
+async function waitTerminalRequest(promiseId: string, maxMs: number): Promise<RequestResult | null> {
+    const deadline = Date.now() + maxMs;
+    while (Date.now() < deadline) {
+        const row = await requestService.getResult(promiseId);
+        if (!row) return null;
+        if (row.status === 'completed' || row.status === 'failed') {
+            return row;
+        }
+        if (row.status === 'pending') {
+            await processRequestByPromiseId(promiseId);
+        } else {
+            await new Promise((r) => setTimeout(r, 30));
+        }
+    }
+    return null;
+}
+
+async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> {
+    let current = rootPromiseId;
+    const hopMax = 16;
+    const waitMs = 120_000;
+
+    for (let hop = 0; hop < hopMax; hop++) {
+        const terminal = await waitTerminalRequest(current, waitMs);
+        if (!terminal) {
+            return {sync: true, promiseId: rootPromiseId};
+        }
+
+        const pr = terminal.result as Record<string, unknown> | undefined;
+
+        if (terminal.status === 'failed') {
+            return {
+                sync: true,
+                execute: pr?.execute as Record<string, unknown> | undefined,
+                context: pr?.context as Record<string, unknown> | undefined,
+                message: typeof pr?.error === 'string' ? pr.error : undefined,
+            };
+        }
+
+        const follow =
+            pr && typeof pr['followUpRequestId'] === 'string'
+                ? (pr['followUpRequestId'] as string)
+                : '';
+        if (follow) {
+            current = follow;
+            continue;
+        }
+
+        return {
+            sync: true,
+            execute: pr?.execute as Record<string, unknown> | undefined,
+            context: pr?.context as Record<string, unknown> | undefined,
+        };
+    }
+
+    return {sync: true, promiseId: rootPromiseId};
 }
 
 export async function invoke(clientId: string, input: InvokeInput): Promise<InvokeResult> {
@@ -112,6 +172,10 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
     
     // Track request start for observability
     trackRequestStart(promiseId);
+
+    if (input.sync) {
+        return runSyncInvokeChain(promiseId);
+    }
 
     return {promiseId};
 }

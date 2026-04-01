@@ -7,11 +7,13 @@
       "choices": [
         {
           "id": "coder",
-          "label": "Так, відкрити Coder"
+          "label": "Так, відкрити Coder",
+          "description": "Switch to the Coder agent to finish ambiguous imports with file tools."
         },
         {
           "id": "fix-vue-imports-done-partial",
-          "label": "Ні, залишити як є (частковий результат)"
+          "label": "Ні, залишити як є (частковий результат)",
+          "description": "Keep the partial scripted fixes and stop the Vue import flow here."
         }
       ]
     }

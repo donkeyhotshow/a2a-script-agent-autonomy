@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { runTransformPipeline, loadTransformPipeline, runPromptsTransform, getPromptsTransformsPath } from '../src/transform/index.js';
 import * as fs from 'fs';
 import * as path from 'path';
+import { tmpdir } from 'node:os';
 
 const PROJECT_ROOT = path.join(process.cwd(), '..');
 const SIM_DIR = path.join(PROJECT_ROOT, 'simulations', 'sync', 'agent-coder', '3');
@@ -742,6 +743,80 @@ describe('Transform Pipeline Runtime', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.output).toBeDefined();
+      }
+    });
+  });
+
+  describe('coder-response.json (schema coder)', () => {
+    it('loads coder-response pipeline', async () => {
+      const pipelinePath = path.join(PROMPTS_TRANSFORMS, 'coder-response.json');
+      const pipeline = await loadTransformPipeline(pipelinePath);
+      const ops = pipeline.steps.map((s: { op: string }) => s.op);
+      expect(ops).toContain('merge-workbench-sections');
+      expect(ops).toContain('apply-workbench-section-ops');
+      expect(ops).toContain('apply-scratchpad-ops');
+      expect(ops).toContain('merge-workbench-slots');
+    });
+
+    it('merges workbench, scratchpad, and LLM slots without overwriting server slots', async () => {
+      const tmp = fs.mkdtempSync(path.join(tmpdir(), 'a2a-coder-res-'));
+      try {
+        fs.writeFileSync(
+          path.join(tmp, 'response.md'),
+          [
+            '```json',
+            '{',
+            '  "step": "read_code",',
+            '  "message": "queued edits",',
+            '  "execute": { "read-file": { "path": "src/x.ts" } },',
+            '  "completed": false,',
+            '  "workbench": {',
+            '    "sections": { "findings": "from llm" },',
+            '    "slots": { "editPlan": { "paths": ["a.ts"] }, "grayRoom": { "hijack": true } }',
+            '  },',
+            '  "workbench_ops": [{ "op": "append", "key": "findings", "text": "line2" }],',
+            '  "scratchpad_ops": [{ "op": "add", "item": "edit_auth" }]',
+            '}',
+            '```'
+          ].join('\n'),
+          'utf-8'
+        );
+
+        const input = {
+          context: {
+            execution: { action: 'coder', step: 'plan' },
+            history: [],
+            workbench: {
+              sections: { findings: 'seed' },
+              slots: { grayRoom: { server: true } }
+            },
+            scratchpad: {}
+          }
+        };
+
+        const result = await runPromptsTransform(
+          PROMPTS_TRANSFORMS,
+          'coder',
+          input,
+          'response',
+          { baseDir: tmp }
+        );
+
+        expect(result.success).toBe(true);
+        if (!result.success) return;
+        const ctx = result.output.context as Record<string, unknown>;
+        const sections = (ctx.workbench as Record<string, unknown>)?.sections as Record<string, string>;
+        expect(sections.findings).toContain('from llm');
+        expect(sections.findings).toContain('line2');
+        const pad = ctx.scratchpad as Record<string, unknown>;
+        expect(pad.edit_auth).toBe(true);
+        const slots = (ctx.workbench as Record<string, unknown>)?.slots as Record<string, unknown>;
+        expect((slots.grayRoom as Record<string, unknown>).server).toBe(true);
+        expect((slots.grayRoom as Record<string, unknown>).hijack).toBeUndefined();
+        expect(slots.editPlan).toEqual({ paths: ['a.ts'] });
+        expect(result.output.execute).toEqual({ 'read-file': { path: 'src/x.ts' } });
+      } finally {
+        fs.rmSync(tmp, { recursive: true, force: true });
       }
     });
   });

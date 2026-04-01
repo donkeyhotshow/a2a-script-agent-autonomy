@@ -189,7 +189,7 @@ async function verifyPromiseStatusAsync(promiseId) {
 export function toPublicSession(session, includeContext = false) {
     if (!session) return session;
     if (includeContext) return { ...session };
-    const { context: _c, promiseId: _omitTransportId, ...rest } = session;
+    const { context: fullContext, promiseId: _omitTransportId, ...rest } = session;
     const base = {
         ...rest,
         asyncPending:
@@ -199,6 +199,16 @@ export function toPublicSession(session, includeContext = false) {
     };
     if (rest.execute !== undefined) {
         base.execute = buildExecuteProjection(rest.execute);
+    }
+    // Public-safe context slice (mode seeds, task) — full workbench/history only with includeContext=1.
+    if (fullContext && typeof fullContext === 'object') {
+        const slim = {};
+        if (fullContext.execution && typeof fullContext.execution === 'object') {
+            slim.execution = { ...fullContext.execution };
+        }
+        if (typeof fullContext.task === 'string') slim.task = fullContext.task;
+        if (typeof fullContext.projectId === 'string') slim.projectId = fullContext.projectId;
+        if (Object.keys(slim).length > 0) base.context = slim;
     }
     // Attach coarse-grained stage for Web UI / adapters.
     base.stage = deriveSessionStage({

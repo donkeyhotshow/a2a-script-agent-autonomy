@@ -15,8 +15,8 @@ for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%OLLAMA_PORT%" ^| findstr "
     exit /b 0
 )
 
-REM Start Ollama
-start /b "" cmd /c "set OLLAMA_HOST=0.0.0.0:%OLLAMA_PORT% && set OLLAMA_MODELS=%OLLAMA_MODELS% && set OLLAMA_ORIGINS=* && ollama serve"
+REM Start Ollama in its own window so the batch file can exit
+start "" cmd /c "set OLLAMA_HOST=0.0.0.0:%OLLAMA_PORT% && set OLLAMA_MODELS=%OLLAMA_MODELS% && set OLLAMA_ORIGINS=* && ollama serve"
 powershell -Command "Start-Sleep -Seconds 3"
 
 REM Capture PID

@@ -60,6 +60,49 @@ Example of deferred edits for accumulating findings:
 }
 ```
 
+### All Three Mechanisms Examples
+
+Here are examples showing how to use all three deferred edit mechanisms:
+
+**1. workbench_ops append (for incremental text updates):**
+```json
+{
+  "step": "analyze",
+  "workbench_ops": [
+    { "op": "append", "key": "findings", "text": "- checked: src/components\\n" }
+  ],
+  "execute": { "read-file": { "path": "src/components/Button.tsx" } }
+}
+```
+
+**2. scratchpad_ops (for checklist/flag updates):**
+```json
+{
+  "step": "review",
+  "scratchpad_ops": [
+    { "op": "add", "item": "lint-passed" },
+    { "op": "check", "item": "tests-passed" }
+  ],
+  "execute": { "run-script": { "command": "npm test" } }
+}
+```
+
+**3. workbench.slots (for structured state like edit plans):**
+```json
+{
+  "step": "plan",
+  "workbench": {
+    "slots": {
+      "editPlan": {
+        "filesToModify": ["src/components/Button.tsx"],
+        "changes": ["add variant prop", "update styles"]
+      }
+    }
+  },
+  "execute": { "read-file": { "path": "src/components/Button.tsx" } }
+}
+```
+
 ### Response
 
 ```json
