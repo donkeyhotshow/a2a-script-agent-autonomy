@@ -188,7 +188,8 @@ export class ArtifactStore {
     }
 
     // Compute retention deadline
-    const ttl = TTL_MS[artifact.artifact_type] ?? 7 * 24 * 60 * 60 * 1_000;
+    const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1_000; // 7-day fallback
+    const ttl = TTL_MS[artifact.artifact_type] ?? DEFAULT_TTL_MS;
     const retained_until = new Date(Date.now() + ttl).toISOString();
 
     const stored: StoredArtifact = {

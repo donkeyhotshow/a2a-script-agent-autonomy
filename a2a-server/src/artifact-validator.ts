@@ -22,8 +22,11 @@ const REQUIRED_STRING_FIELDS = [
 
 const VALID_SEVERITIES = new Set(['info', 'warning', 'critical']);
 const SCHEMA_VERSION_RE = /^\d+\.\d+$/;
-// ISO 8601 date-time (relaxed: YYYY-MM-DDTHH:mm:ss with optional tz)
-const ISO_DATE_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+// Relaxed ISO 8601 date-time: validates structural prefix YYYY-MM-DDTHH:mm:ss.
+// Intentionally does not validate calendar correctness (e.g. month 1-12) to
+// avoid reimplementing a full date parser; real date-time correctness is
+// guaranteed upstream by the server layer that stamps created_at.
+const ISO_DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])T([01]\d|2[0-3]):[0-5]\d:[0-5]\d/;
 
 export function validateArtifact(artifact: unknown): ArtifactValidationResult {
   const errors: string[] = [];
