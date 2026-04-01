@@ -1,6 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {
     shouldEnforceTransformStrictMode,
+    validateAgentExecuteShape,
     validateDialogExecuteShape,
     validateFormChoiceProcessResult,
     validateRouterResultShape,
@@ -59,6 +60,46 @@ describe('validateDialogExecuteShape', () => {
                 title: 'Pick mode',
                 choices: [{id: 'dialog', label: 'Dialog', description: 'd'}],
             },
+        } as any);
+        expect(issues).toHaveLength(0);
+    });
+
+    it('accepts workspace tool keys as single action', () => {
+        expect(
+            validateDialogExecuteShape({'file-exists': {path: 'x'}} as any),
+        ).toHaveLength(0);
+        expect(
+            validateDialogExecuteShape({'edit-patch': {path: 'x', patch: ''}} as any),
+        ).toHaveLength(0);
+        expect(
+            validateDialogExecuteShape({'run-script': {id: 's1'}} as any),
+        ).toHaveLength(0);
+    });
+});
+
+describe('validateAgentExecuteShape', () => {
+    it('accepts workspace tool keys (strict mode / agent-workspace-tools)', () => {
+        expect(
+            validateAgentExecuteShape({'file-exists': {path: 'src/x.ts'}} as any),
+        ).toHaveLength(0);
+        expect(
+            validateAgentExecuteShape({'edit-patch': {path: 'a', patch: '---'}} as any),
+        ).toHaveLength(0);
+        expect(
+            validateAgentExecuteShape({'run-script': {id: 'r1'}} as any),
+        ).toHaveLength(0);
+    });
+
+    it('accepts script as single tool (fix-vue-imports / coder)', () => {
+        const issues = validateAgentExecuteShape({
+            script: {language: 'javascript', content: '1+1'},
+        } as any);
+        expect(issues).toHaveLength(0);
+    });
+
+    it('accepts dialog tool as single action', () => {
+        const issues = validateAgentExecuteShape({
+            dialog: {message: 'hi'},
         } as any);
         expect(issues).toHaveLength(0);
     });

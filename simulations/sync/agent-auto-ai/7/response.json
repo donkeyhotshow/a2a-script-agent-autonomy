@@ -5,16 +5,20 @@
       "action": "agent",
       "step": "completed"
     },
-    "scratchpad": {
-      "locate_started": true,
-      "rag_ok": true,
-      "listed_src": true,
-      "read_app_js": true,
-      "wrote_health_route": true
-    },
-    "files": {
-      "src/app.js": "const express = require('express');\nconst app = express();\nmodule.exports = app;\n",
-      "src/routes/health.js": "const express = require('express');\nconst router = express.Router();\nrouter.get('/health', (_req, res) => res.json({ ok: true }));\nmodule.exports = router;\n"
+    "workbench": {
+      "sections": {
+        "scratchpad": {
+          "locate_started": true,
+          "rag_ok": true,
+          "listed_src": true,
+          "read_app_js": true,
+          "wrote_health_route": true
+        },
+        "files": {
+          "src/app.js": "const express = require('express');\nconst app = express();\nmodule.exports = app;\n",
+          "src/routes/health.js": "const express = require('express');\nconst router = express.Router();\nrouter.get('/health', (_req, res) => res.json({ ok: true }));\nmodule.exports = router;\n"
+        }
+      }
     },
     "history": [
       {

@@ -15,6 +15,20 @@ describe('validateExecutePayloadDetailed', () => {
         });
         expect(r.success).toBe(true);
     });
+
+    it('accepts dialog execute key', () => {
+        const r = validateExecutePayloadDetailed({
+            dialog: {message: 'x'},
+        });
+        expect(r.success).toBe(true);
+    });
+
+    it('accepts file-exists execute key', () => {
+        const r = validateExecutePayloadDetailed({
+            'file-exists': {path: 'p'},
+        });
+        expect(r.success).toBe(true);
+    });
 });
 
 describe('validateInvokeEnvelopeResponse', () => {

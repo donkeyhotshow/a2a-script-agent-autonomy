@@ -7,9 +7,9 @@
 
 // Valid action keys for execute payloads
 export const VALID_EXECUTE_KEYS = [
-  'form', 'script', 'read-file', 'write-file', 'execute-command', 
-  'message', 'rag-search', 'list-directory', 'grep-search', 
-  'file-exists', 'edit-patch', 'run-script'
+  'form', 'script', 'read-file', 'write-file', 'execute-command',
+  'message', 'rag-search', 'list-directory', 'grep-search',
+  'file-exists', 'edit-patch', 'run-script', 'dialog',
 ] as const;
 
 // Valid result keys (execute keys + result-specific keys)

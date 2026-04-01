@@ -79,6 +79,14 @@ Rules:
   },
   "history": [
     {
+      "message": "допоможи розібратись з кодом",
+      "role": "user"
+    },
+    {
+      "message": "Роутер запропонував вибір: dialog, agent, task-decomposition, fix-vue-imports. Користувач обрав 'agent' → coder.",
+      "role": "system"
+    },
+    {
       "message": "як працює система авторизації?",
       "role": "user"
     }

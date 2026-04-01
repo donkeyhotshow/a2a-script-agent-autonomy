@@ -1,30 +1,70 @@
-# Consolidated ADRs (0035 - 0057)
+# ADR-0057: Canonical Schema Registry
+
+- **Status:** Accepted
+- **Date:** 2026-04-01
+- **Author:** Alex Ribchinskiy
+- **Impact:** Medium | **Complexity:** Medium | **Risk:** Low
+- **Estimated Effort:** 1 week | **Priority:** P1
+- **Deciders:** Backend team lead
+
 ---
 
-## Summary
+## Context
 
-- [ADR-0035: Agentic Reasoning Safety Layer](./ADR-0035-agentic-reasoning-safety-layer.md)
-- [ADR-0036: A2A Autonomous Agent Master Orchestration & Memory](./ADR-0036-a2a-autonomous-agent-master-orchestration-memory.md)
-- [ADR-0037: Living Specs for Task Synthesis](./ADR-0037-living-specs-for-task-synthesis.md)
-- [ADR-0038: Multi-Agent Orchestrator with Dynamic Delegation](./ADR-0038-multi-agent-orchestrator-with-dynamic-delegation.md)
-- [ADR-0039: A2A Registry Layer for Scale](./ADR-0039-a2a-registry-layer-for-scale.md)
-- [ADR-0040: Writer/Reviewer Pattern for Session Integrity](./ADR-0040-writer-reviewer-pattern-for-session-integrity.md)
-- [ADR-0042: First-Class Waiting UX (Waiting Action Card & Heartbeat)](./ADR-0042-first-class-waiting-ux-waiting-action-card-heartbeat.md)
-- [ADR-0043: Evidence-Anchored Chat Messages](./ADR-0043-evidence-anchored-chat-messages.md)
-- [ADR-0044: Deterministic Clarification UX](./ADR-0044-deterministic-clarification-ux.md)
-- [ADR-0045: Session Steering Controls](./ADR-0045-session-steering-controls.md)
-- [ADR-0046: Structured Decision Packets & Idempotency Key](./ADR-0046-structured-decision-packets-idempotency-key.md)
-- [ADR-0047: Critique Before Action](./ADR-0047-critique-before-action.md)
-- [ADR-0048: Self-Calibrating Confidence](./ADR-0048-self-calibrating-confidence.md)
-- [ADR-0049: Negative Memory & Semantic Error Split](./ADR-0049-negative-memory-semantic-error-split.md)
-- [ADR-0050: Intent Preservation Gate](./ADR-0050-intent-preservation-gate.md)
-- [ADR-0051: Orchestrator Single State Enum](./ADR-0051-orchestrator-single-state-enum.md)
-- [ADR-0052: Session Finite State Machine](./ADR-0052-session-finite-state-machine.md)
-- [ADR-0053: Artifact Lifecycle Authority](./ADR-0053-artifact-lifecycle-authority.md)
-- [ADR-0054: Real-time Update Contracts](./ADR-0054-real-time-update-contracts.md)
-- [ADR-0055: Evidence-First UI Architecture](./ADR-0055-evidence-first-ui-architecture.md)
-- [ADR-0056: Operator Decision Model](./ADR-0056-operator-decision-model.md)
-- [ADR-0057: Canonical Schema Registry](./ADR-0057-canonical-schema-registry.md)
+Artifact schemas were defined implicitly in TypeScript interfaces scattered across files. No runtime validation occurred, allowing malformed artifacts to silently persist in ArtifactStore and cause downstream errors.
+
+## Decision
+
+Maintain a **Canonical Schema Registry** at `a2a-server/src/artifacts/schemas/`:
+
+```
+schemas/
+├── base.schema.json             # ArtifactBase
+├── confidence_trace.schema.json
+├── execution_decision.schema.json
+├── waiting_state.schema.json
+├── loop_signal.schema.json
+├── dryrun_delta.schema.json
+├── memory_influence.schema.json
+├── validation_summary.schema.json
+├── ... (one file per artifact type)
+└── index.ts                     # exports: Record<ArtifactType, JSONSchema>
+```
+
+### Validation
+
+`ArtifactValidator` applies the schema before `ArtifactStore.write()`:
+
+```typescript
+class ArtifactValidator {
+  validate<T extends ArtifactBase>(artifact: T): ValidationResult {
+    const schema = SchemaRegistry[artifact.artifact_type];
+    if (!schema) return { valid: false, error: 'UNKNOWN_ARTIFACT_TYPE' };
+    return ajv.validate(schema, artifact)
+      ? { valid: true }
+      : { valid: false, errors: ajv.errors };
+  }
+}
+```
+
+Write is **rejected** if validation fails — the error is logged as `A2A_MESSAGE_ERROR` and the writing component is notified synchronously.
+
+### Schema Versioning
+
+All schemas include `"schema_version": "2.0"` as a required field. On future breaking changes, bump to `"2.1"` etc. and add a migration handler.
+
+## Consequences
+
+### Positive
+- Runtime guarantee: no malformed artifacts in ArtifactStore
+- Schema files are the single source of truth (TypeScript types generated from them)
+- Enables cross-team contract enforcement
+
+### Negative
+- ~1ms overhead per artifact write (ajv is fast, but measurable at scale)
+- Schema drift between JSON Schema and TypeScript types must be managed (codegen solves this)
+
+---
 
 *Version: 1.0 | Date: 2026-04-01*  
 *These ADRs are the direct result of the Architecture Blueprint v2.0 audit.*  

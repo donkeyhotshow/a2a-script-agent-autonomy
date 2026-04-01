@@ -6,6 +6,24 @@ export interface TransformExecuteValidationIssue {
     message: string;
 }
 
+/**
+ * Single-tool execute keys (agent + dialog LLM transforms, workspace tools).
+ * Keep aligned with prompts (e.g. agent-request/coder-request) and `VALID_EXECUTE_KEYS` in action-validator.
+ */
+export const SINGLE_TOOL_EXECUTE_KEYS = [
+    'rag-search',
+    'read-file',
+    'write-file',
+    'execute-command',
+    'list-directory',
+    'grep-search',
+    'file-exists',
+    'edit-patch',
+    'run-script',
+    'script',
+    'dialog',
+] as const;
+
 export function validateDialogExecuteShape(execute: ProcessResult['execute'] | undefined): TransformExecuteValidationIssue[] {
     const issues: TransformExecuteValidationIssue[] = [];
     if (!execute || typeof execute !== 'object') {
@@ -24,15 +42,7 @@ export function validateDialogExecuteShape(execute: ProcessResult['execute'] | u
         });
         return issues;
     }
-    const toolKeys = [
-        'rag-search',
-        'read-file',
-        'write-file',
-        'execute-command',
-        'list-directory',
-        'grep-search',
-        'script',
-    ];
+    const toolKeys = [...SINGLE_TOOL_EXECUTE_KEYS];
     const activeToolKeys = keys.filter((k) => toolKeys.includes(k));
     const hasForm = typeof ex['form'] === 'object' && ex['form'] !== null;
     const hasMessage = typeof ex['message'] === 'string' && ex['message'].trim().length > 0;
@@ -217,15 +227,7 @@ export function validateAgentExecuteShape(execute: ProcessResult['execute'] | un
         });
         return issues;
     }
-    const toolKeys = [
-        'rag-search',
-        'read-file',
-        'write-file',
-        'execute-command',
-        'list-directory',
-        'grep-search',
-        'dialog',
-    ];
+    const toolKeys = [...SINGLE_TOOL_EXECUTE_KEYS];
     const activeToolKeys = keys.filter((k) => toolKeys.includes(k));
     const hasForm = typeof ex['form'] === 'object' && ex['form'] !== null;
     const hasMessage = typeof ex['message'] === 'string' && ex['message'].trim().length > 0;

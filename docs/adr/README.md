@@ -50,6 +50,28 @@ Recommended sections:
 - `ADR-0032-port-management-execution.md` - Standardize dynamic port allocation, locking, conflict detection, and cleanup via `scripts/port-manager.js`
 - `ADR-0033-standard-extensions-structure.md` - Plan for single-extension sources, consistent handler/service naming, and cleaned server directories per the refactoring plan
 - `ADR-0034-protocol-consolidation.md` - Propose `@a2a/protocol`, canonical docs/actions layout, and a config map to consolidate shared types
+- `ADR-0035-agentic-reasoning-safety-layer.md` - Safety Layer intercept for Gray Room loops, context drift, and confidence gating
+- `ADR-0036-a2a-autonomous-agent-master-orchestration-memory.md` - Master orchestration blueprint plus hierarchical memory planning
+- `ADR-0037-living-specs-for-task-synthesis.md` - Living specifications that evolve with task synthesis and traceability
+- `ADR-0038-multi-agent-orchestrator-with-dynamic-delegation.md` - Dynamic delegation supervisor orchestrator coordinating architect/reviewer agents
+- `ADR-0039-a2a-registry-layer-for-scale.md` - Registry-based discovery and routing layer for agent scalability
+- `ADR-0040-writer-reviewer-pattern-for-session-integrity.md` - Writer/Reviewer session pattern to reduce confirmation bias
+- `ADR-0042-first-class-waiting-ux-waiting-action-card-heartbeat.md` - Waiting-action card with heartbeat contract for human gating
+- `ADR-0043-evidence-anchored-chat-messages.md` - Mandating artifact evidence for every UI claim about agent state
+- `ADR-0044-deterministic-clarification-ux.md` - Deterministic clarification flows so user guidance always matches state
+- `ADR-0045-session-steering-controls.md` - Explicit steering-control authority table mapping FSM states to operator actions
+- `ADR-0046-structured-decision-packets-idempotency-key.md` - Structured decision packets plus idempotency keys for resilient human handoffs
+- `ADR-0047-critique-before-action.md` - Critique-against-plan stage before any structural changes are applied
+- `ADR-0048-self-calibrating-confidence.md` - Confidence tracing with heuristic fallback and waiting states
+- `ADR-0049-negative-memory-semantic-error-split.md` - Separate negative memory artifacts from semantic error signals for clarity
+- `ADR-0050-intent-preservation-gate.md` - Intent-preserving gate that rejects drifted actor intents
+- `ADR-0051-orchestrator-single-state-enum.md` - Single FSM enum for orchestrator states to avoid boolean flags
+- `ADR-0052-session-finite-state-machine.md` - Session FSM with exhaustive transitions and guard validation
+- `ADR-0053-artifact-lifecycle-authority.md` - Canonical authority model for artifact writing, retention, and consumption
+- `ADR-0054-real-time-update-contracts.md` - Typed WebSocket topics plus polling fallbacks for real-time updates
+- `ADR-0055-evidence-first-ui-architecture.md` - Evidence-first UI components with stale detection rules
+- `ADR-0056-operator-decision-model.md` - Steering Controls Authority table defining operator actions per state
+- `ADR-0057-canonical-schema-registry.md` - JSON Schema registry plus validator guarantees for artifacts
 
 ## Reference bundles (large / multi-topic)
 

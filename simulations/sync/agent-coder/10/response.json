@@ -1,6 +1,6 @@
 {
   "context": {
-    "task": "проаналізуй код авторизації",
+    "task": "допоможи розібратись з кодом",
     "execution": {
       "action": "agent",
       "step": "request"
@@ -8,29 +8,67 @@
     "history": [
       {
         "role": "user",
-        "message": "покажи мені як працює система авторизації в цьому проекті"
+        "message": "як працює система авторизації?"
       },
       {
         "role": "assistant",
-        "message": "Зроблю пошук по коду для знаходження файлів авторизації.",
-        "action": "rag-search",
-        "params": {
-          "query": "authorization login JWT token auth"
-        }
+        "message": "Система авторизації працює..."
+      },
+      {
+        "role": "user",
+        "message": "запиши весь звіт в docs/auth-report.md"
+      },
+      {
+        "role": "assistant",
+        "message": "Запишу детальний звіт про систему авторизації у файл docs/auth-report.md",
+        "action": "write-file"
       },
       {
         "role": "system",
-        "message": "RAG знайшов: src/auth.js, src/middleware/auth.js, src/utils/jwt.js"
+        "message": "Файл docs/auth-report.md успішно записано (1847 байт)"
       },
       {
         "role": "assistant",
-        "message": "Знайшов файли авторизації. Зараз прочитаю основний файл src/auth.js."
+        "message": "Звіт успішно записано! Файл docs/auth-report.md створено. Якщо потрібно щось ще - звертайся!",
+        "action": "completed"
+      },
+      {
+        "role": "user",
+        "message": "покажи мені код з файлу src/auth.js"
+      },
+      {
+        "role": "assistant",
+        "message": "Читаю файл src/auth.js...",
+        "action": "read-file"
+      },
+      {
+        "role": "system",
+        "message": "Прочитано файл src/auth.js"
+      },
+      {
+        "role": "assistant",
+        "message": "Ось вміст src/auth.js у контексті запиту. Можеш задати наступне питання.",
+        "action": "continue"
+      },
+      {
+        "role": "user",
+        "message": "проаналізуй цей код авторизації"
       }
     ]
   },
   "execute": {
-    "read-file": {
-      "path": "src/auth.js"
+    "form": {
+      "title": "Аналіз коду авторизації",
+      "description": "Код авторизації використовує JWT та bcrypt для безпечної аутентифікації. Які аспекти проаналізувати?",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "placeholder": "Наступне питання або команда",
+          "required": true
+        }
+      ]
     }
   }
 }

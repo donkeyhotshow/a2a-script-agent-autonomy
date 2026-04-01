@@ -6,7 +6,13 @@
       "step": "router"
     },
     "workbench": {
-      "sections": {}
+      "sections": {
+        "scratchpad": {
+          "mode": "agent",
+          "initialized": true
+        },
+        "files": {}
+      }
     }
   },
   "execute": {
