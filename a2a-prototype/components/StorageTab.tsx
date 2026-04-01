@@ -70,7 +70,7 @@ const StorageTab: FC<Props> = ({ items }) => {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-3 py-8 text-center text-zinc-700">No {activeType}s</td>
+                <td colSpan={4} className="px-3 py-8 text-center text-zinc-500">No {activeType}s</td>
               </tr>
             )}
           </tbody>

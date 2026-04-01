@@ -11,7 +11,7 @@ interface Props {
 const WaitingCard: FC<Props> = ({ artifact, onApprove, onReject }) => {
   const [approved, setApproved] = useState<boolean | null>(null);
   const data = artifact.data as Record<string, unknown>;
-  const requiredInputs = (data.required_inputs as RequiredInput[]) ?? [];
+  const requiredInputs = (Array.isArray(data.required_inputs) ? data.required_inputs : []) as RequiredInput[];
   const reason = (data.reason as string) ?? 'unknown';
   const expiresAt = data.expires_at as string;
   const approvalType = data.humanlayer_approval_type as string;
