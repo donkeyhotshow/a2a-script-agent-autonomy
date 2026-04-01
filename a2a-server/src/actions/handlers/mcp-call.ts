@@ -120,10 +120,18 @@ export async function executeMcpCall(input: McpCallInput): Promise<McpCallOutput
   }
 
   const [bin, ...args] = command;
+  if (!bin) {
+    return {
+      success: false,
+      server: input.server,
+      tool: input.tool,
+      error: `MCP server command for '${input.server}' is an empty array`,
+    };
+  }
   logger.info(`[mcp-call] Spawning server '${input.server}': ${bin} ${args.join(' ')}`);
 
   return new Promise<McpCallOutput>((resolve) => {
-    const proc = spawn(bin ?? '', args, {
+    const proc = spawn(bin, args, {
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 

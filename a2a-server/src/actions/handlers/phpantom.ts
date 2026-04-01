@@ -77,7 +77,17 @@ export interface PhpantomFixOutput {
   dryRun: boolean;
 }
 
-// ── Handlers ──────────────────────────────────────────────────────────────────
+/** Shape of errors thrown by Node.js child_process when the process exits non-zero */
+interface ExecError {
+  stdout?: string;
+  stderr?: string;
+  message?: string;
+  code?: number;
+}
+
+function toExecError(err: unknown): ExecError {
+  return err as ExecError;
+}
 
 /**
  * Run `phpantom_lsp analyze` on the given path.
@@ -101,7 +111,7 @@ export async function handlePhpantomAnalyze(
     };
   } catch (err) {
     // phpantom exits non-zero when issues are found — that is not a tool error
-    const e = err as { stdout?: string; stderr?: string; message?: string; code?: number };
+    const e = toExecError(err);
     const report = e.stdout ?? e.message ?? String(err);
     logger.info('[phpantom-analyze] Issues found or binary error', {
       exitCode: e.code,
@@ -145,7 +155,7 @@ export async function handlePhpantomFix(
       dryRun,
     };
   } catch (err) {
-    const e = err as { stdout?: string; stderr?: string; message?: string };
+    const e = toExecError(err);
     const report = e.stdout ?? e.message ?? String(err);
     logger.warn('[phpantom-fix] Fix command failed', { error: report });
     return {

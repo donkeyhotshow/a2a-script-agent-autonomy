@@ -122,6 +122,7 @@ export function useA2AStream(options: UseA2AStreamOptions = {}): UseA2AStreamRet
       while (!abortRef.current) {
         if (pollAttemptsRef.current >= maxPollAttempts) {
           const err = new Error('A2A stream timed out waiting for response');
+          abortRef.current = true; // ensure loop terminates after return
           setError(err);
           setStatus('error');
           onError?.(err);

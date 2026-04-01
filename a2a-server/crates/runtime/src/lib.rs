@@ -21,6 +21,13 @@ use napi_derive::napi;
 use std::collections::HashMap;
 use std::sync::Mutex;
 
+// Global session registry.
+//
+// `Mutex<Option<HashMap>>` rather than `Mutex<HashMap>` is a Rust idiom for
+// lazy initialisation: the inner `Option` starts as `None` and is populated
+// the first time `with_sessions` is called via `get_or_insert_with`.  This
+// avoids allocating the HashMap until the module is actually used, which is
+// important for N-API modules loaded at server startup before any sessions exist.
 static SESSIONS: Mutex<Option<HashMap<String, String>>> = Mutex::new(None);
 
 fn with_sessions<F, R>(f: F) -> R
