@@ -1,13 +1,12 @@
-# DEV_STATE - 2026-04-01
+# DEV_STATE - 2026-04-02
 
 **Doc:** Schema-debug entry point: [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md), [`simulations/SCHEMA.md`](simulations/SCHEMA.md), [`AGENTS.md`](AGENTS.md).
 
-**Agent-mode task prompts:** [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md) — run in the live stack via Client API + seed **`mode: "agent"`** (see `AGENTS.md` *Unified manual path*).
+**Agent-mode task prompts:** [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md); **live stack contract:** [`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md); **linear workflow:** [`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md); **root master prompt (full index run):** [`START-FULL-SPECTRUM.md`](START-FULL-SPECTRUM.md) — Client API + seed **`mode: "agent"`** (not `invoke` alone; see `AGENTS.md` *Unified manual path*).
 
-**System roadmap:** [`work/tasks/system-improvement-priorities.md`](work/tasks/system-improvement-priorities.md) (contract unification, gray room, verification pyramid, observability).
+**System roadmap:** [`tasks/system-improvement-priorities.md`](tasks/system-improvement-priorities.md) (contract unification, gray room, verification pyramid, observability).
 
-**Work queue (sync sims):** S7–S12 done (2026-04-01). Осталось:
-- S10: router drift (optional)
+**Work queue (sync sims):** S9 done (substeps default-on in `sim-validate`); S10–S12 partial; S11 — `sync/script` steps 1–10 have `request.md`/`response.md` ( `sim:check-md` ); S14 partial — see [`work/STATE.md`](work/STATE.md).
 
 Current system state: **Stack готов** - все сервисы работают; `sim:validate -- --all --step-contract` зелёный.
 
@@ -18,7 +17,12 @@ Current system state: **Stack готов** - все сервисы работа�
 - Orchestrator metrics: требует периодического обновления
 
 **Pending tasks:**
-- S10: Router drift (optional)
+- S10–S12, S14, SYS: see [`work/STATE.md`](work/STATE.md)
+
+## Completed work/tasks (2026-04-02):
+- Doc: router alignment — `simulations/sync/agent/description.md` (step 1 vs `router-static-choices.json`); `AGENTS.md` router note + `tasks/sync-documentation-and-router-drift.md` status line
+- Doc: S11 — `sync/dialog/1` request/response `.md` mirrors; `sync/script/description.md` sim:check-md note; refreshed `tasks/sync-llm-snapshot-coverage.md` + `work/STATE.md` S11; `sync/dialog/description.md` step-1 table accuracy
+- S11: `sync/script` steps 2–3, 4/response, 5–10 — added `request.md`/`response.md` JSON fences ( `cd a2a-server && npm run sim:check-md -- --fail` ); `npm run sim:quality` clean
 
 ## Completed work/tasks (2026-04-01):
 - Analyze test failures: Classified 41 failed a2a-client tests as config/environment issues
@@ -27,7 +31,7 @@ Current system state: **Stack готов** - все сервисы работа�
 - Sync LLM snapshot coverage: Documented in simulations/sync/README.md
 - Sync README and CLI gap: Updated README to match SCHEMA.md
 - Sync step-contract warnings: Fixed all 47 warnings via passthrough transforms
-- Sync substeps not discovered: Extended scanner with --include-substeps flag
+- Sync substeps: `sim-validate --all` includes `N-sub-M` by default (`--skip-substeps` to exclude); fixed agent-auto-ai substep fixtures
 - Sync workspace tools golden map: Added mapping to description.md
 
 ---

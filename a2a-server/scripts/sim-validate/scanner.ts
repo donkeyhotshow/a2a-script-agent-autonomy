@@ -27,7 +27,7 @@ export interface CliArgs {
     strict: boolean;
     /** SCHEMA.md no-LLM step transform contract (optional warnings). */
     stepContract: boolean;
-    /** If true, include substep folders (e.g., "3-sub-1") in validation. */
+    /** If false, skip `N-sub-M` folders (not recommended; default true). */
     includeSubsteps: boolean;
 }
 
@@ -54,7 +54,7 @@ export function getAllSimulations(includeSubsteps = false): {path: string; name:
 
             for (const subEntry of subEntries) {
                 if (!subEntry.isDirectory()) continue;
-                if (substepDirRe.test(subEntry.name)) continue; // Skip "3-sub-1" by default
+                if (!includeSubsteps && substepDirRe.test(subEntry.name)) continue;
 
                 const simBaseDir = join(subDir, subEntry.name);
                 const simBaseEntries = readdirSync(simBaseDir, {withFileTypes: true});
@@ -71,7 +71,6 @@ export function getAllSimulations(includeSubsteps = false): {path: string; name:
                             name: `${entry.name}/${subEntry.name}/${stepEntry.name}`
                         });
                     }
-                    // Also include substep folders if flag is set
                     if (includeSubsteps && substepDirRe.test(stepEntry.name)) {
                         simulations.push({
                             path: join(simBaseDir, stepEntry.name),
@@ -140,7 +139,8 @@ export function parseArgs(): CliArgs {
         help: args.includes('--help') || args.includes('-h'),
         strict: args.includes('--strict'),
         stepContract: args.includes('--step-contract'),
-        includeSubsteps: args.includes('--include-substeps'),
+        /** Substeps (`N-sub-M`) are included by default; opt out with `--skip-substeps`. */
+        includeSubsteps: !args.includes('--skip-substeps'),
     };
 }
 
@@ -157,7 +157,7 @@ export function printHelp() {
   --verbose, -v      Подробный вывод
   --strict           Без нормализации (сырой JSON против схемы)
   --step-contract    Доп. предупреждения: no-LLM шаги и server-transforms-*.json (см. simulations/SCHEMA.md)
-  --include-substeps Включить подпапки substeps (например, "3-sub-1") в валидацию
+  --skip-substeps    Исключить подпапки substeps (например, "3-sub-1") из --all
   --help, -h         Показать эту справку
 
 По умолчанию request/response нормализуются: снимаются promiseId/даты, обёртка success/data,

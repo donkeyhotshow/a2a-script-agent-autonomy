@@ -1,0 +1,40 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "fix-vue-imports",
+        "step": "operator_gate"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "form": {
+          "title": "Continue pipeline?",
+          "description": "Audit merged: 1 patch proposal, lint pass. Proceed to shell check or stop.",
+          "choices": [
+            {
+              "id": "proceed",
+              "label": "Proceed",
+              "description": "Run sim:lint on sync/script/1 via execute-command."
+            },
+            {
+              "id": "done",
+              "label": "Stop here",
+              "description": "Skip shell check (not taken in this golden)."
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

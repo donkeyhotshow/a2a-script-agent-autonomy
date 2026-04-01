@@ -1,0 +1,25 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "fix-vue-imports",
+        "step": "summary"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "message": "Auto summary: scan → resolve → lint-fix → audit merge → operator proceed → sim:lint exit 0. Central golden sync/script (10 steps) complete."
+      }
+    }
+  ]
+}

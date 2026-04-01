@@ -25,7 +25,7 @@ function getApiHelpers() {
         typeof H.normalizeSessionsList !== 'function'
     ) {
         throw new Error(
-            '[api-integration] Load a2a-client/shared/api-helpers.js before api-integration.js (see web/index.html)'
+            '[api-integration] Load /shared/api-helpers.js before api-integration.js (see web/index.html)'
         );
     }
     return H;

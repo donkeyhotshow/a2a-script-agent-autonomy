@@ -9,8 +9,8 @@
 
 ## Agent prompt (copy)
 
-Either implement `--include-substeps` (or equivalent) so `N-sub-M` paths get AJV/schema validation, or add a focused test that validates those folders. Document CLI in `simulations/sync/README.md`. Update the source task file checkboxes and `work/STATE.md`.
+Substeps are validated by default in `sim-validate --all`; use `--skip-substeps` to exclude. Documented in `simulations/SCHEMA.md` and `SERVER-CONTRACT.md`. Task file: `tasks/sync-substeps-not-discovered.md`.
 
 ## Completion
 
-- [ ] Done
+- [x] Done

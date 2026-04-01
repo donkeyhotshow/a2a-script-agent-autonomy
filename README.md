@@ -26,6 +26,10 @@ At the repo root on Windows, `npm run dev` is an alias for `start-all.bat` — t
 
 ---
 
+## Full-spectrum agent run (master prompt)
+
+Open **[`START-FULL-SPECTRUM.md`](START-FULL-SPECTRUM.md)** and copy the **Agent prompt** block into Cursor **or** into `POST /api/a2a/sessions` (`mode: "agent"`, field `task`). That file indexes the full `prompts-to-agent-mode/` surface plus methodology and Client API checks. Linear spine: [`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md). Curl detail: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
+
 ## Quick Start
 
 ```bash
@@ -146,7 +150,7 @@ See [System Startup Documentation](docs/SYSTEM_STARTUP.md) for details.
 
 ### Testing
 
-**Sessions and E2E / operator flows:** Exercises that create a **session**, send turns, or poll **async** should target the **Client API** — default dev base `http://localhost:5173` and paths `/api/a2a/*` (same as the web UI). The A2A Server on `:3000` is **`/api/v1/invoke`** only (stateless). **Agent mode** is reflected in **session `context`** (e.g. `execution.action`), not a separate HTTP route. **Indexed operator prompts:** [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md) (seed `mode: "agent"` on create). Details: root [`AGENTS.md`](AGENTS.md) (“Sessions, tests, and agent mode”), [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md), [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
+**Sessions and E2E / operator flows:** Exercises that create a **session**, send turns, or poll **async** should target the **Client API** — default dev base `http://localhost:5173` and paths `/api/a2a/*` (same as the web UI). The A2A Server on `:3000` is **`/api/v1/invoke`** only (stateless). **Agent mode** is reflected in **session `context`** (e.g. `execution.action`), not a separate HTTP route. **Indexed operator prompts:** [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md); **how to run them on the live stack** (Client API vs `invoke`): [`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md). Seed `mode: "agent"` on create. Details: root [`AGENTS.md`](AGENTS.md) (“Sessions, tests, and agent mode”), [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md), [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 
 **Schema debugging order (mandatory):** start with **[scripts/direct-tests/README.md](scripts/direct-tests/README.md#schema-debugging--start-here)** — reproduce and isolate payload-shape issues there first; escalate to session flow, then simulations, then full e2e.
 
@@ -262,7 +266,8 @@ The a2a-server component is now production-ready with:
 | Document | Purpose |
 |----------|---------|
 | [AGENTS.md](AGENTS.md) | Agent and repo conventions; API and architecture pointers |
-| [prompts-to-agent-mode/README.md](prompts-to-agent-mode/README.md) | Task prompts for the live stack — Client API + `mode: "agent"` (same as UI) |
+| [prompts-to-agent-mode/README.md](prompts-to-agent-mode/README.md) | Task prompt index |
+| [prompts-to-agent-mode/STACK-RUN.md](prompts-to-agent-mode/STACK-RUN.md) | **Required read** before HTTP-driving those prompts: Client API + `mode: "agent"` (not `invoke` alone) |
 | [New request flow](docs/new-request-flow/) | Protocol, data flow, server architecture (canonical) |
 | [System Startup](docs/SYSTEM_STARTUP.md) | Port allocation, conflict detection, health gating |
 | [Machine-Readable Docs](docs/DOCUMENTATION-MACHINE-READABLE.md) | Documentation requirements for parsing |

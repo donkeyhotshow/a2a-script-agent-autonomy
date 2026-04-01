@@ -8,3 +8,5 @@
   оновленим `context.task`.
 
 Далі можна підключити реальне злиття сесії / історію (поки лише золоті JSON).
+
+Full scripted chain reference: **`sync/script`** ([`../script/description.md`](../script/description.md)).

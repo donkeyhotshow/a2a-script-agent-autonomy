@@ -4,6 +4,11 @@
 
 Усі кроки **без LLM** у фікстурах (`server-transforms-request.json` = passthrough `copy`): це **контрактний** реплей, не жива розмова.
 
+## Router (крок 1)
+
+- Канонічні **`id` / `label` / `description`** для статичного хвоста choices: [`shared/router-static-choices.json`](../../../shared/router-static-choices.json) (`staticTailChoices`, `formTitle` → `execute.form.title`).
+- Золото `1/response.json` має збігатися з цим файлом (і з нотатками в [`AGENTS.md`](../../../AGENTS.md) про fallback ids та registry). Після зміни одного — перевірити інші; чекліст: [`tasks/sync-documentation-and-router-drift.md`](../../../tasks/sync-documentation-and-router-drift.md).
+
 ## Файли на крок (7)
 
 | Файл | Примітка |

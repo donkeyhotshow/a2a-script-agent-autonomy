@@ -9,7 +9,7 @@
 - **Client API**: http://localhost:5173/api/a2a — **сюда** сессии: `POST …/sessions`, `…/next`, poll `…/async` (как UI, так и curl-оператор). Это не «второй класс» API, а основной контур для шагов и хранения.
 - **A2A Server**: http://localhost:3000 — только `invoke` и связанные статусы; **не** заменяет Client API для жизненного цикла сессии.
 - **Agent / tool loop**: не ищите `?mode=agent` в URL; проверяйте **состояние сессии** (`GET …/sessions/{id}`, при необходимости `?includeContext=1`). Канонично: `AGENTS.md` → *Sessions, tests, and agent mode*; [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md), [ADR-0030](docs/adr/ADR-0030-unified-agent-mode.md).
-- **Промпты из `prompts-to-agent-mode/`**: индекс в [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md). Чтобы задача выполнялась **в системе**, вставляйте текст в сессию через **Client API** с **`mode: "agent"`** на create (тот же контур, что у веб-UI), не заменяя это сырым `invoke` на `:3000`.
+- **Промпты из `prompts-to-agent-mode/`**: индекс в [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md). Чтобы задача выполнялась **в системе**, вставляйте текст в сессию через **Client API** с **`mode: "agent"`** на create (тот же контур, что у веб-UI), не заменяя это сырым `invoke` на `:3000`. Линейный контур и полный прогон индекса (EN): [`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md), [`START-FULL-SPECTRUM.md`](START-FULL-SPECTRUM.md).
 - **Перезапуск стека (Windows):** только `start-all.bat` из корня репозитория; не поднимать отдельные сервисы через `npm run dev` в подпапках (`docs/SYSTEM_STARTUP.md`, `AGENTS.md`).
 - **Директория задач**: tasks/
 - **Pending задачи**: tasks/pending/

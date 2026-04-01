@@ -42,6 +42,7 @@ Each step folder may contain up to the full pipeline (see [`../SCHEMA.md`](../SC
 | orchestrator-dialog | Orchestrator dialog |
 | phpunit-deprecations | PHPUnit deprecations |
 | resilience-contract | Resilience contract |
+| script | **Central** scripted E2E (10 steps): router → forms → `script`×3 ↔ client → `run-script` → gate → `execute-command` → summary → follow-up ([`script/description.md`](script/description.md)) |
 | task-decomposition | Task decomposition |
 
 ## Running validation
@@ -74,6 +75,6 @@ npx tsx scripts/sim-validate.ts --sim sync/dialog/1 --step-contract
 Some sync simulations include **substep folders** (e.g., `agent-auto-ai/3-sub-1`) for server interrupt-loop goldens. These document internal server LLM/transform turns that are not exposed to the web client. Behavior:
 
 - **`sim-lint`** walks substep folders when linting the parent simulation and validates JSON there.
-- **`sim-validate`** does **not** treat substeps as standalone simulations — they are skipped in the scanner.
+- **`sim-validate --all`** includes substep paths by default (same schema rules as numeric steps). Pass **`--skip-substeps`** to exclude them.
 - Substeps contain `request.*` / `response.*` + server-transforms but **no** `client.json` / `received.json`.
 - Documentation: see [`../SCHEMA.md`](../SCHEMA.md) section "Supplementary: server interrupt loop (optional)".

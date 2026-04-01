@@ -1,0 +1,18 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Script central — next",
+      "description": "Optional follow-up; same closing pattern as sync/agent/15.",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Next instruction",
+          "required": false
+        }
+      ]
+    }
+  }
+}

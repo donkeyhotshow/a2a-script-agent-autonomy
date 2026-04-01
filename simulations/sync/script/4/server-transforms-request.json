@@ -1,0 +1,37 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "fix-vue-imports",
+        "step": "vue-import-resolve"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "script": {
+          "input": {
+            "broken_imports": [
+              {
+                "file": "app/Example.vue",
+                "line": 2,
+                "specifier": "./Missing"
+              }
+            ]
+          },
+          "output": "patches[]",
+          "code": "return { patches: [{ file: 'app/Example.vue', line: 2, from: './Missing', to: '@/components/Missing' }] };"
+        }
+      }
+    }
+  ]
+}

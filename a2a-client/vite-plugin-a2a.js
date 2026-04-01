@@ -45,10 +45,10 @@ export default function vitePluginA2a() {
             server.middlewares.use(createDaemonRoutes({ cwd }));
             server.middlewares.use(createActionsRoutes({ cwd }));
             
-            // Serve shared files - first check local, then parent
-            let sharedPath = path.join(cwd, 'shared');
+            // Serve shared files - check parent first (repo root), then local a2a-client/shared
+            let sharedPath = path.join(cwd, '..', 'shared');
             if (!fs.existsSync(sharedPath)) {
-                sharedPath = path.join(cwd, '..', 'shared');
+                sharedPath = path.join(cwd, 'shared');
             }
             if (fs.existsSync(sharedPath)) {
                 server.middlewares.use('/shared', (req, res, next) => {

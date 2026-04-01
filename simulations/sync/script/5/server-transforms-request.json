@@ -1,0 +1,30 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "fix-vue-imports",
+        "step": "npm_script_gate"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "run-script": {
+          "scriptId": "lint-fix",
+          "params": {
+            "scope": "script-central"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,8 +1,19 @@
 # Agent-mode prompts (project task index)
 
+**If you are driving the live script-agent stack:** read **[STACK-RUN.md](STACK-RUN.md)** first.
+
+**Linear pipeline:** **[ONE-PIPELINE.md](ONE-PIPELINE.md)** (env → Client API → prompts → observe → improve). **Root master prompt** (full indexed backlog in one loop): **[`../START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md)**.
+
+This folder’s name means “prompts aligned with **agent mode** in session **context**”; it does **not** mean “paste into `invoke` on port 3000.”
+
 ## Run through the script-agent stack (Client API)
 
 When a prompt should execute **in the live system** (same path as the web UI), drive it via the **Client API**, not `POST /api/v1/invoke` alone.
+
+| Wrong default | Correct |
+|---------------|---------|
+| Only `POST :3000/api/v1/invoke` | `POST :5173/api/a2a/sessions` with **`mode: "agent"`**, then `/next` + poll `/async` |
+| Treat “Agent prompt” as server payload | Treat it as **task text** (or IDE instructions); HTTP contour is still **sessions** on the **client** origin |
 
 1. Start the stack (Windows: [`start-all.bat`](../start-all.bat) from repo root — see [`docs/SYSTEM_STARTUP.md`](../docs/SYSTEM_STARTUP.md)).
 2. **`POST /api/a2a/sessions`** with **`mode: "agent"`** (or `execution` seeded to agent) and paste the file’s **Agent prompt** into **`task`** when creating the session (or send it on the first `/next` as text when the form has no `choices`).
@@ -10,7 +21,7 @@ When a prompt should execute **in the live system** (same path as the web UI), d
 
 Normative detail, two-beat router, and pitfalls: **[`AGENTS.md`](../AGENTS.md)** (*Unified manual path*). Curl walkthrough: **[`docs/OPERATOR-CURL.md`](../docs/OPERATOR-CURL.md)**. Deep checklist: [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md).
 
-**Other surfaces:** editing the repo, running sims (`sim:lint` / `sim:validate`), or using an IDE agent is separate. Those prompts still describe *what* to do; only stack-backed verification needs the Client API contour above.
+**Other surfaces:** editing the repo, running sims (`npm run sim:lint` / `npm run sim:validate`), or using an IDE agent is separate. Those prompts still describe *what* to do; only stack-backed verification needs the Client API contour above.
 
 ---
 

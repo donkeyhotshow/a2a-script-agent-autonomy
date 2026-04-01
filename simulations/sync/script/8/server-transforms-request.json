@@ -1,0 +1,28 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "fix-vue-imports",
+        "step": "shell_check"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "execute-command": {
+          "command": "npm run sim:lint -- --sim sync/script/1",
+          "cwd": "."
+        }
+      }
+    }
+  ]
+}

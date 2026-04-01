@@ -3,7 +3,7 @@
 Этот файл — **стейт задач**: сюда пишем твои задачи и статус.  
 Остальные документы в `work/` — про **апгрейд симуляций** (отдельно от этого файла).
 
-**Живой стек (как UI):** готовые промпты под задачи и как их гонять через HTTP — [`prompts-to-agent-mode/README.md`](../prompts-to-agent-mode/README.md) (`POST /api/a2a/sessions` с `mode: "agent"`, затем `next` / `async`; канон — корневой `AGENTS.md`).
+**Живой стек (как UI):** индекс промптов — [`prompts-to-agent-mode/README.md`](../prompts-to-agent-mode/README.md); **контракт HTTP (не путать с `invoke` :3000)** — [`prompts-to-agent-mode/STACK-RUN.md`](../prompts-to-agent-mode/STACK-RUN.md) (`POST /api/a2a/sessions` + `mode: "agent"`, затем `next` / `async`; канон — `AGENTS.md`). **Линейный процесс:** [`prompts-to-agent-mode/ONE-PIPELINE.md`](../prompts-to-agent-mode/ONE-PIPELINE.md). **Старт всего индекса (мастер-промпт):** [`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md).
 
 ---
 
@@ -31,15 +31,15 @@
 | S4 | Дубли JSON-скелетов в `*-request.md`: вариант единого минимального каркаса + дельты по action — оценить и описать trade-off (меньше повторов в промпте vs ясность для модели) | **done** — см. § «Скелеты» ниже |
 | S5 | Сверить «Token discipline» / `workbench_ops` в промптах с тем, что делает gray-room / оркестратор — нет ли повторного раздувания workbench | **done** — см. § «Gray room» ниже |
 | S6 | Регрессия после любых правок схемы/промпта: `cd a2a-server && npm run test`, `npm run sim:lint -- --all`, `npm run sim:validate -- --all` (из корня репо, как в AGENTS.md) | **done** — `npm run test` (a2a-server), `sim:lint -- --all`, `sim-validate --all --strict` |
-| S7 | Аудит `simulations/sync`: README vs SCHEMA + фиктивный `--path` в примерах | **done** — README переписан; `--sim` / `--all` ([`tasks/sync-readme-and-cli-gap.md`](tasks/sync-readme-and-cli-gap.md)) |
+| S7 | Аудит `simulations/sync`: README vs SCHEMA + фиктивный `--path` в примерах | **done** — README переписан; `--sim` / `--all` ([`tasks/sync-readme-and-cli-gap.md`](../tasks/sync-readme-and-cli-gap.md)) |
 | S8 | Step-contract: 47 предупреждений только в `simulations/sync` (`--step-contract`) | **done** — passthrough `server-transforms-request.json` + удалены лишние `server-transforms-response.json` ([`tasks/sync-step-contract-warnings.md`](tasks/sync-step-contract-warnings.md)) |
-| S9 | Sub-папки `N-sub-M`: не в списке sim-validate; sim-lint обходит JSON при линте родителя | **pending** — [`tasks/sync-substeps-not-discovered.md`](tasks/sync-substeps-not-discovered.md) |
-| S10 | `agent/` без `description.md`; дрейф роутера vs `shared/router-static-choices.json` | **partial** — добавлен `simulations/sync/agent/description.md`; router drift — optional ([`tasks/sync-documentation-and-router-drift.md`](tasks/sync-documentation-and-router-drift.md)) |
-| S11 | Редкие `request.md`/`response.md` в sync — слабое покрытие промпт-пайплайна | **pending** — [`tasks/sync-llm-snapshot-coverage.md`](tasks/sync-llm-snapshot-coverage.md) |
-| S12 | `agent-workspace-tools` покрывает 4/ключей; остальное размазано по симам | **pending** — [`tasks/sync-workspace-tools-golden-map.md`](tasks/sync-workspace-tools-golden-map.md) |
-| S13 | `execute.form.choices` без `description` (несколько шагов sync) | **done** — правки в `received.json` / `response.json` ([`tasks/sync-form-choices-description.md`](tasks/sync-form-choices-description.md)) |
-| S14 | Паритет скриптового режима с dialog/agent: те же формы ответа, история/витрина, Web DTO / action-key shape — один контракт для UI и симов (см. фокус §2) | **pending** — [`tasks/script-dialog-agent-response-parity.md`](../tasks/script-dialog-agent-response-parity.md) |
-| SYS | Улучшение всей системы: приоритеты и связка модулей | **backlog** — [`tasks/system-improvement-priorities.md`](tasks/system-improvement-priorities.md) |
+| S9 | Sub-папки `N-sub-M` в `sim-validate --all` (по умолчанию); `--skip-substeps` для исключения; sim-lint обходит JSON в родительской симуляции | **done** — [`tasks/sync-substeps-not-discovered.md`](../tasks/sync-substeps-not-discovered.md) |
+| S10 | `agent/` без `description.md`; дрейф роутера vs `shared/router-static-choices.json` | **partial** — добавлен `simulations/sync/agent/description.md`; чеклист — [`tasks/sync-documentation-and-router-drift.md`](../tasks/sync-documentation-and-router-drift.md) |
+| S11 | `request.md`/`response.md` в sync — покрытие промпт-пайплайна | **partial** — `sync/script/1–10` + `sync/dialog/1`; см. [`tasks/sync-llm-snapshot-coverage.md`](../tasks/sync-llm-snapshot-coverage.md) |
+| S12 | Карта всех `VALID_EXECUTE_KEYS` vs золотые шаги | **partial** — таблица в `agent-workspace-tools/description.md` — [`tasks/sync-workspace-tools-golden-map.md`](../tasks/sync-workspace-tools-golden-map.md) |
+| S13 | `execute.form.choices` без `description` (несколько шагов sync) | **done** — правки в `received.json` / `response.json` ([`tasks/sync-form-choices-description.md`](../tasks/sync-form-choices-description.md)) |
+| S14 | Паритет скриптового режима с dialog/agent: те же формы ответа, история/витрина, Web DTO / action-key shape — один контракт для UI и симов (см. фокус §2) | **partial** — матрица + `history`/`workbench.sections` в шагах 4–10, E2E smoke [`scripts/e2e-client-api-replay-sync-script.mjs`](../scripts/e2e-client-api-replay-sync-script.mjs); [`tasks/script-dialog-agent-response-parity.md`](../tasks/script-dialog-agent-response-parity.md) |
+| SYS | Улучшение всей системы: приоритеты и связка модулей | **backlog** — [`tasks/system-improvement-priorities.md`](../tasks/system-improvement-priorities.md) |
 
 ---
 
@@ -75,4 +75,4 @@
 
 **Уже сделано (смежно):** S2 — пайплайн и релевантный контекст; S5 — gray room vs раздувание workbench; AGENTS.md — action-key shape и Web DTO.
 
-**Остаётся явно проверить/свести:** серверные ответы для script-action, санитизация на клиенте (`received.json`-подобная форма), шаги сессии, золотые симы на parity с `dialog`/`agent`. Детали и критерии — в [`tasks/script-dialog-agent-response-parity.md`](../tasks/script-dialog-agent-response-parity.md).
+**Матрица script vs dialog/agent** (execute, result, history, workbench, Web DTO, сессии): [`tasks/script-dialog-agent-response-parity.md`](../tasks/script-dialog-agent-response-parity.md). Золотой контур Web DTO для `execute.script`: [`simulations/sync/script/`](../simulations/sync/script/).

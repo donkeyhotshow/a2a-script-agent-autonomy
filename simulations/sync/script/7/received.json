@@ -1,0 +1,22 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Continue pipeline?",
+      "description": "Audit merged: 1 patch proposal, lint pass. Proceed to shell check or stop.",
+      "choices": [
+        {
+          "id": "proceed",
+          "label": "Proceed",
+          "description": "Run sim:lint on sync/script/1 via execute-command."
+        },
+        {
+          "id": "done",
+          "label": "Stop here",
+          "description": "Skip shell check (not taken in this golden)."
+        }
+      ]
+    }
+  }
+}

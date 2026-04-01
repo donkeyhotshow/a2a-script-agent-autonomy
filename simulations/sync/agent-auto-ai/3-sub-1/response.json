@@ -29,5 +29,8 @@
         "message": "RAG: src/app.js (page 1, pageSize 10, total 1, hasMore false)"
       }
     ]
+  },
+  "execute": {
+    "message": "Gray-room substep: RAG page recorded; internal continuation (not a separate web turn)."
   }
 }

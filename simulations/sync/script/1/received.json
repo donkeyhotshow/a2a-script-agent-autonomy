@@ -1,0 +1,27 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Choose pipeline",
+      "description": "Central script golden: scripted actions use the same router form class as dialog/agent.",
+      "choices": [
+        {
+          "id": "dialog",
+          "label": "Dialog",
+          "description": "LLM chat (not exercised in this golden)."
+        },
+        {
+          "id": "agent",
+          "label": "Agent",
+          "description": "Tool loop (see sync/agent)."
+        },
+        {
+          "id": "fix-vue-imports",
+          "label": "Scripted Vue import pipeline",
+          "description": "Multi-phase script ↔ client ↔ run-script chain under sync/script."
+        }
+      ]
+    }
+  }
+}

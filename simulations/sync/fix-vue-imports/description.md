@@ -18,6 +18,8 @@
 Другий сценарій (відмова від Coder, повернення до роутера + нова задача): [
 `fix-vue-imports-decline`](../fix-vue-imports-decline/description.md).
 
+Full scripted chain reference (10-step central golden): **`sync/script`** ([`../script/description.md`](../script/description.md)).
+
 ## Структура файлів
 
 ```

@@ -267,33 +267,35 @@
        /**
         * Update off-screen indicators with state comparison
         */
-       updateOffScreenIndicators() {
-           const taskbar = global.resolveTaskbarContentEl?.();
-           if (!taskbar) return;
+        updateOffScreenIndicators() {
+            const taskbar = global.resolveTaskbarContentEl?.();
+            if (!taskbar) return;
 
-           const sessionsWrapper = taskbar.querySelector('.taskbar-sessions-wrapper');
-           if (!sessionsWrapper) return;
+            const sessionsWrapper = taskbar.querySelector('.taskbar-sessions-wrapper');
+            if (!sessionsWrapper) return;
 
-           // Remove all existing indicators
-           document.querySelectorAll('.offscreen-indicator').forEach(ind => ind.remove());
+            // Remove all existing indicators
+            document.querySelectorAll('.offscreen-indicator').forEach(ind => ind.remove());
 
-           // Build current state directly to avoid double DOM traversal
-           const buttons = sessionsWrapper.querySelectorAll('.taskbar-session-btn');
-           const containerRect = sessionsWrapper.getBoundingClientRect();
+            // Build current state directly to avoid double DOM traversal
+            const buttons = sessionsWrapper.querySelectorAll('.taskbar-session-btn');
+            const containerRect = sessionsWrapper.getBoundingClientRect();
 
-           buttons.forEach((btn, index) => {
-               const btnRect = btn.getBoundingClientRect();
-               const sessionId = btn.dataset.sessionId;
+            buttons.forEach((btn, index) => {
+                const btnRect = btn.getBoundingClientRect();
+                const sessionId = btn.dataset.sessionId;
 
-               if (btnRect.right < containerRect.left) {
-                   // Off-screen to the left
-                   this.createOffScreenIndicator(sessionId, 'left', index, btn);
-               } else if (btnRect.left > containerRect.right) {
-                   // Off-screen to the right
-                   this.createOffScreenIndicator(sessionId, 'right', index, btn);
-               }
-           });
-       },
+                if (!sessionId) return;
+
+                if (btnRect.right < containerRect.left) {
+                    // Off-screen to the left
+                    this.createOffScreenIndicator(sessionId, 'left', index, btn);
+                } else if (btnRect.left > containerRect.right) {
+                    // Off-screen to the right
+                    this.createOffScreenIndicator(sessionId, 'right', index, btn);
+                }
+            });
+        },
 
         /**
          * Create off-screen indicator

@@ -45,6 +45,10 @@ function locateProjectModeSession(cwd, sessionId, q = {}) {
     const primary = getProjectPathForSessions(cwd);
     let session = loadSession(primary, sessionId);
     if (session) return { session, projectPath: primary };
+    // Also check new session format (storage/sessions/{id}/)
+    session = loadNewSession(cwd, sessionId);
+    if (session) return { session, projectPath: primary };
+    // Fallback: scan all projects for legacy session
     const found = findSessionProjectPath(cwd, sessionId);
     if (!found) return { session: null, projectPath: primary };
     return { session: loadSession(found, sessionId), projectPath: found };
@@ -241,7 +245,10 @@ export function createSessionRoutes({ cwd }) {
                 res.writeHead(400).end(JSON.stringify({ error: 'Invalid session ID' }));
                 return;
             }
-            const { session, projectPath } = resolveSession(cwd, sessionId, url);
+            const { session, projectPath } = locateProjectModeSession(cwd, sessionId, {
+                projectId: url.searchParams.get('projectId'),
+                projectRoot: url.searchParams.get('projectRoot')
+            });
             if (!session) {
                 res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
                 return;

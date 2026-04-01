@@ -39,5 +39,8 @@
         "message": "Listed src/: app.js, routes/"
       }
     ]
+  },
+  "execute": {
+    "message": "Gray-room substep: list-directory recorded; internal continuation (not a separate web turn)."
   }
 }

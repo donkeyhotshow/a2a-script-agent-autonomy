@@ -1,0 +1,12 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "script": {
+      "auditSummary": {
+        "patches": 1,
+        "lint": "pass"
+      }
+    }
+  }
+}
