@@ -47,7 +47,7 @@ const WaitingCard: FC<Props> = ({ artifact, onApprove, onReject }) => {
         {expiresAt && (
           <div className="flex gap-2 text-xs">
             <span className="text-zinc-500 font-mono w-24 shrink-0">expires:</span>
-            <span className="text-zinc-300 font-mono">{new Date(expiresAt).toLocaleString()}</span>
+            <span className="text-zinc-300 font-mono">{new Date(expiresAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</span>
           </div>
         )}
         {checkpointId && (

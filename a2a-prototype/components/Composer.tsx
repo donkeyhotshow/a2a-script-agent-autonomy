@@ -40,6 +40,8 @@ const Composer: FC<Props> = ({ onSend, onPreflightToggle, preflightMode = false,
       </div>
       <div className="flex gap-2">
         <textarea
+          id="composer-input"
+          aria-label="Send instruction to agent"
           value={text}
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}

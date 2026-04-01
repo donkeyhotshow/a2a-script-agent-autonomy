@@ -36,6 +36,7 @@ const SessionList: FC<Props> = ({ sessions, selectedId, onSelect }) => {
           <button
             key={s.session_id}
             onClick={() => onSelect(s.session_id)}
+            aria-pressed={selectedId === s.session_id}
             className={`w-full text-left px-3 py-2 hover:bg-zinc-800 transition-colors ${selectedId === s.session_id ? 'bg-zinc-800 border-l-2 border-blue-500' : 'border-l-2 border-transparent'}`}
           >
             <div className="flex items-center justify-between gap-2 mb-0.5">

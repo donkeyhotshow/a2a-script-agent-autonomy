@@ -10,10 +10,15 @@ const STATUS_COLORS = {
 
 const TYPE_TABS = ['artifact', 'step', 'checkpoint'] as const;
 
+const KB = 1024;
+const MB = KB * 1024;
+const GB = MB * 1024;
+
 function formatBytes(bytes: number): string {
-  if (bytes < 1024) return `${bytes}B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)}KB`;
-  return `${(bytes / 1024 / 1024).toFixed(1)}MB`;
+  if (bytes < KB) return `${bytes}B`;
+  if (bytes < MB) return `${(bytes / KB).toFixed(1)}KB`;
+  if (bytes < GB) return `${(bytes / MB).toFixed(1)}MB`;
+  return `${(bytes / GB).toFixed(1)}GB`;
 }
 
 interface Props {

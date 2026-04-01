@@ -59,11 +59,10 @@ const AgentConsole: FC = () => {
     }));
   };
 
-  const handleChipClick = (artifactId: string) => {
+  const handleChipClick = (_artifactId: string) => {
     // Switch to evidence panel so the user can inspect the referenced artifact
+    // _artifactId will be used for scroll-to-artifact highlighting in a future implementation
     void setRightTab('evidence');
-    // artifactId could be used for scrolling/highlighting in a future implementation
-    void artifactId;
   };
 
   const handleProjectChange = (projectId: string) => {
