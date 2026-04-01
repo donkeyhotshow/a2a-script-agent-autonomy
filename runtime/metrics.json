@@ -33,6 +33,15 @@
       "pendingQueueAge": 0,
       "tasksCompleted": 0,
       "tasksFailed": 0
+    },
+    {
+      "timestamp": "2026-04-01T19:17:46.517Z",
+      "cycleTime": 0,
+      "taskSuccessRate": 0,
+      "errorRate": 0,
+      "pendingQueueAge": 0,
+      "tasksCompleted": 0,
+      "tasksFailed": 0
     }
   ]
 }
