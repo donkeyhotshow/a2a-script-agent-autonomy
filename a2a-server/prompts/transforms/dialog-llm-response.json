@@ -42,6 +42,15 @@
       "sectionsPath": "context.workbench.sections"
     },
     {
+      "op": "apply-scratchpad-ops",
+      "from": "$.llm.scratchpad_ops",
+      "scratchpadPath": "context.scratchpad"
+    },
+    {
+      "op": "merge-workbench-slots",
+      "from": "$.llm.workbench.slots"
+    },
+    {
       "op": "set",
       "path": "$.result.completed",
       "value": "${$.llm.completed}"

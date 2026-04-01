@@ -207,6 +207,7 @@ export type TransformStep =
   | PickFilesOperation
   | MergeFilesToContextOperation
   | MergeWorkbenchSectionsOperation
+  | MergeWorkbenchSlotsOperation
   | SummarizeFilesOperation
   | ForEachOperation;
 
@@ -219,6 +220,19 @@ export interface MergeWorkbenchSectionsOperation {
   from: string;
   /** JSONPath on `$out` (e.g. `$.context.workbench.sections`). */
   to: string;
+}
+
+/**
+ * Shallow-merge LLM `workbench.slots` into `context.workbench.slots` (skips server-owned keys).
+ */
+export interface MergeWorkbenchSlotsOperation {
+  op: 'merge-workbench-slots';
+  /** JSONPath on `$out` (e.g. `$.llm.workbench.slots`). */
+  from: string;
+  /** JSONPath on `$out` (default `context.workbench.slots`). */
+  to?: string;
+  /** Extra keys to skip (beyond server-owned). */
+  skipKeys?: string[];
 }
 
 /** Single LLM-emitted scratchpad command (ISSUE 6) */
@@ -399,6 +413,10 @@ export interface RenderMarkdownOperation {
   templateRef: string; // Reference to markdown template
   data: string;        // JSONPath used as template data context
   outputFile: string;  // File name to write markdown to
+  /** Cap rendered size (chars). For `outputFile === 'request.md'`, `LLM_REQUEST_MAX_CHARS` applies when omitted. */
+  maxChars?: number;
+  /** Suffix when truncated (default: short server notice). */
+  truncateSuffix?: string;
 }
 
 /**

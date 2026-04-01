@@ -40,6 +40,26 @@ Each item is one command:
 | Append line | `{"op":"append","key":"findings","text":"- found: src/app.ts"}` |
 | Remove section | `{"op":"remove","key":"pending_questions"}` |
 
+### Deferred Edits Pattern
+
+For incremental updates that should be applied without resending full section text, use the `workbench_ops` array with `append` operations. This is particularly useful for:
+
+- Building up findings over multiple turns
+- Maintaining running logs or audit trails
+- Accumulating partial results from long-running operations
+
+Example of deferred edits for accumulating findings:
+```json
+{
+  "step": "analyze",
+  "workbench_ops": [
+    { "op": "append", "key": "findings", "text": "- checked: src/components\\n" },
+    { "op": "append", "key": "findings", "text": "- found: utility pattern in utils/helpers.ts\\n" }
+  ],
+  "execute": { "read-file": { "path": "src/utils/helpers.ts" } }
+}
+```
+
 ### Response
 
 ```json
@@ -60,8 +80,10 @@ Rules:
 
 - `step`: MUST be a non-empty string from the list above. Repeat to stay in current phase; set new value to advance.
 - `workbench_ops` (optional): incremental edits; applied after `workbench.sections` merge.
+- `scratchpad_ops` (optional): checklist updates — `[{ "op": "check"|"add"|"remove", "item": "key" }]`; merged into `context.scratchpad` (`check`/`add` set the flag true; `remove` deletes the key).
+- `workbench.slots` (optional): JSON blobs for structured state (e.g. edit plans); merged into `context.workbench.slots` except server keys (`interruptTrace`, `grayRoom`, `thinking`, `clarify`).
 - `execute`: MUST follow **action-key shape** — exactly one key per turn.
-- Allowed actions (keys): `rag-search`, `list-directory`, `read-file`, `write-file`, `grep-search`, `execute-command`, `dialog`.
+- Allowed actions (keys): `rag-search`, `list-directory`, `read-file`, `write-file`, `grep-search`, `file-exists`, `edit-patch`, `run-script`, `script`, `execute-command`, `dialog` (same surface the server validates for single-tool turns).
 - `completed`: Set `true` only when the task is fully finished. When `true`, omit or empty `execute`.
 
 ## Current State

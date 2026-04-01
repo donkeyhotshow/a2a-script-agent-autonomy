@@ -6,7 +6,7 @@
  * copy, set, append-to-array, parse-json-from-md, render-markdown, switch,
  * apply-scratchpad-ops, apply-workbench-section-ops, truncate-section, pick-context, drop,
  * truncate-history, include-if, pick-files, merge-files-to-context, merge-workbench-sections,
- * summarize-files, for-each
+ * merge-workbench-slots, summarize-files, for-each
  * 
  * @example
  * ```typescript
@@ -26,6 +26,7 @@ export {
     INTERRUPT_TRACE_SLOT_KEY,
     INTERRUPT_TRACE_CONTEXT_PATH,
     GRAY_ROOM_SLOT_KEY,
+    SERVER_OWNED_WORKBENCH_SLOT_KEYS,
     mergeInterruptTraceIntoContext,
     mergeGrayRoomSlotIntoContext,
 } from './interrupt-trace-contract.js';

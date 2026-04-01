@@ -42,6 +42,7 @@ export function validatePipeline(pipeline: unknown): string[] {
     'pick-files',
     'merge-files-to-context',
     'merge-workbench-sections',
+    'merge-workbench-slots',
     'summarize-files',
     'for-each',
   ];
@@ -81,6 +82,11 @@ export function validatePipeline(pipeline: unknown): string[] {
         if (!step.templateRef) errors.push(`Step ${i} (render-markdown): Missing 'templateRef'`);
         if (!step.data) errors.push(`Step ${i} (render-markdown): Missing 'data'`);
         if (!step.outputFile) errors.push(`Step ${i} (render-markdown): Missing 'outputFile'`);
+        if (step.maxChars !== undefined) {
+          if (typeof step.maxChars !== 'number' || !Number.isFinite(step.maxChars) || step.maxChars < 1) {
+            errors.push(`Step ${i} (render-markdown): 'maxChars' must be a finite number >= 1`);
+          }
+        }
         break;
       case 'switch':
         if (!step.discriminator) errors.push(`Step ${i} (switch): Missing 'discriminator'`);
@@ -121,6 +127,9 @@ export function validatePipeline(pipeline: unknown): string[] {
       case 'merge-workbench-sections':
         if (!step.from) errors.push(`Step ${i} (merge-workbench-sections): Missing 'from'`);
         if (!step.to) errors.push(`Step ${i} (merge-workbench-sections): Missing 'to'`);
+        break;
+      case 'merge-workbench-slots':
+        if (!step.from) errors.push(`Step ${i} (merge-workbench-slots): Missing 'from'`);
         break;
       case 'summarize-files':
         break;

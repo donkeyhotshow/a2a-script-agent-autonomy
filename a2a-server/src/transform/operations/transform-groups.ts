@@ -4,7 +4,7 @@
  * Groups of related transform operations:
  * - Context operations: pick-context, drop, truncate-history
  * - File operations: pick-files, merge-files-to-context, summarize-files
- * - Workbench operations: merge-workbench-sections, apply-workbench-section-ops
+ * - Workbench operations: merge-workbench-sections, merge-workbench-slots, apply-workbench-section-ops
  * - Loop operations: for-each
  * - Scratchpad operations: apply-scratchpad-ops
  * - Switch/conditional operations
@@ -25,6 +25,7 @@ import type {
   PickFilesOperation,
   MergeFilesToContextOperation,
   MergeWorkbenchSectionsOperation,
+  MergeWorkbenchSlotsOperation,
   SummarizeFilesOperation,
   ForEachOperation,
   ApplyScratchpadOpsOperation,
@@ -32,6 +33,7 @@ import type {
   SwitchOperation,
   ScratchpadOpCommand
 } from '../types.js';
+import {SERVER_OWNED_WORKBENCH_SLOT_KEYS} from '../interrupt-trace-contract.js';
 
 /**
  * pick-context — keep only specified fields under context, drop the rest.
@@ -184,6 +186,39 @@ export async function applyMergeWorkbenchSections(
     ...(incoming as Record<string, unknown>)
   };
   jsonPathSet(context.$out, to, merged);
+}
+
+/**
+ * merge-workbench-slots — shallow-merge LLM `workbench.slots` into context (skips server-owned keys).
+ */
+export async function applyMergeWorkbenchSlots(
+  operation: MergeWorkbenchSlotsOperation,
+  context: TransformContext
+): Promise<void> {
+  const {from, to = 'context.workbench.slots', skipKeys} = operation;
+  const incoming = query<unknown>(context.$out, from);
+  if (!incoming || typeof incoming !== 'object' || Array.isArray(incoming)) {
+    return;
+  }
+
+  const skipSet = new Set<string>([...SERVER_OWNED_WORKBENCH_SLOT_KEYS]);
+  if (skipKeys) {
+    for (const k of skipKeys) skipSet.add(k);
+  }
+
+  let existingSlots = query<Record<string, unknown>>(context.$out, to);
+  if (!existingSlots || typeof existingSlots !== 'object' || Array.isArray(existingSlots)) {
+    existingSlots = {};
+  } else {
+    existingSlots = {...existingSlots};
+  }
+
+  for (const [k, v] of Object.entries(incoming as Record<string, unknown>)) {
+    if (skipSet.has(k)) continue;
+    existingSlots[k] = v;
+  }
+
+  jsonPathSet(context.$out, to, existingSlots);
 }
 
 /**

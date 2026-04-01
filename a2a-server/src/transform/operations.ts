@@ -43,6 +43,7 @@ import {
   applyIncludeIf,
   applyPickFiles,
   applyMergeWorkbenchSections,
+  applyMergeWorkbenchSlots,
   applyMergeFilesToContext,
   applySummarizeFiles,
   applyForEach,
@@ -63,6 +64,7 @@ export {
   applyIncludeIf,
   applyPickFiles,
   applyMergeWorkbenchSections,
+  applyMergeWorkbenchSlots,
   applyMergeFilesToContext,
   applySummarizeFiles,
   applyForEach,
@@ -70,6 +72,17 @@ export {
   applyWorkbenchSectionOps,
   applySwitch,
 };
+
+const DEFAULT_RENDER_TRUNCATE_SUFFIX =
+  '\n\n---\n\n*[Rendered markdown truncated by server (`maxChars` or `LLM_REQUEST_MAX_CHARS`)]*\n';
+
+function effectiveLlmRequestMaxCharsFromEnv(): number | undefined {
+  const raw = process.env.LLM_REQUEST_MAX_CHARS;
+  if (raw == null || raw === '') return undefined;
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 1) return undefined;
+  return Math.floor(n);
+}
 
 /**
  * Apply a single transform operation
@@ -126,6 +139,9 @@ export async function applyOperation(
       break;
     case 'merge-workbench-sections':
       await applyMergeWorkbenchSections(operation, context);
+      break;
+    case 'merge-workbench-slots':
+      await applyMergeWorkbenchSlots(operation, context);
       break;
     case 'summarize-files':
       await applySummarizeFiles(operation, context);
@@ -281,7 +297,7 @@ async function applyRenderMarkdown(
   operation: RenderMarkdownOperation,
   context: TransformContext
 ): Promise<void> {
-  const { templateRef, data, outputFile } = operation;
+  const { templateRef, data, outputFile, truncateSuffix } = operation;
   
   // Get template data
   let templateData: Record<string, unknown>;
@@ -344,18 +360,28 @@ async function applyRenderMarkdown(
   }
   
   // Simple template rendering - replace placeholders
-  const rendered = renderTemplateSimple(template, resolvedData);
-  
+  let rendered = renderTemplateSimple(template, resolvedData);
+
+  const envCap = outputFile === 'request.md' ? effectiveLlmRequestMaxCharsFromEnv() : undefined;
+  const cap =
+    operation.maxChars != null && Number.isFinite(operation.maxChars) && operation.maxChars >= 1
+      ? Math.floor(operation.maxChars)
+      : envCap;
+  if (cap != null && rendered.length > cap) {
+    const suf = truncateSuffix ?? DEFAULT_RENDER_TRUNCATE_SUFFIX;
+    rendered = truncateToMaxChars(rendered, cap, suf);
+  }
+
   // Write output file
   const outputBaseDir = context.outputDir || baseDir;
   const outputPath = path.resolve(outputBaseDir, outputFile);
-  
+
   if (context.fs) {
     await context.fs.writeFile(outputPath, rendered);
   } else {
     await fs.writeFile(outputPath, rendered, 'utf-8');
   }
-  
+
   // Track written files in context
   if (!context.$out._files) {
     context.$out._files = {};

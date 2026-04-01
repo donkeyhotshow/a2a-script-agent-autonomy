@@ -2,7 +2,7 @@
 
 **Doc:** Schema-debug entry point: [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md), [`simulations/SCHEMA.md`](simulations/SCHEMA.md), [`AGENTS.md`](AGENTS.md).
 
-Current system state: **Stack готов** - все сервисы работают, задач нет.
+Current system state: **Stack готов** - все сервисы работают, задач нет. Недавно: `render-markdown` — опциональный `maxChars` + env `LLM_REQUEST_MAX_CHARS` для `request.md`; схема и `work/STATE.md` обновлены.
 
 ---
 
@@ -39,6 +39,8 @@ curl http://localhost:5173/api/a2a/projects
 ---
 
 ## Testing
+
+`scripts/direct-tests/e2e-dialog-test.js`: added 8 server-only cases (invoke 400s, `/health` JSON, `/api/v1/requests/*` batch/single).
 
 ```bash
 npm run sim:lint -- --all

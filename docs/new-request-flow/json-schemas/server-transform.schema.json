@@ -2,721 +2,265 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "$id": "https://a2a-script-agent/new-request-flow/json-schemas/server-transform.schema.json",
   "title": "Server Transform Pipeline",
-  "description": "Declarative JSONPath-based transform for one simulation step (replaces server-transforms-request.md / server-transforms-response.md). Each step describes how to transform current JSON state into the next file in the pipeline (request.md or response.json, etc.).",
+  "description": "JSONPath transform DSL for sim step pipelines (request.md / response.json). See a2a-server/src/transform/types.ts.",
   "type": "object",
   "additionalProperties": false,
+  "required": ["type", "steps"],
   "properties": {
-    "type": {
-      "type": "string",
-      "enum": ["pipeline"],
-      "description": "Transform document type. For now only 'pipeline' is supported."
-    },
+    "type": { "type": "string", "enum": ["pipeline"] },
     "steps": {
       "type": "array",
       "minItems": 1,
-      "items": {
-        "type": "object",
-        "description": "Single transform operation.",
-        "oneOf": [
-          {
-            "title": "copy",
-            "type": "object",
-            "properties": {
-              "op": { "const": "copy" },
-              "from": {
-                "type": "string",
-                "description": "JSONPath expression in input document."
-              },
-              "to": {
-                "type": "string",
-                "description": "JSONPath expression in output document ($out)."
-              }
-            },
-            "required": ["op", "from", "to"],
-            "additionalProperties": false
-          },
-          {
-            "title": "set",
-            "type": "object",
-            "properties": {
-              "op": { "const": "set" },
-              "path": {
-                "type": "string",
-                "description": "JSONPath in $out to write to."
-              },
-              "value": {
-                "description": "Literal or template string (e.g. $.llm.step) to set.",
-                "type": ["object", "null", "string", "number", "boolean", "array"]
-              },
-              "valueFrom": {
-                "type": "string",
-                "description": "JSONPath in input or $out; if provided, takes precedence over 'value'."
-              }
-            },
-            "required": ["op", "path"],
-            "additionalProperties": false
-          },
-          {
-            "title": "append-to-array",
-            "type": "object",
-            "properties": {
-              "op": { "const": "append-to-array" },
-              "to": {
-                "type": "string",
-                "description": "JSONPath in $out pointing to an array."
-              },
-              "value": {
-                "description": "Value to append. May contain 'template' placeholders.",
-                "type": "object",
-                "additionalProperties": true
-              }
-            },
-            "required": ["op", "to", "value"],
-            "additionalProperties": false
-          },
-          {
-            "title": "parse-json-from-md",
-            "type": "object",
-            "properties": {
-              "op": { "const": "parse-json-from-md" },
-              "fromFile": {
-                "type": "string",
-                "description": "Relative file name to read markdown from (e.g. response.md)."
-              },
-              "jsonPath": {
-                "type": "string",
-                "description": "JSONPath inside parsed JSON. Default '$'.",
-                "default": "$"
-              },
-              "to": {
-                "type": "string",
-                "description": "JSONPath in $out to place parsed JSON (e.g. $llm)."
-              }
-            },
-            "required": ["op", "fromFile", "to"],
-            "additionalProperties": false
-          },
-          {
-            "title": "render-markdown",
-            "type": "object",
-            "properties": {
-              "op": { "const": "render-markdown" },
-              "templateRef": {
-                "type": "string",
-                "description": "Reference to markdown template (e.g. actions/definitions/coder.md#system-prompt)."
-              },
-              "data": {
-                "type": "string",
-                "description": "JSONPath (usually '$out' or '$') used as template data context."
-              },
-              "outputFile": {
-                "type": "string",
-                "description": "File name to write markdown to (e.g. request.md)."
-              }
-            },
-            "required": ["op", "templateRef", "data", "outputFile"],
-            "additionalProperties": false
-          },
-          {
-            "title": "apply-scratchpad-ops",
-            "type": "object",
-            "properties": {
-              "op": { "const": "apply-scratchpad-ops" },
-              "from": {
-                "type": "string",
-                "description": "JSONPath to an array of { op: check|add|remove, item: string }."
-              },
-              "scratchpadPath": {
-                "type": "string",
-                "description": "JSONPath in $out for the scratchpad object (default: context.scratchpad)."
-              }
-            },
-            "required": ["op", "from"],
-            "additionalProperties": false
-          },
-          {
-            "title": "truncate-section",
-            "type": "object",
-            "properties": {
-              "op": { "const": "truncate-section" },
-              "path": {
-                "type": "string",
-                "description": "JSONPath to a string or a plain object whose string values are truncated (e.g. context.workbench.sections)."
-              },
-              "maxChars": {
-                "type": "number",
-                "minimum": 1,
-                "description": "Maximum length of the resulting string (prefix + suffix when truncated)."
-              },
-              "suffix": {
-                "type": "string",
-                "description": "Suffix when truncated (default: newline + ...[truncated])."
-              }
-            },
-            "required": ["op", "path", "maxChars"],
-            "additionalProperties": false
-          },
-          {
-            "title": "switch",
-            "type": "object",
-            "properties": {
-              "op": { "const": "switch" },
-              "discriminator": {
-                "type": "string",
-                "description": "JSONPath expression whose value is used to pick a case (e.g. '$llm.action')."
-              },
-              "cases": {
-                "type": "object",
-                "description": "Map from discriminator value to a single nested op (inline).",
-                "additionalProperties": {
-                  "type": "object",
-                  "description": "Any op object from this schema, without its own 'op' field if you use a shorthand, or with explicit 'op'.",
-                  "additionalProperties": true
-                }
-              },
-              "default": {
-                "type": "object",
-                "description": "Optional default op if no case matches.",
-                "additionalProperties": true
-              }
-            },
-            "required": ["op", "discriminator", "cases"],
-            "additionalProperties": false
-          },
-          {
-            "title": "pick-context",
-            "type": "object",
-            "properties": {
-              "op": { "const": "pick-context" },
-              "include": {
-                "type": "array",
-                "items": { "type": "string" },
-                "description": "Fields to keep under context. Use 'field:N' for last N, or plain 'field' for all."
-              }
-            },
-            "required": ["op", "include"],
-            "additionalProperties": false
-          },
-          {
-            "title": "drop",
-            "type": "object",
-            "properties": {
-              "op": { "const": "drop" },
-              "path": {
-                "type": "string",
-                "description": "JSONPath in $out to delete (e.g. '$.context.files')."
-              }
-            },
-            "required": ["op", "path"],
-            "additionalProperties": false
-          },
-          {
-            "title": "truncate-history",
-            "type": "object",
-            "properties": {
-              "op": { "const": "truncate-history" },
-              "keep": {
-                "type": "number",
-                "description": "Number of most-recent history entries to keep."
-              }
-            },
-            "required": ["op", "keep"],
-            "additionalProperties": false
-          },
-          {
-            "title": "include-if",
-            "type": "object",
-            "properties": {
-              "op": { "const": "include-if" },
-              "path": {
-                "type": "string",
-                "description": "JSONPath to the field to conditionally keep."
-              },
-              "condition": {
-                "type": "string",
-                "description": "JSONPath whose value is evaluated as truthy/falsy."
-              }
-            },
-            "required": ["op", "path", "condition"],
-            "additionalProperties": false
-          },
-          {
-            "title": "pick-files",
-            "type": "object",
-            "properties": {
-              "op": { "const": "pick-files" },
-              "paths": {
-                "oneOf": [
-                  {
-                    "type": "array",
-                    "items": { "type": "string" },
-                    "description": "Exact paths to keep."
-                  },
-                  { "const": "$result", "description": "Auto-pick from result action key." }
-                ]
-              }
-            },
-            "required": ["op", "paths"],
-            "additionalProperties": false
-          },
-          {
-            "title": "merge-files-to-context",
-            "type": "object",
-            "properties": {
-              "op": { "const": "merge-files-to-context" },
-              "from": {
-                "type": "array",
-                "items": { "type": "string" },
-                "description": "Which result keys to process. Default: ['read-file', 'write-file']."
-              }
-            },
-            "required": ["op"],
-            "additionalProperties": false
-          },
-          {
-            "title": "merge-workbench-sections",
-            "type": "object",
-            "properties": {
-              "op": { "const": "merge-workbench-sections" },
-              "from": {
-                "type": "string",
-                "description": "JSONPath on $out (e.g. '$.llm.workbench.sections')."
-              },
-              "to": {
-                "type": "string",
-                "description": "JSONPath on $out (e.g. '$.context.workbench.sections')."
-              }
-            },
-            "required": ["op", "from", "to"],
-            "additionalProperties": false
-          },
-          {
-            "title": "summarize-files",
-            "type": "object",
-            "properties": {
-              "op": { "const": "summarize-files" },
-              "maxLines": {
-                "type": "number",
-                "description": "Max lines to keep per file. Default: 40"
-              },
-              "only": {
-                "type": "array",
-                "items": { "type": "string" },
-                "description": "Only summarize files matching these path prefixes."
-              }
-            },
-            "required": ["op"],
-            "additionalProperties": false
-          },
-          {
-            "title": "for-each",
-            "type": "object",
-            "properties": {
-              "op": { "const": "for-each" },
-              "arrayPath": {
-                "type": "string",
-                "description": "JSONPath to the array to iterate."
-              },
-              "as": {
-                "type": "string",
-                "description": "Variable name injected as $item into sub-steps."
-              },
-              "steps": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "description": "Sub-pipeline steps executed per element.",
-                  "oneOf": [
-                    { "$ref": "#/definitions/pick-context" },
-                    { "$ref": "#/definitions/drop" },
-                    { "$ref": "#/definitions/truncate-history" },
-                    { "$ref": "#/definitions/include-if" },
-                    { "$ref": "#/definitions/pick-files" },
-                    { "$ref": "#/definitions/merge-files-to-context" },
-                    { "$ref": "#/definitions/merge-workbench-sections" },
-                    { "$ref": "#/definitions/summarize-files" },
-                    { "$ref": "#/definitions/copy" },
-                    { "$ref": "#/definitions/set" },
-                    { "$ref": "#/definitions/append-to-array" },
-                    { "$ref": "#/definitions/parse-json-from-md" },
-                    { "$ref": "#/definitions/render-markdown" },
-                    { "$ref": "#/definitions/apply-scratchpad-ops" },
-                    { "$ref": "#/definitions/truncate-section" },
-                    { "$ref": "#/definitions/switch" },
-                    { "$ref": "#/definitions/apply-workbench-section-ops" },
-                    { "$ref": "#/definitions/for-each" }
-                  ]
-                }
-              }
-            },
-            "required": ["op", "arrayPath", "as", "steps"],
-            "additionalProperties": false
-          },
-          {
-            "title": "apply-workbench-section-ops",
-            "type": "object",
-            "properties": {
-              "op": { "const": "apply-workbench-section-ops" },
-              "from": {
-                "type": "string",
-                "description": "JSONPath on input or $out (e.g. 'llm.workbench_ops')."
-              },
-              "sectionsPath": {
-                "type": "string",
-                "description": "JSONPath under $out (default: 'context.workbench.sections')."
-              }
-            },
-            "required": ["op", "from"],
-            "additionalProperties": false
-          }
-        ]
-      }
+      "items": { "$ref": "#/definitions/transformStep" }
     }
   },
   "definitions": {
-    "pick-context": {
-      "title": "pick-context",
+    "jp": { "type": "string" },
+    "transformStep": {
+      "oneOf": [
+        { "$ref": "#/definitions/opAppendToArray" },
+        { "$ref": "#/definitions/opApplyScratchpadOps" },
+        { "$ref": "#/definitions/opApplyWorkbenchSectionOps" },
+        { "$ref": "#/definitions/opCopy" },
+        { "$ref": "#/definitions/opDrop" },
+        { "$ref": "#/definitions/opForEach" },
+        { "$ref": "#/definitions/opIncludeIf" },
+        { "$ref": "#/definitions/opMergeFilesToContext" },
+        { "$ref": "#/definitions/opMergeWorkbenchSections" },
+        { "$ref": "#/definitions/opMergeWorkbenchSlots" },
+        { "$ref": "#/definitions/opParseJsonFromMd" },
+        { "$ref": "#/definitions/opPickContext" },
+        { "$ref": "#/definitions/opPickFiles" },
+        { "$ref": "#/definitions/opRenderMarkdown" },
+        { "$ref": "#/definitions/opSet" },
+        { "$ref": "#/definitions/opSummarizeFiles" },
+        { "$ref": "#/definitions/opSwitch" },
+        { "$ref": "#/definitions/opTruncateHistory" },
+        { "$ref": "#/definitions/opTruncateSection" }
+      ]
+    },
+    "opAppendToArray": {
       "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "to", "value"],
+      "properties": {
+        "op": { "const": "append-to-array" },
+        "to": { "$ref": "#/definitions/jp" },
+        "value": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "opApplyScratchpadOps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "from"],
+      "properties": {
+        "op": { "const": "apply-scratchpad-ops" },
+        "from": { "$ref": "#/definitions/jp" },
+        "scratchpadPath": { "$ref": "#/definitions/jp" }
+      }
+    },
+    "opApplyWorkbenchSectionOps": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "from"],
+      "properties": {
+        "op": { "const": "apply-workbench-section-ops" },
+        "from": { "$ref": "#/definitions/jp" },
+        "sectionsPath": { "$ref": "#/definitions/jp" }
+      }
+    },
+    "opCopy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "from", "to"],
+      "properties": {
+        "op": { "const": "copy" },
+        "from": { "$ref": "#/definitions/jp" },
+        "to": { "$ref": "#/definitions/jp" }
+      }
+    },
+    "opDrop": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "path"],
+      "properties": {
+        "op": { "const": "drop" },
+        "path": { "$ref": "#/definitions/jp" }
+      }
+    },
+    "opForEach": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "arrayPath", "as", "steps"],
+      "properties": {
+        "op": { "const": "for-each" },
+        "arrayPath": { "$ref": "#/definitions/jp" },
+        "as": { "type": "string" },
+        "steps": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/transformStep" }
+        }
+      }
+    },
+    "opIncludeIf": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "path", "condition"],
+      "properties": {
+        "op": { "const": "include-if" },
+        "path": { "$ref": "#/definitions/jp" },
+        "condition": { "$ref": "#/definitions/jp" }
+      }
+    },
+    "opMergeFilesToContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op"],
+      "properties": {
+        "op": { "const": "merge-files-to-context" },
+        "from": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    },
+    "opMergeWorkbenchSections": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "from", "to"],
+      "properties": {
+        "op": { "const": "merge-workbench-sections" },
+        "from": { "$ref": "#/definitions/jp" },
+        "to": { "$ref": "#/definitions/jp" }
+      }
+    },
+    "opMergeWorkbenchSlots": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "from"],
+      "properties": {
+        "op": { "const": "merge-workbench-slots" },
+        "from": { "$ref": "#/definitions/jp" },
+        "to": { "$ref": "#/definitions/jp" },
+        "skipKeys": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "opParseJsonFromMd": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "fromFile", "to"],
+      "properties": {
+        "op": { "const": "parse-json-from-md" },
+        "fromFile": { "type": "string" },
+        "jsonPath": { "$ref": "#/definitions/jp" },
+        "to": { "$ref": "#/definitions/jp" }
+      }
+    },
+    "opPickContext": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "include"],
       "properties": {
         "op": { "const": "pick-context" },
         "include": {
           "type": "array",
-          "items": { "type": "string" },
-          "description": "Fields to keep under context. Use 'field:N' for last N, or plain 'field' for all."
+          "minItems": 1,
+          "items": { "type": "string" }
         }
-      },
-      "required": ["op", "include"],
-      "additionalProperties": false
+      }
     },
-    "drop": {
-      "title": "drop",
+    "opPickFiles": {
       "type": "object",
-      "properties": {
-        "op": { "const": "drop" },
-        "path": {
-          "type": "string",
-          "description": "JSONPath in $out to delete (e.g. '$.context.files')."
-        }
-      },
-      "required": ["op", "path"],
-      "additionalProperties": false
-    },
-    "truncate-history": {
-      "title": "truncate-history",
-      "type": "object",
-      "properties": {
-        "op": { "const": "truncate-history" },
-        "keep": {
-          "type": "number",
-          "description": "Number of most-recent history entries to keep."
-        }
-      },
-      "required": ["op", "keep"],
-      "additionalProperties": false
-    },
-    "include-if": {
-      "title": "include-if",
-      "type": "object",
-      "properties": {
-        "op": { "const": "include-if" },
-        "path": {
-          "type": "string",
-          "description": "JSONPath in $in to check (e.g. '$.context.execution.action')."
-        },
-        "match": {
-          "type": "string",
-          "description": "Regex pattern to match the value at path."
-        }
-      },
-      "required": ["op", "path", "match"],
-      "additionalProperties": false
-    },
-    "pick-files": {
-      "title": "pick-files",
-      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "paths"],
       "properties": {
         "op": { "const": "pick-files" },
         "paths": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Paths to files to keep."
+          "oneOf": [
+            { "type": "array", "items": { "type": "string" } },
+            { "const": "$result" }
+          ]
         }
-      },
-      "required": ["op", "paths"],
-      "additionalProperties": false
+      }
     },
-    "merge-files-to-context": {
-      "title": "merge-files-to-context",
+    "opRenderMarkdown": {
       "type": "object",
-      "properties": {
-        "op": { "const": "merge-files-to-context" },
-        "from": {
-          "type": "string",
-          "description": "JSONPath in $in to array of {path, content} objects."
-        },
-        "to": {
-          "type": "string",
-          "description": "JSONPath in $out to merge into (default: '$.context.files')."
-        }
-      },
-      "required": ["op", "from"],
-      "additionalProperties": false
-    },
-    "merge-workbench-sections": {
-      "title": "merge-workbench-sections",
-      "type": "object",
-      "properties": {
-        "op": { "const": "merge-workbench-sections" },
-        "from": {
-          "type": "string",
-          "description": "JSONPath in $in to source sections object."
-        },
-        "to": {
-          "type": "string",
-          "description": "JSONPath in $out to target sections (default: '$.context.workbench.sections')."
-        }
-      },
-      "required": ["op", "from"],
-      "additionalProperties": false
-    },
-    "summarize-files": {
-      "title": "summarize-files",
-      "type": "object",
-      "properties": {
-        "op": { "const": "summarize-files" },
-        "from": {
-          "type": "string",
-          "description": "JSONPath in $in to files array."
-        },
-        "maxLines": {
-          "type": "number",
-          "description": "Max lines to keep per file. Default: 40"
-        },
-        "only": {
-          "type": "array",
-          "items": { "type": "string" },
-          "description": "Only summarize files matching these path prefixes."
-        }
-      },
-      "required": ["op"],
-      "additionalProperties": false
-    },
-    "copy": {
-      "title": "copy",
-      "type": "object",
-      "properties": {
-        "op": { "const": "copy" },
-        "from": {
-          "type": "string",
-          "description": "JSONPath expression in input document."
-        },
-        "to": {
-          "type": "string",
-          "description": "JSONPath in $out to write to."
-        }
-      },
-      "required": ["op", "from", "to"],
-      "additionalProperties": false
-    },
-    "set": {
-      "title": "set",
-      "type": "object",
-      "properties": {
-        "op": { "const": "set" },
-        "path": {
-          "type": "string",
-          "description": "JSONPath in $out to write to."
-        },
-        "value": {
-          "description": "Value to write (any JSON)."
-        }
-      },
-      "required": ["op", "path", "value"],
-      "additionalProperties": false
-    },
-    "append-to-array": {
-      "title": "append-to-array",
-      "type": "object",
-      "properties": {
-        "op": { "const": "append-to-array" },
-        "path": {
-          "type": "string",
-          "description": "JSONPath to array in $out."
-        },
-        "items": {
-          "type": "array",
-          "description": "Items to append."
-        }
-      },
-      "required": ["op", "path", "items"],
-      "additionalProperties": false
-    },
-    "parse-json-from-md": {
-      "title": "parse-json-from-md",
-      "type": "object",
-      "properties": {
-        "op": { "const": "parse-json-from-md" },
-        "path": {
-          "type": "string",
-          "description": "JSONPath in $in to markdown string."
-        },
-        "to": {
-          "type": "string",
-          "description": "JSONPath in $out to write parsed JSON object."
-        },
-        "field": {
-          "type": "string",
-          "description": "If specified, extract a specific field from parsed JSON."
-        }
-      },
-      "required": ["op", "path", "to"],
-      "additionalProperties": false
-    },
-    "render-markdown": {
-      "title": "render-markdown",
-      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "templateRef", "data", "outputFile"],
       "properties": {
         "op": { "const": "render-markdown" },
-        "path": {
-          "type": "string",
-          "description": "JSONPath in $in to markdown string."
-        },
-        "to": {
-          "type": "string",
-          "description": "JSONPath in $out to write HTML."
-        }
-      },
-      "required": ["op", "path", "to"],
-      "additionalProperties": false
+        "templateRef": { "type": "string" },
+        "data": { "$ref": "#/definitions/jp" },
+        "outputFile": { "type": "string" },
+        "maxChars": { "type": "number", "minimum": 1 },
+        "truncateSuffix": { "type": "string" }
+      }
     },
-    "apply-scratchpad-ops": {
-      "title": "apply-scratchpad-ops",
-      "type": "object",
-      "properties": {
-        "op": { "const": "apply-scratchpad-ops" },
-        "ops": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "op": {
-                "type": "string",
-                "enum": ["set", "append", "clear"]
-              },
-              "path": {
-                "type": "string",
-                "description": "JSONPath in scratchpad."
-              },
-              "value": {
-                "description": "Value for set/append."
-              }
+    "opSet": {
+      "allOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["op", "path"],
+          "properties": {
+            "op": { "const": "set" },
+            "path": { "$ref": "#/definitions/jp" },
+            "value": {
+              "type": ["object", "null", "string", "number", "boolean", "array"]
             },
-            "required": ["op", "path"]
+            "valueFrom": { "$ref": "#/definitions/jp" }
           }
-        }
-      },
-      "required": ["op", "ops"],
-      "additionalProperties": false
-    },
-    "truncate-section": {
-      "title": "truncate-section",
-      "type": "object",
-      "properties": {
-        "op": { "const": "truncate-section" },
-        "section": {
-          "type": "string",
-          "description": "Section ID (e.g., 'files', 'history')."
         },
-        "maxItems": {
-          "type": "number",
-          "description": "Maximum items to keep."
+        {
+          "anyOf": [{ "required": ["value"] }, { "required": ["valueFrom"] }]
         }
-      },
-      "required": ["op", "section", "maxItems"],
-      "additionalProperties": false
+      ]
     },
-    "switch": {
-      "title": "switch",
+    "opSummarizeFiles": {
       "type": "object",
+      "additionalProperties": false,
+      "required": ["op"],
+      "properties": {
+        "op": { "const": "summarize-files" },
+        "maxLines": { "type": "number" },
+        "only": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "opSwitch": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "discriminator", "cases"],
       "properties": {
         "op": { "const": "switch" },
-        "discriminator": {
-          "type": "string",
-          "description": "JSONPath in $in to evaluate."
-        },
+        "discriminator": { "$ref": "#/definitions/jp" },
         "cases": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "match": {
-                "type": "string",
-                "description": "Regex pattern or exact value."
-              },
-              "steps": {
-                "type": "array",
-                "description": "Transform steps if matched.",
-                "items": { "type": "object" }
-              }
-            },
-            "required": ["match", "steps"]
-          }
+          "type": "object",
+          "additionalProperties": { "type": "object", "additionalProperties": true }
         },
-        "default": {
-          "type": "array",
-          "description": "Steps to run if no case matches.",
-          "items": { "type": "object" }
-        }
-      },
-      "required": ["op", "discriminator", "cases"],
-      "additionalProperties": false
+        "default": { "type": "object", "additionalProperties": true },
+        "exactOnly": { "type": "boolean" }
+      }
     },
-    "apply-workbench-section-ops": {
-      "title": "apply-workbench-section-ops",
+    "opTruncateHistory": {
       "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "keep"],
       "properties": {
-        "op": { "const": "apply-workbench-section-ops" },
-        "from": {
-          "type": "string",
-          "description": "JSONPath in $in to ops array."
-        },
-        "section": {
-          "type": "string",
-          "description": "Target section ID under context.workbench.sections."
-        },
-        "target": {
-          "type": "string",
-          "description": "JSONPath under $out (default: 'context.workbench.sections')."
-        }
-      },
-      "required": ["op", "from"],
-      "additionalProperties": false
+        "op": { "const": "truncate-history" },
+        "keep": { "type": "number", "minimum": 0 }
+      }
     },
-    "for-each": {
-      "title": "for-each",
+    "opTruncateSection": {
       "type": "object",
+      "additionalProperties": false,
+      "required": ["op", "path", "maxChars"],
       "properties": {
-        "op": { "const": "for-each" },
-        "arrayPath": {
-          "type": "string",
-          "description": "JSONPath to the array to iterate."
-        },
-        "as": {
-          "type": "string",
-          "description": "Variable name injected as $item into sub-steps."
-        },
-        "steps": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "description": "Sub-pipeline steps executed per element."
-          }
-        }
-      },
-      "required": ["op", "arrayPath", "as", "steps"],
-      "additionalProperties": false
+        "op": { "const": "truncate-section" },
+        "path": { "$ref": "#/definitions/jp" },
+        "maxChars": { "type": "number", "minimum": 1 },
+        "suffix": { "type": "string" }
+      }
     }
-  },
-  "required": ["type", "steps"]
+  }
 }
-

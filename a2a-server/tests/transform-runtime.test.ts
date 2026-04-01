@@ -172,6 +172,58 @@ describe('Transform Pipeline Runtime', () => {
       }
     });
 
+    it('should truncate render-markdown when maxChars is set', async () => {
+      const tpl = path.join(process.cwd(), 'tests', 'fixtures', 'render-test.md');
+      const long = 'b'.repeat(400);
+      const pipeline = {
+        steps: [
+          { op: 'set', path: 'x', value: long },
+          {
+            op: 'render-markdown',
+            templateRef: tpl,
+            data: '$out',
+            outputFile: 'prompt.md',
+            maxChars: 120,
+            truncateSuffix: '<<END>>',
+          },
+        ],
+      };
+      const result = await runTransformPipeline(pipeline, {}, { baseDir: process.cwd() });
+      expect(result.success).toBe(true);
+      if (result.success && result.files) {
+        const md = result.files['prompt.md'];
+        expect(md.length).toBeLessThanOrEqual(120);
+        expect(md.endsWith('<<END>>')).toBe(true);
+      }
+    });
+
+    it('should apply LLM_REQUEST_MAX_CHARS for request.md when step maxChars omitted', async () => {
+      const prev = process.env.LLM_REQUEST_MAX_CHARS;
+      process.env.LLM_REQUEST_MAX_CHARS = '100';
+      try {
+        const tpl = path.join(process.cwd(), 'tests', 'fixtures', 'render-test.md');
+        const pipeline = {
+          steps: [
+            { op: 'set', path: 'x', value: 'z'.repeat(500) },
+            {
+              op: 'render-markdown',
+              templateRef: tpl,
+              data: '$out',
+              outputFile: 'request.md',
+            },
+          ],
+        };
+        const result = await runTransformPipeline(pipeline, {}, { baseDir: process.cwd() });
+        expect(result.success).toBe(true);
+        if (result.success && result.files) {
+          expect(result.files['request.md'].length).toBeLessThanOrEqual(100);
+        }
+      } finally {
+        if (prev === undefined) delete process.env.LLM_REQUEST_MAX_CHARS;
+        else process.env.LLM_REQUEST_MAX_CHARS = prev;
+      }
+    });
+
     it('should truncate-section on string path', async () => {
       const pipeline = {
         steps: [
@@ -398,6 +450,47 @@ describe('Transform Pipeline Runtime', () => {
       expect(sec.findings).toBe('from llm');
       expect(sec.onlyLlm).toBe('x');
       expect(sec.preserved).toBe('keep');
+    });
+
+    it('merge-workbench-slots merges LLM slots and preserves server-owned keys', async () => {
+      const pipeline = {
+        steps: [
+          { op: 'set', path: '$.context.workbench.sections', value: { findings: 'x' } },
+          {
+            op: 'set',
+            path: '$.context.workbench.slots',
+            value: {
+              grayRoom: { server: true },
+              interruptTrace: [{ kind: 'llm_output' }]
+            }
+          },
+          {
+            op: 'set',
+            path: '$.llm.workbench.slots',
+            value: {
+              grayRoom: { hacked: true },
+              interruptTrace: [{ kind: 'hacked' }],
+              thinking: { t: 1 },
+              clarify: { q: '?' },
+              editPlan: { paths: ['a.ts'] }
+            }
+          },
+          { op: 'merge-workbench-slots', from: '$.llm.workbench.slots' }
+        ]
+      };
+      const result = await runTransformPipeline(pipeline, {});
+      expect(result.success).toBe(true);
+      const wb = (
+        result.output.context as {
+          workbench: { sections: Record<string, string>; slots: Record<string, unknown> };
+        }
+      ).workbench;
+      expect(wb.sections.findings).toBe('x');
+      expect(wb.slots.grayRoom).toEqual({ server: true });
+      expect(wb.slots.interruptTrace).toEqual([{ kind: 'llm_output' }]);
+      expect(wb.slots.thinking).toBeUndefined();
+      expect(wb.slots.clarify).toBeUndefined();
+      expect(wb.slots.editPlan).toEqual({ paths: ['a.ts'] });
     });
 
     it('drop removes nested path from $out', async () => {

@@ -23,6 +23,16 @@ export const INTERRUPT_TRACE_SLOT_KEY = 'interruptTrace' as const;
 /** GR-S-08 — gray-room control envelope under `workbench.slots`. */
 export const GRAY_ROOM_SLOT_KEY = 'grayRoom' as const;
 
+/**
+ * Slot keys owned by the server (gray room, trace). LLM `workbench.slots` merges must not overwrite these.
+ */
+export const SERVER_OWNED_WORKBENCH_SLOT_KEYS: ReadonlySet<string> = new Set([
+    INTERRUPT_TRACE_SLOT_KEY,
+    GRAY_ROOM_SLOT_KEY,
+    'thinking',
+    'clarify',
+]);
+
 /** Human-readable JSON path for docs and logs. */
 export const INTERRUPT_TRACE_CONTEXT_PATH = 'context.workbench.slots.interruptTrace' as const;
 
