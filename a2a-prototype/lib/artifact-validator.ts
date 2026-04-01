@@ -70,6 +70,129 @@ const DATA_SCHEMAS: Partial<Record<string, object>> = {
       idempotency_key: { type: 'string' },
     },
   },
+  VALIDATION_SUMMARY: {
+    type: 'object',
+    required: ['validation_id', 'suites', 'coverage', 'all_passed', 'blocking_failures',
+               'merge_ready', 'branch_safety', 'donecriteria_passed', 'manual_review_required'],
+    properties: {
+      validation_id: { type: 'string', minLength: 1 },
+      suites: {
+        type: 'object',
+        required: ['unit', 'integration', 'simulation', 'regression'],
+        properties: {
+          unit:        { $ref: '#/$defs/testSuite' },
+          integration: { $ref: '#/$defs/testSuite' },
+          simulation:  { $ref: '#/$defs/testSuite' },
+          regression:  { $ref: '#/$defs/testSuite' },
+        },
+      },
+      coverage:               { type: 'number', minimum: 0, maximum: 100 },
+      all_passed:             { type: 'boolean' },
+      blocking_failures:      { type: 'array', items: { type: 'string' } },
+      merge_ready:            { type: 'boolean' },
+      branch_safety:          { type: 'string', enum: ['SAFE', 'UNSAFE', 'UNKNOWN'] },
+      donecriteria_passed:    { type: 'boolean' },
+      manual_review_required: { type: 'boolean' },
+    },
+    $defs: {
+      testSuite: {
+        type: 'object',
+        required: ['total', 'passed', 'failed', 'skipped'],
+        properties: {
+          total:   { type: 'integer', minimum: 0 },
+          passed:  { type: 'integer', minimum: 0 },
+          failed:  { type: 'integer', minimum: 0 },
+          skipped: { type: 'integer', minimum: 0 },
+        },
+      },
+    },
+  },
+  MEMORY_INFLUENCE: {
+    type: 'object',
+    required: ['episodic_recalls', 'pattern_injections', 'total_influence_score', 'confidence_delta_from_memory'],
+    properties: {
+      episodic_recalls: {
+        type: 'array',
+        items: {
+          type: 'object',
+          required: ['run_id', 'task_similarity', 'outcome', 'roi_metrics', 'applied_lessons'],
+          properties: {
+            run_id:           { type: 'string', minLength: 1 },
+            task_similarity:  { type: 'number', minimum: 0, maximum: 1 },
+            outcome:          { type: 'string', enum: ['SUCCESS', 'FAILED'] },
+            roi_metrics: {
+              type: 'object',
+              required: ['time_saved_ms', 'errors_prevented'],
+              properties: {
+                time_saved_ms:     { type: 'number', minimum: 0 },
+                errors_prevented:  { type: 'integer', minimum: 0 },
+              },
+            },
+            applied_lessons: { type: 'array', items: { type: 'string' } },
+          },
+        },
+      },
+      pattern_injections: {
+        type: 'array',
+        items: {
+          type: 'object',
+          required: ['pattern_id', 'pattern_name', 'anti_pattern', 'confidence', 'injection_effect'],
+          properties: {
+            pattern_id:       { type: 'string', minLength: 1 },
+            pattern_name:     { type: 'string', minLength: 1 },
+            anti_pattern:     { type: 'boolean' },
+            confidence:       { type: 'number', minimum: 0, maximum: 1 },
+            injection_effect: { type: 'string', minLength: 1 },
+          },
+        },
+      },
+      total_influence_score:         { type: 'number', minimum: 0, maximum: 1 },
+      confidence_delta_from_memory:  { type: 'number' },
+    },
+  },
+  SESSION_END_RECORD: {
+    type: 'object',
+    required: ['end_reason', 'duration_ms', 'total_loop_count', 'total_tool_calls',
+               'total_human_interrupts', 'total_self_corrections', 'final_confidence',
+               'donecriteria_completion_rate', 'branch_merged', 'roi_metrics',
+               'fitness_violations', 'lessons_saved_to_memory'],
+    properties: {
+      end_reason: {
+        type: 'string',
+        enum: ['SUCCESS', 'FAILED', 'ABORTED', 'TIMEOUT', 'OPERATOR_STOPPED'],
+      },
+      duration_ms:                  { type: 'number', minimum: 0 },
+      total_loop_count:             { type: 'integer', minimum: 0 },
+      total_tool_calls:             { type: 'integer', minimum: 0 },
+      total_human_interrupts:       { type: 'integer', minimum: 0 },
+      total_self_corrections:       { type: 'integer', minimum: 0 },
+      final_confidence:             { type: 'number', minimum: 0, maximum: 1 },
+      donecriteria_completion_rate: { type: 'number', minimum: 0, maximum: 100 },
+      branch_merged:                { type: 'boolean' },
+      roi_metrics: {
+        type: 'object',
+        required: ['estimated_time_saved_ms', 'errors_prevented', 'suggestions_applied'],
+        properties: {
+          estimated_time_saved_ms: { type: 'number', minimum: 0 },
+          errors_prevented:        { type: 'integer', minimum: 0 },
+          suggestions_applied:     { type: 'integer', minimum: 0 },
+        },
+      },
+      fitness_violations: {
+        type: 'array',
+        items: {
+          type: 'object',
+          required: ['metric', 'threshold', 'actual'],
+          properties: {
+            metric:    { type: 'string', minLength: 1 },
+            threshold: { type: 'number' },
+            actual:    { type: 'number' },
+          },
+        },
+      },
+      lessons_saved_to_memory: { type: 'integer', minimum: 0 },
+    },
+  },
 };
 
 const baseValidator = ajv.compile(BASE_SCHEMA);

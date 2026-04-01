@@ -143,6 +143,85 @@ export interface EvidenceChipData {
   value?: string | number;
 }
 
+// ── Strongly-typed data shapes for key artifact types ───────────────────────
+
+// VALIDATION_SUMMARY (ADR-0071 spec v3.0)
+export interface TestSuite {
+  total: number;
+  passed: number;
+  failed: number;
+  skipped: number;
+}
+
+export interface ValidationSummaryData {
+  validation_id: string;
+  suites: {
+    unit: TestSuite;
+    integration: TestSuite;
+    simulation: TestSuite;
+    regression: TestSuite;
+  };
+  coverage: number;           // percentage 0–100
+  all_passed: boolean;
+  blocking_failures: string[];
+  merge_ready: boolean;
+  branch_safety: 'SAFE' | 'UNSAFE' | 'UNKNOWN';
+  donecriteria_passed: boolean;
+  manual_review_required: boolean;
+}
+
+// MEMORY_INFLUENCE (ADR-0071 spec v3.0)
+export interface EpisodicRecall {
+  run_id: string;
+  task_similarity: number;
+  outcome: 'SUCCESS' | 'FAILED';
+  roi_metrics: { time_saved_ms: number; errors_prevented: number };
+  applied_lessons: string[];
+}
+
+export interface PatternInjection {
+  pattern_id: string;
+  pattern_name: string;
+  anti_pattern: boolean;
+  confidence: number;
+  injection_effect: string;
+}
+
+export interface MemoryInfluenceData {
+  episodic_recalls: EpisodicRecall[];
+  pattern_injections: PatternInjection[];
+  total_influence_score: number;   // 0.0 – 1.0
+  confidence_delta_from_memory: number;
+}
+
+// SESSION_END_RECORD (ADR-0071 spec v3.0)
+export interface FitnessViolation {
+  metric: string;
+  threshold: number;
+  actual: number;
+}
+
+export interface SessionEndRecordData {
+  end_reason: 'SUCCESS' | 'FAILED' | 'ABORTED' | 'TIMEOUT' | 'OPERATOR_STOPPED';
+  duration_ms: number;
+  total_loop_count: number;
+  total_tool_calls: number;
+  total_human_interrupts: number;
+  total_self_corrections: number;
+  final_confidence: number;
+  donecriteria_completion_rate: number;  // 0–100 %
+  branch_merged: boolean;
+  roi_metrics: {
+    estimated_time_saved_ms: number;
+    errors_prevented: number;
+    suggestions_applied: number;
+  };
+  fitness_violations: FitnessViolation[];
+  lessons_saved_to_memory: number;
+}
+
+// ── TaskFlowStep ─────────────────────────────────────────────────────────────
+
 export interface TaskFlowStep {
   step_id: string;
   session_id: string;

@@ -1,6 +1,11 @@
 'use client';
 import { useState, type FC } from 'react';
 import type { ArtifactBase } from '@/lib/types';
+import MemoryInfluenceCard from './MemoryInfluenceCard';
+import SessionEndCard from './SessionEndCard';
+
+// Artifact types that have their own rich inline renderer
+const RICH_TYPES = new Set<string>(['MEMORY_INFLUENCE', 'SESSION_END_RECORD']);
 
 const SEVERITY_COLORS = {
   info: 'border-blue-800 bg-blue-950/30',
@@ -31,6 +36,46 @@ const ArtifactCard: FC<Props> = ({ artifact, onInspect }) => {
     }).catch(() => { /* clipboard write failed — silently ignore */ });
   };
 
+  // Action toolbar shown above rich cards too
+  const toolbar = (
+    <div className="flex items-center gap-1 justify-end mb-2">
+      {onInspect && (
+        <button
+          onClick={() => onInspect(artifact)}
+          className="text-xs text-zinc-500 hover:text-zinc-300 px-1.5 py-0.5 rounded border border-zinc-700 hover:border-zinc-500 transition-colors"
+        >
+          Inspect
+        </button>
+      )}
+      <button
+        onClick={handleCopy}
+        className="text-xs text-zinc-500 hover:text-zinc-300 px-1.5 py-0.5 rounded border border-zinc-700 hover:border-zinc-500 transition-colors"
+      >
+        {copied ? 'Copied' : 'Copy'}
+      </button>
+    </div>
+  );
+
+  // Delegate to rich renderer for specific artifact types
+  if (artifact.artifact_type === 'MEMORY_INFLUENCE') {
+    return (
+      <div>
+        {toolbar}
+        <MemoryInfluenceCard artifact={artifact} />
+      </div>
+    );
+  }
+
+  if (artifact.artifact_type === 'SESSION_END_RECORD') {
+    return (
+      <div>
+        {toolbar}
+        <SessionEndCard artifact={artifact} />
+      </div>
+    );
+  }
+
+  // Default generic card
   return (
     <div className={`rounded border p-3 text-sm ${SEVERITY_COLORS[sev]}`}>
       <div className="flex items-start justify-between gap-2 mb-1">
@@ -76,4 +121,5 @@ const ArtifactCard: FC<Props> = ({ artifact, onInspect }) => {
   );
 };
 
+export { RICH_TYPES };
 export default ArtifactCard;
