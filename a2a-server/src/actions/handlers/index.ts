@@ -53,3 +53,21 @@ export {
     type RunScriptOutput,
     type RunScriptParams,
 } from './run-script.js';
+
+// MCP-call handler (ADR-ClawCode §14.2)
+export {
+    executeMcpCall,
+    type McpCallInput,
+    type McpCallOutput,
+    type McpContent,
+} from './mcp-call.js';
+
+// PHPantom LSP handlers (ADR-PHPantom §15)
+export {
+    handlePhpantomAnalyze,
+    handlePhpantomFix,
+    type PhpantomAnalyzeInput,
+    type PhpantomAnalyzeOutput,
+    type PhpantomFixInput,
+    type PhpantomFixOutput,
+} from './phpantom.js';
