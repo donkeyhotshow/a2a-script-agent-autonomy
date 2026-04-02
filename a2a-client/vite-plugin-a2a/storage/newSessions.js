@@ -140,16 +140,23 @@ export function saveNewSession(cwd, session) {
   // The session object contains id, title, currentStep, context, etc.
   const sessionId = session.id;
   const stepNum = session.currentStep || 1;
-  
-  // If session has context, save it as a step
+
+  // Persist step-level snapshot only if the step file doesn't already exist.
+  // Async completion writes server-response.json (including execute), and calling saveNewSession()
+  // right after was clobbering that file by re-writing only { context, title, status }.
   if (session.context) {
-    const stepData = {
-      step: stepNum,
-      context: session.context,
-      title: session.title,
-      status: session.status || 'active'
-    };
-    saveNewStep(cwd, sessionId, stepNum, stepData);
+    const stepDir = getNewStepDir(cwd, sessionId, stepNum);
+    const metaFile = path.join(stepDir, 'server-response.json');
+    if (!fs.existsSync(metaFile)) {
+      const stepData = {
+        step: stepNum,
+        context: session.context,
+        title: session.title,
+        status: session.status || 'active',
+        ...(session.execute !== undefined ? { execute: session.execute } : {})
+      };
+      saveNewStep(cwd, sessionId, stepNum, stepData);
+    }
   }
   
   // Always update session index for fast recovery

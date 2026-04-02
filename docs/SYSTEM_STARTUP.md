@@ -22,6 +22,8 @@ kill-all.ps1     # Stop all services
 
 **Restart (Windows):** To stop or refresh **any** part of the stack, use **`start-all.bat`** from the repo root again (it calls `kill-all.bat`, verifies ports, then starts everything in order). Do **not** restart individual services with `npm run dev` (or similar) inside `a2a-server`, `a2a-client`, `packages/sdk`, etc.—that leaves orphan processes, port conflicts, and a stale `.pids.txt`. See also [`AGENTS.md`](../AGENTS.md) (live stack restart).
 
+**Ollama busy:** If a Client API session is waiting on the LLM (`asyncPending` / server `processing`), **confirm** Ollama is actually generating (e.g. `curl http://localhost:11435/api/ps`) **before** killing or restarting the stack. Otherwise you abort in-flight inference. Normative wording: [`OPERATOR-CURL.md`](OPERATOR-CURL.md) → *Ollama is generating — pause other work*.
+
 ### Linux/Mac
 ```bash
 bash start-all.sh    # Start all services
@@ -111,24 +113,21 @@ curl http://localhost:11434/health
 curl http://localhost:3001/health
 ```
 
-### Тестовый запрос
+### Тестовый запрос (Client API session flow)
 
 ```bash
-# Создание сессии
-curl -X POST http://localhost:3001/api/sessions \
-  -H "Content-Type: application/json" \
-  -d '{"projectId": "test"}'
+# 1) Create session via Client API (same surface as Web UI)
+curl -X POST http://localhost:5173/api/a2a/sessions ^
+  -H "Content-Type: application/json" ^
+  -d "{\"projectId\":\"test\",\"mode\":\"agent\",\"task\":\"Say hello\"}"
 
-# Отправка задачи
-curl -X POST http://localhost:3001/api/v1/invoke \
-  -H "Content-Type: application/json" \
-  -d '{
-    "sessionId": "sess_xxx",
-    "message": {
-      "role": "user",
-      "parts": [{"type": "text", "text": "Привет"}]
-    }
-  }'
+# 2) Advance one turn (ack-only), then poll async until settled
+# (replace SESSION_ID with the returned session.id)
+curl -X POST http://localhost:5173/api/a2a/sessions/SESSION_ID/next ^
+  -H "Content-Type: application/json" ^
+  -d "{\"task\":\"Say hello\"}"
+
+curl http://localhost:5173/api/a2a/sessions/SESSION_ID/async
 ```
 
 ## Конфигурация

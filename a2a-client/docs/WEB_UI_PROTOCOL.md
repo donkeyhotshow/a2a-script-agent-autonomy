@@ -2,6 +2,8 @@
 
 Checkpoint: agent mode in `a2a-client/web` against the Vite **storage-mode** Client API (`/api/a2a/*`).
 
+**Web HTTP surface:** the browser only sees **`/api/a2a/*`** on the app origin. **Execution** still runs on **a2a-server** (`/api/v1/invoke` and request polling); the Client API is the gateway and session layer. Operator doc: [`docs/OPERATOR-CURL.md`](../../docs/OPERATOR-CURL.md) → *Web access and a2a-server*.
+
 ## Principles
 
 1. **Transport ids stay server-side** — The browser does not need A2A `promiseId` to poll. The Client API resolves the active in-flight step and calls A2A internally.

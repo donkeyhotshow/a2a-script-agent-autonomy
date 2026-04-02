@@ -79,9 +79,9 @@ Optional: **`workbench_ops`** / **`workbench.sections`** to stash durable notes 
 
 ```json
 {
-  "context": ${context},
-  "workbench": ${workbench},
-  "ragResults": ${ragResults}
+  "context": ${$.context},
+  "workbench": ${$.workbench},
+  "ragResults": ${$.ragResults}
 }
 ```
 

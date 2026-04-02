@@ -52,9 +52,8 @@ class LegacyConfig:
     STORAGE_DIR = os.environ.get('STORAGE_DIR', 'proxy_logs')
     PROMISES_DIR = os.environ.get('PROMISES_DIR', os.path.join(STORAGE_DIR, 'promises'))
     
-    # Request Handling Configuration (0 = no timeout)
-    # Timeout tuning for qwen3:8b: CONNECT_TIMEOUT=10s, REQUEST_TIMEOUT=120s
-    _ft = int(os.environ.get('FORWARD_TIMEOUT_SECONDS', '120'))
+    # Request Handling Configuration (0 = no timeout on forwarded LLM requests)
+    _ft = int(os.environ.get('FORWARD_TIMEOUT_SECONDS', '0'))
     FORWARD_TIMEOUT_SECONDS = _ft
     FORWARD_TIMEOUT = None if _ft == 0 else _ft
     PROMISE_TTL_SECONDS = int(os.environ.get('PROMISE_TTL_SECONDS', '86400'))
@@ -90,7 +89,7 @@ class LegacyConfig:
     PROVIDERS_CONFIG = os.environ.get('PROVIDERS_CONFIG', 'config/providers.json')
     DEFAULT_PROVIDER = os.environ.get('DEFAULT_PROVIDER', 'ollama')
     ENABLE_FALLBACK = os.environ.get('ENABLE_FALLBACK', 'true').lower() in {'1', 'true', 'yes', 'y', 'on', 't'}
-    PROVIDER_TIMEOUT = int(os.environ.get('PROVIDER_TIMEOUT', '30'))  # 30s for Ollama; use 120s for slow external providers
+    PROVIDER_TIMEOUT = int(os.environ.get('PROVIDER_TIMEOUT', '0'))  # 0 = no aiohttp total limit on LLM calls
     
     # Provider API Keys
     OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')
@@ -174,12 +173,9 @@ if HAS_PYDANTIC:
         # ===========================================
         # Request Handling Configuration
         # ===========================================
-        # Timeout tuning for qwen3:8b model:
-        # - CONNECT_TIMEOUT (provider_timeout): 10s - connection should establish quickly
-        # - REQUEST_TIMEOUT (forward_timeout_seconds): 120s - typical request completion time
-        # - LLM_TIMEOUT (ollama_timeout): 180s - allows for slow model responses
-        forward_timeout_seconds: int = 120
-        """Timeout for forwarding requests in seconds. Default 120s for qwen3:8b slow responses."""
+        # forward_timeout_seconds: 0 = unlimited (wait for upstream). Set env for a cap.
+        forward_timeout_seconds: int = 0
+        """Timeout for forwarding requests in seconds. 0 = no limit."""
         
         promise_ttl_seconds: int = 86400
         """Time-to-live for promises in seconds (24 hours)."""
@@ -262,15 +258,9 @@ if HAS_PYDANTIC:
         enable_fallback: bool = True
         """Enable fallback chain between providers."""
         
-        provider_timeout: int = 30
+        provider_timeout: int = 0
         """
-        Provider request timeout in seconds.
-        
-        Recommended values:
-        - 10s: For fast local models (connection establish timeout only)
-        - 30s: Default for Ollama (local provider)
-        - 120s: For slow external providers (OpenRouter, Groq, etc.)
-        
+        aiohttp total timeout for provider sessions (seconds). 0 = no limit.
         Set via PROVIDER_TIMEOUT environment variable.
         """
         
@@ -360,6 +350,14 @@ if HAS_PYDANTIC:
             """0 = no timeout, positive = seconds."""
             if v < 0:
                 raise ValueError('forward_timeout_seconds must be >= 0')
+            return v
+
+        @field_validator('provider_timeout')
+        @classmethod
+        def validate_provider_timeout(cls, v: int) -> int:
+            """0 = no aiohttp total limit on provider sessions."""
+            if v < 0:
+                raise ValueError('provider_timeout must be >= 0')
             return v
         
         @field_validator('log_level', mode='before')

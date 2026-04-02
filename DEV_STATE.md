@@ -6,7 +6,7 @@
 
 **System roadmap:** [`tasks/system-improvement-priorities.md`](tasks/system-improvement-priorities.md) (contract unification, gray room, verification pyramid, observability).
 
-**Work queue (sync sims):** S9 done (substeps default-on in `sim-validate`); S10–S12 partial; S11 — `sync/script` steps 1–10 have `request.md`/`response.md` ( `sim:check-md` ); S14 partial — see [`work/STATE.md`](work/STATE.md).
+**Open work (authoritative queue):** [`work/STATE.md`](work/STATE.md) — table *Очередь задач* (S10–S12 partial, S14 partial, SYS backlog). Root file keeps narrative only; do not treat a single line here as the row-by-row status.
 
 Current system state: **Stack готов** - все сервисы работают; `sim:validate -- --all --step-contract` зелёный.
 
@@ -16,13 +16,11 @@ Current system state: **Stack готов** - все сервисы работа�
 - a2a-client test failures: 41 failed — 100% SDK config issues (not code)
 - Orchestrator metrics: требует периодического обновления
 
-**Pending tasks:**
-- S10–S12, S14, SYS: see [`work/STATE.md`](work/STATE.md)
-
 ## Completed work/tasks (2026-04-02):
 - Doc: router alignment — `simulations/sync/agent/description.md` (step 1 vs `router-static-choices.json`); `AGENTS.md` router note + `tasks/sync-documentation-and-router-drift.md` status line
 - Doc: S11 — `sync/dialog/1` request/response `.md` mirrors; `sync/script/description.md` sim:check-md note; refreshed `tasks/sync-llm-snapshot-coverage.md` + `work/STATE.md` S11; `sync/dialog/description.md` step-1 table accuracy
 - S11: `sync/script` steps 2–3, 4/response, 5–10 — added `request.md`/`response.md` JSON fences ( `cd a2a-server && npm run sim:check-md -- --fail` ); `npm run sim:quality` clean
+- S11/S12: `sync/dialog/2` request.md aligned with `dialog/1`/`script` headers; `dialog/3–4` top matter; `description.md` tree path `simulations/sync/dialog/` + notes for steps 1–2 vs 3–4; `agent-workspace-tools/description.md` — `dialog` row points at `sync/dialog/`; `npm run sim:check-md -- --fail` clean
 
 ## Completed work/tasks (2026-04-01):
 - Analyze test failures: Classified 41 failed a2a-client tests as config/environment issues

@@ -1,3 +1,7 @@
+# `dialog/3` — request
+
+Mirror of `request.json` for drift checks (`sim:check-md`). Sections below document the LLM-facing template for this step.
+
 ## System Prompt
 
 You are a proactive dialogue assistant whose job is to respond directly to the user message and keep the conversation

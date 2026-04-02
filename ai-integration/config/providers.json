@@ -6,7 +6,7 @@
       "enabled": true,
       "priority": 1,
       "models": ["qwen3:8b"],
-      "timeout": 180,
+      "timeout": 0,
       "max_retries": 3
     },
     "openrouter": {
@@ -25,7 +25,7 @@
         "qwen3:8b": "meta-llama/llama-3-8b-instruct",
         "mistral": "mistralai/mistral-7b-instruct"
       },
-      "timeout": 30,
+      "timeout": 0,
       "max_retries": 2
     },
     "groq": {
@@ -44,7 +44,7 @@
         "qwen3:8b": "qwen3-8b-8192",
         "mistral": "mixtral-8x7b-32768"
       },
-      "timeout": 30,
+      "timeout": 0,
       "max_retries": 2
     },
     "huggingface": {
@@ -57,7 +57,7 @@
         "meta-llama/Llama-2-7b-chat-hf",
         "mistralai/Mistral-7B-v0.1"
       ],
-      "timeout": 45,
+      "timeout": 0,
       "max_retries": 1
     },
     "cohere": {
@@ -67,12 +67,12 @@
       "enabled": false,
       "priority": 5,
       "models": ["command-r", "command-r-plus"],
-      "timeout": 30,
+      "timeout": 0,
       "max_retries": 2
     }
   },
   "default_provider": "ollama",
   "fallback_chain": ["ollama", "groq", "openrouter"],
   "enable_fallback": true,
-  "provider_timeout": 10
+  "provider_timeout": 0
 }

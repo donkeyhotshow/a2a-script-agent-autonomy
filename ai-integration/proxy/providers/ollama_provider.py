@@ -19,6 +19,7 @@ from .base import (
     ChatMessage,
     EmbeddingResult,
 )
+from .http_utils import aiohttp_llm_timeout
 
 logger = logging.getLogger('ai-proxy.ollama')
 
@@ -165,7 +166,7 @@ class OllamaProvider(LLMProvider):
         """Get or create aiohttp session"""
         if self.session is None or self.session.closed:
             self.session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout)
+                timeout=aiohttp_llm_timeout(self.config.timeout)
             )
         return self.session
     

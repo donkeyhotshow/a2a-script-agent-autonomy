@@ -440,8 +440,23 @@ export class GrayRoomOrchestrator {
 
             // Rebuild request for next LLM turn
             const outputDir = await this.createTempDir();
+            const invokeShape: Record<string, unknown> =
+                workingCtx && typeof workingCtx === 'object' && !Array.isArray(workingCtx) && 'context' in workingCtx
+                    ? workingCtx
+                    : {
+                          context: workingCtx,
+                          task:
+                              (workingCtx['task'] as string | undefined) ??
+                              (workingCtx['message'] as string | undefined),
+                          message: workingCtx['message'],
+                          result: (workingCtx['result'] as Record<string, unknown> | undefined) ?? {},
+                      };
             const requestTransformResult = await runPromptsTransform(
-                this.promptsTransformsPath, activeSchemaName, workingCtx, 'request', {forceServerTransforms: true, outputDir}
+                this.promptsTransformsPath,
+                activeSchemaName,
+                invokeShape,
+                'request',
+                {forceServerTransforms: true, outputDir}
             );
             
             if (!requestTransformResult.success) {

@@ -19,7 +19,7 @@ class ProvidersConfig:
     default_provider: str = "ollama"
     fallback_chain: List[str] = field(default_factory=list)
     enable_fallback: bool = True
-    provider_timeout: int = 30
+    provider_timeout: int = 0
     
     def get_provider(self, name: str) -> Optional[ProviderConfig]:
         """Get provider config by name"""
@@ -93,7 +93,7 @@ def _parse_config(data: Dict[str, Any]) -> ProvidersConfig:
             api_key=provider_data.get('api_key'),
             models=provider_data.get('models', []),
             fallback_models=provider_data.get('fallback_models', {}),
-            timeout=provider_data.get('timeout', 30),
+            timeout=provider_data.get('timeout', 0) or 0,
             max_retries=provider_data.get('max_retries', 3),
             retry_delay=provider_data.get('retry_delay', 1.0),
             rate_limit_rpm=provider_data.get('rate_limit_rpm'),
@@ -103,7 +103,7 @@ def _parse_config(data: Dict[str, Any]) -> ProvidersConfig:
     config.default_provider = data.get('default_provider', 'ollama')
     config.fallback_chain = data.get('fallback_chain', [])
     config.enable_fallback = data.get('enable_fallback', True)
-    config.provider_timeout = data.get('provider_timeout', 30)
+    config.provider_timeout = data.get('provider_timeout', 0) or 0
     
     return config
 
@@ -120,7 +120,7 @@ def _default_config() -> ProvidersConfig:
         enabled=True,
         priority=1,
         models=['qwen3:8b', 'mistral', 'codellama'],
-        timeout=60,
+        timeout=0,
     )
     
     # OpenRouter
@@ -140,7 +140,7 @@ def _default_config() -> ProvidersConfig:
             'qwen3:8b': 'meta-llama/llama-3-8b-instruct',
             'mistral': 'mistralai/mistral-7b-instruct',
         },
-        timeout=30,
+        timeout=0,
     )
     
     # Groq
@@ -160,7 +160,7 @@ def _default_config() -> ProvidersConfig:
             'qwen3:8b': 'qwen3-8b-8192',
             'mistral': 'mixtral-8x7b-32768',
         },
-        timeout=30,
+        timeout=0,
     )
     
     # HuggingFace (disabled by default)
@@ -175,7 +175,7 @@ def _default_config() -> ProvidersConfig:
             'meta-llama/Llama-2-7b-chat-hf',
             'mistralai/Mistral-7B-v0.1',
         ],
-        timeout=30,
+        timeout=0,
     )
     
     # Cohere
@@ -190,7 +190,7 @@ def _default_config() -> ProvidersConfig:
             'command-r',
             'command-r-plus',
         ],
-        timeout=30,
+        timeout=0,
     )
     
     # Default fallback chain

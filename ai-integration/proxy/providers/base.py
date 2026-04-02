@@ -32,7 +32,7 @@ class ProviderConfig:
     api_key: Optional[str] = None
     models: List[str] = field(default_factory=list)
     fallback_models: Dict[str, str] = field(default_factory=dict)
-    timeout: int = 30
+    timeout: int = 0  # 0 = no aiohttp total limit on LLM requests
     max_retries: int = 3
     retry_delay: float = 1.0
     rate_limit_rpm: Optional[int] = None  # Requests per minute

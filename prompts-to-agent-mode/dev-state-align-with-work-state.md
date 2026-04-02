@@ -11,4 +11,4 @@ Reconcile: one source of truth for “what is still open” (S10 optional, S14, 
 
 ## Completion
 
-- [ ] Done
+- [x] Done — root `DEV_STATE.md` points to `work/STATE.md` as the authoritative queue table; duplicate “pending” line removed (2026-04-02).

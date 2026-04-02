@@ -22,4 +22,4 @@ Canonical allowlist: `VALID_EXECUTE_KEYS` in [`a2a-server/src/actions/action-val
 | `execute-command` | `fix-laravel-namespaces-and-uses/5`, `script/8` | Shell |
 | `message` | `script/9`, summaries | Auto text |
 | `rag-search` | `agent-coder/4`, `agent/5` | RAG |
-| `dialog` | Reserved / registry | Rare in sync goldens |
+| `dialog` | `dialog/2+` (execute.form після router), registry | Див. `sync/dialog/` |

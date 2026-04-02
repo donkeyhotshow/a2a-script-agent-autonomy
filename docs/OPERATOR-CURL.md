@@ -38,6 +38,14 @@ Escalation order:
 
 Full endpoint table: root **`AGENTS.md`** (Client API section).
 
+## Web access and a2a-server
+
+For **web** (browser), HTTP goes to the **same origin as the Vite app** — **`/api/a2a/*`** (Client API). The browser does **not** call `http://localhost:3000` directly.
+
+Under that surface, work is still executed by **a2a-server**: the Client API forwards to **`POST {A2A_SERVER_URL}/api/v1/invoke`** and polls **`GET …/api/v1/requests/{promiseId}/result`** (or equivalent) while persisting sessions and projecting responses for the UI. So the **protocol and LLM pipeline** are **a2a-server**; the **session and operator-facing HTTP** for web and curl are **Client API**.
+
+See also: [`a2a-client/docs/WEB_UI_PROTOCOL.md`](../a2a-client/docs/WEB_UI_PROTOCOL.md) (async polling matrix).
+
 ## Minimal mental model
 
 | Step | Meaning |
@@ -60,13 +68,28 @@ Use this as a **literal** loop for curl or scripts so a low-context prompt does 
 5. If still stuck, re-run step 2; if Client API returns empty execute but you have `promiseId`, see *Direct A2A Server invoke (workaround)* below.
 6. Do **not** treat “I sent one `/next`” as done; parity with the web UI is **next + poll until settled**.
 
+### Ollama is generating — pause other work
+
+When **`GET …/async`** keeps `asyncPending` (or **`GET …/api/v1/requests/{promiseId}/result`** returns `"status":"processing"`), the chain is often **waiting on Ollama** (via ai-integration). **Do not** immediately restart the stack or assume a bug.
+
+1. **Verify** that a generation is actually in progress: Ollama process logs, **`curl http://localhost:11435/api/ps`** (shows running models when supported), host CPU/GPU activity, or ai-integration / proxy logs (e.g. under `ai-integration/proxy_logs/` when enabled).
+2. **After** you are satisfied the model is working on the request, **stop other disruptive work** until this call finishes or you explicitly abandon it: no **`kill-all` / `start-all`**, no parallel heavy session or load tests on the **same** Ollama instance, no piling extra `/next` turns on the same session unless you intend to cancel/replace work.
+
+If Ollama is **idle** (no active inference) but status stays `processing` for a long time, treat that as a **stuck** pipeline and debug per root **`AGENTS.md`** → *Common Issues* and *Debugging*.
+
 Narrative table of common “why iteration stopped” traps and mitigations (IDE vs driver): root **`AGENTS.md`** → *Why iteration stops (misreads and mitigations)*.
 
 **Why this is easy to miss:** Three processes are all called “server” in conversation — **Vite+Client API** (sessions), **standalone SDK** (same contract, optional port), **A2A Server** (invoke only). **Agent** is not `?mode=agent`; it is whatever the session’s **`context.execution`** / workbench shows after your Client API calls. Canonical table and full explanation: root **`AGENTS.md`** → *Sessions, tests, and agent mode*.
 
-## Direct A2A Server invoke (workaround)
+## Direct A2A Server invoke (debug-only fallback)
 
-When Client API `/async` returns empty `execute`, use direct server polling:
+**Not a normal operating mode.** This bypasses the Client API session layer (persistence, step folders, projections) and is only for **isolating protocol/schema problems** when you already have a server `promiseId` and the Client API is failing to surface it.
+
+Prefer:
+- **Client API session flow**: `POST /api/a2a/sessions` → `POST /next` → poll `GET /async`
+- **Direct-tests entry points**: `scripts/direct-tests/README.md` (schema debugging start point)
+
+When you must debug a stuck `promiseId`, poll the A2A Server directly:
 
 ```bash
 # 1. After /next returns promiseId
@@ -93,27 +116,8 @@ Flaky or vague agent behavior is addressed mainly **inside the system**, not by 
 
 ---
 
-## Direct A2A Server invoke (alternative method)
+## Do not use direct `POST /api/v1/invoke` for operator runs
 
-When Client API sessions do not return execute results correctly, you can call **A2A Server directly** using `POST /api/v1/invoke`:
+Calling `POST http://localhost:3000/api/v1/invoke` directly is useful for **server-only** debugging, but it is outside the repo’s normative “drive the stack like the UI” flow.
 
-```bash
-# 1. Direct invoke (bypasses session handling)
-curl -X POST http://localhost:3000/api/v1/invoke \
-  -H "Content-Type: application/json" \
-  -d '{"context":{"execution":{"action":"dialog","step":"new"},"task":"Your task here"},"task":"Your task here"}'
-
-# Returns: {"success":true,"data":{"promiseId":"prom_XXX","status":"pending",...}}
-
-
-# 2. Poll for result
-curl http://localhost:3000/api/v1/requests/{promiseId}/result
-# Returns: {"success":true,"data":{"status":"completed","execute":{...},"context":{...}}}
-```
-
-**Key differences from Client API sessions:**
-- No session state management
-- Direct call to A2A Server (`:3000`), not Client API (`:5173`)
-- Returns router choices directly in sync/async mode
-
-**Note:** The Client API session flow is being improved to return execute results correctly. This direct invoke method is a temporary workaround.
+If you need an automated repro, prefer adding or extending a runner under `scripts/direct-tests/` that uses the **Client API session flow**. Keep direct-invoke usage as a last resort for isolating server behavior from session storage/projection bugs.

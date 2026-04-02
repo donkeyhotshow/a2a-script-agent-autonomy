@@ -33,10 +33,22 @@ function Invoke-PollResult {
         try {
             $r = Invoke-RestMethod -Uri "$ServerUrl/api/v1/requests/$PromiseId/result" -Headers @{ "x-skip-auth" = "true" } -TimeoutSec 10
             if ($r.data.status -eq "completed") {
-                return $r.data.result
+                # Server responses expose `execute` at `data.execute` (not `data.result.execute`)
+                if ($null -ne $r.data.result) {
+                    return $r.data.result
+                }
+                return $r.data
             }
             if ($r.data.status -eq "failed") {
-                Fail "Request failed: $($r.data.result.error)"
+                $err = $null
+                if ($null -ne $r.data.result -and $null -ne $r.data.result.error) {
+                    $err = $r.data.result.error
+                } elseif ($null -ne $r.data.error) {
+                    $err = $r.data.error
+                } else {
+                    $err = $r.data.message
+                }
+                Fail "Request failed: $err"
             }
         } catch {
             Write-Host "  Poll $i : $($_.Exception.Message)" -ForegroundColor Gray
@@ -94,9 +106,9 @@ if ($prom1b) {
     $r1b = Invoke-RestMethod -Uri "$ClientUrl/api/a2a/sessions/$sessionId" -Headers $SessionHeader -TimeoutSec 15
 }
 
-if (-not $r1b.session.execute.form.choices) { Fail "No execute.form.choices after /next" }
-if ($r1b.session.execute.form.choices.Count -lt 2) { Fail "Expected at least 2 choices" }
-Ok "execute.form.choices ($($r1b.session.execute.form.choices.Count) items)"
+if (-not $r1b.execute.form.choices) { Fail "No execute.form.choices after /next" }
+if ($r1b.execute.form.choices.Count -lt 2) { Fail "Expected at least 2 choices" }
+Ok "execute.form.choices ($($r1b.execute.form.choices.Count) items)"
 
 # Step 2: choice "dialog" -> expect input form
 Write-Step 2 "Select choice 'dialog' -> expect input form"

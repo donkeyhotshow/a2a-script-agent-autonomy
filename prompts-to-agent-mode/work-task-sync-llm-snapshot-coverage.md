@@ -13,4 +13,4 @@ Pick representative high-value sync flows lacking `request.md`/`response.md` and
 
 ## Completion
 
-- [ ] Done
+- [x] Partial (2026-04-02) — `sync/dialog/2–4` `request.md` headers + `description.md` path/notes; [`tasks/sync-llm-snapshot-coverage.md`](../tasks/sync-llm-snapshot-coverage.md) backlog narrowed. Optional: audit other sync sims for missing step MD.

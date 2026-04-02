@@ -42,7 +42,7 @@ request.json → server-transforms-request.json → response.json
 ## Структура файлов
 
 ```
-simulations/dialog/
+simulations/sync/dialog/
 ├── description.md
 ├── WORKFLOW.md
 ├── analysis.md
@@ -50,9 +50,11 @@ simulations/dialog/
 │   ├── client.json
 │   ├── request.json
 │   ├── server-transforms-request.json
+│   ├── request.md
+│   ├── response.md
 │   ├── response.json
 │   └── received.json
-├── 2/                          # З LLM
+├── 2/                          # Без LLM: після вибору dialog (див. WORKFLOW.md)
 │   ├── client.json
 │   ├── request.json
 │   ├── server-transforms-request.json
@@ -83,6 +85,6 @@ simulations/dialog/
 
 ## Нотатки
 
-- Крок 1 — без LLM, має тільки `server-transforms-request.json`
-- Кроки 2, 3, 4 — з LLM, мають повний пайпайн з request.md/response.md
+- Кроки 1–2 — без LLM у контури `request → server-transforms-request → response.json` (деталі — [`WORKFLOW.md`](WORKFLOW.md)); `request.md` / `response.md` — дзеркала та супутні артефакти для аудиту.
+- Кроки 3–4 — з LLM: повний ланцюжок з `request.md` / `response.md`.
 

@@ -9,6 +9,7 @@ import json
 import time
 from typing import Any, Dict, List, Optional
 
+from .http_utils import aiohttp_llm_timeout
 from .base import (
     LLMProvider,
     ProviderConfig,
@@ -41,7 +42,7 @@ class HuggingFaceProvider(LLMProvider):
         """Get or create aiohttp session"""
         if self.session is None or self.session.closed:
             self.session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout),
+                timeout=aiohttp_llm_timeout(self.config.timeout),
                 headers=self.headers
             )
         return self.session

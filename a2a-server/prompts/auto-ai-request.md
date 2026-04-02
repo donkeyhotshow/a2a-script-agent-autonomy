@@ -86,9 +86,9 @@ Rules:
 
 ```json
 {
-  "context": ${context},
-  "workbench": ${workbench},
-  "ragResults": ${ragResults}
+  "context": ${$.context},
+  "workbench": ${$.workbench},
+  "ragResults": ${$.ragResults}
 }
 ```
 

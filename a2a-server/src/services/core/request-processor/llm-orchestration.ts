@@ -47,8 +47,24 @@ export async function runRequestTransforms(
     ctx: Record<string, unknown>,
     outputDir: string
 ): Promise<{success: boolean; files?: Record<string, string>; error?: string}> {
+    // Most server processors persist a "flat" context object (execution/task/history at root).
+    // Prompts/transforms expect an invoke-shaped payload with `context` + top-level `result`
+    // so that `result.message` can be folded into history before prompt render.
+    const invokeShape: Record<string, unknown> =
+        ctx && typeof ctx === 'object' && !Array.isArray(ctx) && 'context' in ctx
+            ? ctx
+            : {
+                  context: ctx,
+                  task: (ctx['task'] as string | undefined) ?? (ctx['message'] as string | undefined),
+                  message: ctx['message'],
+                  result: (ctx['result'] as Record<string, unknown> | undefined) ?? {},
+              };
     const transformResult = await runPromptsTransform(
-        promptsTransformsPath, schemaName, ctx, 'request', {forceServerTransforms: true, outputDir}
+        promptsTransformsPath,
+        schemaName,
+        invokeShape,
+        'request',
+        {forceServerTransforms: true, outputDir}
     );
 
     if (!transformResult.success) {

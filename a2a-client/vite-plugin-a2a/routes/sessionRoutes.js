@@ -24,6 +24,88 @@ import { pickInitialExecution } from './utils/session-create-initial.js';
 
 const API_PREFIX = '/api/a2a';
 
+function isNonEmptyString(x) {
+    return typeof x === 'string' && x.trim().length > 0;
+}
+
+function parseJsonBody(req, res, onJson) {
+    let body = '';
+    req.on('data', (c) => (body += c));
+    req.on('end', () => {
+        try {
+            if (!body || body.trim() === '') throw new Error('Empty request body');
+            onJson(JSON.parse(body));
+        } catch (e) {
+            res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
+        }
+    });
+}
+
+function buildNewSessionFromRequest({ cwd, d, storageMode }) {
+    const title = d.title || 'New Session';
+    const task = d.task;
+    const projectId = isNonEmptyString(d.projectId) ? d.projectId.trim() : '';
+    const projectRoot = isNonEmptyString(d.projectRoot) ? d.projectRoot.trim() : '';
+    const sessionId = d.id || `sess_${Date.now()}`;
+    const initialExec = pickInitialExecution(d);
+
+    const session = {
+        id: sessionId,
+        title,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        status: 'created',
+        currentStep: 1,
+        messages: [
+            {
+                role: 'assistant',
+                content: 'What would you like me to do?',
+                step: 1,
+            },
+        ],
+        context: {
+            execution: initialExec,
+            ...(task ? { task } : {}),
+            ...(projectId ? { projectId } : {}),
+            ...(projectRoot ? { projectRoot } : {}),
+        },
+        // After POST /next (stepRoutes), poll GET /sessions/:id or .../async
+        execute: {
+            message: 'What would you like me to do?',
+            form: {
+                input: [
+                    {
+                        name: 'task',
+                        type: 'text',
+                        label: 'Enter your task',
+                        required: true,
+                    },
+                ],
+            },
+        },
+    };
+
+    if (storageMode === 'project') {
+        const projectPath = resolveSessionProjectPath(cwd, { projectId, projectRoot });
+        session.context = {
+            ...session.context,
+            ...projectStorageContextFields(projectId, projectPath),
+        };
+        saveSession(projectPath, session);
+    } else {
+        saveNewSession(cwd, session);
+        saveNewStep(cwd, sessionId, 1, {
+            step: 1,
+            title,
+            execute: session.execute,
+            messages: session.messages || [],
+            context: session.context,
+        });
+    }
+
+    return session;
+}
+
 /**
  * @param {string} cwd
  * @param {string} sessionId
@@ -82,160 +164,23 @@ export function createSessionRoutes({ cwd }) {
         }
 
         if (req.method === 'POST' && p === '/sessions') {
-            let body = '';
-            req.on('data', (c) => (body += c));
-            req.on('end', () => {
-                try {
-                    if (!body || body.trim() === '') {
-                        throw new Error('Empty request body');
-                    }
-                    const d = JSON.parse(body);
-                    const title = d.title || 'New Session';
-                    const task = d.task; // Capture task from request body
-                    const projectId = typeof d.projectId === 'string' ? d.projectId.trim() : '';
-                    const projectRoot = typeof d.projectRoot === 'string' ? d.projectRoot.trim() : '';
-                    const sessionId = d.id || `sess_${Date.now()}`;
-                    const initialExec = pickInitialExecution(d);
-                    const session = {
-                        id: sessionId,
-                        title,
-                        createdAt: new Date().toISOString(),
-                        updatedAt: new Date().toISOString(),
-                        status: 'created',
-                        currentStep: 1,
-                        messages: [
-                            {
-                                role: 'assistant',
-                                content: 'What would you like me to do?',
-                                step: 1
-                            }
-                        ],
-                        context: { 
-                            execution: initialExec,
-                            ...(task ? { task } : {}),
-                            ...(projectId ? { projectId } : {}),
-                        },
-                        // After POST /next (stepRoutes), poll GET /sessions/:id or .../async
-                        execute: {
-                            message: 'What would you like me to do?',
-                            form: {
-                                input: [
-                                    {
-                                        name: 'task',
-                                        type: 'text',
-                                        label: 'Enter your task',
-                                        required: true
-                                    }
-                                ]
-                            }
-                        }
-                    };
-
-                    if (storageMode === 'project') {
-                        const projectPath = resolveSessionProjectPath(cwd, { projectId, projectRoot });
-                        session.context = {
-                            ...session.context,
-                            ...projectStorageContextFields(projectId, projectPath),
-                        };
-                        saveSession(projectPath, session);
-                    } else {
-                        saveNewSession(cwd, session);
-                        saveNewStep(cwd, sessionId, 1, {
-                            step: 1,
-                            title,
-                            execute: session.execute,
-                            messages: session.messages || [],
-                            context: session.context
-                        });
-                    }
-
-                    res.setHeader('Content-Type', 'application/json');
-                    res.end(JSON.stringify({ success: true, session: toPublicSession(session, false) }));
-                } catch (e) {
-                    res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
-                }
+            parseJsonBody(req, res, (d) => {
+                const session = buildNewSessionFromRequest({ cwd, d, storageMode });
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ success: true, session: toPublicSession(session, false) }));
             });
             return;
         }
 
-        // Handle task-add and task-execute
-        if (req.method === 'POST' && p === '/sessions/task-add') {
-           console.log('[SessionRoutes] Handling task-add request');
-           let body = '';
-           req.on('data', (c) => (body += c));
-           req.on('end', () => {
-               try {
-                   if (!body || body.trim() === '') {
-                       throw new Error('Empty request body');
-                   }
-                   const d = JSON.parse(body);
-                   const title = d.title || 'New Session';
-                   const task = d.task; // Capture task from request body
-                   const projectId = typeof d.projectId === 'string' ? d.projectId.trim() : '';
-                   const projectRoot = typeof d.projectRoot === 'string' ? d.projectRoot.trim() : '';
-                   const sessionId = d.id || `sess_${Date.now()}`;
-                   const initialExec = pickInitialExecution(d);
-                   const session = {
-                       id: sessionId,
-                       title,
-                       createdAt: new Date().toISOString(),
-                       updatedAt: new Date().toISOString(),
-                       status: 'created',
-                       currentStep: 1,
-                       messages: [
-                           {
-                               role: 'assistant',
-                               content: 'What would you like me to do?',
-                               step: 1
-                           }
-                       ],
-                       context: {
-                           execution: initialExec,
-                           ...(task ? { task } : {}),
-                           ...(projectId ? { projectId } : {})
-                       },
-                       // After POST /next (stepRoutes), poll GET /sessions/:id or .../async
-                       execute: {
-                           message: 'What would you like me to do?',
-                           form: {
-                               input: [
-                                   {
-                                       name: 'task',
-                                       type: 'text',
-                                       label: 'Enter your task',
-                                       required: true
-                                   }
-                               ]
-                           }
-                       }
-                   };
-
-                   if (storageMode === 'project') {
-                       const projectPath = resolveSessionProjectPath(cwd, { projectId, projectRoot });
-                       session.context = {
-                           ...session.context,
-                           ...projectStorageContextFields(projectId, projectPath),
-                       };
-                       saveSession(projectPath, session);
-                   } else {
-                       saveNewSession(cwd, session);
-                       saveNewStep(cwd, sessionId, 1, {
-                           step: 1,
-                           title,
-                           execute: session.execute,
-                           messages: session.messages || [],
-                           context: session.context
-                       });
-                   }
-
-                   res.setHeader('Content-Type', 'application/json');
-                   res.end(JSON.stringify({ success: true, session: toPublicSession(session, false) }));
-               } catch (e) {
-                   res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
-               }
-           });
-           return;
-       }
+        // Legacy aliases (kept for compatibility): behave like POST /sessions
+        if (req.method === 'POST' && (p === '/sessions/task-add' || p === '/sessions/task-execute')) {
+            parseJsonBody(req, res, (d) => {
+                const session = buildNewSessionFromRequest({ cwd, d, storageMode });
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ success: true, session: toPublicSession(session, false) }));
+            });
+            return;
+        }
 
         // GET /sessions/:id - get single session
         const sessionIdMatch = p.match(/^\/sessions\/([^\/]+)$/);
@@ -259,87 +204,17 @@ export function createSessionRoutes({ cwd }) {
             res.end(JSON.stringify(publicSession));
             return;
         }
+
+        // Defer /sessions/:id/next to the step routes middleware.
+        const nextMatch = p.match(/^\/sessions\/([^\/]+)\/next$/);
         if (req.method === 'POST' && nextMatch) {
             return next();
         }
 
         if (req.method === 'POST' && p === '/sessions/task-execute') {
-           console.log('[SessionRoutes] Handling task-execute request');
-           let body = '';
-           req.on('data', (c) => (body += c));
-           req.on('end', () => {
-               try {
-                   if (!body || body.trim() === '') {
-                       throw new Error('Empty request body');
-                   }
-                   const d = JSON.parse(body);
-                   const title = d.title || 'New Session';
-                   const task = d.task; // Capture task from request body
-                   const projectId = typeof d.projectId === 'string' ? d.projectId.trim() : '';
-                   const projectRoot = typeof d.projectRoot === 'string' ? d.projectRoot.trim() : '';
-                   const sessionId = d.id || `sess_${Date.now()}`;
-                   const initialExec = pickInitialExecution(d);
-                   const session = {
-                       id: sessionId,
-                       title,
-                       createdAt: new Date().toISOString(),
-                       updatedAt: new Date().toISOString(),
-                       status: 'created',
-                       currentStep: 1,
-                       messages: [
-                           {
-                               role: 'assistant',
-                               content: 'What would you like me to do?',
-                               step: 1
-                           }
-                       ],
-                       context: {
-                           execution: initialExec,
-                           ...(task ? { task } : {}),
-                           ...(projectId ? { projectId } : {})
-                       },
-                       // After POST /next (stepRoutes), poll GET /sessions/:id or .../async
-                       execute: {
-                           message: 'What would you like me to do?',
-                           form: {
-                               input: [
-                                   {
-                                       name: 'task',
-                                       type: 'text',
-                                       label: 'Enter your task',
-                                       required: true
-                                   }
-                               ]
-                           }
-                       }
-                   };
-
-                   if (storageMode === 'project') {
-                       const projectPath = resolveSessionProjectPath(cwd, { projectId, projectRoot });
-                       session.context = {
-                           ...session.context,
-                           ...projectStorageContextFields(projectId, projectPath),
-                       };
-                       saveSession(projectPath, session);
-                   } else {
-                       saveNewSession(cwd, session);
-                       saveNewStep(cwd, sessionId, 1, {
-                           step: 1,
-                           title,
-                           execute: session.execute,
-                           messages: session.messages || [],
-                           context: session.context
-                       });
-                   }
-
-                   res.setHeader('Content-Type', 'application/json');
-                   res.end(JSON.stringify({ success: true, session: toPublicSession(session, false) }));
-               } catch (e) {
-                   res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
-               }
-           });
-           return;
-       }
+            // This route is handled above as an alias.
+            return;
+        }
 
         const sessionMessagesMatch = p.match(/^\/sessions\/([^/]+)\/messages$/);
         if (req.method === 'GET' && sessionMessagesMatch) {
@@ -416,10 +291,8 @@ export function createSessionRoutes({ cwd }) {
                     return;
                 }
 
-                console.log('[SessionRoutes] GET session:', sessionId, 'storageMode:', storageMode, 'currentStep:', session.currentStep);
                 if (storageMode !== 'project') {
                     await attachPromiseMeta(cwd, sessionId, session);
-                    console.log('[SessionRoutes] After attachPromiseMeta:', sessionId, 'promiseId:', session.promiseId);
                     const { messages, lastSeq } = collectSessionMessagesFlat(cwd, sessionId);
                     session.messages = messages;
                     session.lastMessageSeq = lastSeq;

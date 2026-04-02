@@ -15,7 +15,11 @@ More sync steps ship Markdown mirrors of JSON fixtures so prompt pipeline audits
 
 ## Backlog
 
-- Optional: align older dialog steps 2–4 prose style with script step headers; audit other sync sims for missing step MD where LLM audit matters.
+- Optional: audit other sync sims for missing step MD where LLM audit matters.
+
+## Done (dialog)
+
+- `sync/dialog/2`–`4` `request.md` headers aligned with `sync/dialog/1` / `sync/script/*` (mirror + `sim:check-md`); `description.md` tree path `simulations/sync/dialog/`.
 
 ## Verify
 

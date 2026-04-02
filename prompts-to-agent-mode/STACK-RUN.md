@@ -15,7 +15,7 @@ If the task says “verify in the live system”, “E2E”, “session”, or �
 
 | Do **not** (misleading default) | Do this instead |
 |--------------------------------|-----------------|
-| `POST http://localhost:3000/api/v1/invoke` as the only step | `POST http://localhost:5173/api/a2a/sessions` (or your Client API base — see [ADR-0028](../docs/adr/ADR-0028-client-api-deployment-modes.md)) |
+| `POST http://localhost:3000/api/v1/invoke` as the only step (debug-only; bypasses sessions) | `POST http://localhost:5173/api/a2a/sessions` (or your Client API base — see [ADR-0028](../docs/adr/ADR-0028-client-api-deployment-modes.md)) |
 | Expect server-side session IDs from `:3000` | Session id from **Client API**; steps live under `a2a-client/storage/sessions/` |
 | One HTTP call and stop | `POST …/sessions` → `POST …/sessions/{id}/next` → poll `GET …/sessions/{id}/async` (and `GET …/sessions/{id}` when debugging) |
 
