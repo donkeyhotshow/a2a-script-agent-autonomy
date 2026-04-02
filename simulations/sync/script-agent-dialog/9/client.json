@@ -1,0 +1,6 @@
+{
+  "sessionId": "sess_test_dialog",
+  "result": {
+    "message": "А что ещё можно протестировать в этом компоненте? Какие edge cases стоит покрыть?"
+  }
+}

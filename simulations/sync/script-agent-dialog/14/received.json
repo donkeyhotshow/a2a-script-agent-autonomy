@@ -1,0 +1,5 @@
+{
+  "execute": {
+    "message": "## Итоговая сводка сессии\n\n### Выполненные действия:\n\n1. **Автоматическое исправление импорта**\n   - Обнаружена ошибка: `Cannot find module @/components/Missing`\n   - Auto-script `fix-vue-imports` автоматически исправил импорт\n\n2. **Написание тестов**\n   - Создан Example.spec.js\n   - 9 тестов с покрытием 85%\n\n### Файлы:\n- `Example.vue` — исправлен импорт\n- `Example.spec.js` — 9 тестов, 85% coverage\n\nВсё готово к коммиту!"
+  }
+}

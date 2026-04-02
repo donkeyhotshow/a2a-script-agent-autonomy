@@ -1,6 +1,6 @@
-# Step 3 — response (auto run-script gate)
+# Step 3 — response (LLM triggered auto-script)
 
-Mirror of response.json: the assistant comment triggers the auto run-script gate.
+LLM responds to the import error, acknowledges it, and triggers the auto-fix script.
 
 ```json
 {
@@ -43,3 +43,10 @@ Mirror of response.json: the assistant comment triggers the auto run-script gate
   }
 }
 ```
+
+## Explanation
+
+The LLM:
+1. Returns `message` explaining the import error
+2. Sets up workbench with `autoScriptTrigger` metadata
+3. Returns `execute.run-script` to automatically run the fix script

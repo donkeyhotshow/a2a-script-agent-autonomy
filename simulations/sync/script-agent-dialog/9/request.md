@@ -1,6 +1,6 @@
-# Step 5 — request (LLM processes follow-up instruction)
+# Step 9 — request (LLM suggests additional test cases)
 
-This step calls the LLM to process the user's follow-up request after the auto-fix.
+This step calls the LLM to suggest additional test cases and edge cases for the component.
 
 ```json
 {
@@ -8,7 +8,7 @@ This step calls the LLM to process the user's follow-up request after the auto-f
     "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
     "execution": {
       "action": "dialog",
-      "step": "request"
+      "step": "completed"
     },
     "history": [
       {
@@ -22,6 +22,22 @@ This step calls the LLM to process the user's follow-up request after the auto-f
       {
         "role": "assistant",
         "message": "Автоматический скрипт fix-vue-imports применил патч: импорт обратно заменён на '@/components/Missing', можно продолжать."
+      },
+      {
+        "role": "user",
+        "message": "Теперь после исправления нужно добавить тест Example.spec и прогнать vitest."
+      },
+      {
+        "role": "user",
+        "message": "Принял: введём Example.spec и запустим vitest после ручного анализа компонента."
+      },
+      {
+        "role": "user",
+        "message": "Пожалуйста, прогоните vitest на Example.spec и отдайте вывод."
+      },
+      {
+        "role": "assistant",
+        "message": "Vitest run: 1 test, 0 failed."
       }
     ],
     "workbench": {
@@ -41,17 +57,17 @@ This step calls the LLM to process the user's follow-up request after the auto-f
     }
   },
   "result": {
-    "message": "Теперь после исправления нужно добавить тест Example.spec и прогнать vitest."
+    "message": "А что ещё можно протестировать в этом компоненте? Какие edge cases стоит покрыть?"
   }
 }
 ```
 
 ## System Prompt
 
-You are a Vue.js expert assistant. The user wants to add a test after the import was fixed. You should:
-1. Acknowledge the completed fix
-2. Offer to create the test file
-3. Explain what the test should cover
+You are a Vue.js expert and testing specialist. The user has basic tests passing and wants to know what additional test cases would be valuable for the Example.vue component. You should:
+1. Think about common edge cases in Vue components
+2. Suggest specific test scenarios that would improve test coverage
+3. Explain why each suggestion is valuable
 
 ## Response Format
 
@@ -61,14 +77,14 @@ You are a Vue.js expert assistant. The user wants to add a test after the import
     "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
     "execution": {
       "action": "dialog",
-      "step": "request"
+      "step": "test_suggestions"
     },
     "history": [
       // ... history from above
     ]
   },
   "result": {
-    "message": "Сообщение от ассистента"
+    "message": "Сообщение с предложениями по тестированию"
   }
 }
 ```
@@ -80,7 +96,7 @@ You are a Vue.js expert assistant. The user wants to add a test after the import
   "context": {
     "execution": {
       "action": "dialog",
-      "step": "request"
+      "step": "completed"
     },
     "history": [
       {
@@ -98,6 +114,22 @@ You are a Vue.js expert assistant. The user wants to add a test after the import
       {
         "message": "Теперь после исправления нужно добавить тест Example.spec и прогнать vitest.",
         "role": "user"
+      },
+      {
+        "message": "Принял: введём Example.spec и запустим vitest после ручного анализа компонента.",
+        "role": "user"
+      },
+      {
+        "message": "Пожалуйста, прогоните vitest на Example.spec и отдайте вывод.",
+        "role": "user"
+      },
+      {
+        "message": "Vitest run: 1 test, 0 failed.",
+        "role": "assistant"
+      },
+      {
+        "message": "А что ещё можно протестировать в этом компоненте? Какие edge cases стоит покрыть?",
+        "role": "user"
       }
     ],
     "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
@@ -118,7 +150,7 @@ You are a Vue.js expert assistant. The user wants to add a test after the import
     }
   },
   "result": {
-    "message": "Теперь после исправления нужно добавить тест Example.spec и прогнать vitest."
+    "message": "А что ещё можно протестировать в этом компоненте? Какие edge cases стоит покрыть?"
   },
   "workbench": null,
   "ragResults": null
@@ -128,6 +160,8 @@ You are a Vue.js expert assistant. The user wants to add a test after the import
 ## Constraints
 
 - Always respond with valid JSON.
-- The response should include a `message` acknowledging the fix and offering to create the test.
-- You can suggest what the test should cover based on the component.
-- Return a `form` if you need user confirmation before proceeding.
+- The response should include a `message` that:
+  - Lists specific test case suggestions for Vue components
+  - Explains why each edge case is important
+  - Keeps suggestions practical and actionable
+- Focus on common Vue component edge cases: props validation, event handling, conditional rendering, error states, etc.

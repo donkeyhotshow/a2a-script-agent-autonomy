@@ -1,14 +1,9 @@
-# Step 8 — response (LLM analyzes vitest output)
-
-LLM analyzes the vitest test results and provides feedback.
-
-```json
 {
   "context": {
     "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
     "execution": {
       "action": "dialog",
-      "step": "completed"
+      "step": "adding_tests"
     },
     "history": [
       {
@@ -21,7 +16,7 @@ LLM analyzes the vitest test results and provides feedback.
       },
       {
         "role": "assistant",
-        "message": "Автоматический скрипт fix-vue-imports применил патч: импорт обратно заменён на '@/components/Missing', можно продолжать."
+        "message": "Автоматический скрипт fix-vue-imports применил патч."
       },
       {
         "role": "user",
@@ -29,7 +24,7 @@ LLM analyzes the vitest test results and provides feedback.
       },
       {
         "role": "user",
-        "message": "Принял: введём Example.spec и запустим vitest после ручного анализа компонента."
+        "message": "Принял: введём Example.spec и запустим vitest."
       },
       {
         "role": "user",
@@ -38,6 +33,22 @@ LLM analyzes the vitest test results and provides feedback.
       {
         "role": "assistant",
         "message": "Vitest run: 1 test, 0 failed."
+      },
+      {
+        "role": "user",
+        "message": "А что ещё можно протестировать в этом компоненте? Какие edge cases стоит покрыть?"
+      },
+      {
+        "role": "assistant",
+        "message": "Вот что стоит добавить:\n\n1. Props validation\n2. Empty state\n3. Loading state\n4. Error boundary\n5. Event testing\n6. Slot content\n\nХотите, чтобы я добавил эти тесты в Example.spec?"
+      },
+      {
+        "role": "user",
+        "message": "add_tests"
+      },
+      {
+        "role": "assistant",
+        "message": "Отлично! Добавляю все 6 тестов в Example.spec."
       }
     ],
     "workbench": {
@@ -45,7 +56,7 @@ LLM analyzes the vitest test results and provides feedback.
         "autoScriptTrigger": {
           "scriptId": "fix-vue-imports",
           "triggeredBy": "assistant",
-          "errorMessage": "Cannot find module @/components/Missing referenced from Example.vue",
+          "errorMessage": "Cannot find module @/components/Missing",
           "file": "resources/js/components/Example.vue",
           "autoRun": true,
           "filesModified": [
@@ -57,14 +68,12 @@ LLM analyzes the vitest test results and provides feedback.
     }
   },
   "execute": {
-    "message": "Vitest прошёл (1 test, 0 failed); дальше можно продолжать работу над Example.vue."
+    "run-script": {
+      "scriptId": "test",
+      "params": {
+        "scope": "resources/js/components/Example.spec",
+        "coverage": true
+      }
+    }
   }
 }
-```
-
-## Explanation
-
-The LLM:
-1. Returns `message` acknowledging the successful vitest run
-2. Provides encouragement to continue working on the component
-3. Keeps the execution step as "completed" since the dialog task is finished

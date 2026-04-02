@@ -1,0 +1,4 @@
+{
+  "context": { "execution": { "action": "dialog", "step": "summary" } },
+  "result": { "message": "Спасибо, отличная работа! Можешь закоммитить эти изменения?" }
+}

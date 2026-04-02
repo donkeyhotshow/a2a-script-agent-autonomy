@@ -354,6 +354,7 @@ async function recoverProcessingRequests(): Promise<void> {
                  // Validate result structure before updating status
                  typeof result === 'object' && result !== null ? result : {}
              );
+            }
             logger.info('[RequestProcessor] Recovered stuck request', {promiseId, success: result.success});
         }
     }

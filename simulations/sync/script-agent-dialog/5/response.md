@@ -1,6 +1,6 @@
-# Step 5 — response (form for follow-up plan)
+# Step 5 — response (LLM confirms fix and offers to create test)
 
-Mirror of response.json: server renders the follow-up directive form.
+LLM acknowledges the fix completion and offers to create the test.
 
 ```json
 {
@@ -60,3 +60,10 @@ Mirror of response.json: server renders the follow-up directive form.
   }
 }
 ```
+
+## Explanation
+
+The LLM:
+1. Returns `message` acknowledging the successful import fix
+2. Offers to create a test for the component
+3. Returns `execute.form` to let the user confirm the next steps

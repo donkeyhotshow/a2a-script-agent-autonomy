@@ -1,0 +1,6 @@
+{
+  "context": {
+    "execution": { "action": "dialog", "step": "refactoring" }
+  },
+  "result": { "choice": "none" }
+}

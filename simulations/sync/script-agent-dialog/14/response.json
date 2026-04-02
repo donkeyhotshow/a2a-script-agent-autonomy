@@ -1,0 +1,12 @@
+{
+  "context": {
+    "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
+    "execution": { "action": "dialog", "step": "summary" },
+    "history": [
+      { "role": "user", "message": "Спасибо, всё отлично! Можешь показать итоговую сводку?" }
+    ]
+  },
+  "execute": {
+    "message": "## Итоговая сводка сессии\n\n### Выполненные действия:\n\n1. **Автоматическое исправление импорта**\n   - Обнаружена ошибка: `Cannot find module @/components/Missing`\n   - Auto-script `fix-vue-imports` автоматически исправил импорт в Example.vue\n\n2. **Написание тестов**\n   - Создан Example.spec.js\n   - Базовые тесты: рендер, emit events, обработка missing prop\n   - Расширено до 9 тестов с покрытием 85%\n\n3. **Покрытые edge cases:**\n   - Props validation\n   - Empty state\n   - Loading state\n   - Error handling\n   - Event testing\n   - Slot content\n\n### Файлы:\n- `resources/js/components/Example.vue` — исправлен импорт\n- `resources/js/components/Example.spec.js` — 9 тестов, 85% coverage\n\nВсё готово к коммиту!"
+  }
+}

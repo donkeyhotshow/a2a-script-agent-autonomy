@@ -1,6 +1,6 @@
-# Step 8 — response (LLM analyzes vitest output)
+# Step 9 — response (LLM suggests test improvements)
 
-LLM analyzes the vitest test results and provides feedback.
+LLM provides detailed suggestions for additional test cases.
 
 ```json
 {
@@ -8,7 +8,7 @@ LLM analyzes the vitest test results and provides feedback.
     "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
     "execution": {
       "action": "dialog",
-      "step": "completed"
+      "step": "test_suggestions"
     },
     "history": [
       {
@@ -38,6 +38,14 @@ LLM analyzes the vitest test results and provides feedback.
       {
         "role": "assistant",
         "message": "Vitest run: 1 test, 0 failed."
+      },
+      {
+        "role": "user",
+        "message": "А что ещё можно протестировать в этом компоненте? Какие edge cases стоит покрыть?"
+      },
+      {
+        "role": "assistant",
+        "message": "Вот что стоит добавить:\n\n1. **Props validation** — тест с невалидными props (отсутствующие, неверного типа)\n2. **Empty state** — рендер с пустыми данными\n3. **Loading state** — индикатор загрузки\n4. **Error boundary** — обработка ошибок\n5. **Event testing** — проверка emit событий с разными payload\n6. **Slot content** — если есть slots, протестировать их\n\nХотите, чтобы я добавил эти тесты в Example.spec?"
       }
     ],
     "workbench": {
@@ -57,7 +65,27 @@ LLM analyzes the vitest test results and provides feedback.
     }
   },
   "execute": {
-    "message": "Vitest прошёл (1 test, 0 failed); дальше можно продолжать работу над Example.vue."
+    "form": {
+      "title": "Дополнительные тесты",
+      "description": "Хотите добавить предложенные тесты в Example.spec?",
+      "choices": [
+        {
+          "id": "add_tests",
+          "label": "Да, добавь все тесты",
+          "description": "Добавить все 6 предложенных тестов в Example.spec"
+        },
+        {
+          "id": "add_some",
+          "label": "Выборочно",
+          "description": "Выберу конкретные тесты вручную"
+        },
+        {
+          "id": "skip",
+          "label": "Пропустить",
+          "description": "Вернуться к основной задаче"
+        }
+      ]
+    }
   }
 }
 ```
@@ -65,6 +93,6 @@ LLM analyzes the vitest test results and provides feedback.
 ## Explanation
 
 The LLM:
-1. Returns `message` acknowledging the successful vitest run
-2. Provides encouragement to continue working on the component
-3. Keeps the execution step as "completed" since the dialog task is finished
+1. Provides detailed test case suggestions with explanations
+2. Creates a form for the user to choose how to proceed
+3. Sets execution step to "test_suggestions" for tracking
