@@ -92,7 +92,7 @@ These are **not** single numbered ADRs. Use them as **roadmap, audit, and featur
 | Schema debugging (start here) | [`scripts/direct-tests/README.md`](../../scripts/direct-tests/README.md) |
 | Simulation JSON contract | [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) |
 | Gray Room (server interrupt loop) | [`a2a-server/docs/GRAY-ROOM.md`](../../a2a-server/docs/GRAY-ROOM.md) |
-| Black Room (algorithm mode) | [`a2a-server/docs/BLACK-ROOM.md`](../../a2a-server/docs/BLACK-ROOM.md) |
+| Black Room (algorithm mode) | [`ai-integration/docs/BLACK-ROOM.md`](../../ai-integration/docs/BLACK-ROOM.md) |
 | Env matrix | [`docs/ENV-MATRIX.md`](../ENV-MATRIX.md) |
 | Terminology | [`GLOSSARY.md`](../../GLOSSARY.md) |
 | Web UI ↔ session protocol | [`a2a-client/docs/WEB_UI_PROTOCOL.md`](../../a2a-client/docs/WEB_UI_PROTOCOL.md) |

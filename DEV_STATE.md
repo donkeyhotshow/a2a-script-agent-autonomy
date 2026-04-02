@@ -32,7 +32,7 @@ Current system state: **Stack готов** - все сервисы работа�
   - **Historical Context:** Session state passed to Ollama via system prompt
   - **Pre-Spins:** Multiple Gray Room spins before algorithm selection for complex cases
   - **ADR:** [`docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md`](docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md)
-  - **Doc:** [`a2a-server/docs/BLACK-ROOM.md`](a2a-server/docs/BLACK-ROOM.md)
+  - **Doc:** [`ai-integration/docs/BLACK-ROOM.md`](ai-integration/docs/BLACK-ROOM.md) (in ai-integration module)
 
 ## Completed work/tasks (2026-04-03):
 - **Manual LLM Mode (NEW)**: Operator-controlled LLM response submission

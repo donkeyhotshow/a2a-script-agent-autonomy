@@ -11,6 +11,8 @@
 
 **Status:** Proposed per [ADR-0058](../../docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md). Not yet implemented.
 
+**Location:** `ai-integration` proxy layer (this document). Gray Room lives in `a2a-server`.
+
 ## Concept
 
 Black Room solves the **cost/latency problem** of running all Gray Room interrupts through expensive LLM calls. When the task is algorithmic (pattern matching, context gathering, structured edits), it should run on **local infrastructure** using pre-defined or fine-tuned models.
@@ -36,34 +38,44 @@ The `algorithmId` maps to a **known execution pattern** in Black Room — no nat
 ### Data Flow
 
 ```
-┌─────────────┐     ┌─────────────────────┐     ┌─────────────────┐
-│   Client    │────►│  Gray Room Orchestrator│────►│   Prompt Mode   │
-└─────────────┘     │  (gray-room-orchestrator)│     │  (Paid API)     │
+┌─────────────┐     ┌─────────────────────────┐     ┌─────────────────┐
+│   Client    │────►│  Gray Room Orchestrator │────►│   Prompt Mode   │
+└─────────────┘     │    (in a2a-server)        │     │  (Paid API)     │
                     └───────────┬─────────────┘     └─────────────────┘
                                 │
                     algorithm_invoke trigger
                                 │
                                 ▼
-                    ┌─────────────────────┐     ┌─────────────────┐
-                    │   Black Room Entry  │────►│ Algorithm Mode  │
-                    │  (black-room-orchestrator)│  (Local Ollama) │
+                    ┌─────────────────────────┐     ┌─────────────────┐
+                    │   Black Room Entry      │────►│ Algorithm Mode  │
+                    │    (in ai-integration)  │     │  (Local Ollama) │
                     └───────────┬─────────────┘     └─────────────────┘
                                 │
                                 │ result
                                 ▼
-                    ┌─────────────────────┐
-                    │  Return to Client   │
-                    └─────────────────────┘
+                    ┌─────────────────────────┐
+                    │  Return to Client       │
+                    │  (via a2a-server)       │
+                    └─────────────────────────┘
 ```
+
+### Boundary: ai-integration vs a2a-server
+
+| Component | Module | Responsibility |
+|-----------|--------|--------------|
+| **Gray Room Orchestrator** | `a2a-server` | Detects `algorithm_invoke`, routes to Black Room |
+| **Black Room Orchestrator** | `ai-integration` | Executes algorithms on local Ollama |
+| **Algorithm Registry** | `ai-integration` | Stores and serves algorithm definitions |
+| **Ollama Client** | `ai-integration` | Direct communication with Ollama (port 11435) |
 
 ### Components
 
-#### 1. BlackRoomOrchestrator
+#### 1. BlackRoomOrchestrator (in ai-integration)
 
-Entry point for algorithm mode. Mirrors `GrayRoomOrchestrator` interface but specialized for local execution.
+Entry point for algorithm mode. Resides in `ai-integration` as it directly manages Ollama communication.
 
 ```typescript
-// a2a-server/src/services/core/black-room/black-room-orchestrator.ts
+// ai-integration/src/black-room/black-room-orchestrator.ts (proposed)
 class BlackRoomOrchestrator {
   async executeAlgorithm(
     algorithmId: string,
@@ -73,21 +85,21 @@ class BlackRoomOrchestrator {
 }
 ```
 
-#### 2. Algorithm Registry
+#### 2. Algorithm Registry (in ai-integration)
 
 Maps `algorithmId` to execution definition:
 
 ```typescript
-// a2a-server/src/services/core/black-room/algorithm-registry.ts
+// ai-integration/src/black-room/algorithm-registry.ts (proposed)
 interface AlgorithmDefinition {
   id: string;
   version: string;
   model: string;                    // Ollama model name
-  promptTemplate: string;         // Path to template
-  outputSchema: JSONSchema;       // Expected output shape
+  promptTemplate: string;           // Path to template
+  outputSchema: JSONSchema;         // Expected output shape
   contextRequirements: string[];    // Required context slots
   maxTokens: number;
-  temperature: number;            // Usually 0.0 for deterministic
+  temperature: number;              // Usually 0.0 for deterministic
 }
 ```
 
@@ -128,9 +140,23 @@ Black Room maintains **session context** passed to Ollama via system prompt:
 
 ## Interrupt Protocol
 
-### Entry from Gray Room
+### Entry from Gray Room (a2a-server)
 
-When `interrupt.reason === "algorithm_invoke"`:
+When `interrupt.reason === "algorithm_invoke"`, Gray Room calls Black Room via internal API:
+
+```typescript
+// In a2a-server gray-room-orchestrator.ts
+const blackRoomResult = await fetch('http://localhost:11434/api/black-room/execute', {
+  method: 'POST',
+  body: JSON.stringify({
+    algorithmId: interrupt.algorithmId,
+    context: currentContext,
+    data: interrupt.data
+  })
+});
+```
+
+### Request Shape
 
 ```json
 {
@@ -180,7 +206,7 @@ Algorithm result merges into context:
 For complex transformations, Gray Room may run **analysis spins** before algorithm selection:
 
 ```
-Primary invoke (Prompt Mode)
+Primary invoke (Prompt Mode in a2a-server)
     │
     ├──► Pre-Spin 1: context_analysis
     │    Input: task description + available files
@@ -190,25 +216,25 @@ Primary invoke (Prompt Mode)
     │    Input: suggestions + cost constraints
     │    Output: final algorithm_id, context_profile
     │
-    └──► Algorithm invoke → Black Room
+    └──► Algorithm invoke → Black Room (ai-integration)
 ```
 
 Pre-spins are tracked in `context.workbench.slots.grayRoomPreSpins[]`.
 
 ## Configuration
 
-### Environment Variables
+### Environment Variables (in ai-integration)
 
 ```bash
 # Enable Black Room
 A2A_BLACK_ROOM_ENABLED=1
 
-# Ollama connection
+# Ollama connection (ai-integration already connects here)
 A2A_BLACK_ROOM_OLLAMA_URL=http://localhost:11435
 A2A_BLACK_ROOM_DEFAULT_MODEL=llama3.1:8b
 
-# Algorithm registry
-A2A_ALGORITHM_REGISTRY_PATH=./prompts/algorithms/
+# Algorithm registry path (relative to ai-integration/)
+A2A_ALGORITHM_REGISTRY_PATH=./algorithms/
 A2A_ALGORITHM_AUTO_RELOAD=1  # Reload on file change (dev)
 
 # Execution limits
@@ -216,10 +242,10 @@ A2A_BLACK_ROOM_MAX_TURNS=10
 A2A_BLACK_ROOM_TIMEOUT_MS=30000
 ```
 
-### Algorithm Template Structure
+### Algorithm Template Structure (in ai-integration/algorithms/)
 
 ```
-prompts/algorithms/
+ai-integration/algorithms/
 ├── ctx-gather-v2/
 │   ├── algorithm.json          # AlgorithmDefinition
 │   ├── system.md              # System prompt template
@@ -244,8 +270,9 @@ When Black Room fails, escalate to Gray Room Prompt Mode:
 
 ## Comparison: Gray Room vs Black Room
 
-| Aspect | Gray Room (Prompt) | Black Room (Algorithm) |
-|--------|-------------------|------------------------|
+| Aspect | Gray Room (a2a-server) | Black Room (ai-integration) |
+|--------|------------------------|------------------------------|
+| **Location** | `a2a-server` | `ai-integration` |
 | **Input** | Natural language | Structured algorithmId + data |
 | **Model** | Paid API (GPT-4/Claude) | Local Ollama |
 | **Cost** | Per-token | Free (local compute) |
@@ -256,42 +283,54 @@ When Black Room fails, escalate to Gray Room Prompt Mode:
 
 ## Integration with Existing Systems
 
-### Gray Room Orchestrator
+### a2a-server Gray Room Orchestrator
 
 Add `algorithm_invoke` handler to `applyInterrupt()`:
 
 ```typescript
-// In gray-room-orchestrator.ts
+// In a2a-server/src/services/core/request-processor/gray-room-orchestrator.ts
  case 'algorithm_invoke': {
-   const blackRoom = new BlackRoomOrchestrator();
-   const result = await blackRoom.executeAlgorithm(
-     interrupt.algorithmId,
-     context,
-     interrupt.data
-   );
+   // Call Black Room in ai-integration
+   const blackRoomUrl = process.env.AI_INTEGRATION_URL || 'http://localhost:11434';
+   const result = await fetch(`${blackRoomUrl}/api/black-room/execute`, {
+     method: 'POST',
+     headers: { 'Content-Type': 'application/json' },
+     body: JSON.stringify({
+       algorithmId: interrupt.algorithmId,
+       context: ctx,
+       data: interrupt.data
+     })
+   }).then(r => r.json());
+   
    return {
      continueLoop: result.continueLoop,
-     context: mergeAlgorithmResult(context, result)
+     context: mergeAlgorithmResult(ctx, result)
    };
  }
 ```
 
-### AI Integration Proxy
+### ai-integration API Endpoint (proposed)
 
-Black Room may run as dedicated endpoint in `ai-integration`:
+Black Room runs as dedicated endpoint in `ai-integration`:
 
 ```
 POST /api/black-room/execute
-Body: { algorithmId, context, data }
+Content-Type: application/json
+
+Body: { 
+  "algorithmId": "ctx-gather-v2",
+  "context": { ... },
+  "data": { ... }
+}
 ```
 
-Or directly via Ollama client in `a2a-server`.
+Implementation location: `ai-integration/proxy/black_room_handler.py` or `ai-integration/src/black-room/` for Node.js.
 
 ## Observability
 
 ### Trace Events
 
-Black Room adds events to `interruptTrace`:
+Black Room adds events to `interruptTrace` (stored in a2a-server, displayed in client):
 
 ```json
 {
@@ -311,7 +350,7 @@ Black Room adds events to `interruptTrace`:
 }
 ```
 
-### Metrics
+### Metrics (in ai-integration)
 
 - `black_room_executions_total` — Counter by algorithmId
 - `black_room_duration_seconds` — Histogram of execution time
@@ -327,5 +366,6 @@ Black Room adds events to `interruptTrace`:
 ## See Also
 
 - [ADR-0058](../../docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md) — Decision record
-- [GRAY-ROOM.md](./GRAY-ROOM.md) — Current Gray Room implementation
-- [ai-integration/README.md](../../ai-integration/README.md) — Ollama integration
+- [a2a-server/docs/GRAY-ROOM.md](../../a2a-server/docs/GRAY-ROOM.md) — Gray Room implementation (in a2a-server)
+- [ai-integration/README.md](../README.md) — AI Integration module overview
+- [ai-integration/docs/api-reference/PROXY_API.md](./api-reference/PROXY_API.md) — Proxy API details

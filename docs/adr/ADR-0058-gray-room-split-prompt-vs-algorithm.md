@@ -160,7 +160,7 @@ A2A_ALGORITHM_REGISTRY_PATH=./prompts/algorithms/
 
 - [ADR-0029-server-interrupt-loop.md](./ADR-0029-server-interrupt-loop.md) — Original Gray Room
 - [a2a-server/docs/GRAY-ROOM.md](../../a2a-server/docs/GRAY-ROOM.md) — Current implementation
-- [a2a-server/docs/BLACK-ROOM.md](../../a2a-server/docs/BLACK-ROOM.md) — Algorithm mode details (to be created)
+- [ai-integration/docs/BLACK-ROOM.md](../../ai-integration/docs/BLACK-ROOM.md) — Algorithm mode details (in ai-integration)
 
 ## Open Questions
 

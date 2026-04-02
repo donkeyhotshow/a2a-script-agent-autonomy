@@ -52,6 +52,17 @@ curl http://localhost:11435/api/tags
 - Оставляем только активные вопросы/риски, если появятся (например, изменение SLAs внешних провайдеров, обновление конфигов timeout).
 - Уточненный статус: module is stable, health checks green.
 
+### Proposed: Black Room (Algorithm Mode)
+
+**Concept:** Local Ollama execution layer for deterministic algorithmic tasks, complementing Gray Room's Prompt Mode.
+
+- **Location:** This module (`ai-integration`) — manages direct Ollama communication
+- **Trigger:** `interrupt.reason: "algorithm_invoke"` from a2a-server Gray Room
+- **Algorithm IDs:** `ctx-gather-*`, `edit-apply-*`, `pattern-match-*`, `validate-*`
+- **Docs:** [`docs/BLACK-ROOM.md`](docs/BLACK-ROOM.md) — full architecture and protocol
+- **ADR:** [`../docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md`](../docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md)
+- **Status:** Proposed, not yet implemented
+
 
 ---
 
