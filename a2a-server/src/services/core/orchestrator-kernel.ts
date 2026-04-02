@@ -104,6 +104,10 @@ export interface GuardContext {
   synthesis_fail_count?: number;
   /** Done-criteria validation result */
   done_criteria_valid?: boolean;
+  /** ID of the sub-goal that failed, used to trigger GoalPlanner.replan() */
+  goal_failure_id?: string;
+  /** Human-readable reason for the sub-goal failure */
+  goal_failure_reason?: string;
 }
 
 // ── Transition descriptor ────────────────────────────────────────────────────
@@ -309,12 +313,36 @@ export interface TransitionResult {
 
 // ── OrchestratorKernel ────────────────────────────────────────────────────────
 
+/**
+ * Optional hook invoked whenever the kernel enters the SELF_CORRECTING state.
+ * Called with the GuardContext that triggered the transition so callers can
+ * forward goal_failure_id / goal_failure_reason to GoalPlanner.replan().
+ */
+export type SelfCorrectingHook = (ctx: GuardContext) => void;
+
 export class OrchestratorKernel extends EventEmitter {
   private _state: OrchestratorState;
+  private readonly _selfCorrectingHooks: SelfCorrectingHook[] = [];
 
   constructor(initialState: OrchestratorState = 'IDLE') {
     super();
     this._state = initialState;
+  }
+
+  /**
+   * Register a hook that is called synchronously whenever the FSM transitions
+   * into SELF_CORRECTING. Use this to wire GoalPlanner.replan() into the kernel:
+   *
+   * ```ts
+   * kernel.onSelfCorrecting((ctx) => {
+   *   if (ctx.goal_failure_id) {
+   *     goalPlanner.replan(currentPlan, ctx.goal_failure_id, ctx.goal_failure_reason ?? '');
+   *   }
+   * });
+   * ```
+   */
+  onSelfCorrecting(hook: SelfCorrectingHook): void {
+    this._selfCorrectingHooks.push(hook);
   }
 
   get state(): OrchestratorState {
@@ -367,11 +395,13 @@ export class OrchestratorKernel extends EventEmitter {
   /**
    * Apply an already-resolved transition spec. Records the state change and
    * emits an 'ORCHESTRATOR_CYCLE' event on the EventEmitter.
+   * When the new state is SELF_CORRECTING, registered onSelfCorrecting hooks
+   * are invoked synchronously so callers can trigger GoalPlanner.replan().
    */
   private _apply(
     event: OrchestratorEvent,
     spec: TransitionSpec,
-    _guardCtx: GuardContext,
+    guardCtx: GuardContext,
   ): TransitionResult {
     const previousState = this._state;
     this._state = spec.to;
@@ -385,6 +415,13 @@ export class OrchestratorKernel extends EventEmitter {
     };
 
     this.emit('transition', result);
+
+    if (spec.to === 'SELF_CORRECTING') {
+      for (const hook of this._selfCorrectingHooks) {
+        hook(guardCtx);
+      }
+    }
+
     return result;
   }
 
