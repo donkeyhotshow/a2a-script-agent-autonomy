@@ -1,12 +1,11 @@
 import crypto from 'crypto';
-import {config} from '../config/index.js';
 
 const ALG = 'aes-256-gcm';
 const IV_LEN = 16;
 const AUTH_TAG_LEN = 16;
 
 function getEncryptionKey(): Buffer {
-    const key = config.encryptionKey || config.jwtSecret;
+    const key = process.env.ENCRYPTION_KEY || process.env.JWT_SECRET || 'default-dev-key-32-chars-min!';
     return crypto.createHash('sha256').update(key).digest();
 }
 
@@ -61,7 +60,7 @@ export function hashSha256(text: string): string {
  * Generate HMAC
  */
 export function generateHmac(data: string, secret?: string): string {
-    const key = secret ?? config.jwtSecret;
+    const key = secret ?? process.env.JWT_SECRET ?? 'default-dev-key-32-chars-min!';
     return crypto.createHmac('sha256', key).update(data, 'utf8').digest('hex');
 }
 

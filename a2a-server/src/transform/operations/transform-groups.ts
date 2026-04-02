@@ -88,12 +88,15 @@ export async function applyDrop(
   if (parts.length === 0) return;
 
   let obj: unknown = context.$out;
+  const lastPart = parts[parts.length - 1];
   for (let i = 0; i < parts.length - 1; i++) {
     if (!obj || typeof obj !== 'object') return;
-    obj = (obj as Record<string, unknown>)[parts[i]];
+    const part = parts[i];
+    if (part === undefined) return;
+    obj = (obj as Record<string, unknown>)[part];
   }
-  if (obj && typeof obj === 'object') {
-    delete (obj as Record<string, unknown>)[parts[parts.length - 1]];
+  if (lastPart !== undefined && obj && typeof obj === 'object') {
+    delete (obj as Record<string, unknown>)[lastPart];
   }
 }
 
@@ -460,13 +463,13 @@ export async function applySwitch(
     // We need to reconstruct it
     const opValue = matchedCase.op;
     if (opValue) {
-      const nestedOperation = matchedCase as TransformStep;
+      const nestedOperation = matchedCase as unknown as TransformStep;
       await applyOperationFromGroups(nestedOperation, context);
     }
   } else if (defaultCase) {
     const defaultOp = defaultCase.op;
     if (defaultOp) {
-      const defaultOperation = defaultCase as TransformStep;
+      const defaultOperation = defaultCase as unknown as TransformStep;
       await applyOperationFromGroups(defaultOperation, context);
     }
   }

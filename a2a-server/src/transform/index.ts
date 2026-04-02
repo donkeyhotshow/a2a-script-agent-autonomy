@@ -30,7 +30,7 @@ export {
     mergeInterruptTraceIntoContext,
     mergeGrayRoomSlotIntoContext,
 } from './interrupt-trace-contract.js';
-export * from './jsonpath.js';
+export {query, resolveTemplates} from './jsonpath.js';
 export * from './operations.js';
 export * from './pipeline.js';
 export {

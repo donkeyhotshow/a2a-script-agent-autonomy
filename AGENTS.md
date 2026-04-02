@@ -105,7 +105,7 @@ Two surfaces: **IDE / Cursor agent** (edits repo, runs tools) vs **Client API se
 | Wrong router beat | Read `GET …/sessions/{id}`; send **`message`** / `task` as text when there are **no** `form.choices`; send **`choice`** / `task` as **choice `id`** when choices exist. | Scripted rule: after each response, **inspect** `execute.form`; branch body shape before next `/next`. |
 | Stopped after `/next` ack | N/A | Poll **`GET …/async`** until final; **`GET …/sessions/{id}`** if unsure. |
 | Raw `invoke` only | Prefer Client API for session persistence; use server direct only as **documented** workaround. | Default path: **`POST /sessions`** → `/next` → `/async`, not `POST /api/v1/invoke` alone. |
-| Stack / promise pending | Diagnose ports (`AGENTS.md` Debugging), retry with backoff; log env (Ollama, AI hub). If Ollama is **actively generating**, do **not** restart the stack — [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) → *Ollama is generating — pause other work*. | Same; do not declare failure on first `pending`. After you confirm the model is working on the request, avoid parallel load / restarts until `async` settles. |
+| Stack / promise pending | Diagnose ports (`AGENTS.md` Debugging), retry with backoff; log env (Ollama, AI hub). If Ollama is **actively generating**, do **not** restart the stack — [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) → *Ollama is generating — pause other work*. If Ollama is **idle** but status stays `processing`, treat as **stuck**. | Same; do not declare failure on first `pending`. After you confirm the model is working on the request, avoid parallel load / restarts until `async` settles. If Ollama is **idle** but status stays `processing`, treat as **stuck** — same section. |
 | 401 / 400 (auth, `ENCRYPTION_KEY`) | Fix `.env` (32-char key, `JWT_SECRET`); retry. | Same. |
 | “Need more context” loop-killer | State assumptions, proceed, verify; don’t halt on questions unless the user must decide. | Seed **`mode: "agent"`** + concrete **`task`** on create when allowed. |
 | No definition of done | Add tests, checklist, or sim run before declaring complete. | Use [`a2a-client/docs/api-testing-plan.md`](a2a-client/docs/api-testing-plan.md) for manual Client API depth. |
@@ -306,7 +306,7 @@ cd a2a-client && npm test
 | 404 on `/invoke` | Use `/api/v1/invoke` |
 | 400 on `/steps` | Check execute/messages/context fields |
 | 401 Unauthorized | Set JWT_SECRET (32+ chars); use SKIP_AUTH=1 (dev) |
-| Promise stays "pending" | Check Ollama, AI Hub, LLM response time (2 min). If status is `processing`, **first** confirm Ollama (or proxy) is **actively generating**; **then** pause other work (no stack restart, no parallel load on the same Ollama) until the call completes — [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) → *Ollama is generating — pause other work*. |
+| Promise stays "pending" | Check Ollama, AI Hub, LLM response time (2 min). If status is `processing`, **first** confirm Ollama (or proxy) is **actively generating**; **then** pause other work (no stack restart, no parallel load on the same Ollama, no extra `/next` spam) until the call completes — [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) → *Ollama is generating — pause other work*. If Ollama is **idle** but status stays `processing`, treat as **stuck**. |
 | Session not found | Verify ID format `sess_{timestamp}_{random}` |
 | LLM not responding | Check Ollama models: `curl http://localhost:11435/api/tags` |
 

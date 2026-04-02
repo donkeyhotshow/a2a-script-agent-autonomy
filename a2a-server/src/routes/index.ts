@@ -5,6 +5,9 @@ import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {invoke} from '../services/utils/invoke.service.js';
 import requestsRouter from './requests.routes.js';
+import type { FileBlock } from '../types/index.js';
+
+const ajv = new (Ajv as any)({strict: false, allErrors: true, validateFormats: false});
 
 const router = Router();
 
@@ -18,7 +21,6 @@ const SERVER_INVOKE_REQUEST_SCHEMA_PATH = join(
     '../../../docs/new-request-flow/json-schemas/server-invoke-request.schema.json'
 );
 
-const ajv = new Ajv({strict: false, allErrors: true, validateFormats: false});
 let validateInvokeRequestBody: ((data: unknown) => boolean) | null = null;
 try {
     const schema = JSON.parse(readFileSync(SERVER_INVOKE_REQUEST_SCHEMA_PATH, 'utf-8'));
@@ -79,12 +81,12 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
             task: body.task,
             context: body.context,
             message: body.message,
-            code_blocks: body.code_blocks as { path: string; content?: string }[] | undefined,
+            code_blocks: body.code_blocks as FileBlock[] | undefined,
             action: body.action,
             selectedAction: body.selectedAction,
             stepId: body.stepId,
             stepResult: body.stepResult,
-            result: body.result,
+            result: body.result as Record<string, unknown> | undefined,
             sync: body.sync,
         });
 

@@ -1,35 +1,55 @@
 {
-    "name":  "a2a-coding-orchestrator",
-    "private":  true,
-    "type":  "module",
-    "devRoots":  [
+    "name": "a2a-coding-orchestrator",
+    "private": true,
+    "type": "module",
+    "devRoots": [
         "a2a-client",
         "a2a-server",
         "ai-integration",
         "a2a-client/web"
     ],
-    "scripts":  {
-                    "dev":  "start-all.bat",
-                    "sim:lint":  "npm --prefix a2a-server run sim:lint --",
-                    "sim:lint:all":  "npm --prefix a2a-server run sim:lint:all --",
-                    "sim:validate":  "npm --prefix a2a-server run sim:validate --",
-                    "sim:quality":  "npm --prefix a2a-server run sim:quality",
-                    "sim:contract-report":  "npm --prefix a2a-server run sim:contract-report --",
-                    "gate:cleanup":  "npm --prefix a2a-server run gate:cleanup"
-                },
-    "devDependencies":  {
-                            "@types/node":  "^20.11.0",
-                            "concurrently":  "^9.1.0",
-                            "dotenv":  "^17.3.1",
-                            "eventsource":  "^2.0.0",
-                            "js-yaml":  "^4.1.0",
-                            "node-fetch":  "^3.3.2",
-                            "tsx":  "^4.19.0",
-                            "typescript":  "^5.3.3",
-                            "vitest":  "^4.0.18"
-                        },
-    "dependencies":  {
-                          "playwright":  "^1.58.2",
-                          "zod":  "^3.22.4"
-                      }
+    "scripts": {
+        "dev": "start-all.bat",
+        "sim:lint": "npm --prefix a2a-server run sim:lint --",
+        "sim:lint:all": "npm --prefix a2a-server run sim:lint:all --",
+        "sim:validate": "npm --prefix a2a-server run sim:validate --",
+        "sim:quality": "npm --prefix a2a-server run sim:quality",
+        "sim:contract-report": "npm --prefix a2a-server run sim:contract-report --",
+        "gate:cleanup": "npm --prefix a2a-server run gate:cleanup",
+        "agent-runner": "node scripts/agent-dialog-runner.mjs"
+    },
+    "devDependencies": {
+        "@types/node": "^20.11.0",
+        "concurrently": "^9.1.0",
+        "dotenv": "^17.3.1",
+        "eventsource": "^2.0.0",
+        "js-yaml": "^4.1.0",
+        "node-fetch": "^3.3.2",
+        "tsx": "^4.19.0",
+        "typescript": "^5.3.3",
+        "vitest": "^4.0.18"
+    },
+    "dependencies": {
+        "axios": "^1.14.0",
+        "playwright": "^1.58.2",
+        "zod": "^3.22.4"
+    },
+    "version": "1.0.0",
+    "description": "**Status: 2026-03-27 (Production Readiness Phase)**",
+    "main": "monitor-and-process-tasks.js",
+    "directories": {
+        "doc": "docs",
+        "test": "test"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://aleon10: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@github.com/aleon10/a2a-script-agent.git"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "ISC",
+    "bugs": {
+        "url": "https://github.com/aleon10/a2a-script-agent/issues"
+    },
+    "homepage": "https://github.com/aleon10/a2a-script-agent#readme"
 }

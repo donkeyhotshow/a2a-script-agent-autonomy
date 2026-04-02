@@ -1,0 +1,7 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "message": "При запуске dev-сервера вылетает ошибка Cannot find module @/components/Missing из resources/js/components/Example.vue."
+  }
+}

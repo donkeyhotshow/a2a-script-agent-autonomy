@@ -72,10 +72,10 @@ Use this as a **literal** loop for curl or scripts so a low-context prompt does 
 
 When **`GET …/async`** keeps `asyncPending` (or **`GET …/api/v1/requests/{promiseId}/result`** returns `"status":"processing"`), the chain is often **waiting on Ollama** (via ai-integration). **Do not** immediately restart the stack or assume a bug.
 
-1. **Verify** that a generation is actually in progress: Ollama process logs, **`curl http://localhost:11435/api/ps`** (shows running models when supported), host CPU/GPU activity, or ai-integration / proxy logs (e.g. under `ai-integration/proxy_logs/` when enabled).
-2. **After** you are satisfied the model is working on the request, **stop other disruptive work** until this call finishes or you explicitly abandon it: no **`kill-all` / `start-all`**, no parallel heavy session or load tests on the **same** Ollama instance, no piling extra `/next` turns on the same session unless you intend to cancel/replace work.
+1. **Confirm** a run is in progress: Ollama logs, **`GET http://localhost:11435/api/ps`** (running models when supported), host CPU/GPU activity, ai-integration / proxy logs (e.g. under `ai-integration/proxy_logs/` when enabled).
+2. **After** that, **stop disruptive actions** until the call finishes: no **`kill-all` / `start-all`**, no extra heavy parallel sessions on the **same** Ollama, no extra `/next` spam on the same session unless you mean to replace or cancel work.
 
-If Ollama is **idle** (no active inference) but status stays `processing` for a long time, treat that as a **stuck** pipeline and debug per root **`AGENTS.md`** → *Common Issues* and *Debugging*.
+If Ollama is **idle** but status stays `processing`, treat it as a **stuck** pipeline — debug per root **`AGENTS.md`** → *Common Issues* and *Debugging*.
 
 Narrative table of common “why iteration stopped” traps and mitigations (IDE vs driver): root **`AGENTS.md`** → *Why iteration stops (misreads and mitigations)*.
 

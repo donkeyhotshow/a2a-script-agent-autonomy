@@ -1,0 +1,7 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "message": "Теперь после исправления нужно добавить тест Example.spec и прогнать vitest."
+  }
+}

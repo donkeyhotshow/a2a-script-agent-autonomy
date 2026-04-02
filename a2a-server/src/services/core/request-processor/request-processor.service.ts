@@ -26,8 +26,9 @@ import { LLM_PIPELINE_ACTIONS, type LlmPipelineAction } from '../../../config/ro
 
 export { LLM_PIPELINE_ACTIONS, type LlmPipelineAction };
 
-const DEFAULT_INTERVAL_MS = 5000;
+const DEFAULT_INTERVAL_MS = parseInt(process.env.REQUEST_PROCESSOR_INTERVAL_MS || '5000', 10);
 let timerId: ReturnType<typeof setInterval> | null = null;
+let isTicking = false;
 
 // Register processors — `dialog` handles all LLM pipeline actions (dialog, agent, task-decomposition, …); see determineRequestType + GR-S-12.
 processorRegistry.register('action', actionRequestProcessor);
@@ -38,9 +39,16 @@ processorRegistry.register('dialog', dialogRequestProcessor);
 /**
  * Determine the request type based on context
  */
-function determineRequestType(context: Record<string, unknown>): RequestType {
-    const exec = context['execution'] as Record<string, unknown> | undefined;
-    const result = context['result'] as Record<string, unknown> | undefined;
+    function determineRequestType(context: Record<string, unknown>): RequestType {
+    // Safely get execution and result, guarding against null values
+    const execRaw = context['execution'];
+    const resultRaw = context['result'];
+    const exec = (execRaw !== null && execRaw !== undefined && typeof execRaw === 'object') 
+        ? execRaw as Record<string, unknown> 
+        : undefined;
+    const result = (resultRaw !== null && resultRaw !== undefined && typeof resultRaw === 'object') 
+        ? resultRaw as Record<string, unknown> 
+        : undefined;
     const transformSchema = context['transformSchema'] as string | undefined;
     const action = (exec?.action ?? context['action']) as string | undefined;
     const task = context['task'] as string | undefined;
@@ -80,7 +88,7 @@ function determineRequestType(context: Record<string, unknown>): RequestType {
         return 'action';
     }
 
-    // Default to action processing for simulations
+    // Default to action processing for non-simulation requests
     return 'action';
 }
 
@@ -122,7 +130,7 @@ async function executePendingRow(request: RequestResult): Promise<ProcessResult>
             promiseId,
             context,
             codeBlocks,
-            message
+            message: message ?? undefined
         };
 
         const result = await routeRequest(requestContext);
@@ -154,20 +162,22 @@ async function executePendingRow(request: RequestResult): Promise<ProcessResult>
             });
 
             // Create new request for neuron processor with LLM
+            // Create a clean context to prevent property leakage
             const followUpContext: Record<string, unknown> = {
-                ...context,
+                // Copy over safe properties
+                ...(context['execution'] ? { execution: context['execution'] } : {}),
+                ...(context['task'] ? { task: context['task'] } : {}),
+                ...(context['message'] ? { message: context['message'] } : {}),
+                ...(context['history'] ? { history: context['history'] } : {}),
+                ...(context['workbench'] ? { workbench: context['workbench'] } : {}),
+                ...(context['session_id'] ? { session_id: context['session_id'] } : {}),
+                ...(context['operationHistory'] ? { operationHistory: context['operationHistory'] } : {}),
+                // Set required properties for AI-action processing
                 action: result.aiActions.action,
                 ai_action: true,
                 previousChoice: result.selection,
                 task: message ?? (context['task'] as string | undefined) ?? result.aiActions.action,
             };
-            // Prevent form re-entry loop: follow-up LLM request must not carry stale choice/form payload.
-            delete followUpContext['result'];
-            delete followUpContext['choice_id'];
-            delete followUpContext['selected_choice'];
-            delete followUpContext['form_id'];
-            delete followUpContext['form_data'];
-            delete followUpContext['form_submission'];
 
             const followUpExecution = (followUpContext['execution'] as Record<string, unknown> | undefined) ?? {};
             followUpContext['execution'] = {
@@ -213,11 +223,12 @@ async function executePendingRow(request: RequestResult): Promise<ProcessResult>
                 }
             }
         }
-        await requestService.updateStatus(
-            promiseId,
-            result.outcome === 'failed' ? 'failed' : 'completed',
-            result
-        );
+            await requestService.updateStatus(
+                promiseId,
+                result.outcome === 'failed' ? 'failed' : 'completed',
+                // Validate result structure before updating status
+                typeof result === 'object' && result !== null ? result : {}
+            );
         return result;
 
     } catch (err) {
@@ -260,6 +271,11 @@ export async function processRequestByPromiseId(promiseId: string): Promise<Proc
  * Timer tick for background processing
  */
 async function tick(): Promise<void> {
+    // Prevent concurrent ticks
+    if (isTicking) {
+        return;
+    }
+    isTicking = true;
     const startTime = Date.now();
     try {
         const result = await processOneRequest();
@@ -286,6 +302,8 @@ async function tick(): Promise<void> {
         const latency = Date.now() - startTime;
         requestProcessorLatencyHistogram.observe({ outcome: 'error' }, latency);
         logger.error('[RequestProcessor] Tick error', {error: String(err)});
+    } finally {
+        isTicking = false;
     }
 }
 
@@ -296,31 +314,47 @@ async function recoverProcessingRequests(): Promise<void> {
     const base = (process.env.AI_HUB_URL || 'http://localhost:11434').replace(/\/$/, '');
     const ids = await requestService.listProcessing();
     for (const promiseId of ids) {
+        // Validate promiseId format (should be a non-empty string)
+        if (!promiseId || typeof promiseId !== 'string' || promiseId.trim() === '') {
+            logger.warn('[RequestProcessor] Skipping invalid promiseId during recovery', {promiseId});
+            continue;
+        }
         const req = await requestService.getResult(promiseId);
         if (!req) continue;
         let llmPromiseId = (req.context as Record<string, unknown>)?.llmPromiseId as string | undefined;
         if (!llmPromiseId) {
             try {
-                const lookupRes = await fetch(`${base}/promise/by-server-request/${encodeURIComponent(promiseId)}`);
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000); // 5 second timeout
+                const lookupRes = await fetch(`${base}/promise/by-server-request/${encodeURIComponent(promiseId)}`, {
+                    signal: controller.signal
+                });
+                clearTimeout(timeoutId);
                 if (lookupRes.ok) {
                     const data = (await lookupRes.json()) as {promiseId?: string};
                     llmPromiseId = data?.promiseId;
                 }
             } catch (err) {
-                logger.error('Failed to fetch session during recovery:', err);
+                // Ignore timeout errors as they're expected when service is unavailable
+                if (err.name !== 'AbortError') {
+                    logger.error('Failed to fetch session during recovery:', err);
+                }
                 continue;
             }
         }
+        
         if (!llmPromiseId) continue;
         const result = await recoverDialogFromLlmPromise(promiseId, req.context, llmPromiseId);
         if (result) {
-            if (result.outcome === 'failed') {
-                const errMsg = (result as ProcessResult & {error?: string}).error ?? 'Recovery failed';
+            if (!result.success) {
+                const errMsg = result.error ?? 'Recovery failed';
                 await requestService.updateStatus(promiseId, 'failed', undefined, { message: errMsg });
             } else {
-                await requestService.updateStatus(promiseId, 'completed', result as unknown as Record<string, unknown>);
-            }
-            logger.info('[RequestProcessor] Recovered stuck request', {promiseId, outcome: result.outcome});
+                 await requestService.updateStatus(promiseId, 'completed', 
+                 // Validate result structure before updating status
+                 typeof result === 'object' && result !== null ? result : {}
+             );
+            logger.info('[RequestProcessor] Recovered stuck request', {promiseId, success: result.success});
         }
     }
 }
@@ -338,7 +372,6 @@ export function startRequestProcessor(intervalMs: number = DEFAULT_INTERVAL_MS):
         });
     }, intervalMs);
 }
-
 /**
  * Stop the request processor
  */

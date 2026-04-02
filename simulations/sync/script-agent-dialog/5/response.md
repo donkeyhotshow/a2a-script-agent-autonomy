@@ -1,0 +1,62 @@
+# Step 5 — response (form for follow-up plan)
+
+Mirror of response.json: server renders the follow-up directive form.
+
+```json
+{
+  "context": {
+    "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
+    "execution": {
+      "action": "dialog",
+      "step": "follow_up_directive"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "При запуске dev-сервера вылетает ошибка Cannot find module @/components/Missing из resources/js/components/Example.vue."
+      },
+      {
+        "role": "assistant",
+        "message": "Ошибка импорта: Vue не может найти @/components/Missing в resources/js/components/Example.vue."
+      },
+      {
+        "role": "assistant",
+        "message": "Автоматический скрипт fix-vue-imports применил патч: импорт обратно заменён на '@/components/Missing', можно продолжать."
+      },
+      {
+        "role": "user",
+        "message": "Теперь после исправления нужно добавить тест Example.spec и прогнать vitest."
+      }
+    ],
+    "workbench": {
+      "sections": {
+        "autoScriptTrigger": {
+          "scriptId": "fix-vue-imports",
+          "triggeredBy": "assistant",
+          "errorMessage": "Cannot find module @/components/Missing referenced from Example.vue",
+          "file": "resources/js/components/Example.vue",
+          "autoRun": true,
+          "filesModified": [
+            "resources/js/components/Example.vue"
+          ],
+          "lastOutput": "Replaced './Missing' with '@/components/Missing' in Example.vue."
+        }
+      }
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Plan follow-up work",
+      "description": "Ваша новая инструкция: Example.spec + vitest. Напишите, как продолжить.",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Message",
+          "required": true
+        }
+      ]
+    }
+  }
+}
+```

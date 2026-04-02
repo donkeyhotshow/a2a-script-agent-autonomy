@@ -1,0 +1,7 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "message": "Принял: введём Example.spec и запустим vitest после ручного анализа компонента."
+  }
+}

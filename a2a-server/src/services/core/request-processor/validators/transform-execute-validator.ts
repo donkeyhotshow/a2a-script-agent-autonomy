@@ -43,7 +43,7 @@ export function validateDialogExecuteShape(execute: ProcessResult['execute'] | u
         return issues;
     }
     const toolKeys = [...SINGLE_TOOL_EXECUTE_KEYS];
-    const activeToolKeys = keys.filter((k) => toolKeys.includes(k));
+    const activeToolKeys = keys.filter((k) => toolKeys.includes(k as typeof toolKeys[number]));
     const hasForm = typeof ex['form'] === 'object' && ex['form'] !== null;
     const hasMessage = typeof ex['message'] === 'string' && ex['message'].trim().length > 0;
     const actionKeys = activeToolKeys.length + (hasForm ? 1 : 0);
@@ -228,7 +228,7 @@ export function validateAgentExecuteShape(execute: ProcessResult['execute'] | un
         return issues;
     }
     const toolKeys = [...SINGLE_TOOL_EXECUTE_KEYS];
-    const activeToolKeys = keys.filter((k) => toolKeys.includes(k));
+    const activeToolKeys = keys.filter((k) => toolKeys.includes(k as typeof toolKeys[number]));
     const hasForm = typeof ex['form'] === 'object' && ex['form'] !== null;
     const hasMessage = typeof ex['message'] === 'string' && ex['message'].trim().length > 0;
     const actionKeys = activeToolKeys.length + (hasForm ? 1 : 0);

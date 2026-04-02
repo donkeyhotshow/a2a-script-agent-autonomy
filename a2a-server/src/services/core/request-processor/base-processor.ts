@@ -21,6 +21,10 @@ export interface BaseProcessorConfig {
     retryDelay: number;
     timeout: number;
     enableValidation: boolean;
+    simulationsBasePath?: string;
+    promptsTransformsPath?: string;
+    enableReplay?: boolean;
+    defaultSimulation?: string | null;
 }
 
 /**
@@ -43,7 +47,11 @@ export type RequestType = 'action' | 'simulation' | 'form' | 'dialog' | 'neuron'
  */
 export abstract class BaseRequestProcessor {
     public config: BaseProcessorConfig;
-    protected processorName: string;
+    public processorName: string;
+
+    public getProcessorName(): string {
+        return this.processorName;
+    }
 
     constructor(processorName: string, config: Partial<BaseProcessorConfig> = {}) {
         this.processorName = processorName;
@@ -241,7 +249,9 @@ export abstract class BaseRequestProcessor {
      */
     protected isStepResult(ctx: Record<string, unknown>): boolean {
         const actionType = this.getActionType(ctx);
-        return actionType === 'step_result' || (ctx['continue'] && ctx['step_result']);
+        const hasContinue = Boolean(ctx['continue']);
+        const hasStepResult = Boolean(ctx['step_result']);
+        return actionType === 'step_result' || (hasContinue && hasStepResult);
     }
 
     /**

@@ -1,0 +1,41 @@
+# Step 1 — response (router form)
+
+Mirror of response.json: the router form lists the soft dialog choice and the scripted fallback.
+
+```json
+{
+  "context": {
+    "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
+    "workbench": {
+      "sections": {}
+    },
+    "execution": {
+      "action": "task",
+      "step": "router"
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Choose pipeline",
+      "description": "script-agent-dialog: dialog that auto-applies fix-vue-imports when the assistant flags import errors.",
+      "choices": [
+        {
+          "id": "dialog",
+          "label": "AI dialog (script-aware)",
+          "description": "Natural conversation that detects import errors and lets the script intervene automatically."
+        },
+        {
+          "id": "agent",
+          "label": "Agent with tools",
+          "description": "Classic agent loop (search, read file, apply edits) with script fallback."
+        },
+        {
+          "id": "fix-vue-imports",
+          "label": "Run fix-vue-imports script",
+          "description": "Invoke the Vue import fixer directly, the same script that runs automatically when the dialog spots missing imports."
+        }
+      ]
+    }
+  }
+}
+```

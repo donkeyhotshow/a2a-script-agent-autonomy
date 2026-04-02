@@ -1,0 +1,60 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "dialog",
+        "step": "auto_script_gate"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.context.history",
+      "value": [
+        {
+          "role": "user",
+          "message": "При запуске dev-сервера вылетает ошибка Cannot find module @/components/Missing из resources/js/components/Example.vue."
+        },
+        {
+          "role": "assistant",
+          "message": "Ошибка импорта: Vue не может найти @/components/Missing в resources/js/components/Example.vue."
+        }
+      ]
+    },
+    {
+      "op": "set",
+      "path": "$.context.workbench",
+      "value": {
+        "sections": {
+          "autoScriptTrigger": {
+            "scriptId": "fix-vue-imports",
+            "triggeredBy": "assistant",
+            "errorMessage": "Cannot find module @/components/Missing referenced from Example.vue",
+            "file": "resources/js/components/Example.vue",
+            "autoRun": true
+          }
+        }
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "run-script": {
+          "scriptId": "fix-vue-imports",
+          "params": {
+            "scope": "resources/js/components/Example.vue",
+            "reason": "assistant reported import error"
+          }
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "dialog",
+        "step": "request"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.context.workbench",
+      "value": {
+        "sections": {}
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "form": {
+          "title": "Message",
+          "description": "Describe blockers; the script-aware dialog watches for import errors.",
+          "input": [
+            {
+              "name": "message",
+              "type": "text",
+              "label": "Message",
+              "required": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

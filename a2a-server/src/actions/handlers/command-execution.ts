@@ -186,9 +186,10 @@ export function validateCommand(input: ExecuteCommandInput): CommandValidationRe
     }
 
     // Check if command is in whitelist
-    const baseCommand = input.command.split(' ')[0].toLowerCase();
+    const commandParts = input.command.split(' ');
+    const baseCommand = commandParts[0]?.toLowerCase();
     
-    if (!ALLOWED_COMMANDS.includes(baseCommand)) {
+    if (!baseCommand || !ALLOWED_COMMANDS.includes(baseCommand)) {
         return {
             valid: false,
             error: `Command '${baseCommand}' is not in the allowed list`,

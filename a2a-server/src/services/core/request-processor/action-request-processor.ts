@@ -21,6 +21,9 @@ import {buildRouterForm} from '../../../config/router-static.js';
 export interface ActionProcessorConfig {
     maxRetries: number;
     enableStepTracking: boolean;
+    retryDelay: number;
+    timeout: number;
+    enableValidation: boolean;
 }
 
 /**
@@ -32,6 +35,9 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         super('ActionRequestProcessor', config);
         this.config = {
             maxRetries: 3,
+            retryDelay: 1000,
+            timeout: 30000,
+            enableValidation: true,
             enableStepTracking: true,
             ...config
         };

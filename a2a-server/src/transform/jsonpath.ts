@@ -28,11 +28,11 @@ export function query<T = unknown>(obj: unknown, path: string): T | undefined {
   
   const results = JSONPath({
     path: jsonPath,
-    json: obj,
+    json: obj as object,
     resultType: 'all'
-  });
+  }) as unknown as Array<{ value: unknown }>;
   
-  if (results.length === 0) {
+  if (!results || results.length === 0) {
     return undefined;
   }
   
@@ -85,6 +85,10 @@ export function set(obj: Record<string, unknown>, path: string, value: unknown):
     const part = parts[i];
     const nextPart = parts[i + 1];
     
+    if (!part) {
+      break;
+    }
+    
     if (current === undefined || current === null) {
       break;
     }
@@ -98,7 +102,7 @@ export function set(obj: Record<string, unknown>, path: string, value: unknown):
     // Create intermediate objects/arrays as needed
     if (!(part in currentObj)) {
       // Check if next part looks like an array index
-      if (/^\d+$/.test(nextPart)) {
+      if (nextPart && /^\d+$/.test(nextPart)) {
         currentObj[part] = [];
       } else {
         currentObj[part] = {};
@@ -110,9 +114,9 @@ export function set(obj: Record<string, unknown>, path: string, value: unknown):
   
   // Set the final value
   const lastPart = parts[parts.length - 1];
-  if (current !== undefined && current !== null && typeof current === 'object') {
+  if (lastPart && current !== undefined && current !== null && typeof current === 'object') {
     (current as Record<string, unknown>)[lastPart] = value;
-  } else if (parts.length === 1) {
+  } else if (parts.length === 1 && lastPart) {
     obj[lastPart] = value;
   }
   
@@ -208,8 +212,10 @@ export function resolveTemplates(
       parts.push(str.slice(lastIndex, match.index));
       // Add resolved value
       const path = match[1];
-      const resolved = query(context, path);
-      parts.push(resolved !== undefined ? String(resolved) : '');
+      if (path) {
+        const resolved = query(context, path);
+        parts.push(resolved !== undefined ? String(resolved) : '');
+      }
       lastIndex = match.index + match[0].length;
     }
     

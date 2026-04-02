@@ -17,10 +17,15 @@ Current system state: **Stack готов** - все сервисы работа�
 - Orchestrator metrics: требует периодического обновления
 
 ## Completed work/tasks (2026-04-02):
+- Doc: operator methodology — **Ollama busy / do not abort inference**: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) (*Ollama is generating — pause other work*), [`AGENTS.md`](AGENTS.md) (Debugging comment, Common Issues *Promise stays pending*, *Why iteration stops* table + stuck pipeline), [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md) (Windows *Ollama busy*), [`docs/agent-iteration-traps.md`](docs/agent-iteration-traps.md) §3 trap 7 + Quick links; cross-links relative per file
 - Doc: router alignment — `simulations/sync/agent/description.md` (step 1 vs `router-static-choices.json`); `AGENTS.md` router note + `tasks/sync-documentation-and-router-drift.md` status line
 - Doc: S11 — `sync/dialog/1` request/response `.md` mirrors; `sync/script/description.md` sim:check-md note; refreshed `tasks/sync-llm-snapshot-coverage.md` + `work/STATE.md` S11; `sync/dialog/description.md` step-1 table accuracy
 - S11: `sync/script` steps 2–3, 4/response, 5–10 — added `request.md`/`response.md` JSON fences ( `cd a2a-server && npm run sim:check-md -- --fail` ); `npm run sim:quality` clean
 - S11/S12: `sync/dialog/2` request.md aligned with `dialog/1`/`script` headers; `dialog/3–4` top matter; `description.md` tree path `simulations/sync/dialog/` + notes for steps 1–2 vs 3–4; `agent-workspace-tools/description.md` — `dialog` row points at `sync/dialog/`; `npm run sim:check-md -- --fail` clean
+- S11: `sync/dialog/2/response.md` — **fixed**: was invalid one-line array; now full JSON fence mirroring `response.json` (dialog `request` step); `sim:check-md -- --path ../simulations/sync/dialog/2` clean
+- S11: `sync/invoke-form-confirmation/1` + `sync/invoke-simulation-record/1` — added `request.md` / `response.md` mirrors (`sim:check-md` clean per step)
+- S11: `sync/orchestrator-dialog/1`–`4` — `request.md` / `response.md` mirrors; `sim:check-md -- --path ../simulations/sync/orchestrator-dialog` clean
+- S11: `sync/resilience-contract/1`–`6` — `request.md` / `response.md` mirrors; `sim:check-md -- --path ../simulations/sync/resilience-contract` clean
 
 ## Completed work/tasks (2026-04-01):
 - Analyze test failures: Classified 41 failed a2a-client tests as config/environment issues

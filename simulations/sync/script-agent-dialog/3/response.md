@@ -1,0 +1,45 @@
+# Step 3 — response (auto run-script gate)
+
+Mirror of response.json: the assistant comment triggers the auto run-script gate.
+
+```json
+{
+  "context": {
+    "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
+    "execution": {
+      "action": "dialog",
+      "step": "auto_script_gate"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "При запуске dev-сервера вылетает ошибка Cannot find module @/components/Missing из resources/js/components/Example.vue."
+      },
+      {
+        "role": "assistant",
+        "message": "Ошибка импорта: Vue не может найти @/components/Missing в resources/js/components/Example.vue."
+      }
+    ],
+    "workbench": {
+      "sections": {
+        "autoScriptTrigger": {
+          "scriptId": "fix-vue-imports",
+          "triggeredBy": "assistant",
+          "errorMessage": "Cannot find module @/components/Missing referenced from Example.vue",
+          "file": "resources/js/components/Example.vue",
+          "autoRun": true
+        }
+      }
+    }
+  },
+  "execute": {
+    "run-script": {
+      "scriptId": "fix-vue-imports",
+      "params": {
+        "scope": "resources/js/components/Example.vue",
+        "reason": "assistant reported import error"
+      }
+    }
+  }
+}
+```
