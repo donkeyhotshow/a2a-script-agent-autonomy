@@ -27,6 +27,10 @@
         "message": "Принял: введём Example.spec и запустим vitest."
       },
       {
+        "role": "assistant",
+        "message": "Принял задачу: напишем Example.spec и запустим vitest, дайте знать, если нужна дополнительная информация."
+      },
+      {
         "role": "user",
         "message": "Пожалуйста, прогоните vitest на Example.spec и отдайте вывод."
       },
@@ -43,8 +47,8 @@
         "message": "Вот что стоит добавить: 1. Props validation ..."
       },
       {
-        "role": "user",
-        "message": "add_tests"
+        "role": "system",
+        "message": "choice: add_tests"
       },
       {
         "role": "assistant",

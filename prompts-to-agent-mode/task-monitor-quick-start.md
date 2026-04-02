@@ -12,7 +12,7 @@ Write or refresh the Task Monitor quick-start reference so that it mirrors the a
 
 1. **What Was Done** – enumerate the six critical fixes (router choice handling, double task submission prevention, improved task extraction fallback, promise-aware poll loop, accurate hardbit logging, session verification safeguards).
 2. **Daemon System** – describe graceful shutdown/signals, 30-second status reporting, hook document generation for failures, non-blocking async task monitoring, and the health-check scaffolding.
-3. **Running the Script** – show both the default daemon invocation (`node monitor-and-process-tasks.js`) and the sequential/once mode with `--sequential` or `--once`.
+3. **Running the Script** – show both the default daemon invocation (`node monitor-and-process-tasks.js`) and the single-pass mode with `--once`.
 4. **What It Does** – explain that the monitor watches `prompts-to-agent-mode/`, spins up A2A agent-mode sessions, logs progress every 30 seconds, writes hook docs on failure, and waits for active work before exiting.
 5. **Monitoring Status** – document the `task-monitor-state.json` payload (current task, session ID, processed task history, active tasks).
 6. **Hook Documents** – spell out the `hooks/` schema (task name, status, error detail, session context, suggested remediation, timestamp) and call out that they only appear for failed or timed-out tasks.
@@ -22,7 +22,7 @@ Write or refresh the Task Monitor quick-start reference so that it mirrors the a
 10. **Troubleshooting** – answer the common questions: hangs (Ctrl+C → waits 30s), tasks not processing (verify services), missing hook docs (only written for failed/timeouts), session not found (check logs for created session ID).
 11. **For More Details** – mention that `COMPLETION-REPORT.md` houses detailed bug-fix narratives, architecture notes, test results, and the implementation checklist.
 
-Tie every section back to the actual code paths (`TaskMonitor` lifecycle, sequential vs daemon loops, health-check endpoints, hook document writer, state serialization). When the reference accurately reflects the automation and tests, mark the task as done.
+Tie every section back to the actual code paths (`TaskMonitor` lifecycle, single-pass vs daemon loops, health-check endpoints, hook document writer, state serialization). When the reference accurately reflects the automation and tests, mark the task as done.
 
 ## Completion
 - [ ] Done

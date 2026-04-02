@@ -9,10 +9,7 @@
   "execute": {
     "form": {
       "title": "Коммит",
-      "description": "Введите сообщение коммита",
-      "input": [
-        { "name": "message", "type": "text", "label": "Commit message", "required": true }
-      ]
+      "description": "Введите сообщение коммита"
     }
   }
 }

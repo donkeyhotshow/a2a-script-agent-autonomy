@@ -2,17 +2,13 @@
   "projectId": "123",
   "sessionId": "456",
   "execute": {
+    "message": "Running script…",
     "form": {
       "title": "Message",
-      "description": "Автоматический скрипт fix-vue-imports применил патч, продолжайте разговор.",
-      "input": [
-        {
-          "name": "message",
-          "type": "text",
-          "label": "Message",
-          "required": true
-        }
-      ]
+      "description": "Автоматический скрипт fix-vue-imports применил патч, продолжайте разговор."
+    },
+    "attachments": {
+      "runScriptId": "fix-vue-imports"
     }
   }
 }

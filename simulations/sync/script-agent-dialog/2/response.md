@@ -1,6 +1,6 @@
 # Step 2 — response (dialog request)
 
-Mirror of response.json: dialog request form with a text field.
+Mirror of response.json: dialog request form (metadata-only; free-text field implied by title/description).
 
 ```json
 {
@@ -17,15 +17,7 @@ Mirror of response.json: dialog request form with a text field.
   "execute": {
     "form": {
       "title": "Message",
-      "description": "Describe blockers; the script-aware dialog watches for import errors.",
-      "input": [
-        {
-          "name": "message",
-          "type": "text",
-          "label": "Message",
-          "required": true
-        }
-      ]
+      "description": "Describe blockers; the script-aware dialog watches for import errors."
     }
   }
 }

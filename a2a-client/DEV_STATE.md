@@ -1,6 +1,8 @@
-# DEV_STATE - a2a-client (2026-04-01)
+# DEV_STATE - a2a-client (2026-04-03)
 
 Stack готов, задач нет.
+
+**2026-04-03:** Dialog/loader — `session-data.setExecute` stops the session loader for any terminal `execute` without `wait` (not only actionable forms), so message-only replies unblock the panel. `action-executor.submit` sync path clears `promisePending`, treats missing `accepted` as OK, and calls `stopLoader` except when hydrated `execute.wait` is set.
 
 ---
 

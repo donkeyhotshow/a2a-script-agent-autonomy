@@ -10,8 +10,13 @@
     function executeHasActionableForm(ex) {
         if (!ex || !ex.form || ex.wait) return false;
         var f = ex.form;
-        if (f.choices && f.choices.length > 0) return true;
+        var choiceList = f.choices;
+        if ((choiceList == null || !choiceList.length) && f.meta && Array.isArray(f.meta.routerChoices)) {
+            choiceList = f.meta.routerChoices;
+        }
+        if (choiceList && choiceList.length > 0) return true;
         if (f.textarea && typeof f.textarea === 'object' && f.textarea.name) return true;
+        if (Array.isArray(f.inputs) && f.inputs.length > 0) return true;
         if (f.input == null) return false;
         if (Array.isArray(f.input)) return f.input.length > 0;
         return true;

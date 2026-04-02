@@ -9,7 +9,7 @@
         {
           "id": "done",
           "label": "OK",
-          "description": "Close the completion summary for the batched import run."
+          "description": "Confirm completion and close the flow"
         }
       ]
     }

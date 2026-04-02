@@ -188,7 +188,10 @@ export async function handleRouterFlow({ cwd, path, req, res, url, storageMode =
                 if (!data?.execute) return { step: stepNum, data };
                 return {
                     step: stepNum,
-                    data: { ...data, execute: buildExecuteProjection(data.execute) },
+                    data: {
+                        ...data,
+                        execute: buildExecuteProjection(data.execute, data.context ? { context: data.context } : undefined),
+                    },
                 };
             });
             res.setHeader('Content-Type', 'application/json');

@@ -10,12 +10,12 @@ Current phase is in `context.execution.step`. Emit the next `step` in your JSON 
 
 Available steps (phases):
 
-- `"plan"` тАФ understand the task, clarify scope, outline approach
-- `"analyze"` тАФ search for relevant code/docs, read files, understand structure
-- `"execute"` тАФ write code, create/modify files, run commands
-- `"review"` тАФ verify changes, run tests, lint, check for issues
-- `"dialog"` тАФ ask user clarifying questions or provide summary
-- `"completed"` тАФ task finished
+- `"plan"` — understand the task, clarify scope, outline approach
+- `"analyze"` — search for relevant code/docs, read files, understand structure
+- `"execute"` — write code, create/modify files, run commands
+- `"review"` — verify changes, run tests, lint, check for issues
+- `"dialog"` — ask user clarifying questions or provide summary
+- `"completed"` — task finished
 
 ## This turn
 
@@ -123,11 +123,35 @@ Rules:
 
 - `step`: MUST be a non-empty string from the list above. Repeat to stay in current phase; set new value to advance.
 - `workbench_ops` (optional): incremental edits; applied after `workbench.sections` merge.
-- `scratchpad_ops` (optional): checklist updates тАФ `[{ "op": "check"|"add"|"remove", "item": "key" }]`; merged into `context.scratchpad` (`check`/`add` set the flag true; `remove` deletes the key).
+- `scratchpad_ops` (optional): checklist updates — `[{ "op": "check"|"add"|"remove", "item": "key" }]`; merged into `context.scratchpad` (`check`/`add` set the flag true; `remove` deletes the key).
 - `workbench.slots` (optional): JSON blobs for structured state (e.g. edit plans); merged into `context.workbench.slots` except server keys (`interruptTrace`, `grayRoom`, `thinking`, `clarify`).
-- `execute`: MUST follow **action-key shape** тАФ exactly one key per turn.
+- `execute`: MUST follow **action-key shape** — exactly one key per turn.
 - Allowed actions (keys): `rag-search`, `list-directory`, `read-file`, `write-file`, `grep-search`, `file-exists`, `edit-patch`, `run-script`, `script`, `execute-command`, `dialog` (same surface the server validates for single-tool turns).
 - `completed`: Set `true` only when the task is fully finished. When `true`, omit or empty `execute`.
+
+## Gray room (server-side, same invoke)
+
+When the server runs the gray-room interrupt loop, you may add a top-level **`interrupt`** object next to `execute` / `message` in your JSON (response transform copies it for the orchestrator).
+
+| Situation | Suggested `interrupt` |
+|-----------|------------------------|
+| **`rag-search`** just produced hits (`ragResults` / tool outcome in history) and you need another server-side RAG page or consolidation before the next main turn | `"reason": "auto_rag_page"` with `"data": { "query": "…", "projectPath": "…" }` (optional `limit`) — server merges hits into **`context.ragResults`** and appends a **system** `history` line summarizing paths. |
+| You **`read-file`** (or equivalent) and must reason about file content before emitting the next tool or answer | `"reason": "thinking"` — sidecar writes structured notes to `workbench.slots.thinking`, then the main model runs again with that context. Prefer this over a thin assistant `message` when the next step depends on careful reading. |
+
+Example (server will merge hits into `ragResults` + append a **system** `history` line, then re-enter the main LLM if `continueLoop` applies):
+
+```json
+{
+  "step": "analyze",
+  "message": "Pulling one more RAG page into history before choosing files to read.",
+  "interrupt": {
+    "reason": "auto_rag_page",
+    "data": { "query": "router mount express", "limit": 10 }
+  }
+}
+```
+
+On turns where you only need tools toward the client, omit `interrupt` and send a normal `execute` action key as usual.
 
 ## Current State
 
@@ -140,15 +164,23 @@ Rules:
   "context": {
   "execution": {
     "action": "agent",
-    "step": "new"
+    "step": "3"
   },
   "history": [
     {
-      "message": "List repo root files and summarize START-FULL-SPECTRUM.md in 3 bullets.",
+      "message": "допоможи розібратись з кодом",
+      "role": "user"
+    },
+    {
+      "message": "Роутер запропонував вибір: dialog, agent, task-decomposition, fix-vue-imports. Користувач обрав 'agent' → coder.",
+      "role": "system"
+    },
+    {
+      "message": "як працює система авторизації?",
       "role": "user"
     }
   ],
-  "task": "List repo root files and summarize START-FULL-SPECTRUM.md in 3 bullets."
+  "task": "допоможи розібратись з кодом"
 },
   "workbench": null,
   "ragResults": null
@@ -162,23 +194,23 @@ Tool outcomes and the latest user text are folded into `context.history` before 
 For each turn, decide:
 
 1. **Which step** (phase) you're in:
-   - `plan` тЖТ initial understanding
-   - `analyze` тЖТ gather information
-   - `execute` тЖТ make changes
-   - `review` тЖТ verify
-   - `dialog` тЖТ communicate
+   - `plan` → initial understanding
+   - `analyze` → gather information
+   - `execute` → make changes
+   - `review` → verify
+   - `dialog` → communicate
 
 2. **Which action** (tool) to use:
-   - Need info? тЖТ `rag-search`, `read-file`, `list-directory`
-   - Need to make changes? тЖТ `write-file`, `execute-command`
-   - Need clarification? тЖТ `dialog`
-   - Done? тЖТ set `completed: true`
+   - Need info? → `rag-search`, `read-file`, `list-directory`
+   - Need to make changes? → `write-file`, `execute-command`
+   - Need clarification? → `dialog`
+   - Done? → set `completed: true`
 
 3. **Transition logic**:
-   - After `plan` тЖТ usually `analyze`
-   - After `analyze` тЖТ if have all info тЖТ `execute`; else тЖТ more `analyze`
-   - After `execute` тЖТ usually `review`
-   - After `review` тЖТ if issues found тЖТ `execute`; else тЖТ `dialog` or `completed`
+   - After `plan` → usually `analyze`
+   - After `analyze` → if have all info → `execute`; else → more `analyze`
+   - After `execute` → usually `review`
+   - After `review` → if issues found → `execute`; else → `dialog` or `completed`
 
 ## Examples
 
@@ -223,5 +255,4 @@ For each turn, decide:
 
 - Respond with **valid JSON** only; no prose outside the JSON block.
 - Exactly one key in `execute` per turn.
-- Always advance through steps logically (plan тЖТ analyze тЖТ execute тЖТ review тЖТ completed).
-
+- Always advance through steps logically (plan → analyze → execute → review → completed).

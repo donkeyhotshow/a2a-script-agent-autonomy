@@ -1,0 +1,13 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Writing file utils/helpers.js",
+    "attachments": {
+      "writtenFile": {
+        "path": "utils/helpers.js",
+        "content": "function calculateTotal(items) {\n  return items.reduce((sum, item) => sum + item.price, 0);\n}\n\nmodule.exports = { calculateTotal };"
+      }
+    }
+  }
+}

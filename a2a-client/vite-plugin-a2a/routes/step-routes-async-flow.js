@@ -150,8 +150,12 @@ function runViteClientPromisePoll({
                 res.setHeader('Content-Type', 'application/json');
                 const statusStr = normalizedStatus.status;
                 const asyncPending = normalizedStatus.asyncPending;
+                const pollCtx = promiseStatus.context;
                 const webExecute = promiseStatus.execute
-                    ? buildExecuteProjection(promiseStatus.execute)
+                    ? buildExecuteProjection(promiseStatus.execute, {
+                          context:
+                              pollCtx && typeof pollCtx === 'object' && pollCtx !== null ? pollCtx : undefined,
+                      })
                     : null;
                 const payload = includePromiseIdInBody
                     ? {
@@ -216,13 +220,17 @@ export async function handleAsyncFlow({ cwd, url, path, req, res, storageMode = 
         const hit = getActiveAsyncWork(cwd, sessionId);
         if (!hit) {
             cleanup();
+            // Load execute from latest step (session.execute may be stale)
+            const latestStepNum = session.currentStep || 1;
+            const latestStep = stepHandlers.loadNewStep(cwd, sessionId, latestStepNum);
+            const latestExecute = latestStep?.execute ?? session.execute ?? null;
             res.setHeader('Content-Type', 'application/json');
             res.end(
                 JSON.stringify({
                     asyncPending: false,
                     completed: true,
                     status: 'idle',
-                    execute: buildExecuteProjection(session.execute),
+                    execute: buildExecuteProjection(latestExecute, session.context ? { context: session.context } : undefined),
                     result: null,
                 })
             );

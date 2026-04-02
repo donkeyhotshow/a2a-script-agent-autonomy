@@ -26,7 +26,11 @@ function collectReadFileEntries(readFilePayload) {
     return out;
 }
 
-export function buildWebExecute(execute) {
+/**
+ * @param {object|null|undefined} execute
+ * @param {{ context?: object }|undefined} [options] - Optional invoke `context` (workbench) for form-only post-tool beats.
+ */
+export function buildWebExecute(execute, options) {
     if (execute == null) return null;
     if (typeof execute !== 'object' || Array.isArray(execute)) {
         return null;
@@ -122,7 +126,7 @@ export function buildWebExecute(execute) {
         msg !== null &&
         (typeof msg === 'string' ? msg.trim().length > 0 : typeof msg === 'object');
 
-    if (!hasForm && !hasMessage) {
+    if (!hasMessage) {
         const parts = [];
         if (hadRag) parts.push('Searching the codebase');
         if (readFiles.length) parts.push('Reading files');
@@ -133,19 +137,60 @@ export function buildWebExecute(execute) {
         if (hadGrep) parts.push('Searching in files');
         if (hadFileExists) parts.push('Checking path');
         if (hadEditPatch) parts.push('Applying patch');
-        ex.message = parts.length ? `${parts.join(' · ')}…` : 'Working…';
+        if (parts.length) {
+            ex.message = `${parts.join(' · ')}…`;
+        } else if (!hasForm) {
+            ex.message = 'Working…';
+        }
     }
+
+    augmentExecuteFromAutoScriptWorkbench(ex, options?.context);
 
     return ex;
 }
 
+/** Form-only execute after auto `run-script`: surface script id + status line (see simulations/SCHEMA.md). */
+function augmentExecuteFromAutoScriptWorkbench(ex, context) {
+    if (!ex || typeof ex !== 'object' || Array.isArray(ex)) return;
+    const keys = Object.keys(ex).filter((k) => k !== 'attachments' && k !== 'debug');
+    if (keys.length !== 1 || keys[0] !== 'form') return;
+
+    const sections = context?.workbench?.sections;
+    const trig = sections && typeof sections === 'object' && !Array.isArray(sections) ? sections.autoScriptTrigger : null;
+    if (!trig || typeof trig !== 'object' || Array.isArray(trig)) return;
+
+    const sid = typeof trig.scriptId === 'string' ? trig.scriptId.trim() : '';
+    if (!sid) return;
+    const completed =
+        (typeof trig.lastOutput === 'string' && trig.lastOutput.trim().length > 0) ||
+        (Array.isArray(trig.filesModified) && trig.filesModified.length > 0);
+    if (!completed) return;
+
+    const msg = ex.message;
+    const hasMsg =
+        msg !== undefined &&
+        msg !== null &&
+        (typeof msg === 'string' ? msg.trim().length > 0 : typeof msg === 'object');
+    if (!hasMsg) {
+        ex.message = 'Running script…';
+    }
+
+    const prior =
+        ex.attachments && typeof ex.attachments === 'object' && !Array.isArray(ex.attachments) ? ex.attachments : {};
+    if (!prior.runScriptId) {
+        ex.attachments = {...prior, runScriptId: sid};
+    }
+}
+
 export function sanitizeApiRecordExecuteFields(payload) {
     const out = { ...payload };
+    const ctx = out.context && typeof out.context === 'object' && !Array.isArray(out.context) ? out.context : undefined;
+    const projOpts = ctx ? { context: ctx } : undefined;
     if (out.execute !== undefined) {
-        out.execute = buildWebExecute(out.execute);
+        out.execute = buildWebExecute(out.execute, projOpts);
     }
     if (out.currentExecute !== undefined) {
-        out.currentExecute = buildWebExecute(out.currentExecute);
+        out.currentExecute = buildWebExecute(out.currentExecute, projOpts);
     }
     return out;
 }

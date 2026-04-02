@@ -87,7 +87,7 @@ def _prepare_logging(path: str, promise_requested: bool, storage_dir: str) -> Tu
     request_id = str(uuid.uuid4())[:8]
     unix_timestamp = int(datetime.datetime.now().timestamp())
     folder_name = f"request_{unix_timestamp}_{request_id}"
-    folder_path = os.path.join(storage_dir, folder_name)
+    folder_path = os.path.join(storage_dir, 'requests', folder_name)
     os.makedirs(folder_path, exist_ok=True)
     
     return True, folder_path, request_id

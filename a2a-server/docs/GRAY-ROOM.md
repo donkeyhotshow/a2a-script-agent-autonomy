@@ -117,13 +117,13 @@ Adding **`prompts/transforms/<your-name>/`** (with `server-transforms-*.json` an
 
 ## Runtime vs roadmap (gap) — GR-S-07
 
-- **`shouldUseGrayRoom()` / `detectGrayRoomTrigger()`** exist in [`gray-room-orchestrator.ts`](../src/services/core/request-processor/gray-room-orchestrator.ts) for policy and diagnostics; **they are not wired to skip `runLoop()`** today. The loop runs whenever the dialog processor completes an LLM call and the **response transform** produces `interrupt` on transform output.
-- **`A2A_GRAY_ROOM_ENABLED`** and **`A2A_GRAY_ROOM_MAX_TURNS`** affect trigger helpers and env; the interrupt loop’s main budget is still **`A2A_MAX_INTERRUPT_TURNS`** unless overridden when constructing `GrayRoomOrchestrator`.
+- **`shouldUseGrayRoom()` / `detectGrayRoomTrigger()`** are wired in [`DialogRequestProcessor`](../src/services/core/request-processor/dialog-request-processor.ts) and [`response-path.ts`](../src/services/core/request-processor/response-path.ts): when gray room is **off** (`A2A_GRAY_ROOM_ENABLED=0` / `false` / `no` / `off`, unless `context.execution.grayRoomRequested` or root `flowControlHint` is `gray-room`), [`runLoop(..., processInterrupts=false)`](../src/services/core/request-processor/gray-room-orchestrator.ts) runs **one** response transform and **ignores** `interrupt` (trace row `interrupt_skipped` / `gray_room_disabled`). When **on** (default if env unset), full interrupt handling applies if the transform emits `interrupt`.
+- **Budget:** `GrayRoomOrchestrator` uses **`A2A_MAX_INTERRUPT_TURNS`** when set, else **`A2A_GRAY_ROOM_MAX_TURNS`** (see `readGrayRoomInterruptBudget()` in the same module).
 
 ## Transform: `$.llm.interrupt` → `$out.interrupt` — GR-S-13
 
 - The **response** pipeline reads LLM markdown from disk as `input.llm.response` / `llm` wrapper (see [`runPromptsTransform`](../src/transform/pipeline/prompts.ts) and `response.md` staging in `gray-room-orchestrator` `runResponseTransform`).
-- Transforms should copy or map `interrupt` onto the **same object** as `context` / `execute` after the pipeline (e.g. `copy` / `set` from `$.llm` to `$out`). Exact ops are per-schema `server-transforms-response.json`; keep behavior consistent across schemas so `extractInterrupt` always sees a top-level `interrupt` on transform output.
+- Transforms should copy or map `interrupt` onto the **same object** as `context` / `execute` after the pipeline (`copy` from `$.llm.interrupt` → `$.interrupt` when present). Shared baseline: [`prompts/transforms/server-transforms-response.json`](../prompts/transforms/server-transforms-response.json). LLM JSON pipelines that merge workbench/history also include the same step in [`agent-response.json`](../prompts/transforms/agent-response.json), [`dialog-response.json`](../prompts/transforms/dialog-response.json), [`dialog-llm-response.json`](../prompts/transforms/dialog-llm-response.json), and [`coder-response.json`](../prompts/transforms/coder-response.json) so `extractInterrupt` sees a top-level `interrupt` on transform output.
 
 ## Simulations and CI — GR-S-06
 

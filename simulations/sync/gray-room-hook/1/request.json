@@ -1,0 +1,9 @@
+{
+  "context": {
+    "task": "Gray room hook — baseline dialog (no interrupt in golden)",
+    "execution": {
+      "action": "dialog",
+      "step": "message-only"
+    }
+  }
+}

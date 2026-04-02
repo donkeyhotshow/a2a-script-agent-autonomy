@@ -48,8 +48,8 @@ LLM celebrates the test success and highlights coverage improvement.
         "message": "Вот что стоит добавить: 1. Props validation ..."
       },
       {
-        "role": "user",
-        "message": "add_tests"
+        "role": "system",
+        "message": "choice: add_tests"
       },
       {
         "role": "assistant",

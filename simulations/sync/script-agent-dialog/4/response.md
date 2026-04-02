@@ -43,15 +43,7 @@ Mirror of response.json: the summary mentions the script outcome before continui
   "execute": {
     "form": {
       "title": "Message",
-      "description": "Автоматический скрипт fix-vue-imports применил патч, продолжайте разговор.",
-      "input": [
-        {
-          "name": "message",
-          "type": "text",
-          "label": "Message",
-          "required": true
-        }
-      ]
+      "description": "Автоматический скрипт fix-vue-imports применил патч, продолжайте разговор."
     }
   }
 }

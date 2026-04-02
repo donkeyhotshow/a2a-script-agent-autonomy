@@ -2,7 +2,9 @@
 
 **If you are driving the live script-agent stack:** read **[STACK-RUN.md](STACK-RUN.md)** first.
 
-**Linear pipeline:** **[ONE-PIPELINE.md](ONE-PIPELINE.md)** (env Р В Р вЂ Р Р†Р вЂљР’В Р Р†Р вЂљРІвЂћСћ Client API Р В Р вЂ Р Р†Р вЂљР’В Р Р†Р вЂљРІвЂћСћ prompts Р В Р вЂ Р Р†Р вЂљР’В Р Р†Р вЂљРІвЂћСћ observe Р В Р вЂ Р Р†Р вЂљР’В Р Р†Р вЂљРІвЂћСћ improve). **Root master prompt** (full indexed backlog in one loop): **[`../START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md)**.
+**Primary instrument — launch tasks through session dialog (same as web UI):** **[`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** — `npm run monitor` / `npm run monitor:once`, `TASK_MONITOR_*`, router beats, **ErrorClassifier** + **direct-tests** on errors. Implementation: [`../monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`../tests/monitor-tasks/`](../tests/monitor-tasks/).
+
+**Linear pipeline:** **[ONE-PIPELINE.md](ONE-PIPELINE.md)** (env → Client API → prompts → observe → improve). **Root master prompt** (daemon + hooks + IDE): **[`../START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md)**.
 
 This folderР В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›s name means Р В Р вЂ Р В РІР‚С™Р РЋРЎв„ўprompts aligned with **agent mode** in session **context**Р В Р вЂ Р В РІР‚С™Р РЋРЎС™; it does **not** mean Р В Р вЂ Р В РІР‚С™Р РЋРЎв„ўpaste into `invoke` on port 3000.Р В Р вЂ Р В РІР‚С™Р РЋРЎС™
 
@@ -46,6 +48,12 @@ One file per task. Each file lists **sources** (canonical docs) and a **copy-pas
 | [work-state-04-gray-room-concept.md](work-state-04-gray-room-concept.md) | [`work/STATE.md`](../work/STATE.md) Р В РІР‚в„ўР вЂ™Р’В§4 |
 | [work-state-stale-links-and-s13.md](work-state-stale-links-and-s13.md) | [`work/STATE.md`](../work/STATE.md) queue links vs real `tasks/*.md` paths ([repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)) |
 
+## DEV_STATE backlog (priority summary)
+
+| Prompt file | Source |
+|-------------|--------|
+| [work-task-a2a-dev-state-improvements.md](work-task-a2a-dev-state-improvements.md) | [`DEV_STATE.md`](../DEV_STATE.md) + [`work/STATE.md`](../work/STATE.md) ticket list |
+
 ## Work task specs
 
 | Prompt file | Source |
@@ -56,10 +64,12 @@ One file per task. Each file lists **sources** (canonical docs) and a **copy-pas
 | [work-task-sync-substeps-not-discovered.md](work-task-sync-substeps-not-discovered.md) | [`tasks/sync-substeps-not-discovered.md`](../tasks/sync-substeps-not-discovered.md) (`work/STATE` S9) |
 | [work-task-sync-llm-snapshot-coverage.md](work-task-sync-llm-snapshot-coverage.md) | [`tasks/sync-llm-snapshot-coverage.md`](../tasks/sync-llm-snapshot-coverage.md) (`work/STATE` S11) |
 | [work-task-sync-workspace-tools-golden-map.md](work-task-sync-workspace-tools-golden-map.md) | [`tasks/sync-workspace-tools-golden-map.md`](../tasks/sync-workspace-tools-golden-map.md) (`work/STATE` S12) |
-| [work-task-sync-readme-and-cli-gap.md](work-task-sync-readme-and-cli-gap.md) | No `tasks/sync-readme-and-cli-gap.md` yet Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) |
-| [work-task-sync-step-contract-warnings.md](work-task-sync-step-contract-warnings.md) | No `tasks/sync-step-contract-warnings.md` yet Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) |
-| [work-task-analyze-test-failures.md](work-task-analyze-test-failures.md) | No `tasks/analyze-test-failures.md` yet Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) |
-| [work-task-orchestrator-metrics-tracking.md](work-task-orchestrator-metrics-tracking.md) | No `tasks/orchestrator-metrics-tracking.md` yet Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) |
+| [work-task-sync-form-choices-description.md](work-task-sync-form-choices-description.md) | [`tasks/sync-form-choices-description.md`](../tasks/sync-form-choices-description.md) (`work/STATE` S13) |
+| [work-task-sync-readme-and-cli-gap.md](work-task-sync-readme-and-cli-gap.md) | [`tasks/sync-readme-and-cli-gap.md`](../tasks/sync-readme-and-cli-gap.md) (`work/STATE` S11) |
+| [work-task-sync-step-contract-warnings.md](work-task-sync-step-contract-warnings.md) | [`tasks/sync-step-contract-warnings.md`](../tasks/sync-step-contract-warnings.md) (`work/STATE` S8) |
+| [work-task-analyze-test-failures.md](work-task-analyze-test-failures.md) | [`tasks/analyze-test-failures.md`](../tasks/analyze-test-failures.md) (root `DEV_STATE` blockers) |
+| [work-task-orchestrator-metrics-tracking.md](work-task-orchestrator-metrics-tracking.md) | [`tasks/orchestrator-metrics-tracking.md`](../tasks/orchestrator-metrics-tracking.md) (SYS backlog) |
+| [work-task-rag-package-tests.md](work-task-rag-package-tests.md) | [`tasks/rag-package-tests.md`](../tasks/rag-package-tests.md) (a2a-client code coverage) |
 
 ## Optional link hygiene
 
@@ -108,7 +118,7 @@ One file per task. Each file lists **sources** (canonical docs) and a **copy-pas
 | Prompt file | Source |
 |-------------|--------|
 | [doc-readme-broken-troubleshooting-link.md](doc-readme-broken-troubleshooting-link.md) | Regression guard: no revival of dead `docs/troubleshooting/standardize-stop-scripts.md` (canonical: `docs/SYSTEM_STARTUP.md`) |
-| [repo-tasks-pending-archive-layout.md](repo-tasks-pending-archive-layout.md) | [`START-PROMPT-UNLIM.md`](../START-PROMPT-UNLIM.md), [`methodology/orchestrator-api-exploit.md`](../methodology/orchestrator-api-exploit.md) vs actual `tasks/` tree |
+| [repo-tasks-pending-archive-layout.md](repo-tasks-pending-archive-layout.md) | [`AGENTS.md`](../AGENTS.md), [`archive/methodology/orchestrator-api-exploit.md`](../archive/methodology/orchestrator-api-exploit.md) vs actual `tasks/` tree |
 | [doc-adr-0027-planning-readme-missing.md](doc-adr-0027-planning-readme-missing.md) | [`docs/adr/ADR-0027-documentation-canonical-sources.md`](../docs/adr/ADR-0027-documentation-canonical-sources.md) |
 | [doc-adr-reference-partial-adrs.md](doc-adr-reference-partial-adrs.md) | [`docs/adr/REFERENCE-A2A-master-specification.md`](../docs/adr/REFERENCE-A2A-master-specification.md) Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ Partial/Progress rows |
 | [doc-adr-reference-not-implemented-v2.md](doc-adr-reference-not-implemented-v2.md) | Same REFERENCE Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ Р В Р вЂ Р РЋРЎС™Р В Р вЂ° ADR-0037Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎС™0040 |
@@ -132,6 +142,8 @@ One file per task. Each file lists **sources** (canonical docs) and a **copy-pas
 
 ## Task Monitor script
 
+**Canonical operator doc (dialog launch, env, direct-tests):** [`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md).
+
 | Prompt file | Source |
 |-------------|--------|
-| [task-monitor-quick-start.md](task-monitor-quick-start.md) | [`monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`monitor-and-process-tasks.test.js`](../monitor-and-process-tasks.test.js), [`task-monitor-state.json`](../task-monitor-state.json), [`hooks/`](../hooks/), [`COMPLETION-REPORT.md`](../COMPLETION-REPORT.md) |
+| [task-monitor-quick-start.md](task-monitor-quick-start.md) | Keep in sync with [`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md); code: [`monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`tests/monitor-tasks/`](../tests/monitor-tasks/), [`monitor-and-process-tasks.test.js`](../monitor-and-process-tasks.test.js), [`task-monitor-state.json`](../task-monitor-state.json), [`hooks/`](../hooks/) |

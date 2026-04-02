@@ -2,7 +2,7 @@
  * Registry: types, constants, and lint rules for simulation validation
  */
 
-import {existsSync, readdirSync} from 'node:fs';
+import {existsSync, readdirSync, readFileSync} from 'node:fs';
 import {join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {INTERNAL_CLIENT_ACTION_KEYS} from '../../../shared/internal-client-action-keys.mjs';
@@ -183,6 +183,63 @@ export function lintReceivedJsonExecuteSanitized(data: any, filePath: string): L
             });
         }
     }
+    return errors;
+}
+
+export function lintFormParity(responsePath: string, receivedPath: string): LintError[] {
+    const errors: LintError[] = [];
+
+    if (!existsSync(responsePath) || !existsSync(receivedPath)) {
+        return errors;
+    }
+
+    let responseData: any;
+    let receivedData: any;
+
+    try {
+        responseData = JSON.parse(readFileSync(responsePath, 'utf-8'));
+    } catch {
+        return errors;
+    }
+
+    try {
+        receivedData = JSON.parse(readFileSync(receivedPath, 'utf-8'));
+    } catch {
+        return errors;
+    }
+
+    const responseForm = responseData?.execute?.form;
+    const receivedForm = receivedData?.execute?.form;
+
+    if (responseForm && receivedForm) {
+        // Deep compare the form objects, ignoring internal action keys (but form is not an action key)
+        const responseFormStr = JSON.stringify(responseForm);
+        const receivedFormStr = JSON.stringify(receivedForm);
+
+        if (responseFormStr !== receivedFormStr) {
+            errors.push({
+                path: receivedPath,
+                message: `received.json form must match response.json form exactly (Web DTO preserves form structure); differences found`,
+                severity: 'error',
+                fixable: false
+            });
+        }
+    } else if (responseForm && !receivedForm) {
+        errors.push({
+            path: receivedPath,
+            message: `received.json missing form that exists in response.json`,
+            severity: 'error',
+            fixable: false
+        });
+    } else if (!responseForm && receivedForm) {
+        errors.push({
+            path: receivedPath,
+            message: `received.json has form but response.json does not`,
+            severity: 'error',
+            fixable: false
+        });
+    }
+
     return errors;
 }
 

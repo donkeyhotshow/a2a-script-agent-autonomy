@@ -1,0 +1,15 @@
+{
+  "context": {
+    "task": "зчитати файл і знайти функцію",
+    "execution": {
+      "action": "agent",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Знайди функцію calculateTotal в utils/helpers.js"
+      }
+    ]
+  }
+}

@@ -48,8 +48,8 @@ This step calls the LLM to analyze the enhanced test results with coverage.
         "message": "Вот что стоит добавить: 1. Props validation ..."
       },
       {
-        "role": "user",
-        "message": "add_tests"
+        "role": "system",
+        "message": "choice: add_tests"
       },
       {
         "role": "assistant",
@@ -105,7 +105,7 @@ The enhanced tests have run successfully with 85% coverage. You should analyze t
     "execution": { "action": "dialog", "step": "adding_tests" },
     "history": [
       // ... from step 10
-      { "message": "add_tests", "role": "user" },
+      { "message": "choice: add_tests", "role": "system" },
       { "message": "Отлично! Добавляю все 6 тестов в Example.spec.", "role": "assistant" }
     ]
   },

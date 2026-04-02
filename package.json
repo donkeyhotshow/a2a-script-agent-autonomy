@@ -16,7 +16,11 @@
         "sim:quality": "npm --prefix a2a-server run sim:quality",
         "sim:contract-report": "npm --prefix a2a-server run sim:contract-report --",
         "gate:cleanup": "npm --prefix a2a-server run gate:cleanup",
-        "agent-runner": "node scripts/agent-dialog-runner.mjs"
+        "agent-runner": "node scripts/agent-dialog-runner.mjs",
+        "monitor": "node monitor-and-process-tasks.js",
+        "monitor:daemon": "node monitor-and-process-tasks.js --daemon",
+        "monitor:once": "node monitor-and-process-tasks.js --once",
+        "monitor:reset": "node -e \"require('fs').unlinkSync('task-monitor-state.json')\" 2>nul || exit 0"
     },
     "devDependencies": {
         "@types/node": "^20.11.0",

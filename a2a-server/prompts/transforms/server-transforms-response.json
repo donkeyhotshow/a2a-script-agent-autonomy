@@ -32,6 +32,11 @@
       "valueFrom": "$.llm.execute"
     },
     {
+      "op": "copy",
+      "from": "$.llm.interrupt",
+      "to": "$.interrupt"
+    },
+    {
       "op": "set",
       "path": "$.result.completed",
       "value": "${$.llm.completed}"

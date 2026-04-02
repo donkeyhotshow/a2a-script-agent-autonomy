@@ -239,17 +239,37 @@ def _resolve_storage_path(relative_path: str) -> str:
 
 def _load_request_snapshot(log_folder: str) -> Optional[dict]:
     folder = _resolve_storage_path(log_folder)
-    if not folder or not os.path.isdir(folder):
+    if not folder:
         return None
-    request_path = os.path.join(folder, 'request.json')
-    if not os.path.isfile(request_path):
-        return None
-    try:
-        with open(request_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        return data if isinstance(data, dict) else None
-    except Exception:
-        return None
+
+    # Try primary location
+    if os.path.isdir(folder):
+        request_path = os.path.join(folder, 'request.json')
+        if os.path.isfile(request_path):
+            try:
+                with open(request_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                return data if isinstance(data, dict) else None
+            except Exception:
+                return None
+
+    # Fallback: check if it's old path, try new location
+    if 'proxy_logs' in folder and 'request_' in folder:
+        # Replace old path with new path in requests/
+        parts = folder.split('proxy_logs')
+        if len(parts) == 2:
+            new_folder = parts[0] + 'proxy_logs' + os.sep + 'requests' + parts[1]
+            if os.path.isdir(new_folder):
+                request_path = os.path.join(new_folder, 'request.json')
+                if os.path.isfile(request_path):
+                    try:
+                        with open(request_path, 'r', encoding='utf-8') as f:
+                            data = json.load(f)
+                        return data if isinstance(data, dict) else None
+                    except Exception:
+                        return None
+
+    return None
 
 
 def _collect_pending_promises() -> list[PromiseRecord]:

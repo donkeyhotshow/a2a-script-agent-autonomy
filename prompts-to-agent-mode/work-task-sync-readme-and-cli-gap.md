@@ -2,7 +2,7 @@
 
 ## Sources
 
-- **Spec (missing on disk):** `tasks/sync-readme-and-cli-gap.md` — see [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)
+- [`tasks/sync-readme-and-cli-gap.md`](../tasks/sync-readme-and-cli-gap.md)
 - [`a2a-server/scripts/sim-validate/scanner.ts`](../a2a-server/scripts/sim-validate/scanner.ts)
 - [`a2a-server/scripts/sim-lint.ts`](../a2a-server/scripts/sim-lint.ts) (entry)
 - [`simulations/sync/README.md`](../simulations/sync/README.md)
@@ -13,4 +13,4 @@ Implement optional `--under <path>` or `--prefix` for `sim-validate` / `sim-lint
 
 ## Completion
 
-- [ ] Done
+- [x] Done (README now documents the canonical CLI commands and matches `package.json` entries)

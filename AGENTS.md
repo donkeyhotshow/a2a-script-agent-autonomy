@@ -173,7 +173,7 @@ Enable sync with `DEFAULT_SYNC_MODE=1` or request `sync: true`.
 - `context.history` — execution records
 - `context.execution` — current state (action, step, progress)
 - `context.workbench` — structured state (`sections`, optional `batch`, optional `slots`)
-- `context.session_id` — session identifier
+- `context.session_id` — server-assigned session identifier (`srv_sess_*`); the client never forwards its own storage `sessionId`
 - `context.operationHistory[]` — lightweight operation tracking (llm_call, transform, interrupt, etc.) for debug/audit
 
 ### Simulation Pipeline
@@ -193,6 +193,7 @@ Note: Server always applies transforms; `response.md` optional (no LLM).
 | ENCRYPTION_KEY | 32 chars | Yes |
 | JWT_SECRET | 32+ chars | Yes |
 | DEFAULT_SYNC_MODE | 1 | No |
+| A2A_GRAY_ROOM_ENABLED | unset or `1` = on; `0`/`false` = off | No |
 
 ---
 
@@ -202,6 +203,10 @@ Note: Server always applies transforms; `response.md` optional (no LLM).
 Web UI (5173) → Client API (5173/api/a2a) → A2A Server (3000) → AI Hub (11434)
       ↓ Session Storage ↓                           → Ollama (11435)
 ```
+
+### Invoke payload privacy
+- The Client API keeps the human-facing `sessionId`/`projectId` confined to `a2a-client/storage/…` and **strips them** before proxying to `/api/v1/invoke`. Project metadata (`projectId`/`projectRoot`) and any camelCase `sessionId` are removed before the server ever sees the payload.
+- The stateless A2A Server always assigns its own `context.session_id` (currently `srv_sess_<uuid>`), returns it inside the response context, and the Client API reuses that server-issued token for follow-up invokes. That lets multi-step actions stay bound to a server session without leaking project or storage identifiers.
 
 ### Ports
 | Port | Service | Role |

@@ -2,7 +2,7 @@
 
 ## Sources
 
-- **Spec (missing on disk):** `tasks/sync-step-contract-warnings.md` — see [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)
+- [`tasks/sync-step-contract-warnings.md`](../tasks/sync-step-contract-warnings.md)
 - [`a2a-server/scripts/sim-contract/step-transform-rules.ts`](../a2a-server/scripts/sim-contract/step-transform-rules.ts)
 - [`package.json`](../package.json) / `a2a-server/package.json` — `sim:validate`, `sim:contract-report`
 
@@ -12,4 +12,4 @@ Keep `sim:validate -- --all --step-contract` clean (or document intentional exce
 
 ## Completion
 
-- [ ] Done (no regression vs last green baseline)
+- [x] Done (step-contract report clean across all sync simulations as of 2026-04-02)

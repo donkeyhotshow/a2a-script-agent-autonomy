@@ -1,4 +1,4 @@
-# DEV_STATE - 2026-04-02 (Self-Upgrade in progress)
+# DEV_STATE - 2026-04-03 (Manual LLM Mode Added)
 
 **Self-Upgrade:** Process of system self-improvement via daemon script `monitor-and-process-tasks.js` or manual API dialog with agent. See [GLOSSARY.md](GLOSSARY.md).
 
@@ -12,11 +12,23 @@
 
 Current system state: **Stack готов** - все сервисы работают; `sim:validate -- --all --step-contract` зелёный.
 
-**Recent (simulations):** `SCHEMA.md` scope unified (sync vs `async/`); root `npm run sim:contract-report`; `async/promise-lifecycle/3` failed-terminal golden; `server-invoke-response-execute.schema.json` allows `execution.status` `failed` / `cancelled`. **`sync/agent`:** 15-step golden — усі типи `execute` для web agent у одному ланцюжку (без LLM у фікстурах), шляхи репо + workbench як `agent-coder-smart`.
+**NEW: Manual LLM Mode ENABLED** — Operator-controlled LLM responses. `A2A_MANUAL_LLM_MODE=1` active in `.env.local`. See docs section at bottom.
+
+**Recent (client UI):** `web/js/action-executor.js` — after `POST …/next` with `asyncPending`, starts session-scoped `startPromisePolling` so floating panels (5173) complete LLM/async steps instead of hanging on "Waiting…". Failed/ rejected acks clear `promisePending` and stop the loader. `window-events.js` — floating session panels no longer re-render the previous router/form while `promisePending` or `awaitingSessionVerify` (avoids double-submit and matches `LOADER-BEHAVIOR.md` sending state); `startLoader` on message/choice submit. `html-utils` / `render-form` still align on actionable form detection for fresh `execute`.
+
+**Recent (simulations):** `SCHEMA.md` scope unified (sync vs `async/`); root `npm run sim:contract-report`; `async/promise-lifecycle/3` failed-terminal golden; `server-invoke-response-execute.schema.json` allows `execution.status` `failed` / `cancelled`. **`sync/agent`:** 15-step golden — усі типи `execute` для web agent у одному ланцюжку (без LLM у фікстурах), шляхи репо + workbench як `agent-coder-smart`. **`web-execute-dto`:** form + stripped `script`/`run-script` now get synthetic `Running script…`; form-only steps after auto script use `context.workbench.sections.autoScriptTrigger` → `message` + `attachments.runScriptId` (`script-agent-dialog/4` received). **`sim:validate`:** `--sim foo/bar` falls back to `simulations/sync/foo/bar`; `--all` lists numeric steps in numeric order.
 
 **Pre-existing issues (known):**
 - a2a-client test failures: 41 failed — 100% SDK config issues (not code)
 - Orchestrator metrics: требует периодического обновления
+
+## Completed work/tasks (2026-04-03):
+- **Manual LLM Mode (NEW)**: Operator-controlled LLM response submission
+  - Env: `A2A_MANUAL_LLM_MODE=1` to enable
+  - Server pauses before LLM call, stores prepared messages
+  - Status: `waiting_manual_llm`
+  - API: `GET /requests/manual-llm/pending`, `POST /requests/{id}/llm-response`
+  - Files: `manual-llm.service.ts`, updates to `llm-orchestration.ts`, `dialog-request-processor.ts`, `requests.routes.ts`
 
 ## Completed work/tasks (2026-04-02):
 - **Task Monitor System (COMPLETED)**: Fixed all 6 identified bugs in `monitor-and-process-tasks.js`:
@@ -52,6 +64,8 @@ Current system state: **Stack готов** - все сервисы работа�
 - S11: `sync/resilience-contract/1`–`6` — `request.md` / `response.md` mirrors; `sim:check-md -- --path ../simulations/sync/resilience-contract` clean
 
 - **AI Integration (COMPLETED)**: Z.AI стал default-провайдером, `/api/tags` отдаёт Z.AI-модели и подмешивает локальные Ollama-entry только при доступности сервера, `/health/ready` смотрит на default-провайдер, а конфиги/README/queue отражают новое поведение (`ai-integration/proxy/proxy_handler.py`, `ai-integration/proxy/health_routes.py`, `ai-integration/proxy/config.py`, `ai-integration/proxy/providers/config_loader.py`, `ai-integration/README.md`, `work/STATE.md`).
+
+- **Self-Upgrade monitor run (2026-04-03)**: `node monitor-and-process-tasks.js` kicked off `ai-integration-configuration-system-plan.md` and, after the router form asked "What would you like me to do?", a manual `POST /sessions/sess_1775163935824/next` (see `curl.exe` log) pushed a real task message. The agent is now sitting on `promiseId prom_1775164401703_g29l65y66` with `asyncPending` still `true` (call `GET .../async` or `GET http://localhost:3000/api/v1/requests/.../result` to watch it). The failure hook document still documents the router prompt, and follow-up instructions live in `tasks/pending/monitor-router-interaction-followup.md` for whoever continues the run.
 
 ## Completed work/tasks (2026-04-01):
 - Analyze test failures: Classified 41 failed a2a-client tests as config/environment issues
@@ -107,3 +121,38 @@ npm run sim:validate -- --all
 cd a2a-server && npm run test
 cd a2a-client && npm test
 ```
+
+---
+
+## Manual LLM Mode
+
+**Env:** `A2A_MANUAL_LLM_MODE=1` to enable (default: 0/off).
+
+When enabled, server pauses before calling LLM and waits for operator to submit response manually. Useful for testing, debugging, using external LLM providers, or manually crafting responses.
+
+**Flow:**
+1. Request submitted via `POST /api/v1/invoke`
+2. Server prepares request.md via transforms
+3. Server stores prepared messages and sets status `waiting_manual_llm`
+4. Response includes `execute.form` with instructions and message preview
+5. Operator submits LLM response via `POST /api/v1/requests/{promiseId}/llm-response`
+6. Server continues with gray room processing
+
+**API Endpoints:**
+```bash
+# List all requests waiting for manual input
+GET /api/v1/requests/manual-llm/pending
+
+# Check request status (shows manualLlmMode: true when waiting)
+GET /api/v1/requests/{promiseId}/result
+
+# Submit manual LLM response
+POST /api/v1/requests/{promiseId}/llm-response
+Body: {"response": "Paste LLM response markdown here"}
+```
+
+**Implementation Files:**
+- `a2a-server/src/services/core/request/manual-llm.service.ts` — core service
+- `a2a-server/src/services/core/request-processor/llm-orchestration.ts` — manual mode hook
+- `a2a-server/src/services/core/request-processor/dialog-request-processor.ts` — wait handling
+- `a2a-server/src/routes/requests.routes.ts` — API endpoints

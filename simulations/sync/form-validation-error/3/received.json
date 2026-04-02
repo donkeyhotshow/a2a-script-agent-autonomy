@@ -1,0 +1,17 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Дякую",
+      "description": "Ваш вік (5) прийнято.",
+      "choices": [
+        {
+          "id": "done",
+          "label": "OK",
+          "description": "Завершити"
+        }
+      ]
+    }
+  }
+}

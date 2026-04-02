@@ -129,6 +129,30 @@ Rules:
 - Allowed actions (keys): `rag-search`, `list-directory`, `read-file`, `write-file`, `grep-search`, `file-exists`, `edit-patch`, `run-script`, `script`, `execute-command`, `dialog` (same surface the server validates for single-tool turns).
 - `completed`: Set `true` only when the task is fully finished. When `true`, omit or empty `execute`.
 
+## Gray room (server-side, same invoke)
+
+When the server runs the gray-room interrupt loop, you may add a top-level **`interrupt`** object next to `execute` / `message` in your JSON (response transform copies it for the orchestrator).
+
+| Situation | Suggested `interrupt` |
+|-----------|------------------------|
+| **`rag-search`** just produced hits (`ragResults` / tool outcome in history) and you need another server-side RAG page or consolidation before the next main turn | `"reason": "auto_rag_page"` with `"data": { "query": "…", "projectPath": "…" }` (optional `limit`) — server merges hits into **`context.ragResults`** and appends a **system** `history` line summarizing paths. |
+| You **`read-file`** (or equivalent) and must reason about file content before emitting the next tool or answer | `"reason": "thinking"` — sidecar writes structured notes to `workbench.slots.thinking`, then the main model runs again with that context. Prefer this over a thin assistant `message` when the next step depends on careful reading. |
+
+Example (server will merge hits into `ragResults` + append a **system** `history` line, then re-enter the main LLM if `continueLoop` applies):
+
+```json
+{
+  "step": "analyze",
+  "message": "Pulling one more RAG page into history before choosing files to read.",
+  "interrupt": {
+    "reason": "auto_rag_page",
+    "data": { "query": "router mount express", "limit": 10 }
+  }
+}
+```
+
+On turns where you only need tools toward the client, omit `interrupt` and send a normal `execute` action key as usual.
+
 ## Current State
 
 `workbench` is structured working memory: `sections` (named text chunks), optional `batch` (items, cursor, label), optional `slots` (named JSON blobs).

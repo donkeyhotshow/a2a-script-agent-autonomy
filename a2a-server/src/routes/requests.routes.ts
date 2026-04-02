@@ -7,6 +7,13 @@
 
 import {Router, Request, Response, NextFunction} from 'express';
 import {requestService} from '../services/core/request/request.service.js';
+import {
+    getPendingManualLlm,
+    removePendingManualLlm,
+    listPendingManualLlms,
+} from '../services/core/request/manual-llm.service.js';
+import {GrayRoomOrchestrator, readGrayRoomInterruptBudget} from '../services/core/request-processor/gray-room-orchestrator.js';
+import {getPromptsTransformsPath} from '../transform/index.js';
 
 const router = Router();
 
@@ -92,6 +99,25 @@ router.get('/status', async (req: Request, res: Response, next: NextFunction): P
 });
 
 /**
+ * GET /requests/manual-llm/pending
+ * List all requests waiting for manual LLM input (must be before /:promiseId/*).
+ */
+router.get('/manual-llm/pending', async (_req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const pending = listPendingManualLlms();
+        res.json({
+            success: true,
+            data: {
+                count: pending.length,
+                items: pending,
+            },
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
  * GET /requests/:promiseId/status
  * Single status (existing behavior)
  */
@@ -127,7 +153,7 @@ router.get('/:promiseId/result', async (req: Request, res: Response, next: NextF
             });
             return;
         }
-        
+
         // Always expose request status so pollers see terminal failed/pending (not empty {}).
         const responseData: Record<string, unknown> = {
             status: fullResult.status,
@@ -152,7 +178,94 @@ router.get('/:promiseId/result', async (req: Request, res: Response, next: NextF
             }
         }
 
+        // Add manual LLM mode indicator if applicable
+        if (fullResult.status === 'waiting_manual_llm') {
+            responseData.manualLlmMode = true;
+            responseData.message = `🛑 MANUAL LLM MODE — Submit response via POST /requests/${promiseId}/llm-response`;
+        }
+
         res.json({success: true, data: responseData});
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * POST /requests/:promiseId/llm-response
+ * Submit manual LLM response for a request in waiting_manual_llm state
+ */
+router.post('/:promiseId/llm-response', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const promiseId = String(req.params.promiseId || '');
+        const {response} = req.body || {};
+
+        if (typeof response !== 'string' || response.trim() === '') {
+            res.status(400).json({
+                success: false,
+                error: {message: 'Missing required field: response (string)'},
+            });
+            return;
+        }
+
+        // Check if there's a pending manual LLM request
+        const pending = getPendingManualLlm(promiseId);
+        if (!pending) {
+            // Check request status
+            const reqStatus = await requestService.getResult(promiseId);
+            if (!reqStatus) {
+                res.status(404).json({
+                    success: false,
+                    error: {message: 'Request not found'},
+                });
+                return;
+            }
+            if (reqStatus.status !== 'waiting_manual_llm') {
+                res.status(400).json({
+                    success: false,
+                    error: {message: `Request is not in waiting_manual_llm state (current: ${reqStatus.status})`},
+                });
+                return;
+            }
+            res.status(400).json({
+                success: false,
+                error: {message: 'No pending manual LLM data found for this request'},
+            });
+            return;
+        }
+
+        // Remove from pending
+        removePendingManualLlm(promiseId);
+
+        // Process the response through gray room
+        const grayRoom = new GrayRoomOrchestrator({
+            promptsTransformsPath: getPromptsTransformsPath(),
+            maxInterruptTurns: readGrayRoomInterruptBudget(),
+        });
+
+        const result = await grayRoom.runLoop(
+            pending.ctxSnapshot,
+            pending.schemaName,
+            response.trim(),
+            promiseId,
+            false,
+            true // gray room enabled for manual mode too
+        );
+
+        // Update request with result
+        await requestService.updateStatus(
+            promiseId,
+            result.outcome === 'failed' ? 'failed' : 'completed',
+            result as unknown as Record<string, unknown>
+        );
+
+        res.json({
+            success: true,
+            data: {
+                promiseId,
+                status: result.outcome === 'failed' ? 'failed' : 'completed',
+                note: 'Manual LLM response processed',
+            },
+        });
     } catch (error) {
         next(error);
     }

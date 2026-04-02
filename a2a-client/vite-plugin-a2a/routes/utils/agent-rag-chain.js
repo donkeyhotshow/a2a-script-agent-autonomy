@@ -11,7 +11,12 @@
 
 import http from 'http';
 import fs from 'fs';
-import { extractA2aExecute, mergeResponseContext, buildStepRecord } from './builders.js';
+import {
+    buildStepRecord,
+    extractA2aExecute,
+    mergeResponseContext,
+    sanitizeContextForServer,
+} from './builders.js';
 import { getMaxRagChainDepth } from '../../../shared/agent-rag-chain-depth.mjs';
 import { getProjectPathForSessions } from '../../storage/projectSessions.js';
 import * as stepHandlers from '../handlers/step-handlers.js';
@@ -148,7 +153,7 @@ export async function chainSyncInvokesForAgentTools({
 }) {
     const max = maxDepth ?? getMaxRagChainDepth();
     let lastResp = serverResponse;
-    let ctx = mergeResponseContext(sessionId, mergedContext, serverResponse);
+    let ctx = mergeResponseContext(mergedContext, serverResponse);
     let stepNum = startStepNum;
 
     if (max <= 0) {
@@ -174,7 +179,8 @@ export async function chainSyncInvokesForAgentTools({
         }
 
         stepNum += 1;
-        const nextBody = { context: ctx, result: { [toolOut.key]: toolOut.value } };
+        const contextForServer = sanitizeContextForServer(ctx);
+        const nextBody = { context: contextForServer, result: { [toolOut.key]: toolOut.value } };
 
         const stepDir = stepHandlers.getNewStepDir(cwd, sessionId, stepNum);
         if (!fs.existsSync(stepDir)) {
@@ -202,7 +208,7 @@ export async function chainSyncInvokesForAgentTools({
         }
 
         lastResp = parsed;
-        ctx = mergeResponseContext(sessionId, ctx, lastResp);
+        ctx = mergeResponseContext(ctx, lastResp);
 
         const stepRecord = buildStepRecord({
             sessionId,

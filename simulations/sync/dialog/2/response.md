@@ -16,11 +16,8 @@
   },
   "execute": {
     "form": {
-      "textarea": {
-        "name": "message",
-        "label": "Повідомлення",
-        "required": true
-      }
+      "title": "Повідомлення",
+      "description": "Введіть повідомлення для продовження діалогу."
     }
   }
 }

@@ -47,15 +47,7 @@ LLM acknowledges the fix completion and offers to create the test.
   "execute": {
     "form": {
       "title": "Plan follow-up work",
-      "description": "Ваша новая инструкция: Example.spec + vitest. Напишите, как продолжить.",
-      "input": [
-        {
-          "name": "message",
-          "type": "text",
-          "label": "Message",
-          "required": true
-        }
-      ]
+      "description": "Ваша новая инструкция: Example.spec + vitest. Напишите, как продолжить."
     }
   }
 }

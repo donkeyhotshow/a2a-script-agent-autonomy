@@ -3,12 +3,13 @@ import http from 'http';
 import pathMod from 'path';
 
 import {
-    mergeResponseContext,
-    mergeDialogHistoryForInvoke,
     buildStepRecord,
     extractA2aExecute,
-    unwrapA2aResponse,
+    mergeDialogHistoryForInvoke,
+    mergeResponseContext,
     pickInvokeContextPatch,
+    sanitizeContextForServer,
+    unwrapA2aResponse,
 } from './utils/builders.js';
 import { toMinimalNextAck } from './utils/session-projection-dto.js';
 import * as stepHandlers from './handlers/step-handlers.js';
@@ -122,8 +123,6 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                 mergedContext = { ...mergedContext, ...filteredContext };
             }
 
-            mergedContext.session_id = sessionId;
-
             const sessionContext = session.context || {};
             const previousExecution = sessionContext.execution || {};
             if (previousExecution.action && !mergedContext.execution) {
@@ -154,9 +153,11 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                 );
             }
 
+            const contextForServer = sanitizeContextForServer(mergedContext);
             const requestToServer = {
-                context: mergedContext,
+                context: contextForServer,
                 result: submitResult,
+                ...(effectiveTask ? { task: effectiveTask } : {}),
             };
 
             stepHandlers.saveRequestToServer(cwd, sessionId, nextStepNum, requestToServer);
@@ -300,7 +301,7 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                         session.messages = session.messages || [];
 
                         const savedContext = serverResponse
-                            ? mergeResponseContext(sessionId, mergedContext, serverResponse)
+                            ? mergeResponseContext(mergedContext, serverResponse)
                             : mergedContext;
                         session.context = savedContext;
                         session.promiseId = null;
@@ -425,11 +426,7 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                 }
             });
 
-            const invokePayload = {
-                context: mergedContext,
-                result: submitResult,
-                ...(effectiveTask ? { task: effectiveTask } : {}),
-            };
+            const invokePayload = requestToServer;
             console.log(
                 '[VitePlugin] === SENDING TO A2A SERVER ===',
                 Object.keys(invokePayload)
@@ -443,4 +440,3 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
 
     return true;
 }
-

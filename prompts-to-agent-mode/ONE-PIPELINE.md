@@ -6,8 +6,8 @@ This document is the **single linear spine** for: run stack → drive the agent 
 
 1. **Environment** — From repo root: `start-all.bat` / `start-all.sh` ([`docs/SYSTEM_STARTUP.md`](../docs/SYSTEM_STARTUP.md)). Confirm health: `AGENTS.md` → *Debugging* (3000, 11434, 11435, 5173).
 2. **Pick a prompt task** — Use the index in [`README.md`](README.md). Prefer order: `DEV_STATE.md` / `work/STATE.md` / `tasks/system-improvement-priorities.md` linked rows → methodology → client-api checks → docs/sims. Each `.md` file here is one **work unit** with sources + **Agent prompt** text.
-3. **Create session (API)** — `POST {ClientAPI}/api/a2a/sessions` with `mode: "agent"`, `projectId`/`projectRoot` as needed, and seed **`task`** with the **Agent prompt** body (or first-beat text). **Not** `POST :3000/api/v1/invoke` alone. Normative detail: [`STACK-RUN.md`](STACK-RUN.md), [`AGENTS.md`](../AGENTS.md) → *Unified manual path*.
-4. **Drive turns** — `POST …/sessions/{id}/next` → poll `GET …/sessions/{id}/async` until settled. After **every** server-visible step, `GET …/sessions/{id}` (`includeContext=1` when debugging). **Router:** no `form.choices` → send text (`message` / `task`); with `choices` → send `choice` / `task` as choice **`id`**. See *Router dialog* in `AGENTS.md`.
+3. **Create session (API)** — `POST {ClientAPI}/api/a2a/sessions` with `mode: "agent"`, `projectId`/`projectRoot` as needed, and seed **`task`** with the **Agent prompt** body (or first-beat text). **Not** `POST :3000/api/v1/invoke` alone. **Batch / automation:** **[`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** — Task Monitor runs steps 3–4 for every indexed file under `prompts-to-agent-mode/`. Normative detail: [`STACK-RUN.md`](STACK-RUN.md), [`AGENTS.md`](../AGENTS.md) → *Unified manual path*.
+4. **Drive turns** — `POST …/sessions/{id}/next` → poll `GET …/sessions/{id}/async` until settled. After **every** server-visible step, `GET …/sessions/{id}` (`includeContext=1` when debugging). **Router:** no `form.choices` → send text (`message` / `task`); with `choices` → send `choice` / `task` as choice **`id`**. See *Router dialog* in `AGENTS.md`. (The Task Monitor implements this loop — same contract as manual curl.)
 5. **Observe** — Disk steps: `a2a-client/storage/sessions/{id}/`; compare to expected behavior in the prompt’s **Completion** / linked spec. For contract/shape issues, start at [`scripts/direct-tests/README.md`](../scripts/direct-tests/README.md) before sims.
 6. **Hardening pass (what can go wrong)** — Walk at least these classes once per milestone or after regressions:
    - **Stuck async** — Poll `/async`; do not stop after `/next` ack alone ([`docs/OPERATOR-CURL.md`](../docs/OPERATOR-CURL.md) → *Driver checklist*).
@@ -24,6 +24,7 @@ This document is the **single linear spine** for: run stack → drive the agent 
 | Layer | Role in this pipeline |
 |--------|------------------------|
 | [`AGENTS.md`](../AGENTS.md) | Contract: Client API, router two beats, anti-stop rules |
+| [`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md) | **Instrument:** launch indexed tasks through session dialog (`npm run monitor`) |
 | [`STACK-RUN.md`](STACK-RUN.md) | Live stack vs IDE vs invoke |
 | [`docs/OPERATOR-CURL.md`](../docs/OPERATOR-CURL.md) | Curl examples + driver checklist |
 | [`methodology/INDEX.md`](../methodology/INDEX.md) | Modes, metrics narrative, links to tasks/improvements |
@@ -33,6 +34,6 @@ This document is the **single linear spine** for: run stack → drive the agent 
 
 ## Automation note
 
-Scripts may create sessions and POST `/next` in a loop; they must still **branch on `execute.form`** (router) and **poll `/async`**. The linear order above stays the **spec** for any driver (human, CI, or bot).
+The repo **Task Monitor** ([`monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`tests/monitor-tasks/`](../tests/monitor-tasks/)) is the reference implementation: create session, POST `/next`, poll `/async`, branch on **`form.choices`**, surface errors with **direct-tests** hints. Any other script must follow the same contour. The linear order above is the **spec** for any driver (human, CI, or bot).
 
-See also: parent index [`README.md`](README.md), stack contour [`STACK-RUN.md`](STACK-RUN.md), master run [`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md).
+See also: [`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md), parent index [`README.md`](README.md), stack contour [`STACK-RUN.md`](STACK-RUN.md), master run [`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md).

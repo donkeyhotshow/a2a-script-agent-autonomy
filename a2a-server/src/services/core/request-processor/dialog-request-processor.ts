@@ -14,7 +14,12 @@ import {logger} from '../../../utils/logger.js';
 import {getPromptsTransformsPath} from '../../../transform/index.js';
 import type {RequestContext, ProcessResult} from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
-import {GrayRoomOrchestrator, isDialogToolExecutePayload} from './gray-room-orchestrator.js';
+import {
+    GrayRoomOrchestrator,
+    isDialogToolExecutePayload,
+    readGrayRoomInterruptBudget,
+    shouldUseGrayRoom
+} from './gray-room-orchestrator.js';
 import {
     resolveTransformSchema,
     normalizeContext,
@@ -55,7 +60,8 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
         super('DialogRequestProcessor', {});
         this.promptsTransformsPath = promptsTransformsPath ?? getPromptsTransformsPath();
         this.grayRoom = new GrayRoomOrchestrator({
-            promptsTransformsPath: this.promptsTransformsPath
+            promptsTransformsPath: this.promptsTransformsPath,
+            maxInterruptTurns: readGrayRoomInterruptBudget()
         });
     }
 
@@ -72,6 +78,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
         const {executeLlmCall} = await import('./llm-orchestration.js');
 
         const ctx = normalizeContext(context, requestMessage);
+        const grayRoomChain = shouldUseGrayRoom(ctx).shouldTrigger;
         const schema = resolveTransformSchema(ctx);
 
         if (!schema) {
@@ -112,11 +119,12 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                     schemaName,
                     responseMd,
                     promiseId,
-                    false
+                    false,
+                    grayRoomChain
                 );
             }
 
-            // Выполняем LLM вызов
+            // Выполняем LLM вызов (или ждем ручной ввод если manual mode)
             const llmResult = await executeLlmCall({
                 promptsTransformsPath: this.promptsTransformsPath,
                 schemaName,
@@ -125,6 +133,34 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 base: aiHubUrl,
                 model
             });
+
+            // Manual mode: must use outcome waiting_manual_llm so request processor does not overwrite status to completed
+            if (llmResult.manualWait) {
+                logger.info('[DialogRequestProcessor] Manual LLM mode — waiting operator input', {promiseId});
+                const manualForm =
+                    (llmResult.manualExecute?.form as Record<string, unknown> | undefined) ??
+                    ({
+                        title: '🛑 MANUAL LLM MODE — Server Paused',
+                        description: `Request ${promiseId} is waiting for manual LLM response. Use POST /api/v1/requests/${promiseId}/llm-response to submit.`,
+                        meta: {
+                            mode: 'manual_llm',
+                            status: 'waiting_operator',
+                            promiseId,
+                        },
+                    } as Record<string, unknown>);
+                return {
+                    outcome: 'waiting_manual_llm',
+                    execute: llmResult.manualExecute ?? {form: manualForm},
+                    context: {
+                        ...ctx,
+                        execution: {
+                            ...(ctx['execution'] as Record<string, unknown>),
+                            step: 'manual_llm_wait',
+                            manualLlmMode: true,
+                        },
+                    },
+                } as ProcessResult;
+            }
 
             if (!llmResult.success || !llmResult.responseMd) {
                 return {outcome: 'failed', error: llmResult.error || 'LLM call failed'} as ProcessResult;
@@ -136,7 +172,8 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 schemaName,
                 llmResult.responseMd,
                 promiseId,
-                false
+                false,
+                grayRoomChain
             );
         } catch (err) {
             logger.error('[DialogRequestProcessor] Failed', {error: String(err)});

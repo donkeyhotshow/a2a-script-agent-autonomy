@@ -1,0 +1,20 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$out.execute",
+      "value": {
+        "rag-search": {
+          "query": "calculateTotal function",
+          "limit": 5
+        }
+      }
+    }
+  ]
+}

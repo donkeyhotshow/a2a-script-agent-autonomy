@@ -7,7 +7,7 @@
 ## Возможности
 
 - **Маршрутизация между провайдерами**: Z.AI (по умолчанию) + fallback (Ollama, Groq, OpenRouter, HuggingFace, Cohere и т.д.) — правила задаются в `AI_HUB_CONFIG` / `providers.json`.
-- **Логирование**: Каждый запрос сохраняется в отдельную папку (`proxy_logs/request_*`) с `request.json` и `response.json`.
+- **Логирование**: Каждый запрос сохраняется в отдельную папку (`proxy_logs/requests/request_*`) с `request.json` и `response.json`.
 - **ML-симуляция**: Симуляции rnj-L / rnj-1 и правила `simulate`/`set_model`.
 - **Маппинг моделей + конфигурация**: `AI_HUB_CONFIG` + `providers.json` позволяют переадресовать `model`, вставлять `virtual_models` и наблюдать `api/tags`.
 - **Async Promises**: Поддержка `promiseId` → `POST /api/promises/create` → потом `result`.
@@ -177,9 +177,10 @@ ai-integration/
 │   └── ai-hub.config.example.json
 │
 └── proxy_logs/                # Логи запросов
-    └── request_*/
-        ├── request.json
-        └── response.json
+    └── requests/                  # Папка для запросов
+        └── request_*/
+            ├── request.json
+            └── response.json
 ```
 
 ## API Endpoints

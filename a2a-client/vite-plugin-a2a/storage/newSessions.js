@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { getStorageRoot, ensureDir } from './root.js';
-import { isRemovablePromiseBesideResponse } from './promise-status.js';
+import { isActivePromiseStatus, isRemovablePromiseBesideResponse } from './promise-status.js';
 
 /** When set, step files for this session live under `${parent}/${sessionId}/…` (project storage mode). */
 const stepSessionsParentBySessionId = new Map();
@@ -329,8 +329,30 @@ export function loadNewStep(cwd, sessionId, stepNum) {
     const promiseFile = path.join(stepDir, 'server-promise.json');
     if (fs.existsSync(promiseFile)) {
       try {
-        const prom = JSON.parse(fs.readFileSync(promiseFile, 'utf8'));
-        if (isRemovablePromiseBesideResponse(prom)) {
+        let prom = null;
+        try {
+          prom = JSON.parse(fs.readFileSync(promiseFile, 'utf8'));
+        } catch {
+          prom = null;
+        }
+        const hasTerminalExecute = data.execute != null && typeof data.execute === 'object';
+        // server-response + stale server-promise (e.g. { status: 'pending' } without promiseId) leaves
+        // getActiveAsyncWork stuck on session-index; /async polls forever and the web UI hides the form.
+        if (hasTerminalExecute && (prom == null || typeof prom !== 'object' || isActivePromiseStatus(prom.status))) {
+          fs.unlinkSync(promiseFile);
+          try {
+            const idx = loadSessionIndex(cwd, sessionId);
+            if (idx && idx.currentStep === stepNum && (idx.promiseId != null || idx.promiseStatus != null)) {
+              idx.promiseId = null;
+              idx.promiseStatus = null;
+              idx.updatedAt = new Date().toISOString();
+              const indexPath = path.join(getNewSessionDir(cwd, sessionId), 'session-index.json');
+              fs.writeFileSync(indexPath, JSON.stringify(idx, null, 2));
+            }
+          } catch (eIdx) {
+            console.error('[newSessions] Failed to clear stale index promise:', eIdx.message);
+          }
+        } else if (isRemovablePromiseBesideResponse(prom)) {
           fs.unlinkSync(promiseFile);
         }
       } catch (e) {

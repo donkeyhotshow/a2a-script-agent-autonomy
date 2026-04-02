@@ -1,137 +1,98 @@
-# Quick Start Guide - Task Monitor
+# Task Monitor — launch tasks through session dialog
 
-## What Was Done
+This document is the **operator entry point** for the Task Monitor: the same **Client API session dialog** the web UI uses (`sessions` → `next` → poll `async`), driven automatically from indexed markdown under `prompts-to-agent-mode/`.
 
-✅ **6 Critical Bugs Fixed**
-- Router choice parameter handling
-- Double task submission prevention
-- Improved task extraction logic
-- Poll loop promise checking
-- Hardbit state logging accuracy
-- Session verification enhancements
+| If you need… | Read first |
+|--------------|------------|
+| **Why** not `invoke` alone, router beats, curl shape | [`AGENTS.md`](AGENTS.md) → *Unified manual path*, *Router dialog* |
+| **Indexed prompts** and stack rules | [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md), [`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md) |
+| **Env / ports** | [`.env.example`](.env.example) (`TASK_MONITOR_*`, `WEB_PORT`, `OLLAMA_HOST`, `AI_HUB_URL`) |
+| **Schema / shape debugging** | [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md) |
+| **Terminology** | [`GLOSSARY.md`](GLOSSARY.md) → Task Monitor, ErrorClassifier, Direct Tests |
 
-✅ **Daemon System Complete**
-- Graceful shutdown with signal handling
-- Status reporting every 30 seconds
-- Hook document creation for failed tasks
-- Non-blocking async task monitoring
-- Health check system
+## What the instrument does
 
-✅ **17 Tests Created & Passing**
-- 100% validation coverage
-- All fixes verified
-- All features tested
+1. Reads each `*.md` in `prompts-to-agent-mode/` (or `TASK_MONITOR_TASKS_DIR`).
+2. **`POST /api/a2a/sessions`** with **`mode: "agent"`** and task text from the file.
+3. **`POST /api/a2a/sessions/{id}/next`** and **`GET /api/a2a/sessions/{id}/async`** in a loop until the step settles.
+4. When the hydrated session shows **`form.choices`**, sends a **choice** (same contract as the UI: `result.choice` or top-level `task` as choice `id`).
+5. Writes **`task-monitor-state.json`**, and on failures may emit **`hooks/`** payloads for follow-up.
 
----
+The monitor is **not** a substitute for understanding the router: if the server asks an unexpected question, inspect **`GET /api/a2a/sessions/{id}`** (`includeContext=1` when debugging) and continue the dialog manually or adjust automation — see [`tasks/pending/monitor-router-interaction-followup.md`](tasks/pending/monitor-router-interaction-followup.md) for a real example.
 
-## Running the Script
+## Prerequisites
 
-### Daemon Mode (Recommended)
+- Stack up: **`start-all.bat`** from repo root (not ad-hoc `npm run dev` per package) — [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md).
+- Client API reachable at your configured base (default **`http://localhost:5173/api/a2a`**).
+
+## Run commands
+
+From repo root:
+
 ```bash
-# Start continuous monitoring daemon
-node monitor-and-process-tasks.js
-
-# Stop daemon gracefully
-# Press Ctrl+C - it will wait up to 30 seconds for tasks to complete
+npm run monitor              # daemon: continuous watch loop
+npm run monitor:daemon       # same (explicit)
+npm run monitor:once         # one pass over tasks, then exit
+npm run monitor:reset        # remove task-monitor-state.json (Windows-friendly)
 ```
 
-### Sequential Mode (One Task at a Time)
+Equivalent:
+
 ```bash
-# Process all tasks one by one and exit
-node monitor-and-process-tasks.js --sequential
-# or
+node monitor-and-process-tasks.js              # daemon
+node monitor-and-process-tasks.js --daemon
 node monitor-and-process-tasks.js --once
 ```
 
----
+## Environment (`TASK_MONITOR_*`)
 
-## What It Does
+Defined in [`.env.example`](.env.example). Common overrides:
 
-1. **Monitors Tasks** - Continuously checks `prompts-to-agent-mode/` directory
-2. **Creates Sessions** - Starts A2A sessions for each task
-3. **Tracks Progress** - Logs status every 30 seconds
-4. **Handles Failures** - Creates hook documents for IDE integration
-5. **Graceful Shutdown** - Waits for tasks to complete on exit
+| Variable | Role |
+|----------|------|
+| `TASK_MONITOR_CLIENT_API_URL` | Client API base (default `http://localhost:5173/api/a2a`) |
+| `TASK_MONITOR_SERVER_API_URL` | Server API for health (default `http://localhost:3000/api/v1`) |
+| `TASK_MONITOR_PROJECT_ID` | Project for new sessions; if empty, first project from `GET /projects` |
+| `TASK_MONITOR_POLL_INTERVAL_MS` | Delay between async polls |
+| `TASK_MONITOR_MAX_POLL_ATTEMPTS` | Max poll iterations per task phase |
+| `TASK_MONITOR_POLL_TIMEOUT_MS` | Wall-clock cap for polling |
+| `TASK_MONITOR_TASKS_DIR` | Directory of task markdown files |
+| `TASK_MONITOR_LOG_LEVEL` | `error` / `warn` / `info` / `debug` — `debug` prints full classified error JSON |
 
----
+`OLLAMA_HOST` and `AI_HUB_URL` are used for health checks when set.
 
-## Monitoring Status
+## When something fails
 
-Check `task-monitor-state.json` for:
-- Current task being processed
-- Session ID
-- All processed tasks with status
-- Active tasks being monitored
+Logs use **`ErrorClassifier`** ([`tests/monitor-tasks/errors.js`](tests/monitor-tasks/errors.js)): **hint**, **quick fix**, **direct test** command, **diagnostic steps**, and **relevant env vars**.
 
----
+Run the suggested **direct tests** from repo root (PowerShell), for example:
 
-## Hook Documents
+```powershell
+.\scripts\direct-tests\run-checks.ps1 -Scope ClientServerLLM
+.\scripts\direct-tests\test-dialog-flow.ps1
+```
 
-When tasks fail, documents appear in `hooks/` directory with:
-- Task name and status
-- Error details
-- Session context
-- Suggested remediation actions
-- Timestamp
+See [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md) for scopes and dialog runners.
 
----
+## State and hooks
 
-## Health Checks
+- **`task-monitor-state.json`** — current task, session id, processed entries, active tasks.
+- **`hooks/`** — machine-readable issue documents when the monitor needs human or IDE follow-up.
 
-System verifies on startup:
-- ✓ Client API (http://localhost:5173/api/a2a)
-- ✓ A2A Server (http://localhost:3000)
-- ✓ Ollama (http://localhost:11435)
-- ✓ AI Hub (http://localhost:11434)
+## Tests
 
----
-
-## Test Suite
-
-Run tests to validate everything works:
 ```bash
 npx vitest run monitor-and-process-tasks.test.js
 ```
 
-Expected output: **17 passed (17)**
+## Implementation map
 
----
+| Area | File |
+|------|------|
+| Entry + wiring | [`monitor-and-process-tasks.js`](monitor-and-process-tasks.js) |
+| API + polling + session | [`tests/monitor-tasks/task-monitor-api.js`](tests/monitor-tasks/task-monitor-api.js), [`tests/monitor-tasks/task-monitor-processing.js`](tests/monitor-tasks/task-monitor-processing.js) |
+| Daemon / batch loop | [`tests/monitor-tasks/task-monitor-daemon.js`](tests/monitor-tasks/task-monitor-daemon.js) |
+| Errors + direct-test hints | [`tests/monitor-tasks/errors.js`](tests/monitor-tasks/errors.js) |
+| Config + `logError` | [`tests/monitor-tasks/task-monitor-core.js`](tests/monitor-tasks/task-monitor-core.js) |
 
-## Key Features
-
-| Feature | Benefit |
-|---------|---------|
-| Graceful Shutdown | Tasks complete before exit |
-| Status Reporting | See progress every 30 seconds |
-| Hook Documents | IDE can read and respond to failures |
-| Health Check | Know if services are available |
-| Promise Tracking | See LLM processing status |
-| Error Handling | Detailed error context for debugging |
-
----
-
-## Troubleshooting
-
-**Q: Script hangs?**  
-A: Press Ctrl+C for graceful shutdown (waits 30 seconds)
-
-**Q: Tasks not processing?**  
-A: Check health: Are Client API, A2A Server, Ollama running?
-
-**Q: No hook documents?**  
-A: Only created for failed or timeout tasks
-
-**Q: Session not found?**  
-A: Check session created successfully; logs show session ID
-
----
-
-## For More Details
-
-See: [COMPLETION-REPORT.md](./COMPLETION-REPORT.md)
-
-Contains:
-- Detailed bug fix descriptions
-- Architecture overview
-- Test results
-- Implementation checklist
+For narrative history of fixes and architecture notes, see [`COMPLETION-REPORT.md`](COMPLETION-REPORT.md) if present.

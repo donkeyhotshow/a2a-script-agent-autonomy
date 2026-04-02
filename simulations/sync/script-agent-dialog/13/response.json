@@ -5,7 +5,7 @@
     "history": [
       { "role": "user", "message": "Какие улучшения можно сделать в Example.vue?" },
       { "role": "assistant", "message": "Рекомендации по рефакторингу..." },
-      { "role": "user", "choice": "none" }
+      { "role": "system", "message": "choice: none" }
     ]
   },
   "execute": {

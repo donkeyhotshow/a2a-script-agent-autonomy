@@ -1,17 +1,19 @@
 # Master prompt — full-spectrum run (repo + live stack)
 
-**Self-Upgrade process:** This represents the Self-Upgrade mechanism, either through daemon script `monitor-and-process-tasks.js` or manual API dialog with the agent. See [GLOSSARY.md](GLOSSARY.md) for full definition.
+**Self-Upgrade process:** This represents the Self-Upgrade mechanism: tasks are **launched through the Client API session dialog** — automated by **`monitor-and-process-tasks.js`** (Task Monitor) or driven manually with the same `sessions` / `next` / `async` contour. See [GLOSSARY.md](GLOSSARY.md) (*Self-Upgrade*, *Task Monitor*).
 
-**Use this file to start the entire work surface:** indexed tasks under `prompts-to-agent-mode/`, methodology, Client API checks, docs/sims — through **automated daemon monitoring** with event-driven agent interventions.
+**Primary instrument for “run the indexed prompts on the live stack”:** **[`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md)** — that doc is the operator manual for dialog-based task launch (`npm run monitor`, env, router beats, errors → direct-tests).
+
+**Use this file to start the entire work surface:** indexed tasks under `prompts-to-agent-mode/`, methodology, Client API checks, docs/sims — through **Task Monitor daemon** plus event-driven IDE follow-up on **`hooks/`**.
 
 | You drive… | What to do |
 |------------|------------|
-| **Cursor / IDE agent** | Paste the **Agent prompt** block below into the chat. Start the daemon script `node monitor-and-process-tasks.js`, then respond to hook events from the `hooks/` directory. |
-| **Live stack only (curl/script)** | Start the daemon with `node monitor-and-process-tasks.js`, then monitor the `hooks/` directory for issues requiring manual intervention. |
+| **Cursor / IDE agent** | Paste the **Agent prompt** block below. Run **`npm run monitor`** (or `node monitor-and-process-tasks.js`); react to **`hooks/`** when the instrument surfaces failures or timeouts. |
+| **Live stack only** | Same: start the Task Monitor; use **`MONITOR-QUICK-START.md`** for commands and env; intervene via Client API only when hooks or errors require it. |
 
 **Client API base URL:** default dev is `http://localhost:5173`; other deployments — [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md).
 
-**Daemon script:** `monitor-and-process-tasks.js` (runs in daemon mode by default, use `--sequential` for one-time runs). **Hook system:** Issues create JSON documents in `hooks/` directory. **Task catalog:** [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md). **Normative spine:** [`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md).
+**Operator guide (instrument + dialog contour):** [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md). **Entry script:** [`monitor-and-process-tasks.js`](monitor-and-process-tasks.js). **Hook system:** JSON under `hooks/`. **Task catalog:** [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md). **Normative spine:** [`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md). **Indexed stack rules:** [`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md).
 
 **Скрипт мониторинга и отчётности:** Скрипт очищает файл отчёта (`task-monitor-state.json`) на старте и пишет результаты после завершения. Если данных нет, остановить сессию — пользователь перезапустит.
 

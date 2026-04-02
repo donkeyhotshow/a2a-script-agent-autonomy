@@ -2,7 +2,8 @@
 
 ## Sources
 
-- **Spec (missing on disk):** `tasks/analyze-test-failures.md` — see [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md); classification already in [`DEV_STATE.md`](../DEV_STATE.md)
+- [`tasks/analyze-test-failures.md`](../tasks/analyze-test-failures.md)
+- [`DEV_STATE.md`](../DEV_STATE.md)
 - [`a2a-client/DEV_STATE.md`](../a2a-client/DEV_STATE.md)
 
 ## Agent prompt (copy)
@@ -11,4 +12,4 @@ Task file marks analysis **completed** (41 failures = config). Use this prompt o
 
 ## Completion
 
-- [ ] Done (re-audit if needed)
+- [x] Done (41 failures documented as config-only; no code fixes required)

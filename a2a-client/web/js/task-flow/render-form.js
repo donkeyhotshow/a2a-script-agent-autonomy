@@ -26,7 +26,8 @@
             return;
         }
 
-        if (global.getTaskFlowPanelViewState?.(storeState)?.isWaiting) {
+        const panelVs = global.getTaskFlowPanelViewState?.(storeState);
+        if (panelVs?.isWaiting && !panelVs?.hasActionableForm) {
             const historyHtml = TFR.renderMessageHistory(contentEl, effectiveStore);
             contentEl.innerHTML = historyHtml;
             return;

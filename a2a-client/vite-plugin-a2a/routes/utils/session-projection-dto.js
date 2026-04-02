@@ -2,13 +2,15 @@
  * Session projection helpers.
  * Canonical session remains persisted in step artifacts; web receives projected DTO.
  */
+import fs from 'fs';
+import path from 'path';
 import * as stepHandlers from '../handlers/step-handlers.js';
 import { isActivePromiseStatus } from '../../storage/promise-status.js';
 import { buildExecuteProjection } from './execute-projection-dto.js';
 import { collectSessionMessagesFlat } from './message-timeline.js';
 import { deriveSessionStage } from './session-stage-machine.js';
 import { getA2aServerBaseUrl } from '../../../shared/a2a-server-base.js';
-import { loadSessionIndex } from '../../storage/newSessions.js';
+import { loadSessionIndex, getNewSessionDir } from '../../storage/newSessions.js';
 import http from 'http';
 
 function debugProjectionLog(event, payload) {
@@ -46,13 +48,29 @@ export function getActiveAsyncWork(cwd, sessionId) {
     // Also check index even when server-promise.json is missing (completed async that wasn't polled)
     const index = loadSessionIndex(cwd, sessionId);
     if (index?.promiseId) {
-        // If status is pending/processing, verify with server
-        if (index.promiseStatus === 'pending' || index.promiseStatus === 'processing') {
-            return { 
-                stepNum: index.currentStep || 1, 
-                promiseId: index.promiseId, 
+        // If status is pending/processing/waiting, verify with server
+        if (index.promiseStatus === 'pending' || index.promiseStatus === 'processing' || index.promiseStatus === 'waiting') {
+            const cs = index.currentStep || 1;
+            const consolidated = stepHandlers.loadNewStep(cwd, sessionId, cs);
+            if (consolidated?.execute) {
+                // Stale index: step has execute but index still shows pending
+                // Clear the stale promise from index
+                try {
+                    const indexPath = path.join(getNewSessionDir(cwd, sessionId), 'session-index.json');
+                    index.promiseId = null;
+                    index.promiseStatus = null;
+                    index.updatedAt = new Date().toISOString();
+                    fs.writeFileSync(indexPath, JSON.stringify(index, null, 2));
+                } catch (e) {
+                    // Ignore index write errors
+                }
+                return null;
+            }
+            return {
+                stepNum: cs,
+                promiseId: index.promiseId,
                 serverPromise: { status: index.promiseStatus || 'pending' },
-                needsServerVerification: true // Flag to force verification
+                needsServerVerification: true, // Flag to force verification
             };
         }
         // If index shows completed but there's no server-response with execute,
@@ -198,7 +216,7 @@ export function toPublicSession(session, includeContext = false) {
         promiseStatus: session.promiseStatus ?? null,
     };
     if (rest.execute !== undefined) {
-        base.execute = buildExecuteProjection(rest.execute);
+        base.execute = buildExecuteProjection(rest.execute, { context: fullContext });
     }
     // Public-safe context slice (mode seeds, task) — full workbench/history only with includeContext=1.
     if (fullContext && typeof fullContext === 'object') {

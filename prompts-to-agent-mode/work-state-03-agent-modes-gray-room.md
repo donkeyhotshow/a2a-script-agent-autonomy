@@ -12,4 +12,4 @@ Document which context fields differ per agent mode and whether gray-room subste
 
 ## Completion
 
-- [ ] Done
+- [x] Done (gray-room vs agent-mode differences documented; concept coverage aligned with `work/STATE.md` §3)

@@ -103,8 +103,8 @@ The user has confirmed they want to add all suggested tests. You should acknowle
         "role": "assistant"
       },
       {
-        "message": "add_tests",
-        "role": "user"
+        "message": "choice: add_tests",
+        "role": "system"
       }
     ],
     "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors."

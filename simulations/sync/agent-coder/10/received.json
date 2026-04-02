@@ -2,11 +2,16 @@
   "projectId": "123",
   "sessionId": "456",
   "execute": {
-    "message": "Reading files…",
-    "attachments": {
-      "readFiles": [
+    "form": {
+      "title": "Аналіз коду авторизації",
+      "description": "Код авторизації використовує JWT та bcrypt для безпечної аутентифікації. Які аспекти проаналізувати?",
+      "input": [
         {
-          "path": "src/auth.js"
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "placeholder": "Наступне питання або команда",
+          "required": true
         }
       ]
     }

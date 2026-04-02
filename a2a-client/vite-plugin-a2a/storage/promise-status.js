@@ -2,7 +2,7 @@
  * Promise polling states that mean async work is still in flight (step server-promise.json).
  */
 export function isActivePromiseStatus(status) {
-    return status === 'pending' || status === 'processing';
+    return status === 'pending' || status === 'processing' || status === 'waiting';
 }
 
 /**

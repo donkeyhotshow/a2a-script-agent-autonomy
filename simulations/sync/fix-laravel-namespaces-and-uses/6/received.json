@@ -9,7 +9,7 @@
         {
           "id": "ok",
           "label": "OK",
-          "description": "Acknowledge autoload refresh and close this step."
+          "description": "Завершити виконання"
         }
       ]
     }

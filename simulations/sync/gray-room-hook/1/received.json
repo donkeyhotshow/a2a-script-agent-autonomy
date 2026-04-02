@@ -1,0 +1,7 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Acknowledged. No interrupt directive in this golden; gray-room loop would exit after one response transform."
+  }
+}

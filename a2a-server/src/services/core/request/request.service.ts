@@ -7,7 +7,7 @@ import * as path from 'path';
 import {logger} from '../../../utils/logger.js';
 import {RequestFileStorage} from './request-file-storage.js';
 
-export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'waiting_manual_llm';
 
 export interface CreateRequestData {
     clientId: string;
@@ -147,7 +147,7 @@ export class RequestService {
         if (status === 'completed' || status === 'failed') req.completedAt = now;
         if (result !== undefined) req.result = result;
         if (error !== undefined) req.error = error;
-        if (status === 'completed' && result !== undefined) {
+        if ((status === 'completed' || status === 'waiting_manual_llm') && result !== undefined) {
             const outCtx = result['context'] as Record<string, unknown> | undefined;
             if (outCtx && typeof outCtx === 'object' && !Array.isArray(outCtx)) {
                 req.context = {...(req.context as Record<string, unknown>), ...outCtx};

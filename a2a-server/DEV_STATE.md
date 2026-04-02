@@ -290,11 +290,10 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [x] **S-11**: [P1] Realize unified Gray Room Orchestrator by extracting logic from `dialog-request-processor.ts`.
 - [x] **GR-S-02 trigger-contract**: Определены механизмы запуска gray room:
   - (a) Explicit flag: `context.execution.grayRoomRequested = true` или `flowControlHint = "gray-room"`
-  - (b) Env toggle: `A2A_GRAY_ROOM_ENABLED=1` (по умолчанию off)
-  - (c) Policy для типов запросов: `dialog`, `agent`, `task-decomposition`
-  - Добавлены переменные: `A2A_GRAY_ROOM_MAX_TURNS` (default 10, max 100)
-  - Реализованы функции: `shouldUseGrayRoom()`, `detectGrayRoomTrigger()`, `isGrayRoomEnabled()`
-  - По умолчанию gray room выключен (backwards compatible)
+  - (b) Env: unset = **on**; `A2A_GRAY_ROOM_ENABLED=0`/`false`/`off` = interrupt chain off (unless explicit/hint)
+  - (c) Policy для типов запросов: `dialog`, `agent`, `task-decomposition` (когда env не явно off)
+  - Переменные: `A2A_GRAY_ROOM_MAX_TURNS`, `A2A_MAX_INTERRUPT_TURNS` (см. `readGrayRoomInterruptBudget()`)
+  - `DialogRequestProcessor` / `response-path` передают `processInterrupts` в `runLoop`
 - [x] **GR-S-03 schema-entry-points** (2026-03-27): В [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) § **Server orchestration (schema entry points)** — цепочка `resolveTransformSchema` → `extractSchemaName` → `runLoop`; `ACTION_TO_SCHEMA` / `LLM_PIPELINE_ACTIONS` из `shared/router-static-choices.json`; `interrupt.schema` → `activeSchemaName` только при `continueLoop`, тот же `runPromptsTransform` / `prompts/transforms/<name>/`; опциональные пакеты без параллельного пайплайна.
 - [x] **GR-S-04 orchestration-loop** (2026-03-27): [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) § Orchestration loop + error paths.
 - [x] **GR-S-05 isolation-and-scheduling** (2026-03-27): [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) § Isolation and scheduling (policy).

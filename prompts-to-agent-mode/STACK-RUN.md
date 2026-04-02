@@ -2,6 +2,15 @@
 
 Every markdown file in this directory is an **indexed task prompt**. That does **not** tell you *which runtime* to use by itself. This page fixes that.
 
+## Preferred: Task Monitor (same dialog as the UI)
+
+To **start tasks through the Client API session dialog** automatically (create session → `next` → poll `async` → router choices), use the repo instrument:
+
+- **[`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** — `npm run monitor` / `npm run monitor:once`, env vars, failure hints, direct-tests.
+- Entry: [`monitor-and-process-tasks.js`](../monitor-and-process-tasks.js) (modules under [`tests/monitor-tasks/`](../tests/monitor-tasks/)).
+
+Manual **curl** uses the **same** endpoints and beats; the monitor is the scripted equivalent.
+
 ## Two different uses of the same text
 
 | You want to… | Use |
@@ -43,9 +52,10 @@ Then `POST /api/a2a/sessions/{id}/next` and poll `GET /api/a2a/sessions/{id}/asy
 
 ## Longer walkthroughs
 
+- [MONITOR-QUICK-START.md](../MONITOR-QUICK-START.md) — instrument for dialog-based task launch
 - [ONE-PIPELINE.md](ONE-PIPELINE.md) — linear env → API → observe → record
-- [docs/OPERATOR-CURL.md](../docs/OPERATOR-CURL.md)
+- [docs/OPERATOR-CURL.md](../docs/OPERATOR-CURL.md) — curl + mental model
 - [AGENTS.md](../AGENTS.md) — *Unified manual path (Client API)*
 - [a2a-client/docs/api-testing-plan.md](../a2a-client/docs/api-testing-plan.md)
 
-Parent index: [README.md](README.md). Full backlog orchestration (IDE or session seed): [`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md).
+Parent index: [README.md](README.md). Full backlog orchestration (daemon + hooks + IDE): [`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md).

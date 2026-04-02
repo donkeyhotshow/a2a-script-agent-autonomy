@@ -9,7 +9,7 @@
         {
           "id": "fix-vue-imports-batched",
           "label": "Виправити зламані імпорти у Vue файлах (пакетна обробка)",
-          "description": "Run the scripted batched Vue import fix across the configured file set."
+          "description": "Batch processing of Vue 2→3 import fixes across multiple files"
         },
         {
           "id": "dialog",

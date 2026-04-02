@@ -1,0 +1,15 @@
+{
+  "context": {
+    "task": "Dialog interrupt golden — when clause vs short history",
+    "execution": {
+      "action": "dialog",
+      "step": "message-only"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "One user line only."
+      }
+    ]
+  }
+}

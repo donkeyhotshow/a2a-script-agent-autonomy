@@ -1,21 +1,19 @@
-# Task specs still missing from `tasks/`
+# Task spec inventory
 
-## On disk today
+**Status:** all referenced `tasks/*.md` files now exist (April 2026). Re-run this checklist whenever the queue in `work/STATE.md` adds a new row that references `tasks/`; make sure the document at hand either points to a real file or intentionally notes why no spec is required.
 
-[`tasks/`](../tasks/) includes: `README.md`, `script-dialog-agent-response-parity.md`, `sync-documentation-and-router-drift.md`, `sync-llm-snapshot-coverage.md`, `sync-substeps-not-discovered.md`, `sync-workspace-tools-golden-map.md`, `system-improvement-priorities.md`.
+## Restored / tracked specs
 
-## Referenced but not present (restore or retarget links)
-
-- `tasks/sync-readme-and-cli-gap.md`
-- `tasks/sync-step-contract-warnings.md`
-- `tasks/sync-form-choices-description.md`
-- `tasks/analyze-test-failures.md`
-- `tasks/orchestrator-metrics-tracking.md`
+- `tasks/sync-readme-and-cli-gap.md` — documents CLI usage and README coverage for `simulations/sync` commands.
+- `tasks/sync-step-contract-warnings.md` — keeps `sim:validate -- --step-contract` clean via passthrough transforms.
+- `tasks/sync-form-choices-description.md` — ensures all `execute.form.choices` entries include `description` so router / UI buttons can render context.
+- `tasks/analyze-test-failures.md` — captures the 41 failing `a2a-client` tests as configuration-only and defers code changes.
+- `tasks/orchestrator-metrics-tracking.md` — describes the metrics script, runtime file, and instrumentation for the orchestrator daemon.
 
 ## Agent prompt (copy)
 
-Add the missing files (short done-notes + pointers to sims/code are enough) **or** update [`work/STATE.md`](../work/STATE.md) / other docs so every `tasks/*.md` link resolves. Re-scan this list after changes.
+When new `tasks/*.md` references appear in `work/STATE.md`, add the missing file or update this inventory. If a reference is intentionally missing (e.g., `S2` is a checklist spread across docs), add a short note here explaining why no dedicated spec exists.
 
 ## Completion
 
-- [ ] Done
+- [x] Done (2026-04-03) — all referenced specs are present in `tasks/`

@@ -1,17 +1,10 @@
 # Step 12 — request (User asks for refactoring suggestions)
 
-The user asks for refactoring suggestions for the component.
+The user asks for refactoring suggestions for the component. **`12/request.json`** is canonical: full `context.task`, `context.execution` (`tests_complete`), full `context.history` (through `choice: add_tests` and Vitest summary), and `context.workbench.sections.autoScriptTrigger`.
 
 ```json
 {
-  "context": {
-    "execution": { "action": "dialog", "step": "tests_complete" },
-    "history": [
-      { "message": "Ошибка импорта", "role": "user" },
-      { "message": "Автоматический скрипт применил патч", "role": "assistant" },
-      { "message": "Vitest: 9 tests passed, Coverage: 85%", "role": "assistant" }
-    ]
-  },
+  "context": { "task": "…", "execution": { "action": "dialog", "step": "tests_complete" }, "history": [ "…" ], "workbench": { "sections": { "autoScriptTrigger": { "…" } } } },
   "result": { "message": "Какие улучшения можно сделать в Example.vue? Есть идеи по рефакторингу?" }
 }
 ```

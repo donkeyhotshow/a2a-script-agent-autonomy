@@ -48,8 +48,8 @@ LLM acknowledges user's choice and adds all suggested tests.
         "message": "Вот что стоит добавить:\n\n1. Props validation\n2. Empty state\n3. Loading state\n4. Error boundary\n5. Event testing\n6. Slot content\n\nХотите, чтобы я добавил эти тесты в Example.spec?"
       },
       {
-        "role": "user",
-        "message": "add_tests"
+        "role": "system",
+        "message": "choice: add_tests"
       },
       {
         "role": "assistant",

@@ -99,8 +99,17 @@
             }
         }
         
-        const data = await submitFn.call(global.apiIntegration, sessionId, result);
-        
+        let data;
+        try {
+            data = await submitFn.call(global.apiIntegration, sessionId, result);
+        } catch (err) {
+            if (store) {
+                store.setPromisePending?.(false);
+                store.stopLoader?.(sessionId);
+            }
+            throw err;
+        }
+
         // Логируем ответ сервера
         if (typeof window !== 'undefined' && window.DEV_MODE) {
             console.log('[ActionExecutor] submit response:', {
@@ -111,19 +120,35 @@
                 window.__devToolsLogAction('submit-response', { sessionId, data });
             }
         }
-        
+
         // Каноничный формат: только asyncPending (устарел promiseId)
         const asyncPending = !!data?.asyncPending;
-        if (store && data?.success && data?.accepted) {
+        const acceptedOk = data?.accepted !== false;
+        if (store && data?.success && acceptedOk) {
             if (asyncPending) {
                 store.setPromisePending?.(true);
-                // startPromisePolling вызывается явно из task-flow
                 await pullSessionSnapshot(sessionId, store, { skipExecuteWhenPending: true });
+                try {
+                    startPromisePolling(sessionId, null);
+                } catch (pollErr) {
+                    console.error('[ActionExecutor] submit: startPromisePolling failed', pollErr);
+                    store.setPromisePending?.(false);
+                    store.stopLoader?.(sessionId);
+                    throw pollErr;
+                }
             } else {
                 await pullSessionSnapshot(sessionId, store);
+                store.setPromisePending?.(false);
+                const ex = store?.execute;
+                if (!ex?.wait) {
+                    store.stopLoader?.(sessionId);
+                }
             }
+        } else if (store) {
+            store.setPromisePending?.(false);
+            store.stopLoader?.(sessionId);
         }
-        
+
         return data;
     }
 

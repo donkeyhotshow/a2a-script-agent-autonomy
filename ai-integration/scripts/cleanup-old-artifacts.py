@@ -95,16 +95,17 @@ class CleanupArtifacts:
             logger.info(f"Logs directory does not exist: {self.logs_dir}")
             return 0
 
+        requests_dir = self.logs_dir / 'requests'
+        if not requests_dir.exists():
+            logger.info(f"Requests directory does not exist: {requests_dir}")
+            return 0
+
         cutoff_time = time.time() - (self.logs_days * 86400)
         deleted_count = 0
 
-        logger.info(f"Cleaning logs older than {self.logs_days} days from {self.logs_dir}")
+        logger.info(f"Cleaning logs older than {self.logs_days} days from {requests_dir}")
 
-        for item in self.logs_dir.iterdir():
-            # Skip promises subdirectory
-            if item.name == 'promises':
-                continue
-
+        for item in requests_dir.iterdir():
             if not item.is_dir():
                 continue
 
@@ -260,9 +261,11 @@ def get_storage_stats(logs_dir: Path) -> dict:
 
     # Count log directories
     promises_dir = logs_dir / 'promises'
-    for item in logs_dir.iterdir():
-        if item.is_dir() and item.name != 'promises' and item.name != 'cache' and item.name.startswith('request_'):
-            stats['log_dirs'] += 1
+    requests_dir = logs_dir / 'requests'
+    if requests_dir.exists():
+        for item in requests_dir.iterdir():
+            if item.is_dir() and item.name.startswith('request_'):
+                stats['log_dirs'] += 1
 
     # Count cache files
     cache_dir = logs_dir / 'cache'
@@ -400,10 +403,12 @@ def main() -> int:
                         pass
 
         # Check logs
-        for item in logs_dir.iterdir():
-            if item.is_dir() and item.name != 'promises' and item.name.startswith('request_'):
-                if item.stat().st_mtime < cutoff_logs:
-                    preview_logs.append(item.name)
+        requests_dir = logs_dir / 'requests'
+        if requests_dir.exists():
+            for item in requests_dir.iterdir():
+                if item.is_dir() and item.name.startswith('request_'):
+                    if item.stat().st_mtime < cutoff_logs:
+                        preview_logs.append(item.name)
 
         # Check promises
         promises_dir = logs_dir / 'promises'

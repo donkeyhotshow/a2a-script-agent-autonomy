@@ -21,6 +21,8 @@ export interface ProcessResult {
     tasks?: Task[];
     taskAnalysis?: TaskAnalysis;
     execute?: ExecuteCommand;
+    /** Present when response transform emitted `interrupt` but the gray-room chain did not consume it. */
+    interrupt?: Record<string, unknown>;
     error?: string;
     validationErrors?: ValidationError[];
     // ai_action follow-up fields
@@ -30,7 +32,13 @@ export interface ProcessResult {
     note?: string;
 }
 
-export type ProcessOutcome = 'completed' | 'failed' | 'graph_incomplete' | 'action_proposal' | 'ai_action_ready';
+export type ProcessOutcome =
+    | 'completed'
+    | 'failed'
+    | 'graph_incomplete'
+    | 'action_proposal'
+    | 'ai_action_ready'
+    | 'waiting_manual_llm';
 
 export interface Task {
     id: string;

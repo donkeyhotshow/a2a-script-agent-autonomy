@@ -58,7 +58,15 @@ Mirror of `response.json` (not LLM output). Single `execute` action key.
       }
     ],
     "workbench": {
-      "sections": {}
+      "sections": {
+        "scratchpad": "Як agent-coder-smart: запис задачі під .carrier/tasks",
+        "files": [
+          {
+            "path": ".carrier/tasks/agent-e2e-audit.md",
+            "content": "# Agent E2E golden\n\n- [x] rag list read grep exists patch\n- [ ] shell run-script script\n"
+          }
+        ]
+      }
     }
   },
   "execute": {

@@ -7,7 +7,7 @@
         {
           "id": "proceed",
           "label": "Продовжити",
-          "description": "Continue to the next step in the smart coder flow."
+          "description": "Перейти к выполнению задач из чеклиста"
         }
       ]
     }

@@ -41,6 +41,7 @@
 | S14 | Паритет скриптового режима с dialog/agent: те же формы ответа, история/витрина, Web DTO / action-key shape — один контракт для UI и симов (см. фокус §2) | **partial** — матрица + `history`/`workbench.sections` в шагах 4–10, E2E smoke [`scripts/e2e-client-api-replay-sync-script.mjs`](../scripts/e2e-client-api-replay-sync-script.mjs); [`tasks/script-dialog-agent-response-parity.md`](../tasks/script-dialog-agent-response-parity.md) |
 | SYS | Улучшение всей системы: приоритеты и связка модулей | **backlog** — [`tasks/system-improvement-priorities.md`](../tasks/system-improvement-priorities.md) |
 | S15 | ai-integration: Z.AI стал default-провайдером, `/api/tags` теперь дополняет локальную Ollama только когда она доступна, `health/ready` смотрит на default-провайдер, README и конфиги обновлены | **done** — proxy_handler.py, config.py, providers/config_loader.py, health_routes.py, README |
+| S16 | Self-Upgrade monitor run: `monitor-and-process-tasks.js` launched `ai-integration-configuration-system-plan.md` and the router prompt (“What would you like me to do?”) was resolved with a manual `next` call; session `sess_1775163935824` now holds promise `prom_1775164401703_g29l65y66` and `asyncPending` is still true. Continue polling until the plan returns a result, then document it in the hooks folder. | **pending** — [`tasks/pending/monitor-router-interaction-followup.md`](../tasks/pending/monitor-router-interaction-followup.md) |
 
 ---
 

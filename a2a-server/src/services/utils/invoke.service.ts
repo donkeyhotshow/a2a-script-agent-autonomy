@@ -18,6 +18,7 @@ import {CURRENT_PROTOCOL_VERSION} from '../../protocol/versioning/protocol-versi
 import {requestService, type RequestResult} from '../core/request/request.service.js';
 import {processRequestByPromiseId} from '../core/request-processor/request-processor.service.js';
 import {trackRequestStart} from './pipeline-observability.service.js';
+import {randomUUID} from 'node:crypto';
 
 export interface InvokeInput {
     context?: unknown;
@@ -45,7 +46,7 @@ async function waitTerminalRequest(promiseId: string, maxMs: number): Promise<Re
     while (Date.now() < deadline) {
         const row = await requestService.getResult(promiseId);
         if (!row) return null;
-        if (row.status === 'completed' || row.status === 'failed') {
+        if (row.status === 'completed' || row.status === 'failed' || row.status === 'waiting_manual_llm') {
             return row;
         }
         if (row.status === 'pending') {
@@ -79,6 +80,15 @@ async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> 
             };
         }
 
+        if (terminal.status === 'waiting_manual_llm') {
+            return {
+                sync: true,
+                execute: pr?.execute as Record<string, unknown> | undefined,
+                context: pr?.context as Record<string, unknown> | undefined,
+                message: `Manual LLM mode: submit response via POST /api/v1/requests/${current}/llm-response`,
+            };
+        }
+
         const follow =
             pr && typeof pr['followUpRequestId'] === 'string'
                 ? (pr['followUpRequestId'] as string)
@@ -96,6 +106,17 @@ async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> 
     }
 
     return {sync: true, promiseId: rootPromiseId};
+}
+
+function ensureContextSessionId(ctx: Record<string, unknown>): string {
+    const current = typeof ctx['session_id'] === 'string' ? ctx['session_id'].trim() : '';
+    if (current && current.toLowerCase() !== 'stateless') {
+        ctx['session_id'] = current;
+        return current;
+    }
+    const generated = `srv_sess_${randomUUID()}`;
+    ctx['session_id'] = generated;
+    return generated;
 }
 
 export async function invoke(clientId: string, input: InvokeInput): Promise<InvokeResult> {
@@ -160,6 +181,8 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
             ctx['task'] = msg;
         }
     }
+
+    ensureContextSessionId(ctx);
 
     const message = input.message ?? input.task ?? (result && typeof result === 'object' ? (result as Record<string, unknown>).message as string : undefined);
 

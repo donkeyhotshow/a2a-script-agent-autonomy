@@ -12,11 +12,14 @@
   },
   "execute": {
     "form": {
-      "textarea": {
-        "name": "message",
-        "label": "Повідомлення",
-        "required": true
-      }
+      "input": [
+        {
+          "name": "message",
+          "type": "textarea",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
     }
   }
 }

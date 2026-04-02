@@ -1,30 +1,35 @@
 # Operating the agent with curl (human or Cursor)
 
+## Instrument: launch tasks through session dialog
+
+**Normative automation for indexed backlog tasks:** use the **Task Monitor** — same **Client API session dialog** as the web UI (`POST /sessions` → `/next` → poll `/async`, router beats). Operator doc: **[`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** (`npm run monitor`, `npm run monitor:once`, `TASK_MONITOR_*`, `ErrorClassifier` + direct-tests on failure). Full IDE + daemon loop narrative: **[`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md)**.
+
+**Manual operator (curl / script):** same HTTP contour as the monitor — you are the driver; the monitor is a scripted driver. Both are **not** `POST /api/v1/invoke` alone.
+
 ## Sub-agent framing
 
-Treat the **running A2A stack** as a **sub-agent**: a headless agent you call over **HTTP** (Client API). The **primary agent** is whoever sits in the **IDE** (e.g. Kilo / Cursor): they reason, run `curl`, edit code. The sub-agent does **not** share the IDE’s context—it only sees what you send in the request body and returns structured **execute/result/context** (after polling async if needed).
+Treat the **running A2A stack** as a **sub-agent**: a headless agent you call over **HTTP** (Client API). The **primary agent** is whoever sits in the **IDE** (e.g. Cursor): they reason, run the **Task Monitor** or **`curl`**, edit code. The sub-agent does **not** share the IDE’s context—it only sees what you send in the request body and returns structured **execute/result/context** (after polling async if needed).
 
-Same mental model as “user types, waits for answer”—except the “user” is the IDE agent and the keyboard is **curl**.
-
-Repo prompt that uses this wording (Russian): [`START-PROMPT-UNLIM.md`](../START-PROMPT-UNLIM.md).
+Same mental model as “user types, waits for answer”—except the “user” may be the IDE agent with **`curl`**, or **`monitor-and-process-tasks.js`** driving the same endpoints.
 
 ---
 
-This repository **is** that stack: services run, and **work is driven by HTTP**, not by clicking the web UI.
+This repository **is** that stack: services run, and **work is driven by HTTP** (Client API sessions), not by the browser as the default control plane.
 
-**Orchestration** = **IDE agent session** + terminal—not a dedicated “orchestrator script” in the repo.
+**Orchestration for backlog prompts** = **Task Monitor** + optional IDE follow-up on **`hooks/`** — see [`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md). **One-off verification** = **`curl`** (or any HTTP client) on the same paths.
 
 ## What the operator does *not* do
 
-- **Not** the primary path: open the browser and use the Vite UI to drive sessions.
+- **Not** the default: open the browser and use the Vite UI as the only way to drive sessions (UI is valid; docs target **API + monitor**).
 - **Not** the stability strategy: maintain a parallel “task ticket” ritual in `tasks/` instead of fixing **system** behavior.
-- **Not** a separate repo script whose job is to loop subprocesses—that is **not** what “orchestrator” means in this project.
+- **Not** treat `POST :3000/api/v1/invoke` as the primary way to “run agent tasks” — that bypasses session storage and the dialog contour.
 
 ## What the operator *does* do
 
-1. **Run services** however you already do (scripts, manual, compose—outside this doc’s scope).
-2. **Talk to the Client API** on the dev server base URL (default **`http://localhost:5173`**) — same API the UI uses, but **via `curl`** (or any HTTP client).
-3. **Wait for completion** on async work: poll **`GET /api/a2a/sessions/{id}/async`** (or legacy promise URL) until the response is final — same as a user waiting for an answer.
+1. **Run services** from repo root: **`start-all.bat`** / **`start-all.sh`** — [`docs/SYSTEM_STARTUP.md`](SYSTEM_STARTUP.md).
+2. **Launch indexed tasks through dialog:** **`npm run monitor`** or **`npm run monitor:once`** — [`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md).
+3. **Or talk to the Client API** directly (default **`http://localhost:5173`**) — same API the UI and monitor use, via **`curl`** or scripts.
+4. **Wait for completion** on async work: poll **`GET /api/a2a/sessions/{id}/async`** until the response is final — same loop the Task Monitor implements.
 
 ## Schema debugging first step (mandatory)
 
@@ -108,7 +113,7 @@ Flaky or vague agent behavior is addressed mainly **inside the system**, not by 
 
 - **Server prompts and transforms** — `a2a-server/prompts/` (e.g. `dialog-request.md`, `agent-request.md`, `router-request.md`), plus pipelines under `a2a-server/prompts/transforms/`.
 - **Gray Room / interrupt behavior** — `a2a-server/docs/GRAY-ROOM.md`, orchestration code under `a2a-server/src/`.
-- **Operator** uses **curl** to **verify** end-to-end behavior after changes. **Not sufficient:** health + a single happy-path `sessions` → `next` → `async`. **Normative checklist:** [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md) (session artifacts, ack/async, **Red Room** tool cycle when the task calls for it). **Indexed copy-paste prompts** (seed `mode: "agent"`): [`prompts-to-agent-mode/README.md`](../prompts-to-agent-mode/README.md) — read [`prompts-to-agent-mode/STACK-RUN.md`](../prompts-to-agent-mode/STACK-RUN.md) so `invoke` on `:3000` is not mistaken for the session driver. Orchestrator-style prompts: [`START-PROMPT-UNLIM.md`](../START-PROMPT-UNLIM.md) → *Ручные испытания Client API*.
+- **Operator** uses the **Task Monitor** or **curl** to **verify** end-to-end behavior. **Not sufficient:** health + a single happy-path `sessions` → `next` → `async`. **Normative checklist:** [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md) (session artifacts, ack/async, **Red Room** tool cycle when the task calls for it). **Indexed prompts + live stack:** [`prompts-to-agent-mode/README.md`](../prompts-to-agent-mode/README.md) and [`prompts-to-agent-mode/STACK-RUN.md`](../prompts-to-agent-mode/STACK-RUN.md). **Automated dialog driver:** [`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md). **Full-spectrum loop (daemon + hooks):** [`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md).
 
 ## Relation to `docs/WORKFLOW.md`
 

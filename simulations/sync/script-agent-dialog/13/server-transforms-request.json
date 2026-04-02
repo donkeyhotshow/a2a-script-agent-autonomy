@@ -13,6 +13,14 @@
         "action": "dialog",
         "step": "completed"
       }
+    },
+    {
+      "op": "append-to-array",
+      "to": "$.context.history",
+      "value": {
+        "role": "system",
+        "message": "choice: none"
+      }
     }
   ]
 }

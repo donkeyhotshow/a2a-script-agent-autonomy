@@ -61,22 +61,38 @@ export function getAllSimulations(includeSubsteps = false): {path: string; name:
 
                 // Check if this simulation has step folders (numeric directories like "1", "2", "3")
                 let hasStepFolders = false;
+                const numericStepNames: string[] = [];
+                const substepNames: string[] = [];
                 for (const stepEntry of simBaseEntries) {
                     if (!stepEntry.isDirectory()) continue;
                     if (stepDirRe.test(stepEntry.name)) {
                         hasStepFolders = true;
-                        // This is a step folder (e.g., "1", "4", "7")
-                        simulations.push({
-                            path: join(simBaseDir, stepEntry.name),
-                            name: `${entry.name}/${subEntry.name}/${stepEntry.name}`
-                        });
+                        numericStepNames.push(stepEntry.name);
+                    } else if (includeSubsteps && substepDirRe.test(stepEntry.name)) {
+                        substepNames.push(stepEntry.name);
                     }
-                    if (includeSubsteps && substepDirRe.test(stepEntry.name)) {
-                        simulations.push({
-                            path: join(simBaseDir, stepEntry.name),
-                            name: `${entry.name}/${subEntry.name}/${stepEntry.name}`
-                        });
+                }
+                numericStepNames.sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+                substepNames.sort((a, b) => {
+                    const ma = a.match(/^(\d+)-sub-(\d+)$/);
+                    const mb = b.match(/^(\d+)-sub-(\d+)$/);
+                    if (ma && mb) {
+                        const d = parseInt(ma[1], 10) - parseInt(mb[1], 10);
+                        return d !== 0 ? d : parseInt(ma[2], 10) - parseInt(mb[2], 10);
                     }
+                    return a.localeCompare(b);
+                });
+                for (const stepName of numericStepNames) {
+                    simulations.push({
+                        path: join(simBaseDir, stepName),
+                        name: `${entry.name}/${subEntry.name}/${stepName}`
+                    });
+                }
+                for (const stepName of substepNames) {
+                    simulations.push({
+                        path: join(simBaseDir, stepName),
+                        name: `${entry.name}/${subEntry.name}/${stepName}`
+                    });
                 }
 
                 // If no step folders, add as legacy nested simulation or flat structure

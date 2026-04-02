@@ -18,8 +18,8 @@
       "op": "append-to-array",
       "to": "$.context.history",
       "value": {
-        "role": "user",
-        "message": "add_tests"
+        "role": "system",
+        "message": "choice: add_tests"
       }
     }
   ]

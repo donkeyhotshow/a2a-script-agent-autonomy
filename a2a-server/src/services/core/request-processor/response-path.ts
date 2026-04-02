@@ -6,7 +6,11 @@
 
 import {logger} from '../../../utils/logger.js';
 import {getPromptsTransformsPath} from '../../../transform/index.js';
-import {GrayRoomOrchestrator} from './gray-room-orchestrator.js';
+import {
+    GrayRoomOrchestrator,
+    readGrayRoomInterruptBudget,
+    shouldUseGrayRoom
+} from './gray-room-orchestrator.js';
 import {resolveTransformSchema, extractSchemaName} from './normalization.js';
 import {recoverLlmPromise} from './llm-orchestration.js';
 
@@ -50,14 +54,18 @@ export async function recoverDialogFromLlmPromise(
 
         // 3. Запускаем gray room loop
         const promptsPath = getPromptsTransformsPath();
-        const orchestrator = new GrayRoomOrchestrator({promptsTransformsPath: promptsPath});
+        const orchestrator = new GrayRoomOrchestrator({
+            promptsTransformsPath: promptsPath,
+            maxInterruptTurns: readGrayRoomInterruptBudget()
+        });
 
         const result = await orchestrator.runLoop(
             ctx,
             schemaName,
             responseMd,
             promiseId,
-            true // recovery mode
+            true, // recovery mode
+            shouldUseGrayRoom(ctx).shouldTrigger
         );
 
         return {success: true, ...result};

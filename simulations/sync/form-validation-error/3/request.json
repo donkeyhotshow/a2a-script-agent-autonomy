@@ -1,0 +1,14 @@
+{
+  "context": {
+    "task": "форма з помилкою валідації",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    }
+  },
+  "result": {
+    "input": {
+      "age": 5
+    }
+  }
+}

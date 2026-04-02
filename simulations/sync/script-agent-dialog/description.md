@@ -12,3 +12,7 @@ Simulate the dialog pipeline catching an assistant call-out for a Vue import fai
 6. The server echoes the updated plan so the dialog can continue with the new directive.
 7. The user asks for a vitest run once Example.spec is ready.
 8. The server runs the packaged vitest script, reports success, and signals that work can continue.
+
+## Fixture scope (16 steps)
+
+The checked-in golden files extend the story with more turns (test suggestions, adding tests, refactoring prompt, wrap-up). Steps 1–8 above are the narrative spine; steps 9–16 are additional dialog beats for regression coverage. `execution.step` values in the fixture are illustrative, not a normative state machine spec.

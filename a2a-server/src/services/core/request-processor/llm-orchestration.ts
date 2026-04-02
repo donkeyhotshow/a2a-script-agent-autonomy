@@ -9,6 +9,12 @@ import {logger} from '../../../utils/logger.js';
 import {runPromptsTransform} from '../../../transform/index.js';
 import {fetchLlmResponse, pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
 import {requestService} from '../request/request.service.js';
+import {
+    isManualLlmModeEnabled,
+    storePendingManualLlm,
+    buildManualLlmWaitingExecute,
+    type PendingManualLlm,
+} from '../request/manual-llm.service.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 const DEFAULT_MODEL = 'qwen3:8b';
@@ -27,6 +33,9 @@ export interface LlmCallResult {
     responseMd?: string;
     llmPromiseId?: string;
     error?: string;
+    /** When manual LLM mode: execute payload for client (messages preview, submit URL). */
+    manualExecute?: Record<string, unknown>;
+    manualWait?: boolean;
 }
 
 /**
@@ -140,7 +149,10 @@ export async function initLlmPromise(
 
 /**
  * Основная функция оркестрации LLM вызова
- * Выполняет: request transforms → LLM call → poll response
+ * Выполняет: request transforms → [manual check] → LLM call → poll response
+ *
+ * When A2A_MANUAL_LLM_MODE=1: pauses after request transforms and stores
+ * the prepared messages for operator to submit LLM response manually.
  */
 export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallResult> {
     const {
@@ -168,7 +180,39 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
         // 2. Prepare messages
         const messages = prepareLlmMessages(transformResult.files);
 
-        // 3. Call LLM via promise flow
+        // 3. MANUAL MODE CHECK: pause here if manual LLM mode enabled
+        if (isManualLlmModeEnabled()) {
+            logger.info('[ManualLlm] MANUAL MODE ACTIVE — pausing for operator input', {
+                promiseId,
+                schemaName,
+            });
+
+            // Store pending manual LLM data
+            const pending: PendingManualLlm = {
+                promiseId,
+                messages,
+                schemaName,
+                ctxSnapshot: JSON.parse(JSON.stringify(ctx)), // deep clone
+                outputDir,
+                createdAt: new Date(),
+            };
+            storePendingManualLlm(pending);
+
+            // Build special execute that tells client we're waiting
+            const manualExecute = buildManualLlmWaitingExecute(promiseId, messages);
+
+            // Status + persistence: request-processor.service (outcome waiting_manual_llm)
+
+            return {
+                success: true,
+                responseMd: '',
+                llmPromiseId: `manual_${promiseId}`,
+                manualWait: true,
+                manualExecute,
+            };
+        }
+
+        // 4. Call LLM via promise flow (normal mode)
         const initResult = await initLlmPromise(normalizedBase, model, messages, promiseId);
         if (!initResult.success) {
             return {success: false, error: initResult.error};
@@ -176,11 +220,11 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
 
         const llmPromiseId = initResult.promiseId!;
 
-        // 4. Store promise ID
+        // 5. Store promise ID
         await requestService.updateLlmPromiseId(promiseId, llmPromiseId);
         logger.info('[DialogRequestProcessor] Polling promise', {llmPromiseId});
 
-        // 5. Poll for response
+        // 6. Poll for response
         const responseMd = await pollReadyThenFetch(normalizedBase, llmPromiseId);
         if (!responseMd) {
             return {success: false, error: 'LLM response fetch failed'};

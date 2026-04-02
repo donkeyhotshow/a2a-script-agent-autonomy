@@ -14,6 +14,9 @@ Keep Web DTO `execute` sanitized and web-safe while preserving canonical server 
 - [ ] If tool actions were present in `response.json`, `received.json.execute.attachments` mirrors only UI hints (`readFiles`, `writtenFiles`, `ragQuery`, `shellCommand`, `pendingClientAction`, and related fields).
 - [ ] `received.json.result` (if present) remains action-key shaped and does not leak unsanitized execute payloads.
 - [ ] Any `form` shown in `received.json.execute.form` matches intended UI step (routing choice/input/completion gate).
+- [ ] **Form metadata (Web / goldens):** use `form.title`, optional `form.description`, and/or `form.choices` — not legacy `form.input[]`. `response.json` and `received.json` **`execute.form` must be identical** (`sim:lint` parity); the Client API does not rewrite form field lists.
+- [ ] **`attachments.pendingClientAction` (after `buildWebExecute`):** set to `"script"` when the canonical execute had `script`; set to `"run-script"` when it had `run-script` (**`run-script` wins** if both were present). Optional `attachments.runScriptId` comes from `run-script.scriptId`.
+- [ ] **Form + message after auto script:** if the only remaining execute key is `form` and `context.workbench.sections.autoScriptTrigger` shows a completed run, `buildWebExecute` may add default `message` (`"Running script…"`) and `attachments.runScriptId` — **without** setting `pendingClientAction` on that path (operator continues via the form). Compare `simulations/sync/script-agent-dialog/4/received.json` vs steps that still expose a stripped `script`/`run-script` execute.
 - [ ] If async metadata exists, `asyncPending`/`promiseStatus` semantics stay intact (no regression while sanitizing `execute`).
 
 ## Quick Verification Commands

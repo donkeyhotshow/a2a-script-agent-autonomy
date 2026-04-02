@@ -5,9 +5,13 @@
 
 import { unwrapA2aInvokeBody } from '../../../shared/client-api-envelope.mjs';
 import { pickInvokeContextPatch } from '../../../shared/context-invoke-patch.mjs';
-import { extractA2aExecute, mergeResponseContext } from '../../../shared/a2a-invoke-builders.mjs';
+import {
+    extractA2aExecute,
+    mergeResponseContext,
+    sanitizeContextForServer,
+} from '../../../shared/a2a-invoke-builders.mjs';
 
-export { pickInvokeContextPatch, extractA2aExecute, mergeResponseContext };
+export { pickInvokeContextPatch, extractA2aExecute, mergeResponseContext, sanitizeContextForServer };
 
 /**
  * A2A Server wraps payloads as { success: true, data: { execute, context, ... } }.
@@ -57,7 +61,7 @@ export function mergeDialogHistoryForInvoke(mergedContext, effectiveTask) {
 export function buildStepRecord({ sessionId, stepNum, serverResponse, messages = [], fallbackContext = {} }) {
     if (!serverResponse) return null;
     
-    const context = mergeResponseContext(sessionId, fallbackContext, serverResponse);
+    const context = mergeResponseContext(fallbackContext, serverResponse);
 
     const execute = extractA2aExecute(serverResponse);
     
@@ -88,5 +92,3 @@ export async function ensureStepDir(cwd, sessionId, stepNum) {
     }
     return stepDir;
 }
-
-

@@ -3,14 +3,8 @@
   "sessionId": "456",
   "execute": {
     "form": {
-      "input": [
-        {
-          "name": "message",
-          "type": "text",
-          "label": "Повідомлення",
-          "required": true
-        }
-      ]
+      "title": "Повідомлення",
+      "description": "Введіть повідомлення для продовження діалогу."
     }
   }
 }

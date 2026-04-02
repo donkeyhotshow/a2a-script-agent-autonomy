@@ -12,4 +12,4 @@ Map how scripted transforms and agent/LLM-facing payloads relate (same contract 
 
 ## Completion
 
-- [ ] Done
+- [x] Done (mapped scripted and agent payloads to the unified contract noted in `work/STATE.md` §2)

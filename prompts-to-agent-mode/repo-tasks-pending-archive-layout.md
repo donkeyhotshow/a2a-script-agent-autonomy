@@ -2,8 +2,8 @@
 
 ## Sources
 
-- [`START-PROMPT-UNLIM.md`](../START-PROMPT-UNLIM.md) — §Базовая информация (`tasks/pending/`, `tasks/archive/`)
-- [`methodology/orchestrator-api-exploit.md`](../methodology/orchestrator-api-exploit.md) — `tasks/pending/current.json`
+- [`AGENTS.md`](../AGENTS.md) — DEV_STATE Protocol, `tasks/pending/`
+- [`archive/methodology/orchestrator-api-exploit.md`](../archive/methodology/orchestrator-api-exploit.md) — `tasks/pending/current.json` (archived reference)
 - [`METHODOLOGY-AGENT-SCRIPT.md`](../METHODOLOGY-AGENT-SCRIPT.md) — pending handoff
 - Current tree: only [`tasks/README.md`](../tasks/README.md) exists
 

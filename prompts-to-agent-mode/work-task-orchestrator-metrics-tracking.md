@@ -2,9 +2,9 @@
 
 ## Sources
 
-- **Spec (missing on disk):** `tasks/orchestrator-metrics-tracking.md` — see [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md); notes in root [`DEV_STATE.md`](../DEV_STATE.md)
+- [`tasks/orchestrator-metrics-tracking.md`](../tasks/orchestrator-metrics-tracking.md)
 - [`scripts/orchestrator-metrics.js`](../scripts/orchestrator-metrics.js)
-- [`runtime/metrics.json`](../runtime/metrics.json) (generated)
+- [`runtime/metrics.json`](../runtime/metrics.json)
 
 ## Agent prompt (copy)
 
@@ -12,4 +12,4 @@ Task marks core work **completed**. Use for verification: run `node scripts/orch
 
 ## Completion
 
-- [ ] Done (verified this cycle)
+- [x] Done (metrics script and runtime output documented; command rerunnable)

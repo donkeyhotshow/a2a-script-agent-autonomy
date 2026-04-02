@@ -1,5 +1,8 @@
 /**
  * Shared execute/context merge for Vite step routes + @a2a/sdk agent chain.
+ *
+ * Invoke `context` (this object): keep `history` as an **array** (`[]` when empty). Do not send root-level
+ * `history` outside `context` — the server reads `context.history` (see `resolveHistoryLength`).
  */
 
 import { unwrapA2aInvokeBody } from './client-api-envelope.mjs';
@@ -11,7 +14,7 @@ export function extractA2aExecute(serverResponse) {
     return inner.execute ?? inner.result?.execute ?? null;
 }
 
-export function mergeResponseContext(sessionId, fallbackContext = {}, serverResponse = null) {
+export function mergeResponseContext(fallbackContext = {}, serverResponse = null) {
     const base = { ...(fallbackContext || {}) };
     const inner = unwrapA2aInvokeBody(serverResponse);
 
@@ -31,9 +34,20 @@ export function mergeResponseContext(sessionId, fallbackContext = {}, serverResp
         Object.assign(base, pickInvokeContextPatch(inner.result.context));
     }
 
-    if (sessionId && !base.session_id) {
-        base.session_id = sessionId;
-    }
-
     return base;
+}
+
+export function sanitizeContextForServer(context) {
+    if (!context || typeof context !== 'object' || Array.isArray(context)) {
+        return {};
+    }
+    const safe = {...context};
+    delete safe.projectId;
+    delete safe.projectRoot;
+    delete safe.clientSessionId;
+    delete safe.sessionId;
+    if (!Array.isArray(safe.history)) {
+        safe.history = [];
+    }
+    return safe;
 }

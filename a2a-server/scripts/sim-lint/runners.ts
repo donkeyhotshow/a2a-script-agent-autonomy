@@ -18,6 +18,7 @@ import {
     lintDirectoryStructure,
     lintRequiredFiles,
     lintStepTransformContract,
+    lintFormParity,
 } from './registry.js';
 
 // ============================================
@@ -151,6 +152,11 @@ export function lintSimulation(simPath: string, simName: string, opts: LintSimul
                     if (stepContract) {
                         result.errors.push(...lintStepTransformContract(stepPath, entry.name));
                     }
+
+                    // Check form parity between response.json and received.json
+                    const responseJsonPath = join(stepPath, 'response.json');
+                    const receivedJsonPath = join(stepPath, 'received.json');
+                    result.errors.push(...lintFormParity(responseJsonPath, receivedJsonPath));
                 } catch {
                     // Skip if cannot read
                 }

@@ -18,7 +18,7 @@
 
 ## Быстрое продвижение
 1. Создать файл `ai-integration/web/promise-viewer.html` и дополняющий JS/CSS; использовать Fetch API для новых endpoints.
-2. Убедиться, что UI подхватывает логи из `proxy_logs/request_*` (они уже сохраняют `save_request`, `save_response`).
+2. Убедиться, что UI подхватывает логи из `proxy_logs/requests/request_*` (они уже сохраняют `save_request`, `save_response`).
 3. Подключить страницы к `start-all.*` и `docs/SYSTEM_STARTUP.md` (UI доступен по `http://localhost:11434/web/promise-viewer.html`).
 4. Добавить smoke-test: `curl http://localhost:11434/promises/pending` после запуска стека.
 

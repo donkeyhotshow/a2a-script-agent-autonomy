@@ -6,7 +6,7 @@
       "input": [
         {
           "name": "message",
-          "type": "text",
+          "type": "textarea",
           "label": "Task description",
           "required": true
         }

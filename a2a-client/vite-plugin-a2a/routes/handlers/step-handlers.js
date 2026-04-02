@@ -52,7 +52,10 @@ export function handleStepDetail(sessionId, stepNum, cwd) {
     const step = loadNewStep(cwd, sessionId, stepNum);
     if (!step) throw new Error('Step not found');
     if (!step.execute) return step;
-    return { ...step, execute: buildExecuteProjection(step.execute) };
+    return {
+        ...step,
+        execute: buildExecuteProjection(step.execute, step.context ? { context: step.context } : undefined),
+    };
 }
 
 /**
@@ -108,12 +111,12 @@ export function getActiveAsyncWork(cwd, sessionId) {
     for (const stepNum of steps) {
         const serverPromise = loadServerPromise(cwd, sessionId, stepNum);
         if (serverPromise?.promiseId) {
-            const isPending = serverPromise.status === 'processing' || 
+            const isPending = serverPromise.status === 'processing' ||
                              serverPromise.status === 'pending' ||
                              serverPromise.status === 'waiting';
             if (isPending) {
                 return {
-                    step: stepNum,
+                    stepNum: stepNum,
                     promiseId: serverPromise.promiseId,
                     status: serverPromise.status
                 };

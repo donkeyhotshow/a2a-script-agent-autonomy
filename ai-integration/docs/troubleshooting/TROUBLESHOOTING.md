@@ -220,7 +220,7 @@ curl http://localhost:11434/metrics
 
 | Component | Location |
 |-----------|----------|
-| Proxy logs | `ai-integration/proxy_logs/request_*/` |
+| Proxy logs | `ai-integration/proxy_logs/requests/request_*/` |
 | Promise storage | `ai-integration/storage/promises/` |
 | Cache | `ai-integration/storage/cache/` |
 | Ollama logs | `ollama logs` |

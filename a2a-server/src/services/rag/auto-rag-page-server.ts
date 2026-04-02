@@ -10,6 +10,24 @@ import type {RAGClientService} from '@a2a/rag';
 
 let singleton: {projectPath: string; service: RAGClientService; initDone: Promise<void>} | null = null;
 
+/** Compact RAG hit lines for `context.history` (system role) after server-side `auto_rag_page`. */
+export function formatRagHitsForHistory(
+    entries: Array<Record<string, unknown>>,
+    query: string,
+    maxLines = 16
+): string {
+    if (!entries.length) {
+        return `RAG: query="${query}" — no hits`;
+    }
+    const lines = entries.slice(0, maxLines).map((e, i) => {
+        const p = (typeof e.path === 'string' && e.path) || (typeof e.file === 'string' && e.file) || '?';
+        const sc = typeof e.score === 'number' && Number.isFinite(e.score) ? ` score=${e.score.toFixed(3)}` : '';
+        return `${i + 1}. ${p}${sc}`;
+    });
+    const more = entries.length > maxLines ? `\n… +${entries.length - maxLines} more` : '';
+    return `RAG (${query}):\n${lines.join('\n')}${more}`;
+}
+
 function resolveProjectPath(data?: Record<string, unknown>): string | null {
     const d = typeof data?.projectPath === 'string' ? data.projectPath.trim() : '';
     if (d) return path.resolve(d);
@@ -66,19 +84,24 @@ export async function mergeServerRagPageIntoContext(
             meta: out.success ? `hits=${entries.length}` : (out.error ?? 'search_failed').slice(0, 120),
         };
 
+        const nextInner: Record<string, unknown> = {
+            ...innerCtx,
+            ragResults: combined,
+            _server_rag_page: {
+                ok: out.success,
+                query,
+                projectPath,
+                ...(out.error ? {error: out.error} : {}),
+            },
+        };
+        if (entries.length > 0) {
+            nextInner['history'] = history;
+        }
+
         return {
             nextCtx: {
                 ...nextCtx,
-                context: {
-                    ...innerCtx,
-                    ragResults: combined,
-                    _server_rag_page: {
-                        ok: out.success,
-                        query,
-                        projectPath,
-                        ...(out.error ? {error: out.error} : {}),
-                    },
-                },
+                context: nextInner,
             },
             trace,
         };

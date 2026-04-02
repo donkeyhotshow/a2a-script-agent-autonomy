@@ -376,7 +376,13 @@ router.get('/:sessionId/promise/:promiseId', async (req: Request, res: Response)
             delete (safeResult as Record<string, unknown>).context;
         }
 
-        const webExecute = promiseStatus.execute ? buildWebExecute(promiseStatus.execute) : null;
+        const pollCtx = (promiseStatus as Record<string, unknown>).context;
+        const webExecute = promiseStatus.execute
+            ? buildWebExecute(promiseStatus.execute, {
+                  context:
+                      pollCtx && typeof pollCtx === 'object' && pollCtx !== null ? pollCtx : undefined,
+              })
+            : null;
         res.json({
             promiseId,
             status: normalizedStatus.status,

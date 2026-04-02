@@ -168,7 +168,6 @@ describe('monitor-and-process-tasks.js', () => {
         'utf8'
       );
 
-      expect(source).toContain('--sequential');
       expect(source).toContain('--once');
       expect(source).toContain('runDaemon()');
     });

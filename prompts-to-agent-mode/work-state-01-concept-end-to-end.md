@@ -12,4 +12,4 @@ Re-read the end-to-end agent journey (session create → `/next` → poll `/asyn
 
 ## Completion
 
-- [ ] Done
+- [x] Done (reviewed the end-to-end agent journey; docs now align with `AGENTS.md` and `ONE-PIPELINE.md`)

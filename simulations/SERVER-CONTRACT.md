@@ -12,11 +12,13 @@ Together, the goldens show **end-to-end contract behavior** for:
 
 | Layer | What is fixed by fixtures |
 |-------|---------------------------|
-| **Server** | `request.json` / `response.json`: single action key under `execute`, action-key `result`, `context` (`execution`, `history`, `workbench`, …), transforms (`server-transforms-*.json`). |
+| **Server** | `request.json` / `response.json`: single action key under `execute`, action-key `result`, `context` (`execution`, `history` as **array**, `workbench`, …), transforms (`server-transforms-*.json`). |
 | **Client API → Web** | `received.json`: Web execute DTO after sanitization (no client-only tool keys under top-level `execute`; see `buildWebExecute` in client code). |
 | **Flows** | Router choices, dialog + LLM tool turns, agent coder/smart paths, analyze/RAG-style steps, deterministic “fix” actions, task decomposition, orchestration, invoke edge cases, gray-room **internal** traces. |
 
 So: **simulations show how the system is designed to work** for the sync contract; they are the **reference** when changing processors, transforms, or the Client API merge.
+
+**Client → Server:** `POST /api/v1/invoke` body `context.history` must be an array (use `[]` when empty). [`a2a-client/shared/a2a-invoke-builders.mjs`](../../a2a-client/shared/a2a-invoke-builders.mjs) (`sanitizeContextForServer`) enforces that for Vite + SDK invoke builders.
 
 `sim-lint --all` currently validates **89** registered step/scenario roots (each named like `scenario/step` or a root scenario with `request.json`).
 

@@ -1,8 +1,8 @@
 # Управление прелоадером в системе агента
 
-> **Дата обновления**: 2026-03-18
-> **Статус**: Реализовано (v1.0)
-> **Версия**: 1.0
+> **Дата обновления**: 2026-04-03
+> **Статус**: Реализовано (v1.1)
+> **Версия**: 1.1
 
 ---
 
@@ -14,7 +14,8 @@
 4. [Минимальное время показа прелоадера](#минимальное-время-показа-прелоадера)
 5. [Восстановление после перезагрузки страницы](#восстановление-после-перезагрузки-страницы)
 6. [Спецификация API](#спецификация-api)
-7. [Тесты](#тесты)
+7. [Согласование async и диска (phantom pending)](#согласование-async-и-диска-phantom-pending)
+8. [Тесты](#тесты)
 
 ---
 
@@ -157,12 +158,18 @@
 
 ### Ключевые файлы для изменений
 
-| Файл | Роль | Изменения |
-|------|------|------------|
-| `web/js/task-flow/core.js` | Координация UI | Добавить логику прелоадера в `run()`, `sendChoice()`, `sendMessageResult()` |
-| `web/js/session-store.js` | State management | Добавить флаги `loaderActive`, `loaderMinTimeEnd` |
-| `web/js/action-handler.js` | API взаимодействие | Передавать флаги управления прелоадером |
-| `vite-plugin-a2a/routes/stepRoutes.js` | Server API | Добавить поля ответа для управления прелоадером |
+| Файл | Роль |
+|------|------|
+| `web/js/daemons/emitter.js` | `timingMs('MIN_LOADER_MS')` (по умолчанию 5000 ms), интервалы polling |
+| `web/js/daemons/dialog-loader.js` | Минимальное время показа лоадера на сессию |
+| `web/js/daemons/dialog-promise-poll.js` | События `promisePending`, опрос async |
+| `web/js/task-flow/loader.js` | Связка лоадера с TaskFlow |
+| `web/js/session-data.js` | `startLoader` / `stopLoader`, `promisePending`, `isInputBlocked` в `getState()` |
+| `web/js/session-store.js` | Прокси к ядру сессии |
+| `web/js/task-flow/render-form.js` | История vs форма: при «ожидании» скрывать форму только если **нет** actionable `execute.form` (`hasActionableForm`) |
+| `vite-plugin-a2a/routes/step-routes-async-flow.js` | `GET …/sessions/:id/async` — предпочтительный poll для веба |
+| `vite-plugin-a2a/storage/newSessions.js` | `loadNewStep`: снятие «залипшего» `server-promise.json` рядом с терминальным `server-response.json` |
+| `vite-plugin-a2a/routes/utils/session-projection-dto.js` | `getActiveAsyncWork` + сверка с `loadNewStep` при stale index |
 
 ### Текущая реализация
 
@@ -177,8 +184,8 @@
 ### Константы
 
 ```javascript
-// session-store.js
-const MINIMUM_LOADER_TIME = 5000; // миллисекунд
+// web/js/daemons/emitter.js — DEFAULT_A2A_TIMING_MS.MIN_LOADER_MS (по умолчанию 5000)
+// web/js/daemons/dialog-loader.js — createDialogLoader() через timingMs('MIN_LOADER_MS')
 ```
 
 ---
@@ -268,15 +275,31 @@ async function restoreSession(sessionId) {
 
 ### API для проверки состояния
 
+Предпочтительно для UI (без transport id в браузере):
+
+```
+GET /api/a2a/sessions/{sessionId}/async
+```
+
+Ответ: `asyncPending`, `status`, `execute` (проекция для веба), `completed` — см. корневой `AGENTS.md` и [`WEB_UI_PROTOCOL.md`](./WEB_UI_PROTOCOL.md).
+
+Legacy / отладка:
+
 ```
 GET /api/a2a/sessions/{sessionId}/promise/{promiseId}
-
-Response:
-{
-    "status": "processing" | "completed" | "failed",
-    "execute": { ... } // если completed
-}
 ```
+
+---
+
+## Согласование async и диска (phantom pending)
+
+Если на диске одновременно есть **терминальный** `server-response.json` (с полем `execute`, например форма ввода или router choices) и **устаревший** `server-promise.json` со статусом `pending`/`processing` (иногда без `promiseId`), а в `session-index.json` всё ещё `promiseStatus: pending`, клиент мог считать async активным бесконечно: `GET …/async` возвращал `asyncPending: true`, в store оставались `promisePending` / блокировка ввода, а **форма не рендерилась** (история без поля ввода).
+
+**Поведение репозитория (исправление):**
+
+1. При чтении шага `loadNewStep()` удаляет такой «залипший» `server-promise.json`, если рядом уже есть `execute` в `server-response.json`, и сбрасывает `promiseId` / `promiseStatus` в индексе для текущего шага.
+2. `getActiveAsyncWork()` перед выдачей «активного» промиса по индексу вызывает `loadNewStep` для `currentStep`; если там уже есть `execute`, активной работы нет — poll не стартует.
+3. В `render-form.js` форма не прячется при `isWaiting`, если у снимка сессии всё ещё есть actionable form (`hasActionableForm`), в духе `task-flow/init.js` (`forceRenderPendingExecute`).
 
 ---
 
@@ -383,6 +406,7 @@ a2a-client/tests/
 | Версия | Дата | Автор | Изменения |
 |--------|------|-------|------------|
 | 1.0 | 2026-03-17 | - | Первая версия документа |
+| 1.1 | 2026-04-03 | - | Актуализированы пути кода и константа `MIN_LOADER_MS`; предпочтение `GET …/async`; раздел phantom pending / согласование хранилища |
 
 ---
 

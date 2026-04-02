@@ -11,4 +11,4 @@ Update `work/STATE.md`: replace dead `tasks/*.md` links with real paths (after r
 
 ## Completion
 
-- [ ] Done
+- [x] Done (stale links cleared and S13 coverage recorded; see `repo-task-specs-missing-restore.md` for restored specs)

@@ -43,11 +43,13 @@
                         
                         const msg = String(text).trim();
                         store.pushMessage?.({ content: msg }, 'user');
+                        if (typeof store.startLoader === 'function') store.startLoader(sessionId);
                         store?.setPromisePending?.(true);
                         refreshContent();
                         await WindowEvents.sendMessage(sessionId, msg, store);
                     },
                     sendChoice: async (choiceId, el) => {
+                        if (typeof store.startLoader === 'function') store.startLoader(sessionId);
                         store?.setPromisePending?.(true);
                         refreshContent();
                         await WindowEvents.sendChoice(sessionId, choiceId, store);
@@ -59,13 +61,18 @@
                  const refreshContent = () => {
                      const st = store.getState?.() || {};
                      const { execute, context, isWaiting } = global.getTaskFlowPanelViewState(st);
+                    const promisePending = !!st.promisePending;
+                    const awaitingVerify = !!st.awaitingSessionVerify;
 
                     // Task-flow UI (form/message/actions) only when server/store set execute; never synthetic { form: pendingForm }
+                    // While promisePending/awaiting verify, do not re-show a stale actionable form (router double-submit / broken loader flow).
                     const shouldRenderPendingExecute =
                         !!execute &&
                         (!isWaiting ||
-                            global.executeHasActionableForm?.(execute) ||
-                            hasPendingClientAction(execute));
+                            hasPendingClientAction(execute) ||
+                            (global.executeHasActionableForm?.(execute) &&
+                                !promisePending &&
+                                !awaitingVerify));
 
                     if (shouldRenderPendingExecute) {
                         Render.renderExecute(contentEl, execute, { execute, context, store }, store, taskFlowRef);

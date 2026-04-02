@@ -299,10 +299,11 @@
                     }
                 }
 
-                // Form replaces loader: show inputs immediately but respect min loader time
-                // Using stop() without force=true allows loader to hide only after MIN_LOADER_MS expires
-                // while inputs can render immediately (form display is independent of loader state)
-                if (execute && !execute.wait && hasForm) {
+                // Any terminal execute (not execute.wait) ends the submit spinner: message-only /
+                // non-form responses must stop the loader or isInputBlocked stays true and the panel
+                // never leaves "Waiting…" (window-events shouldRenderPendingExecute).
+                // stop() still honors MIN_LOADER_MS unless force — same as form path.
+                if (execute && !execute.wait) {
                     var l = getLoader(state.sessionId);
                     if (l) l.stop();
                     sessionLoaders.forEach(function (loader) {

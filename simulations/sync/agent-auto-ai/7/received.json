@@ -9,7 +9,7 @@
         {
           "id": "done",
           "label": "OK",
-          "description": "Dismiss this confirmation and continue the session."
+          "description": "Задача завершена, файлы созданы"
         }
       ]
     }

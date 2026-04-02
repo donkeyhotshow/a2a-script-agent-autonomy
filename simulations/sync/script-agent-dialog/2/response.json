@@ -12,15 +12,7 @@
   "execute": {
     "form": {
       "title": "Message",
-      "description": "Describe blockers; the script-aware dialog watches for import errors.",
-      "input": [
-        {
-          "name": "message",
-          "type": "text",
-          "label": "Message",
-          "required": true
-        }
-      ]
+      "description": "Describe blockers; the script-aware dialog watches for import errors."
     }
   }
 }
