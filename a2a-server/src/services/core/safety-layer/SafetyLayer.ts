@@ -19,6 +19,7 @@ import { LoopDetector } from './LoopDetector.js';
 import { ContextValidator } from './ContextValidator.js';
 import { ConfidenceTracer } from './ConfidenceTracer.js';
 import type { LOOP_SIGNAL, CONFIDENCE_TRACE, IntegrityResult, WAITING_STATE, SafetyTurn } from './types.js';
+import { globalEventBus } from '../event-bus.js';
 
 export type InterceptDecision =
   | { decision: 'continue' }
@@ -95,7 +96,17 @@ export class SafetyLayer {
       }
     }
 
-    return { decision: 'continue' };
+    const interceptResult: InterceptDecision = { decision: 'continue' };
+
+    setImmediate(() => {
+      globalEventBus.publish({
+        type: 'SAFETY_INTERCEPT',
+        session_id: sessionId ?? 'unknown',
+        payload: { decision: interceptResult.decision },
+      });
+    });
+
+    return interceptResult;
   }
 
   /** Reset per-session state (call when a new session starts). */

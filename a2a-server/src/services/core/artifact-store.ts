@@ -13,6 +13,7 @@
  */
 
 import { validateArtifact } from '../../artifact-validator.js';
+import { globalEventBus } from './event-bus.js';
 
 // ── Re-export base types so callers only import from one place ────────────────
 
@@ -46,7 +47,8 @@ export type ArtifactType =
   | 'ROUTE_DECISION'
   | 'REASONING_CHAIN'
   | 'EXECUTION_PLAN'
-  | 'REPLAN_DECISION';
+  | 'REPLAN_DECISION'
+  | 'JUDGMENT_RESULT';
 
 /** Unique identifier for the component writing an artifact */
 export type ComponentId = string;
@@ -83,6 +85,7 @@ export const TTL_MS: Partial<Record<ArtifactType, number>> = {
   REASONING_CHAIN:         14 * 24 * 60 * 60 * 1_000,  // 14 days
   EXECUTION_PLAN:          14 * 24 * 60 * 60 * 1_000,  // 14 days
   REPLAN_DECISION:         14 * 24 * 60 * 60 * 1_000,  // 14 days
+  JUDGMENT_RESULT:         14 * 24 * 60 * 60 * 1_000,  // 14 days
 };
 
 // ── Stored artifact shape ─────────────────────────────────────────────────────
@@ -211,6 +214,19 @@ export class ArtifactStore {
     };
 
     this.store.set(artifact.artifact_id, stored);
+
+    setImmediate(() => {
+      globalEventBus.publish({
+        type: 'ARTIFACT_WRITTEN',
+        session_id: stored.session_id,
+        payload: {
+          artifact_id: stored.artifact_id,
+          artifact_type: stored.artifact_type,
+          written_by: stored.written_by,
+        },
+      });
+    });
+
     return stored;
   }
 

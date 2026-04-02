@@ -12,6 +12,7 @@
  */
 
 import { EventEmitter } from 'events';
+import { globalEventBus } from './event-bus.js';
 
 // ── States ──────────────────────────────────────────────────────────────────
 
@@ -323,10 +324,12 @@ export type SelfCorrectingHook = (ctx: GuardContext) => void;
 export class OrchestratorKernel extends EventEmitter {
   private _state: OrchestratorState;
   private readonly _selfCorrectingHooks: SelfCorrectingHook[] = [];
+  private readonly _sessionId: string;
 
-  constructor(initialState: OrchestratorState = 'IDLE') {
+  constructor(initialState: OrchestratorState = 'IDLE', sessionId = 'unknown') {
     super();
     this._state = initialState;
+    this._sessionId = sessionId;
   }
 
   /**
@@ -415,6 +418,12 @@ export class OrchestratorKernel extends EventEmitter {
     };
 
     this.emit('transition', result);
+
+    globalEventBus.publish({
+      type: 'FSM_TRANSITION',
+      session_id: this._sessionId,
+      payload: result,
+    });
 
     if (spec.to === 'SELF_CORRECTING') {
       for (const hook of this._selfCorrectingHooks) {
