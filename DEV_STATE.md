@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # DEV_STATE - 2026-04-02
 
 **Doc:** Schema-debug entry point: [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md), [`simulations/SCHEMA.md`](simulations/SCHEMA.md), [`AGENTS.md`](AGENTS.md).
@@ -7,6 +8,9 @@
 **System roadmap:** [`tasks/system-improvement-priorities.md`](tasks/system-improvement-priorities.md) (contract unification, gray room, verification pyramid, observability).
 
 **Open work (authoritative queue):** [`work/STATE.md`](work/STATE.md) — table *Очередь задач* (S10–S12 partial, S14 partial, SYS backlog). Root file keeps narrative only; do not treat a single line here as the row-by-row status.
+=======
+### Simulation Tests Fix (2026-03-29 03:16-03:18)
+>>>>>>> 4800bb41 (feat: sync additional ADRs for aleon10)
 
 Current system state: **Stack готов** - все сервисы работают; `sim:validate -- --all --step-contract` зелёный.
 

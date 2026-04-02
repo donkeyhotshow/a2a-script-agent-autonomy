@@ -50,6 +50,7 @@ Recommended sections:
 - `ADR-0032-port-management-execution.md` - Standardize dynamic port allocation, locking, conflict detection, and cleanup via `scripts/port-manager.js`
 - `ADR-0033-standard-extensions-structure.md` - Plan for single-extension sources, consistent handler/service naming, and cleaned server directories per the refactoring plan
 - `ADR-0034-protocol-consolidation.md` - Propose `@a2a/protocol`, canonical docs/actions layout, and a config map to consolidate shared types
+<<<<<<< HEAD
 - `ADR-0035-agentic-reasoning-safety-layer.md` - Safety Layer intercept for Gray Room loops, context drift, and confidence gating
 - `ADR-0036-a2a-autonomous-agent-master-orchestration-memory.md` - Master orchestration blueprint plus hierarchical memory planning
 - `ADR-0037-living-specs-for-task-synthesis.md` - Living specifications that evolve with task synthesis and traceability
@@ -94,6 +95,16 @@ These are **not** single numbered ADRs. Use them as **roadmap, audit, and featur
 | Env matrix | [`docs/ENV-MATRIX.md`](../ENV-MATRIX.md) |
 | Terminology | [`GLOSSARY.md`](../../GLOSSARY.md) |
 | Web UI ↔ session protocol | [`a2a-client/docs/WEB_UI_PROTOCOL.md`](../../a2a-client/docs/WEB_UI_PROTOCOL.md) |
+=======
+- `ADR-0035-agentic-reasoning-safety-layer.md` - Safety Layer inside GrayRoomOrchestrator: LoopDetector (triple×3), ContextValidator (SHA256), ConfidenceTracer (LLM gate) to raise session success rate ≥85%
+- `ADR-0036-autonomous-agent-memory-orchestration.md` - A2A Autonomous Agent Master Orchestration & Memory (38 feature contracts + 2026 improvements)
+- `ADR-0037-living-specs-task-synthesis.md` - Living Specs for Task Synthesis: machine-verifiable requirements that evolve with the agent
+- `ADR-0038-multi-agent-orchestrator.md` - Multi-Agent Orchestrator: Dynamic delegation to Architect/Implementer/Reviewer specialized agents
+- `ADR-0039-a2a-registry-layer.md` - A2A Registry Layer: Stateless worker discovery and routing to scale beyond N² connectivity
+- `ADR-0040-writer-reviewer-pattern.md` - Writer/Reviewer Pattern: Strict session-level separation to eliminate confirmation bias
+- `ADR-0041-comprehensive-architectural-improvements.md` - 15 Comprehensive Architectural Improvements for A2A-Script-Agent (Multi-Agent Memory, PolicyGuard, DX)
+- `ADR-0042-advanced-agent-capabilities.md` - Advanced Agent Capabilities: MCP Orchestration, Session Compaction (Summarization), and LSP-driven Context Enrichment
+>>>>>>> 4800bb41 (feat: sync additional ADRs for aleon10)
 
 ## Tooling: ADR compliance via Client API
 
