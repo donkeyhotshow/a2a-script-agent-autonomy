@@ -240,7 +240,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         }
         
         return {
-            outcome: 'action_proposal',
+            outcome: 'completed',
             context: {
                 execution: {
                     action: 'task',

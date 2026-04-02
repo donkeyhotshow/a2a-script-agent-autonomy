@@ -1,0 +1,217 @@
+#!/usr/bin/env node
+/**
+ * Gray Room Test — Direct test for server-side LLM chain execution
+ *
+ * Tests the Gray Room (серой комнате): server-side chain of LLM calls
+ * (compress_history, thinking, auto_rag_page, auto_read_file, clarify)
+ * before returning to client.
+ *
+ * Usage:
+ *   node scripts/direct-tests/gray-room-test.js
+ *
+ * Requires: Client API (5173) + A2A Server (3000) + Ollama (11435/11434)
+ * Env: CLIENT_API_URL, SERVER_URL
+ */
+
+import fs from 'fs/promises';
+import path from 'path';
+
+const CLIENT_API_URL = process.env.CLIENT_API_URL || 'http://localhost:5173';
+const SERVER_URL = process.env.SERVER_URL || 'http://localhost:3000';
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function assert(cond, msg) {
+  if (!cond) throw new Error(msg);
+}
+
+async function createSession(body = {}) {
+  const response = await fetch(`${CLIENT_API_URL}/api/a2a/sessions`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    throw new Error(`Failed to create session: ${response.status}`);
+  }
+  return response.json();
+}
+
+async function sendNext(sessionId, body) {
+  const response = await fetch(
+    `${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/next`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    }
+  );
+  if (!response.ok) {
+    throw new Error(`next failed: ${response.status} - ${await response.text()}`);
+  }
+  return response.json();
+}
+
+async function pollAsyncSettled(sessionId, maxWaitMs = 120_000, stepMs = 500) {
+  const deadline = Date.now() + maxWaitMs;
+  while (Date.now() < deadline) {
+    const r = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
+    if (!r.ok) break;
+    const j = await r.json();
+    if (!j.asyncPending) return j;
+    await sleep(stepMs);
+  }
+  return null;
+}
+
+function assertGrayRoomSlot(session, label) {
+  const ctx = session.session?.context ?? session.context;
+  const grayRoom = ctx?.workbench?.slots?.grayRoom;
+  assert(grayRoom && typeof grayRoom === 'object', `${label}: expected grayRoom slot in context.workbench.slots`);
+  assert(typeof grayRoom.status === 'string', `${label}: expected grayRoom.status string`);
+  assert(typeof grayRoom.turn === 'number' || grayRoom.turn === undefined, `${label}: expected grayRoom.turn number|undefined`);
+  console.log(`${label}: Gray Room status: ${grayRoom.status}, turn: ${grayRoom.turn}`);
+}
+
+async function getSession(sessionId) {
+  const response = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}`);
+  if (!response.ok) {
+    throw new Error(`Failed to get session: ${response.status}`);
+  }
+  return response.json();
+}
+
+async function testGrayRoomChain() {
+  console.log('Testing Gray Room LLM chain execution...');
+
+  // Create agent session to trigger Gray Room
+  const sessionBody = await createSession({
+    mode: 'agent',
+    task: 'Test Gray Room chain: compress_history, thinking, auto_rag_page, auto_read_file, clarify'
+  });
+  const sessionId = sessionBody.session?.id || sessionBody.id;
+
+  console.log(`Created session: ${sessionId}`);
+
+  // Send initial task to start agent processing
+  const nextBody = await sendNext(sessionId, { result: { message: 'Start agent processing for Gray Room test' } });
+  assert(nextBody.success === true, 'Initial /next success');
+
+  // Poll for async settlement (Gray Room processing)
+  const settled = await pollAsyncSettled(sessionId, 180_000); // 3 minutes for LLM chain
+  assert(settled, 'Gray Room async processing settled');
+
+  // Get session and check Gray Room slot
+  const session = await getSession(sessionId);
+  assertGrayRoomSlot(session, 'After Gray Room processing');
+
+  // Verify Gray Room completed successfully
+  const grayRoom = session.session?.context?.workbench?.slots?.grayRoom || session.context?.workbench?.slots?.grayRoom;
+  assert(grayRoom.status === 'completed' || grayRoom.status === 'ready', `Gray Room status should be completed or ready, got: ${grayRoom.status}`);
+
+  console.log('Gray Room test passed: LLM chain executed successfully');
+}
+
+async function testRedRoomToolExecution() {
+  console.log('Testing Red Room tool execution...');
+
+  // Create agent session
+  const sessionBody = await createSession({
+    mode: 'agent',
+    task: 'Test Red Room: execute tool operations like read-file'
+  });
+  const sessionId = sessionBody.session?.id || sessionBody.id;
+
+  console.log(`Created session: ${sessionId}`);
+
+  // Prompt for tool execution to trigger Red Room
+  const promptText = 'Please execute a read-file operation on README.md to test Red Room.';
+
+  let toolExecute = null;
+  let attempts = 0;
+  const maxAttempts = 3;
+
+  while (!toolExecute && attempts < maxAttempts) {
+    attempts++;
+    console.log(`Attempt ${attempts}: Sending prompt for tool execution`);
+
+    const nextBody = await sendNext(sessionId, { result: { message: promptText } });
+    assert(nextBody.success === true, `/next success on attempt ${attempts}`);
+
+    const settled = await pollAsyncSettled(sessionId, 120_000);
+    assert(settled, `Async settled on attempt ${attempts}`);
+
+    const session = await getSession(sessionId);
+    assertGrayRoomSlot(session, `Gray Room after attempt ${attempts}`);
+
+    // Check if we got a tool execute
+    const executeObj = session.session?.execute ?? session.execute;
+    if (executeObj && Object.keys(executeObj).filter(k => !k.startsWith('_')).length > 0) {
+      toolExecute = executeObj;
+      console.log(`Tool execute found on attempt ${attempts}:`, JSON.stringify(toolExecute, null, 2));
+    } else {
+      console.log(`No tool execute yet on attempt ${attempts}, trying again...`);
+      await sleep(1000);
+    }
+  }
+
+  assert(toolExecute, `Red Room: no tool execute observed after ${maxAttempts} attempts`);
+
+  // Simulate Red Room execution (client-side tool execution)
+  const action = Object.keys(toolExecute).find(k => !k.startsWith('_'));
+  assert(action === 'read-file', `Expected read-file action, got: ${action}`);
+
+  const cfg = toolExecute[action];
+  assert(cfg && cfg.path, 'Red Room: read-file path missing');
+
+  console.log(`Executing Red Room tool: read-file on ${cfg.path}`);
+
+  // Perform the file read (simulating client tool execution)
+  const repoPath = path.isAbsolute(cfg.path) ? cfg.path : path.resolve(process.cwd(), cfg.path);
+  const content = await fs.readFile(repoPath, 'utf8');
+  const result = { 'read-file': { path: cfg.path, content } };
+
+  // Send result back
+  const ack = await sendNext(sessionId, { result });
+  assert(ack.success === true, 'Red Room result /next success');
+
+  if (ack.asyncPending) {
+    await pollAsyncSettled(sessionId, 120_000);
+  }
+
+  // Verify Gray Room slot still present after Red Room
+  const sessionAfterRed = await getSession(sessionId);
+  assertGrayRoomSlot(sessionAfterRed, 'After Red Room execution');
+
+  console.log('Red Room test passed: Tool executed successfully');
+}
+
+async function main() {
+  console.log('='.repeat(60));
+  console.log('Gray Room & Red Room Direct Tests');
+  console.log('='.repeat(60));
+
+  try {
+    // Test Gray Room chain
+    await testGrayRoomChain();
+    console.log('✓ Gray Room chain test passed');
+
+    // Test Red Room tool execution
+    await testRedRoomToolExecution();
+    console.log('✓ Red Room tool execution test passed');
+
+    console.log('\n' + '='.repeat(60));
+    console.log('All tests passed!');
+    console.log('='.repeat(60));
+  } catch (error) {
+    console.error('\nTest failed:', error.message);
+    console.log('\n' + '='.repeat(60));
+    console.log('Test failed');
+    console.log('='.repeat(60));
+    process.exit(1);
+  }
+}
+
+main();

@@ -210,6 +210,7 @@ export async function handleAsyncFlow({ cwd, url, path, req, res, storageMode = 
             res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
             return true;
         }
+        const session = loadSessionForAsync(cwd, sessionId, projectPath);
         // Use getActiveAsyncWork from session-projection-dto to also find completed async
         // that hasn't been saved to step files yet (from session-index fallback)
         const hit = getActiveAsyncWork(cwd, sessionId);
@@ -221,7 +222,7 @@ export async function handleAsyncFlow({ cwd, url, path, req, res, storageMode = 
                     asyncPending: false,
                     completed: true,
                     status: 'idle',
-                    execute: null,
+                    execute: buildExecuteProjection(session.execute),
                     result: null,
                 })
             );

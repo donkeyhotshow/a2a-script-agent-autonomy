@@ -296,7 +296,7 @@ export class GrayRoomOrchestrator {
     constructor(options: GrayRoomOptions) {
         this.maxInterruptTurns = options.maxInterruptTurns ?? 10;
         this.aiHubUrl = (options.aiHubUrl ?? process.env.AI_HUB_URL ?? DEFAULT_AI_HUB).replace(/\/$/, '');
-        this.model = options.model ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL;
+        this.model = options.model ?? process.env.LLM_MODEL ?? process.env.Z_AI_MODEL ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL;
         this.promptsTransformsPath = options.promptsTransformsPath;
     }
 

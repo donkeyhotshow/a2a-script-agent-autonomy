@@ -17,7 +17,7 @@ from .base import (
     EmbeddingResult,
 )
 from .ollama_provider import OllamaProvider
-from .openai_compatible_provider import OpenAICompatibleProvider, OpenRouterProvider, GroqProvider, CohereProvider
+from .openai_compatible_provider import OpenAICompatibleProvider, OpenRouterProvider, GroqProvider, CohereProvider, ZAIProvider
 from .huggingface_provider import HuggingFaceProvider
 from .config_loader import load_providers_config, ProvidersConfig
 
@@ -29,6 +29,7 @@ PROVIDER_REGISTRY: Dict[str, Type[LLMProvider]] = {
     'openrouter': OpenRouterProvider,
     'groq': GroqProvider,
     'cohere': CohereProvider,
+    'z_ai': ZAIProvider,
     'huggingface': HuggingFaceProvider,
 }
 
@@ -84,6 +85,27 @@ class ProviderRouter:
                 await provider.close()
         self._initialized = False
     
+    def _resolve_model(self, model: str) -> str:
+        """
+        Resolve model name with redirects.
+        
+        If Z.AI provider is enabled and default, redirect all models to glm-4.7-flash.
+        
+        Args:
+            model: Requested model name
+            
+        Returns:
+            Resolved model name
+        """
+        # Check if Z.AI is the default provider and is enabled
+        default_provider = self.config.get_provider(self.config.default_provider)
+        if default_provider and default_provider.name == 'z_ai' and default_provider.enabled:
+            # Get the first model from Z.AI config
+            if default_provider.models:
+                return default_provider.models[0]  # Usually glm-4.7-flash
+        
+        return model
+    
     # ========================================================================
     # Core Routing Methods
     # ========================================================================
@@ -117,6 +139,7 @@ class ProviderRouter:
             await self.initialize()
         
         model = model or self._get_default_model()
+        model = self._resolve_model(model)  # Apply model redirects
         enable_fallback = enable_fallback if enable_fallback is not None else self.config.enable_fallback
         
         # Get providers to try
@@ -163,6 +186,8 @@ class ProviderRouter:
             await self.initialize()
         
         model = model or self._get_default_model()
+        model = self._resolve_model(model)  # Apply model redirects
+        model = self._resolve_model(model)  # Apply model redirects
         enable_fallback = enable_fallback if enable_fallback is not None else self.config.enable_fallback
         
         providers = self._get_provider_chain(model, preferred_provider, enable_fallback)

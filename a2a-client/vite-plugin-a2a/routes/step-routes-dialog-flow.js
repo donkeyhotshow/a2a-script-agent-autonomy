@@ -339,7 +339,7 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                             }
                         }
 
-                        if (serverResponse && hasServer && !hasPromise) {
+                        if (serverResponse && hasServer && !hasPromise && (execAction !== 'task' || mergedContext.execution?.step !== 'router')) {
                             const agentResult = await maybeChainAgentTools({
                                 cwd,
                                 sessionId,

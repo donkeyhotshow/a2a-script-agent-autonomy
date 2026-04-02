@@ -1,4 +1,6 @@
-# DEV_STATE - 2026-04-02
+# DEV_STATE - 2026-04-02 (Self-Upgrade in progress)
+
+**Self-Upgrade:** Process of system self-improvement via daemon script `monitor-and-process-tasks.js` or manual API dialog with agent. See [GLOSSARY.md](GLOSSARY.md).
 
 **Doc:** Schema-debug entry point: [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md), [`simulations/SCHEMA.md`](simulations/SCHEMA.md), [`AGENTS.md`](AGENTS.md).
 
@@ -48,6 +50,8 @@ Current system state: **Stack готов** - все сервисы работа�
 - S11: `sync/invoke-form-confirmation/1` + `sync/invoke-simulation-record/1` — added `request.md` / `response.md` mirrors (`sim:check-md` clean per step)
 - S11: `sync/orchestrator-dialog/1`–`4` — `request.md` / `response.md` mirrors; `sim:check-md -- --path ../simulations/sync/orchestrator-dialog` clean
 - S11: `sync/resilience-contract/1`–`6` — `request.md` / `response.md` mirrors; `sim:check-md -- --path ../simulations/sync/resilience-contract` clean
+
+- **AI Integration (COMPLETED)**: Z.AI стал default-провайдером, `/api/tags` отдаёт Z.AI-модели и подмешивает локальные Ollama-entry только при доступности сервера, `/health/ready` смотрит на default-провайдер, а конфиги/README/queue отражают новое поведение (`ai-integration/proxy/proxy_handler.py`, `ai-integration/proxy/health_routes.py`, `ai-integration/proxy/config.py`, `ai-integration/proxy/providers/config_loader.py`, `ai-integration/README.md`, `work/STATE.md`).
 
 ## Completed work/tasks (2026-04-01):
 - Analyze test failures: Classified 41 failed a2a-client tests as config/environment issues

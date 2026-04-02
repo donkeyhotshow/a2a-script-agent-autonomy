@@ -79,7 +79,7 @@ def init_providers():
         print(f"Warning: Could not initialize provider router: {e}")
 
 # Initialize providers when module is loaded
-init_providers()
+# init_providers()  # Commented out to avoid event loop issues
 
 
 def init_daemon():

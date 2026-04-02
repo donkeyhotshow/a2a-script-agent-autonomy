@@ -18,7 +18,7 @@ for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PROXY_PORT%" ^| findstr "L
 
 REM Start ai-integration
 cd ai-integration
-start "ai-integration" cmd /c "set OLLAMA_HOST=http://localhost:%OLLAMA_PORT% && set OLLAMA_MODELS=%OLLAMA_MODELS% && set FORWARD_TIMEOUT_SECONDS=0 && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port %PROXY_PORT%"
+start "ai-integration" cmd /c "set OLLAMA_HOST=http://localhost:%OLLAMA_PORT% && set OLLAMA_MODELS=%OLLAMA_MODELS% && set FORWARD_TIMEOUT_SECONDS=180 && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port %PROXY_PORT%"
 cd ..
 
 powershell -Command "Start-Sleep -Seconds 5"

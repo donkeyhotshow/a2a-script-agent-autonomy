@@ -1,17 +1,17 @@
-# Ollama Proxy Service
+# AI Integration Proxy (Z.AI first, Ollama optional)
 
-**Live stack:** Start or restart the **whole** coordinated stack from the repo root: **`.\start-all.bat`** (Windows) or **`./start-all.sh`** (Linux/macOS). Do not treat this folder’s standalone run instructions as the way to restart the monorepo stack.
+**Live stack:** Start or restart the **whole** coordinated stack from the repo root: **`.\start-all.bat`** (Windows) or **`./start-all.sh`** (Linux/macOS). The proxy routes requests to the configured providers (Z.AI by default, with Ollama/Groq/OpenRouter fallbacks) and logs every call with optional simulation hooks.
 
-Прокси-сервис для перехвата и логирования запросов к Ollama с поддержкой ML-симуляции rnj-L.
+Самостоятельный прокси объединяет несколько LLM-поставщиков: по умолчанию это Z.AI (`glm-4.7-flash`), а локальная Ollama выступает как дополнительный источник моделей, который добавляется в `/api/tags` только если доступен.
 
 ## Возможности
 
-- **Базовый прокси**: Перенаправляет запросы с порта 11434 на 11435
-- **Логирование**: Сохраняет каждый запрос в отдельную папку с request.json и response.json
-- **ML Симуляция**: Обучение на истории rnj-1 и симуляция ответов как rnj-L при высокой уверенности
-- **Model Mapping**: Маппинг имен моделей + правила роутинга через `AI_HUB_CONFIG`
-- **Async Promises**:异步模式 через `promiseId` + получение результата позже
-- **Ollama Manager**: Автоматический старт/остановка Ollama
+- **Маршрутизация между провайдерами**: Z.AI (по умолчанию) + fallback (Ollama, Groq, OpenRouter, HuggingFace, Cohere и т.д.) — правила задаются в `AI_HUB_CONFIG` / `providers.json`.
+- **Логирование**: Каждый запрос сохраняется в отдельную папку (`proxy_logs/request_*`) с `request.json` и `response.json`.
+- **ML-симуляция**: Симуляции rnj-L / rnj-1 и правила `simulate`/`set_model`.
+- **Маппинг моделей + конфигурация**: `AI_HUB_CONFIG` + `providers.json` позволяют переадресовать `model`, вставлять `virtual_models` и наблюдать `api/tags`.
+- **Async Promises**: Поддержка `promiseId` → `POST /api/promises/create` → потом `result`.
+- **OllamaManager**: Управление локальным Ollama (старт/стоп/health) — используется только при необходимости.
 
 ## Установка
 
@@ -67,7 +67,11 @@ python -m proxy
 | Переменная              | По умолчанию           | Описание                        |
 |-------------------------|------------------------|---------------------------------|
 | PROXY_PORT              | 11434                  | Порт прокси                     |
-| OLLAMA_HOST             | http://localhost:11435 | Хост реальной Ollama            |
+| DEFAULT_PROVIDER        | z_ai                    | Имя провайдера по умолчанию (можно переопределить через `providers.json`). |
+| Z_AI_BASE_URL           | https://api.z.ai/api/paas/v4/ | Базовый URL для Z.AI (по умолчанию). |
+| Z_AI_MODEL              | glm-4.7-flash           | Модель Z.AI по умолчанию.        |
+| Z_AI_API_KEY            | -                       | Ключ доступа к Z.AI (требуется). |
+| OLLAMA_HOST             | http://localhost:11435 | Хост локальной Ollama (фолбэк, необязательный). |
 | STORAGE_DIR             | proxy_logs             | Папка для логов                 |
 | SIMULATION_ENABLED      | false                  | Включить ML симуляцию           |
 | SIMULATION_DATA_PATH    | simulation_data        | Папка данных симуляции          |
@@ -107,7 +111,7 @@ python -m proxy
 ```
 
 ### `/health/ready` - Readiness Probe
-Проверка готовности прокси к обработке запросов. Возвращает HTTP 200 только если Ollama доступна.
+Проверка готовности прокси к обработке запросов. Возвращает HTTP 200 если доступен текущий default-провайдер (Z.AI по умолчанию). Если по умолчанию стоит `ollama`, то поведение прежнее: при недоступной Ollama — HTTP 503.
 
 ```json
 {
@@ -192,6 +196,10 @@ ai-integration/
 - `POST /api/promises/create` - Создать promise
 - `GET /api/promises/<id>/status` - Статус promise
 - `GET /api/promises/<id>/result` - Получить результат
+
+---
+
+`GET /api/tags` отдаёт список моделей из текущего провайдера (Z.AI), а затем подмешивает локальные модели (Ollama, `virtual_models`), но только если Ollama доступна — иначе `qwen`/локальные модели исчезают из списка, чтобы пользователь не выбирал недоступный ресурс.
 
 ### Симуляция (когда SIMULATION_ENABLED=true)
 

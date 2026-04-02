@@ -3,7 +3,7 @@
     "ollama": {
       "type": "ollama",
       "url": "${OLLAMA_HOST:-http://localhost:11435}",
-      "enabled": true,
+      "enabled": false,
       "priority": 1,
       "models": ["qwen3:8b"],
       "timeout": 0,
@@ -71,14 +71,15 @@
       "max_retries": 2
     },
     "z_ai": {
-      "type": "openai",
+      "type": "z_ai",
       "url": "${Z_AI_BASE_URL:-https://api.z.ai/api/paas/v4/}",
       "api_key": "${Z_AI_API_KEY}",
       "enabled": true,
       "priority": 6,
       "models": ["${Z_AI_MODEL:-glm-4.7-flash}"],
       "timeout": 0,
-      "max_retries": 2
+      "max_retries": 2,
+      "request_delay_seconds": 2.0
     }
   },
   "default_provider": "z_ai",

@@ -24,7 +24,7 @@ REM Phase 1: Kill by port
 echo.
 echo === Phase 1: Kill by port ===
 call :p1 "Ollama" "11434"
-call :p1 "ai-integration" "11435"
+call :p1 "ai-integration" "11434"
 call :p1 "a2a-server" "3000"
 call :p1 "client-api" "3001"
 call :p1 "web-ui" "5173"

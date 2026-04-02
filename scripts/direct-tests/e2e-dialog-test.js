@@ -11,6 +11,9 @@
  * Optional: REQUIRE_ASYNC_PIPELINE=1 — fail if dialog /next does not go async or no in-flight /async seen
  */
 
+import fs from 'fs/promises';
+import path from 'path';
+
 const SERVER_URL = process.env.A2A_SERVER_URL || 'http://localhost:3000';
 const CLIENT_API_URL = process.env.CLIENT_API_URL || 'http://localhost:5173';
 const REQUIRE_ASYNC_PIPELINE = process.env.REQUIRE_ASYNC_PIPELINE === '1';
@@ -122,6 +125,55 @@ async function pollAsyncSettled(sessionId, maxWaitMs = 120_000, stepMs = 500) {
     await sleep(stepMs);
   }
   return null;
+}
+
+function assertGrayRoomSlot(session, label) {
+  const ctx = session.session?.context ?? session.context;
+  const grayRoom = ctx?.workbench?.slots?.grayRoom;
+  assert(grayRoom && typeof grayRoom === 'object', `${label}: expected grayRoom slot in context.workbench.slots`);
+  assert(typeof grayRoom.status === 'string', `${label}: expected grayRoom.status string`);
+  assert(typeof grayRoom.turn === 'number' || grayRoom.turn === undefined, `${label}: expected grayRoom.turn number|undefined`);
+}
+
+async function performRedRoomClientExecute(sessionId, executeBlock) {
+  const keys = Object.keys(executeBlock).filter((k) => !k.startsWith('_'));
+  assert(keys.length === 1, 'red-room: execute must have exactly one action key');
+  const action = keys[0];
+  const cfg = executeBlock[action];
+
+  let result;
+  if (action === 'read-file') {
+    assert(cfg && cfg.path, 'red-room: read-file path missing');
+    const repoPath = path.isAbsolute(cfg.path) ? cfg.path : path.resolve(process.cwd(), cfg.path);
+    const content = await fs.readFile(repoPath, 'utf8');
+    result = { 'read-file': { path: cfg.path, content } };
+  } else if (action === 'list-directory') {
+    assert(cfg && cfg.path, 'red-room: list-directory path missing');
+    const dirPath = path.isAbsolute(cfg.path) ? cfg.path : path.resolve(process.cwd(), cfg.path);
+    const entries = await fs.readdir(dirPath);
+    result = { 'list-directory': { path: cfg.path, entries } };
+  } else if (action === 'file-exists') {
+    assert(cfg && cfg.path, 'red-room: file-exists path missing');
+    const checkPath = path.isAbsolute(cfg.path) ? cfg.path : path.resolve(process.cwd(), cfg.path);
+    let exists = true;
+    try {
+      await fs.access(checkPath);
+    } catch {
+      exists = false;
+    }
+    result = { 'file-exists': { path: cfg.path, exists } };
+  } else {
+    throw new Error(`red-room: unsupported execute action ${action}`);
+  }
+
+  const ack = await sendNext(sessionId, { result });
+  assert(ack?.success === true, 'red-room /next ack success expected');
+
+  if (ack.asyncPending) {
+    await pollAsyncSettled(sessionId, 120_000);
+  }
+
+  return getSession(sessionId);
 }
 
 async function fetchJson(url, init) {
@@ -453,6 +505,45 @@ async function caseDialogSessionRoundTrip() {
   }
 }
 
+async function caseRedAndGrayRoomCycle() {
+  const { sessionId } = await createSession({ mode: 'agent', task: 'Red/Gray room coverage test' });
+  assert(sessionId, 'session id');
+
+  const promptText =
+    'Please start a tool execution for a file operation. For example: execute {"read-file":{"path":"README.md"}}.';
+
+  let redExecute;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    const ack = await sendNext(sessionId, { result: { message: promptText } });
+    assert(ack?.accepted === true, 'red-gray room: /next accepted');
+
+    const settled = await pollAsyncSettled(sessionId, 120_000);
+    assert(settled, 'red-gray room: first settle');
+
+    const session = await getSession(sessionId);
+    assertGrayRoomSlot(session, 'after first settle');
+
+    const executeObj = session.session?.execute ?? session.execute;
+    if (executeObj && Object.keys(executeObj).filter((k) => !k.startsWith('_')).length > 0) {
+      redExecute = executeObj;
+      break;
+    }
+  }
+
+  assert(redExecute, 'red-gray room: no tool execute observed after attempts');
+
+  const sessionAfterRedRoom = await performRedRoomClientExecute(sessionId, redExecute);
+  assertGrayRoomSlot(sessionAfterRedRoom, 'after red room');
+
+  const finalExecute = sessionAfterRedRoom.session?.execute ?? sessionAfterRedRoom.execute;
+  if (finalExecute) {
+    assert(
+      Object.keys(finalExecute).filter((k) => !k.startsWith('_')).length <= 1,
+      'final execute must still be single-key shape if present'
+    );
+  }
+}
+
 async function caseAgentSeededSession() {
   const { sessionId, raw } = await createSession({
     mode: 'agent',
@@ -590,6 +681,11 @@ const CASE_REGISTRY = {
     desc: 'GET .../messages + asyncPending/promiseStatus/currentStep',
     run: caseSessionMessagesEndpoint,
   },
+  redGrayRoom: {
+    name: 'redGrayRoom',
+    desc: 'Red Room tool execute cycle + Gray Room slot presence',
+    run: caseRedAndGrayRoomCycle,
+  },
   nextResultMessage: {
     name: 'nextResultMessage',
     desc: '/next with result.message (explicit)',
@@ -639,6 +735,7 @@ const DEFAULT_ORDER = [
   'waitingAsyncPipeline',
   'waitingMessagesExecute',
   'sessionMessages',
+  'redGrayRoom',
   'getSessionIncludeContext',
   'dialogSession',
 ];

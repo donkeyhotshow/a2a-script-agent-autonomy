@@ -80,7 +80,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
 
         const schemaName = extractSchemaName(schema);
         const aiHubUrl = process.env.AI_HUB_URL || DEFAULT_AI_HUB;
-        const model = process.env.OLLAMA_MODEL || DEFAULT_MODEL;
+        const model = process.env.LLM_MODEL || process.env.Z_AI_MODEL || process.env.OLLAMA_MODEL || DEFAULT_MODEL;
 
         logger.info('[DialogRequestProcessor] Processing', {promiseId});
 

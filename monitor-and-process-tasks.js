@@ -206,6 +206,7 @@ class TaskMonitor {
     let session = null;
     let nextResult = null;
     let abortDueToServer = false;
+    let lastAsyncResult = null;
 
     try {
       session = await this.createSession(taskDescription);
@@ -247,7 +248,8 @@ class TaskMonitor {
       let attempts = 0;
       
       while (attempts < maxAttempts) {
-        const asyncResult = await this.pollAsync(session.id);
+      const asyncResult = await this.pollAsync(session.id);
+      lastAsyncResult = asyncResult;
         if (!asyncResult) {
           attempts++;
           await new Promise(resolve => setTimeout(resolve, 5000));
@@ -319,8 +321,16 @@ class TaskMonitor {
         await new Promise(resolve => setTimeout(resolve, 5000));
       }
 
-      console.error(`Task ${taskFile.name} timed out after ${maxAttempts * 5} seconds`);
-      failureReason = `Timed out after ${maxAttempts * 5} seconds`;
+      let timeoutStageInfo = null;
+      if (session) {
+        timeoutStageInfo = await this.describeTaskStage(session.id, lastAsyncResult);
+      }
+      const stageSummary = timeoutStageInfo ? ` stage=${timeoutStageInfo.stage}` : '';
+      const detailSummary = timeoutStageInfo ? ` detail=${timeoutStageInfo.detail}` : '';
+      console.error(
+        `Task ${taskFile.name} timed out after ${maxAttempts * 5} seconds${stageSummary}${detailSummary}`
+      );
+      failureReason = `Timed out after ${maxAttempts * 5} seconds${timeoutStageInfo ? ` (${timeoutStageInfo.stage})` : ''}`;
       return false;
     } catch (error) {
       if (error instanceof ServerUnavailableError) {
@@ -434,6 +444,87 @@ class TaskMonitor {
     }
   }
 
+  async describeTaskStage(sessionId, asyncResult = null, sessionData = null) {
+    const stageInfo = {
+      stage: 'unknown',
+      detail: 'n/a',
+      promiseId: null,
+      sessionId: sessionId ?? null
+    };
+    if (!sessionId && !sessionData && !asyncResult) {
+      stageInfo.detail = 'no session or async result information';
+      return stageInfo;
+    }
+
+    try {
+      if (!sessionData && sessionId) {
+        sessionData = await this.getSession(sessionId);
+      }
+    } catch (error) {
+      stageInfo.stage = 'session-fetch-error';
+      stageInfo.detail = `session fetch failed: ${error.message}`;
+      return stageInfo;
+    }
+
+    if (!sessionData) {
+      stageInfo.detail = 'session data unavailable';
+      return stageInfo;
+    }
+
+    const execution = sessionData?.context?.execution ?? sessionData?.execute?.execution ?? {};
+    const stageParts = [];
+    if (execution.action) stageParts.push(`action=${execution.action}`);
+    if (execution.step) stageParts.push(`step=${execution.step}`);
+    const execStatus = execution.status ?? asyncResult?.status ?? sessionData?.status;
+    if (execStatus) stageParts.push(`status=${execStatus}`);
+    if (!stageParts.length) {
+      stageParts.push(asyncResult?.status ? `status=${asyncResult.status}` : 'unknown');
+    }
+
+    const hasRouterForm =
+      Boolean(asyncResult?.execute?.form) ||
+      Boolean(sessionData?.execute?.form) ||
+      Boolean(sessionData?.context?.execution?.form);
+    if (hasRouterForm) {
+      const formTitle =
+        asyncResult?.execute?.form?.title ??
+        sessionData?.execute?.form?.title ??
+        sessionData?.context?.execution?.form?.title;
+      stageParts.push(formTitle ? `awaiting form (${formTitle})` : 'awaiting router form');
+    }
+
+    stageInfo.stage = stageParts.join(' | ');
+    const detailPieces = [];
+    const messageValue =
+      sessionData?.context?.execution?.message ??
+      sessionData?.context?.result?.message ??
+      asyncResult?.result?.message ??
+      asyncResult?.execute?.message ??
+      null;
+    if (messageValue) {
+      const messageString = typeof messageValue === 'string' ? messageValue : JSON.stringify(messageValue);
+      detailPieces.push(`message=${messageString}`);
+    }
+    const errorMessage = asyncResult?.result?.error ?? asyncResult?.error;
+    if (errorMessage) {
+      const errorString = typeof errorMessage === 'string' ? errorMessage : JSON.stringify(errorMessage);
+      detailPieces.push(`error=${errorString}`);
+    }
+    const promiseId =
+      asyncResult?.result?.promiseId ??
+      asyncResult?.execute?.promiseId ??
+      sessionData?.context?.result?.promiseId ??
+      sessionData?.result?.promiseId ??
+      null;
+    if (promiseId) {
+      detailPieces.push(`promiseId=${promiseId}`);
+    }
+
+    stageInfo.detail = detailPieces.filter(Boolean).join(' | ') || 'n/a';
+    stageInfo.promiseId = promiseId || null;
+    return stageInfo;
+  }
+
   async logAgentExecution(sessionId, phase) {
     if (!sessionId) return;
     try {
@@ -535,17 +626,27 @@ class TaskMonitor {
     return actions;
   }
 
-  async createHookDocument(sessionId, taskName, status, error = null) {
+  async createHookDocument(sessionId, taskName, status, error = null, stageInfo = null) {
     const hookId = 'task_monitor_issue';
+    const stage = stageInfo?.stage ?? null;
+    const stageDetail = stageInfo?.detail ?? null;
+    const targetSessionId = stageInfo?.sessionId ?? sessionId ?? this.state.sessionId;
+    const promiseId = stageInfo?.promiseId ?? (
+      targetSessionId ? await this.getCurrentPromiseId(targetSessionId) : null
+    );
     const hookDoc = {
       hookId,
       type: 'task_monitor_issue',
       taskName,
       status,
       error: error || null,
+      stage,
+      stageDetail,
       context: {
         sessionId,
-        promiseId: this.state.sessionId ? await this.getCurrentPromiseId(sessionId) : null,
+        promiseId,
+        stage,
+        stageDetail,
         lastActivity: new Date().toISOString()
       },
       suggestedActions: this.generateSuggestedActions(status, error),
@@ -684,7 +785,7 @@ class TaskMonitor {
         if (isCompleted) {
           await this.handleTaskCompletion(taskName, taskMeta, asyncResult);
         } else if (isTimeout) {
-          await this.handleTaskTimeout(taskName, taskMeta);
+          await this.handleTaskTimeout(taskName, taskMeta, asyncResult);
         }
       } catch (error) {
         console.error(`Error monitoring task ${taskName}:`, error.message);
@@ -709,7 +810,8 @@ class TaskMonitor {
   }
 
   async handleTaskCompletion(taskName, taskMeta, asyncResult) {
-    console.log(`Task ${taskName} completed`);
+    const stageInfo = await this.describeTaskStage(taskMeta.sessionId, asyncResult);
+    console.log(`Task ${taskName} completed (stage=${stageInfo.stage})`);
 
     // Get final session state to check for results
     const sessionData = await this.getSession(taskMeta.sessionId);
@@ -717,11 +819,20 @@ class TaskMonitor {
 
     if (result) {
       console.log(`Task ${taskName} completed with result:`, result);
+
       await this.markTaskAsCompleted(taskName);
       await this.createCompletionReport(taskMeta.sessionId, taskName, result);
     } else {
-      console.warn(`Task ${taskName} completed but no result found`);
-      await this.createHookDocument(taskMeta.sessionId, taskName, 'failed', 'No result in completed session');
+      console.warn(
+        `Task ${taskName} completed but no result found (stage=${stageInfo.stage} detail=${stageInfo.detail})`
+      );
+      await this.createHookDocument(
+        taskMeta.sessionId,
+        taskName,
+        'failed',
+        'No result in completed session',
+        stageInfo
+      );
     }
 
     // Remove from active tasks
@@ -729,10 +840,19 @@ class TaskMonitor {
     this.saveState();
   }
 
-  async handleTaskTimeout(taskName, taskMeta) {
-    console.error(`Task ${taskName} timed out after 5 minutes`);
+  async handleTaskTimeout(taskName, taskMeta, asyncResult) {
+    const stageInfo = await this.describeTaskStage(taskMeta.sessionId, asyncResult);
+    console.error(
+      `Task ${taskName} timed out after 5 minutes (stage=${stageInfo.stage} detail=${stageInfo.detail})`
+    );
 
-    await this.createHookDocument(taskMeta.sessionId, taskName, 'timeout', 'Task timed out after 5 minutes');
+    await this.createHookDocument(
+      taskMeta.sessionId,
+      taskName,
+      'timeout',
+      'Task timed out after 5 minutes',
+      stageInfo
+    );
 
     // Remove from active tasks
     this.activeTasks.delete(taskName);

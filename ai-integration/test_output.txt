@@ -1,0 +1,35 @@
+Promise daemon auto-started
+=== Debugging Z.AI Provider Integration ===
+
+1. Loading providers config...
+   Config loaded. Default provider: z_ai
+
+2. Checking if Z.AI provider is in config...
+   Z.AI provider found in config
+   Type: z_ai
+   Enabled: True
+
+3. Z.AI provider models list:
+   Models: ['glm-4.7-flash']
+
+4. Checking if 'glm-4.7-flash' is in models list...
+Traceback (most recent call last):
+  File "C:\workspace\org-carrier\a2a-script-agent\ai-integration\test_z_ai_debug.py", line 80, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3312.0_x64__qbz5n2kfra8p0\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3312.0_x64__qbz5n2kfra8p0\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3312.0_x64__qbz5n2kfra8p0\Lib\asyncio\base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\workspace\org-carrier\a2a-script-agent\ai-integration\test_z_ai_debug.py", line 44, in main
+    print("   'glm-4.7-flash' is in the models list \u2713")
+    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3312.0_x64__qbz5n2kfra8p0\Lib\encodings\cp1251.py", line 19, in encode
+    return codecs.charmap_encode(input,self.errors,encoding_table)[0]
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+UnicodeEncodeError: 'charmap' codec can't encode character '\u2713' in position 41: character maps to <undefined>

@@ -252,8 +252,8 @@ if HAS_PYDANTIC:
         providers_config: str = 'config/providers.json'
         """Path to providers configuration JSON file."""
         
-        default_provider: str = 'ollama'
-        """Default LLM provider to use."""
+        default_provider: str = 'z_ai'
+        """Default LLM provider to use (Z.AI by default, Ollama stays as optional fallback)."""
         
         enable_fallback: bool = True
         """Enable fallback chain between providers."""

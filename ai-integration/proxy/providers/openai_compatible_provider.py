@@ -115,6 +115,9 @@ class OpenAICompatibleProvider(LLMProvider):
         session = await self._get_session()
         
         try:
+            await self._check_rate_limit()
+            await self._check_request_delay()
+            
             async with session.post(
                 f"{self.base_url}/chat/completions",
                 json=payload
@@ -169,6 +172,9 @@ class OpenAICompatibleProvider(LLMProvider):
         session = await self._get_session()
         
         try:
+            await self._check_rate_limit()
+            await self._check_request_delay()
+            
             async with session.post(
                 f"{self.base_url}/embeddings",
                 json=payload
@@ -240,6 +246,13 @@ class OpenAICompatibleProvider(LLMProvider):
         """Close the aiohttp session"""
         if self.session and not self.session.closed:
             await self.session.close()
+    
+    def get_capabilities(self) -> Dict[str, Any]:
+        """Get OpenAI-compatible provider capabilities"""
+        caps = super().get_capabilities()
+        caps["supports_streaming"] = True
+        caps["api_version"] = "openai-v1"
+        return caps
 
 
 # Convenience classes for specific providers
@@ -272,3 +285,17 @@ class CohereProvider(OpenAICompatibleProvider):
         if not config.url or config.url == "${COHERE_URL}":
             config.url = "https://api.cohere.ai/v1"
         super().__init__(config)
+
+
+class ZAIProvider(OpenAICompatibleProvider):
+    """Z.AI-specific provider"""
+    
+    def __init__(self, config: ProviderConfig):
+        # Set default URL if not provided
+        if not config.url or config.url.startswith("${Z_AI"):
+            config.url = "https://api.z.ai/api/paas/v4/"
+        super().__init__(config)
+        
+        # Z.AI specific headers or configurations can be added here
+        # For example, if Z.AI requires specific headers
+        # self.headers.update({"X-ZAI-Version": "v1"})

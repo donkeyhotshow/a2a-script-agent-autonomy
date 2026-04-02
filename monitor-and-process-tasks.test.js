@@ -211,6 +211,29 @@ describe('monitor-and-process-tasks.js', () => {
     });
   });
 
+  describe('Diagnostics Enhancements', () => {
+    it('should describe task stage data for stuck runs', () => {
+      const source = fs.readFileSync(
+        path.join(testDir, 'monitor-and-process-tasks.js'),
+        'utf8'
+      );
+
+      expect(source).toContain('describeTaskStage(');
+      expect(source).toContain('stageParts');
+      expect(source).toContain('stageInfo');
+    });
+
+    it('should record stage metadata in hook documents', () => {
+      const source = fs.readFileSync(
+        path.join(testDir, 'monitor-and-process-tasks.js'),
+        'utf8'
+      );
+
+      expect(source).toContain('stageDetail');
+      expect(source).toContain('stage=');
+    });
+  });
+
   describe('Code Quality Checks', () => {
     it('should have proper async method definitions', () => {
       const source = fs.readFileSync(

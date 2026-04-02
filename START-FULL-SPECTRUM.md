@@ -1,5 +1,7 @@
 # Master prompt — full-spectrum run (repo + live stack)
 
+**Self-Upgrade process:** This represents the Self-Upgrade mechanism, either through daemon script `monitor-and-process-tasks.js` or manual API dialog with the agent. See [GLOSSARY.md](GLOSSARY.md) for full definition.
+
 **Use this file to start the entire work surface:** indexed tasks under `prompts-to-agent-mode/`, methodology, Client API checks, docs/sims — through **automated daemon monitoring** with event-driven agent interventions.
 
 | You drive… | What to do |

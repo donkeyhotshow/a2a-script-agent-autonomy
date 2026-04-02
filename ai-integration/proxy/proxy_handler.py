@@ -9,6 +9,7 @@ import logging
 import uuid
 import datetime
 import time
+from urllib.parse import urlparse
 from flask import Response
 from typing import Optional, Any
 
@@ -44,6 +45,39 @@ from .caching import get_cache
 import requests
 
 
+def _normalize_host_key(url: str) -> str:
+    if not url:
+        return ''
+    parsed = urlparse(url)
+    host = (parsed.hostname or '').lower()
+    if not host:
+        return ''
+    port = parsed.port
+    if port is None:
+        port = 443 if parsed.scheme == 'https' else 80
+    return f"{host}:{port}"
+
+
+def _hosts_equal(a: str, b: str) -> bool:
+    return bool(a and b and _normalize_host_key(a) == _normalize_host_key(b))
+
+
+def _fetch_tags_response(url: str, headers: dict[str, Any], params: Optional[dict[str, Any]]) -> tuple[Optional[requests.Response], Optional[dict]]:
+    if not url:
+        return None, None
+    try:
+        resp = requests.get(url, params=params or {}, headers=headers, timeout=FORWARD_TIMEOUT)
+    except requests.exceptions.RequestException:
+        return None, None
+    if resp.status_code != 200:
+        return resp, None
+    try:
+        tags = resp.json()
+    except Exception:
+        return resp, None
+    return resp, tags if isinstance(tags, dict) else None
+
+
 def handle_proxy_request(path: str, request) -> Response:
     """Main proxy request handler - coordinates all processing modules"""
     
@@ -57,21 +91,12 @@ def handle_proxy_request(path: str, request) -> Response:
         if not mgr.is_running():
             mgr.start()
     
-    # Target URL for forwarding
-    target_url = f"{OLLAMA_HOST}/{path}"
-    
     try:
-        # Get headers and body
         headers = _prepare_headers(request)
         body, body_json = _get_body(request)
-        
-        # Check for promise request
         promise_requested = _check_promise_requested(request, body_json)
-        
-        # Get forward args (query params)
         forward_args = _get_forward_args(request)
         
-        # Setup logging
         should_log = should_log_base or promise_requested
         if should_log:
             request_id = str(uuid.uuid4())[:8]
@@ -84,6 +109,40 @@ def handle_proxy_request(path: str, request) -> Response:
         
         cfg = get_ai_hub_config()
         path_norm = _normalize_path(path)
+        
+        model = None
+        if isinstance(body_json, dict):
+            model = body_json.get('model')
+        
+        from .providers.router import get_router
+        router = get_router()
+        
+        if not router._initialized:
+            try:
+                import asyncio
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                try:
+                    loop.run_until_complete(router.initialize())
+                finally:
+                    loop.close()
+            except Exception as e:
+                logger.warning(f"Failed to initialize router: {e}, falling back to Ollama")
+        
+        if model and router._initialized:
+            model = router._resolve_model(model)
+            provider_chain = router._get_provider_chain(model)
+            if provider_chain:
+                provider_name, provider = provider_chain[0]
+                target_url = provider.config.url.rstrip('/') + '/' + path
+                logger.info(f"Routed request for model '{model}' to provider '{provider_name}' -> {target_url}")
+            else:
+                fallback_host = OLLAMA_HOST.rstrip('/') or OLLAMA_HOST
+                target_url = f"{fallback_host}/{path}"
+                logger.warning(f"No provider available for model '{model}', falling back to Ollama")
+        else:
+            fallback_host = OLLAMA_HOST.rstrip('/') or OLLAMA_HOST
+            target_url = f"{fallback_host}/{path}"
         
         # Handle virtual models - api/show
         if request.method == 'GET' and path_norm == 'api/show':
@@ -107,64 +166,67 @@ def handle_proxy_request(path: str, request) -> Response:
         # Handle virtual models - api/tags
         if request.method == 'GET' and path_norm == 'api/tags':
             virtual_models = cfg.get('virtual_models') or {}
-            if not isinstance(virtual_models, dict) or not virtual_models:
-                try:
-                    resp_tags = requests.get(target_url, params=forward_args, headers=headers, timeout=FORWARD_TIMEOUT)
-                    if resp_tags.status_code == 200:
-                        return Response(resp_tags.content, status=200, mimetype='application/json')
-                except Exception:
-                    out = _json_bytes({"models": []})
-                    return Response(out, status=200, mimetype='application/json')
-            else:
-                try:
-                    resp_tags = requests.get(target_url, params=forward_args, headers=headers, timeout=FORWARD_TIMEOUT)
-                    if resp_tags.status_code == 200:
-                        try:
-                            tags_obj = resp_tags.json()
-                        except Exception:
-                            tags_obj = None
-                        if isinstance(tags_obj, dict):
-                            models = tags_obj.get('models')
-                            if not isinstance(models, list):
-                                models = []
-                            existing = set()
-                            for m in models:
-                                if isinstance(m, dict) and isinstance(m.get('name'), str):
-                                    existing.add(_normalize_model_key(m['name']))
-                            for vm in virtual_models.values():
-                                if not isinstance(vm, dict):
-                                    continue
-                                entry = _virtual_tags_entry(vm)
-                                if _normalize_model_key(str(entry.get('name', ''))) in existing:
-                                    continue
-                                models.append(entry)
-                            tags_obj['models'] = models
-                            out = _json_bytes(tags_obj)
-                            response = Response(out, status=200, mimetype='application/json')
-                            if should_log:
-                                save_response(folder_path, {
-                                    "status_code": 200,
-                                    "headers": {"Content-Type": "application/json"},
-                                    "content": out[:10000].decode('utf-8', errors='replace'),
-                                    "simulated": True,
-                                    "virtual_models_injected": len(virtual_models),
-                                })
-                            return response
-                except requests.exceptions.ConnectionError:
-                    models = [_virtual_tags_entry(vm) for vm in virtual_models.values() if isinstance(vm, dict)]
-                    out = _json_bytes({"models": models})
-                    response = Response(out, status=200, mimetype='application/json')
-                    if should_log:
-                        save_response(folder_path, {
-                            "status_code": 200,
-                            "headers": {"Content-Type": "application/json"},
-                            "content": out[:10000].decode('utf-8', errors='replace'),
-                            "simulated": True,
-                            "virtual_models_only": len(models),
-                        })
-                    return response
-            out = _json_bytes({"models": []})
-            return Response(out, status=200, mimetype='application/json')
+            resp, tags_obj = _fetch_tags_response(target_url, headers, forward_args or {})
+            if resp and resp.status_code == 200 and tags_obj is None:
+                return Response(resp.content, status=200, mimetype='application/json')
+            if tags_obj is None:
+                tags_obj = {"models": []}
+
+            models: list[dict[str, Any]] = []
+            existing: set[str] = set()
+            raw_models = tags_obj.get('models')
+            if isinstance(raw_models, list):
+                for entry in raw_models:
+                    if not isinstance(entry, dict):
+                        continue
+                    models.append(entry)
+                    name_key = _normalize_model_key(entry.get('name') or entry.get('model') or '')
+                    if name_key:
+                        existing.add(name_key)
+
+            ollama_models_injected = 0
+            if OLLAMA_HOST and not _hosts_equal(target_url, OLLAMA_HOST):
+                ollama_base = (OLLAMA_HOST.rstrip('/') or OLLAMA_HOST)
+                ollama_url = f"{ollama_base}/api/tags"
+                _, ollama_tags = _fetch_tags_response(ollama_url, headers, forward_args or {})
+                if isinstance(ollama_tags, dict):
+                    for entry in ollama_tags.get('models') or []:
+                        if not isinstance(entry, dict):
+                            continue
+                        name_key = _normalize_model_key(entry.get('name') or entry.get('model') or '')
+                        if not name_key or name_key in existing:
+                            continue
+                        existing.add(name_key)
+                        models.append(entry)
+                        ollama_models_injected += 1
+
+            virtual_models_injected = 0
+            if isinstance(virtual_models, dict):
+                for vm in virtual_models.values():
+                    if not isinstance(vm, dict):
+                        continue
+                    entry = _virtual_tags_entry(vm)
+                    entry_key = _normalize_model_key(str(entry.get('name', '')))
+                    if entry_key and entry_key in existing:
+                        continue
+                    models.append(entry)
+                    if entry_key:
+                        existing.add(entry_key)
+                    virtual_models_injected += 1
+
+            tags_obj['models'] = models
+            out = _json_bytes(tags_obj)
+            response = Response(out, status=200, mimetype='application/json')
+            if should_log:
+                save_response(folder_path, {
+                    "status_code": 200,
+                    "headers": {"Content-Type": "application/json"},
+                    "content": out[:10000].decode('utf-8', errors='replace'),
+                    "simulated": True,
+                    "virtual_models_injected": virtual_models_injected,
+                    "ollama_models_injected": ollama_models_injected,
+                })
+            return response
         
         # Process model and rules
         requested_model: Optional[str] = None

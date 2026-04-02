@@ -92,6 +92,10 @@ class OllamaProvider(LLMProvider):
         session = await self._get_session()
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
         
+        # Check rate limit and request delay
+        await self._check_rate_limit()
+        await self._check_request_delay()
+        
         last_exception = None
         
         for attempt in range(self.MAX_RETRIES):
@@ -372,3 +376,11 @@ class OllamaProvider(LLMProvider):
         """Close the aiohttp session"""
         if self.session and not self.session.closed:
             await self.session.close()
+    
+    def get_capabilities(self) -> Dict[str, Any]:
+        """Get Ollama provider capabilities"""
+        caps = super().get_capabilities()
+        caps["supports_streaming"] = True  # Ollama supports streaming
+        caps["local"] = True
+        caps["api_version"] = "ollama"
+        return caps

@@ -65,7 +65,7 @@ REM Step 4: Start Ollama
 REM ==========================================
 echo.
 echo [Step 4/8] Starting Ollama on port %OLLAMA_PORT%...
-call scripts\start-ollama.bat 2>&1
+call scripts\start-ollama.bat
 :ollama_done
 
 REM ==========================================
@@ -73,7 +73,7 @@ REM Step 5: Start ai-integration
 REM ==========================================
 echo.
 echo [Step 5/8] Starting ai-integration on port %PROXY_PORT%...
-call scripts\start-ai-integration.bat 2>&1
+call scripts\start-ai-integration.bat
 :ai_done
 
 REM ==========================================
@@ -81,7 +81,7 @@ REM Step 6: Start a2a-server
 REM ==========================================
 echo.
 echo [Step 6/8] Starting a2a-server on port %SERVER_PORT%...
-call scripts\start-a2a-server.bat 2>&1
+call scripts\start-a2a-server.bat
 :server_done
 
 REM ==========================================
@@ -89,7 +89,7 @@ REM Step 7: Start client-api
 REM ==========================================
 echo.
 echo [Step 7/8] Starting client-api on port %CLIENT_API_PORT%...
-call scripts\start-client-api.bat 2>&1
+call scripts\start-client-api.bat
 :client_api_done
 
 REM ==========================================
@@ -97,7 +97,7 @@ REM Step 8: Start web-ui
 REM ==========================================
 echo.
 echo [Step 8/8] Starting web-ui on port %WEB_PORT%...
-call scripts\start-web-ui.bat 2>&1
+call scripts\start-web-ui.bat
 :web_ui_done
 
 REM ==========================================

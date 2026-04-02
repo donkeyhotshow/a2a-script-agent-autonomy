@@ -12,4 +12,4 @@ Tighten gray-room specification: triggers, client-visible slots, failure modes, 
 
 ## Completion
 
-- [ ] Done
+- [x] Done

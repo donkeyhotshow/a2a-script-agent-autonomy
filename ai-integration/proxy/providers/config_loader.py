@@ -6,17 +6,44 @@ Loads and manages provider configurations from JSON file.
 
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from .base import ProviderConfig
 
 
+def _resolve_env_var(value: str) -> str:
+    """Resolve environment variable references like ${VAR:-default}"""
+    def replace_var(match):
+        var_expr = match.group(1)
+        if ':-' in var_expr:
+            var_name, default_value = var_expr.split(':-', 1)
+            return os.environ.get(var_name.strip(), default_value.strip())
+        return os.environ.get(var_expr, match.group(0))
+    return re.sub(r'\$\{([^}]+)\}', replace_var, value)
+
+
+def _resolve_env_vars_in_dict(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Recursively resolve environment variables in a dictionary"""
+    result = {}
+    for key, value in data.items():
+        if isinstance(value, str):
+            result[key] = _resolve_env_var(value)
+        elif isinstance(value, dict):
+            result[key] = _resolve_env_vars_in_dict(value)
+        elif isinstance(value, list):
+            result[key] = [_resolve_env_var(item) if isinstance(item, str) else item for item in value]
+        else:
+            result[key] = value
+    return result
+
+
 @dataclass
 class ProvidersConfig:
     """Complete providers configuration"""
     providers: Dict[str, ProviderConfig] = field(default_factory=dict)
-    default_provider: str = "ollama"
+    default_provider: str = "z_ai"
     fallback_chain: List[str] = field(default_factory=list)
     enable_fallback: bool = True
     provider_timeout: int = 0
@@ -81,6 +108,9 @@ def _parse_config(data: Dict[str, Any]) -> ProvidersConfig:
     """Parse configuration from JSON data"""
     config = ProvidersConfig()
     
+    # Resolve environment variables in entire config
+    data = _resolve_env_vars_in_dict(data)
+    
     # Parse providers
     providers_data = data.get('providers', {})
     for name, provider_data in providers_data.items():
@@ -97,6 +127,7 @@ def _parse_config(data: Dict[str, Any]) -> ProvidersConfig:
             max_retries=provider_data.get('max_retries', 3),
             retry_delay=provider_data.get('retry_delay', 1.0),
             rate_limit_rpm=provider_data.get('rate_limit_rpm'),
+            request_delay_seconds=provider_data.get('request_delay_seconds'),
         )
     
     # Parse other settings
@@ -121,6 +152,20 @@ def _default_config() -> ProvidersConfig:
         priority=1,
         models=['qwen3:8b', 'mistral', 'codellama'],
         timeout=0,
+    )
+
+    # Z.AI (default cloud provider)
+    config.providers['z_ai'] = ProviderConfig(
+        name='z_ai',
+        type='z_ai',
+        url=os.environ.get('Z_AI_BASE_URL', 'https://api.z.ai/api/paas/v4/'),
+        api_key=os.environ.get('Z_AI_API_KEY'),
+        enabled=True,
+        priority=0,
+        models=[os.environ.get('Z_AI_MODEL', 'glm-4.7-flash')],
+        timeout=0,
+        max_retries=2,
+        request_delay_seconds=2.0,
     )
     
     # OpenRouter
@@ -194,7 +239,9 @@ def _default_config() -> ProvidersConfig:
     )
     
     # Default fallback chain
-    config.fallback_chain = ['ollama', 'groq', 'openrouter']
+    config.fallback_chain = ['z_ai', 'ollama', 'groq', 'openrouter']
+
+    config.default_provider = 'z_ai'
     
     return config
 
