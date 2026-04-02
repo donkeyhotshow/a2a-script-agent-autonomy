@@ -15,8 +15,10 @@ class TaskMonitor {
     this.projectId = 'p_1771576028988'; // From projects endpoint
     this.stateFile = path.join(process.cwd(), 'task-monitor-state.json');
     this.tasksDir = path.join(process.cwd(), 'prompts-to-agent-mode');
+    this.hooksDir = path.join(process.cwd(), 'hooks');
     this.serverBaseUrl = 'http://localhost:3000/api/v1';
     this.hardbitState = { server: false, llm: false, client: true };
+    this.activeTasks = new Map(); // sessionId -> task metadata
     this.loadState();
   }
 
@@ -25,32 +27,51 @@ class TaskMonitor {
       if (fs.existsSync(this.stateFile)) {
         const data = fs.readFileSync(this.stateFile, 'utf8');
         this.state = JSON.parse(data);
+
+        // Restore active tasks if in daemon mode
+        if (this.state.activeTasks) {
+          this.activeTasks = new Map(Object.entries(this.state.activeTasks));
+        }
+
         console.log(`Loaded state: ${JSON.stringify(this.state)}`);
       } else {
-        this.state = {
-          lastChecked: null,
-          processedTasks: [],
-          currentTask: null,
-          sessionId: null,
-          status: 'idle'
-        };
+        this.state = this.buildInitialState();
         this.saveState();
       }
     } catch (error) {
       console.error('Error loading state:', error);
-      this.state = {
-        lastChecked: null,
-        processedTasks: [],
-        currentTask: null,
-        sessionId: null,
-        status: 'error'
-      };
+      this.state = this.buildInitialState();
+      this.state.status = 'error';
+      this.activeTasks.clear();
     }
+  }
+
+  buildInitialState() {
+    return {
+      lastChecked: null,
+      processedTasks: [],
+      currentTask: null,
+      sessionId: null,
+      status: 'idle',
+      activeTasks: {}
+    };
+  }
+
+  resetStateForFreshRun() {
+    console.log('Clearing previous monitor state for a fresh run...');
+    this.activeTasks.clear();
+    // Keep processedTasks to avoid reprocessing completed/failed tasks
+    const processedTasks = this.state.processedTasks || [];
+    this.state = this.buildInitialState();
+    this.state.processedTasks = processedTasks;
+    this.saveState();
   }
 
   saveState() {
     try {
       this.state.lastChecked = new Date().toISOString();
+      // Convert Map to object for JSON serialization
+      this.state.activeTasks = Object.fromEntries(this.activeTasks);
       fs.writeFileSync(this.stateFile, JSON.stringify(this.state, null, 2));
     } catch (error) {
       console.error('Error saving state:', error);
@@ -133,10 +154,22 @@ class TaskMonitor {
 
   async getSession(sessionId) {
     try {
+      if (!sessionId) {
+        console.warn('getSession called with empty sessionId');
+        return null;
+      }
       const response = await axios.get(`${this.baseUrl}/sessions/${sessionId}`);
+      if (!response.data) {
+        console.warn(`Session ${sessionId} returned no data`);
+        return null;
+      }
       return response.data;
     } catch (error) {
-      console.error('Error getting session:', error.message);
+      if (error.response?.status === 404) {
+        console.warn(`Session ${sessionId} not found`);
+      } else {
+        console.error('Error getting session:', error.message);
+      }
       return null;
     }
   }
@@ -189,11 +222,12 @@ class TaskMonitor {
       this.logHardBit({ phase: 'session-start', detail: 'session created with task' });
       await this.logAgentExecution(session.id, 'after-session-create');
 
-      // Session was created with task in context - send the task again to move state forward
-      // (server expects result/message on /next after session creation with task)
+      // Session was created with task in context
+      // Server may need explicit routing input; try with task field first
       nextResult = await this.sendNext(session.id, { task: taskDescription });
-      if (!nextResult) {
-        // Try alternative with result.message
+      if (!nextResult || nextResult.error) {
+        // Fallback: send as message in result payload
+        console.log('Initial task send failed, retrying with result.message');
         nextResult = await this.sendNext(session.id, { result: { message: taskDescription } });
       }
       if (!nextResult) {
@@ -232,8 +266,9 @@ class TaskMonitor {
           continue;
         }
 
-        // If we have a promiseId but no completed flag yet, we might still be processing
+        // If we have an active promise but task not yet completed, continue polling
         if (hasPromiseId && !isCompleted) {
+          console.log(`Waiting on promise ${hasPromiseId} to complete...`);
           attempts++;
           await new Promise(resolve => setTimeout(resolve, 5000));
           continue;
@@ -242,7 +277,12 @@ class TaskMonitor {
         // If completed, get the session state to check for any form/choices
         if (isCompleted) {
           const sessionData = await this.getSession(session.id);
-          
+          const validation = this.validateSessionResponse(sessionData);
+          if (!validation.valid) {
+            console.warn(`Session response validation failed: ${validation.error}`);
+            // Continue processing, but log
+          }
+
           // Check if there's a form with choices that needs user input
           const form = sessionData?.context?.execution?.form || sessionData?.execute?.form;
           if (form && form.choices && form.choices.length > 0) {
@@ -351,8 +391,16 @@ class TaskMonitor {
       }
     }
     
-    // Fallback to first line
-    return lines[0].trim();
+    // Fallback: find first non-empty, non-header line with meaningful content
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed.length > 5 && !trimmed.startsWith('#') && !trimmed.startsWith('```')) {
+        return trimmed;
+      }
+    }
+    
+    // Last resort: use first line if it exists
+    return lines.length > 0 ? lines[0].trim() : 'Untitled task';
   }
 
   async describeAsyncResult(asyncResult, isAsyncPending) {
@@ -404,8 +452,11 @@ class TaskMonitor {
   }
 
   logHardBit({ phase, serverBusy = false, llmBusy = false, detail = '' }) {
-    this.hardbitState.server = serverBusy;
-    this.hardbitState.llm = llmBusy;
+    // Only update state if explicitly set (avoid overwriting with false)
+    if (serverBusy !== false || llmBusy !== false) {
+      this.hardbitState.server = serverBusy;
+      this.hardbitState.llm = llmBusy;
+    }
     this.hardbitState.client = Boolean(this.state.sessionId);
     const bits = [
       this.hardbitState.server ? 'S' : '-',
@@ -439,7 +490,7 @@ class TaskMonitor {
     const taskFilePath = path.join(this.tasksDir, taskName);
     try {
       let content = fs.readFileSync(taskFilePath, 'utf8');
-      
+
       // Add completion marker if not already present
       if (!content.includes('## Completion')) {
         content += '\n\n## Completion\n\n[X] Completed\n';
@@ -456,42 +507,301 @@ class TaskMonitor {
     }
   }
 
+  generateSuggestedActions(status, error = null) {
+    const actions = [];
+    switch (status) {
+      case 'timeout':
+        actions.push('Check A2A server request processor');
+        actions.push('Verify Ollama model availability');
+        actions.push('Review session logs for stuck promises');
+        break;
+      case 'failed':
+        if (error && error.includes('server')) {
+          actions.push('Restart A2A server components');
+          actions.push('Check server logs for errors');
+        } else {
+          actions.push('Review task description for clarity');
+          actions.push('Check session context and execution state');
+        }
+        break;
+      case 'completed':
+        actions.push('Verify task completion in target system');
+        actions.push('Review generated code/output for correctness');
+        break;
+      default:
+        actions.push('Check A2A server health');
+        actions.push('Review session and task logs');
+    }
+    return actions;
+  }
+
+  async createHookDocument(sessionId, taskName, status, error = null) {
+    const hookId = 'task_monitor_issue';
+    const hookDoc = {
+      hookId,
+      type: 'task_monitor_issue',
+      taskName,
+      status,
+      error: error || null,
+      context: {
+        sessionId,
+        promiseId: this.state.sessionId ? await this.getCurrentPromiseId(sessionId) : null,
+        lastActivity: new Date().toISOString()
+      },
+      suggestedActions: this.generateSuggestedActions(status, error),
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      fs.mkdirSync(this.hooksDir, { recursive: true });
+      const hookPath = path.join(this.hooksDir, `${hookId}.json`);
+      fs.writeFileSync(hookPath, JSON.stringify(hookDoc, null, 2));
+      console.log(`Created/overwritten hook document: ${hookPath}`);
+      return hookDoc;
+    } catch (error) {
+      console.error(`Failed to create hook document: ${error.message}`);
+      return null;
+    }
+  }
+
+  async createCompletionReport(sessionId, taskName, result) {
+    const reportId = 'task_completion_report';
+    const reportDoc = {
+      reportId,
+      type: 'task_completion_report',
+      taskName,
+      status: 'completed',
+      result: result || null,
+      context: {
+        sessionId,
+        completedAt: new Date().toISOString()
+      },
+      createdAt: new Date().toISOString()
+    };
+
+    try {
+      fs.mkdirSync(this.hooksDir, { recursive: true });
+      const reportPath = path.join(this.hooksDir, `${reportId}.json`);
+      fs.writeFileSync(reportPath, JSON.stringify(reportDoc, null, 2));
+      console.log(`Created completion report: ${reportPath}`);
+      return reportDoc;
+    } catch (error) {
+      console.error(`Failed to create completion report: ${error.message}`);
+      return null;
+    }
+  }
+
+  async getCurrentPromiseId(sessionId) {
+    try {
+      const sessionData = await this.getSession(sessionId);
+      return sessionData?.context?.result?.promiseId ||
+             sessionData?.execute?.promiseId ||
+             sessionData?.result?.promiseId || null;
+    } catch (error) {
+      console.error(`Error getting promise ID for session ${sessionId}:`, error.message);
+      return null;
+    }
+  }
+
+  async processNewTasks() {
+    const taskFiles = await this.getTaskFiles();
+    if (taskFiles.length === 0) {
+      return;
+    }
+
+    // Only start new tasks if no active tasks are running
+    if (this.activeTasks.size > 0) {
+      return;
+    }
+
+    // Start only the first available task to avoid flooding
+    for (const taskFile of taskFiles) {
+      // Skip if already active or completed
+      if (this.activeTasks.has(taskFile.name) ||
+          taskFile.content.includes('[X] Completed') ||
+          taskFile.content.includes('## Completion') && taskFile.content.includes('Completed')) {
+        continue;
+      }
+
+
+
+      try {
+        // Start processing this task
+        const taskDescription = this.extractTaskDescription(taskFile.content);
+        if (!taskDescription) {
+          console.warn(`Could not extract task description from ${taskFile.name}`);
+          continue;
+        }
+
+        const session = await this.createSession(taskDescription);
+        if (!session) {
+          console.error(`Failed to create session for task ${taskFile.name}`);
+          await this.createHookDocument(null, taskFile.name, 'failed', 'Session creation failed');
+          continue;
+        }
+
+        // Add to active tasks
+        this.activeTasks.set(taskFile.name, {
+          sessionId: session.id,
+          taskName: taskFile.name,
+          startedAt: new Date().toISOString(),
+          lastPolled: new Date().toISOString(),
+          status: 'processing'
+        });
+
+        this.state.currentTask = taskFile.name;
+        this.state.sessionId = session.id;
+        this.state.status = 'processing';
+        this.saveState();
+
+        console.log(`Started monitoring task: ${taskFile.name} (session: ${session.id})`);
+
+        // Stop after starting one task to avoid flooding
+        return;
+
+      } catch (error) {
+        console.error(`Error starting task ${taskFile.name}:`, error.message);
+        await this.createHookDocument(null, taskFile.name, 'failed', error.message);
+      }
+    }
+  }
+
+  async monitorActiveTasks() {
+    const activeSessions = Array.from(this.activeTasks.keys());
+
+    for (const taskName of activeSessions) {
+      try {
+        const taskMeta = this.activeTasks.get(taskName);
+        const sessionId = taskMeta.sessionId;
+
+        const asyncResult = await this.pollAsync(sessionId);
+        if (!asyncResult) continue;
+
+        taskMeta.lastPolled = new Date().toISOString();
+        const isCompleted = this.checkTaskCompletion(asyncResult);
+        const isTimeout = this.isTaskTimeout(taskMeta);
+
+        if (isCompleted) {
+          await this.handleTaskCompletion(taskName, taskMeta, asyncResult);
+        } else if (isTimeout) {
+          await this.handleTaskTimeout(taskName, taskMeta);
+        }
+      } catch (error) {
+        console.error(`Error monitoring task ${taskName}:`, error.message);
+      }
+    }
+  }
+
+  checkTaskCompletion(asyncResult) {
+    const isAsyncPending = asyncResult.asyncPending === true || asyncResult.status === 'processing';
+    const isCompleted = asyncResult.completed === true || asyncResult.status === 'completed';
+    const hasPromiseId = asyncResult.result?.promiseId || asyncResult.execute?.promiseId;
+
+    // Task is completed if not pending and not waiting on promise
+    return !isAsyncPending && (!hasPromiseId || isCompleted);
+  }
+
+  isTaskTimeout(taskMeta) {
+    const now = new Date();
+    const startedAt = new Date(taskMeta.startedAt);
+    const elapsedMinutes = (now - startedAt) / (1000 * 60);
+    return elapsedMinutes > 5; // 5 minute timeout
+  }
+
+  async handleTaskCompletion(taskName, taskMeta, asyncResult) {
+    console.log(`Task ${taskName} completed`);
+
+    // Get final session state to check for results
+    const sessionData = await this.getSession(taskMeta.sessionId);
+    const result = sessionData?.context?.result || sessionData?.result;
+
+    if (result) {
+      console.log(`Task ${taskName} completed with result:`, result);
+      await this.markTaskAsCompleted(taskName);
+      await this.createCompletionReport(taskMeta.sessionId, taskName, result);
+    } else {
+      console.warn(`Task ${taskName} completed but no result found`);
+      await this.createHookDocument(taskMeta.sessionId, taskName, 'failed', 'No result in completed session');
+    }
+
+    // Remove from active tasks
+    this.activeTasks.delete(taskName);
+    this.saveState();
+  }
+
+  async handleTaskTimeout(taskName, taskMeta) {
+    console.error(`Task ${taskName} timed out after 5 minutes`);
+
+    await this.createHookDocument(taskMeta.sessionId, taskName, 'timeout', 'Task timed out after 5 minutes');
+
+    // Remove from active tasks
+    this.activeTasks.delete(taskName);
+    this.saveState();
+  }
+
+  async cleanupCompletedTasks() {
+    // Clean up any stale tasks (optional - activeTasks should be managed properly)
+    const now = new Date();
+    for (const [taskName, taskMeta] of this.activeTasks.entries()) {
+      const lastPolled = new Date(taskMeta.lastPolled);
+      const minutesSincePoll = (now - lastPolled) / (1000 * 60);
+
+      // Remove tasks that haven't been polled in 10 minutes (indicates an error)
+      if (minutesSincePoll > 10) {
+        console.warn(`Removing stale task ${taskName} from active monitoring`);
+        this.activeTasks.delete(taskName);
+      }
+    }
+  }
+
   async run() {
-    console.log('Starting task monitor...');
-    
+    console.log('Starting task monitor in sequential mode...');
+
+    this.resetStateForFreshRun();
+
+    // Run initial health check
+    const initialHealth = await this.healthCheck();
+    if (!initialHealth.allOk) {
+      console.error('Initial health check failed:', initialHealth.details);
+      this.state.status = 'health-check-failed';
+      this.saveState();
+      return;
+    }
+    console.log('Initial health check passed');
+
     // Verify we can connect to the system
     const projects = await this.getProjects();
     if (projects.length === 0) {
       console.error('Could not connect to a2a system. Make sure it\'s running.');
       return;
     }
-    
+
     console.log(`Connected to projects: ${projects.map(p => p.name).join(', ')}`);
-    
+
     // Get task files
     const taskFiles = await this.getTaskFiles();
     if (taskFiles.length === 0) {
       console.error('No task files found in prompts-to-agent-mode directory');
       return;
     }
-    
+
     console.log(`Found ${taskFiles.length} task files`);
     let successCount = 0;
     let failureCount = 0;
     let skipCount = 0;
-    
+
     // Process each task that hasn't been completed
     let encounteredServerUnavailable = false;
     for (const taskFile of taskFiles) {
       // Check if task is already marked as completed
-      if (taskFile.content.includes('[X] Completed') || 
-          taskFile.content.includes('## Completion') && 
+      if (taskFile.content.includes('[X] Completed') ||
+          taskFile.content.includes('## Completion') &&
           taskFile.content.includes('Completed')) {
         console.log(`Skipping already completed task: ${taskFile.name}`);
         skipCount++;
         continue;
       }
-      
+
       // Process the task
       let success = false;
       try {
@@ -514,11 +824,29 @@ class TaskMonitor {
         failureCount++;
         // Continue with other tasks even if one fails
       }
-      
+
       // Save state between tasks
       this.saveState();
     }
-    
+
+    // Run final health check
+    const finalHealth = await this.healthCheck();
+    if (!finalHealth.allOk) {
+      console.error('Final health check failed:', finalHealth.details);
+      this.state.status = 'final-health-check-failed';
+    } else {
+      console.log('Final health check passed');
+    }
+
+    // Validate final report state
+    const reportValidation = this.validateReportState();
+    if (!reportValidation.hasData) {
+      console.warn('Report file has no data after processing');
+      this.state.status = 'no-report-data';
+    } else {
+      console.log('Report file validation passed');
+    }
+
     console.log(`Task processing complete (${successCount} succeeded, ${failureCount} failed, ${skipCount} skipped).`);
     if (encounteredServerUnavailable) {
       this.state.status = 'server-unavailable';
@@ -530,6 +858,171 @@ class TaskMonitor {
     this.state.currentTask = null;
     this.state.sessionId = null;
     this.saveState();
+  }
+
+  async runDaemon() {
+    console.log('Starting daemon monitoring mode...');
+
+    this.resetStateForFreshRun();
+
+    // Run initial health check
+    const initialHealth = await this.healthCheck();
+    if (!initialHealth.allOk) {
+      console.error('Initial health check failed:', initialHealth.details);
+      this.state.status = 'health-check-failed';
+      this.saveState();
+      return;
+    }
+    console.log('Initial health check passed');
+
+    // Verify we can connect to the system
+    const projects = await this.getProjects();
+    if (projects.length === 0) {
+      console.error('Could not connect to a2a system. Make sure it\'s running.');
+      return;
+    }
+
+    console.log(`Connected to projects: ${projects.map(p => p.name).join(', ')}`);
+    console.log('Daemon monitor is running. Press Ctrl+C to stop.\n');
+
+    // Setup graceful shutdown
+    const shutdownHandler = async () => {
+      console.log('\n\nShutting down daemon monitor gracefully...');
+      await this.gracefulShutdown();
+      process.exit(0);
+    };
+    process.on('SIGINT', shutdownHandler);
+    process.on('SIGTERM', shutdownHandler);
+
+    let cycleCount = 0;
+    // Start monitoring loop
+    while (true) {
+      cycleCount++;
+      if (cycleCount % 30 === 0) {
+        // Log status every 30 seconds (30 cycles of 1 second each)
+        const activeCount = this.activeTasks.size;
+        const completedCount = this.state.processedTasks.filter(t => t.status === 'completed').length;
+        const failedCount = this.state.processedTasks.filter(t => t.status === 'failed').length;
+        console.log(`\n[daemon status] Active: ${activeCount} | Completed: ${completedCount} | Failed: ${failedCount}`);
+      }
+
+      await this.processNewTasks();
+      await this.monitorActiveTasks();
+      await this.cleanupCompletedTasks();
+
+      // Brief pause before next cycle
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
+
+  async gracefulShutdown() {
+    console.log('Saving state and waiting for active tasks...');
+    const maxWaitTime = 30000; // 30 seconds
+    const startTime = Date.now();
+    let lastCheck = 0;
+
+    while (this.activeTasks.size > 0 && Date.now() - startTime < maxWaitTime) {
+      const elapsed = Date.now() - startTime;
+      if (elapsed - lastCheck > 5000) {
+        // Log every 5 seconds
+        console.log(`  Waiting... ${this.activeTasks.size} tasks still active (${Math.floor(elapsed / 1000)}s elapsed)`);
+        lastCheck = elapsed;
+      }
+      
+      await this.monitorActiveTasks();
+      await this.cleanupCompletedTasks();
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    if (this.activeTasks.size > 0) {
+      console.warn(`\n  Force shutdown with ${this.activeTasks.size} tasks still active`);
+    }
+
+    // Final state save
+    this.state.status = 'daemon-shutdown';
+    this.state.lastChecked = new Date().toISOString();
+    this.saveState();
+
+    // Print final summary
+    const completedCount = this.state.processedTasks.filter(t => t.status === 'completed').length;
+    const failedCount = this.state.processedTasks.filter(t => t.status === 'failed').length;
+    const totalCount = this.state.processedTasks.length;
+    console.log('\nDaemon monitor shutdown complete');
+    console.log(`Final stats: ${totalCount} tasks processed (${completedCount} completed, ${failedCount} failed)`);
+  }
+
+  async healthCheck() {
+    const results = {
+      clientApi: false,
+      a2aServer: false,
+      ollama: false,
+      aiHub: false,
+      allOk: false,
+      details: {}
+    };
+
+    try {
+      // Check Client API
+      const clientRes = await axios.get(`${this.baseUrl}/projects`, { timeout: 5000 });
+      results.clientApi = clientRes.status === 200 && Array.isArray(clientRes.data.projects);
+      results.details.clientApi = results.clientApi ? 'OK' : 'Failed';
+    } catch (error) {
+      results.details.clientApi = `Error: ${error.message}`;
+    }
+
+    try {
+      // Check A2A Server
+      const serverRes = await axios.get(`${this.serverBaseUrl}/health`, { timeout: 5000 });
+      results.a2aServer = serverRes.status === 200;
+      results.details.a2aServer = results.a2aServer ? 'OK' : 'Failed';
+    } catch (error) {
+      results.details.a2aServer = `Error: ${error.message}`;
+    }
+
+    try {
+      // Check Ollama
+      const ollamaRes = await axios.get('http://localhost:11435/api/tags', { timeout: 5000 });
+      results.ollama = ollamaRes.status === 200 && Array.isArray(ollamaRes.data.models);
+      results.details.ollama = results.ollama ? 'OK' : 'Failed';
+    } catch (error) {
+      results.details.ollama = `Error: ${error.message}`;
+    }
+
+    try {
+      // Check AI Hub
+      const aiHubRes = await axios.get('http://localhost:11434/health', { timeout: 5000 });
+      results.aiHub = aiHubRes.status === 200;
+      results.details.aiHub = results.aiHub ? 'OK' : 'Failed';
+    } catch (error) {
+      results.details.aiHub = `Error: ${error.message}`;
+    }
+
+    results.allOk = results.clientApi && results.a2aServer && results.ollama && results.aiHub;
+
+    return results;
+  }
+
+  validateActionKeyShape(obj, type) {
+    if (!obj || typeof obj !== 'object') return false;
+    const keys = Object.keys(obj);
+    return keys.length === 1 && (type === 'execute' ? keys[0] !== 'result' : keys[0] !== 'execute');
+  }
+
+  validateSessionResponse(response) {
+    if (!response) return { valid: false, error: 'No response' };
+    if (response.execute && !this.validateActionKeyShape(response.execute, 'execute')) {
+      return { valid: false, error: 'Invalid execute action-key shape' };
+    }
+    if (response.result && !this.validateActionKeyShape(response.result, 'result')) {
+      return { valid: false, error: 'Invalid result action-key shape' };
+    }
+    return { valid: true };
+  }
+
+  validateReportState() {
+    const hasProcessedTasks = this.state.processedTasks && this.state.processedTasks.length > 0;
+    const hasRecentActivity = this.state.lastChecked;
+    return { hasData: hasProcessedTasks, recent: !!hasRecentActivity };
   }
 
   isServerUnavailableError(error) {
@@ -546,5 +1039,13 @@ class TaskMonitor {
 // Run the monitor
 (async () => {
   const monitor = new TaskMonitor();
-  await monitor.run();
+
+  // Check for sequential/once flag
+  const isSequential = process.argv.includes('--sequential') || process.argv.includes('--once');
+
+  if (isSequential) {
+    await monitor.run();
+  } else {
+    await monitor.runDaemon();
+  }
 })().catch(console.error);

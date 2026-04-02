@@ -69,10 +69,20 @@
       "models": ["command-r", "command-r-plus"],
       "timeout": 0,
       "max_retries": 2
+    },
+    "z_ai": {
+      "type": "openai",
+      "url": "${Z_AI_BASE_URL:-https://api.z.ai/api/paas/v4/}",
+      "api_key": "${Z_AI_API_KEY}",
+      "enabled": true,
+      "priority": 6,
+      "models": ["${Z_AI_MODEL:-glm-4.7-flash}"],
+      "timeout": 0,
+      "max_retries": 2
     }
   },
-  "default_provider": "ollama",
-  "fallback_chain": ["ollama", "groq", "openrouter"],
+  "default_provider": "z_ai",
+  "fallback_chain": ["z_ai", "ollama", "groq", "openrouter"],
   "enable_fallback": true,
   "provider_timeout": 0
 }

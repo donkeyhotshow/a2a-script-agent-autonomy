@@ -1,0 +1,17 @@
+{
+  "hookId": "task_monitor_issue",
+  "type": "task_monitor_issue",
+  "taskName": "work-task-system-improvement-priorities-missing.md",
+  "status": "failed",
+  "error": "Session creation failed",
+  "context": {
+    "sessionId": null,
+    "promiseId": null,
+    "lastActivity": "2026-04-02T19:11:01.537Z"
+  },
+  "suggestedActions": [
+    "Review task description for clarity",
+    "Check session context and execution state"
+  ],
+  "createdAt": "2026-04-02T19:11:01.537Z"
+}

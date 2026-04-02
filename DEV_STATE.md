@@ -17,6 +17,28 @@ Current system state: **Stack готов** - все сервисы работа�
 - Orchestrator metrics: требует периодического обновления
 
 ## Completed work/tasks (2026-04-02):
+- **Task Monitor System (COMPLETED)**: Fixed all 6 identified bugs in `monitor-and-process-tasks.js`:
+  - Bug 1: Router choice parameter handling (`result.choice` format)
+  - Bug 2: Double task submission prevention with fallback logic
+  - Bug 3: Task extraction fallback improved with multi-level strategy
+  - Bug 4: Poll loop promise state checking enhanced with clear logging
+  - Bug 5: Hardbit state logging accuracy improved
+  - Bug 6: Session verification with 404 handling and empty check
+- **Daemon System (COMPLETED)**: Full daemon monitoring implementation:
+  - Graceful shutdown with signal handling (SIGINT/SIGTERM)
+  - Status reporting every 30 seconds (Active/Completed/Failed tasks)
+  - Hook document creation for failed/timeout tasks
+  - Non-blocking async task monitoring with concurrent processing
+  - Health check system on startup
+- **Testing (COMPLETED)**: Created comprehensive test suite:
+  - 17 validation tests (100% passing)
+  - All 6 bug fixes validated
+  - All daemon features verified
+  - Code quality checks passed
+- **Documentation (COMPLETED)**:
+  - Completion report: [COMPLETION-REPORT.md](./COMPLETION-REPORT.md)
+  - Quick start guide: [MONITOR-QUICK-START.md](./MONITOR-QUICK-START.md)
+  - Test file: [monitor-and-process-tasks.test.js](./monitor-and-process-tasks.test.js)
 - Doc: operator methodology — **Ollama busy / do not abort inference**: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) (*Ollama is generating — pause other work*), [`AGENTS.md`](AGENTS.md) (Debugging comment, Common Issues *Promise stays pending*, *Why iteration stops* table + stuck pipeline), [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md) (Windows *Ollama busy*), [`docs/agent-iteration-traps.md`](docs/agent-iteration-traps.md) §3 trap 7 + Quick links; cross-links relative per file
 - Doc: router alignment — `simulations/sync/agent/description.md` (step 1 vs `router-static-choices.json`); `AGENTS.md` router note + `tasks/sync-documentation-and-router-drift.md` status line
 - Doc: S11 — `sync/dialog/1` request/response `.md` mirrors; `sync/script/description.md` sim:check-md note; refreshed `tasks/sync-llm-snapshot-coverage.md` + `work/STATE.md` S11; `sync/dialog/description.md` step-1 table accuracy
