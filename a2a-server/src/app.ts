@@ -8,6 +8,9 @@ import {errorHandler} from './middleware/error.middleware.js';
 import routes from './routes/index.js';
 import sessionsRouter from './routes/sessions.routes.js';
 import {register} from './utils/metrics.js';
+import registryRegisterRouter from './api/registry/register.js';
+import registryRouteRouter from './api/registry/route.js';
+import registryHealthRouter from './api/registry/health.js';
 
 const app: Express = express();
 
@@ -35,6 +38,9 @@ app.get('/metrics', async (_req: Request, res: Response) => {
 
 app.use('/api/v1', routes);
 app.use('/api/a2a/sessions', sessionsRouter);
+app.use('/api/registry/register', registryRegisterRouter);
+app.use('/api/registry/route', registryRouteRouter);
+app.use('/api/registry', registryHealthRouter);
 
 app.use((_req: Request, res: Response) => {
     res.status(404).json({success: false, error: {code: 'NOT_FOUND', message: 'Not found'}});
