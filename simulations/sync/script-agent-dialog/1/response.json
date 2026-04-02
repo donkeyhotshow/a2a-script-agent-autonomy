@@ -11,23 +11,33 @@
   },
   "execute": {
     "form": {
-      "title": "Choose pipeline",
-      "description": "script-agent-dialog: dialog that auto-applies fix-vue-imports when the assistant flags import errors.",
+      "title": "Оберіть спосіб виконання",
+      "description": "script-agent-dialog: dialog that auto-applies fix-vue-imports when the assistant flags import errors. (Static tail ids match shared/router-static-choices.json.)",
       "choices": [
         {
           "id": "dialog",
-          "label": "AI dialog (script-aware)",
-          "description": "Natural conversation that detects import errors and lets the script intervene automatically."
+          "label": "AI діалог з користувачем",
+          "description": "Вільний текстовий діалог з моделлю без інструментів коду."
         },
         {
           "id": "agent",
-          "label": "Agent with tools",
-          "description": "Classic agent loop (search, read file, apply edits) with script fallback."
+          "label": "Agent (універсальний режим)",
+          "description": "Агент з інструментами: пошук по коду, файли, команди."
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі",
+          "description": "Розбиття задачі на підзадачі та план виконання."
         },
         {
           "id": "fix-vue-imports",
-          "label": "Run fix-vue-imports script",
-          "description": "Invoke the Vue import fixer directly, the same script that runs automatically when the dialog spots missing imports."
+          "label": "Виправлення Vue imports",
+          "description": "Скриптований сценарій для виправлення імпортів у Vue."
+        },
+        {
+          "id": "fix-laravel-namespaces-and-uses",
+          "label": "Laravel: namespace та use",
+          "description": "Скриптований сценарій для PHP namespace та use."
         }
       ]
     }

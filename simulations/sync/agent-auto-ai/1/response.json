@@ -25,6 +25,16 @@
           "id": "task-decomposition",
           "label": "Декомпозиція задачі",
           "description": "Розбиття задачі на підзадачі та план виконання."
+        },
+        {
+          "id": "fix-vue-imports",
+          "label": "Виправлення Vue imports",
+          "description": "Скриптований сценарій для виправлення імпортів у Vue."
+        },
+        {
+          "id": "fix-laravel-namespaces-and-uses",
+          "label": "Laravel: namespace та use",
+          "description": "Скриптований сценарій для PHP namespace та use."
         }
       ]
     }
