@@ -11,9 +11,9 @@
     Optional (debug-only): bypass sessions and call A2A Server directly:
       POST /api/v1/invoke -> poll GET /api/v1/requests/{id}/result until completed.
 .EXAMPLE
-    .\scripts\direct-tests\server-invoke-agent.ps1 -Task "List repo files"
+    .\tests\direct-tests\server-invoke-agent.ps1 -Task "List repo files"
 .EXAMPLE
-    .\scripts\direct-tests\server-invoke-agent.ps1 -UseDirectServer -Task "List repo files"
+    .\tests\direct-tests\server-invoke-agent.ps1 -UseDirectServer -Task "List repo files"
 #>
 param(
     [int]$ClientPort = 5173,

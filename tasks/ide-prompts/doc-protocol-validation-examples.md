@@ -3,7 +3,7 @@
 ## Sources
 
 - [`docs/new-request-flow/PROTOCOL.md`](../../docs/new-request-flow/PROTOCOL.md) — **Критерии завершения** (unchecked: validation examples)
-- [`scripts/direct-tests/README.md`](../../scripts/direct-tests/README.md) — schema debugging entry
+- [`tests/direct-tests/README.md`](../../tests/direct-tests/README.md) — schema debugging entry
 
 ## Agent prompt (copy)
 

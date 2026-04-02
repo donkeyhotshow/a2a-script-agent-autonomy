@@ -5,8 +5,8 @@
     Verifies: task -> choices -> choice dialog -> input form -> message -> message.
     Requires: Client API (5173), a2a-server (3000) running.
 .EXAMPLE
-    .\scripts\direct-tests\test-dialog-flow.ps1
-    .\scripts\direct-tests\test-dialog-flow.ps1 -ClientPort 5173 -ServerPort 3000
+    .\tests\direct-tests\test-dialog-flow.ps1
+    .\tests\direct-tests\test-dialog-flow.ps1 -ClientPort 5173 -ServerPort 3000
 #>
 param(
     [int]$ClientPort = 5173,

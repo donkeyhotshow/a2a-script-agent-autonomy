@@ -33,10 +33,10 @@ This repository **is** that stack: services run, and **work is driven by HTTP** 
 
 ## Schema debugging first step (mandatory)
 
-Before session-level or e2e debugging, reproduce schema/shape problems in `scripts/direct-tests`.
+Before session-level or e2e debugging, reproduce schema/shape problems in `tests/direct-tests`.
 
 Escalation order:
-1. `scripts/direct-tests` (fast isolation of schema/action-key shape)
+1. `tests/direct-tests` (fast isolation of schema/action-key shape)
 2. Client API session flow (`/sessions` -> `/next` -> `/async`)
 3. Simulations (`sim:lint`, `sim:validate`)
 4. Full stack/e2e
@@ -92,7 +92,7 @@ Narrative table of common “why iteration stopped” traps and mitigations (IDE
 
 Prefer:
 - **Client API session flow**: `POST /api/a2a/sessions` → `POST /next` → poll `GET /async`
-- **Direct-tests entry points**: `scripts/direct-tests/README.md` (schema debugging start point)
+- **Direct-tests entry points**: `tests/direct-tests/README.md` (schema debugging start point)
 
 When you must debug a stuck `promiseId`, poll the A2A Server directly:
 
@@ -125,4 +125,4 @@ Flaky or vague agent behavior is addressed mainly **inside the system**, not by 
 
 Calling `POST http://localhost:3000/api/v1/invoke` directly is useful for **server-only** debugging, but it is outside the repo’s normative “drive the stack like the UI” flow.
 
-If you need an automated repro, prefer adding or extending a runner under `scripts/direct-tests/` that uses the **Client API session flow**. Keep direct-invoke usage as a last resort for isolating server behavior from session storage/projection bugs.
+If you need an automated repro, prefer adding or extending a runner under `tests/direct-tests/` that uses the **Client API session flow**. Keep direct-invoke usage as a last resort for isolating server behavior from session storage/projection bugs.

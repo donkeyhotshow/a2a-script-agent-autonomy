@@ -1,6 +1,6 @@
 # Production Test Harness
 
-> **⚠️ DEPRECATED**: Use `direct-tests/run-checks.ps1` instead.
+> **⚠️ DEPRECATED**: Use `tests/direct-tests/run-checks.ps1` instead.
 
 ## Overview
 

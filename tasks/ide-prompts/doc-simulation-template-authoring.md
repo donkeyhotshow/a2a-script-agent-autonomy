@@ -4,7 +4,7 @@
 
 - [`docs/new-request-flow/SIMULATION-TEMPLATE.md`](../../docs/new-request-flow/SIMULATION-TEMPLATE.md) — full authoring checklist (`- [ ]` blocks)
 - [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md)
-- [`scripts/direct-tests/README.md`](../../scripts/direct-tests/README.md) — schema debugging first
+- [`tests/direct-tests/README.md`](../../tests/direct-tests/README.md) — schema debugging first
 
 ## Agent prompt (copy)
 

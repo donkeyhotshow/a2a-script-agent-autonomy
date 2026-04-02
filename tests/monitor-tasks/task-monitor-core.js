@@ -227,8 +227,8 @@ class TaskMonitorCore {
     }
 
     console.log('\n🚀 Quick commands to run:');
-    console.log('   Full check:   .\\scripts\\direct-tests\\run-checks.ps1 -Scope Full');
-    console.log('   Dialog flow:  .\\scripts\\direct-tests\\test-dialog-flow.ps1');
+    console.log('   Full check:   .\\tests\\direct-tests\\run-checks.ps1 -Scope Full');
+    console.log('   Dialog flow:  .\\tests\\direct-tests\\test-dialog-flow.ps1');
     console.log('   Sim lint:     npm run sim:lint -- --all');
     console.log('   Sim validate: npm run sim:validate -- --all');
     console.log('   Health:       curl http://localhost:3000/health');
@@ -253,7 +253,7 @@ class TaskMonitorCore {
 
     if (!health.allOk) {
       console.log('\n⚠️  Some services are not healthy. Run:');
-      console.log('   .\\scripts\\direct-tests\\run-checks.ps1 -Scope Full');
+      console.log('   .\\tests\\direct-tests\\run-checks.ps1 -Scope Full');
     }
 
     return health;

@@ -214,9 +214,9 @@ class ErrorClassifier {
     ];
 
     this.directTests = {
-      connection: '.\\scripts\\direct-tests\\run-checks.ps1 -Scope ClientServerLLM',
-      schema: '.\\scripts\\direct-tests\\test-dialog-flow.ps1',
-      dialog: '.\\scripts\\direct-tests\\dialog\\run-dialog-direct-ollama.ps1',
+      connection: '.\\tests\\direct-tests\\run-checks.ps1 -Scope ClientServerLLM',
+      schema: '.\\tests\\direct-tests\\test-dialog-flow.ps1',
+      dialog: '.\\tests\\direct-tests\\dialog\\run-dialog-direct-ollama.ps1',
       sim: 'npm run sim:lint -- --all --json',
       simValidate: 'npm run sim:validate -- --all --json',
       health: 'curl http://localhost:3000/health && curl http://localhost:5173/api/a2a/projects',
@@ -454,7 +454,7 @@ class ErrorClassifier {
       'connection:refused': 'Start services: .\\start-all.bat',
       'connection:timeout': 'Increase timeout: $env:FORWARD_TIMEOUT_SECONDS=180',
       'connection:dns': 'Check .env.local for correct hostnames/ports',
-      'connection:reset': 'Check if service crashed: .\\scripts\\direct-tests\\run-checks.ps1 -Scope ClientServer',
+      'connection:reset': 'Check if service crashed: .\\tests\\direct-tests\\run-checks.ps1 -Scope ClientServer',
       'http:auth': 'Set SKIP_AUTH=1 in .env.local',
       'http:notfound': 'Check URL paths in TASK_MONITOR_*_URL vars',
       'http:unavailable': 'Check Ollama: curl http://localhost:11435/api/ps',
@@ -471,7 +471,7 @@ class ErrorClassifier {
       'router:beat': 'See AGENTS.md Router dialog section',
       'task:timeout': 'Check Ollama generating: curl http://localhost:11435/api/ps',
       'task:promise-stuck': 'DO NOT restart if Ollama generating; wait or kill process',
-      'task:router-stuck': 'Verify Beat A/B: Run .\\scripts\\direct-tests\\test-dialog-flow.ps1',
+      'task:router-stuck': 'Verify Beat A/B: Run .\\tests\\direct-tests\\test-dialog-flow.ps1',
       'gray-room:processing': 'Check A2A_GRAY_ROOM_MAX_TURNS setting',
       'filesystem:not-found': 'Check TASK_MONITOR_TASKS_DIR path exists',
       'filesystem:permission': 'Check file permissions: icacls <path>',

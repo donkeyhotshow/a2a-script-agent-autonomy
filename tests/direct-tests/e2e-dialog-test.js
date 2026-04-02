@@ -3,9 +3,9 @@
  * E2E / schema-oriented direct tests (Client API + optional invoke).
  *
  * Usage:
- *   node scripts/direct-tests/e2e-dialog-test.js
- *   node scripts/direct-tests/e2e-dialog-test.js --list
- *   node scripts/direct-tests/e2e-dialog-test.js --only=invokeHello,agentSeed,clientProjects
+ *   node tests/direct-tests/e2e-dialog-test.js
+ *   node tests/direct-tests/e2e-dialog-test.js --list
+ *   node tests/direct-tests/e2e-dialog-test.js --only=invokeHello,agentSeed,clientProjects
  *
  * Env: A2A_SERVER_URL, CLIENT_API_URL
  * Optional: REQUIRE_ASYNC_PIPELINE=1 — fail if dialog /next does not go async or no in-flight /async seen
@@ -20,7 +20,7 @@ import {
   assertGrayRoomSlot,
   assertSingleActionKey,
   assertWaitingPublicSessionShape,
-} from '../../tests/direct-tests/lib/a2a-schema-guards.mjs';
+} from './lib/a2a-schema-guards.mjs';
 
 const SERVER_URL = process.env.A2A_SERVER_URL || 'http://localhost:3000';
 const CLIENT_API_URL = process.env.CLIENT_API_URL || 'http://localhost:5173';

@@ -2,7 +2,7 @@
 
 ## Schema debugging — start here
 
-**Mandatory order** (same as [`AGENTS.md`](../../AGENTS.md)): reproduce and isolate **execute/result JSON shape** problems in **`scripts/direct-tests`** first (dialog runners, `e2e-dialog-test.js`, health checks). Only after that escalate to full session flows, **`npm run sim:lint` / `sim:validate`**, or heavy e2e. This folder is the repo’s **first** stop for schema debugging — not simulations.
+**Mandatory order** (same as [`AGENTS.md`](../../AGENTS.md)): reproduce and isolate **execute/result JSON shape** problems in **`tests/direct-tests`** first (dialog runners, `e2e-dialog-test.js`, health checks). Only after that escalate to full session flows, **`npm run sim:lint` / `sim:validate`**, or heavy e2e. This folder is the repo’s **first** stop for schema debugging — not simulations.
 
 | If you are debugging… | Use |
 |------------------------|-----|
@@ -11,13 +11,13 @@
 
 **See also:** [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) (golden sim contract — **after** direct reproduction).
 
-**Unit tests (no stack):** shared schema guards live in [`tests/direct-tests/lib/`](../../tests/direct-tests/lib/) — run `npm run test:direct-tests` from repo root.
+**Unit tests (no stack):** schema guards in [`lib/`](lib/) — run `npm run test:direct-tests` from repo root.
 
 ---
 
 Scripts that run test/check flows **directly** (no test framework). Original files stay in project folders; here are runners and index.
 
-**See also:** [scripts/tests/](../tests/README.md) (Level 1–3 suite) · [Root README — Testing](../../README.md#testing)
+**See also:** [scripts/tests/](../../scripts/tests/README.md) (Level 1–3 suite) · [Root README — Testing](../../README.md#testing)
 
 | Entry | Purpose |
 |-------|---------|
@@ -43,11 +43,11 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 | `Full` | Web + Client + Server + LLM |
 
 ```powershell
-.\scripts\direct-tests\run-checks.ps1 -Scope LLM
-.\scripts\direct-tests\run-checks.ps1 -Scope ClientServerLLM
-.\scripts\direct-tests\run-checks.ps1 -Scope Full
+.\tests\direct-tests\run-checks.ps1 -Scope LLM
+.\tests\direct-tests\run-checks.ps1 -Scope ClientServerLLM
+.\tests\direct-tests\run-checks.ps1 -Scope Full
 # Override ports/URLs:
-.\scripts\direct-tests\run-checks.ps1 -Scope Full -ServerPort 3000 -ClientPort 5173 -WebPort 5173 -AiProxyUrl http://localhost:11435
+.\tests\direct-tests\run-checks.ps1 -Scope Full -ServerPort 3000 -ClientPort 5173 -WebPort 5173 -AiProxyUrl http://localhost:11435
 ```
 
 ## Dialog
@@ -56,11 +56,11 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 
 ```powershell
 # Full dialog chain: task -> choices -> choice dialog -> input -> message -> message
-.\scripts\direct-tests\test-dialog-flow.ps1
+.\tests\direct-tests\test-dialog-flow.ps1
 
 # With Ollama checks + retry helper
-.\scripts\direct-tests\dialog\run-dialog-direct-ollama.ps1
-.\scripts\direct-tests\dialog\run-dialog-direct-ollama.ps1 -RetryRequest "a2a-server\storage\requests\prom_xxx.json"
+.\tests\direct-tests\dialog\run-dialog-direct-ollama.ps1
+.\tests\direct-tests\dialog\run-dialog-direct-ollama.ps1 -RetryRequest "a2a-server\storage\requests\prom_xxx.json"
 ```
 
 ai-integration uses FORWARD_TIMEOUT_SECONDS=180 (set in start-ai-integration.bat) for slow models.
@@ -113,49 +113,49 @@ From repo root:
 
 ```powershell
 # Scripts (root)
-.\scripts\direct-tests\scripts\run-test-services-basic.ps1
-.\scripts\direct-tests\scripts\run-test-web-ui.ps1
-.\scripts\direct-tests\scripts\run-test-a2a-client.ps1
-.\scripts\direct-tests\scripts\run-web-ui-smoke-report.ps1
-.\scripts\direct-tests\scripts\run-prod-test.ps1
-.\scripts\direct-tests\scripts\run-pre-release.ps1
+.\tests\direct-tests\scripts\run-test-services-basic.ps1
+.\tests\direct-tests\scripts\run-test-web-ui.ps1
+.\tests\direct-tests\scripts\run-test-a2a-client.ps1
+.\tests\direct-tests\scripts\run-web-ui-smoke-report.ps1
+.\tests\direct-tests\scripts\run-prod-test.ps1
+.\tests\direct-tests\scripts\run-pre-release.ps1
 
 # RAG
-.\scripts\direct-tests\rag\run-rag-test.ps1
-.\scripts\direct-tests\rag\run-simple-rag-test.ps1
-.\scripts\direct-tests\rag\run-test-rag-on-project.ps1
-.\scripts\direct-tests\rag\run-test-perf.ps1
-.\scripts\direct-tests\rag\run-test-scoring.ps1
-.\scripts\direct-tests\rag\run-test-cached.ps1
-.\scripts\direct-tests\rag\run-test-optimizations.ps1
-.\scripts\direct-tests\rag\run-rag-batch-test.ps1
-.\scripts\direct-tests\rag\run-rag-simulation.ps1
+.\tests\direct-tests\rag\run-rag-test.ps1
+.\tests\direct-tests\rag\run-simple-rag-test.ps1
+.\tests\direct-tests\rag\run-test-rag-on-project.ps1
+.\tests\direct-tests\rag\run-test-perf.ps1
+.\tests\direct-tests\rag\run-test-scoring.ps1
+.\tests\direct-tests\rag\run-test-cached.ps1
+.\tests\direct-tests\rag\run-test-optimizations.ps1
+.\tests\direct-tests\rag\run-rag-batch-test.ps1
+.\tests\direct-tests\rag\run-rag-simulation.ps1
 
 # SDK
-.\scripts\direct-tests\sdk\run-server-connection.ps1
+.\tests\direct-tests\sdk\run-server-connection.ps1
 
 # AI integration
-.\scripts\direct-tests\ai-integration\run-ai-integration.ps1
-.\scripts\direct-tests\ai-integration\run-test-ai-integration-chain.ps1
-.\scripts\direct-tests\ai-integration\run-test-promise-simulate.ps1
-.\scripts\direct-tests\ai-integration\run-test-promise-daemon.ps1
-.\scripts\direct-tests\ai-integration\run-test-cleanup.ps1
-.\scripts\direct-tests\ai-integration\run-promise-chain.ps1
-.\scripts\direct-tests\ai-integration\run-promise-chain-py.ps1
+.\tests\direct-tests\ai-integration\run-ai-integration.ps1
+.\tests\direct-tests\ai-integration\run-test-ai-integration-chain.ps1
+.\tests\direct-tests\ai-integration\run-test-promise-simulate.ps1
+.\tests\direct-tests\ai-integration\run-test-promise-daemon.ps1
+.\tests\direct-tests\ai-integration\run-test-cleanup.ps1
+.\tests\direct-tests\ai-integration\run-promise-chain.ps1
+.\tests\direct-tests\ai-integration\run-promise-chain-py.ps1
 
 # Server simulations
-.\scripts\direct-tests\server\run-simulation.ps1
-.\scripts\direct-tests\server\run-sim-create.ps1
-.\scripts\direct-tests\server\run-sim-lint.ps1
-.\scripts\direct-tests\server\run-sim-run.ps1
-.\scripts\direct-tests\server\run-sim-scaffold.ps1
-.\scripts\direct-tests\server\run-sim-compare.ps1
-.\scripts\direct-tests\server\run-sim-report.ps1
-.\scripts\direct-tests\server\run-sim-validate.ps1
-.\scripts\direct-tests\server\run-all-simulations.ps1
+.\tests\direct-tests\server\run-simulation.ps1
+.\tests\direct-tests\server\run-sim-create.ps1
+.\tests\direct-tests\server\run-sim-lint.ps1
+.\tests\direct-tests\server\run-sim-run.ps1
+.\tests\direct-tests\server\run-sim-scaffold.ps1
+.\tests\direct-tests\server\run-sim-compare.ps1
+.\tests\direct-tests\server\run-sim-report.ps1
+.\tests\direct-tests\server\run-sim-validate.ps1
+.\tests\direct-tests\server\run-all-simulations.ps1
 ```
 
-Level 1–3 suite: [scripts/tests/README.md](../tests/README.md)
+Level 1–3 suite: [scripts/tests/README.md](../../scripts/tests/README.md)
 
 ```powershell
 .\scripts\tests\run-all.ps1

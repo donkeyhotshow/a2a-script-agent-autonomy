@@ -1,6 +1,6 @@
 # Master prompt — full-spectrum run (repo + live stack)
 
-**Self-Upgrade process:** This represents the Self-Upgrade mechanism: tasks are **launched through the Client API session dialog** — automated by **`monitor-and-process-tasks.js`** (Task Monitor) or driven manually with the same `sessions` / `next` / `async` contour. See [GLOSSARY.md](GLOSSARY.md) (*Self-Upgrade*, *Task Monitor*).
+**Self-Upgrade process:** This represents the Self-Upgrade mechanism: tasks are **launched through the Client API session dialog** — automated by **`monitor-and-process-tasks.js`** (Task Monitor) or driven manually with the same `sessions` / `next` / `async` contour. See [GLOSSARY.md](GLOSSARY.md) (*Self-Upgrade*, *Task Monitor*). **Before a full-index or heavy run:** archive valuable session trees under `a2a-client/storage/sessions/` — [tasks/README.md](tasks/README.md) (*Self-Upgrade order*, step 2).
 
 **Primary instrument for “run the indexed prompts on the live stack”:** **[`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md)** — that doc is the operator manual for dialog-based task launch (`npm run monitor`, env, router beats, errors → direct-tests).
 
@@ -64,7 +64,7 @@ You are the lead operator for the **a2a-script-agent** repository running in **e
 
 **Quality and evidence (when resolving hooks):**
 
-- Schema/shape bugs: reproduce via [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md) before relying only on golden sims.
+- Schema/shape bugs: reproduce via [`tests/direct-tests/README.md`](tests/direct-tests/README.md) before relying only on golden sims.
 - When you touch protocol or fixtures: `npm run sim:lint` / `npm run sim:validate` as appropriate; respect [`simulations/SCHEMA.md`](simulations/SCHEMA.md) and action-key shape in [`AGENTS.md`](AGENTS.md).
 
 **State and iteration:**

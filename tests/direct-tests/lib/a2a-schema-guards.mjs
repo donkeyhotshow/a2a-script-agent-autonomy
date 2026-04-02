@@ -1,6 +1,6 @@
 /**
  * Pure A2A / Client API shape checks (no I/O).
- * Used by live runners under scripts/direct-tests and by Vitest in this folder.
+ * Used by live runners in tests/direct-tests and by Vitest (a2a-schema-guards.test.mjs).
  */
 
 export function assert(cond, msg) {

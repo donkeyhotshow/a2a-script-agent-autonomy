@@ -69,5 +69,5 @@ Run the level-specific runners directly for faster iteration against a broken su
 - Keep documentation in sync with any new `test-*.ps1` scripts — add a short description inside the corresponding subdirectory when you add new checks.
 
 ## See also
-- **[scripts/direct-tests/](../direct-tests/README.md)** — Hub for health checks by stack part (`run-checks.ps1 -Scope LLM|ServerLLM|ClientServer|…`) and runners for RAG, SDK, AI, server sim, and scripts (no service startup; run from repo root).
-- Direct test scripts in this folder: `test-services-basic.ps1`, `test-web-ui.ps1`, `test-a2a-client.ps1` (also invokable via `scripts/direct-tests/scripts/run-*.ps1`).
+- **[tests/direct-tests/](../../tests/direct-tests/README.md)** — Hub for health checks by stack part (`run-checks.ps1 -Scope LLM|ServerLLM|ClientServer|…`) and runners for RAG, SDK, AI, server sim, and root `scripts/` (no service startup; run from repo root).
+- Direct test scripts in this folder: `test-services-basic.ps1`, `test-web-ui.ps1`, `test-a2a-client.ps1` (also invokable via `tests/direct-tests/scripts/run-*.ps1`).

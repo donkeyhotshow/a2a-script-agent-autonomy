@@ -10,8 +10,8 @@
 
     Requires: Client API (5173), a2a-server (3000) running.
 .EXAMPLE
-    .\scripts\direct-tests\test-agent-flow.ps1
-    .\scripts\direct-tests\test-agent-flow.ps1 -ClientPort 5173 -ServerPort 3000 -MaxTurns 12
+    .\tests\direct-tests\test-agent-flow.ps1
+    .\tests\direct-tests\test-agent-flow.ps1 -ClientPort 5173 -ServerPort 3000 -MaxTurns 12
 #>
 param(
     [int]$ClientPort = 5173,

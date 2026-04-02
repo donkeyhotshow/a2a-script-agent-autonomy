@@ -89,7 +89,7 @@ These are **not** single numbered ADRs. Use them as **roadmap, audit, and featur
 |-------|----------|
 | Operator / Client API curl flow | [`docs/OPERATOR-CURL.md`](../OPERATOR-CURL.md) |
 | New request / protocol detail | [`docs/new-request-flow/PROTOCOL.md`](../new-request-flow/PROTOCOL.md) |
-| Schema debugging (start here) | [`scripts/direct-tests/README.md`](../../scripts/direct-tests/README.md) |
+| Schema debugging (start here) | [`tests/direct-tests/README.md`](../../tests/direct-tests/README.md) |
 | Simulation JSON contract | [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) |
 | Gray Room (server interrupt loop) | [`a2a-server/docs/GRAY-ROOM.md`](../../a2a-server/docs/GRAY-ROOM.md) |
 | Black Room (algorithm mode) | [`ai-integration/docs/BLACK-ROOM.md`](../../ai-integration/docs/BLACK-ROOM.md) |

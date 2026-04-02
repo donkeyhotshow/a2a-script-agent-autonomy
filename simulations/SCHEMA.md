@@ -1,6 +1,6 @@
 # Simulations schema (canonical)
 
-**Debugging broken JSON shapes:** do **not** start here. Reproduce the issue in [`scripts/direct-tests/README.md`](../scripts/direct-tests/README.md) first (mandatory order in [`AGENTS.md`](../AGENTS.md)), then return to simulations once the shape is clear.
+**Debugging broken JSON shapes:** do **not** start here. Reproduce the issue in [`tests/direct-tests/README.md`](../tests/direct-tests/README.md) first (mandatory order in [`AGENTS.md`](../AGENTS.md)), then return to simulations once the shape is clear.
 
 Align all simulations to avoid redundant or conflicting values.
 

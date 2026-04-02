@@ -1,8 +1,8 @@
 # DEV_STATE - 2026-04-03 (Manual LLM Mode Added)
 
-**Self-Upgrade:** Process of system self-improvement via daemon script `monitor-and-process-tasks.js` or manual API dialog with agent. See [GLOSSARY.md](GLOSSARY.md). **Operator order:** advance `tasks/` / `tasks/ide-prompts/` first; run `prompts-to-agent-mode/` (monitor / session API) after — policy only, not enforced in code ([`tasks/README.md`](tasks/README.md) *Self-Upgrade order*).
+**Self-Upgrade:** Process of system self-improvement via daemon script `monitor-and-process-tasks.js` or manual API dialog with agent. See [GLOSSARY.md](GLOSSARY.md). **Operator order:** advance `tasks/` / `tasks/ide-prompts/` first; **before large session volume**, archive needed `a2a-client/storage/sessions/` ([`tasks/README.md`](tasks/README.md) step 2, *Session archival*); run `prompts-to-agent-mode/` (monitor / session API) after — policy only, not enforced in code ([`tasks/README.md`](tasks/README.md) *Self-Upgrade order*).
 
-**Doc:** Schema-debug entry point: [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md), [`simulations/SCHEMA.md`](simulations/SCHEMA.md), [`AGENTS.md`](AGENTS.md).
+**Doc:** Schema-debug entry point: [`tests/direct-tests/README.md`](tests/direct-tests/README.md) (hub moved from `scripts/direct-tests/`; stub [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md) redirects), [`simulations/SCHEMA.md`](simulations/SCHEMA.md), [`AGENTS.md`](AGENTS.md).
 
 **Agent-mode task prompts (Task Monitor scans this folder only):** [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md); **IDE/docs prompts (not in monitor scan):** [`tasks/ide-prompts/README.md`](tasks/ide-prompts/README.md); **live stack contract:** [`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md); **linear workflow:** [`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md); **root master prompt (full index run):** [`START-FULL-SPECTRUM.md`](START-FULL-SPECTRUM.md) — Client API + seed **`mode: "agent"`** (not `invoke` alone; see `AGENTS.md` *Unified manual path*).
 
@@ -15,6 +15,8 @@ Current system state: **Stack готов** - все сервисы работа�
 **NEW: Manual LLM Mode ENABLED** — Operator-controlled LLM responses. `A2A_MANUAL_LLM_MODE=1` active in `.env.local`. See docs section at bottom.
 
 **Recent (client UI):** `web/js/action-executor.js` — after `POST …/next` with `asyncPending`, starts session-scoped `startPromisePolling` so floating panels (5173) complete LLM/async steps instead of hanging on "Waiting…". Failed/ rejected acks clear `promisePending` and stop the loader. `window-events.js` — floating session panels no longer re-render the previous router/form while `promisePending` or `awaitingSessionVerify` (avoids double-submit and matches `LOADER-BEHAVIOR.md` sending state); `startLoader` on message/choice submit. `html-utils` / `render-form` still align on actionable form detection for fresh `execute`.
+
+**Recent (direct-tests):** All runners and `e2e-dialog-test.js` / `gray-room-test.js` live under `tests/direct-tests/`; nested `.ps1` wrappers use `Join-Path $PSScriptRoot '..\..\..'` for repo root; `npm run test:direct-tests` = Vitest on `lib/a2a-schema-guards.mjs`.
 
 **Recent (simulations):** `SCHEMA.md` scope unified (sync vs `async/`); root `npm run sim:contract-report`; `async/promise-lifecycle/3` failed-terminal golden; `server-invoke-response-execute.schema.json` allows `execution.status` `failed` / `cancelled`. **`sync/agent`:** 15-step golden — усі типи `execute` для web agent у одному ланцюжку (без LLM у фікстурах), шляхи репо + workbench як `agent-coder-smart`. **`web-execute-dto`:** form + stripped `script`/`run-script` now get synthetic `Running script…`; form-only steps after auto script use `context.workbench.sections.autoScriptTrigger` → `message` + `attachments.runScriptId` (`script-agent-dialog/4` received). **`sim:validate`:** `--sim foo/bar` falls back to `simulations/sync/foo/bar`; `--all` lists numeric steps in numeric order. **Gray room goldens:** `sync/gray-room-clarify-dialog/1` (`clarify` + trace + `grayRoom` slot), `sync/gray-room-auto-read-file/1` (`auto_read_file` + `context.files`); server `mergeGrayRoomFinalizeInnerContext` fixes finalize dropping handler context. **S11:** `sync/dialog-message-only/1`, `sync/gray-room-hook/1` — `request.md`/`response.md`. **S10:** `tasks/sync-documentation-and-router-drift.md` — script step-1 router ids vs `router-static-choices.json`. **S12:** `agent-workspace-tools/description.md` — coverage note (13 keys, agent vs dialog). **S16:** Client API `sess_1775163935824` → 404 (storage pruned); see `tasks/pending/monitor-router-interaction-followup.md`. **`sync/agent-tool-loop/10`:** added missing `request.json` (execute-command result → `run-script` step); aligned `server-transforms-request.json` with `response.json`; `npm run sim:quality` clean.
 
@@ -125,7 +127,7 @@ curl http://localhost:5173/api/a2a/projects
 
 ## Testing
 
-`scripts/direct-tests/e2e-dialog-test.js`: added 8 server-only cases (invoke 400s, `/health` JSON, `/api/v1/requests/*` batch/single).
+`tests/direct-tests/e2e-dialog-test.js`: added 8 server-only cases (invoke 400s, `/health` JSON, `/api/v1/requests/*` batch/single).
 
 ```bash
 npm run sim:lint -- --all

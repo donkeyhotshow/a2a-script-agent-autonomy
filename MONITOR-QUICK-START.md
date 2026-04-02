@@ -7,7 +7,7 @@ This document is the **operator entry point** for the Task Monitor: the same **C
 | **Why** not `invoke` alone, router beats, curl shape | [`AGENTS.md`](AGENTS.md) → *Unified manual path*, *Router dialog* |
 | **Indexed prompts** and stack rules | [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md), [`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md) |
 | **Env / ports** | [`.env.example`](.env.example) (`TASK_MONITOR_*`, `WEB_PORT`, `OLLAMA_HOST`, `AI_HUB_URL`) |
-| **Schema / shape debugging** | [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md) |
+| **Schema / shape debugging** | [`tests/direct-tests/README.md`](tests/direct-tests/README.md) |
 | **Terminology** | [`GLOSSARY.md`](GLOSSARY.md) → Task Monitor, ErrorClassifier, Direct Tests |
 
 ## What the instrument does
@@ -24,6 +24,7 @@ The monitor is **not** a substitute for understanding the router: if the server 
 
 - Stack up: **`start-all.bat`** from repo root (not ad-hoc `npm run dev` per package) — [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md).
 - Client API reachable at your configured base (default **`http://localhost:5173/api/a2a`**).
+- **Before a large or full-index run:** archive session folders you need from **`a2a-client/storage/sessions/`** (Self-Upgrade policy — [`tasks/README.md`](tasks/README.md) step 2, [`GLOSSARY.md`](GLOSSARY.md) *Session archival*). Reduces risk when many new sessions are created or storage is pruned later.
 
 ## Run commands
 
@@ -68,11 +69,11 @@ Logs use **`ErrorClassifier`** ([`tests/monitor-tasks/errors.js`](tests/monitor-
 Run the suggested **direct tests** from repo root (PowerShell), for example:
 
 ```powershell
-.\scripts\direct-tests\run-checks.ps1 -Scope ClientServerLLM
-.\scripts\direct-tests\test-dialog-flow.ps1
+.\tests\direct-tests\run-checks.ps1 -Scope ClientServerLLM
+.\tests\direct-tests\test-dialog-flow.ps1
 ```
 
-See [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md) for scopes and dialog runners.
+See [`tests/direct-tests/README.md`](tests/direct-tests/README.md) for scopes and dialog runners.
 
 ## State and hooks
 

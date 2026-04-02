@@ -7,7 +7,7 @@
  * before returning to client.
  *
  * Usage:
- *   node scripts/direct-tests/gray-room-test.js
+ *   node tests/direct-tests/gray-room-test.js
  *
  * Requires: Client API (5173) + A2A Server (3000) + Ollama (11435/11434)
  * Env: CLIENT_API_URL, SERVER_URL
@@ -16,7 +16,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { assert, assertGrayRoomSlot as assertGrayRoomSlotCore } from '../../tests/direct-tests/lib/a2a-schema-guards.mjs';
+import { assert, assertGrayRoomSlot as assertGrayRoomSlotCore } from './lib/a2a-schema-guards.mjs';
 
 const CLIENT_API_URL = process.env.CLIENT_API_URL || 'http://localhost:5173';
 const SERVER_URL = process.env.SERVER_URL || 'http://localhost:3000';
