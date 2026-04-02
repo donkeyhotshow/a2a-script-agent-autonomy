@@ -92,6 +92,7 @@ These are **not** single numbered ADRs. Use them as **roadmap, audit, and featur
 | Schema debugging (start here) | [`scripts/direct-tests/README.md`](../../scripts/direct-tests/README.md) |
 | Simulation JSON contract | [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) |
 | Gray Room (server interrupt loop) | [`a2a-server/docs/GRAY-ROOM.md`](../../a2a-server/docs/GRAY-ROOM.md) |
+| Black Room (algorithm mode) | [`a2a-server/docs/BLACK-ROOM.md`](../../a2a-server/docs/BLACK-ROOM.md) |
 | Env matrix | [`docs/ENV-MATRIX.md`](../ENV-MATRIX.md) |
 | Terminology | [`GLOSSARY.md`](../../GLOSSARY.md) |
 | Web UI ↔ session protocol | [`a2a-client/docs/WEB_UI_PROTOCOL.md`](../../a2a-client/docs/WEB_UI_PROTOCOL.md) |
@@ -104,6 +105,7 @@ These are **not** single numbered ADRs. Use them as **roadmap, audit, and featur
 - `ADR-0040-writer-reviewer-pattern.md` - Writer/Reviewer Pattern: Strict session-level separation to eliminate confirmation bias
 - `ADR-0041-comprehensive-architectural-improvements.md` - 15 Comprehensive Architectural Improvements for A2A-Script-Agent (Multi-Agent Memory, PolicyGuard, DX)
 - `ADR-0042-advanced-agent-capabilities.md` - Advanced Agent Capabilities: MCP Orchestration, Session Compaction (Summarization), and LSP-driven Context Enrichment
+- `ADR-0058-gray-room-split-prompt-vs-algorithm.md` - Gray Room Split: Prompt Mode (paid API) vs Algorithm Mode (local Ollama/Black Room) for cost/latency optimization
 >>>>>>> 4800bb41 (feat: sync additional ADRs for aleon10)
 
 ## Tooling: ADR compliance via Client API

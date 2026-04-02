@@ -104,10 +104,15 @@ Server-driven LLM/transform substeps before final client response:
 
 ### Black Room
 
-Future smart loop inside `ai-integration` proxy:
+Algorithm execution mode for deterministic operations on **local Ollama**:
 
-- Planned area for proxy-side autonomous optimization logic.
-- Out of current implementation scope.
+- **Purpose:** Run pre-defined algorithms (pattern matching, context gathering, edits) on local LLM instead of paid API
+- **Trigger:** `interrupt.reason: "algorithm_invoke"` from Gray Room
+- **Algorithm IDs:** `ctx-gather-*`, `edit-apply-*`, `pattern-match-*`, `validate-*`
+- **Historical context:** Session state passed to Ollama via system prompt
+- **Cost:** Free (local compute) vs paid API for Prompt Mode
+- **Status:** Proposed per [ADR-0058](./adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md)
+- **Doc:** [`a2a-server/docs/BLACK-ROOM.md`](../a2a-server/docs/BLACK-ROOM.md)
 
 ## Phrase Mapping
 

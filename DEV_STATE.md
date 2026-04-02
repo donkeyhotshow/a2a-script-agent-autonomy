@@ -22,6 +22,18 @@ Current system state: **Stack готов** - все сервисы работа�
 - a2a-client test failures: 41 failed — 100% SDK config issues (not code)
 - Orchestrator metrics: требует периодического обновления
 
+## Proposed architecture (2026-04-03):
+- **Black Room / Gray Room Split (NEW CONCEPT)**: Algorithm Mode for local Ollama execution
+  - **Concept:** Split Gray Room into Prompt Mode (paid API) and Algorithm Mode (local Ollama)
+  - **Prompt Mode:** Natural language instructions, strategy, reasoning → Paid API
+  - **Algorithm Mode:** Deterministic execution via `algorithmId` → Local Ollama (free)
+  - **Trigger:** `interrupt.reason: "algorithm_invoke"` with `algorithmId` and `data`
+  - **Algorithm Numbers:** Pre-defined templates (ctx-gather-*, edit-apply-*, pattern-match-*, validate-*)
+  - **Historical Context:** Session state passed to Ollama via system prompt
+  - **Pre-Spins:** Multiple Gray Room spins before algorithm selection for complex cases
+  - **ADR:** [`docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md`](docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md)
+  - **Doc:** [`a2a-server/docs/BLACK-ROOM.md`](a2a-server/docs/BLACK-ROOM.md)
+
 ## Completed work/tasks (2026-04-03):
 - **Manual LLM Mode (NEW)**: Operator-controlled LLM response submission
   - Env: `A2A_MANUAL_LLM_MODE=1` to enable
