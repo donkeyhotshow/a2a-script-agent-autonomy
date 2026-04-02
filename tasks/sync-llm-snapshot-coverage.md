@@ -15,7 +15,12 @@ More sync steps ship Markdown mirrors of JSON fixtures so prompt pipeline audits
 
 ## Backlog
 
-- Optional: audit remaining sync sims for missing `request.md` / `response.md` (many `agent-*`, `fix-*`, `resilience-contract`, etc. still lack mirrors — see repo-wide search vs `request.json`).
+- Optional: audit remaining sync sims for missing `request.md` / `response.md` (many `agent-*`, `fix-*`, `task-decomposition`, etc. still lack mirrors — see repo-wide search vs `request.json`).
+
+## Done (small dialog / gray-room)
+
+- `sync/dialog-message-only/1` — `request.md` + `response.md`
+- `sync/gray-room-hook/1` — `request.md` + `response.md`
 
 ## Done (dialog)
 

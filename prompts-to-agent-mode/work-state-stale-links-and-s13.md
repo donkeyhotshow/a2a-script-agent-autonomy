@@ -2,8 +2,8 @@
 
 ## Sources
 
-- [`work/STATE.md`](../work/STATE.md) — queue table (S9–S14, SYS); `tasks/*.md` links in the table should resolve (see [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) for specs intentionally not committed). Also scan root `README.md`, `methodology/tasks.md`, and shell headers for dead `docs/troubleshooting/` or `proposals/` paths.
-- [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)
+- [`work/STATE.md`](../work/STATE.md) — queue table (S9–S14, SYS); `tasks/*.md` links in the table should resolve (see [`../tasks/ide-prompts/repo-task-specs-missing-restore.md`](../tasks/ide-prompts/repo-task-specs-missing-restore.md)). Also scan root `README.md`, `methodology/tasks.md`, and shell headers for dead `docs/troubleshooting/` or `proposals/` paths.
+- [`../tasks/ide-prompts/repo-task-specs-missing-restore.md`](../tasks/ide-prompts/repo-task-specs-missing-restore.md)
 
 ## Agent prompt (copy)
 
@@ -11,4 +11,4 @@ Update `work/STATE.md`: replace dead `tasks/*.md` links with real paths (after r
 
 ## Completion
 
-- [x] Done (stale links cleared and S13 coverage recorded; see `repo-task-specs-missing-restore.md` for restored specs)
+- [x] Done (stale links cleared and S13 coverage recorded; see `tasks/ide-prompts/repo-task-specs-missing-restore.md` for restored specs)

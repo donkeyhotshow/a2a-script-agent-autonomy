@@ -1,7 +1,9 @@
 # Self-Upgrade monitor router follow-up
 
-**Status:** pending → in progress  
+**Status:** pending (session storage expired)  
 **Context:** `node monitor-and-process-tasks.js` run on 2026-04-03 hit `ai-integration-configuration-system-plan.md` and left `sess_1775163935824` at `action=agent | step=new | status=idle | message=What would you like me to do?`. The run logged repeated “Task … completed but no result” lines, the script timed out (code 124) and emitted `EPIPE` while writing logs, and `hooks/task_monitor_issue.json` plus `task-monitor-state.json` hold the snapshot.
+
+**2026-04-03 follow-up:** `GET http://localhost:5173/api/a2a/sessions/sess_1775163935824` returns `Session not found` (Client API disk session pruned). To continue: re-run the monitor or create a new session with the same task; treat promise `prom_1775164401703_g29l65y66` as stale unless still resolvable on `:3000`.
 
 ## Progress so far
 1. The router form was refreshed via `/api/a2a/sessions/sess_1775163935824` and then `POST /next` with a human prompt (see `curl.exe .../next` in the log) telling the agent to continue the ai-integration configuration plan.  

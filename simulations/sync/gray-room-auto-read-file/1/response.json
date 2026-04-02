@@ -1,0 +1,70 @@
+{
+  "context": {
+    "task": "Gray room auto_read_file — dialog golden (context.files merge + trace)",
+    "execution": {
+      "action": "dialog",
+      "step": "message-only"
+    },
+    "workbench": {
+      "sections": {},
+      "slots": {
+        "interruptTrace": [
+          {
+            "kind": "llm_output",
+            "phase": "primary",
+            "chars": 240
+          },
+          {
+            "kind": "response_transform",
+            "interruptReason": "auto_read_file"
+          },
+          {
+            "kind": "sidecar_llm",
+            "purpose": "auto_read_file",
+            "ok": true,
+            "meta": "package.json"
+          },
+          {
+            "kind": "interrupt_handler",
+            "reason": "auto_read_file",
+            "continueLoop": false
+          }
+        ],
+        "grayRoom": {
+          "enabled": true,
+          "planId": "sess-gray-read-1",
+          "phase": "completed",
+          "maxTurns": 10,
+          "turn": 0,
+          "remainingBudget": 9,
+          "status": "completed",
+          "lastReason": "auto_read_file",
+          "timestamps": {
+            "startedAt": "2026-04-03T10:05:00.000Z",
+            "lastUpdateAt": "2026-04-03T10:05:00.100Z"
+          },
+          "traceRef": {
+            "length": 4
+          }
+        }
+      }
+    },
+    "files": {
+      "package.json": "{\n  \"name\": \"demo-app\",\n  \"version\": \"1.0.0\"\n}\n"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "What is the package name?"
+      },
+      {
+        "role": "assistant",
+        "step": "message-only",
+        "message": "Package name is demo-app (from package.json)."
+      }
+    ]
+  },
+  "execute": {
+    "message": "Package name is demo-app (from package.json)."
+  }
+}

@@ -8,6 +8,8 @@ Protocol goldens for workspace tools implemented in **`a2a-server/src/actions/ha
 
 Canonical allowlist: `VALID_EXECUTE_KEYS` in [`a2a-server/src/actions/action-validator.ts`](../../../a2a-server/src/actions/action-validator.ts) (`form`, `script`, `read-file`, `write-file`, `execute-command`, `message`, `rag-search`, `list-directory`, `grep-search`, `file-exists`, `edit-patch`, `run-script`, `dialog`).
 
+**Coverage:** All **13** keys are represented across sync goldens: the 15-step [`sync/agent`](../agent/description.md) chain covers every key except `dialog` (use [`sync/dialog/`](../dialog/description.md)). This folder isolates workspace-tool executes (`grep-search` … `run-script`).
+
 | Execute key | Sync golden step(s) | Notes |
 |-------------|---------------------|-------|
 | `form` | `agent/1`, `dialog/*`, `script/*`, … | Router / gates |

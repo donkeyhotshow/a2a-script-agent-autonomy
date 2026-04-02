@@ -65,6 +65,7 @@ npx tsx scripts/sim-validate.ts --sim sync/dialog/1 --step-contract
 
 ## Key characteristics
 
+- **LLM backends (Z.AI vs Ollama):** goldens are synthetic; see [`../LLM-BACKEND-MAP.md`](../LLM-BACKEND-MAP.md) for runtime vs fixtures and optional `request.md` headers.
 - **Sync mode:** immediate execution, no `promiseId` in goldens (see [`SCHEMA.md`](../SCHEMA.md) for async scope).
 - **Pipeline order:** `client.json` → `request.json` → … → `response.json` → `received.json` (Web DTO is derived **after** the server response).
 - **Use case:** simple operations, form interactions, deterministic scripted flows, and LLM steps where `request.md` / `response.md` are present.

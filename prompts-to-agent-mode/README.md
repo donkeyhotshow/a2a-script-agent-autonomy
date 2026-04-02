@@ -1,33 +1,33 @@
-# Agent-mode prompts (project task index)
+# Agent-mode prompts (Task Monitor queue)
 
-**If you are driving the live script-agent stack:** read **[STACK-RUN.md](STACK-RUN.md)** first.
+**Scope:** Only `.md` files **in this directory** (no subfolders) are read by **`monitor-and-process-tasks.js`** by default. Each one should be a task the **live stack can drive** (Client API: `POST /api/a2a/sessions` with `mode: "agent"`, then `/next` + `/async`). **Docs, methodology, ADR, sim-authoring, and module-plan prompts** live under **[`../tasks/ide-prompts/`](../tasks/ide-prompts/README.md)** — use them in the IDE **before** or **without** session automation.
 
-**Primary instrument — launch tasks through session dialog (same as web UI):** **[`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** — `npm run monitor` / `npm run monitor:once`, `TASK_MONITOR_*`, router beats, **ErrorClassifier** + **direct-tests** on errors. Implementation: [`../monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`../tests/monitor-tasks/`](../tests/monitor-tasks/).
+**When to run this queue (policy):** Treat **`tasks/*.md`**, **`tasks/pending/`**, and **[`tasks/ide-prompts/`](../tasks/ide-prompts/README.md)** as **primary** work. Start **`npm run monitor`** / full-spectrum session prompts **after** those items are under control (or explicitly deprioritized). The monitor does not gate on that; it is documented operator order — see **[`tasks/README.md`](../tasks/README.md)** (*Self-Upgrade order*).
 
-**Linear pipeline:** **[ONE-PIPELINE.md](ONE-PIPELINE.md)** (env → Client API → prompts → observe → improve). **Root master prompt** (daemon + hooks + IDE): **[`../START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md)**.
+**If you run the live stack:** read **[STACK-RUN.md](STACK-RUN.md)** first.
 
-This folderР В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›s name means Р В Р вЂ Р В РІР‚С™Р РЋРЎв„ўprompts aligned with **agent mode** in session **context**Р В Р вЂ Р В РІР‚С™Р РЋРЎС™; it does **not** mean Р В Р вЂ Р В РІР‚С™Р РЋРЎв„ўpaste into `invoke` on port 3000.Р В Р вЂ Р В РІР‚С™Р РЋРЎС™
+**Task Monitor:** **[`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** — `npm run monitor` / `npm run monitor:once`, `TASK_MONITOR_*`, router beats. Code: [`../monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`../tests/monitor-tasks/`](../tests/monitor-tasks/).
+
+**Linear pipeline:** **[ONE-PIPELINE.md](ONE-PIPELINE.md)**. **Master prompt (daemon + hooks):** **[`../START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md)**.
+
+This folder's name means prompts aligned with **agent mode** in session **context**; it does **not** mean paste into `invoke` on port 3000 alone.
 
 ## Run through the script-agent stack (Client API)
-
-When a prompt should execute **in the live system** (same path as the web UI), drive it via the **Client API**, not `POST /api/v1/invoke` alone.
 
 | Wrong default | Correct |
 |---------------|---------|
 | Only `POST :3000/api/v1/invoke` | `POST :5173/api/a2a/sessions` with **`mode: "agent"`**, then `/next` + poll `/async` |
-| Treat Р В Р вЂ Р В РІР‚С™Р РЋРЎв„ўAgent promptР В Р вЂ Р В РІР‚С™Р РЋРЎС™ as server payload | Treat it as **task text** (or IDE instructions); HTTP contour is still **sessions** on the **client** origin |
+| Treat "Agent prompt" as server payload | Treat it as **task text**; HTTP contour is **sessions** on the **client** origin |
 
-1. Start the stack (Windows: [`start-all.bat`](../start-all.bat) from repo root Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ see [`docs/SYSTEM_STARTUP.md`](../docs/SYSTEM_STARTUP.md)).
-2. **`POST /api/a2a/sessions`** with **`mode: "agent"`** (or `execution` seeded to agent) and paste the fileР В Р вЂ Р В РІР‚С™Р Р†РІР‚С›РЎС›s **Agent prompt** into **`task`** when creating the session (or send it on the first `/next` as text when the form has no `choices`).
-3. **`POST /api/a2a/sessions/{id}/next`**, then poll **`GET /api/a2a/sessions/{id}/async`** (and **`GET Р В Р вЂ Р В РІР‚С™Р вЂ™Р’В¦/sessions/{id}`** if the router shows `form.choices` Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ send **`result.choice`** / shorthand `task` as the choice **`id`**).
+1. Start the stack ([`start-all.bat`](../start-all.bat) / [`docs/SYSTEM_STARTUP.md`](../docs/SYSTEM_STARTUP.md)).
+2. **`POST /api/a2a/sessions`** with **`mode: "agent"`** and the file's **Agent prompt** in **`task`** (or first `/next` text when there are no `form.choices`).
+3. **`POST …/next`**, poll **`GET …/async`**, and **`GET …/sessions/{id}`** when the router shows **`choices`** — send **`result.choice`** / shorthand **`task`** as the choice **`id`**.
 
-Normative detail, two-beat router, and pitfalls: **[`AGENTS.md`](../AGENTS.md)** (*Unified manual path*). Curl walkthrough: **[`docs/OPERATOR-CURL.md`](../docs/OPERATOR-CURL.md)**. Deep checklist: [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md).
-
-**Other surfaces:** editing the repo, running sims (`npm run sim:lint` / `npm run sim:validate`), or using an IDE agent is separate. Those prompts still describe *what* to do; only stack-backed verification needs the Client API contour above.
+Normative detail: [`AGENTS.md`](../AGENTS.md) (*Unified manual path*). Curl: [`docs/OPERATOR-CURL.md`](../docs/OPERATOR-CURL.md).
 
 ---
 
-One file per task. Each file lists **sources** (canonical docs) and a **copy-paste prompt**. Check **Completion** in the file when done.
+One file per task. Each file lists **sources** and a **copy-paste prompt**. Check **Completion** when done.
 
 ## Root state (`DEV_STATE.md`)
 
@@ -36,114 +36,62 @@ One file per task. Each file lists **sources** (canonical docs) and a **copy-pas
 | [dev-state-router-drift-optional.md](dev-state-router-drift-optional.md) | [`DEV_STATE.md`](../DEV_STATE.md) (S10 optional) |
 | [dev-state-client-test-failures.md](dev-state-client-test-failures.md) | [`DEV_STATE.md`](../DEV_STATE.md), [`a2a-client/DEV_STATE.md`](../a2a-client/DEV_STATE.md) |
 | [dev-state-orchestrator-metrics.md](dev-state-orchestrator-metrics.md) | [`DEV_STATE.md`](../DEV_STATE.md) |
-| [dev-state-align-with-work-state.md](dev-state-align-with-work-state.md) | [`DEV_STATE.md`](../DEV_STATE.md) vs [`work/STATE.md`](../work/STATE.md) drift |
+| [dev-state-align-with-work-state.md](dev-state-align-with-work-state.md) | [`DEV_STATE.md`](../DEV_STATE.md) vs [`work/STATE.md`](../work/STATE.md) |
 
 ## Work focus (`work/STATE.md`)
 
 | Prompt file | Source |
 |-------------|--------|
-| [work-state-01-concept-end-to-end.md](work-state-01-concept-end-to-end.md) | [`work/STATE.md`](../work/STATE.md) Р В РІР‚в„ўР вЂ™Р’В§1 |
-| [work-state-02-unified-data-language.md](work-state-02-unified-data-language.md) | [`work/STATE.md`](../work/STATE.md) Р В РІР‚в„ўР вЂ™Р’В§2 |
-| [work-state-03-agent-modes-gray-room.md](work-state-03-agent-modes-gray-room.md) | [`work/STATE.md`](../work/STATE.md) Р В РІР‚в„ўР вЂ™Р’В§3 |
-| [work-state-04-gray-room-concept.md](work-state-04-gray-room-concept.md) | [`work/STATE.md`](../work/STATE.md) Р В РІР‚в„ўР вЂ™Р’В§4 |
-| [work-state-stale-links-and-s13.md](work-state-stale-links-and-s13.md) | [`work/STATE.md`](../work/STATE.md) queue links vs real `tasks/*.md` paths ([repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md)) |
+| [work-state-01-concept-end-to-end.md](work-state-01-concept-end-to-end.md) | [`work/STATE.md`](../work/STATE.md) §1 |
+| [work-state-02-unified-data-language.md](work-state-02-unified-data-language.md) | [`work/STATE.md`](../work/STATE.md) §2 |
+| [work-state-03-agent-modes-gray-room.md](work-state-03-agent-modes-gray-room.md) | [`work/STATE.md`](../work/STATE.md) §3 |
+| [work-state-04-gray-room-concept.md](work-state-04-gray-room-concept.md) | [`work/STATE.md`](../work/STATE.md) §4 |
+| [work-state-stale-links-and-s13.md](work-state-stale-links-and-s13.md) | Queue links vs `tasks/*.md` — inventory [`../tasks/ide-prompts/repo-task-specs-missing-restore.md`](../tasks/ide-prompts/repo-task-specs-missing-restore.md) |
 
 ## DEV_STATE backlog (priority summary)
 
 | Prompt file | Source |
 |-------------|--------|
-| [work-task-a2a-dev-state-improvements.md](work-task-a2a-dev-state-improvements.md) | [`DEV_STATE.md`](../DEV_STATE.md) + [`work/STATE.md`](../work/STATE.md) ticket list |
+| [work-task-a2a-dev-state-improvements.md](work-task-a2a-dev-state-improvements.md) | [`DEV_STATE.md`](../DEV_STATE.md) + [`work/STATE.md`](../work/STATE.md) |
 
-## Work task specs
+## Work task specs (mirrors `tasks/*.md`)
 
 | Prompt file | Source |
 |-------------|--------|
 | [work-task-s14-script-dialog-agent-response-parity.md](work-task-s14-script-dialog-agent-response-parity.md) | [`tasks/script-dialog-agent-response-parity.md`](../tasks/script-dialog-agent-response-parity.md) |
-| [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) | Inventory of `tasks/*.md` still absent vs on disk; restore or fix [`work/STATE.md`](../work/STATE.md) links |
-| [work-task-sync-documentation-router-drift.md](work-task-sync-documentation-router-drift.md) | [`tasks/sync-documentation-and-router-drift.md`](../tasks/sync-documentation-and-router-drift.md) + [`simulations/sync/agent/description.md`](../simulations/sync/agent/description.md) (`work/STATE` S10) |
-| [work-task-sync-substeps-not-discovered.md](work-task-sync-substeps-not-discovered.md) | [`tasks/sync-substeps-not-discovered.md`](../tasks/sync-substeps-not-discovered.md) (`work/STATE` S9) |
-| [work-task-sync-llm-snapshot-coverage.md](work-task-sync-llm-snapshot-coverage.md) | [`tasks/sync-llm-snapshot-coverage.md`](../tasks/sync-llm-snapshot-coverage.md) (`work/STATE` S11) |
-| [work-task-sync-workspace-tools-golden-map.md](work-task-sync-workspace-tools-golden-map.md) | [`tasks/sync-workspace-tools-golden-map.md`](../tasks/sync-workspace-tools-golden-map.md) (`work/STATE` S12) |
-| [work-task-sync-form-choices-description.md](work-task-sync-form-choices-description.md) | [`tasks/sync-form-choices-description.md`](../tasks/sync-form-choices-description.md) (`work/STATE` S13) |
-| [work-task-sync-readme-and-cli-gap.md](work-task-sync-readme-and-cli-gap.md) | [`tasks/sync-readme-and-cli-gap.md`](../tasks/sync-readme-and-cli-gap.md) (`work/STATE` S11) |
-| [work-task-sync-step-contract-warnings.md](work-task-sync-step-contract-warnings.md) | [`tasks/sync-step-contract-warnings.md`](../tasks/sync-step-contract-warnings.md) (`work/STATE` S8) |
-| [work-task-analyze-test-failures.md](work-task-analyze-test-failures.md) | [`tasks/analyze-test-failures.md`](../tasks/analyze-test-failures.md) (root `DEV_STATE` blockers) |
-| [work-task-orchestrator-metrics-tracking.md](work-task-orchestrator-metrics-tracking.md) | [`tasks/orchestrator-metrics-tracking.md`](../tasks/orchestrator-metrics-tracking.md) (SYS backlog) |
-| [work-task-rag-package-tests.md](work-task-rag-package-tests.md) | [`tasks/rag-package-tests.md`](../tasks/rag-package-tests.md) (a2a-client code coverage) |
+| [work-task-sync-documentation-router-drift.md](work-task-sync-documentation-router-drift.md) | [`tasks/sync-documentation-and-router-drift.md`](../tasks/sync-documentation-and-router-drift.md) |
+| [work-task-sync-substeps-not-discovered.md](work-task-sync-substeps-not-discovered.md) | [`tasks/sync-substeps-not-discovered.md`](../tasks/sync-substeps-not-discovered.md) |
+| [work-task-sync-llm-snapshot-coverage.md](work-task-sync-llm-snapshot-coverage.md) | [`tasks/sync-llm-snapshot-coverage.md`](../tasks/sync-llm-snapshot-coverage.md) |
+| [work-task-sync-workspace-tools-golden-map.md](work-task-sync-workspace-tools-golden-map.md) | [`tasks/sync-workspace-tools-golden-map.md`](../tasks/sync-workspace-tools-golden-map.md) |
+| [work-task-sync-form-choices-description.md](work-task-sync-form-choices-description.md) | [`tasks/sync-form-choices-description.md`](../tasks/sync-form-choices-description.md) |
+| [work-task-sync-readme-and-cli-gap.md](work-task-sync-readme-and-cli-gap.md) | [`tasks/sync-readme-and-cli-gap.md`](../tasks/sync-readme-and-cli-gap.md) |
+| [work-task-sync-step-contract-warnings.md](work-task-sync-step-contract-warnings.md) | [`tasks/sync-step-contract-warnings.md`](../tasks/sync-step-contract-warnings.md) |
+| [work-task-analyze-test-failures.md](work-task-analyze-test-failures.md) | [`tasks/analyze-test-failures.md`](../tasks/analyze-test-failures.md) |
+| [work-task-orchestrator-metrics-tracking.md](work-task-orchestrator-metrics-tracking.md) | [`tasks/orchestrator-metrics-tracking.md`](../tasks/orchestrator-metrics-tracking.md) |
+| [work-task-rag-package-tests.md](work-task-rag-package-tests.md) | [`tasks/rag-package-tests.md`](../tasks/rag-package-tests.md) |
 
 ## Optional link hygiene
 
 | Prompt file | Notes |
 |-------------|--------|
-| [work-task-system-improvement-priorities-missing.md](work-task-system-improvement-priorities-missing.md) | [`tasks/system-improvement-priorities.md`](../tasks/system-improvement-priorities.md); verify no stale `work/tasks/Р В Р вЂ Р В РІР‚С™Р вЂ™Р’В¦` links ([`work/STATE.md`](../work/STATE.md) SYS) |
-
-## Methodology (`methodology/`)
-
-| Prompt file | Source |
-|-------------|--------|
-| [methodology-task-organize-dialog-test.md](methodology-task-organize-dialog-test.md) | [`methodology/tasks.md`](../methodology/tasks.md) row #1 |
-| [methodology-task-export-debug-state.md](methodology-task-export-debug-state.md) | [`methodology/tasks.md`](../methodology/tasks.md) row #3 |
-| [methodology-improvements-automation.md](methodology-improvements-automation.md) | [`methodology/improvements.md`](../methodology/improvements.md) |
-| [methodology-adr-compliance-orchestrator.md](methodology-adr-compliance-orchestrator.md) | [`methodology/adr-compliance-orchestrator.md`](../methodology/adr-compliance-orchestrator.md) |
-| [scripts-tests-hierarchical-suite.md](scripts-tests-hierarchical-suite.md) | [`scripts/tests/README.md`](../scripts/tests/README.md) |
+| [work-task-system-improvement-priorities-missing.md](work-task-system-improvement-priorities-missing.md) | [`tasks/system-improvement-priorities.md`](../tasks/system-improvement-priorities.md); stale `work/tasks/` links in [`work/STATE.md`](../work/STATE.md) (SYS) |
 
 ## Client API manual verification (`a2a-client/docs/api-testing-plan.md`)
 
 | Prompt file | Source |
 |-------------|--------|
-| [client-api-01-sessions-create-load.md](client-api-01-sessions-create-load.md) | Р В РІР‚в„ўР вЂ™Р’В§1 + checklist |
-| [client-api-02-next-ack-first.md](client-api-02-next-ack-first.md) | Р В РІР‚в„ўР вЂ™Р’В§2 + checklist |
-| [client-api-03-async-resolves-pending.md](client-api-03-async-resolves-pending.md) | Р В РІР‚в„ўР вЂ™Р’В§3 + checklist |
-| [client-api-04-session-rebuild-highest-step.md](client-api-04-session-rebuild-highest-step.md) | Р В РІР‚в„ўР вЂ™Р’В§4 + checklist |
-| [client-api-05-red-room-artifacts.md](client-api-05-red-room-artifacts.md) | Р В РІР‚в„ўР вЂ™Р’В§5 + checklist |
-
-## Docs / simulations / imports
-
-| Prompt file | Source |
-|-------------|--------|
-| [doc-protocol-validation-examples.md](doc-protocol-validation-examples.md) | [`docs/new-request-flow/PROTOCOL.md`](../docs/new-request-flow/PROTOCOL.md) |
-| [doc-golden-simulations-web-dto-checklist.md](doc-golden-simulations-web-dto-checklist.md) | [`a2a-client/docs/GOLDEN-SIMULATIONS-CHECKLIST.md`](../a2a-client/docs/GOLDEN-SIMULATIONS-CHECKLIST.md) |
-| [doc-server-elements-hierarchy-roadmap.md](doc-server-elements-hierarchy-roadmap.md) | [`a2a-server/docs/server-elements-hierarchy.md`](../a2a-server/docs/server-elements-hierarchy.md) |
-| [doc-adr-0021-cross-browser-matrix.md](doc-adr-0021-cross-browser-matrix.md) | [`docs/adr/ADR-0021-cross-browser-testing-matrix.md`](../docs/adr/ADR-0021-cross-browser-testing-matrix.md) |
-| [doc-adr-0025-promise-ui-decouple.md](doc-adr-0025-promise-ui-decouple.md) | [`docs/adr/ADR-0025-decouple-promise-from-ui.md`](../docs/adr/ADR-0025-decouple-promise-from-ui.md) Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ Status: proposed |
-| [doc-adr-0035-open-followups.md](doc-adr-0035-open-followups.md) | [`docs/adr/ADR-0035-agentic-reasoning-safety-layer.md`](../docs/adr/ADR-0035-agentic-reasoning-safety-layer.md) Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ Р В Р вЂ Р В Р РЏР РЋРІР‚вЂњ rows |
-| [doc-adr-0012-session-store-enhancements.md](doc-adr-0012-session-store-enhancements.md) | [`docs/adr/ADR-0012-session-state-unification.md`](../docs/adr/ADR-0012-session-state-unification.md) Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ Future enhancements |
-| [doc-adr-0036-master-orchestration-memory-proposed.md](doc-adr-0036-master-orchestration-memory-proposed.md) | [`docs/adr/ADR-0036-a2a-autonomous-agent-master-orchestration-memory.md`](../docs/adr/ADR-0036-a2a-autonomous-agent-master-orchestration-memory.md) |
-| [greedy-dump-integration-and-slices.md](greedy-dump-integration-and-slices.md) | [`greedy-dump/docs/DOCUMENTS-STATE.md`](../greedy-dump/docs/DOCUMENTS-STATE.md) |
-| [greedy-dump-task-tree-open-nodes.md](greedy-dump-task-tree-open-nodes.md) | [`greedy-dump/TASK-TREE.md`](../greedy-dump/TASK-TREE.md) |
-| [sim-async-expand-coverage.md](sim-async-expand-coverage.md) | [`simulations/async/README.md`](../simulations/async/README.md) |
-
-## Repo layout & ADR gaps
-
-| Prompt file | Source |
-|-------------|--------|
-| [doc-readme-broken-troubleshooting-link.md](doc-readme-broken-troubleshooting-link.md) | Regression guard: no revival of dead `docs/troubleshooting/standardize-stop-scripts.md` (canonical: `docs/SYSTEM_STARTUP.md`) |
-| [repo-tasks-pending-archive-layout.md](repo-tasks-pending-archive-layout.md) | [`AGENTS.md`](../AGENTS.md), [`archive/methodology/orchestrator-api-exploit.md`](../archive/methodology/orchestrator-api-exploit.md) vs actual `tasks/` tree |
-| [doc-adr-0027-planning-readme-missing.md](doc-adr-0027-planning-readme-missing.md) | [`docs/adr/ADR-0027-documentation-canonical-sources.md`](../docs/adr/ADR-0027-documentation-canonical-sources.md) |
-| [doc-adr-reference-partial-adrs.md](doc-adr-reference-partial-adrs.md) | [`docs/adr/REFERENCE-A2A-master-specification.md`](../docs/adr/REFERENCE-A2A-master-specification.md) Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ Partial/Progress rows |
-| [doc-adr-reference-not-implemented-v2.md](doc-adr-reference-not-implemented-v2.md) | Same REFERENCE Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ Р В Р вЂ Р РЋРЎС™Р В Р вЂ° ADR-0037Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎС™0040 |
-| [doc-simulation-template-authoring.md](doc-simulation-template-authoring.md) | [`docs/new-request-flow/SIMULATION-TEMPLATE.md`](../docs/new-request-flow/SIMULATION-TEMPLATE.md) |
-| [sim-sync-agent-coder-smart-description-stubs.md](sim-sync-agent-coder-smart-description-stubs.md) | [`simulations/sync/agent-coder-smart/description.md`](../simulations/sync/agent-coder-smart/description.md) |
-| [sim-sync-task-decomposition-description-stubs.md](sim-sync-task-decomposition-description-stubs.md) | [`simulations/sync/task-decomposition/description.md`](../simulations/sync/task-decomposition/description.md) |
-
-## Modules & protocol docs
-
-| Prompt file | Source |
-|-------------|--------|
-| [ai-integration-documentation-plan.md](ai-integration-documentation-plan.md) | [`ai-integration/plans/documentation-plan.md`](../ai-integration/plans/documentation-plan.md) |
-| [ai-integration-ui-improvements-plan.md](ai-integration-ui-improvements-plan.md) | [`ai-integration/plans/ai-integration-ui-improvements-plan.md`](../ai-integration/plans/ai-integration-ui-improvements-plan.md) |
-| [ai-integration-promise-queue-plan.md](ai-integration-promise-queue-plan.md) | [`ai-integration/plans/promise-queue-plan.md`](../ai-integration/plans/promise-queue-plan.md) |
-| [ai-integration-configuration-system-plan.md](ai-integration-configuration-system-plan.md) | [`ai-integration/plans/configuration-system-plan.md`](../ai-integration/plans/configuration-system-plan.md) |
-| [ai-integration-ollama-loop-detection-plan.md](ai-integration-ollama-loop-detection-plan.md) | [`ai-integration/plans/ollama-tuning-plan.md`](../ai-integration/plans/ollama-tuning-plan.md) |
-| [doc-protocols-actions-roadmap-checklists.md](doc-protocols-actions-roadmap-checklists.md) | [`docs/new-request-flow/PROTOCOLS/`](../docs/new-request-flow/PROTOCOLS/) (actions + `states/cancelled.md`) |
-| [doc-protocols-index-truth-vs-server.md](doc-protocols-index-truth-vs-server.md) | PROTOCOLS README / STAGES / actions index vs server + sims |
-| [doc-protocols-message-loading-state.md](doc-protocols-message-loading-state.md) | [`PROTOCOLS/actions/message.md`](../docs/new-request-flow/PROTOCOLS/actions/message.md) Р В Р вЂ Р В РІР‚С™Р Р†Р вЂљРЎСљ `loading` Р В Р вЂ Р В Р РЏР РЋРІР‚вЂњ |
-| [methodology-proposals-folder-missing.md](methodology-proposals-folder-missing.md) | [`methodology/tasks.md`](../methodology/tasks.md) Р В Р вЂ Р Р†Р вЂљР’В Р Р†Р вЂљРІвЂћСћ broken `proposals/` link |
+| [client-api-01-sessions-create-load.md](client-api-01-sessions-create-load.md) | §1 + checklist |
+| [client-api-02-next-ack-first.md](client-api-02-next-ack-first.md) | §2 + checklist |
+| [client-api-03-async-resolves-pending.md](client-api-03-async-resolves-pending.md) | §3 + checklist |
+| [client-api-04-session-rebuild-highest-step.md](client-api-04-session-rebuild-highest-step.md) | §4 + checklist |
+| [client-api-05-red-room-artifacts.md](client-api-05-red-room-artifacts.md) | §5 + checklist |
 
 ## Task Monitor script
 
-**Canonical operator doc (dialog launch, env, direct-tests):** [`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md).
-
 | Prompt file | Source |
 |-------------|--------|
-| [task-monitor-quick-start.md](task-monitor-quick-start.md) | Keep in sync with [`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md); code: [`monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`tests/monitor-tasks/`](../tests/monitor-tasks/), [`monitor-and-process-tasks.test.js`](../monitor-and-process-tasks.test.js), [`task-monitor-state.json`](../task-monitor-state.json), [`hooks/`](../hooks/) |
+| [task-monitor-quick-start.md](task-monitor-quick-start.md) | In sync with [`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md); [`monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`tests/monitor-tasks/`](../tests/monitor-tasks/), [`hooks/`](../hooks/) |
+
+## IDE-only prompts (docs / methodology / sims)
+
+**[`../tasks/ide-prompts/README.md`](../tasks/ide-prompts/README.md)** — not scanned by the default Task Monitor task dir.

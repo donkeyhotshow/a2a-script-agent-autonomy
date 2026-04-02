@@ -1,0 +1,18 @@
+{
+  "context": {
+    "task": "Gray room auto_read_file — dialog golden (context.files merge + trace)",
+    "execution": {
+      "action": "dialog",
+      "step": "message-only"
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "What is the package name?"
+      }
+    ]
+  }
+}

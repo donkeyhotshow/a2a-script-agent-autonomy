@@ -48,6 +48,32 @@ curl http://localhost:11435/api/tags
 
 ## Next Actions (Executable)
 
+### Proxy Tags Normalization (Multi-Provider Model List)
+
+**Task:** Normalize `/api/tags` endpoint to combine models from multiple providers (Z.AI + Ollama) into unified list while routing requests to correct backend.
+
+**Requirements:**
+1. `/api/tags` returns combined list: Z.AI models (e.g., `glm-4.7-flash`) + Ollama models (e.g., `qwen3:8b`)
+2. Each model entry includes `provider` field indicating backend system (`z_ai` or `ollama`)
+3. Model selection in request routes to correct provider:
+   - `glm-4.7-flash` → Z.AI provider
+   - `qwen3:8b` → Ollama provider
+4. Maintain backward compatibility with existing `virtual_models` config
+
+**Files to modify:**
+- `proxy/proxy_handler.py` - Update `/api/tags` handler to query all providers
+- `proxy/providers/router.py` - Add `get_all_models()` method for tags aggregation
+- `proxy/providers/base.py` - Add model metadata method if needed
+- `proxy/ai_hub_config.py` - Add provider-aware model entries
+
+**Cross-module impact:**
+- a2a-server must support `model` parameter in requests (propagate to AI Hub)
+- ADR needed: multi-provider model routing contract
+
+**Status:** TODO | **Priority:** High
+
+---
+
 - Все текущие action steps выполнены и зафиксированы.
 - Оставляем только активные вопросы/риски, если появятся (например, изменение SLAs внешних провайдеров, обновление конфигов timeout).
 - Уточненный статус: module is stable, health checks green.

@@ -1,6 +1,6 @@
 # A2A Dev State Worklist
 
-Based on the current `DEV_STATE` analysis and the derail points captured in `work/STATE.md`, here are the concrete action items that belong under `prompts-to-agent-mode` so the daemon and agent stacks reach parity.
+Based on the current `DEV_STATE` analysis and the derail points captured in `work/STATE.md`, here are concrete action items for the **live stack queue** (`prompts-to-agent-mode`) and linked **IDE prompts** (`tasks/ide-prompts`) where work is repo-only.
 
 ## High Priority
 
@@ -20,7 +20,7 @@ Based on the current `DEV_STATE` analysis and the derail points captured in `wor
 
 4. **LLM request/response Markdown coverage (S11)**
    - Ensure every `simulations/sync/*` has full `request.md` and `response.md` coverage so the pipeline can be replayed at any step; the desired command is `npm run sim:check-md -- --fail`.
-   - Reference: `work-task-sync-llm-snapshot-coverage.md`, `doc-protocol-validation-examples.md`.
+   - Reference: `work-task-sync-llm-snapshot-coverage.md`, [`tasks/ide-prompts/doc-protocol-validation-examples.md`](../tasks/ide-prompts/doc-protocol-validation-examples.md).
 
 5. **Gray room refinement**
    - Clarify interrupt loop boundaries, trigger policies, and observability needs inside `docs/GRAY-ROOM.md` (work-state references in `work-state-03-agent-modes-gray-room.md`).

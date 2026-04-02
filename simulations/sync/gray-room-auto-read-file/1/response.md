@@ -1,0 +1,1 @@
+{"step":"message-only","message":"Package name is demo-app (from package.json).","execute":{"message":"Package name is demo-app (from package.json)."},"interrupt":{"reason":"auto_read_file","data":{"path":"package.json"}},"completed":true}

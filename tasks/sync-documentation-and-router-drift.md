@@ -15,4 +15,4 @@ When changing golden `execute.form.choices`, compare ids and copy to `router-sta
 ## Sims
 
 - `simulations/sync/agent/description.md`
-- `simulations/sync/script/1/response.json` (scenario copy may differ; ids must stay stable where aligned with registry).
+- `simulations/sync/script/1/response.json` — **scenario copy**: `title`/`description`/`label` text are English and specific to the script golden; **`id` values** match `staticTailChoices` (`dialog`, `agent`, `task-decomposition`, `fix-vue-imports`, `fix-laravel-namespaces-and-uses`). When changing shared static choices, keep these ids in sync.

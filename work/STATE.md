@@ -3,7 +3,11 @@
 Этот файл — **стейт задач**: сюда пишем твои задачи и статус.  
 Остальные документы в `work/` — про **апгрейд симуляций** (отдельно от этого файла). **Self-Upgrade:** Процесс самоулучшения системы через скрипт монитора или ручной диалог с агентом. См. [GLOSSARY.md](../GLOSSARY.md).
 
-**Живой стек (как UI):** индекс промптов — [`prompts-to-agent-mode/README.md`](../prompts-to-agent-mode/README.md); **контракт HTTP (не путать с `invoke` :3000)** — [`prompts-to-agent-mode/STACK-RUN.md`](../prompts-to-agent-mode/STACK-RUN.md) (`POST /api/a2a/sessions` + `mode: "agent"`, затем `next` / `async`; канон — `AGENTS.md`). **Линейный процесс:** [`prompts-to-agent-mode/ONE-PIPELINE.md`](../prompts-to-agent-mode/ONE-PIPELINE.md). **Старт всего индекса (мастер-промпт):** [`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md).
+**Распределение:** спецификации и бэклог до/вне сессии — [`tasks/`](../tasks/README.md) (`tasks/*.md`, `tasks/pending/`). Промпты под **живой стек** (Task Monitor) — только плоские файлы в [`prompts-to-agent-mode/README.md`](../prompts-to-agent-mode/README.md). Доки/методология/ADR — [`tasks/ide-prompts/README.md`](../tasks/ide-prompts/README.md).
+
+**Порядок Self-Upgrade (политика, не код):** сначала основная инженерная работа по очереди и спекам в `tasks/` / `tasks/ide-prompts/`; **после** этого — прогон очереди `prompts-to-agent-mode/` через сессии Client API (`monitor`, `/next`, `/async`). Скрипт монитора не блокирует старт, но так задуман операторский контур. Подробнее: [`tasks/README.md`](../tasks/README.md) → *Self-Upgrade order*.
+
+**Живой стек (как UI):** **контракт HTTP (не путать с `invoke` :3000)** — [`prompts-to-agent-mode/STACK-RUN.md`](../prompts-to-agent-mode/STACK-RUN.md) (`POST /api/a2a/sessions` + `mode: "agent"`, затем `next` / `async`; канон — `AGENTS.md`). **Линейный процесс:** [`prompts-to-agent-mode/ONE-PIPELINE.md`](../prompts-to-agent-mode/ONE-PIPELINE.md). **Старт всего индекса (мастер-промпт):** [`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md).
 
 ---
 
@@ -41,7 +45,8 @@
 | S14 | Паритет скриптового режима с dialog/agent: те же формы ответа, история/витрина, Web DTO / action-key shape — один контракт для UI и симов (см. фокус §2) | **partial** — матрица + `history`/`workbench.sections` в шагах 4–10, E2E smoke [`scripts/e2e-client-api-replay-sync-script.mjs`](../scripts/e2e-client-api-replay-sync-script.mjs); [`tasks/script-dialog-agent-response-parity.md`](../tasks/script-dialog-agent-response-parity.md) |
 | SYS | Улучшение всей системы: приоритеты и связка модулей | **backlog** — [`tasks/system-improvement-priorities.md`](../tasks/system-improvement-priorities.md) |
 | S15 | ai-integration: Z.AI стал default-провайдером, `/api/tags` теперь дополняет локальную Ollama только когда она доступна, `health/ready` смотрит на default-провайдер, README и конфиги обновлены | **done** — proxy_handler.py, config.py, providers/config_loader.py, health_routes.py, README |
-| S16 | Self-Upgrade monitor run: `monitor-and-process-tasks.js` launched `ai-integration-configuration-system-plan.md` and the router prompt (“What would you like me to do?”) was resolved with a manual `next` call; session `sess_1775163935824` now holds promise `prom_1775164401703_g29l65y66` and `asyncPending` is still true. Continue polling until the plan returns a result, then document it in the hooks folder. | **pending** — [`tasks/pending/monitor-router-interaction-followup.md`](../tasks/pending/monitor-router-interaction-followup.md) |
+| S16 | Self-Upgrade monitor run (2026-04-03): session `sess_1775163935824` later **404** on Client API (`Session not found`); promise likely stale. Re-run monitor or new session; see follow-up task. | **pending** — [`tasks/pending/monitor-router-interaction-followup.md`](../tasks/pending/monitor-router-interaction-followup.md) |
+| S17 | **Multi-Provider Model Selection:** Normalize ai-integration `/api/tags` to combine Z.AI + Ollama models; add model selection across stack (a2a-server → ai-integration). | **pending** — [`ai-integration/DEV_STATE.md`](../ai-integration/DEV_STATE.md) |
 
 ---
 

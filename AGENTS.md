@@ -9,6 +9,7 @@ Guidance for agents working in this repository.
 | **Windows live stack restart** | **`start-all.bat`** from repo root only — not per-service `npm run dev` ([`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md)) |
 | **Unified manual path** | **Client API only:** create session → **`mode: "agent"`** (or `execution.action`) → **`task`** → `next` + poll `async` — [Unified manual path](#unified-manual-path-client-api) |
 | **Backlog prompts (live stack)** | **[`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md)** + **[`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md)** — indexed tasks; **must** use Client API as the UI (`sessions` / `next` / `async` + seed `mode: "agent"`), not `invoke` alone |
+| **Self-Upgrade order (policy)** | Do **`tasks/`** + **[`tasks/ide-prompts/`](tasks/ide-prompts/README.md)** first; run **`prompts-to-agent-mode/`** / monitor **after** — not enforced in code; **[`tasks/README.md`](tasks/README.md)** (*Self-Upgrade order*) |
 | **Single pipeline (API → prompts → observe → improve)** | **[`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md)** — linear sequence + failure classes + doc map |
 | **Master prompt (run full prompt index + loop)** | **[`START-FULL-SPECTRUM.md`](START-FULL-SPECTRUM.md)** — root; paste Agent block into IDE or session `task` |
 | **Sessions / curl / agent tests** | Same surface: not `invoke` alone — [technical notes](#sessions-tests-and-agent-mode-where-to-send-http) |

@@ -90,6 +90,15 @@ class TaskMonitorUtils {
       if (serverPromise) {
         console.log(`[promise ${promiseId}] server status: ${serverPromise.status}, action: ${serverPromise.action || 'n/a'}`);
       }
+
+      // Check for Manual LLM Mode
+      const manualLlmStatus = await this.inspectManualLlmStatus(promiseId);
+      if (manualLlmStatus?.manualLlmMode) {
+        console.log(`[promise ${promiseId}] MANUAL LLM MODE ACTIVE - awaiting operator input`);
+        if (manualLlmStatus.hasForm) {
+          console.log(`[promise ${promiseId}] Form: ${manualLlmStatus.formTitle || 'Manual LLM Input'}`);
+        }
+      }
     }
   }
 
@@ -128,6 +137,14 @@ class TaskMonitorUtils {
     if (execStatus) stageParts.push(`status=${execStatus}`);
     if (!stageParts.length) {
       stageParts.push(asyncResult?.status ? `status=${asyncResult.status}` : 'unknown');
+    }
+
+    // Check for Manual LLM Mode status
+    const isManualLlmMode = execStatus === 'waiting_manual_llm' ||
+                            execution.status === 'waiting_manual_llm' ||
+                            sessionData?.manualLlmMode === true;
+    if (isManualLlmMode) {
+      stageParts.push('MANUAL_LLM_MODE');
     }
 
     const hasRouterForm =
@@ -211,6 +228,11 @@ class TaskMonitorUtils {
       case 'completed':
         actions.push('Verify task completion in target system');
         actions.push('Review generated code/output for correctness');
+        break;
+      case 'manual-llm-paused':
+        actions.push('Submit LLM response via POST /api/v1/requests/{promiseId}/llm-response');
+        actions.push('Check pending requests: GET /api/v1/requests/manual-llm/pending');
+        actions.push('Or disable manual mode: A2A_MANUAL_LLM_MODE=0 in .env.local');
         break;
       default:
         actions.push('Check A2A server health');
@@ -451,6 +473,20 @@ class TaskMonitorUtils {
           interrupt: execution.interrupt
         });
         inspection.recommendations.push(`Check interrupt.reason: ${execution.interrupt.reason}`);
+      }
+
+      // Check for Manual LLM Mode
+      const isManualLlmMode = execution.status === 'waiting_manual_llm' ||
+                              sessionData?.manualLlmMode === true;
+      if (isManualLlmMode) {
+        inspection.issues.push({
+          type: 'manual-llm-mode',
+          severity: 'medium',
+          message: 'Manual LLM Mode is active - awaiting operator to submit LLM response'
+        });
+        inspection.recommendations.push('Use: GET /api/v1/requests/manual-llm/pending to see pending requests');
+        inspection.recommendations.push('Use: POST /api/v1/requests/{promiseId}/llm-response to submit response');
+        inspection.recommendations.push('Or set A2A_MANUAL_LLM_MODE=0 to disable manual mode');
       }
 
     } catch (error) {

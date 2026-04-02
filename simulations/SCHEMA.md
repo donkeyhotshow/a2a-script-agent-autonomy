@@ -119,6 +119,13 @@ Some legacy or router-only steps **omit** per-step `server-transforms-request.js
 Examples: [`agent-auto-ai/6/interrupt.md`](agent-auto-ai/6/interrupt.md); substeps: [
 `6-sub-1/`](agent-auto-ai/6-sub-1/) … [`6-sub-4/`](agent-auto-ai/6-sub-4/).
 
+## LLM provider / model (what sims represent)
+
+Simulations test **payload shape**, not live Z.AI vs Ollama. **`request.md` / `response.md`** are fixtures: they do not prove routing.
+
+- **Runtime** model list and routing live in **ai-integration** (`GET /api/tags`, per-request `model`) → see [`LLM-BACKEND-MAP.md`](LLM-BACKEND-MAP.md) for ports, “fixture vs live”, and an optional YAML header for `request.md` so authors state assumed `provider` + `model`.
+- **Future:** when the server stores `model` (and optional provider) on invoke, document the exact `context` paths in `request.json` here and add a targeted golden (tracked in [`tasks/pending/multi-provider-model-selection.md`](../tasks/pending/multi-provider-model-selection.md)).
+
 ## Примеры Web ↔ Client API
 
 | Файл                                        | Направление      | Что показывает                                                                                              |

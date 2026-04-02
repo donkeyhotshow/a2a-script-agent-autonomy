@@ -7,7 +7,7 @@
 
 ## Agent prompt (copy)
 
-Reconcile: one source of truth for “what is still open” (S10 optional, S14, SYS, any pending sync follow-ups). Prune duplicate or contradictory lines in root `DEV_STATE.md`; align dates and pointers to real `tasks/*.md` files after [repo-task-specs-missing-restore.md](repo-task-specs-missing-restore.md) if applicable.
+Reconcile: one source of truth for “what is still open” (S10 optional, S14, SYS, any pending sync follow-ups). Prune duplicate or contradictory lines in root `DEV_STATE.md`; align dates and pointers to real `tasks/*.md` files after [`tasks/ide-prompts/repo-task-specs-missing-restore.md`](../tasks/ide-prompts/repo-task-specs-missing-restore.md) if applicable.
 
 ## Completion
 

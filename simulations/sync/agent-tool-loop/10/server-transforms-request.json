@@ -10,8 +10,8 @@
       "op": "set",
       "path": "$out.execute",
       "value": {
-        "read-file": {
-          "path": "utils/helpers.js"
+        "run-script": {
+          "scriptId": "validate-helper"
         }
       }
     }
