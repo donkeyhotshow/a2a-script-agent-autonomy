@@ -41,7 +41,9 @@ export type ArtifactType =
   | 'EXECUTION_TRACE'
   | 'POLICY_DECISION'
   | 'WAITING_STATE_EVENT'
-  | 'OPPORTUNITY_SUPPRESSION';
+  | 'OPPORTUNITY_SUPPRESSION'
+  | 'REGISTRY_HEALTH'
+  | 'ROUTE_DECISION';
 
 /** Unique identifier for the component writing an artifact */
 export type ComponentId = string;
@@ -73,6 +75,8 @@ export const TTL_MS: Partial<Record<ArtifactType, number>> = {
   POLICY_DECISION:         14 * 24 * 60 * 60 * 1_000,
   WAITING_STATE_EVENT:     3  * 24 * 60 * 60 * 1_000,
   OPPORTUNITY_SUPPRESSION: 3  * 24 * 60 * 60 * 1_000,
+  REGISTRY_HEALTH:         1  * 24 * 60 * 60 * 1_000,  // 1 day — high-frequency, short-lived
+  ROUTE_DECISION:          3  * 24 * 60 * 60 * 1_000,
 };
 
 // ── Stored artifact shape ─────────────────────────────────────────────────────
