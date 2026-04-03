@@ -25,8 +25,8 @@ from .config import (
     SIMULATION_DATA_PATH,
     PROMISE_DELAY_BEFORE_EXECUTE,
     PROMISE_DAEMON_ONLY,
-    Z_AI_API_KEY,
 )
+from .api_key_routing import forward_with_api_key_failover, write_routing_hint
 from .ollama_manager import get_ollama_manager, check_port_occupied, get_ollama_host_port
 from .ai_hub_config import (
     get_ai_hub_config, _is_truthy, _normalize_path, _normalize_model_key,
@@ -36,7 +36,8 @@ from .ai_hub_config import (
 from .promises import (
     create_promise, _promise_set_done, _promise_reset_pending,
     save_request, save_response, create_request_log,
-    _safe_json_loads, _json_bytes, _write_json_file, _PROMISE_EXECUTOR
+    _safe_json_loads, _json_bytes, _write_json_file, _PROMISE_EXECUTOR,
+    is_llm_upstream_response_ok,
 )
 
 # Import new modules
@@ -208,13 +209,16 @@ def handle_proxy_request(path: str, request) -> Response:
                     loop.close()
             except Exception as e:
                 logger.warning(f"Failed to initialize router: {e}, falling back to Ollama")
-        
+
+        routed_provider_name: Optional[str] = None
+        routed_provider_type: Optional[str] = None
+        headers = base_headers
+
         if model and router._initialized:
             model = router._resolve_model(model)
             provider_chain = router._get_provider_chain(model)
             if provider_chain:
                 provider_name, provider = provider_chain[0]
-                # Translate path for OpenAI-compatible providers (non-Ollama)
                 provider_type = getattr(provider.config, 'type', '')
                 if provider_type in ('openai', 'z_ai'):
                     translated_path = _translate_ollama_to_openai_path(path)
@@ -223,24 +227,14 @@ def handle_proxy_request(path: str, request) -> Response:
                 else:
                     target_url = provider.config.url.rstrip('/') + '/' + path
                     logger.info(f"Routed request for model '{model}' to provider '{provider_name}' -> {target_url}")
-                # Add auth headers for upstream.
-                # Z.AI and other OpenAI-compatible providers expect Authorization: Bearer <key>
-                # per official docs: https://docs.z.ai/guides/overview/quick-start
-                api_key: Optional[str] = None
-                if hasattr(provider.config, 'get_api_key'):
-                    api_key = provider.config.get_api_key()
-                if not api_key and Z_AI_API_KEY:
-                    api_key = Z_AI_API_KEY
-                # Build upstream headers independently from client auth:
-                # we only keep a small safe subset and inject our own Authorization.
                 upstream_headers: dict[str, Any] = {}
                 for hk, hv in base_headers.items():
                     lk = str(hk).lower()
                     if lk in ('content-type', 'accept', 'accept-language', 'user-agent'):
                         upstream_headers[hk] = hv
-                if api_key:
-                    upstream_headers['Authorization'] = f"Bearer {api_key}"
                 headers = upstream_headers
+                routed_provider_name = provider_name
+                routed_provider_type = provider_type
             else:
                 fallback_host = OLLAMA_HOST.rstrip('/') or OLLAMA_HOST
                 target_url = f"{fallback_host}/{path}"
@@ -248,6 +242,14 @@ def handle_proxy_request(path: str, request) -> Response:
         else:
             fallback_host = OLLAMA_HOST.rstrip('/') or OLLAMA_HOST
             target_url = f"{fallback_host}/{path}"
+
+        if should_log and folder_path and routed_provider_name and routed_provider_type:
+            write_routing_hint(
+                folder_path,
+                provider_name=routed_provider_name,
+                provider_type=routed_provider_type,
+                key_failover=routed_provider_type != 'ollama',
+            )
         
         # Handle virtual models - api/show
         if request.method == 'GET' and path_norm == 'api/show':
@@ -475,7 +477,10 @@ def handle_proxy_request(path: str, request) -> Response:
             prompt_snapshot = prompt
             model_snapshot = resolved_model
             body_json_snapshot = body_json if isinstance(body_json, dict) else None
-            
+            routed_provider_snapshot = routed_provider_name
+            routed_type_snapshot = routed_provider_type
+            router_config_snapshot = router.config
+
             def _job():
                 try:
                     debug_payload = {
@@ -523,8 +528,19 @@ def handle_proxy_request(path: str, request) -> Response:
                             })
                         return
                     
-                    # Forward to Ollama
-                    if method_snapshot == 'GET':
+                    if routed_provider_snapshot is not None and routed_type_snapshot is not None:
+                        resp0, _ = forward_with_api_key_failover(
+                            method=method_snapshot,
+                            target_url=target_url,
+                            body=body_snapshot,
+                            forward_args=args_snapshot,
+                            base_header_subset=headers_snapshot,
+                            provider_name=routed_provider_snapshot,
+                            provider_type=routed_type_snapshot,
+                            timeout=FORWARD_TIMEOUT,
+                            cfg=router_config_snapshot,
+                        )
+                    elif method_snapshot == 'GET':
                         resp0 = requests.get(target_url, params=args_snapshot, headers=headers_snapshot, timeout=FORWARD_TIMEOUT)
                     elif method_snapshot == 'POST':
                         resp0 = requests.post(target_url, data=body_snapshot, headers=headers_snapshot, timeout=FORWARD_TIMEOUT, stream=False)
@@ -564,14 +580,35 @@ def handle_proxy_request(path: str, request) -> Response:
         cache = get_cache()
         cache_key = cache.build_key("ollama", {"path": path, "body": body_json})
         
-        # Check cache first
+        # Check cache first (do not serve poisoned 200 + provider error JSON)
         cached = cache.get(cache_key)
         if cached:
-            logger.debug(f"Cache hit for key: {cache_key[:16]}...")
-            return Response(cached['body'], status=cached['status'], content_type='application/json')
+            body_text = cached.get('body', '')
+            body_b = body_text.encode('utf-8') if isinstance(body_text, str) else (body_text or b'')
+            st = int(cached.get('status', 200))
+            if is_llm_upstream_response_ok(st, body_b, 'application/json'):
+                logger.debug(f"Cache hit for key: {cache_key[:16]}...")
+                return Response(cached['body'], status=cached['status'], content_type='application/json')
+            logger.warning(
+                'Rejecting cached response: not a valid LLM success (invalidating key %s...)',
+                cache_key[:16],
+            )
+            cache.delete(cache_key)
         
         # Forward request to upstream (Ollama or external provider)
-        if request.method == 'GET':
+        if routed_provider_name is not None and routed_provider_type is not None:
+            resp, _ = forward_with_api_key_failover(
+                method=request.method,
+                target_url=target_url,
+                body=body,
+                forward_args=forward_args,
+                base_header_subset=headers,
+                provider_name=routed_provider_name,
+                provider_type=routed_provider_type,
+                timeout=FORWARD_TIMEOUT,
+                cfg=router.config,
+            )
+        elif request.method == 'GET':
             resp = requests.get(target_url, params=forward_args, headers=headers, timeout=FORWARD_TIMEOUT)
         elif request.method == 'POST':
             resp = requests.post(target_url, data=body, headers=headers, timeout=FORWARD_TIMEOUT, stream=False)
@@ -601,10 +638,18 @@ def handle_proxy_request(path: str, request) -> Response:
                     resp._content = patched_body
                     resp.headers['Content-Length'] = str(len(patched_body))
         
-        # Save to cache after successful response
+        # Save to cache only for real LLM successes (not 200 + {"error":...})
         if resp.status_code == 200:
-            cache.set(cache_key, {"status": resp.status_code, "body": resp.text})
-            logger.debug(f"Cached response for key: {cache_key[:16]}...")
+            ct = (resp.headers.get('Content-Type') or '') if resp.headers else ''
+            if is_llm_upstream_response_ok(resp.status_code, resp.content or b'', ct):
+                cache.set(cache_key, {"status": resp.status_code, "body": resp.text})
+                logger.debug(f"Cached response for key: {cache_key[:16]}...")
+            else:
+                logger.warning(
+                    'Not caching upstream response: LLM failure payload (status=%s key=%s...)',
+                    resp.status_code,
+                    cache_key[:16],
+                )
         
         # Forward response
         if should_log:

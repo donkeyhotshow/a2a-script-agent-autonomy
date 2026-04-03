@@ -124,11 +124,13 @@ class ProviderRouter:
                 continue
             if not provider.config.enabled:
                 continue
+            keys = self.config.get_api_keys_for_provider(name)
+            key_id = keys[0].id if keys else None
             for m in provider.config.models:
                 if not m or not str(m).strip():
                     continue
                 mid = str(m).strip()
-                out.append({
+                row = {
                     "name": mid,
                     "model": mid,
                     "modified_at": "",
@@ -136,7 +138,10 @@ class ProviderRouter:
                     "digest": "",
                     "details": {},
                     "provider": name,
-                })
+                }
+                if key_id:
+                    row["api_key_id"] = key_id
+                out.append(row)
         return out
     
     # ========================================================================

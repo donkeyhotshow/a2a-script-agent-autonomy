@@ -15,7 +15,11 @@
 import {parseContextBlock} from '../../protocol/context-parser.js';
 import type {ContextBlock, FileBlock} from '../../types/index.js';
 import {CURRENT_PROTOCOL_VERSION} from '../../protocol/versioning/protocol-versions.js';
-import {requestService, type RequestResult} from '../core/request/request.service.js';
+import {
+    requestService,
+    type RequestResult,
+    humanizeUpstreamErrorMessage,
+} from '../core/request/request.service.js';
 import {processRequestByPromiseId} from '../core/request-processor/request-processor.service.js';
 import {resolveExecution, resolveResultObject} from '../core/request-processor/normalization.js';
 import {ACTION_TO_SCHEMA} from '../../config/router-static.js';
@@ -68,7 +72,11 @@ async function waitTerminalRequest(promiseId: string, maxMs: number): Promise<Re
     const deadline = Date.now() + maxMs;
     while (Date.now() < deadline) {
         const row = await requestService.getResult(promiseId);
-        if (!row) return null;
+        // Storage may not be visible for a tick after create — retry instead of aborting sync chain.
+        if (!row) {
+            await new Promise((r) => setTimeout(r, 30));
+            continue;
+        }
         if (row.status === 'completed' || row.status === 'failed' || row.status === 'waiting_manual_llm') {
             return row;
         }
@@ -81,6 +89,18 @@ async function waitTerminalRequest(promiseId: string, maxMs: number): Promise<Re
     return null;
 }
 
+function syncFailureUserMessage(terminal: RequestResult): string | undefined {
+    const pr = terminal.result as Record<string, unknown> | undefined;
+    if (typeof pr?.error === 'string') {
+        return humanizeUpstreamErrorMessage(pr.error);
+    }
+    const te = terminal.error as Record<string, unknown> | null | undefined;
+    if (te && typeof te.message === 'string') {
+        return humanizeUpstreamErrorMessage(te.message);
+    }
+    return undefined;
+}
+
 async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> {
     let current = rootPromiseId;
     const hopMax = 16;
@@ -89,7 +109,7 @@ async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> 
     for (let hop = 0; hop < hopMax; hop++) {
         const terminal = await waitTerminalRequest(current, waitMs);
         if (!terminal) {
-            return {sync: true, promiseId: rootPromiseId};
+            return {promiseId: rootPromiseId};
         }
 
         const pr = terminal.result as Record<string, unknown> | undefined;
@@ -99,7 +119,7 @@ async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> 
                 sync: true,
                 execute: pr?.execute as Record<string, unknown> | undefined,
                 context: pr?.context as Record<string, unknown> | undefined,
-                message: typeof pr?.error === 'string' ? pr.error : undefined,
+                message: syncFailureUserMessage(terminal),
             };
         }
 
@@ -128,7 +148,7 @@ async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> 
         };
     }
 
-    return {sync: true, promiseId: rootPromiseId};
+    return {promiseId: rootPromiseId};
 }
 
 function ensureContextSessionId(ctx: Record<string, unknown>): string {

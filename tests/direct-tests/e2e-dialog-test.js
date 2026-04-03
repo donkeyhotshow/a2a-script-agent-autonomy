@@ -16,7 +16,7 @@
  *
  * Web dialog projection (normative): a2a-client/docs/WEB_UI_PROTOCOL.md — GET /sessions/:id uses
  * toPublicSession(): projected execute (message / llmMessage / form / attachments), no raw tool keys;
- * optional slim context { task, projectId } from session-projection-dto.js; full context only with
+ * optional slim context { task, projectId, execution? } from session-projection-dto.js; full context only with
  * ?includeContext=1. Response may use { session } wrapper; unwrapPublicSession() accepts both.
  */
 
@@ -30,6 +30,8 @@ import {
   assertWebUiExecuteProjection,
   assertSingleActionKey,
   assertWaitingPublicSessionShape,
+  getRouterFormChoiceArray,
+  hasWebFormTextEntry,
 } from './lib/a2a-schema-guards.mjs';
 import {recordClientSession, recordServerPromise} from './artifacts-registry.js';
 
@@ -500,10 +502,9 @@ async function caseAgentModeDialogWorkflow() {
     }
 
     const form = ex?.form;
-    const choices = form?.choices;
-    const inputs = form?.input;
+    const choices = getRouterFormChoiceArray(form);
 
-    if (Array.isArray(choices) && choices.length > 0) {
+    if (choices.length > 0) {
       assert(
         choices.some((c) => c && c.id === 'dialog'),
         'router form must include id dialog'
@@ -515,7 +516,7 @@ async function caseAgentModeDialogWorkflow() {
       continue;
     }
 
-    if (Array.isArray(inputs) && inputs.length > 0 && !choices?.length) {
+    if (hasWebFormTextEntry(form) && !choices?.length) {
       if (!pickedDialog) {
         const ack = await sendNext(sessionId, {
           result: { message: 'direct-tests: agent dialog routing probe' },
@@ -584,10 +585,9 @@ async function runRouterChoiceNoLoopCore(opts) {
     }
 
     const form = ex?.form;
-    const choices = form?.choices;
-    const inputs = form?.input;
+    const choices = getRouterFormChoiceArray(form);
 
-    if (Array.isArray(choices) && choices.length > 0) {
+    if (choices.length > 0) {
       if (submittedRouterChoice) {
         throw new Error(
           `${label}: router loop — form.choices again after ${choiceId} choice; server stuck on router`
@@ -602,7 +602,7 @@ async function runRouterChoiceNoLoopCore(opts) {
       continue;
     }
 
-    if (Array.isArray(inputs) && inputs.length > 0 && !choices?.length) {
+    if (hasWebFormTextEntry(form) && !choices?.length) {
       if (submittedRouterChoice) {
         return;
       }
@@ -730,10 +730,9 @@ async function caseRouterWrongBeatMessage() {
     }
 
     const form = ex?.form;
-    const choices = form?.choices;
-    const inputs = form?.input;
+    const choices = getRouterFormChoiceArray(form);
 
-    if (Array.isArray(choices) && choices.length > 0) {
+    if (choices.length > 0) {
       const ack = await sendNext(sessionId, {
         result: {
           message:
@@ -746,10 +745,9 @@ async function caseRouterWrongBeatMessage() {
       if (after.asyncPending) await pollAsyncSettled(sessionId, 120_000);
       const settled = unwrapPublicSession(await getSession(sessionId));
       assertWaitingPublicSessionShape(settled, 'routerWrongBeat after wrong beat');
-      const c2 = settled.execute?.form?.choices;
+      const c2 = getRouterFormChoiceArray(settled.execute?.form);
       const stillRouting =
-        settled.stage === 'routing' ||
-        (Array.isArray(c2) && c2.length > 0);
+        settled.stage === 'routing' || c2.length > 0;
       assert(
         stillRouting,
         'routerWrongBeat: expected routing stage or form.choices after message-with-choices (wrong beat must not advance like choice)'
@@ -757,7 +755,7 @@ async function caseRouterWrongBeatMessage() {
       return;
     }
 
-    if (Array.isArray(inputs) && inputs.length > 0 && !choices?.length) {
+    if (hasWebFormTextEntry(form) && !choices?.length) {
       const ack = await sendNext(sessionId, {
         result: { message: 'direct-tests: task direction for wrong-beat probe' },
       });
@@ -787,13 +785,13 @@ async function caseDialogSessionRoundTrip() {
   if (pub.execute && typeof pub.execute === 'object') {
     assertWebUiExecuteProjection(pub.execute, 'dialog Web DTO execute');
   }
-  // Public DTO: no full context unless ?includeContext=1; when present, only task/projectId (session-projection-dto.js).
+  // Public DTO: slim context is task/projectId + optional execution slice (session-projection-dto.js).
   const slimCtx = pub.context;
   if (slimCtx && typeof slimCtx === 'object') {
-    const extra = Object.keys(slimCtx).filter((k) => k !== 'task' && k !== 'projectId');
+    const extra = Object.keys(slimCtx).filter((k) => k !== 'task' && k !== 'projectId' && k !== 'execution');
     assert(
       extra.length === 0,
-      `public context must be slim (task/projectId only), got extra: ${extra.join(', ')}`
+      `public context must be slim (task/projectId/execution only), got extra: ${extra.join(', ')}`
     );
   }
 }
@@ -816,9 +814,8 @@ async function navigateThroughRouterToAgent(sessionId, label) {
       pub = unwrapPublicSession(await getSession(sessionId));
     }
     const ex = pub.execute;
-    const choices = ex?.form?.choices;
-    const inputs = ex?.form?.input;
-    if (Array.isArray(choices) && choices.length > 0) {
+    const choices = getRouterFormChoiceArray(ex?.form);
+    if (choices.length > 0) {
       const pick = choices.find((c) => c && c.id === 'agent')?.id;
       assert(pick, `${label}: router missing agent choice`);
       const ack = await sendNext(sessionId, { result: { choice: pick } });
@@ -826,7 +823,7 @@ async function navigateThroughRouterToAgent(sessionId, label) {
       if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
       return;
     }
-    if (Array.isArray(inputs) && inputs.length > 0 && !choices?.length) {
+    if (hasWebFormTextEntry(ex?.form) && !choices?.length) {
       const ack = await sendNext(sessionId, {
         result: { message: `${label}: task direction for router` },
       });

@@ -128,15 +128,17 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                 mergedContext = { ...mergedContext, ...filteredContext };
             }
 
-            const sessionContext = session.context || {};
-            const previousExecution = sessionContext.execution || {};
-            if (previousExecution.action && !mergedContext.execution) {
-                mergedContext.execution = previousExecution;
-                console.log('[VitePlugin] Preserving execution.action from session:', previousExecution.action);
-            }
-            if (sessionContext.llmModel && !mergedContext.llmModel) {
-                mergedContext.llmModel = sessionContext.llmModel;
-            }
+             const sessionContext = session.context || {};
+             const previousExecution = sessionContext.execution || {};
+             if (previousExecution.action && !mergedContext.execution) {
+                 mergedContext.execution = previousExecution;
+                 console.log('[VitePlugin] Preserving execution.action from session:', previousExecution.action);
+             }
+             if (sessionContext.llmModel && !mergedContext.llmModel) {
+                 mergedContext.llmModel = sessionContext.llmModel;
+             }
+             // Add client sessionId to mergedContext
+             mergedContext.sessionId = sessionId;
 
             // Router beat B: choice submit must keep execution.step === 'router' (not session seed agent/new).
             if (
@@ -350,6 +352,16 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                         session.context = savedContext;
                         session.promiseId = null;
 
+                        // Router first-beat: server returns execution { action: task, step: router }.
+                        // Session may still be mode-seeded with agent/new in pre-invoke mergedContext — do not treat
+                        // that as "already in agent pipeline" for maybeChainAgentTools (would run the chain on router execute).
+                        const postExec = savedContext?.execution;
+                        const serverOnRouterBeat =
+                            postExec &&
+                            typeof postExec === 'object' &&
+                            postExec.action === 'task' &&
+                            postExec.step === 'router';
+
                         let finalStepNum = nextStepNum;
                         let finalServerResponse = serverResponse;
                         let finalSavedContext = savedContext;
@@ -384,7 +396,7 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                             }
                         }
 
-                        if (serverResponse && hasServer && !hasPromise && (execAction !== 'task' || mergedContext.execution?.step !== 'router')) {
+                        if (serverResponse && hasServer && !hasPromise && !serverOnRouterBeat) {
                             const agentResult = await maybeChainAgentTools({
                                 cwd,
                                 sessionId,

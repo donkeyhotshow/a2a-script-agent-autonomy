@@ -6,15 +6,18 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 from typing import Any, Callable, Optional, Tuple
 
 import requests
 
-from .providers.config_loader import ProvidersConfig, load_providers_config
+from .providers.config_loader import (
+    OLLAMA_API_KEY_PLACEHOLDER,
+    ProvidersConfig,
+    load_providers_config,
+)
 
 logger = logging.getLogger(__name__)
-
-OLLAMA_API_KEY_PLACEHOLDER = "__OLLAMA_LOCAL__"
 
 
 def is_ollama_placeholder(secret: Optional[str]) -> bool:
@@ -80,70 +83,11 @@ def get_api_keys_for_provider(
     cfg: ProvidersConfig,
     provider_name: str,
 ) -> list:
-    """Ordered list of ApiKeyEntry for provider (empty if none)."""
+    """Delegate to ProvidersConfig."""
     return cfg.get_api_keys_for_provider(provider_name)
 
 
-def forward_with_api_key_failover(
-    *,
-    method: str,
-    target_url: str,
-    body: Optional[bytes],
-    forward_args: Optional[dict[str, Any]],
-    base_header_subset: dict[str, Any],
-    provider_name: str,
-    provider_type: str,
-    timeout: Any,
-    cfg: Optional[ProvidersConfig] = None,
-    request_fn: Optional[
-        Callable[..., requests.Response]
-    ] = None,
-) -> Tuple[requests.Response, Optional[str]]:
-    """
-    Try each API key for provider_name until a non-rate-limited response or keys exhausted.
-    Returns (last_response, api_key_id_used or None).
-    """
-    cfg = cfg or load_providers_config()
-    keys = get_api_keys_for_provider(cfg, provider_name)
-
-    if provider_type == "ollama" or not keys:
-        # Single shot: Ollama or no keys in pool (caller may have set legacy headers elsewhere)
-        headers = dict(base_header_subset)
-        if keys and is_ollama_placeholder(keys[0].secret):
-            headers = _merge_upstream_headers(base_header_subset, None)
-        elif not keys:
-            headers = dict(base_header_subset)
-        else:
-            # No dedicated keys but non-ollama — still try without loop if only placeholder
-            pass
-        req = request_fn or _default_request
-        resp = req(method, target_url, body=body, headers=headers, params=forward_args or {}, timeout=timeout)
-        used_id = keys[0].id if len(keys) == 1 and keys[0] else None
-        return resp, used_id
-
-    last: Optional[requests.Response] = None
-    for entry in keys:
-        secret = entry.secret
-        if is_ollama_placeholder(secret):
-            hdr = _merge_upstream_headers(base_header_subset, None)
-        else:
-            hdr = _merge_upstream_headers(base_header_subset, secret)
-        req = request_fn or _default_request
-        resp = req(method, target_url, body=body, headers=hdr, params=forward_args or {}, timeout=timeout)
-        last = resp
-        ct = resp.headers.get("Content-Type")
-        if not is_upstream_rate_limited(resp.status_code, resp.content, ct):
-            return resp, entry.id
-        logger.warning(
-            "upstream rate limit for provider=%s api_key_id=%s status=%s",
-            provider_name,
-            entry.id,
-            resp.status_code,
-        )
-    return last, None
-
-
-def _default_request(
+def _do_http(
     method: str,
     url: str,
     *,
@@ -164,6 +108,59 @@ def _default_request(
     return requests.request(m, url, data=body, headers=headers, params=params, timeout=timeout)
 
 
+def forward_with_api_key_failover(
+    *,
+    method: str,
+    target_url: str,
+    body: Optional[bytes],
+    forward_args: Optional[dict[str, Any]],
+    base_header_subset: dict[str, Any],
+    provider_name: str,
+    provider_type: str,
+    timeout: Any,
+    cfg: Optional[ProvidersConfig] = None,
+    request_fn: Optional[Callable[..., requests.Response]] = None,
+) -> Tuple[requests.Response, Optional[str]]:
+    """
+    Try each API key for provider_name until a non-rate-limited response or keys exhausted.
+    Returns (last_response, api_key_id_used or None).
+    """
+    cfg = cfg or load_providers_config()
+    keys = get_api_keys_for_provider(cfg, provider_name)
+    req = request_fn or _do_http
+
+    if provider_type == "ollama":
+        hdr = _merge_upstream_headers(base_header_subset, None)
+        resp = req(method, target_url, body=body, headers=hdr, params=forward_args or {}, timeout=timeout)
+        oid = keys[0].id if keys else "ollama-local"
+        return resp, oid
+
+    if not keys:
+        hdr = dict(base_header_subset)
+        resp = req(method, target_url, body=body, headers=hdr, params=forward_args or {}, timeout=timeout)
+        return resp, None
+
+    last: Optional[requests.Response] = None
+    for entry in keys:
+        secret = entry.secret
+        if is_ollama_placeholder(secret):
+            hdr = _merge_upstream_headers(base_header_subset, None)
+        else:
+            hdr = _merge_upstream_headers(base_header_subset, secret)
+        resp = req(method, target_url, body=body, headers=hdr, params=forward_args or {}, timeout=timeout)
+        last = resp
+        ct = resp.headers.get("Content-Type")
+        if not is_upstream_rate_limited(resp.status_code, resp.content, ct):
+            return resp, entry.id
+        logger.warning(
+            "upstream rate limit for provider=%s api_key_id=%s status=%s",
+            provider_name,
+            entry.id,
+            resp.status_code,
+        )
+    return last, None
+
+
 def write_routing_hint(
     folder_path: str,
     *,
@@ -174,7 +171,6 @@ def write_routing_hint(
     if not folder_path:
         return
     try:
-        import os
         from .promises import _write_json_file
 
         path = os.path.join(folder_path, "routing.json")
@@ -194,7 +190,6 @@ def load_routing_hint(folder_path: str) -> Optional[dict[str, Any]]:
     if not folder_path:
         return None
     try:
-        import os
         import json as _json
 
         path = os.path.join(folder_path, "routing.json")

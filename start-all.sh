@@ -166,6 +166,7 @@ echo ""
 log STEP "Step 5/8" "Starting ai-integration on port $PROXY_PORT..."
 
 cd ai-integration
+python scripts/ensure-providers-config.py || { log WARN "ai-integration: ensure-providers-config failed (missing config/providers.example.json?)"; exit 1; }
 export OLLAMA_HOST="http://localhost:$OLLAMA_PORT"
 python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port $PROXY_PORT &
 AI_PID=$!

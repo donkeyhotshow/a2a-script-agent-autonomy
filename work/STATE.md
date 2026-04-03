@@ -50,6 +50,8 @@
 | S18 | **`@a2a-client` web + vite-plugin:** Make `a2a-client/web` a proper scoped workspace package; `packages/vite-plugin` (`@a2a-client/vite-plugin`) — moved from legacy `vite-plugin-a2a`; workspaces, build, tests, publish checklist. | **pending** — [`tasks/pending/a2a-client-web-scoped-package.md`](../tasks/pending/a2a-client-web-scoped-package.md) |
 | S19 | **Technical debt (legacy / sims / Gray Room):** legacy execute blobs & compat exports; missing goldens for promise/async/retries and `execute.wait`/loader; Gray Room triggers + interrupt budget + substep/transform contracts. | **partial** — trigger matrix + legacy `validateResultShape` tests + async README scope; see [`tasks/pending/technical-debt-legacy-sim-gray-room.md`](../tasks/pending/technical-debt-legacy-sim-gray-room.md) |
 
+| S20 | projectId и sessionId не отправляются с сервера на клиента, и также не приходят с сервера | **pending** |
+
 ---
 
 ## Заметки

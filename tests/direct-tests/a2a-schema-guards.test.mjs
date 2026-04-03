@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { mergeResponseContext } from '../../a2a-client/shared/a2a-invoke-builders.mjs';
 import {
   assert,
   assertExecuteSingleKeyOrDialogMessageForm,
@@ -6,6 +7,8 @@ import {
   assertSingleActionKey,
   assertWaitingPublicSessionShape,
   assertWebUiExecuteProjection,
+  hasWebFormTextEntry,
+  getRouterFormChoiceArray,
 } from './lib/a2a-schema-guards.mjs';
 
 function expectAssert(fn, re) {
@@ -114,6 +117,61 @@ describe('assertGrayRoomSlot', () => {
 
   it('rejects missing slot', () => {
     expectAssert(() => assertGrayRoomSlot({ session: { context: {} } }, 'g'), /grayRoom slot/);
+  });
+});
+
+describe('hasWebFormTextEntry', () => {
+  it('detects legacy form.input array', () => {
+    expect(hasWebFormTextEntry({ input: [{ id: 'task' }] })).toBe(true);
+  });
+
+  it('detects Pattern A form.textarea object', () => {
+    expect(hasWebFormTextEntry({ textarea: { placeholder: 'x' } })).toBe(true);
+  });
+
+  it('rejects empty', () => {
+    expect(hasWebFormTextEntry(null)).toBe(false);
+    expect(hasWebFormTextEntry({})).toBe(false);
+  });
+
+  it('detects form.inputs array (alias of form.input)', () => {
+    expect(hasWebFormTextEntry({ inputs: [{ id: 'task' }] })).toBe(true);
+  });
+
+  it('detects non-empty textarea string', () => {
+    expect(hasWebFormTextEntry({ textarea: 'Type here' })).toBe(true);
+  });
+});
+
+describe('getRouterFormChoiceArray', () => {
+  it('reads form.choices or form.meta.routerChoices', () => {
+    expect(getRouterFormChoiceArray({ choices: [{ id: 'a' }] }).length).toBe(1);
+    expect(getRouterFormChoiceArray({ meta: { routerChoices: [{ id: 'b' }] } }).length).toBe(1);
+    expect(getRouterFormChoiceArray({})).toEqual([]);
+  });
+});
+
+describe('mergeResponseContext workbench.slots', () => {
+  it('preserves grayRoom when server patch omits slots', () => {
+    const fallback = {
+      workbench: {
+        sections: { a: 1 },
+        slots: { grayRoom: { status: 'completed', turn: 1 } },
+      },
+    };
+    const serverLike = {
+      success: true,
+      data: {
+        context: {
+          workbench: {
+            sections: { b: 2 },
+          },
+        },
+      },
+    };
+    const merged = mergeResponseContext(fallback, serverLike);
+    expect(merged.workbench?.slots?.grayRoom).toEqual({ status: 'completed', turn: 1 });
+    expect(merged.workbench?.sections).toEqual({ b: 2 });
   });
 });
 

@@ -40,7 +40,17 @@ async function loadRegistry() {
 
 async function saveRegistry(registry) {
   const data = JSON.stringify(registry, null, 2);
-  await fs.writeFile(registryPath, data, 'utf8');
+  let lastErr;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    try {
+      await fs.writeFile(registryPath, data, 'utf8');
+      return;
+    } catch (e) {
+      lastErr = e;
+      await new Promise((r) => setTimeout(r, 40 * (attempt + 1)));
+    }
+  }
+  console.warn('[artifacts-registry] write failed (non-fatal):', lastErr?.message || lastErr);
 }
 
 export async function recordClientSession(sessionId) {

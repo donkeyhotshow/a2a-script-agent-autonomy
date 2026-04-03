@@ -15,6 +15,7 @@ from flask import Flask, request, Response
 from . import app
 from .promises import (
     get_promise, get_promise_by_server_id, _promise_set_done, _promise_reset_pending,
+    is_llm_upstream_response_ok,
     _collect_pending_promises, _collect_ready_promises, _load_request_snapshot,
     _prepare_execute_body, _sanitize_execute_headers, save_response, _json_bytes, _resolve_storage_path,
 )
@@ -46,8 +47,21 @@ def _run_execute_in_background(promise_id: str, rec, request_snapshot: dict) -> 
         }
         cache_key = cache.build_key("ollama", cache_payload)
         
-        # Check cache first
+        # Check cache first (reject poisoned entries; same rules as _promise_set_done)
         cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            body_base64 = cached_response.get('body_base64', '')
+            body_bytes = base64.b64decode(body_base64) if body_base64 else b''
+            hdrs = cached_response.get('headers', {}) or {}
+            ct = hdrs.get('Content-Type') or hdrs.get('content-type') or ''
+            sc = int(cached_response.get('status_code', 200))
+            if not is_llm_upstream_response_ok(sc, body_bytes, ct):
+                logger.warning(
+                    'Promise %s: invalid cached LLM payload (not success); invalidating cache',
+                    promise_id,
+                )
+                cache.delete(cache_key)
+                cached_response = None
         if cached_response is not None:
             logger.info(f"Promise {promise_id} served from cache")
             body_base64 = cached_response.get('body_base64', '')
@@ -82,8 +96,11 @@ def _run_execute_in_background(promise_id: str, rec, request_snapshot: dict) -> 
         else:
             resp = requests.request(rec.method, rec.target_url, params=args, headers=headers, data=body_payload, timeout=FORWARD_TIMEOUT)
 
-        # Cache successful responses
-        if resp.status_code == 200:
+        # Cache only real LLM successes (do not cache 200 + provider error JSON)
+        ct = (resp.headers.get('Content-Type') or '') if resp.headers else ''
+        if resp.status_code == 200 and is_llm_upstream_response_ok(
+            resp.status_code, resp.content or b'', ct
+        ):
             body_bytes = resp.content
             cached_value = {
                 "status_code": resp.status_code,

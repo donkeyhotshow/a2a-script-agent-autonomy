@@ -271,11 +271,17 @@ export abstract class BaseRequestProcessor {
         const actionType = this.getActionType(ctx);
         if (actionType === 'task_request') return true;
         if (actionType !== undefined) return false;
-        // actionType is undefined - check if execution.action is already an LLM pipeline action
         const exec = resolveExecution(ctx);
         const execAction = exec?.['action'] as string | undefined;
+        const execStep = exec?.['step'] as string | undefined;
         if (execAction && LLM_PIPELINE_ACTIONS.includes(execAction)) {
-            return false; // Already in LLM pipeline, not a new task request
+            // POST /sessions with mode:agent|dialog|… seeds execution with step "new" — still Beat A/B
+            // (task text + router); not yet in the LLM pipeline. Router / handleTaskRequest sets
+            // task+router; pipeline runs after e.g. step "start".
+            if (execStep === 'new') {
+                return true;
+            }
+            return false;
         }
         return true;
     }

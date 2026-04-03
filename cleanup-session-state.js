@@ -39,7 +39,7 @@ async function main() {
 
     // AI integration promise and cache storage
     'ai-integration/storage/promises',
-    'ai-integration/storage/cache',
+    // 'ai-integration/storage/cache',
   ];
 
   for (const dir of targets) {

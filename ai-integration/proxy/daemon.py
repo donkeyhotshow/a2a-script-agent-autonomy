@@ -27,6 +27,7 @@ from .cleanup import get_cleanup_manager
 from .caching import get_cache
 from .promises import (
     get_promise,
+    is_llm_upstream_response_ok,
     _collect_pending_promises,
     _load_request_snapshot,
     _prepare_execute_body,
@@ -34,6 +35,8 @@ from .promises import (
     _promise_set_done,
     _promise_reset_pending,
 )
+from .api_key_routing import forward_with_api_key_failover, load_routing_hint
+from .providers.config_loader import load_providers_config
 
 logger = logging.getLogger('ai-proxy.daemon')
 
@@ -263,8 +266,15 @@ class PromiseDaemon:
         # Prepare request
         args = dict(request_snapshot.get('args') or {})
         args.pop('promise', None)
-        headers = _sanitize_execute_headers(request_snapshot.get('headers') or {})
+        raw_headers = request_snapshot.get('headers') or {}
+        headers = _sanitize_execute_headers(raw_headers)
         body_payload = _prepare_execute_body(request_snapshot.get('body'))
+        routing = load_routing_hint(rec.log_folder or "")
+        safe_upstream = {}
+        for hk, hv in (raw_headers or {}).items():
+            lk = str(hk).lower()
+            if lk in ('content-type', 'accept', 'accept-language', 'user-agent'):
+                safe_upstream[hk] = str(hv)
         
         # Build cache key
         cache = get_cache()
@@ -276,8 +286,24 @@ class PromiseDaemon:
         }
         cache_key = cache.build_key("ollama", cache_payload)
         
-        # Check cache first
+        # Check cache first (reject poisoned 200 + provider error JSON)
         cached_response = cache.get(cache_key)
+        if cached_response is not None:
+            body_b = (
+                base64.b64decode(cached_response.get('body_base64', ''))
+                if cached_response.get('body_base64')
+                else b''
+            )
+            hdrs = cached_response.get('headers', {}) or {}
+            ct = hdrs.get('Content-Type') or hdrs.get('content-type') or ''
+            sc = int(cached_response.get('status_code', 200))
+            if not is_llm_upstream_response_ok(sc, body_b, ct):
+                logger.warning(
+                    'Daemon %s: invalid cached LLM payload; invalidating cache',
+                    promise_id,
+                )
+                cache.delete(cache_key)
+                cached_response = None
         if cached_response is not None:
             logger.info(f"Daemon {promise_id} served from cache")
             _promise_set_done(
@@ -291,7 +317,26 @@ class PromiseDaemon:
         # Execute request (use FORWARD_TIMEOUT for Ollama, not execute_timeout)
         req_timeout = FORWARD_TIMEOUT
         try:
-            if rec.method == 'GET':
+            use_failover = (
+                routing
+                and routing.get('upstream_key_failover')
+                and routing.get('provider')
+                and routing.get('provider_type')
+            )
+            if use_failover:
+                cfg = load_providers_config()
+                resp, _ = forward_with_api_key_failover(
+                    method=rec.method,
+                    target_url=rec.target_url,
+                    body=body_payload,
+                    forward_args=args,
+                    base_header_subset=safe_upstream,
+                    provider_name=str(routing.get('provider')),
+                    provider_type=str(routing.get('provider_type')),
+                    timeout=req_timeout,
+                    cfg=cfg,
+                )
+            elif rec.method == 'GET':
                 resp = requests.get(
                     rec.target_url, params=args, headers=headers,
                     timeout=req_timeout
@@ -317,8 +362,11 @@ class PromiseDaemon:
                     timeout=req_timeout
                 )
             
-            # Cache successful responses
-            if resp.status_code == 200:
+            # Cache only real LLM successes (do not cache 200 + provider error JSON)
+            ct = (resp.headers.get('Content-Type') or '') if resp.headers else ''
+            if resp.status_code == 200 and is_llm_upstream_response_ok(
+                resp.status_code, resp.content or b'', ct
+            ):
                 cache.set(cache_key, {
                     "status_code": resp.status_code,
                     "headers": dict(resp.headers),

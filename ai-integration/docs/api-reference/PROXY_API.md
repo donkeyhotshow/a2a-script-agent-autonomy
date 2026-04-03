@@ -7,7 +7,7 @@ This document provides comprehensive API reference for the AI Integration proxy 
 **Auth forwarding policy (mandatory):**
 
 - Clients **MUST NOT** forward their own `Authorization` / `API-Key` / similar provider credentials through this proxy.
-- The proxy is the **only** place that injects upstream auth headers (for example, it builds `Authorization: Bearer <Z_AI_API_KEY>` when calling Z.AI, based on its own config / `.env`).
+- The proxy is the **only** place that injects upstream auth headers (for example, `Authorization: Bearer <key>` when calling Z.AI, using the **`api_keys`** pool in **`config/providers.json`** — see [`docs/configuration/PROVIDERS_AND_API_KEYS.md`](../configuration/PROVIDERS_AND_API_KEYS.md)).
 - Any incoming auth headers from the client are ignored for upstream provider calls; do not rely on “header passthrough” from the app or a2a-server to Z.AI/Ollama.
 
 ## Base URL
@@ -69,7 +69,7 @@ Combined model list for UIs and the a2a-server stack.
 
 **Behavior:** Merges (in order) models from enabled **non-Ollama** providers in `config/providers.json` (e.g. Z.AI), then live models from `OLLAMA_HOST/api/tags` when reachable, then `virtual_models` from the AI Hub JSON config.
 
-**Response shape:** Ollama-style `{ "models": [ ... ] }`. Each element includes a string **`provider`** identifying the backend (`z_ai`, `ollama`, `virtual`, …). Clients should send `model` on `POST /api/chat` / `POST /api/generate` with one of the listed names; the proxy routes to the correct provider.
+**Response shape:** Ollama-style `{ "models": [ ... ] }`. Each element includes a string **`provider`** identifying the backend (`z_ai`, `ollama`, `virtual`, …). Non-Ollama rows may include **`api_key_id`** (first key id for that provider in `config/providers.json` → `api_keys`). Clients should send `model` on `POST /api/chat` / `POST /api/generate` with one of the listed names; the proxy routes to the correct provider.
 
 ---
 
@@ -227,6 +227,8 @@ Prometheus-compatible metrics.
 
 ### OpenAI-Compatible API
 
+Implemented in [`proxy/openai_wrapper.py`](../../proxy/openai_wrapper.py) as a Flask blueprint with **`url_prefix='/v1'`** — all routes below are **`/v1/...`** on the proxy base URL (default `http://localhost:11434`). Wrong prefix → **404**.
+
 #### POST /v1/chat/completions
 Chat completions endpoint.
 
@@ -305,7 +307,7 @@ Forwarded chat/generate bodies may contain the provider’s own JSON error objec
 
 | Upstream `error.code` (typical) | Meaning | Operator action |
 |---------------------------------|---------|-----------------|
-| `1302` | Rate limit | Expected; backoff, fewer parallel calls |
-| `1001` (with HTTP **401**) | Auth failure (Z.AI) | Fix key in proxy env; proxy may rewrite to `upstream_auth_failed` |
+| `1302` | Rate limit | Expected; backoff, fewer parallel calls; proxy may try the next **api key** for the same provider (see [`PROVIDERS_AND_API_KEYS.md`](../configuration/PROVIDERS_AND_API_KEYS.md)) |
+| `1001` (with HTTP **401**) | Auth failure (Z.AI) | Fix key in `config/providers.json` (`api_keys` / provider); proxy may rewrite to `upstream_auth_failed` |
 
 Details and retries: [`docs/troubleshooting/TROUBLESHOOTING.md`](../troubleshooting/TROUBLESHOOTING.md) (section *Upstream API key: limits, auth, and flaky first response*).

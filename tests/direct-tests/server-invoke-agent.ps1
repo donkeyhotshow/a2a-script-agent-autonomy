@@ -132,8 +132,9 @@ Write-Host ('  sessionId: ' + $sessionId) -ForegroundColor Green
 # Beat 1: if UI shows task input form, submit task as message (same as test-dialog-flow / test-agent-flow).
 $snap = Get-SessionSnapshot -sessionId $sessionId -Headers $hdr
 $exec = $snap.execute
-if ($null -ne $exec -and $null -ne $exec.form -and $null -ne $exec.form.input) {
-    Write-Host '  step: submit task into execute.form.input' -ForegroundColor Gray
+$hasTextBeat = ($null -ne $exec -and $null -ne $exec.form -and ($null -ne $exec.form.input -or $null -ne $exec.form.textarea))
+if ($hasTextBeat) {
+    Write-Host '  step: submit task into execute.form (input or textarea)' -ForegroundColor Gray
     $nextBody = @{ result = @{ message = $Task } } | ConvertTo-Json -Depth 10
     Invoke-RestMethod -Uri ($ClientUrl + '/api/a2a/sessions/' + $sessionId + '/next') -Method POST -Headers $hdr -Body $nextBody -TimeoutSec 60 | Out-Null
     Poll-ClientApiAsync -sessionId $sessionId -Headers $hdr

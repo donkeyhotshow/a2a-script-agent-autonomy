@@ -173,8 +173,9 @@ class TestProviderRouter:
         
         chain = router._get_provider_chain("model-a", preferred_provider="mock1")
         
-        assert len(chain) == 1  # Only mock1 supports model-a
         assert chain[0][0] == "mock1"
+        # mock2 also lists model-a via fallback_models → model-b
+        assert any(name == "mock2" for name, _ in chain)
     
     def test_get_provider_chain_with_fallback(self, router):
         """Test getting provider chain with fallback models"""

@@ -184,16 +184,28 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
 
         if (result.continue) {
             const fromMessage = result.message.execute;
+            const resultContext = { ...result.message.context };
+            // Include sessionId in context if it exists in input
+            const sessionIdValue = ctx['session_id'];
+            if (sessionIdValue && typeof sessionIdValue === 'string') {
+                (resultContext as any)['session_id'] = sessionIdValue;
+            }
             return {
                 outcome: 'completed',
-                context: result.message.context,
+                context: resultContext,
                 activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
                 execute: fromMessage,
             };
         }
+        const resultContext = { ...result.message.context };
+        // Include sessionId in context if it exists in input
+        const sessionIdValue = ctx['session_id'];
+        if (sessionIdValue && typeof sessionIdValue === 'string') {
+            (resultContext as any)['session_id'] = sessionIdValue;
+        }
         return {
             outcome: 'completed',
-            context: result.message.context,
+            context: resultContext,
             activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
             execute: result.message.execute ?? {
                 message: result.message.message || 'Action completed',
@@ -242,6 +254,10 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
                 execution: { action: choiceId, step: 'start' },
                 result: { ...(ctx['result'] as Record<string, unknown> ?? {}), choice: choiceId },
             };
+            // Include sessionId in context if it exists in input
+            if (ctx['session_id']) {
+                patchedContext['session_id'] = ctx['session_id'];
+            }
             const patchedRequest: RequestContext = {
                 ...request,
                 context: patchedContext,
@@ -261,22 +277,54 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
 
         // Execute the selected scripted action directly
         try {
-            const actionResult = await actionProcessor.executeAction(sessionId, actionDef, { task: taskText });
+            // Process as a task request to start the action
+            const actionResult = await actionProcessor.processTaskRequest(sessionId, taskText);
 
-            if (actionResult.outcome === 'completed') {
+            if (actionResult.continue) {
+                // Action is executing, return the execute command
+                const resultContext = { 
+                    ...(actionResult.message.context || {}) 
+                };
+                // Include sessionId in context if it exists in input
+                if (ctx['session_id'] && typeof ctx['session_id'] === 'string') {
+                    resultContext['session_id'] = ctx['session_id'];
+                }
                 return {
                     outcome: 'completed',
-                    context: actionResult.context,
-                    execute: actionResult.execute,
+                    context: resultContext,
+                    execute: actionResult.message.execute ?? {
+                        message: actionResult.message.message || 'Action started',
+                    },
                     activated_neuron_ids: actionResult.actionId ? [actionResult.actionId] : undefined,
                 };
             } else {
-                return actionResult;
+                // Action completed immediately
+                const resultContext = { 
+                    ...(actionResult.message.context || {}) 
+                };
+                // Include sessionId in context if it exists in input
+                if (ctx['session_id'] && typeof ctx['session_id'] === 'string') {
+                    resultContext['session_id'] = ctx['session_id'];
+                }
+                return {
+                    outcome: 'completed',
+                    context: resultContext,
+                    execute: actionResult.message.execute ?? {
+                        message: actionResult.message.message || 'Action completed',
+                    },
+                    activated_neuron_ids: actionResult.actionId ? [actionResult.actionId] : undefined,
+                };
             }
         } catch (error) {
             logger.error('[ActionRequestProcessor] Error executing router choice', { error, choiceId });
+            const errorContext: Record<string, unknown> = {};
+            // Include sessionId in context if it exists in input
+            if (ctx['session_id'] && typeof ctx['session_id'] === 'string') {
+                errorContext['session_id'] = ctx['session_id'];
+            }
             return {
                 outcome: 'failed' as ProcessOutcome,
+                context: errorContext,
                 error: `Failed to execute action: ${error instanceof Error ? error.message : String(error)}`
             } as ProcessResult;
         }
@@ -286,7 +334,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
      * Handle task_request - client sends new task, propose actions
      */
     private async handleTaskRequest(
-        _sessionId: string,
+        sessionId: string,
         _promiseId: string,
         ctx: Record<string, unknown>
     ): Promise<ProcessResult> {
@@ -342,12 +390,19 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
             execution.routerAnalysis = this.analyzeTaskForAutoRouting(taskText);
         }
 
+        const resultContext: Record<string, unknown> = {
+            execution,
+            task: taskText
+        };
+        // Include sessionId in context if it exists in input
+        const sessionIdValue = ctx['session_id'];
+        if (sessionIdValue && typeof sessionIdValue === 'string') {
+            (resultContext as any)['session_id'] = sessionIdValue;
+        }
+         
         return {
             outcome: 'completed',
-            context: {
-                execution,
-                task: taskText
-            },
+            context: resultContext,
             execute: {
                 form: buildRouterForm(rankedChoices)
             }
@@ -407,7 +462,15 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
 
         // Find the highest scoring choice
         const maxScore = Math.max(...Object.values(scores));
-        const preferredChoice = maxScore > 0 ? Object.keys(scores).find(key => scores[key] === maxScore) : null;
+        let preferredChoice: string | null = null;
+        if (maxScore > 0) {
+            for (const [choice, score] of Object.entries(scores)) {
+                if (score === maxScore) {
+                    preferredChoice = choice as string;
+                    break;
+                }
+            }
+        }
 
         // Determine suitability using router configuration
         const totalKeywords = Object.values(scores).reduce((sum, score) => sum + score, 0);
@@ -466,9 +529,15 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
             completedStepId: stepId,
         });
 
+        const resultContext = { ...(applied.context as ProcessResult['context']) };
+        // Include sessionId in context if it exists in input
+        if (ctx['session_id']) {
+            resultContext['session_id'] = ctx['session_id'];
+        }
+        
         return {
             outcome: 'completed',
-            context: applied.context as ProcessResult['context'],
+            context: resultContext,
             execute: {
                 dialog: {
                     message: `Step ${stepId} completed successfully.`,
@@ -480,11 +549,11 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
     /**
      * Handle approve_action - client confirms action execution
      */
-    private handleApproveAction(
+    private async handleApproveAction(
         sessionId: string,
         _promiseId: string,
         ctx: Record<string, unknown>
-    ): ProcessResult {
+    ): Promise<ProcessResult> {
         logger.info('[ActionRequestProcessor] Processing approve_action', {
             actionId: ctx['action_id'] || ctx['actionId'],
             sessionId
@@ -501,7 +570,22 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         }
 
         // Delegate to action processor
-        return this.actionProcessor.approveAction(sessionId, actionId);
+        const result = await actionProcessor.approveAction(sessionId, actionId);
+        
+        // Include sessionId in context if it exists in input
+        if (ctx['session_id'] && typeof ctx['session_id'] === 'string') {
+            const resultContext = { ...result.message.context };
+            (resultContext as any)['session_id'] = ctx['session_id'];
+            return {
+                ...result,
+                message: {
+                    ...result.message,
+                    context: resultContext
+                }
+            };
+        }
+        
+        return result;
     }
 
     /**

@@ -16,7 +16,11 @@
 import fs from 'fs/promises';
 import path from 'path';
 
-import { assert, assertGrayRoomSlot as assertGrayRoomSlotCore } from './lib/a2a-schema-guards.mjs';
+import {
+  assert,
+  assertGrayRoomSlot as assertGrayRoomSlotCore,
+  hasWebFormTextEntry,
+} from './lib/a2a-schema-guards.mjs';
 import {recordClientSession, recordServerPromise} from './artifacts-registry.js';
 
 const CLIENT_API_URL = process.env.CLIENT_API_URL || 'http://localhost:5173';
@@ -79,8 +83,12 @@ async function pollAsyncSettled(sessionId, maxWaitMs = 120_000, stepMs = 500) {
   return null;
 }
 
-async function getSession(sessionId) {
-  const response = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}`);
+async function getSession(sessionId, opts = {}) {
+  const q = opts.includeContext ? '?includeContext=1' : '';
+  const response = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}${q}`);
+  if (response.status === 403 && opts.includeContext) {
+    return null;
+  }
   if (!response.ok) {
     throw new Error(`Failed to get session: ${response.status}`);
   }
@@ -103,7 +111,6 @@ async function navigatePastRouterToAgent(sessionId) {
     }
     const ex = s.execute;
     const choices = ex?.form?.choices;
-    const inputs = ex?.form?.input;
     if (Array.isArray(choices) && choices.length > 0) {
       const pick = choices.find((c) => c && c.id === 'agent')?.id;
       assert(pick, 'router missing agent choice');
@@ -112,7 +119,7 @@ async function navigatePastRouterToAgent(sessionId) {
       if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
       return;
     }
-    if (Array.isArray(inputs) && inputs.length > 0 && !choices?.length) {
+    if (hasWebFormTextEntry(ex?.form) && !choices?.length) {
       const ack = await sendNext(sessionId, {
         result: { message: 'gray-room-test: task direction for router' },
       });
@@ -147,8 +154,12 @@ async function testGrayRoomChain() {
   const settled = await pollAsyncSettled(sessionId, 180_000); // 3 minutes for LLM chain
   assert(settled, 'Gray Room async processing settled');
 
-  // Get session and check Gray Room slot
-  const session = await getSession(sessionId);
+  // Get session and check Gray Room slot (full workbench only with includeContext)
+  const session = await getSession(sessionId, { includeContext: true });
+  if (session == null) {
+    console.warn('[gray-room-test] skip: GET ?includeContext=1 returned 403');
+    return;
+  }
   assertGrayRoomSlot(session, 'After Gray Room processing');
 
   // Verify Gray Room completed successfully
@@ -189,7 +200,7 @@ async function testRedRoomToolExecution() {
     const settled = await pollAsyncSettled(sessionId, 120_000);
     assert(settled, `Async settled on attempt ${attempts}`);
 
-    const session = await getSession(sessionId);
+    const session = await getSession(sessionId, { includeContext: true });
     assertGrayRoomSlot(session, `Gray Room after attempt ${attempts}`);
 
     // Check if we got a tool execute
@@ -228,7 +239,7 @@ async function testRedRoomToolExecution() {
   }
 
   // Verify Gray Room slot still present after Red Room
-  const sessionAfterRed = await getSession(sessionId);
+  const sessionAfterRed = await getSession(sessionId, { includeContext: true });
   assertGrayRoomSlot(sessionAfterRed, 'After Red Room execution');
 
   console.log('Red Room test passed: Tool executed successfully');

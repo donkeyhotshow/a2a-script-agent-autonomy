@@ -32,6 +32,25 @@
       "valueFrom": "$.llm.execute"
     },
     {
+      "op": "merge-workbench-sections",
+      "from": "$.llm.workbench.sections",
+      "to": "$.context.workbench.sections"
+    },
+    {
+      "op": "apply-workbench-section-ops",
+      "from": "$.llm.workbench_ops",
+      "sectionsPath": "context.workbench.sections"
+    },
+    {
+      "op": "apply-scratchpad-ops",
+      "from": "$.llm.scratchpad_ops",
+      "scratchpadPath": "context.scratchpad"
+    },
+    {
+      "op": "merge-workbench-slots",
+      "from": "$.llm.workbench.slots"
+    },
+    {
       "op": "copy",
       "from": "$.llm.interrupt",
       "to": "$.interrupt"

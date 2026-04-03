@@ -28,7 +28,11 @@ Current operational state for the `ai-integration` module.
 | Ollama | 11435 | Expected healthy |
 | Promise daemon | n/a | Enabled via config |
 
-**2026-04-03:** Promise completion (`proxy/promises.py`): `_promise_set_done` no longer marks a promise `done` when the upstream LLM returns a non-2xx HTTP status or a JSON body with a provider `error` (e.g. `401`/`429`); the promise is stored as `status=error` with `rec.error` and the raw response body for debugging.
+**2026-04-03:** Promise completion (`proxy/promises.py`): `_promise_set_done` does not mark a promise `done` on non-2xx HTTP **or** on 2xx with a JSON `error` envelope (OpenAI-style), including when `Content-Type` omits `json`. `is_llm_upstream_response_ok()` gates **all** LLM response caches: `proxy_handler.py` (sync path: no store + reject bad hits), `daemon.py` / `promise_routes.py` (invalidate poisoned cache entries on read). Tests: `tests/test_promises_llm_failure.py`.
+
+**2026-04-03 (API keys):** Upstream auth is driven by `config/providers.json` → `api_keys[]` (each entry: `id`, `provider`, `secret`, `priority`, `enabled`). Ollama uses placeholder secret `__OLLAMA_LOCAL__` (no `Authorization`). Z.AI and other cloud rows use real secrets; `${Z_AI_API_KEY}` still resolves from env. On HTTP 429 or JSON `error.code` **1302** (rate limit), the proxy tries the next key for the same provider. Implementation: `proxy/api_key_routing.py`, `proxy_handler.py`, `daemon.py` (reads `routing.json`), `proxy/providers/config_loader.py`.
+**Docs:** [`docs/configuration/PROVIDERS_AND_API_KEYS.md`](docs/configuration/PROVIDERS_AND_API_KEYS.md).
+**Bootstrap:** `config/providers.example.json` (tracked) → copy to `config/providers.json` (gitignored); `python scripts/ensure-providers-config.py` if missing.
 
 ---
 

@@ -239,19 +239,29 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                 this.validateTransformResult(responseData.result, 'simulation.response');
             }
 
-            return {
-                outcome: 'completed',
-                message: 'Simulation replay completed',
-                simulation: {
-                    name: simContext.simulationName,
-                    step: simContext.stepNumber,
-                    mode: 'replay'
-                },
-                content: responseData,
-                execute: {
-                    message: `Replayed simulation: ${simContext.simulationName}, step ${simContext.stepNumber}`
-                }
-            } as ProcessResult;
+            // Include projectId and sessionId in context if they exist in input context
+              const resultContext: Record<string, unknown> = {};
+              if (ctx.projectId) {
+                  resultContext.projectId = ctx.projectId;
+              }
+              if (ctx.sessionId) {
+                  resultContext.sessionId = ctx.sessionId;
+              }
+
+              return {
+                  outcome: 'completed',
+                  message: 'Simulation replay completed',
+                  simulation: {
+                      name: simContext.simulationName,
+                      step: simContext.stepNumber,
+                      mode: 'replay'
+                  },
+                  context: resultContext,
+                  content: responseData,
+                  execute: {
+                      message: `Replayed simulation: ${simContext.simulationName}, step ${simContext.stepNumber}`
+                  }
+              } as ProcessResult;
 
         } catch (error) {
             logger.error('[SimulationRequestProcessor] Replay failed', {
@@ -286,18 +296,28 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
             timestamp: new Date().toISOString()
         };
 
-        return {
-            outcome: 'completed',
-            message: 'Simulation scenario initialized',
-            simulation: {
-                name: simContext.simulationName,
-                mode: 'record',
-                data: simulationData
-            },
-            execute: {
-                message: `Started simulation: ${simContext.simulationName}`
-            }
-        } as ProcessResult;
+          // Include projectId and sessionId in context if they exist in input context
+          const resultContext: Record<string, unknown> = {};
+          if (ctx.projectId) {
+              resultContext.projectId = ctx.projectId;
+          }
+          if (ctx.sessionId) {
+              resultContext.sessionId = ctx.sessionId;
+          }
+
+          return {
+              outcome: 'completed',
+              message: 'Simulation scenario initialized',
+              simulation: {
+                  name: simContext.simulationName,
+                  mode: 'record',
+                  data: simulationData
+              },
+              context: resultContext,
+              execute: {
+                  message: `Started simulation: ${simContext.simulationName}`
+              }
+          } as ProcessResult;
     }
 
     /**

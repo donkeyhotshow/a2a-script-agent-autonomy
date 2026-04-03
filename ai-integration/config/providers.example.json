@@ -1,4 +1,27 @@
 {
+  "api_keys": [
+    {
+      "id": "ollama-local",
+      "provider": "ollama",
+      "secret": "__OLLAMA_LOCAL__",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "id": "z-ai-primary",
+      "provider": "z_ai",
+      "secret": "PASTE_PRIMARY_Z_AI_KEY_HERE",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "id": "z-ai-secondary",
+      "provider": "z_ai",
+      "secret": "PASTE_SECONDARY_Z_AI_KEY_HERE",
+      "enabled": true,
+      "priority": 2
+    }
+  ],
   "providers": {
     "ollama": {
       "type": "ollama",
@@ -73,7 +96,7 @@
     "z_ai": {
       "type": "z_ai",
       "url": "${Z_AI_BASE_URL:-https://api.z.ai/api/paas/v4/}",
-      "api_key": "${Z_AI_API_KEY}",
+      "api_key": "PASTE_PRIMARY_Z_AI_KEY_HERE",
       "enabled": true,
       "priority": 6,
       "models": ["${Z_AI_MODEL:-glm-4.7-flash}"],

@@ -30,6 +30,28 @@ export function assertExecuteSingleKeyOrDialogMessageForm(execute, label) {
   );
 }
 
+/**
+ * True when the Web DTO form exposes a text entry beat: legacy `form.input[]` or Pattern A `form.textarea` object.
+ * Server prompts use `form.textarea` for dialog/agent chat (see transform-execute-validator.ts).
+ */
+export function hasWebFormTextEntry(form) {
+  if (!form || typeof form !== 'object' || Array.isArray(form)) return false;
+  const inputs = form.input;
+  if (Array.isArray(inputs) && inputs.length > 0) return true;
+  const inputsAlt = form.inputs;
+  if (Array.isArray(inputsAlt) && inputsAlt.length > 0) return true;
+  const ta = form.textarea;
+  if (typeof ta === 'string' && ta.trim().length > 0) return true;
+  return Boolean(ta && typeof ta === 'object' && !Array.isArray(ta));
+}
+
+/** Router choices: same as UI (`form.choices` or `form.meta.routerChoices`). */
+export function getRouterFormChoiceArray(form) {
+  if (!form || typeof form !== 'object' || Array.isArray(form)) return [];
+  const raw = form.choices ?? form.meta?.routerChoices;
+  return Array.isArray(raw) ? raw : [];
+}
+
 /** Web DTO execute after `buildExecuteProjection` / `toPublicSession` (WEB_UI_PROTOCOL.md — message, form, attachments). */
 const WEB_UI_EXECUTE_KEYS = new Set(['message', 'llmMessage', 'form', 'attachments']);
 

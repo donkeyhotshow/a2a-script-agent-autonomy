@@ -31,6 +31,13 @@ function Unwrap-SessionBody($body) {
     return $body
 }
 
+function Test-TextEntryForm($form) {
+    if ($null -eq $form) { return $false }
+    if ($null -ne $form.input) { return $true }
+    if ($null -ne $form.textarea) { return $true }
+    return $false
+}
+
 # POST /next ack uses asyncPending only (no promiseId on public DTO). Poll Client API /async then hydrate.
 function Wait-ClientAsyncSettled {
     param([string]$Sid)
@@ -73,9 +80,9 @@ $sessionId = $r1.session.id
 if (-not $sessionId) { Fail "No session id" }
 Ok "Session: $sessionId"
 
-# Sync response - check session.execute for input form
-if (-not $r1.session.execute.form.input) { Fail "No execute.form.input in sync response" }
-Ok "execute.form.input found - initial form received"
+# Sync response — text entry beat: legacy form.input or Pattern A form.textarea
+if (-not (Test-TextEntryForm $r1.session.execute.form)) { Fail "No execute.form input/textarea in sync response" }
+Ok "execute.form text entry found - initial form received"
 
 # Step 1b: Send task via /next to trigger server routing
 Write-Step 1b "Send task via /next to get router"
@@ -93,22 +100,25 @@ Write-Step 2 "Select choice 'dialog' -> expect input form"
 $body2 = '{"result":{"choice":"dialog"}}'
 $r2 = Invoke-RestMethod -Uri "$ClientUrl/api/a2a/sessions/$sessionId/next" -Method POST -Body $body2 -Headers $SessionHeader -TimeoutSec 15
 $s2 = After-NextHydrate -ack $r2 -Sid $sessionId
-# Dialog pipeline may still be writing the step; retry hydrate (async race or slow LLM).
-$waitInputDeadline = (Get-Date).AddSeconds(45)
-while ((-not $s2.execute.form.input) -and (Get-Date) -lt $waitInputDeadline) {
+# Fallback: slow LLM or old Client API bundle without sync on router choice — re-hydrate briefly.
+$waitInputDeadline = (Get-Date).AddSeconds(20)
+while ((-not (Test-TextEntryForm $s2.execute.form)) -and (Get-Date) -lt $waitInputDeadline) {
     Start-Sleep -Seconds 2
     $raw2 = Invoke-RestMethod -Uri "$ClientUrl/api/a2a/sessions/$sessionId" -Headers $SessionHeader -TimeoutSec 15
     $s2 = Unwrap-SessionBody $raw2
 }
-if (-not $s2.execute.form.input) { Fail "No execute.form.input" }
+if (-not (Test-TextEntryForm $s2.execute.form)) { Fail "No execute.form input/textarea" }
 $inputField = $s2.execute.form.input
+if ($null -eq $inputField -and $null -ne $s2.execute.form.textarea) {
+    $inputField = @{ name = 'task' }
+}
 if ($inputField -is [array]) {
     if ($inputField.Count -eq 0) { Fail "Form input array empty" }
     $inputField = $inputField[0]
 } else {
     if (-not $inputField.name) { Fail "Form input missing name" }
 }
-Ok "execute.form.input"
+Ok "execute.form text entry"
 
 # Step 3: message "hello world" -> expect response + form
 Write-Step 3 "Send message 'hello world' -> expect response"

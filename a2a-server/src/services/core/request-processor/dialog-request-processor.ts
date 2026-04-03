@@ -79,6 +79,14 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
         const {executeLlmCall} = await import('./llm-orchestration.js');
 
         const ctx = normalizeContext(context, requestMessage);
+        // Preserve projectId from original context if it exists
+        if (context.projectId) {
+            ctx.projectId = context.projectId;
+        }
+        // Preserve session_id from original context if it exists
+        if (context.session_id) {
+            ctx.session_id = context.session_id;
+        }
         const grayRoomChain = shouldUseGrayRoom(ctx).shouldTrigger;
         const schema = resolveTransformSchema(ctx);
 
@@ -115,7 +123,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 // Получаем responseMd из контекста (gray room уже обработал ответ)
                 const responseMd = ctx['lastLlmResponse'] as string || '';
 
-                return this.grayRoom.runLoop(
+                const grayRoomResult = this.grayRoom.runLoop(
                     ctx,
                     schemaName,
                     responseMd,
@@ -123,6 +131,19 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                     false,
                     grayRoomChain
                 );
+                
+                // Include sessionId in returned context if session_id exists in input
+                if (grayRoomResult.context && typeof grayRoomResult.context === 'object' && !Array.isArray(grayRoomResult.context)) {
+                    const sessionIdValue = ctx['session_id'];
+                    if (sessionIdValue && typeof sessionIdValue === 'string') {
+                        grayRoomResult.context = {
+                            ...grayRoomResult.context,
+                            sessionId: sessionIdValue
+                        };
+                    }
+                }
+                
+                return grayRoomResult;
             }
 
             // Выполняем LLM вызов (или ждем ручной ввод если manual mode)
@@ -168,7 +189,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
             }
 
             // Запускаем gray room loop с ответом от LLM
-            return this.grayRoom.runLoop(
+            const grayRoomResult = this.grayRoom.runLoop(
                 ctx,
                 schemaName,
                 llmResult.responseMd,
@@ -176,6 +197,19 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 false,
                 grayRoomChain
             );
+            
+            // Include sessionId in returned context if session_id exists in input
+            if (grayRoomResult.context && typeof grayRoomResult.context === 'object' && !Array.isArray(grayRoomResult.context)) {
+                const sessionIdValue = ctx['session_id'];
+                if (sessionIdValue && typeof sessionIdValue === 'string') {
+                    grayRoomResult.context = {
+                        ...grayRoomResult.context,
+                        sessionId: sessionIdValue
+                    };
+                }
+            }
+            
+            return grayRoomResult;
         } catch (err) {
             logger.error('[DialogRequestProcessor] Failed', {error: String(err)});
             return {

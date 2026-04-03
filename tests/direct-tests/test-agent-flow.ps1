@@ -54,6 +54,13 @@ function Has-Choices($execute) {
     return ($null -ne $execute -and $null -ne $execute.form -and $null -ne $execute.form.choices -and $execute.form.choices.Count -gt 0)
 }
 
+function Has-TextEntryForm($execute) {
+    if ($null -eq $execute -or $null -eq $execute.form) { return $false }
+    if ($null -ne $execute.form.input) { return $true }
+    if ($null -ne $execute.form.textarea) { return $true }
+    return $false
+}
+
 function Pick-ChoiceId($choices) {
     if ($null -eq $choices -or $choices.Count -eq 0) { return $null }
     # Prefer stable ids when present.
@@ -72,7 +79,9 @@ function Is-ToolExecute($execute) {
 
 # Prefer sending the actual task when a form asks for it.
 function Extract-FormInputName($execute) {
-    if ($null -eq $execute -or $null -eq $execute.form -or $null -eq $execute.form.input) { return $null }
+    if ($null -eq $execute -or $null -eq $execute.form) { return $null }
+    if ($null -ne $execute.form.textarea -and $null -eq $execute.form.input) { return 'task' }
+    if ($null -eq $execute.form.input) { return $null }
     $inp = $execute.form.input
     if ($inp -is [array]) {
         if ($inp.Count -eq 0) { return $null }
@@ -149,7 +158,7 @@ for ($turn = 1; $turn -le $MaxTurns; $turn++) {
         continue
     }
 
-    if ($exec.form -and $exec.form.input) {
+    if (Has-TextEntryForm $exec) {
         $inputName = Extract-FormInputName -execute $exec
         $msg = if ($inputName -eq "task") { $task } else { "yes" }
         Write-Step $turn "POST /next (message to input form: $inputName)"

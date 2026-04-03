@@ -18,6 +18,12 @@ for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PROXY_PORT%" ^| findstr "L
 
 REM Start ai-integration
 cd ai-integration
+python scripts\ensure-providers-config.py
+if errorlevel 1 (
+    echo [AI-Integration] Missing config/providers.example.json — cannot bootstrap providers.json
+    cd ..
+    exit /b 1
+)
 start "ai-integration" cmd /c "set OLLAMA_HOST=http://localhost:%OLLAMA_PORT% && set OLLAMA_MODELS=%OLLAMA_MODELS% && set FORWARD_TIMEOUT_SECONDS=180 && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port %PROXY_PORT%"
 cd ..
 

@@ -61,6 +61,25 @@ export function isRetryableError(err: string): boolean {
     return /fetch failed|econnrefused|etimedout|network|timeout|socket hang up/.test(s);
 }
 
+/**
+ * Map Node/Undici low-signal errors to operator-actionable text (Client API / session messages).
+ */
+export function humanizeUpstreamErrorMessage(raw: string): string {
+    const s = String(raw ?? '').trim();
+    if (!s) return 'Request failed';
+    const low = s.toLowerCase();
+    if (low === 'fetch failed' || low === 'failed to fetch') {
+        return 'Upstream LLM connection failed (check AI integration proxy and Ollama are running and reachable).';
+    }
+    if (/econnrefused|connect econnrefused/i.test(s)) {
+        return 'Connection refused — upstream service is not listening (verify AI integration :11434, Ollama :11435, a2a-server :3000).';
+    }
+    if (/etimedout|timed out/i.test(s) && !/read\s+(timed?\s*out|timeout)/i.test(s)) {
+        return `Upstream request timed out: ${s}`;
+    }
+    return s;
+}
+
 let storageSingleton: RequestFileStorage | null = null;
 function getRequestStorage(): RequestFileStorage {
     if (!storageSingleton) {

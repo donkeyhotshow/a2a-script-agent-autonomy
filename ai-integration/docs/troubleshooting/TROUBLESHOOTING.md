@@ -198,7 +198,7 @@ dir ai-integration\proxy_logs\promises
 **Solutions**
 
 - **1302 / rate limit:** Wait, retry, lower parallel load.
-- **401 / auth:** Fix provider credentials in proxy config (e.g. `Z_AI_API_KEY`), restart the proxy, confirm account status with the provider.
+- **401 / auth:** Fix provider credentials in `config/providers.json` (`api_keys` / `providers.*.api_key`) — see [`../configuration/PROVIDERS_AND_API_KEYS.md`](../configuration/PROVIDERS_AND_API_KEYS.md). Restart the proxy; confirm account status with the provider.
 - **Malformed LLM step JSON** (e.g. multiple keys under `execute`) is a **different** class of problem — A2A contract / model output; use `tests/direct-tests/validators/` and project action-key rules, not this section.
 
 ---

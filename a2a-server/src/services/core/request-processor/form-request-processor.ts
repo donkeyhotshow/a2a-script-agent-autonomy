@@ -150,7 +150,7 @@ export class FormRequestProcessor extends BaseRequestProcessor {
         }
 
         // Default: return available forms
-        return this.handleListForms();
+        return this.handleListForms(ctx);
     }
 
 
@@ -176,7 +176,7 @@ export class FormRequestProcessor extends BaseRequestProcessor {
         // Validate form data
         const validationErrors = await this.validateFormData(form, formData);
         if (validationErrors.length > 0) {
-            return {
+            const result: ProcessResult = {
                 outcome: 'failed' as ProcessOutcome,
                 error: 'Form validation failed',
                 validationErrors,
@@ -186,7 +186,14 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                         choices: form.choices
                     }
                 }
-            } as ProcessResult;
+            };
+            
+            // Include projectId in context if present
+            if (ctx['projectId']) {
+                result.context = { ...(result.context || {}), projectId: ctx['projectId'] };
+            }
+            
+            return result;
         }
 
         // Process the submission
@@ -223,14 +230,27 @@ export class FormRequestProcessor extends BaseRequestProcessor {
         logger.info('[FormRequestProcessor] Handling choice selection', {choiceId, formId});
 
         if (!choiceId) {
-            return {
+            const result: ProcessResult = {
                 outcome: 'failed' as ProcessOutcome,
                 error: 'No choice selected'
-            } as ProcessResult;
+            };
+            
+            // Include projectId in context if present
+            if (ctx['projectId']) {
+                result.context = { projectId: ctx['projectId'] };
+            }
+            
+            return result;
         }
 
         const pipelineInput = {...ctx, choice_id: choiceId, form_id: formId};
         const result = await runFormChoicePipeline(pipelineInput);
+        
+        // Include projectId in context if present
+        if (ctx['projectId']) {
+            result.context = { ...(result.context || {}), projectId: ctx['projectId'] };
+        }
+        
         return result;
     }
 
@@ -244,13 +264,20 @@ export class FormRequestProcessor extends BaseRequestProcessor {
 
         const form = this.forms.get(formId);
         if (!form) {
-            return {
+            const result: ProcessResult = {
                 outcome: 'failed' as ProcessOutcome,
                 error: `Form not found: ${formId}`
-            } as ProcessResult;
+            };
+            
+            // Include projectId in context if present
+            if (ctx['projectId']) {
+                result.context = { projectId: ctx['projectId'] };
+            }
+            
+            return result;
         }
 
-        return {
+        const result: ProcessResult = {
             outcome: 'completed',
             message: 'Form definition',
             form: {
@@ -266,24 +293,38 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     choices: form.choices
                 }
             }
-        } as ProcessResult;
+        };
+        
+            // Include projectId in context if present
+            if (ctx['projectId']) {
+                result.context = { ...(result.context || {}), projectId: ctx['projectId'] };
+            }
+        
+        return result;
     }
 
     /**
      * Handle list forms request
      */
-    private async handleListForms(): Promise<ProcessResult> {
+    private async handleListForms(ctx: Record<string, unknown>): Promise<ProcessResult> {
         const availableForms = Array.from(this.forms.values()).map(f => ({
             id: f.id,
             title: f.title,
             description: f.description
         }));
 
-        return {
+        const result: ProcessResult = {
             outcome: 'completed',
             message: 'Available forms',
             forms: availableForms
-        } as ProcessResult;
+        };
+        
+            // Include projectId in context if present
+            if (ctx && ctx['projectId']) {
+                result.context = { ...(result.context || {}), projectId: ctx['projectId'] };
+            }
+        
+        return result;
     }
 
     /**

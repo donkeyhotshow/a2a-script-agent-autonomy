@@ -4,6 +4,7 @@
  */
 
 import {describe, it, expect, vi} from 'vitest';
+import {humanizeUpstreamErrorMessage} from '../../src/services/core/request/request.service.js';
 
 vi.mock('../../src/utils/logger.js', () => ({
     logger: {
@@ -175,6 +176,16 @@ describe('Request Service', () => {
             const data = {clientId: 'client-1', context: {}, priority: -5};
             const priority = data.priority || 0;
             expect(priority).toBe(-5);
+        });
+    });
+
+    describe('humanizeUpstreamErrorMessage', () => {
+        it('replaces bare fetch failed with actionable text', () => {
+            expect(humanizeUpstreamErrorMessage('fetch failed')).toContain('Upstream LLM connection failed');
+        });
+
+        it('passes through other messages', () => {
+            expect(humanizeUpstreamErrorMessage('Schema validation failed')).toBe('Schema validation failed');
         });
     });
 

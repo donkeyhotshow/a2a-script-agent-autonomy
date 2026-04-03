@@ -8,6 +8,32 @@
 import { unwrapA2aInvokeBody } from './client-api-envelope.mjs';
 import { pickInvokeContextPatch } from './context-invoke-patch.mjs';
 
+/**
+ * Merge `workbench` from invoke patches without dropping `slots` the server omitted.
+ * Shallow assign of `context.workbench` would replace `{ sections, slots: { grayRoom } }`
+ * with `{ sections }` and lose gray-room / interrupt trace on the client session.
+ */
+function mergeWorkbenchPreserveSlots(fallbackWorkbench, mergedWorkbench) {
+    if (mergedWorkbench === undefined) {
+        return fallbackWorkbench;
+    }
+    if (!mergedWorkbench || typeof mergedWorkbench !== 'object' || Array.isArray(mergedWorkbench)) {
+        return mergedWorkbench;
+    }
+    const fb = fallbackWorkbench && typeof fallbackWorkbench === 'object' && !Array.isArray(fallbackWorkbench) ? fallbackWorkbench : {};
+    const fbSlots = fb.slots && typeof fb.slots === 'object' && !Array.isArray(fb.slots) ? fb.slots : {};
+    const inSlots =
+        mergedWorkbench.slots && typeof mergedWorkbench.slots === 'object' && !Array.isArray(mergedWorkbench.slots)
+            ? mergedWorkbench.slots
+            : {};
+    const mergedSlots = {...fbSlots, ...inSlots};
+    return {
+        ...fb,
+        ...mergedWorkbench,
+        slots: mergedSlots,
+    };
+}
+
 export function extractA2aExecute(serverResponse) {
     const inner = unwrapA2aInvokeBody(serverResponse);
     if (!inner) return null;
@@ -34,6 +60,10 @@ export function mergeResponseContext(fallbackContext = {}, serverResponse = null
         Object.assign(base, pickInvokeContextPatch(inner.result.context));
     }
 
+    if (base.workbench !== undefined || fallbackContext?.workbench !== undefined) {
+        base.workbench = mergeWorkbenchPreserveSlots(fallbackContext?.workbench, base.workbench);
+    }
+
     return base;
 }
 
@@ -42,10 +72,7 @@ export function sanitizeContextForServer(context) {
         return {};
     }
     const safe = {...context};
-    delete safe.projectId;
-    delete safe.projectRoot;
     delete safe.clientSessionId;
-    delete safe.sessionId;
     if (!Array.isArray(safe.history)) {
         safe.history = [];
     }

@@ -8,7 +8,7 @@ import * as path from 'path';
 import {logger} from '../../../utils/logger.js';
 import {runPromptsTransform} from '../../../transform/index.js';
 import {fetchLlmResponse, pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
-import {requestService} from '../request/request.service.js';
+import {humanizeUpstreamErrorMessage, requestService} from '../request/request.service.js';
 import {
     isManualLlmModeEnabled,
     storePendingManualLlm,
@@ -174,7 +174,11 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
         );
 
         if (!transformResult.success || !transformResult.files) {
-            return {success: false, error: transformResult.error};
+            const te = transformResult.error;
+            return {
+                success: false,
+                error: typeof te === 'string' ? humanizeUpstreamErrorMessage(te) : te,
+            };
         }
 
         // 2. Prepare messages
@@ -215,7 +219,11 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
         // 4. Call LLM via promise flow (normal mode)
         const initResult = await initLlmPromise(normalizedBase, model, messages, promiseId);
         if (!initResult.success) {
-            return {success: false, error: initResult.error};
+            const ie = initResult.error;
+            return {
+                success: false,
+                error: typeof ie === 'string' ? humanizeUpstreamErrorMessage(ie) : ie,
+            };
         }
 
         const llmPromiseId = initResult.promiseId!;
@@ -227,15 +235,19 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
         // 6. Poll for response
         const responseMd = await pollReadyThenFetch(normalizedBase, llmPromiseId);
         if (!responseMd) {
-            return {success: false, error: 'LLM response fetch failed'};
+            return {
+                success: false,
+                error: humanizeUpstreamErrorMessage('LLM response fetch failed'),
+            };
         }
 
         return {success: true, responseMd, llmPromiseId};
     } catch (err) {
         logger.error('[DialogRequestProcessor] LLM call failed', {error: String(err)});
+        const raw = err instanceof Error ? err.message : String(err);
         return {
             success: false,
-            error: err instanceof Error ? err.message : String(err)
+            error: humanizeUpstreamErrorMessage(raw),
         };
     }
 }
