@@ -7,7 +7,7 @@ import * as path from 'path';
 import {logger} from '../../../utils/logger.js';
 import {RequestFileStorage} from './request-file-storage.js';
 
-export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'waiting_manual_llm';
+export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 export interface CreateRequestData {
     clientId: string;
@@ -62,20 +62,31 @@ export function isRetryableError(err: string): boolean {
 }
 
 /**
- * Map Node/Undici low-signal errors to operator-actionable text (Client API / session messages).
+ * User-visible copy for invoke/session paths. Never mention proxy, Ollama, or ports — details stay in server logs.
+ */
+export const CLIENT_SAFE_PROCESSING_ERROR = "We couldn't complete this step. Please try again.";
+
+/**
+ * Map upstream/network failures to a client-safe string. Non-infrastructure messages pass through.
  */
 export function humanizeUpstreamErrorMessage(raw: string): string {
     const s = String(raw ?? '').trim();
-    if (!s) return 'Request failed';
+    if (!s) return CLIENT_SAFE_PROCESSING_ERROR;
     const low = s.toLowerCase();
     if (low === 'fetch failed' || low === 'failed to fetch') {
-        return 'Upstream LLM connection failed (check AI integration proxy and Ollama are running and reachable).';
+        return CLIENT_SAFE_PROCESSING_ERROR;
     }
     if (/econnrefused|connect econnrefused/i.test(s)) {
-        return 'Connection refused — upstream service is not listening (verify AI integration :11434, Ollama :11435, a2a-server :3000).';
+        return CLIENT_SAFE_PROCESSING_ERROR;
     }
     if (/etimedout|timed out/i.test(s) && !/read\s+(timed?\s*out|timeout)/i.test(s)) {
-        return `Upstream request timed out: ${s}`;
+        return CLIENT_SAFE_PROCESSING_ERROR;
+    }
+    if (isRetryableError(s)) {
+        return CLIENT_SAFE_PROCESSING_ERROR;
+    }
+    if (/llm response fetch failed|^llm error:/i.test(s)) {
+        return CLIENT_SAFE_PROCESSING_ERROR;
     }
     return s;
 }
@@ -166,7 +177,7 @@ export class RequestService {
         if (status === 'completed' || status === 'failed') req.completedAt = now;
         if (result !== undefined) req.result = result;
         if (error !== undefined) req.error = error;
-        if ((status === 'completed' || status === 'waiting_manual_llm') && result !== undefined) {
+        if (status === 'completed' && result !== undefined) {
             const outCtx = result['context'] as Record<string, unknown> | undefined;
             if (outCtx && typeof outCtx === 'object' && !Array.isArray(outCtx)) {
                 req.context = {...(req.context as Record<string, unknown>), ...outCtx};
@@ -358,6 +369,21 @@ export class RequestService {
             retentionMs,
             maxFiles: maxFiles > 0 ? maxFiles : undefined,
         });
+    }
+
+    /**
+     * Shallow-merge fields into the stored request `context` (for UI: `requestPhase`, etc.).
+     */
+    async patchRequestContext(promiseId: string, patch: Record<string, unknown>): Promise<boolean> {
+        const req = await getRequestStorage().load(promiseId);
+        if (!req) return false;
+        const prev =
+            req.context && typeof req.context === 'object' && !Array.isArray(req.context)
+                ? (req.context as Record<string, unknown>)
+                : {};
+        req.context = {...prev, ...patch};
+        await getRequestStorage().save(req);
+        return true;
     }
 
     /**

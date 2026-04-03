@@ -77,7 +77,7 @@ async function waitTerminalRequest(promiseId: string, maxMs: number): Promise<Re
             await new Promise((r) => setTimeout(r, 30));
             continue;
         }
-        if (row.status === 'completed' || row.status === 'failed' || row.status === 'waiting_manual_llm') {
+        if (row.status === 'completed' || row.status === 'failed') {
             return row;
         }
         if (row.status === 'pending') {
@@ -120,15 +120,6 @@ async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> 
                 execute: pr?.execute as Record<string, unknown> | undefined,
                 context: pr?.context as Record<string, unknown> | undefined,
                 message: syncFailureUserMessage(terminal),
-            };
-        }
-
-        if (terminal.status === 'waiting_manual_llm') {
-            return {
-                sync: true,
-                execute: pr?.execute as Record<string, unknown> | undefined,
-                context: pr?.context as Record<string, unknown> | undefined,
-                message: `Manual LLM mode: submit response via POST /api/v1/requests/${current}/llm-response`,
             };
         }
 

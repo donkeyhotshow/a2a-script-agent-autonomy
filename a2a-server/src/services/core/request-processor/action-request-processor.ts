@@ -190,6 +190,13 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
             if (sessionIdValue && typeof sessionIdValue === 'string') {
                 (resultContext as any)['session_id'] = sessionIdValue;
             }
+            // Include projectId and client sessionId in context if they exist in input
+            if (typeof ctx.projectId === 'string') {
+                resultContext.projectId = ctx.projectId;
+            }
+            if (typeof ctx.sessionId === 'string') {
+                resultContext.sessionId = ctx.sessionId;
+            }
             return {
                 outcome: 'completed',
                 context: resultContext,
@@ -398,6 +405,13 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         const sessionIdValue = ctx['session_id'];
         if (sessionIdValue && typeof sessionIdValue === 'string') {
             (resultContext as any)['session_id'] = sessionIdValue;
+        }
+        // Include projectId and client sessionId in context if they exist in input
+        if (typeof ctx.projectId === 'string') {
+            resultContext.projectId = ctx.projectId;
+        }
+        if (typeof ctx.sessionId === 'string') {
+            resultContext.sessionId = ctx.sessionId;
         }
          
         return {

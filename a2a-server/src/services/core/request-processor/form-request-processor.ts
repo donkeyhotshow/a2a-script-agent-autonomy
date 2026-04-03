@@ -246,10 +246,13 @@ export class FormRequestProcessor extends BaseRequestProcessor {
         const pipelineInput = {...ctx, choice_id: choiceId, form_id: formId};
         const result = await runFormChoicePipeline(pipelineInput);
         
-        // Include projectId in context if present
-        if (ctx['projectId']) {
-            result.context = { ...(result.context || {}), projectId: ctx['projectId'] };
-        }
+            // Include projectId and sessionId in context if present
+            if (typeof ctx['projectId'] === 'string' || typeof ctx['sessionId'] === 'string') {
+                result.context = {
+                    ...(typeof ctx['projectId'] === 'string' ? { projectId: ctx['projectId'] } : {}),
+                    ...(typeof ctx['sessionId'] === 'string' ? { sessionId: ctx['sessionId'] } : {})
+                };
+            }
         
         return result;
     }
@@ -319,10 +322,14 @@ export class FormRequestProcessor extends BaseRequestProcessor {
             forms: availableForms
         };
         
-            // Include projectId in context if present
-            if (ctx && ctx['projectId']) {
-                result.context = { ...(result.context || {}), projectId: ctx['projectId'] };
-            }
+        // Include projectId and sessionId in context if present
+        if (typeof ctx['projectId'] === 'string' || typeof ctx['sessionId'] === 'string') {
+            result.context = {
+                ...(result.context || {}),
+                ...(typeof ctx['projectId'] === 'string' ? { projectId: ctx['projectId'] } : {}),
+                ...(typeof ctx['sessionId'] === 'string' ? { sessionId: ctx['sessionId'] } : {})
+            };
+        }
         
         return result;
     }

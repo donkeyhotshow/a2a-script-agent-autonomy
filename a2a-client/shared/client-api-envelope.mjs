@@ -75,5 +75,7 @@ export function normalizePromisePollStatus(promiseStatus) {
         completed,
         failed,
         asyncPending: !(completed || failed),
+        requestPhase: promiseStatus?.requestPhase ?? null,
+        retryAfter: promiseStatus?.retryAfter ?? null,
     };
 }

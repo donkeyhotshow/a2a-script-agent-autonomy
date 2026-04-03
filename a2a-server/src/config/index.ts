@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 
 // Load .env
 const serverRoot = path.resolve(__dirname, '../..');
-dotenv.config({path: path.join(serverRoot, '.env')});
+dotenv.config({path: path.join(serverRoot, '../.env')});
 
 // Helper schemas
 const int = (min: number, max: number, defaultValue: number) =>

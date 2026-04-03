@@ -146,7 +146,6 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 return grayRoomResult;
             }
 
-            // Выполняем LLM вызов (или ждем ручной ввод если manual mode)
             const llmResult = await executeLlmCall({
                 promptsTransformsPath: this.promptsTransformsPath,
                 schemaName,
@@ -155,34 +154,6 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 base: aiHubUrl,
                 model
             });
-
-            // Manual mode: must use outcome waiting_manual_llm so request processor does not overwrite status to completed
-            if (llmResult.manualWait) {
-                logger.warn('[DialogRequestProcessor] Manual LLM mode — waiting operator input (no live LLM)', {promiseId});
-                const manualForm =
-                    (llmResult.manualExecute?.form as Record<string, unknown> | undefined) ??
-                    ({
-                        title: '🛑 MANUAL LLM MODE — Server Paused',
-                        description: `Request ${promiseId} is waiting for manual LLM response. Use POST /api/v1/requests/${promiseId}/llm-response to submit.`,
-                        meta: {
-                            mode: 'manual_llm',
-                            status: 'waiting_operator',
-                            promiseId,
-                        },
-                    } as Record<string, unknown>);
-                return {
-                    outcome: 'waiting_manual_llm',
-                    execute: llmResult.manualExecute ?? {form: manualForm},
-                    context: {
-                        ...ctx,
-                        execution: {
-                            ...(ctx['execution'] as Record<string, unknown>),
-                            step: 'manual_llm_wait',
-                            manualLlmMode: true,
-                        },
-                    },
-                } as ProcessResult;
-            }
 
             if (!llmResult.success || !llmResult.responseMd) {
                 return {outcome: 'failed', error: llmResult.error || 'LLM call failed'} as ProcessResult;
@@ -198,14 +169,20 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 grayRoomChain
             );
             
-            // Include sessionId in returned context if session_id exists in input
+            // Include sessionId, projectId, and client sessionId in returned context
             if (grayRoomResult.context && typeof grayRoomResult.context === 'object' && !Array.isArray(grayRoomResult.context)) {
                 const sessionIdValue = ctx['session_id'];
                 if (sessionIdValue && typeof sessionIdValue === 'string') {
                     grayRoomResult.context = {
                         ...grayRoomResult.context,
-                        sessionId: sessionIdValue
+                        session_id: sessionIdValue
                     };
+                }
+                if (typeof ctx.projectId === 'string') {
+                    (grayRoomResult.context as any).projectId = ctx.projectId;
+                }
+                if (typeof ctx.sessionId === 'string') {
+                    (grayRoomResult.context as any).sessionId = ctx.sessionId;
                 }
             }
             

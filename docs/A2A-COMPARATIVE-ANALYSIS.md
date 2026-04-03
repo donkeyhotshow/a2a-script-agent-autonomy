@@ -617,7 +617,7 @@ A2A is designed for:
 1. **Observability** - Every step on disk, inspectable, replayable
 2. **Local-first** - Runs without cloud dependencies
 3. **Explicit contracts** - Simulations as golden standard
-4. **Operator control** - Manual LLM mode, interrupt hooks
+4. **Operator control** - Interrupt hooks
 5. **Deterministic debugging** - File-based state, deterministic replay
 
 **Trade-offs:**

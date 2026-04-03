@@ -170,6 +170,8 @@ function runViteClientPromisePoll({
                           result: safeResult,
                           execute: webExecute,
                           completed: normalizedStatus.completed,
+                          requestPhase: normalizedStatus.requestPhase,
+                          retryAfter: normalizedStatus.retryAfter,
                       }
                     : {
                           asyncPending,
@@ -177,6 +179,8 @@ function runViteClientPromisePoll({
                           result: safeResult,
                           execute: webExecute,
                           completed: normalizedStatus.completed,
+                          requestPhase: normalizedStatus.requestPhase,
+                          retryAfter: normalizedStatus.retryAfter,
                       };
                 res.end(JSON.stringify(payload));
             } catch (e) {

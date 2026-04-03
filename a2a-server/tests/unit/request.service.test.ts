@@ -4,7 +4,10 @@
  */
 
 import {describe, it, expect, vi} from 'vitest';
-import {humanizeUpstreamErrorMessage} from '../../src/services/core/request/request.service.js';
+import {
+    CLIENT_SAFE_PROCESSING_ERROR,
+    humanizeUpstreamErrorMessage,
+} from '../../src/services/core/request/request.service.js';
 
 vi.mock('../../src/utils/logger.js', () => ({
     logger: {
@@ -180,8 +183,8 @@ describe('Request Service', () => {
     });
 
     describe('humanizeUpstreamErrorMessage', () => {
-        it('replaces bare fetch failed with actionable text', () => {
-            expect(humanizeUpstreamErrorMessage('fetch failed')).toContain('Upstream LLM connection failed');
+        it('replaces bare fetch failed with client-safe text', () => {
+            expect(humanizeUpstreamErrorMessage('fetch failed')).toBe(CLIENT_SAFE_PROCESSING_ERROR);
         });
 
         it('passes through other messages', () => {

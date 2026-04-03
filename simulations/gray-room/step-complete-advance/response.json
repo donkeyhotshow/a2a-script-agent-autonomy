@@ -1,5 +1,7 @@
 {
   "context": {
+    "projectId": "default",
+    "clientSessionId": "sess_gray_room_step_complete_advance",
     "execution": {
       "action": "agent",
       "step": "sequence"

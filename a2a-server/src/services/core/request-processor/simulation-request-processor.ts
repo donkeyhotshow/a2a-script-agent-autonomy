@@ -239,14 +239,14 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                 this.validateTransformResult(responseData.result, 'simulation.response');
             }
 
-            // Include projectId and sessionId in context if they exist in input context
-              const resultContext: Record<string, unknown> = {};
-              if (ctx.projectId) {
-                  resultContext.projectId = ctx.projectId;
-              }
-              if (ctx.sessionId) {
-                  resultContext.sessionId = ctx.sessionId;
-              }
+          // Include projectId and sessionId in context if they exist in input context
+          const resultContext: Record<string, unknown> = {};
+          if (typeof ctx.projectId === 'string') {
+              resultContext.projectId = ctx.projectId;
+          }
+          if (typeof ctx.sessionId === 'string') {
+              resultContext.sessionId = ctx.sessionId;
+          }
 
               return {
                   outcome: 'completed',
@@ -298,10 +298,10 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
 
           // Include projectId and sessionId in context if they exist in input context
           const resultContext: Record<string, unknown> = {};
-          if (ctx.projectId) {
+          if (typeof ctx.projectId === 'string') {
               resultContext.projectId = ctx.projectId;
           }
-          if (ctx.sessionId) {
+          if (typeof ctx.sessionId === 'string') {
               resultContext.sessionId = ctx.sessionId;
           }
 

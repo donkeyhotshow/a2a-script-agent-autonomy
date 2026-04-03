@@ -6,7 +6,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
-export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'waiting_manual_llm';
+export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 export interface RequestResult {
     id: string;

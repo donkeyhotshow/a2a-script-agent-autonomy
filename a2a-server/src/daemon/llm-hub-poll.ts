@@ -3,6 +3,8 @@
  * Waits until ai-integration reports the LLM promise ready, then fetches response body.
  */
 
+import {requestService} from '../services/core/request/request.service.js';
+
 export async function fetchLlmResponse(base: string, llmPromiseId: string): Promise<string | null> {
     const bodyRes = await fetch(`${base}/promise/${llmPromiseId}/response`);
     if (!bodyRes.ok) return null;
@@ -18,10 +20,19 @@ function readEnvMs(name: string, fallback: number, maxCap: number): number {
     return Math.min(Math.max(n, 1000), maxCap);
 }
 
+export type LlmPollOpts = {
+    /** A2A request `promiseId` — context gets `requestPhase: llm_waiting` on each poll tick. */
+    a2aPromiseId?: string;
+};
+
 /**
  * Poll `/promises/status` until `llmPromiseId` is ready, then GET `/promise/:id/response`.
  */
-export async function pollReadyThenFetch(base: string, llmPromiseId: string): Promise<string | null> {
+export async function pollReadyThenFetch(
+    base: string,
+    llmPromiseId: string,
+    opts?: LlmPollOpts
+): Promise<string | null> {
     const pollIntervalMs = readEnvMs('LLM_POLL_INTERVAL_MS', parseInt(process.env.POLL_INTERVAL_MS || '2000', 10) || 2000, 120_000);
     const pollTimeoutMs = readEnvMs(
         'LLM_POLL_TIMEOUT_MS',
@@ -30,6 +41,9 @@ export async function pollReadyThenFetch(base: string, llmPromiseId: string): Pr
     );
     const started = Date.now();
     for (;;) {
+        if (opts?.a2aPromiseId) {
+            await requestService.patchRequestContext(opts.a2aPromiseId, {requestPhase: 'llm_waiting'});
+        }
         const res = await fetch(`${base}/promises/status`);
         if (res.ok) {
             const data = (await res.json()) as {ready?: Array<{promiseId?: string}>};

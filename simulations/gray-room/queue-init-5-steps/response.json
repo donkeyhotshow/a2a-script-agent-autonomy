@@ -1,5 +1,7 @@
 {
   "context": {
+    "projectId": "default",
+    "clientSessionId": "sess_gray_room_queue_init",
     "task": "Initialize a sequence with 5 steps for gray room processing",
     "execution": {
       "action": "agent",

@@ -217,7 +217,7 @@ async function applyAppendToArray(
   const { to, value } = operation;
   
   // Resolve templates in the value
-  let resolvedValue = resolveTemplates(value, context.$out);
+  const resolvedValue = resolveTemplates(value, context.$out);
   // Assistant line: prefer `llm.execute.message` (tool + form turns), then top-level `llm.message` (legacy / completion-only).
   if (
     resolvedValue &&

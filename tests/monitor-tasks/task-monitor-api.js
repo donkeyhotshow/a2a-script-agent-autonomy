@@ -140,48 +140,6 @@ class TaskMonitorApi {
     }
   }
 
-  async getManualLlmPendingRequests() {
-    try {
-      const response = await axios.get(`${this.serverBaseUrl}/requests/manual-llm/pending`);
-      return response.data?.requests || [];
-    } catch (error) {
-      if (error.response?.status === 404) {
-        return []; // Endpoint not available (manual LLM mode disabled)
-      }
-      this.logError('getManualLlmPendingRequests', error, null);
-      return null;
-    }
-  }
-
-  async submitManualLlmResponse(promiseId, responseText) {
-    try {
-      const response = await axios.post(
-        `${this.serverBaseUrl}/requests/${promiseId}/llm-response`,
-        { response: responseText }
-      );
-      return response.data;
-    } catch (error) {
-      this.logError('submitManualLlmResponse', error, null, { promiseId });
-      return null;
-    }
-  }
-
-  async inspectManualLlmStatus(promiseId) {
-    if (!promiseId) return null;
-    try {
-      const resultRes = await axios.get(`${this.serverBaseUrl}/requests/${promiseId}/result`);
-      const data = resultRes.data;
-      return {
-        status: data?.status,
-        manualLlmMode: data?.manualLlmMode || false,
-        hasForm: Boolean(data?.execute?.form),
-        formTitle: data?.execute?.form?.title,
-        formDescription: data?.execute?.form?.description,
-      };
-    } catch (error) {
-      return null;
-    }
-  }
 }
 
 export { TaskMonitorApi };

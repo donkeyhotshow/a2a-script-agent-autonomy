@@ -24,6 +24,10 @@ At the repo root on Windows, `npm run dev` is an alias for `start-all.bat` — t
 | Step-based storage | Numbered folders in Client API |
 | DEV_STATE methodology | Always update before/after work |
 
+## Implementation preferences
+
+**Simplicity first:** prefer the straightforward implementation over shaving bytes or cycles — performance and payload size are secondary unless something is proven to be a bottleneck. **Unification** (one contract, one code path where it makes sense) and **JSON-first** APIs and artifacts (easy to inspect, log, validate, and align across Client API ↔ server ↔ tests) are explicit goals.
+
 ---
 
 ## Full-spectrum agent run (master prompt)

@@ -38,6 +38,10 @@ export interface ContextBlock {
         /** History of executed steps */
         history?: Array<{ step: string; result?: unknown }>;
     };
+    /** Project ID from client */
+    projectId?: string;
+    /** Client session ID */
+    sessionId?: string;
 }
 
 export interface Task {
@@ -316,6 +320,10 @@ export interface RequestContextBlock {
     frameworks?: Record<string, unknown>;
     /** Original task from client */
     new_task?: string[];
+    /** Project ID from client */
+    projectId?: string;
+    /** Client session ID */
+    sessionId?: string;
 }
 
 /**

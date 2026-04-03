@@ -44,12 +44,6 @@ function Poll-ServerDirect {
             $r.data | ConvertTo-Json -Depth 50
             exit 1
         }
-        if ($r.data.status -eq 'waiting_manual_llm') {
-            Write-Host '  waiting_manual_llm (manual LLM mode - not live LLM)' -ForegroundColor Yellow
-            if ($r.data.message) { Write-Host ('  ' + $r.data.message) -ForegroundColor Yellow }
-            $r.data | ConvertTo-Json -Depth 50
-            exit 2
-        }
         Write-Host ('  ' + $r.data.status + ' (' + $i + ')') -ForegroundColor Gray
     }
     throw 'Poll timeout'

@@ -1,4 +1,4 @@
-# DEV_STATE - 2026-04-03 (Manual LLM Mode Added)
+# DEV_STATE - 2026-04-03
 
 **Self-Upgrade:** Process of system self-improvement via daemon script `monitor-and-process-tasks.js` or manual API dialog with agent. See [GLOSSARY.md](GLOSSARY.md). In this repo, **“doing work” = executing concrete tasks _and_, when that queue is empty, driving prompts through the Client API / monitor until new concrete, testable tasks appear and are written back into `tasks/` + `DEV_STATE`**. **Operator order:** advance `tasks/` / `tasks/ide-prompts/` first; **before large session volume**, archive needed `a2a-client/storage/sessions/` ([`tasks/README.md`](tasks/README.md) step 2, *Session archival*); run `prompts-to-agent-mode/` (monitor / session API) after — policy only, not enforced in code ([`tasks/README.md`](tasks/README.md) *Self-Upgrade order*).
 
@@ -13,8 +13,6 @@
 Current system state: **Stack готов** - все сервисы работают; `sim:validate -- --all --step-contract` зелёный.
 
 **Sequence queue checks:** `npm run verify:gray-room -- <snapshot.json>` (or `--stdin`) — offline validation of `context.workbench.sections.sequence` / `predictions` / `history`; [`tests/direct-tests/validators/verify-gray-room-state.mjs`](tests/direct-tests/validators/verify-gray-room-state.mjs).
-
-**NEW: Manual LLM Mode ENABLED** — Operator-controlled LLM responses. `A2A_MANUAL_LLM_MODE=1` active in `.env.local`. See docs section at bottom.
 
 **Recent (operator / parity batch):** Task Monitor with promise queue support; Client API multi-provider LLM routing; session storage improvements.
 
@@ -82,41 +80,6 @@ npm run sim:validate -- --all
 cd a2a-server && npm run test
 cd a2a-client && npm test
 ```
-
----
-
-## Manual LLM Mode
-
-**Env:** `A2A_MANUAL_LLM_MODE=1` to enable (default: 0/off).
-
-When enabled, server pauses before calling LLM and waits for operator to submit response manually. Useful for testing, debugging, using external LLM providers, or manually crafting responses.
-
-**Flow:**
-1. Request submitted via `POST /api/v1/invoke`
-2. Server prepares request.md via transforms
-3. Server stores prepared messages and sets status `waiting_manual_llm`
-4. Response includes `execute.form` with instructions and message preview
-5. Operator submits LLM response via `POST /api/v1/requests/{promiseId}/llm-response`
-6. Server continues with gray room processing
-
-**API Endpoints:**
-```bash
-# List all requests waiting for manual input
-GET /api/v1/requests/manual-llm/pending
-
-# Check request status (shows manualLlmMode: true when waiting)
-GET /api/v1/requests/{promiseId}/result
-
-# Submit manual LLM response
-POST /api/v1/requests/{promiseId}/llm-response
-Body: {"response": "Paste LLM response markdown here"}
-```
-
-**Implementation Files:**
-- `a2a-server/src/services/core/request/manual-llm.service.ts` — core service
-- `a2a-server/src/services/core/request-processor/llm-orchestration.ts` — manual mode hook
-- `a2a-server/src/services/core/request-processor/dialog-request-processor.ts` — wait handling
-- `a2a-server/src/routes/requests.routes.ts` — API endpoints
 
 ---
 

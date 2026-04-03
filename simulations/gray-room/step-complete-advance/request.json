@@ -1,5 +1,10 @@
 {
   "context": {
+    "task": "Step step-1 completed successfully.",
+    "execution": {
+      "action": "agent",
+      "step": "sequence"
+    },
     "workbench": {
       "sections": {
         "sequence": {

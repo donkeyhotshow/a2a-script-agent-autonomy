@@ -237,15 +237,6 @@ async function executePendingRow(request: RequestResult): Promise<ProcessResult>
             }
         }
 
-        if (result.outcome === 'waiting_manual_llm') {
-            await requestService.updateStatus(
-                promiseId,
-                'waiting_manual_llm',
-                typeof result === 'object' && result !== null ? (result as unknown as Record<string, unknown>) : {}
-            );
-            return result;
-        }
-
         await requestService.updateStatus(
             promiseId,
             result.outcome === 'failed' ? 'failed' : 'completed',

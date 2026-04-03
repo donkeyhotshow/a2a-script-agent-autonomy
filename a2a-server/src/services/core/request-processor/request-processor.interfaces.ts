@@ -37,8 +37,7 @@ export type ProcessOutcome =
     | 'failed'
     | 'graph_incomplete'
     | 'action_proposal'
-    | 'ai_action_ready'
-    | 'waiting_manual_llm';
+    | 'ai_action_ready';
 
 export interface Task {
     id: string;

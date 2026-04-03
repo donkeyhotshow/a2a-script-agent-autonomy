@@ -151,11 +151,10 @@ class TaskMonitorProcessing {
         // Check asyncPending to determine if still waiting for LLM
         const isAsyncPending = asyncResult.asyncPending === true || asyncResult.status === 'processing';
         const isCompleted = asyncResult.completed === true || asyncResult.status === 'completed';
-        const isManualLlmMode = asyncResult.status === 'waiting_manual_llm';
         const hasPromiseId = asyncResult.result?.promiseId || asyncResult.execute?.promiseId;
         await this.describeAsyncResult(asyncResult, isAsyncPending);
 
-        if (!isAsyncPending && !isManualLlmMode && idleGateAttempts < 5) {
+        if (!isAsyncPending && idleGateAttempts < 5) {
           const sd = await this.getSession(session.id, { includeContext: true });
           const progressed = await this.tryAdvanceMonitorGate(session.id, taskDescription, sd);
           if (progressed) {
@@ -170,22 +169,6 @@ class TaskMonitorProcessing {
             await new Promise((resolve) => setTimeout(resolve, pollInterval));
             continue;
           }
-        }
-
-        // If Manual LLM Mode is active, create hook and stop polling
-        if (isManualLlmMode) {
-          console.log(`\n[MANUAL LLM MODE] Task paused - awaiting operator input`);
-          const stageInfo = await this.describeTaskStage(session.id, asyncResult);
-          failureReason = 'Manual LLM Mode - requires operator to submit LLM response';
-          await this.createHookDocument(
-            session.id,
-            taskFile.name,
-            'manual-llm-paused',
-            failureReason,
-            { ...stageInfo, stage: 'manual-llm-mode', promiseId: hasPromiseId }
-          );
-          console.log(`Hook document created. Use POST /api/v1/requests/${hasPromiseId}/llm-response to continue`);
-          return false;
         }
 
         // If still processing (asyncPending is true), wait more
@@ -375,25 +358,6 @@ class TaskMonitorProcessing {
         if (!asyncResult) continue;
 
         taskMeta.lastPolled = new Date().toISOString();
-
-        // Check for Manual LLM Mode
-        const isManualLlmMode = asyncResult.status === 'waiting_manual_llm';
-        if (isManualLlmMode) {
-          const promiseId = asyncResult.result?.promiseId || asyncResult.execute?.promiseId;
-          console.log(`\n[MANUAL LLM MODE] Task ${taskName} paused - awaiting operator input`);
-          const stageInfo = await this.describeTaskStage(sessionId, asyncResult);
-          await this.createHookDocument(
-            sessionId,
-            taskName,
-            'manual-llm-paused',
-            'Manual LLM Mode - requires operator to submit LLM response',
-            { ...stageInfo, stage: 'manual-llm-mode', promiseId }
-          );
-          // Remove from active tasks - requires manual intervention
-          this.activeTasks.delete(taskName);
-          this.saveState();
-          continue;
-        }
 
         const isCompleted = this.checkTaskCompletion(asyncResult);
         const isTimeout = this.isTaskTimeout(taskMeta);

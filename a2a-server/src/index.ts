@@ -7,7 +7,6 @@ import {startRequestProcessor, stopRequestProcessor} from './daemon/request-proc
 import {actionRegistry} from './actions/action-registry.js';
 import {algorithmRegistry} from './services/core/black-room/algorithm-registry.js';
 import {getPromptsTransformsPath} from './transform/index.js';
-import {isManualLlmModeEnabled} from './services/core/request/manual-llm.service.js';
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -51,13 +50,6 @@ async function bootstrap(): Promise<void> {
     }
 
     startRequestProcessor(config.requestProcessorIntervalMs);
-
-    if (isManualLlmModeEnabled()) {
-        const banner =
-            'A2A_MANUAL_LLM_MODE is ON: LLM calls are paused until POST /api/v1/requests/{promiseId}/llm-response — see docs/MANUAL-LLM-MODE.md';
-        console.warn(`\n*** ${banner}\n`);
-        logger.warn(`[ManualLlm] ${banner}`);
-    }
 
     server.listen(config.port, () => {
         logger.info(`A2A Server started (Simulation Mode)`, {

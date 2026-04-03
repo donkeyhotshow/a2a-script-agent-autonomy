@@ -8,13 +8,7 @@ import * as path from 'path';
 import {logger} from '../../../utils/logger.js';
 import {runPromptsTransform} from '../../../transform/index.js';
 import {fetchLlmResponse, pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
-import {humanizeUpstreamErrorMessage, requestService} from '../request/request.service.js';
-import {
-    isManualLlmModeEnabled,
-    storePendingManualLlm,
-    buildManualLlmWaitingExecute,
-    type PendingManualLlm,
-} from '../request/manual-llm.service.js';
+import {requestService} from '../request/request.service.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 const DEFAULT_MODEL = 'glm-4.7-flash';
@@ -33,9 +27,6 @@ export interface LlmCallResult {
     responseMd?: string;
     llmPromiseId?: string;
     error?: string;
-    /** When manual LLM mode: execute payload for client (messages preview, submit URL). */
-    manualExecute?: Record<string, unknown>;
-    manualWait?: boolean;
 }
 
 /**
@@ -149,10 +140,7 @@ export async function initLlmPromise(
 
 /**
  * Основная функция оркестрации LLM вызова
- * Выполняет: request transforms → [manual check] → LLM call → poll response
- *
- * When A2A_MANUAL_LLM_MODE=1: pauses after request transforms and stores
- * the prepared messages for operator to submit LLM response manually.
+ * Выполняет: request transforms → LLM call → poll response
  */
 export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallResult> {
     const {
@@ -167,6 +155,8 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
     const normalizedBase = base.replace(/\/$/, '');
 
     try {
+        await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_request_transform'});
+
         // 1. Request transforms → request.md
         const outputDir = await createDialogTransformOutputDir();
         const transformResult = await runRequestTransforms(
@@ -174,80 +164,56 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
         );
 
         if (!transformResult.success || !transformResult.files) {
+            await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
             const te = transformResult.error;
             return {
                 success: false,
-                error: typeof te === 'string' ? humanizeUpstreamErrorMessage(te) : te,
+                error: typeof te === 'string' ? te : te,
             };
         }
 
         // 2. Prepare messages
         const messages = prepareLlmMessages(transformResult.files);
+        await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_hub_submit'});
 
-        // 3. MANUAL MODE CHECK: pause here if manual LLM mode enabled
-        if (isManualLlmModeEnabled()) {
-            logger.warn('[ManualLlm] MANUAL MODE ACTIVE — pausing for operator input (no live LLM call)', {
-                promiseId,
-                schemaName,
-            });
-
-            // Store pending manual LLM data
-            const pending: PendingManualLlm = {
-                promiseId,
-                messages,
-                schemaName,
-                ctxSnapshot: JSON.parse(JSON.stringify(ctx)), // deep clone
-                outputDir,
-                createdAt: new Date(),
-            };
-            storePendingManualLlm(pending);
-
-            // Build special execute that tells client we're waiting
-            const manualExecute = buildManualLlmWaitingExecute(promiseId, messages);
-
-            // Status + persistence: request-processor.service (outcome waiting_manual_llm)
-
-            return {
-                success: true,
-                responseMd: '',
-                llmPromiseId: `manual_${promiseId}`,
-                manualWait: true,
-                manualExecute,
-            };
-        }
-
-        // 4. Call LLM via promise flow (normal mode)
+        // 3. Call LLM via promise flow
         const initResult = await initLlmPromise(normalizedBase, model, messages, promiseId);
         if (!initResult.success) {
+            await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
             const ie = initResult.error;
             return {
                 success: false,
-                error: typeof ie === 'string' ? humanizeUpstreamErrorMessage(ie) : ie,
+                error: typeof ie === 'string' ? ie : ie,
             };
         }
 
         const llmPromiseId = initResult.promiseId!;
 
-        // 5. Store promise ID
+        // 4. Store promise ID
         await requestService.updateLlmPromiseId(promiseId, llmPromiseId);
         logger.info('[DialogRequestProcessor] Polling promise', {llmPromiseId});
 
-        // 6. Poll for response
-        const responseMd = await pollReadyThenFetch(normalizedBase, llmPromiseId);
+        // 5. Poll for response
+        const responseMd = await pollReadyThenFetch(normalizedBase, llmPromiseId, {
+            a2aPromiseId: promiseId,
+        });
         if (!responseMd) {
+            await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
             return {
                 success: false,
-                error: humanizeUpstreamErrorMessage('LLM response fetch failed'),
+                error: 'LLM response fetch failed',
             };
         }
 
+        await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_response_ready'});
         return {success: true, responseMd, llmPromiseId};
     } catch (err) {
         logger.error('[DialogRequestProcessor] LLM call failed', {error: String(err)});
+        await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
         const raw = err instanceof Error ? err.message : String(err);
         return {
             success: false,
-            error: humanizeUpstreamErrorMessage(raw),
+            error: raw,
         };
     }
 }
