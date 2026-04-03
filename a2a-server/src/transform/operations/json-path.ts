@@ -26,11 +26,12 @@ export function query<T = unknown>(obj: unknown, path: string): T | undefined {
     jsonPath = dollar + '.' + path;
   }
   
-  const results = JSONPath({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const results = (JSONPath({
     path: jsonPath,
-    json: obj,
+    json: obj as any,
     resultType: 'all'
-  }) as Array<{value: unknown}>;
+  }) as unknown) as Array<{value: unknown}>;
   
   if (results.length === 0) {
     return undefined;

@@ -215,7 +215,7 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                 responseData = responseTransformResult.output;
                 
                 // Validate execute shape based on schema type (agent or dialog)
-                this.validateTransformExecute(schemaName, responseData['execute'], 'simulation.response');
+                this.validateTransformExecute(schemaName, responseData['execute'] as import('./request-processor.interfaces.js').ExecuteCommand | undefined, 'simulation.response');
                 
                 // Validate result shape (action-key format)
                 this.validateTransformResult(responseData['result'], 'simulation.response');

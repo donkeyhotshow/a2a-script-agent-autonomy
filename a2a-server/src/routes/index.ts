@@ -1,5 +1,6 @@
 import {Router, Request, Response, NextFunction} from 'express';
-import Ajv from 'ajv';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const Ajv = require('ajv') as { new(opts?: Record<string, unknown>): { compile(schema: unknown): (data: unknown) => boolean } };
 import {readFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
