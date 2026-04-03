@@ -55,7 +55,7 @@ See also: [`a2a-client/docs/WEB_UI_PROTOCOL.md`](../a2a-client/docs/WEB_UI_PROTO
 
 | Step | Meaning |
 |------|--------|
-| Create session | `POST /api/a2a/sessions` (optional `task`, `mode`, `projectId`, …) |
+| Create session | `POST /api/a2a/sessions` (optional `task`, `mode`, `projectId`, `llmModel` for AI Hub model id, …) |
 | First user turn | Usually **free text** — direction of work: `POST …/next` with `result.message` **or** shorthand `{ "task": "<natural language>" }` when the session is **not** showing router **choices** |
 | Router turn | When `GET …/sessions/{id}` shows `execute.form.choices`, next `POST …/next` must send **`result.choice`** = a choice **`id`** (shorthand: `{ "task": "<choice id>" }` — same field name, different meaning) |
 | Wait / fetch result | `GET .../async` (repeat until done); hydrate session between turns if unsure |
@@ -66,7 +66,7 @@ Exact shapes: root **`AGENTS.md`** → *Unified manual path* → *Router dialog 
 
 Use this as a **literal** loop for curl or scripts so a low-context prompt does not become a single-shot HTTP trace.
 
-1. **`POST /api/a2a/sessions`** — optional: `mode: "agent"`, `task`, `projectId` (see root **`AGENTS.md`**).
+1. **`POST /api/a2a/sessions`** — optional: `mode: "agent"`, `task`, `projectId`, `llmModel` (e.g. `qwen3:8b` vs `glm-4.7-flash`; see **`GET http://localhost:11434/api/tags`** on the proxy for names + `provider`) (see root **`AGENTS.md`**).
 2. **`GET /api/a2a/sessions/{id}`** — if `execute.form.choices` → next body uses **`result.choice`** (or `{ "task": "<id>" }`); else **`result.message`** / `{ "task": "<free text>" }`.
 3. **`POST /api/a2a/sessions/{id}/next`** with the body from step 2.
 4. **`GET /api/a2a/sessions/{id}/async`** — repeat until not pending / you have a settled `execute` (re-**GET session** if ambiguous).

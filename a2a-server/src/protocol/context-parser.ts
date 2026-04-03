@@ -109,6 +109,10 @@ export function validateContextBlock(context: unknown): { valid: boolean; errors
         errors.push('request_files must be an array of strings');
     }
 
+    if (ctx['llmModel'] !== undefined && (!isString(ctx['llmModel']) || ctx['llmModel'].trim().length === 0)) {
+        errors.push('llmModel must be a non-empty string when present');
+    }
+
     if (ctx['errors'] !== undefined) {
         const errs = ctx['errors'];
         if (!Array.isArray(errs)) {
@@ -123,7 +127,7 @@ export function validateContextBlock(context: unknown): { valid: boolean; errors
 
 const CONTEXT_PASSTHROUGH_KEYS = [
     'version', 'action', 'new_task', 'architectural_features', 'continue',
-    'tasks', 'request_files', 'confirm', 'errors', 'task', 'execution',
+    'tasks', 'request_files', 'confirm', 'errors', 'task', 'execution', 'llmModel',
 ] as const;
 
 export function parseContextBlock(data: unknown): ContextBlock {

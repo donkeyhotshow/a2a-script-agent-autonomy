@@ -175,13 +175,11 @@ Body: {"response": "Paste LLM response markdown here"}
 
 ## Cross-Module: Multi-Provider Model Selection
 
-**Status:** Pending ai-integration proxy normalization (see `ai-integration/DEV_STATE.md`)
+**Status:** Done (API path) — Combined `GET /api/tags` with `provider`; invoke / context **`llmModel`** and Client API **`POST /sessions` { llmModel }** propagate to dialog + gray room (`resolveLlmModelFromContext`). ADR-0059. Optional: Web UI dropdown.
 
 **Goal:** Enable model selection throughout the stack (Z.AI `glm-4.7-flash` vs Ollama `qwen3:8b`).
 
-**Required changes:**
-1. **a2a-server:** Propagate `model` parameter from request to AI Hub invoke
-2. **a2a-client:** UI for model selection (dropdown in session create / settings)
-3. **Shared:** ADR for multi-provider model routing contract
-
-**Blocked by:** ai-integration `/api/tags` normalization task
+**Done:**
+1. **a2a-server:** `context.llmModel` + top-level invoke `llmModel` → AI Hub `/api/chat` body `model`
+2. **a2a-client:** Session create + `/next` merge `llmModel`; full UI picker optional
+3. **Shared:** ADR-0059

@@ -55,6 +55,18 @@ Readiness probe - checks if proxy can handle requests.
 
 ---
 
+### Ollama-compatible discovery
+
+#### GET /api/tags
+
+Combined model list for UIs and the a2a-server stack.
+
+**Behavior:** Merges (in order) models from enabled **non-Ollama** providers in `config/providers.json` (e.g. Z.AI), then live models from `OLLAMA_HOST/api/tags` when reachable, then `virtual_models` from the AI Hub JSON config.
+
+**Response shape:** Ollama-style `{ "models": [ ... ] }`. Each element includes a string **`provider`** identifying the backend (`z_ai`, `ollama`, `virtual`, …). Clients should send `model` on `POST /api/chat` / `POST /api/generate` with one of the listed names; the proxy routes to the correct provider.
+
+---
+
 ### Ollama Management
 
 #### GET /ollama/status

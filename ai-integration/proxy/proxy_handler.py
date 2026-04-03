@@ -9,7 +9,6 @@ import logging
 import uuid
 import datetime
 import time
-from urllib.parse import urlparse
 from flask import Response
 from typing import Optional, Any
 
@@ -45,23 +44,6 @@ from .caching import get_cache
 import requests
 
 
-def _normalize_host_key(url: str) -> str:
-    if not url:
-        return ''
-    parsed = urlparse(url)
-    host = (parsed.hostname or '').lower()
-    if not host:
-        return ''
-    port = parsed.port
-    if port is None:
-        port = 443 if parsed.scheme == 'https' else 80
-    return f"{host}:{port}"
-
-
-def _hosts_equal(a: str, b: str) -> bool:
-    return bool(a and b and _normalize_host_key(a) == _normalize_host_key(b))
-
-
 def _fetch_tags_response(url: str, headers: dict[str, Any], params: Optional[dict[str, Any]]) -> tuple[Optional[requests.Response], Optional[dict]]:
     if not url:
         return None, None
@@ -76,6 +58,80 @@ def _fetch_tags_response(url: str, headers: dict[str, Any], params: Optional[dic
     except Exception:
         return resp, None
     return resp, tags if isinstance(tags, dict) else None
+
+
+def _handle_api_tags_unified(
+    cfg: dict,
+    router,
+    headers: dict[str, Any],
+    forward_args: Optional[dict[str, Any]],
+    should_log: bool,
+    folder_path: str,
+) -> Response:
+    """
+    Combined /api/tags: provider-config models (e.g. z_ai) + live Ollama + virtual_models.
+    Each entry includes a string \"provider\" (e.g. z_ai, ollama, virtual).
+    """
+    models: list[dict[str, Any]] = []
+    existing: set[str] = set()
+
+    if router._initialized:
+        for entry in router.tag_entries_from_non_ollama_providers():
+            if not isinstance(entry, dict):
+                continue
+            k = _normalize_model_key(entry.get('name') or entry.get('model') or '')
+            if k:
+                existing.add(k)
+            models.append(entry)
+
+    ollama_models_injected = 0
+    ollama_base = (OLLAMA_HOST.rstrip('/') or OLLAMA_HOST)
+    if ollama_base:
+        ollama_url = f"{ollama_base}/api/tags"
+        _, ollama_tags = _fetch_tags_response(ollama_url, headers, forward_args or {})
+        if isinstance(ollama_tags, dict):
+            for entry in ollama_tags.get('models') or []:
+                if not isinstance(entry, dict):
+                    continue
+                name_key = _normalize_model_key(entry.get('name') or entry.get('model') or '')
+                if not name_key or name_key in existing:
+                    continue
+                row = dict(entry)
+                row.setdefault('provider', 'ollama')
+                existing.add(name_key)
+                models.append(row)
+                ollama_models_injected += 1
+
+    virtual_models = cfg.get('virtual_models') or {}
+    virtual_models_injected = 0
+    if isinstance(virtual_models, dict):
+        for vm in virtual_models.values():
+            if not isinstance(vm, dict):
+                continue
+            entry = _virtual_tags_entry(vm)
+            entry.setdefault('provider', 'virtual')
+            entry_key = _normalize_model_key(str(entry.get('name', '')))
+            if entry_key and entry_key in existing:
+                continue
+            models.append(entry)
+            if entry_key:
+                existing.add(entry_key)
+            virtual_models_injected += 1
+
+    tags_obj: dict[str, Any] = {'models': models}
+    out = _json_bytes(tags_obj)
+    response = Response(out, status=200, mimetype='application/json')
+    if should_log:
+        save_response(folder_path, {
+            "status_code": 200,
+            "headers": {"Content-Type": "application/json"},
+            "content": out[:10000].decode('utf-8', errors='replace'),
+            "simulated": True,
+            "virtual_models_injected": virtual_models_injected,
+            "ollama_models_injected": ollama_models_injected,
+            "multi_provider_tags": True,
+        })
+    return response
 
 
 def handle_proxy_request(path: str, request) -> Response:
@@ -163,71 +219,10 @@ def handle_proxy_request(path: str, request) -> Response:
                         })
                     return response
         
-        # Handle virtual models - api/tags
+        # Combined multi-provider /api/tags (Z.AI config + live Ollama + virtual_models)
         if request.method == 'GET' and path_norm == 'api/tags':
-            virtual_models = cfg.get('virtual_models') or {}
-            resp, tags_obj = _fetch_tags_response(target_url, headers, forward_args or {})
-            if resp and resp.status_code == 200 and tags_obj is None:
-                return Response(resp.content, status=200, mimetype='application/json')
-            if tags_obj is None:
-                tags_obj = {"models": []}
+            return _handle_api_tags_unified(cfg, router, headers, forward_args, should_log, folder_path)
 
-            models: list[dict[str, Any]] = []
-            existing: set[str] = set()
-            raw_models = tags_obj.get('models')
-            if isinstance(raw_models, list):
-                for entry in raw_models:
-                    if not isinstance(entry, dict):
-                        continue
-                    models.append(entry)
-                    name_key = _normalize_model_key(entry.get('name') or entry.get('model') or '')
-                    if name_key:
-                        existing.add(name_key)
-
-            ollama_models_injected = 0
-            if OLLAMA_HOST and not _hosts_equal(target_url, OLLAMA_HOST):
-                ollama_base = (OLLAMA_HOST.rstrip('/') or OLLAMA_HOST)
-                ollama_url = f"{ollama_base}/api/tags"
-                _, ollama_tags = _fetch_tags_response(ollama_url, headers, forward_args or {})
-                if isinstance(ollama_tags, dict):
-                    for entry in ollama_tags.get('models') or []:
-                        if not isinstance(entry, dict):
-                            continue
-                        name_key = _normalize_model_key(entry.get('name') or entry.get('model') or '')
-                        if not name_key or name_key in existing:
-                            continue
-                        existing.add(name_key)
-                        models.append(entry)
-                        ollama_models_injected += 1
-
-            virtual_models_injected = 0
-            if isinstance(virtual_models, dict):
-                for vm in virtual_models.values():
-                    if not isinstance(vm, dict):
-                        continue
-                    entry = _virtual_tags_entry(vm)
-                    entry_key = _normalize_model_key(str(entry.get('name', '')))
-                    if entry_key and entry_key in existing:
-                        continue
-                    models.append(entry)
-                    if entry_key:
-                        existing.add(entry_key)
-                    virtual_models_injected += 1
-
-            tags_obj['models'] = models
-            out = _json_bytes(tags_obj)
-            response = Response(out, status=200, mimetype='application/json')
-            if should_log:
-                save_response(folder_path, {
-                    "status_code": 200,
-                    "headers": {"Content-Type": "application/json"},
-                    "content": out[:10000].decode('utf-8', errors='replace'),
-                    "simulated": True,
-                    "virtual_models_injected": virtual_models_injected,
-                    "ollama_models_injected": ollama_models_injected,
-                })
-            return response
-        
         # Process model and rules
         requested_model: Optional[str] = None
         resolved_model: Optional[str] = None
@@ -261,11 +256,7 @@ def handle_proxy_request(path: str, request) -> Response:
             body_json['stream'] = False
             
             prompt = _extract_prompt(body_json)
-            
-            # Force qwen3:8b (for debugging)
-            body_json['model'] = 'qwen3:8b'
-            resolved_model = 'qwen3:8b'
-            
+
             # Apply routing rules
             for rule in cfg.get('rules') or []:
                 when = rule.get('when') or {}

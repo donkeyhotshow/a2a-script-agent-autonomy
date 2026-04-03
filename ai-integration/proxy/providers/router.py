@@ -87,24 +87,57 @@ class ProviderRouter:
     
     def _resolve_model(self, model: str) -> str:
         """
-        Resolve model name with redirects.
-        
-        If Z.AI provider is enabled and default, redirect all models to glm-4.7-flash.
-        
-        Args:
-            model: Requested model name
-            
-        Returns:
-            Resolved model name
+        Resolve model name without destroying multi-provider selection.
+
+        When Z.AI is default, only models that no registered provider claims
+        are left unchanged (or mapped via the default provider's resolve_model).
+        Ollama-local names like qwen3:8b must not be rewritten to the Z.AI default.
         """
-        # Check if Z.AI is the default provider and is enabled
-        default_provider = self.config.get_provider(self.config.default_provider)
-        if default_provider and default_provider.name == 'z_ai' and default_provider.enabled:
-            # Get the first model from Z.AI config
-            if default_provider.models:
-                return default_provider.models[0]  # Usually glm-4.7-flash
-        
+        if not model or not str(model).strip():
+            if not self._initialized:
+                return (model or "").strip()
+            return self._get_default_model()
+        model = str(model).strip()
+        if not self._initialized:
+            return model
+        for _name, provider in self._providers.items():
+            if provider.supports_model(model):
+                return model
+        dp_name = self.config.default_provider
+        if dp_name in self._providers:
+            p = self._providers[dp_name]
+            resolved = p.resolve_model(model)
+            if resolved:
+                return resolved
         return model
+
+    def tag_entries_from_non_ollama_providers(self) -> list[dict[str, Any]]:
+        """
+        Ollama-shaped tag rows for models declared on non-Ollama providers (e.g. z_ai).
+        Live Ollama /api/tags is merged separately in the proxy handler.
+        """
+        out: list[dict[str, Any]] = []
+        if not self._initialized:
+            return out
+        for name, provider in self._providers.items():
+            if provider.config.type == "ollama":
+                continue
+            if not provider.config.enabled:
+                continue
+            for m in provider.config.models:
+                if not m or not str(m).strip():
+                    continue
+                mid = str(m).strip()
+                out.append({
+                    "name": mid,
+                    "model": mid,
+                    "modified_at": "",
+                    "size": 0,
+                    "digest": "",
+                    "details": {},
+                    "provider": name,
+                })
+        return out
     
     # ========================================================================
     # Core Routing Methods
@@ -186,7 +219,6 @@ class ProviderRouter:
             await self.initialize()
         
         model = model or self._get_default_model()
-        model = self._resolve_model(model)  # Apply model redirects
         model = self._resolve_model(model)  # Apply model redirects
         enable_fallback = enable_fallback if enable_fallback is not None else self.config.enable_fallback
         

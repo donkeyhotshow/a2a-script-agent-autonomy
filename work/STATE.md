@@ -46,7 +46,7 @@
 | SYS | Улучшение всей системы: приоритеты и связка модулей | **backlog** — [`tasks/system-improvement-priorities.md`](../tasks/system-improvement-priorities.md) |
 | S15 | ai-integration: Z.AI стал default-провайдером, `/api/tags` теперь дополняет локальную Ollama только когда она доступна, `health/ready` смотрит на default-провайдер, README и конфиги обновлены | **done** — proxy_handler.py, config.py, providers/config_loader.py, health_routes.py, README |
 | S16 | Self-Upgrade monitor run (2026-04-03): session `sess_1775163935824` later **404** on Client API (`Session not found`); promise likely stale. Re-run monitor or new session; see follow-up task. | **pending** — [`tasks/pending/monitor-router-interaction-followup.md`](../tasks/pending/monitor-router-interaction-followup.md) |
-| S17 | **Multi-Provider Model Selection:** Normalize ai-integration `/api/tags` to combine Z.AI + Ollama models; add model selection across stack (a2a-server → ai-integration). | **pending** — [`ai-integration/DEV_STATE.md`](../ai-integration/DEV_STATE.md) |
+| S17 | **Multi-Provider Model Selection:** Normalize ai-integration `/api/tags` to combine Z.AI + Ollama models; add model selection across stack (a2a-server → ai-integration). | **done** (core) — proxy `/api/tags` + `provider`; `context.llmModel` / invoke `llmModel` + `POST /sessions` `llmModel`; dialog + gray room use `resolveLlmModelFromContext`; Client API merges `llmModel` on `/next`; ADR-0059, PROXY_API, OPERATOR-CURL. Optional later: dedicated Web UI model dropdown — [`ai-integration/DEV_STATE.md`](../ai-integration/DEV_STATE.md) |
 
 ---
 

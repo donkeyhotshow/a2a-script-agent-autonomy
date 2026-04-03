@@ -129,6 +129,9 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                 mergedContext.execution = previousExecution;
                 console.log('[VitePlugin] Preserving execution.action from session:', previousExecution.action);
             }
+            if (sessionContext.llmModel && !mergedContext.llmModel) {
+                mergedContext.llmModel = sessionContext.llmModel;
+            }
 
             const effectiveTask = submitResult?.message;
             console.log(

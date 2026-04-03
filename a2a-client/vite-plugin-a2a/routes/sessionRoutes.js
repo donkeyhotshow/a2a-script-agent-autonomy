@@ -66,6 +66,7 @@ function buildNewSessionFromRequest({ cwd, d, storageMode }) {
         context: {
             execution: initialExec,
             ...(task ? { task } : {}),
+            ...(isNonEmptyString(d.llmModel) ? { llmModel: d.llmModel.trim() } : {}),
             ...(projectId ? { projectId } : {}),
             ...(projectRoot ? { projectRoot } : {}),
         },

@@ -70,7 +70,9 @@ curl http://localhost:11435/api/tags
 - a2a-server must support `model` parameter in requests (propagate to AI Hub)
 - ADR needed: multi-provider model routing contract
 
-**Status:** TODO | **Priority:** High
+**Status:** Done (core, 2026-04-03) — same as above; `docs/api-reference/PROXY_API.md` documents `GET /api/tags`. a2a-server uses per-invoke `llmModel` (see root ADR-0059). Optional: rich Web UI picker only.
+
+**Priority:** High (wiring complete; UI polish backlog)
 
 ---
 
@@ -159,4 +161,4 @@ Returns provider connection status:
 
 ---
 
-Updated: 2026-03-27
+Updated: 2026-04-03

@@ -22,6 +22,8 @@ import {randomUUID} from 'node:crypto';
 
 export interface InvokeInput {
     context?: unknown;
+    /** Overrides LLM model for this invoke (stored on context as `llmModel` for dialog / gray room). */
+    llmModel?: string;
     task?: string;  // Top-level task field for action_proposal
     message?: string;
     action?: string;  // action type: task_request, approve_action, step_result, action_selection
@@ -183,6 +185,14 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
     }
 
     ensureContextSessionId(ctx);
+
+    const topLlm =
+        typeof input.llmModel === 'string' && input.llmModel.trim()
+            ? input.llmModel.trim()
+            : undefined;
+    if (topLlm) {
+        ctx['llmModel'] = topLlm;
+    }
 
     const message = input.message ?? input.task ?? (result && typeof result === 'object' ? (result as Record<string, unknown>).message as string : undefined);
 

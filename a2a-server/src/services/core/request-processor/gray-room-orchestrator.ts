@@ -9,6 +9,7 @@ import {pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
 import {validateDialogExecuteShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
 import {resolveExecution, resolveHistoryLength} from './normalization.js';
+import {resolveLlmModelFromContext} from './llm-model-resolver.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 const DEFAULT_MODEL = 'qwen3:8b';
@@ -509,6 +510,7 @@ export class GrayRoomOrchestrator {
             messages.push({role: 'user', content: requestMd});
 
             const subHeader = `${promiseId}-intr-${interruptBudget}`;
+            const llmModel = resolveLlmModelFromContext(workingCtx, this.model);
             const chatRes = await fetch(`${this.aiHubUrl}/api/chat?promise=1`, {
                 method: 'POST',
                 headers: {
@@ -516,7 +518,7 @@ export class GrayRoomOrchestrator {
                     'X-Server-Promise-Id': subHeader,
                 },
                 body: JSON.stringify({
-                    model: this.model,
+                    model: llmModel,
                     messages,
                     stream: false,
                 }),
@@ -647,10 +649,11 @@ export class GrayRoomOrchestrator {
                 ].join('\n');
 
                 try {
+                    const sidecarModel = resolveLlmModelFromContext(nextCtx, this.model);
                     const chatRes = await fetch(`${this.aiHubUrl}/api/chat?promise=1`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-Server-Promise-Id': `${promiseId}-compress` },
-                        body: JSON.stringify({ model: this.model, messages: [{ role: 'user', content: compressPrompt }], stream: false }),
+                        body: JSON.stringify({ model: sidecarModel, messages: [{ role: 'user', content: compressPrompt }], stream: false }),
                     });
                     if (chatRes.status === 202) {
                         const initData = (await chatRes.json()) as { promiseId?: string };
@@ -682,10 +685,11 @@ export class GrayRoomOrchestrator {
                     JSON.stringify(nextCtx['context'] ?? {}, null, 2)
                 ].join('\n');
                 try {
+                    const sidecarModel = resolveLlmModelFromContext(nextCtx, this.model);
                     const chatRes = await fetch(`${this.aiHubUrl}/api/chat?promise=1`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-Server-Promise-Id': `${promiseId}-think` },
-                        body: JSON.stringify({ model: this.model, messages: [{ role: 'user', content: thinkingPrompt }], stream: false }),
+                        body: JSON.stringify({ model: sidecarModel, messages: [{ role: 'user', content: thinkingPrompt }], stream: false }),
                     });
                     if (chatRes.status === 202) {
                         const initData = (await chatRes.json()) as { promiseId?: string };
