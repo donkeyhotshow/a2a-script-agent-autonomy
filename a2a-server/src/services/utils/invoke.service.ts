@@ -28,9 +28,8 @@ import {randomUUID} from 'node:crypto';
 
 /**
  * Router beat + `result.choice` → dialog|agent|task-decomposition: set `transformSchema` on the
- * invoke context so `determineRequestType` always routes to the dialog processor even if
- * `execution` is only nested or routing heuristics drift. `resolveTransformSchema` then resolves
- * without relying on `applyRouterPipelineChoice` alone.
+ * invoke context so `resolveTransformSchema` succeeds after normalization. Routing still goes
+ * through the action processor first (`exec.step === router` + pipeline choice → `handleRouterChoice`).
  */
 function applyRouterTransformSchemaHint(ctx: Record<string, unknown>): void {
     const ex = resolveExecution(ctx);

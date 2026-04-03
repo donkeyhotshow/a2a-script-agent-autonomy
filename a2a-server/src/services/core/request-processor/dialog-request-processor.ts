@@ -12,6 +12,7 @@
 
 import {logger} from '../../../utils/logger.js';
 import {getPromptsTransformsPath} from '../../../transform/index.js';
+import type {RequestContextBlock} from '../../../types/index.js';
 import type {RequestContext, ProcessResult} from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {
@@ -53,6 +54,14 @@ export {
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 const DEFAULT_MODEL = 'glm-4.7-flash';
 
+function dialogFailedWithContext(ctx: Record<string, unknown>, error: string): ProcessResult {
+    return {
+        outcome: 'failed',
+        error,
+        context: ctx as unknown as RequestContextBlock,
+    };
+}
+
 export class DialogRequestProcessor extends BaseRequestProcessor {
     private grayRoom: GrayRoomOrchestrator;
     private promptsTransformsPath: string;
@@ -91,7 +100,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
         const schema = resolveTransformSchema(ctx);
 
         if (!schema) {
-            return {outcome: 'failed', error: 'transformSchema required'} as ProcessResult;
+            return dialogFailedWithContext(ctx, 'transformSchema required');
         }
 
         const schemaName = extractSchemaName(schema);
@@ -113,11 +122,11 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 );
 
                 if (!recoveryResult) {
-                    return {outcome: 'failed', error: 'LLM recovery failed'} as ProcessResult;
+                    return dialogFailedWithContext(ctx, 'LLM recovery failed');
                 }
 
                 if (!recoveryResult.success) {
-                    return {outcome: 'failed', error: recoveryResult.error || 'LLM recovery failed'} as ProcessResult;
+                    return dialogFailedWithContext(ctx, recoveryResult.error || 'LLM recovery failed');
                 }
 
                 // Получаем responseMd из контекста (gray room уже обработал ответ)
@@ -156,7 +165,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
             });
 
             if (!llmResult.success || !llmResult.responseMd) {
-                return {outcome: 'failed', error: llmResult.error || 'LLM call failed'} as ProcessResult;
+                return dialogFailedWithContext(ctx, llmResult.error || 'LLM call failed');
             }
 
             // Запускаем gray room loop с ответом от LLM
@@ -189,10 +198,10 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
             return grayRoomResult;
         } catch (err) {
             logger.error('[DialogRequestProcessor] Failed', {error: String(err)});
-            return {
-                outcome: 'failed',
-                error: err instanceof Error ? err.message : String(err),
-            } as ProcessResult;
+            return dialogFailedWithContext(
+                ctx,
+                err instanceof Error ? err.message : String(err)
+            );
         }
     }
 }

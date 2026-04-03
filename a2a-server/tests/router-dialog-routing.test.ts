@@ -60,17 +60,17 @@ describe('determineRequestType router + LLM choice', () => {
         choice_id: 'dialog',
     };
 
-    it('routes to dialog when transformSchema is set (invoke router hint)', () => {
+    it('routes to action when transformSchema is set (invoke hint; handleRouterChoice still runs first)', () => {
         expect(
             determineRequestType({
                 ...routerCtx,
                 transformSchema: 'dialog',
             })
-        ).toBe('dialog');
+        ).toBe('action');
     });
 
-    it('routes to dialog when step is router and result.choice is a pipeline id', () => {
-        expect(determineRequestType(routerCtx)).toBe('dialog');
+    it('routes to action when step is router and result.choice is a pipeline id', () => {
+        expect(determineRequestType(routerCtx)).toBe('action');
     });
 
     it('routes nested execution + root result', () => {
@@ -83,7 +83,7 @@ describe('determineRequestType router + LLM choice', () => {
                 },
                 result: {choice: 'dialog'},
             })
-        ).toBe('dialog');
+        ).toBe('action');
     });
 
     it('routes when only choice_id is set (no result key)', () => {
@@ -94,7 +94,7 @@ describe('determineRequestType router + LLM choice', () => {
                 task: 'hi',
                 choice_id: 'dialog',
             })
-        ).toBe('dialog');
+        ).toBe('action');
     });
 
     it('nested-only execution: root ctx.execution is empty; resolvers still see router', () => {

@@ -72,12 +72,18 @@ export function determineRequestType(context: Record<string, unknown>): RequestT
         return 'action';
     }
 
+    // Router beat B (dialog|agent|task-decomposition): ActionRequestProcessor.handleRouterChoice patches
+    // execution before delegating to dialog. Routing straight to dialog skipped that patch and left
+    // task/router on the client when the LLM hop failed (no context on failed ProcessResult).
+    if (execStep === 'router' && llmChoice !== undefined) {
+        return 'action';
+    }
+
     // Transform pipeline / LLM: transformSchema, or execution.action in LLM modes + (message/task or router choice)
     const llmActions = [...LLM_PIPELINE_ACTIONS] as string[];
     if (
         transformSchema ||
-        (action && llmActions.includes(action) && (hasMessage || llmChoice !== undefined)) ||
-        (execStep === 'router' && llmChoice !== undefined)
+        (action && llmActions.includes(action) && (hasMessage || llmChoice !== undefined))
     ) {
         return 'dialog';
     }
