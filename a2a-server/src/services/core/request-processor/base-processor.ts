@@ -241,7 +241,7 @@ export abstract class BaseRequestProcessor {
      */
     protected isStepResult(ctx: Record<string, unknown>): boolean {
         const actionType = this.getActionType(ctx);
-        return actionType === 'step_result' || (ctx['continue'] && ctx['step_result']);
+        return actionType === 'step_result' || Boolean(ctx['continue'] && ctx['step_result']);
     }
 
     /**
@@ -271,7 +271,7 @@ export class ProcessorRegistry {
      */
     register(type: RequestType, processor: BaseRequestProcessor): void {
         this.processors.set(type, processor);
-        logger.info('[ProcessorRegistry] Registered processor', {type, processor: processor.processorName});
+        logger.info('[ProcessorRegistry] Registered processor', {type, processor: (processor as unknown as {processorName: string}).processorName});
     }
 
     /**

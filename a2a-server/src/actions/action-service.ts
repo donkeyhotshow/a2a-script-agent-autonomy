@@ -276,7 +276,7 @@ export function createActionResponse(params: {
     const { outcome, message, ...rest } = params;
     const response: ActionResponseSimulation = { outcome, message };
     for (const [k, v] of Object.entries(rest)) {
-        if (v !== undefined) (response as Record<string, unknown>)[k] = v;
+        if (v !== undefined) (response as unknown as Record<string, unknown>)[k] = v;
     }
     return response;
 }

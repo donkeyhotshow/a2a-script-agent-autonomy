@@ -21,7 +21,7 @@ import {
 import type {
     RequestContext,
     ProcessResult
-} from '../request-processor.interfaces.js';
+} from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {
     validateAgentExecuteShape,
@@ -54,10 +54,12 @@ export interface SimulationContext {
  * Handles simulation and replay scenarios
  */
 export class SimulationRequestProcessor extends BaseRequestProcessor {
+    private simConfig: SimulationConfig;
+
     constructor(config: Partial<SimulationConfig> = {}) {
-        super('SimulationRequestProcessor', config);
-        this.config = {
-            simulationsBasePath: process.env.SIMULATIONS_PATH || './simulations',
+        super('SimulationRequestProcessor', {});
+        this.simConfig = {
+            simulationsBasePath: process.env['SIMULATIONS_PATH'] || './simulations',
             promptsTransformsPath: getPromptsTransformsPath(),
             enableReplay: true,
             defaultSimulation: null,
@@ -163,11 +165,11 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
 
             // Apply transforms from prompts/transforms (schema from simulation name)
             let requestData = requestContent ? JSON.parse(requestContent) : ctx;
-            const simulationDir = path.join(this.config.simulationsBasePath, simContext.simulationName, String(simContext.stepNumber));
+            const simulationDir = path.join(this.simConfig.simulationsBasePath, simContext.simulationName, String(simContext.stepNumber));
             const schemaName = SIMULATION_TO_SCHEMA[simContext.simulationName] ?? simContext.simulationName;
 
             const requestTransformResult = await runPromptsTransform(
-                this.config.promptsTransformsPath,
+                this.simConfig.promptsTransformsPath,
                 schemaName,
                 requestData,
                 'request',
@@ -196,9 +198,9 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
             }
 
             // Apply response transforms from prompts/transforms (baseDir = simulation dir for response.md)
-            let responseData = { context: requestData.context ?? requestData, llm: { response: responseContent } };
+            let responseData: Record<string, unknown> = { context: requestData['context'] ?? requestData, llm: { response: responseContent } };
             const responseTransformResult = await runPromptsTransform(
-                this.config.promptsTransformsPath,
+                this.simConfig.promptsTransformsPath,
                 schemaName,
                 responseData,
                 'response',
@@ -213,10 +215,10 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                 responseData = responseTransformResult.output;
                 
                 // Validate execute shape based on schema type (agent or dialog)
-                this.validateTransformExecute(schemaName, responseData.execute, 'simulation.response');
+                this.validateTransformExecute(schemaName, responseData['execute'], 'simulation.response');
                 
                 // Validate result shape (action-key format)
-                this.validateTransformResult(responseData.result, 'simulation.response');
+                this.validateTransformResult(responseData['result'], 'simulation.response');
             }
 
             return {
@@ -284,7 +286,7 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
      * Load simulation request.json from file
      */
     private async loadSimulationRequest(simulationName: string, step: number): Promise<string | null> {
-        const simulationDir = path.join(this.config.simulationsBasePath, simulationName, String(step));
+        const simulationDir = path.join(this.simConfig.simulationsBasePath, simulationName, String(step));
         const requestPath = path.join(simulationDir, 'request.json');
 
         if (!existsSync(requestPath)) {
@@ -313,7 +315,7 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
      * Load simulation response from file
      */
     private async loadSimulationResponse(simulationName: string, step: number): Promise<string | null> {
-        const simulationDir = path.join(this.config.simulationsBasePath, simulationName, String(step));
+        const simulationDir = path.join(this.simConfig.simulationsBasePath, simulationName, String(step));
         const responsePath = path.join(simulationDir, 'response.md');
 
         if (!existsSync(responsePath)) {
@@ -348,7 +350,7 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
     ): Promise<Record<string, unknown> | null> {
         const schemaName = SIMULATION_TO_SCHEMA[simulationName] ?? simulationName;
         const pipeline = await loadPromptsTransform(
-            this.config.promptsTransformsPath,
+            this.simConfig.promptsTransformsPath,
             schemaName,
             type,
             step
@@ -366,10 +368,10 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
         input: Record<string, unknown>
     ): Promise<Record<string, unknown>> {
         const schemaName = SIMULATION_TO_SCHEMA[simulationName] ?? simulationName;
-        const simulationDir = path.join(this.config.simulationsBasePath, simulationName, String(step));
+        const simulationDir = path.join(this.simConfig.simulationsBasePath, simulationName, String(step));
 
         const result = await runPromptsTransform(
-            this.config.promptsTransformsPath,
+            this.simConfig.promptsTransformsPath,
             schemaName,
             input,
             type,
@@ -406,7 +408,7 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
      * Validate simulation exists
      */
     async validateSimulation(simulationName: string): Promise<boolean> {
-        const simulationDir = path.join(this.config.simulationsBasePath, simulationName);
+        const simulationDir = path.join(this.simConfig.simulationsBasePath, simulationName);
         return existsSync(simulationDir);
     }
 

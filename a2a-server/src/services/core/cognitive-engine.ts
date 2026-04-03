@@ -137,9 +137,6 @@ export class ReasoningEngine {
         session_id: sessionId,
         turn_id: turnId,
         created_at: new Date().toISOString(),
-        retained_until: new Date(
-          Date.now() + 14 * 24 * 60 * 60 * 1_000,
-        ).toISOString(),
         schema_version: '1.0',
         summary: `Reasoning chain for: ${goal.slice(0, 80)}`,
         data: chain as unknown as Record<string, unknown>,

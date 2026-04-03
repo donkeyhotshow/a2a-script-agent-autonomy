@@ -96,7 +96,7 @@ export function validateContextBlock(context: unknown): { valid: boolean; errors
         errors.push('confirm must be a boolean');
     }
 
-    if (ctx['tasks'] !== undefined && !Array.isArray(ctx['tasks']) && !ctx['tasks'].every(isTask)) {
+    if (ctx['tasks'] !== undefined && !(Array.isArray(ctx['tasks']) && (ctx['tasks'] as unknown[]).every(isTask))) {
         errors.push('tasks must be an array of valid Task objects');
     }
 
@@ -104,7 +104,7 @@ export function validateContextBlock(context: unknown): { valid: boolean; errors
         errors.push('request_files must be an array of strings');
     }
 
-    if (ctx['errors'] !== undefined && !Array.isArray(ctx['errors']) && !ctx['errors'].every(isProtocolError)) {
+    if (ctx['errors'] !== undefined && !(Array.isArray(ctx['errors']) && (ctx['errors'] as unknown[]).every(isProtocolError))) {
         errors.push('errors must be an array of valid ProtocolError objects');
     }
 
@@ -123,7 +123,7 @@ export function parseContextBlock(data: unknown): ContextBlock {
     const ctx = data as Record<string, unknown>;
     const result: ContextBlock = { session_id: ctx['session_id'] as string };
     for (const key of CONTEXT_PASSTHROUGH_KEYS) {
-        if (ctx[key] !== undefined) (result as Record<string, unknown>)[key] = ctx[key];
+        if (ctx[key] !== undefined) (result as unknown as Record<string, unknown>)[key] = ctx[key];
     }
     return result;
 }

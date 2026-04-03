@@ -82,7 +82,7 @@ export class LLMJudge {
     output: string,
     goal: string,
     artifactIds: string[],
-    reasoningChain?: ReasoningChain,
+    _reasoningChain?: ReasoningChain,
     sessionId = 'unknown',
     turn = 0,
   ): Promise<JudgmentResult> {
@@ -108,9 +108,6 @@ export class LLMJudge {
         session_id: sessionId,
         turn_id: turnId,
         created_at: new Date().toISOString(),
-        retained_until: new Date(
-          Date.now() + 14 * 24 * 60 * 60 * 1_000,
-        ).toISOString(),
         schema_version: '1.0',
         severity: result.approved ? 'info' : 'warning',
         summary: `Judgment: ${result.approved ? 'APPROVED' : 'BLOCKED'} (score=${result.overall_score.toFixed(2)})`,

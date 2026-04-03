@@ -108,9 +108,6 @@ export class GoalPlanner {
         session_id: sessionId,
         turn_id: turnId,
         created_at: new Date().toISOString(),
-        retained_until: new Date(
-          Date.now() + 14 * 24 * 60 * 60 * 1_000,
-        ).toISOString(),
         schema_version: '1.0',
         summary: `Execution plan for: ${goal.slice(0, 80)} (${subGoals.length} sub-goals, ${criticalPath.length} critical)`,
         data: plan as unknown as Record<string, unknown>,
@@ -186,9 +183,6 @@ export class GoalPlanner {
         session_id: sessionId,
         turn_id: turnId,
         created_at: new Date().toISOString(),
-        retained_until: new Date(
-          Date.now() + 14 * 24 * 60 * 60 * 1_000,
-        ).toISOString(),
         schema_version: '1.0',
         summary: `Replan after failure of '${failedGoalId}': ${reason.slice(0, 60)}`,
         data: {

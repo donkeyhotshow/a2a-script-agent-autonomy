@@ -54,8 +54,8 @@ const TOOL_FORMATTERS: Record<string, ToolFormatter> = {
     } else if (matches.length > 0) {
       // Infer glob from common directory + extension of matched files
       const files = matches.map((m) => (m as { file?: string }).file ?? '').filter(Boolean);
-      const dir = files[0].includes('/') ? files[0].split('/').slice(0, -1).join('/') : '';
-      const ext = files[0].includes('.') ? files[0].split('.').pop() : '';
+      const dir = files[0]!.includes('/') ? files[0]!.split('/').slice(0, -1).join('/') : '';
+      const ext = files[0]!.includes('.') ? files[0]!.split('.').pop() : '';
       scope = dir && ext ? `${dir}/*.${ext}` : (typeof o.pattern === 'string' ? o.pattern : 'matches');
     } else {
       scope = typeof o.pattern === 'string' ? o.pattern : 'matches';

@@ -62,7 +62,7 @@ export function errorHandler(
             success: false,
             error: {
                 ...errorPayload,
-            },
+            } as unknown as import('../types/index.js').ApiError,
         };
 
         res.status(err.statusCode).json(response);
@@ -84,7 +84,7 @@ export function errorHandler(
     };
 
     if (exposeClient && err.stack) {
-        (response.error as Record<string, unknown>).stack = err.stack;
+        (response.error as unknown as Record<string, unknown>).stack = err.stack;
     }
 
     res.status(500).json(response);

@@ -79,12 +79,12 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
             task: body.task,
             context: body.context,
             message: body.message,
-            code_blocks: body.code_blocks as { path: string; content?: string }[] | undefined,
+            code_blocks: body.code_blocks as unknown as import('../types/index.js').FileBlock[] | undefined,
             action: body.action,
             selectedAction: body.selectedAction,
             stepId: body.stepId,
             stepResult: body.stepResult,
-            result: body.result,
+            result: body.result as Record<string, unknown> | undefined,
             sync: body.sync,
         });
 
@@ -95,7 +95,6 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
                 data: {
                     sync: true,
                     execute: invokeResult.execute,
-                    message: invokeResult.message,
                     context: invokeResult.context,
                 }
             });

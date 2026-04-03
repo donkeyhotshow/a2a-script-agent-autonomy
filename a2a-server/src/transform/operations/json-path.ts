@@ -30,14 +30,14 @@ export function query<T = unknown>(obj: unknown, path: string): T | undefined {
     path: jsonPath,
     json: obj,
     resultType: 'all'
-  });
+  }) as Array<{value: unknown}>;
   
   if (results.length === 0) {
     return undefined;
   }
   
   // Return the first result for simple queries
-  return results[0]?.value as T;
+  return results[0]!.value as T;
 }
 
 /**
@@ -82,8 +82,8 @@ export function set(obj: Record<string, unknown>, path: string, value: unknown):
   let current: unknown = obj;
   
   for (let i = 0; i < parts.length - 1; i++) {
-    const part = parts[i];
-    const nextPart = parts[i + 1];
+    const part = parts[i]!;
+    const nextPart = parts[i + 1]!
     
     if (current === undefined || current === null) {
       break;
@@ -109,7 +109,7 @@ export function set(obj: Record<string, unknown>, path: string, value: unknown):
   }
   
   // Set the final value
-  const lastPart = parts[parts.length - 1];
+  const lastPart = parts[parts.length - 1]!;
   if (current !== undefined && current !== null && typeof current === 'object') {
     (current as Record<string, unknown>)[lastPart] = value;
   } else if (parts.length === 1) {
@@ -207,7 +207,7 @@ export function resolveTemplates(
       // Add text before the match
       parts.push(str.slice(lastIndex, match.index));
       // Add resolved value
-      const path = match[1];
+      const path = match[1] ?? '';
       const resolved = query(context, path);
       parts.push(resolved !== undefined ? String(resolved) : '');
       lastIndex = match.index + match[0].length;
@@ -259,7 +259,7 @@ export function extractJsonFromMarkdown(md: string): unknown {
   if (jsonBlockMatch) {
     console.log('[DEBUG extractJsonFromMarkdown] Found JSON block');
     try {
-      return JSON.parse(jsonBlockMatch[1]);
+      return JSON.parse(jsonBlockMatch[1]!);
     } catch {
       // Fall through to try raw JSON
     }
@@ -270,7 +270,7 @@ export function extractJsonFromMarkdown(md: string): unknown {
   if (codeBlockMatch) {
     console.log('[DEBUG extractJsonFromMarkdown] Found generic code block');
     try {
-      return JSON.parse(codeBlockMatch[1]);
+      return JSON.parse(codeBlockMatch[1]!);
     } catch {
       // Fall through to try raw
     }

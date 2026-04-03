@@ -186,7 +186,7 @@ export function validateCommand(input: ExecuteCommandInput): CommandValidationRe
     }
 
     // Check if command is in whitelist
-    const baseCommand = input.command.split(' ')[0].toLowerCase();
+    const baseCommand = (input.command.split(' ')[0] ?? '').toLowerCase();
     
     if (!ALLOWED_COMMANDS.includes(baseCommand)) {
         return {

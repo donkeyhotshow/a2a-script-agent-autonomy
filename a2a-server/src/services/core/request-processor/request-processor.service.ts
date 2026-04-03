@@ -125,7 +125,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
             promiseId,
             context,
             codeBlocks,
-            message
+            message: message ?? undefined
         };
 
         const result = await routeRequest(requestContext);
@@ -219,7 +219,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
         await requestService.updateStatus(
             promiseId,
             result.outcome === 'failed' ? 'failed' : 'completed',
-            result
+            result as unknown as Record<string, unknown>
         );
         return result;
 
@@ -299,13 +299,13 @@ async function recoverProcessingRequests(): Promise<void> {
         if (!llmPromiseId) continue;
         const result = await recoverDialogFromLlmPromise(promiseId, req.context, llmPromiseId);
         if (result) {
-            if (result.outcome === 'failed') {
-                const errMsg = (result as ProcessResult & {error?: string}).error ?? 'Recovery failed';
+            if (!result.success) {
+                const errMsg = result.error ?? 'Recovery failed';
                 await requestService.updateStatus(promiseId, 'failed', undefined, { message: errMsg });
             } else {
                 await requestService.updateStatus(promiseId, 'completed', result as unknown as Record<string, unknown>);
             }
-            logger.info('[RequestProcessor] Recovered stuck request', {promiseId, outcome: result.outcome});
+            logger.info('[RequestProcessor] Recovered stuck request', {promiseId, success: result.success});
         }
     }
 }

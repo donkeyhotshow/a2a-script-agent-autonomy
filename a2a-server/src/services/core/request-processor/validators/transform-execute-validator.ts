@@ -42,7 +42,7 @@ export function validateDialogExecuteShape(execute: ProcessResult['execute'] | u
         });
         return issues;
     }
-    const toolKeys = [...SINGLE_TOOL_EXECUTE_KEYS];
+    const toolKeys: string[] = [...SINGLE_TOOL_EXECUTE_KEYS];
     const activeToolKeys = keys.filter((k) => toolKeys.includes(k));
     const hasForm = typeof ex['form'] === 'object' && ex['form'] !== null;
     const hasMessage = typeof ex['message'] === 'string' && ex['message'].trim().length > 0;
@@ -227,7 +227,7 @@ export function validateAgentExecuteShape(execute: ProcessResult['execute'] | un
         });
         return issues;
     }
-    const toolKeys = [...SINGLE_TOOL_EXECUTE_KEYS];
+    const toolKeys: string[] = [...SINGLE_TOOL_EXECUTE_KEYS];
     const activeToolKeys = keys.filter((k) => toolKeys.includes(k));
     const hasForm = typeof ex['form'] === 'object' && ex['form'] !== null;
     const hasMessage = typeof ex['message'] === 'string' && ex['message'].trim().length > 0;

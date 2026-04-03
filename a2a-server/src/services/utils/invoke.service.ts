@@ -106,7 +106,7 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
     const {promiseId} = await requestService.create({
         clientId,
         context: ctx,
-        message: message ?? null,
+        message: message ?? undefined,
         codeBlocks: input.code_blocks ?? undefined,
     });
     

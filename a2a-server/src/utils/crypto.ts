@@ -6,7 +6,11 @@ const IV_LEN = 16;
 const AUTH_TAG_LEN = 16;
 
 function getEncryptionKey(): Buffer {
-    const key = config.encryptionKey || config.jwtSecret;
+    const key = (config as Record<string, unknown>)['encryptionKey'] as string | undefined
+        ?? (config as Record<string, unknown>)['jwtSecret'] as string | undefined
+        ?? process.env['ENCRYPTION_KEY']
+        ?? process.env['JWT_SECRET']
+        ?? 'default-dev-key-32-characters!!';
     return crypto.createHash('sha256').update(key).digest();
 }
 
@@ -61,7 +65,7 @@ export function hashSha256(text: string): string {
  * Generate HMAC
  */
 export function generateHmac(data: string, secret?: string): string {
-    const key = secret ?? config.jwtSecret;
+    const key = secret ?? (config as Record<string, unknown>)['jwtSecret'] as string | undefined ?? process.env['JWT_SECRET'] ?? 'dev-hmac-key';
     return crypto.createHmac('sha256', key).update(data, 'utf8').digest('hex');
 }
 

@@ -11,7 +11,7 @@ import {logger} from '../../../utils/logger.js';
 import {actionProcessor} from '../../../actions/action-processor.js';
 import {actionRegistry} from '../../../actions/action-registry.js';
 import type {ActionDefinition} from '../../../actions/types.js';
-import type {RequestContext, ProcessResult, ProcessOutcome} from '../request-processor.interfaces.js';
+import type {RequestContext, ProcessResult, ProcessOutcome} from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {buildRouterForm} from '../../../config/router-static.js';
 
@@ -29,11 +29,10 @@ export interface ActionProcessorConfig {
  */
 export class ActionRequestProcessor extends BaseRequestProcessor {
     constructor(config: Partial<ActionProcessorConfig> = {}) {
-        super('ActionRequestProcessor', config);
+        super('ActionRequestProcessor', {});
         this.config = {
-            maxRetries: 3,
-            enableStepTracking: true,
-            ...config
+            ...this.config,
+            maxRetries: config.maxRetries ?? 3,
         };
     }
 
@@ -136,18 +135,18 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
             const fromMessage = result.message.execute;
             return {
                 outcome: 'completed',
-                context: result.message.context,
+                context: result.message.context as unknown as import('./request-processor.interfaces.js').ProcessResult['context'],
                 activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
-                execute: fromMessage,
+                execute: fromMessage as unknown as import('./request-processor.interfaces.js').ExecuteCommand,
             };
         }
         return {
             outcome: 'completed',
-            context: result.message.context,
+            context: result.message.context as unknown as import('./request-processor.interfaces.js').ProcessResult['context'],
             activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
-            execute: result.message.execute ?? {
+            execute: (result.message.execute ?? {
                 message: result.message.message || 'Action completed',
-            },
+            }) as unknown as import('./request-processor.interfaces.js').ExecuteCommand,
         };
     }
 
@@ -175,9 +174,9 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         const fromMessage = actionResult.message.execute;
         return {
             outcome: 'completed',
-            context: actionResult.message.context,
+            context: actionResult.message.context as unknown as import('./request-processor.interfaces.js').ProcessResult['context'],
             activated_neuron_ids: actionResult.actionId ? [actionResult.actionId] : undefined,
-            execute: fromMessage,
+            execute: fromMessage as unknown as import('./request-processor.interfaces.js').ExecuteCommand,
         };
     }
 
@@ -241,7 +240,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
                     step: 'router'
                 },
                 task: taskText
-            },
+            } as unknown as import('./request-processor.interfaces.js').ProcessResult['context'],
             execute: {
                 form: buildRouterForm(rankedChoices)
             }

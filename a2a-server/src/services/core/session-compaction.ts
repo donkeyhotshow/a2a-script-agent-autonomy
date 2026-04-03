@@ -21,7 +21,7 @@
  *   - Raw tool call/result turns beyond the preserved window
  */
 
-import { logger } from '../../../utils/logger.js';
+import { logger } from '../../utils/logger.js';
 
 // ── Configuration ─────────────────────────────────────────────────────────────
 

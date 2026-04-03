@@ -6,7 +6,8 @@
  * Pipeline order: request.json → server-transforms-request.json → request.md → LLM → response.md → server-transforms-response.json → response.json
  */
 
-import type { JSONValue } from 'jsonify';
+// JSONValue type — defined locally since 'jsonify' has no TypeScript declarations
+type JSONValue = string | number | boolean | null | JSONValue[] | { [key: string]: JSONValue };
 
 /**
  * Operation history entry - represents a single operation in the execution trace.

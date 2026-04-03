@@ -13,7 +13,7 @@ import type {
     RequestContext,
     ProcessResult,
     ProcessOutcome
-} from '../request-processor.interfaces.js';
+} from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {runFormChoicePipeline} from './form-choice-pipeline.js';
 
