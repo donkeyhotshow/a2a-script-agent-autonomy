@@ -1,0 +1,33 @@
+# `fix-vue-imports-batched/5` — response
+
+Mirror of `response.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports-batched",
+      "step": "search-exporter",
+      "progress": {
+        "totalFiles": 50,
+        "currentFile": 3
+      }
+    },
+    "vite_config": {
+      "file": "vite.config.js"
+    },
+    "aliases": {
+      "@": "resources/js",
+      "~": "resources"
+    }
+  },
+  "execute": {
+    "rag-search": {
+      "query": "export userStore",
+      "description": "Пошук файлу, який експортує 'userStore' з помилки",
+      "output": "exporter_file"
+    }
+  }
+}
+```

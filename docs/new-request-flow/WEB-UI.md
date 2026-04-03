@@ -592,4 +592,4 @@ TerminalEmulator.on('output', (text) => {
 - Client API: в dev обычно встроен в Vite (**5173**, `/api/a2a/*`); отдельный SDK — порт **3001**
 - Для RAG поиска требуется Meilisearch на порту 7700
 
-> **Примечание:** Основной поток использует `promiseId` async polling. SSE/WebSocket опционально для realtime updates.
+> **Примечание:** Основной поток использует `promiseId` async polling (HTTP only; no WebSocket/SSE in this repo).

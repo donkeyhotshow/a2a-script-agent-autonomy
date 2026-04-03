@@ -3,7 +3,7 @@ import {
     toMinimalNextAck,
     toPublicNextResponse,
     toPublicSession,
-} from '../../vite-plugin-a2a/routes/utils/session-projection-dto.js';
+} from '../../packages/vite-plugin/routes/utils/session-projection-dto.js';
 
 describe('session-projection-dto', () => {
     it('builds minimal ack for async next calls', () => {

@@ -1,0 +1,42 @@
+# `phpunit-deprecations/4` — request
+
+Mirror of `request.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "знайти застарілі PHPUnit методи",
+    "execution": {
+      "action": "phpunit-deprecations",
+      "step": "detect-deprecations"
+    },
+    "history": [
+      {
+        "step": "scan-phpunit",
+        "status": "completed",
+        "result": {
+          "total": 45
+        }
+      }
+    ]
+  },
+  "result": {
+    "script": {
+      "deprecations": [
+        {
+          "method": "assertEquals",
+          "file": "tests/Unit/UserTest.php",
+          "line": 15,
+          "suggestion": "assertEqualsWithDelta"
+        },
+        {
+          "method": "assertInternalType",
+          "file": "tests/Feature/AuthTest.php",
+          "line": 22,
+          "suggestion": "assertIsArray"
+        }
+      ]
+    }
+  }
+}
+```

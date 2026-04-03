@@ -1,0 +1,9 @@
+{
+  "context": {
+    "task": "sequence queue",
+    "execution": {
+      "action": "agent",
+      "step": "idle"
+    }
+  }
+}

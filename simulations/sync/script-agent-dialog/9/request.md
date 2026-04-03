@@ -32,6 +32,10 @@ This step calls the LLM to suggest additional test cases and edge cases for the 
         "message": "Принял: введём Example.spec и запустим vitest после ручного анализа компонента."
       },
       {
+        "role": "assistant",
+        "message": "Принял задачу: напишем Example.spec и запустим vitest, дайте знать, если нужна дополнительная информация."
+      },
+      {
         "role": "user",
         "message": "Пожалуйста, прогоните vitest на Example.spec и отдайте вывод."
       },

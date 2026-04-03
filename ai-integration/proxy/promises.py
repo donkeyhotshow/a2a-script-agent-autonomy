@@ -51,7 +51,7 @@ def _promise_meta_path(promise_id: str) -> str:
 
 
 def _promise_body_path(promise_id: str) -> str:
-    return os.path.join(_promise_folder(promise_id), 'body.bin')
+    return os.path.join(_promise_folder(promise_id), 'body.md')
 
 
 def _promise_prune_expired() -> None:

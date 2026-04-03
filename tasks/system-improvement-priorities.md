@@ -13,6 +13,8 @@
 4. **Markdown drift** — More `request.md` / `response.md` in sync (S11); optional strict CI check later.
 5. **Gray room** — Interrupt substeps documented and validated; thinking / trace slots remain separate from user workbench sections.
 
+**Sequence / step queue (not started):** canonical schema, `step_complete`, `POST /api/v1/sequence`, client queue UI — tracked in [`tasks/pending/gray-room-system-tasks.md`](pending/gray-room-system-tasks.md).
+
 ## Module touchpoints
 
 | Module | Focus |

@@ -419,6 +419,68 @@ export function validateTransformReferencedFiles(simPath: string, transformFilen
     return warnings;
 }
 
+/**
+ * When `context.workbench.sections.sequence` is present in response.json, enforce minimal shape
+ * (aligned with docs/references/sequence-schema.json).
+ */
+export function collectSequenceWorkbenchWarnings(sequenceVal: unknown, filename: string): string[] {
+    const out: string[] = [];
+    const prefix = `${filename} context.workbench.sections.sequence:`;
+
+    if (Array.isArray(sequenceVal)) {
+        sequenceVal.forEach((step, i) => {
+            if (!step || typeof step !== 'object') {
+                out.push(`${prefix} [${i}] must be an object`);
+                return;
+            }
+            const s = step as Record<string, unknown>;
+            if (typeof s['id'] !== 'string') {
+                out.push(`${prefix} [${i}].id must be a string`);
+            }
+            if (typeof s['title'] !== 'string') {
+                out.push(`${prefix} [${i}].title must be a string`);
+            }
+            if (typeof s['status'] !== 'string') {
+                out.push(`${prefix} [${i}].status must be a string`);
+            }
+        });
+        return out;
+    }
+
+    if (sequenceVal && typeof sequenceVal === 'object' && !Array.isArray(sequenceVal)) {
+        const o = sequenceVal as Record<string, unknown>;
+        const steps = o['steps'];
+        const headIndex = o['headIndex'];
+        if (!Array.isArray(steps)) {
+            out.push(`${prefix} object form requires "steps" array`);
+            return out;
+        }
+        if (typeof headIndex === 'number' && (headIndex < 0 || headIndex >= steps.length)) {
+            out.push(`${prefix} headIndex out of range for steps.length`);
+        }
+        steps.forEach((step: unknown, i: number) => {
+            if (!step || typeof step !== 'object') {
+                out.push(`${prefix} steps[${i}] must be an object`);
+                return;
+            }
+            const s = step as Record<string, unknown>;
+            if (typeof s['id'] !== 'string') {
+                out.push(`${prefix} steps[${i}].id must be a string`);
+            }
+            if (typeof s['title'] !== 'string') {
+                out.push(`${prefix} steps[${i}].title must be a string`);
+            }
+            if (typeof s['status'] !== 'string') {
+                out.push(`${prefix} steps[${i}].status must be a string`);
+            }
+        });
+        return out;
+    }
+
+    out.push(`${prefix} must be a non-null array or { steps, headIndex? }`);
+    return out;
+}
+
 // ============================================
 // File validation
 // ============================================
@@ -481,6 +543,16 @@ export function validateFile(filePath: string, filename: string, opts: ValidateO
         }
     } else if (!fileConfig) {
         result.warnings.push(`No schema defined for: ${filename}`);
+    }
+
+    if (filename === 'response.json' && data && typeof data === 'object' && data !== null && !Array.isArray(data)) {
+        const ctx = (data as Record<string, unknown>)['context'] as Record<string, unknown> | undefined;
+        const seq = ctx?.['workbench'] as Record<string, unknown> | undefined;
+        const sections = seq?.['sections'] as Record<string, unknown> | undefined;
+        const sequenceVal = sections?.['sequence'];
+        if (sequenceVal !== undefined && sequenceVal !== null) {
+            result.warnings.push(...collectSequenceWorkbenchWarnings(sequenceVal, filename));
+        }
     }
 
     if (

@@ -17,6 +17,8 @@ class TaskMonitorDaemon {
     }
     console.log('Initial health check passed');
 
+    await this.promptPromiseManualGateIfNeeded();
+
     // Verify we can connect to the system
     const projects = await this.getProjects();
     if (projects.length === 0) {
@@ -131,6 +133,8 @@ class TaskMonitorDaemon {
       return;
     }
     console.log('Initial health check passed');
+
+    await this.promptPromiseManualGateIfNeeded();
 
     // Verify we can connect to the system
     const projects = await this.getProjects();

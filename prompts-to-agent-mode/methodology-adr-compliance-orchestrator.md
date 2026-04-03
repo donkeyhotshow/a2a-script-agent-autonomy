@@ -2,7 +2,7 @@
 
 ## Sources
 
-- [`methodology/adr-compliance-orchestrator.md`](../../methodology/adr-compliance-orchestrator.md)
+- [`archive/methodology/adr-compliance-orchestrator.md`](../../archive/methodology/adr-compliance-orchestrator.md)
 - [`docs/adr/README.md`](../../docs/adr/README.md)
 
 ## Agent prompt (copy)

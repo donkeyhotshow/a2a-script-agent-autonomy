@@ -54,13 +54,19 @@
     "form": {
       "choices": [
         {
-          "id": "coder"
+          "id": "coder",
+          "label": "Так, відкрити Coder",
+          "description": "Proceed with Coder agent to manually resolve remaining imports."
         },
         {
-          "id": "fix-vue-imports-done-partial"
+          "id": "fix-vue-imports-done-partial",
+          "label": "Ні, залишити як є (частковий результат)",
+          "description": "Keep the partial results; 1 import was fixed."
         },
         {
-          "id": "fix-vue-imports-decline-router"
+          "id": "fix-vue-imports-decline-router",
+          "label": "Повернутись до роутера (зберегти контекст)",
+          "description": "Return to router with unresolved imports preserved in context."
         }
       ]
     }

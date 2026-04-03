@@ -17,7 +17,7 @@ import {
 } from '../request/manual-llm.service.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
-const DEFAULT_MODEL = 'qwen3:8b';
+const DEFAULT_MODEL = 'glm-4.7-flash';
 
 export interface LlmCallOptions {
     promptsTransformsPath: string;
@@ -182,7 +182,7 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
 
         // 3. MANUAL MODE CHECK: pause here if manual LLM mode enabled
         if (isManualLlmModeEnabled()) {
-            logger.info('[ManualLlm] MANUAL MODE ACTIVE — pausing for operator input', {
+            logger.warn('[ManualLlm] MANUAL MODE ACTIVE — pausing for operator input (no live LLM call)', {
                 promiseId,
                 schemaName,
             });

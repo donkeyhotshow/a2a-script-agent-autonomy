@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pickInitialExecution } from '../../vite-plugin-a2a/routes/utils/session-create-initial.js';
+import { pickInitialExecution } from '../../packages/vite-plugin/routes/utils/session-create-initial.js';
 
 describe('pickInitialExecution', () => {
     it('defaults to task/new', () => {

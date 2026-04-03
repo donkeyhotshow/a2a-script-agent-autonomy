@@ -11,9 +11,9 @@ Purpose: define how simulation artifacts map to persisted client session fields 
 ## Canonical Read Pipeline
 
 1. Step artifacts are read from `a2a-client/storage/sessions/{sessionId}/{step}/`.
-2. Canonical session is reconstructed by `loadNewSession()` in `vite-plugin-a2a/storage/newSessions.js`.
-3. API projection/sanitization is applied by `toPublicSession()` in `vite-plugin-a2a/routes/utils/session-projection-dto.js`.
-4. Execute payload is sanitized to web DTO by `buildExecuteProjection` / `buildWebExecute` in `vite-plugin-a2a/routes/utils/execute-projection-dto.js` and `shared/web-execute-dto.mjs`.
+2. Canonical session is reconstructed by `loadNewSession()` in `packages/vite-plugin/storage/newSessions.js`.
+3. API projection/sanitization is applied by `toPublicSession()` in `packages/vite-plugin/routes/utils/session-projection-dto.js`.
+4. Execute payload is sanitized to web DTO by `buildExecuteProjection` / `buildWebExecute` in `packages/vite-plugin/routes/utils/execute-projection-dto.js` and `shared/web-execute-dto.mjs`.
 5. Web store hydrates in `web/js/session-store.js` (`restoreAndReconnect()`, `setExecute()`, `setContext()`, `applyServerMessages()`).
 6. Renderer consumes store/execute in `web/js/task-flow/render.js` (`renderExecute()`, `renderForm()`, `renderWebExecuteMessage()`, `renderResultBlock()`, `renderMessageHistory()`).
 
@@ -41,11 +41,11 @@ Purpose: define how simulation artifacts map to persisted client session fields 
 
 ## Related symbols (quick index)
 
-- Storage reconstruction: `loadNewSession`, `loadNewStep`, `listNewSteps` in `vite-plugin-a2a/storage/newSessions.js`
-- Session projection: `toPublicSession`, `getActiveAsyncWork`, `attachPromiseMeta` in `vite-plugin-a2a/routes/utils/session-projection-dto.js`
-- Execute projection: `buildExecuteProjection`, `buildWebExecute` in `vite-plugin-a2a/routes/utils/execute-projection-dto.js`, `shared/web-execute-dto.mjs`
-- View model adapter: `buildSessionViewModel` in `vite-plugin-a2a/routes/utils/session-view-model.js`
-- History adapter: `projectHistoryTimeline` in `vite-plugin-a2a/routes/utils/history-projection.js`
+- Storage reconstruction: `loadNewSession`, `loadNewStep`, `listNewSteps` in `packages/vite-plugin/storage/newSessions.js`
+- Session projection: `toPublicSession`, `getActiveAsyncWork`, `attachPromiseMeta` in `packages/vite-plugin/routes/utils/session-projection-dto.js`
+- Execute projection: `buildExecuteProjection`, `buildWebExecute` in `packages/vite-plugin/routes/utils/execute-projection-dto.js`, `shared/web-execute-dto.mjs`
+- View model adapter: `buildSessionViewModel` in `packages/vite-plugin/routes/utils/session-view-model.js`
+- History adapter: `projectHistoryTimeline` in `packages/vite-plugin/routes/utils/history-projection.js`
 - Store hydration: `restoreAndReconnect`, `setExecute`, `setContext`, `applyServerMessages` in `web/js/session-store.js`
 - Rendering: `renderExecute`, `renderForm`, `renderWebExecuteMessage`, `renderResultBlock`, `renderMessageHistory` in `web/js/task-flow/render.js`
 

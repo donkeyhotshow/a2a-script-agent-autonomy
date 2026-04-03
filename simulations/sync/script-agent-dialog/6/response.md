@@ -30,6 +30,10 @@ LLM confirms the user's plan to create the test.
       {
         "role": "user",
         "message": "Принял: введём Example.spec и запустим vitest после ручного анализа компонента."
+      },
+      {
+        "role": "assistant",
+        "message": "Принял задачу: напишем Example.spec и запустим vitest, дайте знать, если нужна дополнительная информация."
       }
     ],
     "workbench": {

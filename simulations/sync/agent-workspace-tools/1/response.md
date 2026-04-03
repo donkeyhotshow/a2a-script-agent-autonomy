@@ -1,0 +1,35 @@
+# `agent-workspace-tools/1` — response
+
+Mirror of `response.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "Golden: workspace tools chain (grep, exists, patch, run-script).",
+    "execution": {
+      "action": "agent",
+      "step": "workspace_chain"
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Find usages of createApp under src/"
+      },
+      {
+        "role": "assistant",
+        "step": "workspace_chain",
+        "message": "Searching the repo for createApp under src/."
+      }
+    ]
+  },
+  "execute": {
+    "grep-search": {
+      "pattern": "createApp",
+      "path": "src"
+    }
+  }
+}
+```

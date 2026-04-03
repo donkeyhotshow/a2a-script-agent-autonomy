@@ -295,7 +295,8 @@ class ZAIProvider(OpenAICompatibleProvider):
         if not config.url or config.url.startswith("${Z_AI"):
             config.url = "https://api.z.ai/api/paas/v4/"
         super().__init__(config)
-        
+
         # Z.AI specific headers or configurations can be added here
-        # For example, if Z.AI requires specific headers
-        # self.headers.update({"X-ZAI-Version": "v1"})
+        # Override auth header for Z.AI
+        if self.api_key:
+            self.headers["API-Key"] = self.api_key

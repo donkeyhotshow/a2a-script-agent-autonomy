@@ -4,7 +4,7 @@ This document defines the base linear flow and operational terms used in the pro
 
 **Operator control plane:** the live stack is used as a **sub-agent**—driven by **HTTP** on the Client API: **`Task Monitor`** ([`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)) for indexed tasks through session dialog, or **`curl`** for manual turns. See [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md).
 
-**Empty task queue:** **not** “nothing to do.” Prune root/module [`DEV_STATE.md`](../DEV_STATE.md), discover work (code, sims, risks), write tasks into `DEV_STATE` / `tasks/pending/`. See [`AGENTS.md`](../AGENTS.md) — **“Empty queue — mandatory”** (under Quick Reference) + DEV_STATE Protocol — and [`methodology/tasks.md`](../methodology/tasks.md).
+**Empty task queue:** **not** “nothing to do.” Prune root/module [`DEV_STATE.md`](../DEV_STATE.md), discover work (code, sims, risks), write tasks into `DEV_STATE` / `tasks/pending/`. See [`AGENTS.md`](../AGENTS.md) — **“Empty queue — mandatory”** (under Quick Reference) + DEV_STATE Protocol — and [`methodology/tasks.md`](../archive/methodology/tasks.md).
 
 ## Flow Diagram
 
@@ -46,7 +46,7 @@ Client/UI   Client API      Server/Core       LLM/External AI
 
 **Placement:** extend the client indexer/search pipeline and/or the agent RAG chain so “Professional” runs **after** base retrieval and **before** or **while** results are shown or sent onward.
 
-**Implementation hooks (current codebase):** `packages/rag` searcher / chunk + ranking pipeline; Vite Client API agent RAG chain (`vite-plugin-a2a/routes/utils/agent-rag-chain.js`). “Professional” is the named home for **intelligent output shaping** in that neighborhood.
+**Implementation hooks (current codebase):** `packages/rag` searcher / chunk + ranking pipeline; Vite Client API agent RAG chain (`a2a-client/packages/vite-plugin/routes/utils/agent-rag-chain.js`). “Professional” is the named home for **intelligent output shaping** in that neighborhood.
 
 **Possible techniques** (pick as needed; all client-local unless you deliberately call the server):
 

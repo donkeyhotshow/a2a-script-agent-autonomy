@@ -59,8 +59,18 @@ Defined in [`.env.example`](.env.example). Common overrides:
 | `TASK_MONITOR_POLL_TIMEOUT_MS` | Wall-clock cap for polling |
 | `TASK_MONITOR_TASKS_DIR` | Directory of task markdown files |
 | `TASK_MONITOR_LOG_LEVEL` | `error` / `warn` / `info` / `debug` — `debug` prints full classified error JSON |
+| `TASK_MONITOR_AI_HUB_URL` | AI Integration proxy base (default `http://localhost:11434`) — used to read `GET …/health` |
+| `TASK_MONITOR_SKIP_PROMISE_GATE` | `1` / `true` — skip the interactive **OK** prompt when `promise_daemon_only` is on (CI / scripts) |
 
 `OLLAMA_HOST` and `AI_HUB_URL` are used for health checks when set.
+
+## AI Integration promise queue (`PROMISE_DAEMON_ONLY`)
+
+When the proxy runs with **`PROMISE_DAEMON_ONLY=true`** (default in `ai-integration`), **`?promise=1`** LLM calls are **queued** under `ai-integration/proxy_logs/promises/` until the **promise daemon** runs them or you **`POST /promise/<id>/execute`**. The Task Monitor drives sessions that eventually hit that path, so async steps can **stall** if nothing drains the queue.
+
+On startup (after the normal health check), the monitor calls **`GET {TASK_MONITOR_AI_HUB_URL}/health`**. If the JSON includes **`"promise_daemon_only": true`**, it prints operator instructions (pending list, execute URL, prompt locations) and, in an **interactive** terminal, requires typing **`OK`** before continuing. Non-TTY runs skip the prompt but print a warning; automation should set **`TASK_MONITOR_SKIP_PROMISE_GATE=1`** (or rely on **`CI=true`**) when the daemon is guaranteed to be running.
+
+Full workflow: [`ai-integration/docs/workflows/WORKFLOWS.md`](ai-integration/docs/workflows/WORKFLOWS.md). Proxy overview: [`ai-integration/README.md`](ai-integration/README.md).
 
 ## When something fails
 

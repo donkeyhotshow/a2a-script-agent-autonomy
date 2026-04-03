@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { isActivePromiseStatus, isPromisePollComplete } from '../../vite-plugin-a2a/storage/promise-status.js';
-import { mergeDialogHistoryForInvoke } from '../../vite-plugin-a2a/routes/utils/builders.js';
+import { isActivePromiseStatus, isPromisePollComplete } from '../../packages/vite-plugin/storage/promise-status.js';
+import { mergeDialogHistoryForInvoke } from '../../packages/vite-plugin/routes/utils/builders.js';
 
 describe('isPromisePollComplete', () => {
     it('true when execute or terminal status', () => {

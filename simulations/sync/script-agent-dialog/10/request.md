@@ -21,7 +21,7 @@ User selects the option to add all suggested tests.
       },
       {
         "role": "assistant",
-        "message": "Автоматический скрипт fix-vue-imports применил патч."
+        "message": "Автоматический скрипт fix-vue-imports применил патч: импорт обратно заменён на '@/components/Missing', можно продолжать."
       },
       {
         "role": "user",
@@ -29,7 +29,11 @@ User selects the option to add all suggested tests.
       },
       {
         "role": "user",
-        "message": "Принял: введём Example.spec и запустим vitest."
+        "message": "Принял: введём Example.spec и запустим vitest после ручного анализа компонента."
+      },
+      {
+        "role": "assistant",
+        "message": "Принял задачу: напишем Example.spec и запустим vitest, дайте знать, если нужна дополнительная информация."
       },
       {
         "role": "user",
@@ -45,7 +49,7 @@ User selects the option to add all suggested tests.
       },
       {
         "role": "assistant",
-        "message": "Вот что стоит добавить:\n\n1. Props validation\n2. Empty state\n3. Loading state\n4. Error boundary\n5. Event testing\n6. Slot content\n\nХотите, чтобы я добавил эти тесты в Example.spec?"
+        "message": "Вот что стоит добавить:\n\n1. **Props validation** — тест с невалидными props\n2. **Empty state** — рендер с пустыми данными\n3. **Loading state** — индикатор загрузки\n4. **Error boundary** — обработка ошибок\n5. **Event testing** — проверка emit событий\n6. **Slot content** — тест слотов\n\nХотите, чтобы я добавил эти тесты в Example.spec?"
       }
     ],
     "workbench": {
@@ -53,7 +57,7 @@ User selects the option to add all suggested tests.
         "autoScriptTrigger": {
           "scriptId": "fix-vue-imports",
           "triggeredBy": "assistant",
-          "errorMessage": "Cannot find module @/components/Missing",
+          "errorMessage": "Cannot find module @/components/Missing referenced from Example.vue",
           "file": "resources/js/components/Example.vue",
           "autoRun": true,
           "filesModified": [

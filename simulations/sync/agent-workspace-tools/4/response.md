@@ -1,0 +1,62 @@
+# `agent-workspace-tools/4` — response
+
+Mirror of `response.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "Golden: workspace tools chain (grep, exists, patch, run-script).",
+    "execution": {
+      "action": "agent",
+      "step": "workspace_chain"
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Find usages of createApp under src/"
+      },
+      {
+        "role": "assistant",
+        "step": "workspace_chain",
+        "message": "Searching the repo for createApp under src/."
+      },
+      {
+        "role": "system",
+        "message": "grep-search: createApp — 1 match in src/main.ts"
+      },
+      {
+        "role": "assistant",
+        "step": "workspace_chain",
+        "message": "Verifying src/main.ts exists before editing."
+      },
+      {
+        "role": "system",
+        "message": "file-exists: src/main.ts — exists (file)"
+      },
+      {
+        "role": "assistant",
+        "step": "workspace_chain",
+        "message": "Applying a small patch to src/main.ts."
+      },
+      {
+        "role": "system",
+        "message": "edit-patch: src/main.ts — applied 1 operation"
+      },
+      {
+        "role": "assistant",
+        "step": "workspace_chain",
+        "message": "Running lint-fix after the edit."
+      }
+    ]
+  },
+  "execute": {
+    "run-script": {
+      "scriptId": "lint-fix",
+      "params": {}
+    }
+  }
+}
+```

@@ -15,6 +15,14 @@ class TaskMonitorCore {
     this.maxPollAttempts = parseInt(process.env.TASK_MONITOR_MAX_POLL_ATTEMPTS || '60', 10);
     this.pollTimeoutMs = parseInt(process.env.TASK_MONITOR_POLL_TIMEOUT_MS || '300000', 10);
     this.logLevel = process.env.TASK_MONITOR_LOG_LEVEL || 'info';
+    this.aiHubUrl = (process.env.TASK_MONITOR_AI_HUB_URL || 'http://localhost:11434').replace(
+      /\/$/,
+      ''
+    );
+    this.skipPromiseGate =
+      process.env.TASK_MONITOR_SKIP_PROMISE_GATE === '1' ||
+      process.env.TASK_MONITOR_SKIP_PROMISE_GATE === 'true' ||
+      process.env.TASK_MONITOR_SKIP_PROMISE_GATE === 'yes';
 
     this.hardbitState = { server: false, llm: false, client: true };
     this.activeTasks = new Map(); // sessionId -> task metadata
@@ -257,6 +265,98 @@ class TaskMonitorCore {
     }
 
     return health;
+  }
+
+  /**
+   * When ai-integration runs with PROMISE_DAEMON_ONLY=true, LLM calls with ?promise=1 stay pending
+   * until the promise daemon or a manual POST /promise/{id}/execute runs. Warn and optionally block.
+   */
+  async promptPromiseManualGateIfNeeded() {
+    let data;
+    try {
+      const response = await axios.get(`${this.aiHubUrl}/health`, {
+        timeout: 8000,
+        validateStatus: () => true
+      });
+      if (response.status !== 200 || !response.data || typeof response.data !== 'object') {
+        this.log(
+          'warn',
+          `AI hub health at ${this.aiHubUrl}/health not OK (status ${response.status}); skipping promise-mode gate`
+        );
+        return;
+      }
+      data = response.data;
+    } catch (err) {
+      this.log(
+        'warn',
+        `Could not reach AI hub at ${this.aiHubUrl} (${err.message}); skipping promise-mode gate`
+      );
+      return;
+    }
+
+    if (data.promise_daemon_only !== true) {
+      return;
+    }
+
+    const lines = [
+      '',
+      '='.repeat(72),
+      'AI INTEGRATION: PROMISE_DAEMON_ONLY is ON',
+      '='.repeat(72),
+      'Async LLM requests (?promise=1) are NOT forwarded immediately. They wait in',
+      `${data.storage_dir || 'proxy_logs'}/promises/ until something executes them.`,
+      '',
+      'Options:',
+      `  1) Keep the promise-queue daemon running (stack start / ai-integration daemon).`,
+      `  2) Execute manually: GET ${this.aiHubUrl}/promises/pending then`,
+      `     POST ${this.aiHubUrl}/promise/<promiseId>/execute`,
+      `  3) Or set PROMISE_DAEMON_ONLY=false in ai-integration env for inline execution.`,
+      '',
+      'Inspect prompts: meta.json → log_folder → request.json (body), or',
+      `  GET ${this.aiHubUrl}/promise/<promiseId>/request`,
+      `  UI: ${this.aiHubUrl}/ui/promises/view`,
+      '',
+      'Docs: ai-integration/docs/workflows/WORKFLOWS.md — MONITOR-QUICK-START.md (promise gate)',
+      '='.repeat(72),
+      ''
+    ];
+    console.log(lines.join('\n'));
+
+    if (this.skipPromiseGate || process.env.CI === 'true') {
+      console.log(
+        '[task-monitor] TASK_MONITOR_SKIP_PROMISE_GATE or CI set — continuing without confirmation.'
+      );
+      return;
+    }
+
+    if (!process.stdin.isTTY || !process.stdout.isTTY) {
+      console.warn(
+        '[task-monitor] Non-interactive terminal: not waiting for input. Set TASK_MONITOR_SKIP_PROMISE_GATE=1 in CI, or ensure the promise daemon is running.'
+      );
+      return;
+    }
+
+    const readline = await import('node:readline/promises');
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+    try {
+      let answer = '';
+      while (!/^ok$/i.test(answer)) {
+        answer = (
+          await rl.question(
+            'Type OK and press Enter when promises will be executed (daemon on or you accept manual runs): '
+          )
+        ).trim();
+        if (!/^ok$/i.test(answer)) {
+          console.log('  Expected exactly: OK');
+        }
+      }
+    } finally {
+      rl.close();
+    }
+    console.log('[task-monitor] Continuing.\n');
   }
 
   logHardBit({ phase, serverBusy = false, llmBusy = false, detail = '' }) {

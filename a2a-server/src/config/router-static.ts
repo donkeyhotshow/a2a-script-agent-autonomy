@@ -16,10 +16,18 @@ export interface RouterStaticChoice {
     description: string;
 }
 
+export interface RouterConfig {
+    autoSelectionEnabled: boolean;
+    minKeywordMatches: number;
+    confidenceThreshold: number;
+    defaultPriorityOrder: string[];
+}
+
 export interface RouterStaticConfig {
     formTitle: string;
     llmPipelineActions: string[];
     actionToSchema: Record<string, string>;
+    routerConfig: RouterConfig;
     staticTailChoices: RouterStaticChoice[];
 }
 
@@ -32,6 +40,9 @@ export type LlmPipelineAction = (typeof LLM_PIPELINE_ACTIONS)[number];
 
 /** action → transformSchema (dialog pipeline). */
 export const ACTION_TO_SCHEMA: Record<string, string> = routerStatic.actionToSchema;
+
+/** Router configuration for auto-selection behavior */
+export const ROUTER_CONFIG = routerStatic.routerConfig;
 
 /** Ranked/registry picks first; remaining modes from static tail (deduped by id). */
 function mergeRouterChoices(

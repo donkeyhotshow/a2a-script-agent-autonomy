@@ -86,13 +86,14 @@ class TaskMonitorApi {
     }
   }
 
-  async getSession(sessionId) {
+  async getSession(sessionId, options = {}) {
     try {
       if (!sessionId) {
         this.log('warn', 'getSession called with empty sessionId');
         return null;
       }
-      const response = await axios.get(`${this.baseUrl}/sessions/${sessionId}`);
+      const q = options.includeContext ? '?includeContext=1' : '';
+      const response = await axios.get(`${this.baseUrl}/sessions/${encodeURIComponent(sessionId)}${q}`);
       if (!response.data) {
         this.log('warn', `Session ${sessionId} returned no data`);
         return null;

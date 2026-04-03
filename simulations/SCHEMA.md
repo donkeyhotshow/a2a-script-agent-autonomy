@@ -64,7 +64,7 @@ Canonical files (Web ↔ Client API и Client API ↔ Server ↔ LLM):
   `list-directory`, `grep-search`, `file-exists`, `edit-patch`, `run-script`, and **`script`** DSL payloads); the Web layer exposes `message`, optional
   `llmMessage`, optional `attachments` (`readFiles`, `writtenFiles`, `ragQuery`, `shellCommand`, `listDirectoryPath`,
   grep fields, `fileExistsPath`, `editPatchPath`, `runScriptId`, `pendingClientAction` — for `execute.script`, use **`pendingClientAction: "script"`** plus the synthetic **“Running script…”** `message` when the model did not already set one), and keeps `form` when present. **Parity with dialog/agent** is “same projection rules for whatever the server emitted”; **central** multi-step golden: [`simulations/sync/script/`](sync/script/) (10 steps, scripted pipeline + Web DTO); see [`tasks/script-dialog-agent-response-parity.md`](../tasks/script-dialog-agent-response-parity.md).
-  Implementation: `a2a-client/vite-plugin-a2a/routes/utils/execute-projection-dto.js` (`buildExecuteProjection`), SDK
+  Implementation: `a2a-client/packages/vite-plugin/routes/utils/execute-projection-dto.js` (`buildExecuteProjection`), SDK
   `packages/sdk/src/server/lib/web-execute-dto.ts`. Checklist for client fixture authoring:
   `a2a-client/docs/GOLDEN-SIMULATIONS-CHECKLIST.md`. Debug: `GET /sessions/:id?includeContext=1` returns unsanitized
   session data.

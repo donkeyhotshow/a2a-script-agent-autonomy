@@ -92,6 +92,9 @@ class LegacyConfig:
     PROVIDER_TIMEOUT = int(os.environ.get('PROVIDER_TIMEOUT', '0'))  # 0 = no aiohttp total limit on LLM calls
     
     # Provider API Keys
+    Z_AI_API_KEY = os.environ.get('Z_AI_API_KEY', '')
+    Z_AI_BASE_URL = os.environ.get('Z_AI_BASE_URL', 'https://api.z.ai/api/paas/v4/')
+    Z_AI_MODEL = os.environ.get('Z_AI_MODEL', 'glm-4.7-flash')
     OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')
     GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
     HF_TOKEN = os.environ.get('HF_TOKEN', '')
@@ -267,15 +270,24 @@ if HAS_PYDANTIC:
         # ===========================================
         # Provider API Keys
         # ===========================================
+        z_ai_api_key: Optional[str] = None
+        """Z.AI API key (https://z.ai)."""
+
+        z_ai_base_url: str = "https://api.z.ai/api/paas/v4/"
+        """Z.AI base URL."""
+
+        z_ai_model: str = "glm-4.7-flash"
+        """Z.AI default model."""
+
         openrouter_api_key: Optional[str] = None
         """OpenRouter API key (https://openrouter.ai)."""
-        
+
         groq_api_key: Optional[str] = None
         """Groq API key (https://groq.com)."""
-        
+
         hf_token: Optional[str] = None
         """HuggingFace API token (https://huggingface.co)."""
-        
+
         cohere_api_key: Optional[str] = None
         """Cohere API key (https://cohere.com)."""
 
@@ -444,6 +456,9 @@ if HAS_PYDANTIC:
     DEFAULT_PROVIDER = settings.default_provider
     ENABLE_FALLBACK = settings.enable_fallback
     PROVIDER_TIMEOUT = settings.provider_timeout
+    Z_AI_API_KEY = settings.z_ai_api_key or ''
+    Z_AI_BASE_URL = settings.z_ai_base_url
+    Z_AI_MODEL = settings.z_ai_model
     OPENROUTER_API_KEY = settings.openrouter_api_key or ''
     GROQ_API_KEY = settings.groq_api_key or ''
     HF_TOKEN = settings.hf_token or ''
@@ -498,6 +513,9 @@ else:
     DEFAULT_PROVIDER = legacy.DEFAULT_PROVIDER
     ENABLE_FALLBACK = legacy.ENABLE_FALLBACK
     PROVIDER_TIMEOUT = legacy.PROVIDER_TIMEOUT
+    Z_AI_API_KEY = legacy.Z_AI_API_KEY
+    Z_AI_BASE_URL = legacy.Z_AI_BASE_URL
+    Z_AI_MODEL = legacy.Z_AI_MODEL
     OPENROUTER_API_KEY = legacy.OPENROUTER_API_KEY
     GROQ_API_KEY = legacy.GROQ_API_KEY
     HF_TOKEN = legacy.HF_TOKEN

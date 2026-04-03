@@ -5,7 +5,9 @@ import {config} from './config/index.js';
 import {logger} from './utils/logger.js';
 import {startRequestProcessor, stopRequestProcessor} from './daemon/request-processor-daemon.js';
 import {actionRegistry} from './actions/action-registry.js';
+import {algorithmRegistry} from './services/core/black-room/algorithm-registry.js';
 import {getPromptsTransformsPath} from './transform/index.js';
+import {isManualLlmModeEnabled} from './services/core/request/manual-llm.service.js';
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -16,6 +18,15 @@ async function bootstrap(): Promise<void> {
         logger.info('[Bootstrap] Action registry loaded', {count: actionRegistry.count});
     } catch (err) {
         logger.error('[Bootstrap] Action registry load failed — router will use empty registry / fallback', {
+            error: err instanceof Error ? err.message : String(err),
+        });
+    }
+
+    try {
+        await algorithmRegistry.loadFromDirectory();
+        logger.info('[Bootstrap] Algorithm registry loaded', {count: algorithmRegistry.count()});
+    } catch (err) {
+        logger.error('[Bootstrap] Algorithm registry load failed — Black Room will use empty registry', {
             error: err instanceof Error ? err.message : String(err),
         });
     }
@@ -40,6 +51,13 @@ async function bootstrap(): Promise<void> {
     }
 
     startRequestProcessor(config.requestProcessorIntervalMs);
+
+    if (isManualLlmModeEnabled()) {
+        const banner =
+            'A2A_MANUAL_LLM_MODE is ON: LLM calls are paused until POST /api/v1/requests/{promiseId}/llm-response — see docs/MANUAL-LLM-MODE.md';
+        console.warn(`\n*** ${banner}\n`);
+        logger.warn(`[ManualLlm] ${banner}`);
+    }
 
     server.listen(config.port, () => {
         logger.info(`A2A Server started (Simulation Mode)`, {

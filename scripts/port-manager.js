@@ -21,7 +21,6 @@ const LOCK_DIR = resolve(homedir(), '.a2a', 'port-locks');
 export const DEFAULT_PORTS = {
   server: { port: 3000, range: [3000, 3010], priority: 1, envVar: 'SERVER_PORT' },
   clientApi: { port: 3001, range: [3001, 3011], priority: 2, envVar: 'CLIENT_API_PORT' },
-  clientApiWs: { port: 3002, range: [3002, 3012], priority: 2, envVar: 'WS_PORT' },
   web: { port: 5173, range: [5173, 5183], priority: 3, envVar: 'WEB_PORT' },
   proxy: { port: 11434, range: [11434, 11444], priority: 4, envVar: 'PROXY_PORT' },
   ollama: { port: 11435, range: [11435, 11445], priority: 5, envVar: 'OLLAMA_PORT' },

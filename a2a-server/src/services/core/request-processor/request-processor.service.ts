@@ -23,6 +23,7 @@ import {
 } from './index.js';
 import type {RequestType} from './base-processor.js';
 import { LLM_PIPELINE_ACTIONS, type LlmPipelineAction } from '../../../config/router-static.js';
+import { resolveExecution, resolveResultObject } from './normalization.js';
 
 export { LLM_PIPELINE_ACTIONS, type LlmPipelineAction };
 
@@ -39,25 +40,20 @@ processorRegistry.register('dialog', dialogRequestProcessor);
 /**
  * Determine the request type based on context
  */
-    function determineRequestType(context: Record<string, unknown>): RequestType {
-    // Safely get execution and result, guarding against null values
-    const execRaw = context['execution'];
-    const resultRaw = context['result'];
-    const exec = (execRaw !== null && execRaw !== undefined && typeof execRaw === 'object') 
-        ? execRaw as Record<string, unknown> 
-        : undefined;
-    const result = (resultRaw !== null && resultRaw !== undefined && typeof resultRaw === 'object') 
-        ? resultRaw as Record<string, unknown> 
-        : undefined;
+export function determineRequestType(context: Record<string, unknown>): RequestType {
+    const exec = resolveExecution(context);
+    const result = resolveResultObject(context);
     const transformSchema = context['transformSchema'] as string | undefined;
     const action = (exec?.action ?? context['action']) as string | undefined;
     const task = context['task'] as string | undefined;
     const message = context['message'] as string | undefined;
     const hasMessage = Boolean(result?.message ?? task ?? message);
+    const choiceRaw =
+        (typeof result?.choice === 'string' ? result.choice : '') ||
+        (typeof context['choice_id'] === 'string' ? context['choice_id'] : '');
     const llmChoice =
-        typeof result?.choice === 'string' && LLM_PIPELINE_ACTIONS.includes(result.choice as LlmPipelineAction)
-            ? result.choice
-            : undefined;
+        choiceRaw && LLM_PIPELINE_ACTIONS.includes(choiceRaw as LlmPipelineAction) ? choiceRaw : undefined;
+    const execStep = exec?.step as string | undefined;
 
     // Check for simulation requests first
     if (context['simulation'] || context['replay'] || context['simulation_name'] || context['simulation_step']) {
@@ -68,14 +64,19 @@ processorRegistry.register('dialog', dialogRequestProcessor);
     const llmActions = [...LLM_PIPELINE_ACTIONS] as string[];
     if (
         transformSchema ||
-        (action && llmActions.includes(action) && (hasMessage || llmChoice !== undefined))
+        (action && llmActions.includes(action) && (hasMessage || llmChoice !== undefined)) ||
+        (execStep === 'router' && llmChoice !== undefined)
     ) {
         return 'dialog';
     }
 
-    // Check for form requests
-    if (context['form_submission'] || context['form_data'] || context['form_id'] ||
-        context['selected_choice'] || context['choice_id']) {
+    // Check for form requests (not router LLM pipeline picks — those use dialog + normalization.applyRouterPipelineChoice)
+    const isRouterLlmPick = execStep === 'router' && llmChoice !== undefined;
+    if (
+        !isRouterLlmPick &&
+        (context['form_submission'] || context['form_data'] || context['form_id'] ||
+        context['selected_choice'] || context['choice_id'])
+    ) {
         return 'form';
     }
 

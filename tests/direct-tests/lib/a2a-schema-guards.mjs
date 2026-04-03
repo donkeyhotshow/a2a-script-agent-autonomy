@@ -30,6 +30,19 @@ export function assertExecuteSingleKeyOrDialogMessageForm(execute, label) {
   );
 }
 
+/** Web DTO execute after `buildExecuteProjection` / `toPublicSession` (WEB_UI_PROTOCOL.md — message, form, attachments). */
+const WEB_UI_EXECUTE_KEYS = new Set(['message', 'llmMessage', 'form', 'attachments']);
+
+export function assertWebUiExecuteProjection(execute, label) {
+  if (execute == null || typeof execute !== 'object') return;
+  const keys = Object.keys(execute).filter((k) => !k.startsWith('_'));
+  const bad = keys.filter((k) => !WEB_UI_EXECUTE_KEYS.has(k));
+  assert(
+    bad.length === 0,
+    `${label}: Web DTO execute must use only message|llmMessage|form|attachments (+ _*), got extra: ${bad.join(', ')}`
+  );
+}
+
 /** Public session DTO (WEB_UI_PROTOCOL / SESSION-READ-MODEL — loader metadata). */
 export function assertWaitingPublicSessionShape(pub, label) {
   assert(pub && typeof pub === 'object', `${label}: session object`);

@@ -19,6 +19,12 @@
 
 ---
 
+## Recent (2026-04-03)
+
+- **Router step**: `context.execution.routerAnalysis` is omitted unless `shared/router-static-choices.json` → `routerConfig.autoSelectionEnabled` is true (default **false**). Router choices are always explicit user/monitor `POST …/next` with `result.choice`.
+- **`DEFAULT_SYNC_MODE`**: `invoke.service` now treats `DEFAULT_SYNC_MODE=1` / `true` as default synchronous `/invoke` (unless `sync: false`). Matches integration tests and AGENTS.md.
+- **Task routing**: `parseTaskText` prefers `message` / `result.message` over stale `task`; dialog router keywords include `dialog` / `диалог` / `діалог`.
+
 ## Текущая архитектура
 
 **Stateless server** - не хранит сессии, только обрабатывает запросы:
@@ -239,7 +245,7 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [x] **No-LLM transform messages (tooling)** (2026-03-27): Одно правило в `scripts/sim-contract/step-transform-rules.ts`; `npm run sim:validate -- --step-contract` и `npm run sim:lint -- --step-contract` (опционально, без изменения default CI). Полное строгое требование в `sim:quality` по-прежнему блокируется warning-debt по золотым.
 - [x] **Contract warnings / CI visibility** (2026-03-27): `npm run sim:contract-report` (JSON: structural + step-contract delta + `bySimulation`); `sim:validate --json` добавляет `structuralValid`, `contractComplete`, `warningCount`; `gate:cleanup` печатает `validate.warningCount` / `contractComplete`; workflow `simulations-ci.yml` — шаг **Contract debt report** в summary.
 - [x] **Shortened golden policy** (2026-03-27): [`simulations/SCHEMA.md`](../simulations/SCHEMA.md) § Shortened golden sets — bundled transforms, warnings vs `valid`, отсылки к `sim:contract-report` / `sim:quality`.
-- [x] **Resilience simulations** (2026-03-27): [`simulations/resilience-contract/`](../simulations/resilience-contract/) — шаги 1–6: human-gate `form`, два `rag-search` с `scratchpad` drain, два `read-file` с ростом `context.files`, финал с `slots.grayRoom` (`6/response.json`). Web UI: `buildGrayRoomHtml` в [`a2a-client/web/js/task-flow/render-layout.js`](../a2a-client/web/js/task-flow/render-layout.js).
+- [x] **Resilience simulations** (2026-03-27): [`simulations/resilience-contract/`](../simulations/resilience-contract/) — шаги 1–6: human-gate `form`, два `rag-search` с `scratchpad` drain, два `read-file` с ростом `context.files`, финал с `slots.grayRoom` (`6/response.json`). Web UI: `buildGrayRoomHtml` в [`a2a-client/packages/web/js/task-flow/render-layout.js`](../a2a-client/packages/web/js/task-flow/render-layout.js).
 - [x] **scan-directory protocol alignment** (2026-03-27): Отдельного действия нет; протокол зафиксирован как зарезервированное имя + маппинг на `list-directory` / `grep-search` в [`docs/new-request-flow/PROTOCOLS/actions/scan-directory.md`](../docs/new-request-flow/PROTOCOLS/actions/scan-directory.md); индексы PROTOCOLS/README, actions/README, STAGES/03-execution обновлены.
 - [x] **sim-validate reporting modes** (2026-03-27): JSON `structuralValid` (= schema errors), `contractComplete` (= `warningCount === 0`), плюс `warningCount` per simulation.
 
@@ -281,7 +287,7 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [x] **Stabilization (2026-03-27):** ESLint **0 warnings** on `src/**/*.ts`: removed unused `path` import in `index.ts`; trimmed `operations.ts` type imports; removed dead `truncateToMaxChars` copy in `json-path.ts`; trimmed unused json-path/value-helpers imports in `transform-groups.ts`.
 
 ### Unusual Findings Alignment (Server/Contracts)
-- [x] **UA-S-01 interrupt-trace-contract** (2026-03-27): Canonical path and merge helper in `src/transform/interrupt-trace-contract.ts` (`INTERRUPT_TRACE_CONTEXT_PATH`, `mergeInterruptTraceIntoContext`). `GrayRoomOrchestrator.mergeTraceIntoResult` uses this helper only. UI readers: `a2a-client/web/js/task-flow/render-layout.js` (`slots?.interruptTrace`).
+- [x] **UA-S-01 interrupt-trace-contract** (2026-03-27): Canonical path and merge helper in `src/transform/interrupt-trace-contract.ts` (`INTERRUPT_TRACE_CONTEXT_PATH`, `mergeInterruptTraceIntoContext`). `GrayRoomOrchestrator.mergeTraceIntoResult` uses this helper only. UI readers: `a2a-client/packages/web/js/task-flow/render-layout.js` (`slots?.interruptTrace`).
 - [x] **UA-S-02 no-llm-vs-llm-step-rules** (2026-03-27): Canonical rules live in `scripts/sim-contract/step-transform-rules.ts` (aligned with `simulations/SCHEMA.md`). **`collectNoLlmStepContractWarningsForSimulation()`** walks numbered steps + `N-sub-M` + flat root (parity with `sim-lint --step-contract`). **Optional** CLI: `npm run sim:validate -- --step-contract` (with `--sim` or `--all`). Default validate unchanged (legacy goldens retain warning debt until fixed).
 
 ### Gray Room / Planned Sub-Requests (Server-Orchestrated)
@@ -311,6 +317,12 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 - [x] **CCP-S-01 where-to-scan**: Primary folders for cleanup scans зафиксированы: `src/transform/`, `src/services/core/request-processor/`, `src/actions/handlers/`, `scripts/`.
 - [x] **CCP-S-02 signal-set (CDM-02)**: (1) duplicate adapters, (2) legacy compatibility bridges, (3) dead exports, (4) unused route branches, (5) overlapping DTO builders. **How:** overlapping operations/validators/reporters and duplicate path-specific branches in `src/transform/`, `src/actions/handlers/`, `src/services/`; ripgrep `deprecated`, `compat`, `re-export`, `legacy`.
 - [x] **CDM-03 evidence format**: Each cleanup candidate must be recorded as one row: `path` · `why redundant` · `usage proof` · `safe removal check` (e.g. `npm run test`, `npm run sim:lint`).
-- [x] **CCP-S-03 deprecation-check** (2026-03-27): Ripgrep on `src/**/*.ts` for `deprecated|legacy|compat` (case-insensitive). **Still intentional (keep):** `transform-execute-validator.ts` rejects legacy bare `{content}` / `{results}` result blobs (runtime validation, not dead code). `request-processor.interfaces.ts` exports `ActionRequest` (comment: legacy shape); **no** internal `import type { ActionRequest }` — reserved for external/compat; do not delete without semver note. `request-processor.service.ts` re-export comment for types. `invoke.service.ts` / `sessions.routes.ts` comments describe compatibility behavior, not unused branches. **No** `deprecated`/`@deprecated` runtime branches found that are safe to remove in this pass.
+- [x] **CCP-S-03 deprecation-check** (2026-03-27): Ripgrep on `src/**/*.ts` for `deprecated|legacy|compat` (case-insensitive). **Still intentional (keep):** `transform-execute-validator.ts` rejects legacy bare `{content}` / `{results}` result blobs (runtime validation, not dead code). `legacy-interfaces.ts` exports `ActionRequest` (isolated legacy shape); **no** internal `import type { ActionRequest }` — reserved for external/compat; do not delete without semver note. `request-processor.service.ts` re-export comment for types. `invoke.service.ts` / `sessions.routes.ts` comments describe compatibility behavior, not unused branches. **No** `deprecated`/`@deprecated` runtime branches found that are safe to remove in this pass.
 - [x] **CCP-S-04 safe-remove-gate (CDM-04)**: Use `npm run gate:cleanup` (tests + `sim:lint.valid` + `sim:validate.valid`). Stricter removals: `npm run sim:quality` when warning debt is zero.
+
+### Recent (2026-04-03)
+- **Vitest:** Dropped stale excluded suites; removed tests that imported deleted modules (`neurons-v2`, `ollama-adapter`, `rag` entity scorer, `llm-client`, `auth.middleware`, `neuron-activator`, old `simulation/*`). `vitest.config.ts` excludes only `node_modules` / `dist`.
+- **Auto-AI index:** Added [`src/actions/definitions/auto-ai-index.ts`](src/actions/definitions/auto-ai-index.ts) (`AUTO_AI_CATEGORIES`, `AUTO_AI_ACTION_IDS`, helpers) for `definitions-load` + `auto-ai-index` unit tests.
+- **Router static JSON:** Fixed corrupt trailing `]` / `}` in [`shared/router-static-choices.json`](../shared/router-static-choices.json) (was breaking `JSON.parse` in `src/config/router-static.ts`).
+- **Sequence / Gray Room (incremental):** [`sequence-workbench.ts`](src/services/core/request-processor/sequence-workbench.ts) implements `step_complete` against `context.workbench.sections.sequence` (replaces broken `session-manager` import). [`docs/references/sequence-schema.json`](../docs/references/sequence-schema.json) documents `SequenceStep` + `SequencePlan`. No `POST /api/v1/sequence` on the stateless server—queue edits stay on Client API or invoke `context`.
 

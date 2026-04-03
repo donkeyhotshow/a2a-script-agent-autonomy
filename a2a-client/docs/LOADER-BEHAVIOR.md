@@ -167,9 +167,9 @@
 | `web/js/session-data.js` | `startLoader` / `stopLoader`, `promisePending`, `isInputBlocked` в `getState()` |
 | `web/js/session-store.js` | Прокси к ядру сессии |
 | `web/js/task-flow/render-form.js` | История vs форма: при «ожидании» скрывать форму только если **нет** actionable `execute.form` (`hasActionableForm`) |
-| `vite-plugin-a2a/routes/step-routes-async-flow.js` | `GET …/sessions/:id/async` — предпочтительный poll для веба |
-| `vite-plugin-a2a/storage/newSessions.js` | `loadNewStep`: снятие «залипшего» `server-promise.json` рядом с терминальным `server-response.json` |
-| `vite-plugin-a2a/routes/utils/session-projection-dto.js` | `getActiveAsyncWork` + сверка с `loadNewStep` при stale index |
+| `packages/vite-plugin/routes/step-routes-async-flow.js` | `GET …/sessions/:id/async` — предпочтительный poll для веба |
+| `packages/vite-plugin/storage/newSessions.js` | `loadNewStep`: снятие «залипшего» `server-promise.json` рядом с терминальным `server-response.json` |
+| `packages/vite-plugin/routes/utils/session-projection-dto.js` | `getActiveAsyncWork` + сверка с `loadNewStep` при stale index |
 
 ### Текущая реализация
 

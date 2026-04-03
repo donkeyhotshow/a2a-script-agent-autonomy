@@ -7,7 +7,7 @@ import {
     saveAdrComplianceState,
     sessionContextAlignsWithAdrState,
     getAdrComplianceStatePath,
-} from '../../vite-plugin-a2a/storage/adrComplianceState.js';
+} from '../../packages/vite-plugin/storage/adrComplianceState.js';
 
 let proj;
 

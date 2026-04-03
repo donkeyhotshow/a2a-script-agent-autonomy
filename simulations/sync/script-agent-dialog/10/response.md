@@ -32,6 +32,10 @@ LLM acknowledges user's choice and adds all suggested tests.
         "message": "Принял: введём Example.spec и запустим vitest."
       },
       {
+        "role": "assistant",
+        "message": "Принял задачу: напишем Example.spec и запустим vitest, дайте знать, если нужна дополнительная информация."
+      },
+      {
         "role": "user",
         "message": "Пожалуйста, прогоните vitest на Example.spec и отдайте вывод."
       },

@@ -7,11 +7,11 @@ set PID_FILE=.pids.txt
 
 echo [Client-API] Starting on port %CLIENT_API_PORT%...
 
-REM Check if already running
+REM Kill any existing process on this port
 for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%CLIENT_API_PORT%" ^| findstr "LISTENING"') do (
-    echo [Client-API] Already running on PID %%p
-    echo CLIENT_API_PID=%%p >> %PID_FILE%
-    exit /b 0
+    echo [Client-API] Killing existing process on PID %%p
+    taskkill /PID %%p /F >nul 2>&1
+    powershell -Command "Start-Sleep -Seconds 2"
 )
 
 REM Create logs directory if it doesn't exist (required for redirect)

@@ -6,7 +6,7 @@ Repo norms that override the default “answer once and exit” habit live in [`
 
 | # | Trap | Cursor agent | Client API driver |
 |---|------|----------------|-------------------|
-| 1 | **Empty queue = finish** | Treat empty `tasks/pending/` as **prune → discover → write**, then continue. See [`AGENTS.md`](../AGENTS.md) DEV_STATE Protocol, [`methodology/tasks.md`](../methodology/tasks.md). | Same: driver does not “complete the repo”; human/agent loop owns queue. |
+| 1 | **Empty queue = finish** | Treat empty `tasks/pending/` as **prune → discover → write**, then continue. See [`AGENTS.md`](../AGENTS.md) DEV_STATE Protocol, [`methodology/tasks.md`](../archive/methodology/tasks.md). | Same: driver does not “complete the repo”; human/agent loop owns queue. |
 | 2 | **Vague prompt = one-shot** | Rule: continue until stated acceptance criteria or a **logged blocker**; define “done” (tests, checklist, files). | Scripts should have explicit exit conditions (step settled, max polls, error class). |
 | 3 | **Silence / one-liner = stop** | [`AGENTS.md`](../AGENTS.md): minimal user text is **not** permission to halt after one turn. | N/A unless the driver stops on empty stdin—avoid that unless intentional. |
 
@@ -45,4 +45,4 @@ Repo norms that override the default “answer once and exit” habit live in [`
 
 - [`AGENTS.md`](../AGENTS.md) — empty queue, router two beats, Client API path, checklist  
 - [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) — operator curl walkthrough; *Ollama is generating — pause other work*  
-- [`methodology/tasks.md`](../methodology/tasks.md) — task wording and queue protocol  
+- [`methodology/tasks.md`](../archive/methodology/tasks.md) — task wording and queue protocol  

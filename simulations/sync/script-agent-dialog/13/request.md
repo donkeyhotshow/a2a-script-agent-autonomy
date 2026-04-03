@@ -6,7 +6,10 @@ User chooses to skip refactoring (`result.choice: "none"`). Request carries full
 {
   "context": {
     "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
-    "execution": { "action": "dialog", "step": "refactoring" },
+    "execution": {
+      "action": "dialog",
+      "step": "refactoring"
+    },
     "history": [
       {
         "role": "user",
@@ -14,12 +17,23 @@ User chooses to skip refactoring (`result.choice: "none"`). Request carries full
       },
       {
         "role": "assistant",
-        "message": "Вот основные рекомендации: …"
+        "message": "Вот основные рекомендации:\n\n1. **Extract composables** — вынести логику в composable useExample.ts\n2. **TypeScript** — добавить типизацию props и emit\n3. **Lazy loading** — использовать defineAsyncComponent для тяжёлых частей\n4. **Error boundaries** — добавить ErrorBoundary компонент\n5. **Memoization** — кешировать вычисляемые свойства через computed\n\nХотите применить какие-то из этих улучшений?"
       }
     ],
-    "workbench": { "sections": { "autoScriptTrigger": { "scriptId": "fix-vue-imports", "triggeredBy": "assistant", "file": "resources/js/components/Example.vue", "autoRun": true } } }
+    "workbench": {
+      "sections": {
+        "autoScriptTrigger": {
+          "scriptId": "fix-vue-imports",
+          "triggeredBy": "assistant",
+          "file": "resources/js/components/Example.vue",
+          "autoRun": true
+        }
+      }
+    }
   },
-  "result": { "choice": "none" }
+  "result": {
+    "choice": "none"
+  }
 }
 ```
 

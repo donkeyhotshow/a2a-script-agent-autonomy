@@ -1,0 +1,70 @@
+---
+description: Documentation hierarchy and organization rules
+globs: **/*.md
+alwaysApply: true
+---
+
+# Document Hierarchy Rules
+
+## Required Files by Level
+
+### Root Level (repo-root/)
+```
+README.md          # Project overview
+AGENTS.md          # Agent guidance (always-applied rules)
+DEV_STATE.md       # Cross-module state
+docs/adr/          # Architecture decisions
+tasks/             # Pending work queue
+```
+
+### Module Level (a2a-*/)
+```
+README.md          # Module purpose + quickstart
+DEV_STATE.md       # Module-specific implementation state
+```
+
+### Feature Level (*/feature/)
+```
+README.md          # Feature docs
+```
+
+## DEV_STATE Protocol
+
+**Always update before/after tasks:**
+
+1. **Prune** — Remove completed items, duplicates
+2. **Discover** — Scan for new work from code/sims/risks
+3. **Write** — Add concrete testable tasks
+
+### Content Rules
+
+- Root: Cross-module facts only
+- Each module: Own implementation details
+- No abstract statements — all tasks testable
+- Tasks >14 days → backlog with blocker reason
+
+## Empty Queue Protocol
+
+Empty backlog = **NOT** finished. Required actions:
+
+1. Prune root + module DEV_STATE.md
+2. Discover work (code, sims, risks, backlog)
+3. Write tasks to DEV_STATE + tasks/pending/
+4. Resume normal cycle
+
+## Quick Reference Table
+
+| Document | Purpose | Update When |
+|----------|---------|-------------|
+| AGENTS.md | Agent rules | Architecture changes |
+| DEV_STATE.md | Current state | Before/after tasks |
+| docs/adr/*.md | Decisions | New patterns |
+| tasks/pending/*.md | Work queue | New tasks found |
+| GLOSSARY.md | Terminology | New concepts |
+
+## README Requirements
+
+Every README must have:
+- Purpose statement (1 sentence)
+- Quickstart or link to one
+- Key files/patterns section

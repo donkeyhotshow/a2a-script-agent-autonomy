@@ -13,11 +13,11 @@ This step calls the LLM to analyze the enhanced test results with coverage.
     "history": [
       {
         "role": "user",
-        "message": "При запуске dev-сервера вылетает ошибка Cannot find module @/components/Missing"
+        "message": "При запуске dev-сервера вылетает ошибка Cannot find module @/components/Missing из resources/js/components/Example.vue."
       },
       {
         "role": "assistant",
-        "message": "Ошибка импорта: Vue не может найти @/components/Missing"
+        "message": "Ошибка импорта: Vue не может найти @/components/Missing в resources/js/components/Example.vue."
       },
       {
         "role": "assistant",
@@ -30,6 +30,10 @@ This step calls the LLM to analyze the enhanced test results with coverage.
       {
         "role": "user",
         "message": "Принял: введём Example.spec и запустим vitest."
+      },
+      {
+        "role": "assistant",
+        "message": "Принял задачу: напишем Example.spec и запустим vitest, дайте знать, если нужна дополнительная информация."
       },
       {
         "role": "user",

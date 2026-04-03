@@ -222,7 +222,7 @@ def ui_promises_next():
     try:
         created_iso = datetime.datetime.fromtimestamp(rec.created_at, datetime.timezone.utc).isoformat()
     except Exception as e:
-        logger.warning(f"Failed to convert timestamp {rec.created_at} for promise {promise_id}: {type(e).__name__}: {e}")
+        logger.warning(f"Failed to convert timestamp {rec.created_at} for promise {rec.promise_id}: {type(e).__name__}: {e}")
         created_iso = None
 
     return {
@@ -413,9 +413,9 @@ def promise_request(promise_id: str):
             mimetype='application/json',
         )
 
-    # Получаем тело запроса: body.bin или request.json.body
+    # Получаем тело запроса: body.md или request.json.body
     body_content = None
-    body_path = os.path.join(_resolve_storage_path(rec.log_folder) or rec.log_folder or '', 'body.bin') if rec.log_folder else None
+    body_path = os.path.join(_resolve_storage_path(rec.log_folder) or rec.log_folder or '', 'body.md') if rec.log_folder else None
     if body_path and os.path.isfile(body_path):
         try:
             with open(body_path, 'rb') as f:

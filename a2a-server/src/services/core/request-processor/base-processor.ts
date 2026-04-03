@@ -214,10 +214,17 @@ export abstract class BaseRequestProcessor {
             return null;
         };
         const nestedCtx = ctx['context'] as Record<string, unknown> | undefined;
+        const resultObj = ctx['result'];
+        const resultMsg =
+            resultObj && typeof resultObj === 'object' && !Array.isArray(resultObj)
+                ? toStr((resultObj as Record<string, unknown>)['message'])
+                : null;
+        // Prefer explicit message/result.message over task (task can be stale on context when user submits a new line).
         return (
+            toStr(ctx['message']) ??
+            resultMsg ??
             toStr(ctx['task']) ??
             toStr(ctx['new_task']) ??
-            toStr(ctx['message']) ??
             toStr(nestedCtx?.['task']) ??
             ''
         );

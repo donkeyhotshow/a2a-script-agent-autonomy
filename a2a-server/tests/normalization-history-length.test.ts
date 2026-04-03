@@ -23,4 +23,13 @@ describe('resolveHistoryLength', () => {
         expect(resolveHistoryLength({})).toBe(0);
         expect(resolveHistoryLength({context: {}})).toBe(0);
     });
+
+    it('matches gray-room compress_history dual-write (root + context.history same length)', () => {
+        const compressed = [{role: 'user', message: 'a'}];
+        const ctx = {
+            history: compressed,
+            context: {history: compressed},
+        };
+        expect(resolveHistoryLength(ctx)).toBe(1);
+    });
 });

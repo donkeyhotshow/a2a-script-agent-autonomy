@@ -8,7 +8,7 @@ This step calls the LLM to analyze the vitest test results and provide feedback.
     "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
     "execution": {
       "action": "dialog",
-      "step": "completed"
+      "step": "run_tests"
     },
     "history": [
       {
@@ -32,6 +32,10 @@ This step calls the LLM to analyze the vitest test results and provide feedback.
         "message": "Принял: введём Example.spec и запустим vitest после ручного анализа компонента."
       },
       {
+        "role": "assistant",
+        "message": "Принял задачу: напишем Example.spec и запустим vitest, дайте знать, если нужна дополнительная информация."
+      },
+      {
         "role": "user",
         "message": "Пожалуйста, прогоните vitest на Example.spec и отдайте вывод."
       }
@@ -53,7 +57,13 @@ This step calls the LLM to analyze the vitest test results and provide feedback.
     }
   },
   "result": {
-    "message": "vitest запущен на Example.spec. Результат:\n\n PASS  resources/js/components/Example.spec.js\n  Example.vue\n    ✓ renders correctly (50 ms)\n    ✓ emits event when button clicked (45 ms)\n    ✓ handles missing prop gracefully (30 ms)\n\n Test Files: 1 passed\n     Time: 0.2s"
+    "run-script": {
+      "scriptId": "test",
+      "success": true,
+      "output": "Vitest run: 1 test, 0 failed.",
+      "filesModified": [],
+      "duration": 4200
+    }
   }
 }
 ```

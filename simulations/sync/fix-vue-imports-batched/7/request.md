@@ -1,0 +1,37 @@
+# `fix-vue-imports-batched/7` — request
+
+Mirror of `request.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports-batched",
+      "step": "vue-import-cleanup",
+      "status": "completed",
+      "progress": {
+        "totalFiles": 50,
+        "currentFile": 50
+      }
+    },
+    "vite_config": {
+      "file": "vite.config.js"
+    },
+    "aliases": {
+      "@": "resources/js",
+      "~": "resources"
+    }
+  },
+  "result": {
+    "script": {
+      "cleanup_count": 50,
+      "fixed_files": [
+        "resources/js/Pages/Auth/Login.vue",
+        "resources/js/Pages/Auth/Register.vue",
+        "resources/js/components/UserCard.vue"
+      ]
+    }
+  }
+}
+```

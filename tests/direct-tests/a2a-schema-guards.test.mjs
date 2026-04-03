@@ -5,6 +5,7 @@ import {
   assertGrayRoomSlot,
   assertSingleActionKey,
   assertWaitingPublicSessionShape,
+  assertWebUiExecuteProjection,
 } from './lib/a2a-schema-guards.mjs';
 
 function expectAssert(fn, re) {
@@ -25,6 +26,22 @@ describe('assertSingleActionKey', () => {
 
   it('rejects multiple action keys', () => {
     expectAssert(() => assertSingleActionKey({ script: {}, form: {} }, 'exec'), /at most one action key/);
+  });
+});
+
+describe('assertWebUiExecuteProjection', () => {
+  it('allows message+form+attachments (WEB_UI_PROTOCOL)', () => {
+    assertWebUiExecuteProjection(
+      { message: 'm', form: {}, attachments: { readFiles: [{ path: 'a' }] } },
+      'x'
+    );
+  });
+
+  it('rejects raw tool keys', () => {
+    expectAssert(
+      () => assertWebUiExecuteProjection({ message: 'm', 'read-file': { path: 'x' } }, 'x'),
+      /extra: read-file/
+    );
   });
 });
 

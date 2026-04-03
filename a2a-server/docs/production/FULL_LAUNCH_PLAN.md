@@ -118,7 +118,7 @@ npm run dev
 ### ЭТАП 6: Запуск Web UI
 
 ```bash
-cd a2a-client/web
+cd a2a-client/packages/web
 
 # Установка зависимостей
 npm install

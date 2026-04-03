@@ -4,8 +4,15 @@ User provides commit message.
 
 ```json
 {
-  "context": { "execution": { "action": "dialog", "step": "commit" } },
-  "result": { "message": "fix: resolve import error and add comprehensive tests..." }
+  "context": {
+    "execution": {
+      "action": "dialog",
+      "step": "commit"
+    }
+  },
+  "result": {
+    "message": "fix: resolve import error and add comprehensive tests\n\n- Auto-fix Vue imports in Example.vue\n- Add 9 tests with 85% coverage\n- Cover props, empty state, loading, error, events, slots"
+  }
 }
 ```
 

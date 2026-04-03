@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Sequence step and queue",
+  "definitions": {
+    "SequenceStep": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the sequence step"
+        },
+        "title": {
+          "type": "string",
+          "description": "Title of the sequence step"
+        },
+        "goal": {
+          "type": "string",
+          "description": "Goal or objective of the sequence step"
+        },
+        "exit_criteria": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Exit criteria for the step"
+        },
+        "prompt_reference": {
+          "type": "string",
+          "description": "Reference to the prompt template used for this step"
+        },
+        "dependencies": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Step IDs this step depends on"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "in_progress", "complete", "blocked"],
+          "description": "Current status of the sequence step"
+        },
+        "completedAt": {
+          "type": "string",
+          "description": "ISO timestamp when the step was completed"
+        }
+      },
+      "required": ["id", "title", "goal", "exit_criteria", "prompt_reference", "dependencies", "status"],
+      "additionalProperties": true
+    },
+    "SequencePlan": {
+      "type": "object",
+      "properties": {
+        "steps": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/SequenceStep"},
+          "minItems": 1
+        },
+        "headIndex": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Index of the current head step in steps[]"
+        }
+      },
+      "required": ["steps"],
+      "additionalProperties": false
+    },
+    "PredictionEntry": {
+      "type": "object",
+      "properties": {
+        "id": {"type": "string"},
+        "kind": {"type": "string", "enum": ["final_prediction"]},
+        "title": {"type": "string"},
+        "goal": {"type": "string"},
+        "at": {"type": "string"}
+      },
+      "required": ["id", "kind", "title", "goal", "at"],
+      "additionalProperties": false
+    }
+  },
+  "oneOf": [
+    {"$ref": "#/definitions/SequenceStep"},
+    {"$ref": "#/definitions/SequencePlan"},
+    {
+      "type": "array",
+      "items": {"$ref": "#/definitions/SequenceStep"},
+      "minItems": 1
+    }
+  ]
+}

@@ -1,8 +1,57 @@
 import fs from 'fs';
 import path from 'path';
-import axios from 'axios';
 
 class TaskMonitorProcessing {
+  /**
+   * Submit router choice or re-send task text when the UI shows a text "task" form (idle beat).
+   * Router forms with `form.choices` never auto-advance — operator must POST /next with result.choice.
+   * @param {string} sessionId - Session identifier
+   * @param {string} taskDescription - Task description for analysis
+   * @param {Object} preloadedSession - Optional preloaded session data
+   * @returns {boolean} true if a /next was sent, false otherwise
+   */
+  async tryAdvanceMonitorGate(sessionId, taskDescription, preloadedSession = null, _options = {}) {
+    const sessionData =
+      preloadedSession || (await this.getSession(sessionId, { includeContext: true }));
+    if (!sessionData) return false;
+
+    const form =
+      sessionData?.context?.execution?.form ||
+      sessionData?.execute?.form ||
+      null;
+    if (!form) return false;
+
+    const choices = Array.isArray(form.choices) ? form.choices : [];
+    if (choices.length > 0) {
+      console.log(
+        `Router step for session ${sessionId}: manual choice required (monitor does not auto-select)`
+      );
+      return false;
+    }
+
+    // Handle text input forms (task input fields)
+    const inputs = Array.isArray(form.input) ? form.input : [];
+    const hasTaskField = inputs.some(
+      (i) => i && (i.name === 'task' || (i.type === 'text' && !i.name))
+    );
+    const text = typeof taskDescription === 'string' ? taskDescription.trim() : '';
+    if (hasTaskField && text) {
+      const res = await this.sendNext(sessionId, { result: { message: text } });
+      return !!res;
+    }
+
+    return false;
+  }
+
+  async readTaskDescriptionForName(taskName) {
+    const taskFilePath = path.join(this.tasksDir, taskName);
+    try {
+      const content = fs.readFileSync(taskFilePath, 'utf8');
+      return this.extractTaskDescription(content);
+    } catch {
+      return null;
+    }
+  }
   async getTaskFiles() {
     try {
       const skipNames = new Set(['README.md', 'ONE-PIPELINE.md', 'STACK-RUN.md']);
@@ -73,6 +122,12 @@ class TaskMonitorProcessing {
       });
       await this.logAgentExecution(session.id, 'after-initial-next');
 
+      let idleGateAttempts = 0;
+      if (await this.tryAdvanceMonitorGate(session.id, taskDescription, null)) {
+        idleGateAttempts += 1;
+        await this.logAgentExecution(session.id, 'after-initial-monitor-gate');
+      }
+
       // Poll for completion using configurable settings
       const maxAttempts = this.maxPollAttempts;
       const pollInterval = this.pollIntervalMs;
@@ -99,6 +154,23 @@ class TaskMonitorProcessing {
         const isManualLlmMode = asyncResult.status === 'waiting_manual_llm';
         const hasPromiseId = asyncResult.result?.promiseId || asyncResult.execute?.promiseId;
         await this.describeAsyncResult(asyncResult, isAsyncPending);
+
+        if (!isAsyncPending && !isManualLlmMode && idleGateAttempts < 5) {
+          const sd = await this.getSession(session.id, { includeContext: true });
+          const progressed = await this.tryAdvanceMonitorGate(session.id, taskDescription, sd);
+          if (progressed) {
+            idleGateAttempts += 1;
+            this.logHardBit({
+              phase: 'monitor-gate',
+              detail: `advanced (${idleGateAttempts})`,
+              serverBusy: true,
+            });
+            await this.logAgentExecution(session.id, 'after-monitor-gate');
+            attempts++;
+            await new Promise((resolve) => setTimeout(resolve, pollInterval));
+            continue;
+          }
+        }
 
         // If Manual LLM Mode is active, create hook and stop polling
         if (isManualLlmMode) {
@@ -138,26 +210,6 @@ class TaskMonitorProcessing {
           if (!validation.valid) {
             console.warn(`Session response validation failed: ${validation.error}`);
             // Continue processing, but log
-          }
-
-          // Check if there's a form with choices that needs user input
-          const form = sessionData?.context?.execution?.form || sessionData?.execute?.form;
-          if (form && form.choices && form.choices.length > 0) {
-            const choiceId = form.choices[0].id;
-            nextResult = await this.sendNext(session.id, { result: { choice: choiceId } });
-            if (!nextResult) {
-              console.error(`Failed to send choice for task ${taskFile.name}`);
-              failureReason = 'Router choice failed';
-              return false;
-            }
-            this.logHardBit({
-              phase: 'router-choice',
-              detail: `auto-picked ${choiceId}`,
-              serverBusy: true
-            });
-            await this.logAgentExecution(session.id, 'after-router-choice');
-            // Poll again after sending choice
-            continue;
           }
 
           // Check if we have a result
@@ -277,9 +329,11 @@ class TaskMonitorProcessing {
         this.activeTasks.set(taskFile.name, {
           sessionId: session.id,
           taskName: taskFile.name,
+          taskDescription,
           startedAt: new Date().toISOString(),
           lastPolled: new Date().toISOString(),
-          status: 'processing'
+          status: 'processing',
+          gateAttempts: 0,
         });
 
         this.state.currentTask = taskFile.name;
@@ -378,6 +432,25 @@ class TaskMonitorProcessing {
   async handleTaskCompletion(taskName, taskMeta, asyncResult) {
     const stageInfo = await this.describeTaskStage(taskMeta.sessionId, asyncResult);
     console.log(`Task ${taskName} completed (stage=${stageInfo.stage})`);
+
+    const taskDesc =
+      taskMeta.taskDescription || (await this.readTaskDescriptionForName(taskName));
+    const gateCap = 5;
+    if ((taskMeta.gateAttempts || 0) < gateCap && taskDesc) {
+      const sessionData = await this.getSession(taskMeta.sessionId, { includeContext: true });
+      const progressed = await this.tryAdvanceMonitorGate(
+        taskMeta.sessionId,
+        taskDesc,
+        sessionData
+      );
+      if (progressed) {
+        taskMeta.gateAttempts = (taskMeta.gateAttempts || 0) + 1;
+        taskMeta.lastPolled = new Date().toISOString();
+        this.activeTasks.set(taskName, taskMeta);
+        this.saveState();
+        return;
+      }
+    }
 
     // Get final session state to check for results
     const sessionData = await this.getSession(taskMeta.sessionId);

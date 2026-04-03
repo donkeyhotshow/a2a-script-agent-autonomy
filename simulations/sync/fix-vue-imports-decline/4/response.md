@@ -1,0 +1,80 @@
+# `fix-vue-imports-decline/4` — response
+
+Mirror of `response.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "vue-import-escalate"
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "unresolved_imports": [
+      {
+        "file": "resources/js/Pages/Dash/Widget.vue",
+        "line": 2,
+        "specifier": "./UserCard",
+        "reason": "ambiguous",
+        "candidates": [
+          "resources/js/features/a/UserCard.vue",
+          "resources/js/features/b/UserCard.vue"
+        ]
+      },
+      {
+        "file": "resources/js/App.vue",
+        "line": 12,
+        "specifier": "@/legacy/missing",
+        "reason": "not_found"
+      }
+    ]
+  },
+  "execute": {
+    "form": {
+      "title": "Скрипт виправив 1 імпорт; 2 залишилися без однозначного рішення. Перейти в Coder (агент з файлами)?",
+      "description": "Script resolved 1 import; 2 remain unresolved.",
+      "choices": [
+        {
+          "id": "coder",
+          "label": "Так, відкрити Coder",
+          "description": "Proceed with Coder agent to manually resolve remaining imports."
+        },
+        {
+          "id": "fix-vue-imports-done-partial",
+          "label": "Ні, залишити як є (частковий результат)",
+          "description": "Keep the partial results; 1 import was fixed."
+        },
+        {
+          "id": "fix-vue-imports-decline-router",
+          "label": "Повернутись до роутера (зберегти контекст)",
+          "description": "Return to router with unresolved imports preserved in context."
+        }
+      ]
+    }
+  },
+  "result": {
+    "form": {
+      "choices": [
+        {
+          "id": "coder",
+          "label": "Так, відкрити Coder",
+          "description": "Proceed with Coder agent to manually resolve remaining imports."
+        },
+        {
+          "id": "fix-vue-imports-done-partial",
+          "label": "Ні, залишити як є (частковий результат)",
+          "description": "Keep the partial results; 1 import was fixed."
+        },
+        {
+          "id": "fix-vue-imports-decline-router",
+          "label": "Повернутись до роутера (зберегти контекст)",
+          "description": "Return to router with unresolved imports preserved in context."
+        }
+      ]
+    }
+  }
+}
+```

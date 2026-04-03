@@ -128,6 +128,15 @@ echo Saved PIDs in %PID_FILE%:
 type %PID_FILE%
 echo.
 echo To stop all services, run: kill-all.bat
+echo.
+echo [Post-start] Full direct-tests suite (hub, vitest, router, e2e, gray-room, PS1 flows^)...
+echo   Faster: set A2A_POST_START_SKIP_HEAVY=1 before start-all (hub+vitest+router+e2e smoke^).
+powershell -ExecutionPolicy Bypass -File ".\tests\direct-tests\run-post-start-all.ps1"
+if errorlevel 1 (
+    echo [WARN] Post-start direct tests reported issues. See output above.
+) else (
+    echo [OK] Post-start direct tests passed.
+)
 goto :eof
 
 REM ==========================================

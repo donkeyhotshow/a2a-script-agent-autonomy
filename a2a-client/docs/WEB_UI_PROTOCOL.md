@@ -13,7 +13,7 @@ Checkpoint: agent mode in `a2a-client/web` against the Vite **storage-mode** Cli
 
 ## Router dialog (two beats)
 
-Task-flow is **not** one shot: (1) user submits **direction of work** (free text in `execute.form.input` / first `POST .../next` as `result.message` or shorthand `task`). (2) After `invoke`, the server often returns **`execute.form.choices`**; the UI renders **buttons** (`task-flow/render-form.js` — types such as `agent`, `dialog`, `decomposition`). The next submit sends **`result.choice`** = the chosen row’s **`id`** (same `task` field is overloaded as choice id when the prior step had choices — see `vite-plugin-a2a/routes/step-routes-router-flow.js` `buildSubmitResult`). Coarse stage **`routing`** when choices exist: `vite-plugin-a2a/routes/utils/session-stage-machine.js`. Default server fallback choice **`id`** values: **`dialog`**, **`agent`**, **`task-decomposition`** — see repo root [`shared/router-static-choices.json`](../../shared/router-static-choices.json). Operators and methodology: root [`AGENTS.md`](../../AGENTS.md) (*Router dialog (two beats)*), [`docs/OPERATOR-CURL.md`](../../docs/OPERATOR-CURL.md).
+Task-flow is **not** one shot: (1) user submits **direction of work** (free text in `execute.form.input` / first `POST .../next` as `result.message` or shorthand `task`). (2) After `invoke`, the server often returns **`execute.form.choices`**; the UI renders **buttons** (`task-flow/render-form.js` — types such as `agent`, `dialog`, `decomposition`). The next submit sends **`result.choice`** = the chosen row’s **`id`** (same `task` field is overloaded as choice id when the prior step had choices — see `packages/vite-plugin/routes/step-routes-router-flow.js` `buildSubmitResult`). Coarse stage **`routing`** when choices exist: `packages/vite-plugin/routes/utils/session-stage-machine.js`. Default server fallback choice **`id`** values: **`dialog`**, **`agent`**, **`task-decomposition`** — see repo root [`shared/router-static-choices.json`](../../shared/router-static-choices.json). Operators and methodology: root [`AGENTS.md`](../../AGENTS.md) (*Router dialog (two beats)*), [`docs/OPERATOR-CURL.md`](../../docs/OPERATOR-CURL.md).
 
 ## Glossary (one term each)
 
@@ -164,8 +164,8 @@ Compatibility rule:
 - **`window-state.js`** — On window open, if `asyncPending`, resumes polling without reading a promise id from the API payload.
 
 Projection helpers are implemented in:
-- `a2a-client/vite-plugin-a2a/routes/utils/session-projection-dto.js`
-- `a2a-client/vite-plugin-a2a/routes/utils/execute-projection-dto.js`
+- `a2a-client/packages/vite-plugin/routes/utils/session-projection-dto.js`
+- `a2a-client/packages/vite-plugin/routes/utils/execute-projection-dto.js`
 
 ## Loader
 

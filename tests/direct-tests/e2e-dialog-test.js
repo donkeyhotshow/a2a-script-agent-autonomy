@@ -9,6 +9,15 @@
  *
  * Env: A2A_SERVER_URL, CLIENT_API_URL
  * Optional: REQUIRE_ASYNC_PIPELINE=1 — fail if dialog /next does not go async or no in-flight /async seen
+ *
+ * Full agent-mode dialog chain: node …/e2e-dialog-test.js --only=agentDialogWorkflow
+ * (mode:agent → router → choice dialog → hello → thanks; mirrors test-dialog-flow.ps1, uses /async poll).
+ * Router regression: --only=routerAgentNoLoop,routerAgentNoLoopTaskShorthand,routerAgentNoLoopUtf8Task,routerDialogNoLoop,routerDialogNoLoopTaskShorthand,routerWrongBeatMessage
+ *
+ * Web dialog projection (normative): a2a-client/docs/WEB_UI_PROTOCOL.md — GET /sessions/:id uses
+ * toPublicSession(): projected execute (message / llmMessage / form / attachments), no raw tool keys;
+ * optional slim context { task, projectId } from session-projection-dto.js; full context only with
+ * ?includeContext=1. Response may use { session } wrapper; unwrapPublicSession() accepts both.
  */
 
 import fs from 'fs/promises';
@@ -18,6 +27,7 @@ import {
   assert,
   assertExecuteSingleKeyOrDialogMessageForm,
   assertGrayRoomSlot,
+  assertWebUiExecuteProjection,
   assertSingleActionKey,
   assertWaitingPublicSessionShape,
 } from './lib/a2a-schema-guards.mjs';
@@ -70,8 +80,12 @@ async function sendNext(sessionId, body) {
   return response.json();
 }
 
-async function getSession(sessionId) {
-  const response = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}`);
+async function getSession(sessionId, opts = {}) {
+  const q = opts.includeContext ? '?includeContext=1' : '';
+  const response = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}${q}`);
+  if (response.status === 403 && opts.includeContext) {
+    return null;
+  }
   if (!response.ok) {
     throw new Error(`Failed to get session: ${response.status}`);
   }
@@ -450,6 +464,306 @@ async function caseInvokeHello() {
   }
 }
 
+/**
+ * Full dialog contour with agent-seeded session: task direction → router (choices) → dialog → hello → thanks.
+ * Mirrors tests/direct-tests/test-dialog-flow.ps1; uses GET /sessions + poll /async (WEB_UI_PROTOCOL).
+ */
+async function caseAgentModeDialogWorkflow() {
+  const { sessionId } = await createSession({
+    mode: 'agent',
+    task: 'direct-tests agent dialog workflow',
+    title: 'e2e agent dialog workflow',
+  });
+  assert(sessionId, 'session id');
+
+  let pickedDialog = false;
+  let postDialogTurns = 0;
+
+  for (let i = 0; i < 18; i++) {
+    let pub = unwrapPublicSession(await getSession(sessionId));
+    if (pub.asyncPending) {
+      await pollAsyncSettled(sessionId, 120_000);
+      pub = unwrapPublicSession(await getSession(sessionId));
+    }
+    assertWaitingPublicSessionShape(pub, `agentDialogWorkflow step ${i}`);
+    const ex = pub.execute;
+    if (ex && typeof ex === 'object') {
+      assertWebUiExecuteProjection(ex, `agentDialogWorkflow execute ${i}`);
+    }
+
+    const form = ex?.form;
+    const choices = form?.choices;
+    const inputs = form?.input;
+
+    if (Array.isArray(choices) && choices.length > 0) {
+      assert(
+        choices.some((c) => c && c.id === 'dialog'),
+        'router form must include id dialog'
+      );
+      const ack = await sendNext(sessionId, { result: { choice: 'dialog' } });
+      assert(ack?.success !== false, 'submit router choice dialog');
+      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      pickedDialog = true;
+      continue;
+    }
+
+    if (Array.isArray(inputs) && inputs.length > 0 && !choices?.length) {
+      if (!pickedDialog) {
+        const ack = await sendNext(sessionId, {
+          result: { message: 'direct-tests: agent dialog routing probe' },
+        });
+        assert(ack?.success !== false, 'task direction /next');
+        if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+        continue;
+      }
+      if (postDialogTurns === 0) {
+        const ack = await sendNext(sessionId, { result: { message: 'hello world' } });
+        assert(ack?.success !== false, 'dialog hello world');
+        if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+        postDialogTurns = 1;
+        continue;
+      }
+      if (postDialogTurns === 1) {
+        const ack = await sendNext(sessionId, { result: { message: 'Thanks!' } });
+        assert(ack?.success !== false, 'dialog Thanks');
+        if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+        postDialogTurns = 2;
+        const fin = unwrapPublicSession(await getSession(sessionId));
+        if (fin.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+        const final = unwrapPublicSession(await getSession(sessionId));
+        assertWaitingPublicSessionShape(final, 'agentDialogWorkflow final');
+        if (final.execute && typeof final.execute === 'object') {
+          assertWebUiExecuteProjection(final.execute, 'agentDialogWorkflow final execute');
+        }
+        assert(
+          Array.isArray(final.messages) && final.messages.length >= 1,
+          'expected non-empty messages[] on GET session after dialog turns'
+        );
+        assert(pickedDialog, 'expected router step with dialog choice');
+        return;
+      }
+    }
+
+    throw new Error(
+      `agentDialogWorkflow: unhandled UI state step ${i} pickedDialog=${pickedDialog} postDialogTurns=${postDialogTurns}`
+    );
+  }
+
+  throw new Error('agentDialogWorkflow: exceeded max iterations');
+}
+
+/**
+ * After a valid router beat B (choice picked), the server must not show the same choice router again.
+ * @param {{ label: string; choiceId: string; sessionCreateBody: Record<string, unknown>; submitRouterChoice: (sessionId: string, pick: string) => Promise<unknown> }} opts
+ */
+async function runRouterChoiceNoLoopCore(opts) {
+  const { label, choiceId, sessionCreateBody, submitRouterChoice } = opts;
+  const { sessionId } = await createSession(sessionCreateBody);
+  assert(sessionId, 'session id');
+
+  let submittedRouterChoice = false;
+
+  for (let i = 0; i < 22; i++) {
+    let pub = unwrapPublicSession(await getSession(sessionId));
+    if (pub.asyncPending) {
+      await pollAsyncSettled(sessionId, 120_000);
+      pub = unwrapPublicSession(await getSession(sessionId));
+    }
+    assertWaitingPublicSessionShape(pub, `${label} step ${i}`);
+    const ex = pub.execute;
+    if (ex && typeof ex === 'object') {
+      assertWebUiExecuteProjection(ex, `${label} execute ${i}`);
+    }
+
+    const form = ex?.form;
+    const choices = form?.choices;
+    const inputs = form?.input;
+
+    if (Array.isArray(choices) && choices.length > 0) {
+      if (submittedRouterChoice) {
+        throw new Error(
+          `${label}: router loop — form.choices again after ${choiceId} choice; server stuck on router`
+        );
+      }
+      const pick = choices.find((c) => c && c.id === choiceId)?.id;
+      assert(pick, `${label}: choice id "${choiceId}" missing from router form`);
+      const ack = await submitRouterChoice(sessionId, pick);
+      assert(ack?.success !== false, `${label}: submit choice`);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      submittedRouterChoice = true;
+      continue;
+    }
+
+    if (Array.isArray(inputs) && inputs.length > 0 && !choices?.length) {
+      if (submittedRouterChoice) {
+        return;
+      }
+      const ack = await sendNext(sessionId, {
+        result: { message: `direct-tests: task direction (${label})` },
+      });
+      assert(ack?.success !== false, `${label}: task direction /next`);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      continue;
+    }
+
+    if (submittedRouterChoice) {
+      const full = await getSession(sessionId, { includeContext: true });
+      if (full) {
+        const u = unwrapPublicSession(full);
+        const step = u.context?.execution?.step;
+        const action = u.context?.execution?.action;
+        if (step === 'router' && action === 'task') {
+          throw new Error(
+            `${label}: context.execution still task/router after choice (includeContext)`
+          );
+        }
+      }
+      return;
+    }
+
+    throw new Error(`${label}: unhandled UI state step ${i}`);
+  }
+
+  throw new Error(`${label}: exceeded max iterations`);
+}
+
+async function caseRouterAgentNoLoop() {
+  await runRouterChoiceNoLoopCore({
+    label: 'routerAgentNoLoop',
+    choiceId: 'agent',
+    sessionCreateBody: {
+      mode: 'agent',
+      task: 'direct-tests router agent no-loop',
+      title: 'router agent no-loop',
+    },
+    submitRouterChoice: (sessionId, pick) =>
+      sendNext(sessionId, { result: { choice: pick } }),
+  });
+}
+
+/** Same as routerAgentNoLoop but uses top-level `task` as choice id (Client API shorthand). */
+async function caseRouterAgentNoLoopTaskShorthand() {
+  await runRouterChoiceNoLoopCore({
+    label: 'routerAgentNoLoopTaskShorthand',
+    choiceId: 'agent',
+    sessionCreateBody: {
+      mode: 'agent',
+      task: 'direct-tests router agent no-loop (task shorthand choice)',
+      title: 'router task shorthand',
+    },
+    submitRouterChoice: (sessionId, pick) => sendNext(sessionId, { task: pick }),
+  });
+}
+
+/** UTF-8 task text on create — catches encoding/classification issues vs ASCII-only probe. */
+async function caseRouterAgentNoLoopUtf8Task() {
+  await runRouterChoiceNoLoopCore({
+    label: 'routerAgentNoLoopUtf8Task',
+    choiceId: 'agent',
+    sessionCreateBody: {
+      mode: 'agent',
+      task: 'Тест українською: direct-tests router agent no-loop',
+      title: 'router utf8 task',
+    },
+    submitRouterChoice: (sessionId, pick) =>
+      sendNext(sessionId, { result: { choice: pick } }),
+  });
+}
+
+async function caseRouterDialogNoLoop() {
+  await runRouterChoiceNoLoopCore({
+    label: 'routerDialogNoLoop',
+    choiceId: 'dialog',
+    sessionCreateBody: {
+      mode: 'agent',
+      task: 'direct-tests router dialog no-loop',
+      title: 'router dialog no-loop',
+    },
+    submitRouterChoice: (sessionId, pick) =>
+      sendNext(sessionId, { result: { choice: pick } }),
+  });
+}
+
+async function caseRouterDialogNoLoopTaskShorthand() {
+  await runRouterChoiceNoLoopCore({
+    label: 'routerDialogNoLoopTaskShorthand',
+    choiceId: 'dialog',
+    sessionCreateBody: {
+      mode: 'agent',
+      task: 'direct-tests router dialog no-loop (task shorthand)',
+      title: 'router dialog task shorthand',
+    },
+    submitRouterChoice: (sessionId, pick) => sendNext(sessionId, { task: pick }),
+  });
+}
+
+/**
+ * Sending explicit `result.message` while `form.choices` is non-empty must not silently
+ * pick a pipeline — expect routing stage or choices to remain (wrong beat vs choice id).
+ */
+async function caseRouterWrongBeatMessage() {
+  const { sessionId } = await createSession({
+    mode: 'agent',
+    task: 'direct-tests router wrong beat',
+    title: 'router wrong beat',
+  });
+  assert(sessionId, 'session id');
+
+  for (let i = 0; i < 20; i++) {
+    let pub = unwrapPublicSession(await getSession(sessionId));
+    if (pub.asyncPending) {
+      await pollAsyncSettled(sessionId, 120_000);
+      pub = unwrapPublicSession(await getSession(sessionId));
+    }
+    assertWaitingPublicSessionShape(pub, `routerWrongBeat step ${i}`);
+    const ex = pub.execute;
+    if (ex && typeof ex === 'object') {
+      assertWebUiExecuteProjection(ex, `routerWrongBeat execute ${i}`);
+    }
+
+    const form = ex?.form;
+    const choices = form?.choices;
+    const inputs = form?.input;
+
+    if (Array.isArray(choices) && choices.length > 0) {
+      const ack = await sendNext(sessionId, {
+        result: {
+          message:
+            'direct-tests: explicit result.message while router choices present (wrong beat)',
+        },
+      });
+      assert(ack?.success !== false, 'routerWrongBeat: wrong-beat /next');
+      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      const after = unwrapPublicSession(await getSession(sessionId));
+      if (after.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      const settled = unwrapPublicSession(await getSession(sessionId));
+      assertWaitingPublicSessionShape(settled, 'routerWrongBeat after wrong beat');
+      const c2 = settled.execute?.form?.choices;
+      const stillRouting =
+        settled.stage === 'routing' ||
+        (Array.isArray(c2) && c2.length > 0);
+      assert(
+        stillRouting,
+        'routerWrongBeat: expected routing stage or form.choices after message-with-choices (wrong beat must not advance like choice)'
+      );
+      return;
+    }
+
+    if (Array.isArray(inputs) && inputs.length > 0 && !choices?.length) {
+      const ack = await sendNext(sessionId, {
+        result: { message: 'direct-tests: task direction for wrong-beat probe' },
+      });
+      assert(ack?.success !== false, 'routerWrongBeat: task direction');
+      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      continue;
+    }
+
+    throw new Error(`routerWrongBeat: unhandled UI state step ${i}`);
+  }
+
+  throw new Error('routerWrongBeat: exceeded max iterations (never saw router choices)');
+}
+
 async function caseDialogSessionRoundTrip() {
   const { sessionId } = await createSession({
     context: { execution: { action: 'dialog', step: 'init' } },
@@ -458,17 +772,61 @@ async function caseDialogSessionRoundTrip() {
   await sendNext(sessionId, { result: { message: 'Hi' } });
   await sleep(800);
   await pollAsyncSettled(sessionId, 60_000);
-  const session = await getSession(sessionId);
-  const step = session.session?.context?.execution?.step ?? session.context?.execution?.step;
-  assert(typeof step === 'string', 'expected execution.step string after message');
-  if (session.session?.execute) {
-    assertSingleActionKey(session.session.execute, 'session.execute');
+  const body = await getSession(sessionId);
+  const pub = unwrapPublicSession(body);
+  assert(pub && typeof pub === 'object', 'GET /sessions/:id public DTO');
+  assertWaitingPublicSessionShape(pub, 'dialog after settle');
+  if (pub.execute && typeof pub.execute === 'object') {
+    assertWebUiExecuteProjection(pub.execute, 'dialog Web DTO execute');
   }
+  // Public DTO: no full context unless ?includeContext=1; when present, only task/projectId (session-projection-dto.js).
+  const slimCtx = pub.context;
+  if (slimCtx && typeof slimCtx === 'object') {
+    const extra = Object.keys(slimCtx).filter((k) => k !== 'task' && k !== 'projectId');
+    assert(
+      extra.length === 0,
+      `public context must be slim (task/projectId only), got extra: ${extra.join(', ')}`
+    );
+  }
+}
+
+function hasCanonicalToolExecute(execute) {
+  if (!execute || typeof execute !== 'object') return false;
+  const keys = Object.keys(execute).filter((k) => !k.startsWith('_'));
+  if (!keys.length) return false;
+  return keys.some((k) =>
+    ['read-file', 'list-directory', 'file-exists', 'rag-search', 'script'].includes(k)
+  );
+}
+
+/** Raw tool keys must not appear on GET /sessions/:id Web DTO (WEB_UI_PROTOCOL execute projection). */
+function assertNoRawToolKeysOnWebExecute(execute, label) {
+  if (!execute || typeof execute !== 'object') return;
+  const raw = [
+    'read-file',
+    'write-file',
+    'list-directory',
+    'rag-search',
+    'script',
+    'execute-command',
+    'grep-search',
+    'file-exists',
+    'edit-patch',
+    'run-script',
+  ];
+  const hit = raw.filter((k) => Object.prototype.hasOwnProperty.call(execute, k));
+  assert(hit.length === 0, `${label}: Web DTO must not expose raw tool keys: ${hit.join(', ')}`);
 }
 
 async function caseRedAndGrayRoomCycle() {
   const { sessionId } = await createSession({ mode: 'agent', task: 'Red/Gray room coverage test' });
   assert(sessionId, 'session id');
+
+  const fullProbe = await getSession(sessionId, { includeContext: true });
+  if (fullProbe == null) {
+    console.warn('[redGrayRoom] skip: GET ?includeContext=1 returned 403 (production?)');
+    return;
+  }
 
   const promptText =
     'Please start a tool execution for a file operation. For example: execute {"read-file":{"path":"README.md"}}.';
@@ -481,11 +839,12 @@ async function caseRedAndGrayRoomCycle() {
     const settled = await pollAsyncSettled(sessionId, 120_000);
     assert(settled, 'red-gray room: first settle');
 
-    const session = await getSession(sessionId);
-    assertGrayRoomSlot(session, 'after first settle');
+    const full = await getSession(sessionId, { includeContext: true });
+    assert(full, 'red-gray room: full session (includeContext)');
+    assertGrayRoomSlot(full, 'after first settle');
 
-    const executeObj = session.session?.execute ?? session.execute;
-    if (executeObj && Object.keys(executeObj).filter((k) => !k.startsWith('_')).length > 0) {
+    const executeObj = full.execute;
+    if (hasCanonicalToolExecute(executeObj)) {
       redExecute = executeObj;
       break;
     }
@@ -493,16 +852,14 @@ async function caseRedAndGrayRoomCycle() {
 
   assert(redExecute, 'red-gray room: no tool execute observed after attempts');
 
-  const sessionAfterRedRoom = await performRedRoomClientExecute(sessionId, redExecute);
-  assertGrayRoomSlot(sessionAfterRedRoom, 'after red room');
+  await performRedRoomClientExecute(sessionId, redExecute);
 
-  const finalExecute = sessionAfterRedRoom.session?.execute ?? sessionAfterRedRoom.execute;
-  if (finalExecute) {
-    assert(
-      Object.keys(finalExecute).filter((k) => !k.startsWith('_')).length <= 1,
-      'final execute must still be single-key shape if present'
-    );
-  }
+  const fullAfterRed = await getSession(sessionId, { includeContext: true });
+  assert(fullAfterRed, 'red-gray room: full session after red');
+  assertGrayRoomSlot(fullAfterRed, 'after red room');
+
+  const pub = unwrapPublicSession(await getSession(sessionId));
+  assertNoRawToolKeysOnWebExecute(pub.execute, 'after red room hydrate');
 }
 
 async function caseAgentSeededSession() {
@@ -662,6 +1019,41 @@ const CASE_REGISTRY = {
     desc: 'session + /next message + hydrate',
     run: caseDialogSessionRoundTrip,
   },
+  agentDialogWorkflow: {
+    name: 'agentDialogWorkflow',
+    desc: 'mode:agent → router → dialog → hello → thanks (full Client API chain)',
+    run: caseAgentModeDialogWorkflow,
+  },
+  routerAgentNoLoop: {
+    name: 'routerAgentNoLoop',
+    desc: 'router → result.choice(agent); must not return form.choices again (sticky router)',
+    run: caseRouterAgentNoLoop,
+  },
+  routerWrongBeatMessage: {
+    name: 'routerWrongBeatMessage',
+    desc: 'with form.choices, result.message must not advance like choice (stay routing)',
+    run: caseRouterWrongBeatMessage,
+  },
+  routerAgentNoLoopTaskShorthand: {
+    name: 'routerAgentNoLoopTaskShorthand',
+    desc: 'sticky router probe via top-level /next { task: agent } (not result.choice)',
+    run: caseRouterAgentNoLoopTaskShorthand,
+  },
+  routerAgentNoLoopUtf8Task: {
+    name: 'routerAgentNoLoopUtf8Task',
+    desc: 'sticky router probe with Cyrillic task on session create (UTF-8)',
+    run: caseRouterAgentNoLoopUtf8Task,
+  },
+  routerDialogNoLoop: {
+    name: 'routerDialogNoLoop',
+    desc: 'router → result.choice(dialog); must not return same form.choices (sticky router)',
+    run: caseRouterDialogNoLoop,
+  },
+  routerDialogNoLoopTaskShorthand: {
+    name: 'routerDialogNoLoopTaskShorthand',
+    desc: 'sticky router probe for dialog via top-level /next { task: dialog }',
+    run: caseRouterDialogNoLoopTaskShorthand,
+  },
   nextTaskShorthand: {
     name: 'nextTaskShorthand',
     desc: '/next with top-level task shorthand',
@@ -699,6 +1091,12 @@ const DEFAULT_ORDER = [
   'redGrayRoom',
   'getSessionIncludeContext',
   'dialogSession',
+  'routerAgentNoLoop',
+  'routerAgentNoLoopTaskShorthand',
+  'routerAgentNoLoopUtf8Task',
+  'routerDialogNoLoop',
+  'routerDialogNoLoopTaskShorthand',
+  'routerWrongBeatMessage',
 ];
 
 async function main() {

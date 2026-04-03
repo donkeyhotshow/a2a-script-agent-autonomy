@@ -1,5 +1,5 @@
 /**
- * Mocks Client API paths used by web/ (vite-plugin-a2a), not /api/v1/sessions.
+ * Mocks Client API paths used by web/ (@a2a-client/vite-plugin), not /api/v1/sessions.
  */
 import type {Page} from '@playwright/test';
 import {fixtures} from './index.js';

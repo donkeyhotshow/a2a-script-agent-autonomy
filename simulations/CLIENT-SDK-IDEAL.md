@@ -23,7 +23,7 @@ DTO.
 
 ## Web execute DTO (`received.json` / GET session `execute`)
 
-Implemented in `a2a-client/vite-plugin-a2a/routes/utils/web-execute-dto.js` (and SDK `web-execute-dto.ts`). The Client
+Implemented in `a2a-client/packages/vite-plugin/routes/utils/web-execute-dto.js` (and SDK `web-execute-dto.ts`). The Client
 API removes these keys from `execute` before responding to the Web UI: `rag-search`, `read-file`, `write-file`,
 `script`, `execute-command`, `list-directory`, `grep-search`, `file-exists`, `edit-patch`, `run-script`, `debug`.
 

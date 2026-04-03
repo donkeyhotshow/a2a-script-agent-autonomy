@@ -32,6 +32,10 @@ LLM provides detailed suggestions for additional test cases.
         "message": "Принял: введём Example.spec и запустим vitest после ручного анализа компонента."
       },
       {
+        "role": "assistant",
+        "message": "Принял задачу: напишем Example.spec и запустим vitest, дайте знать, если нужна дополнительная информация."
+      },
+      {
         "role": "user",
         "message": "Пожалуйста, прогоните vitest на Example.spec и отдайте вывод."
       },

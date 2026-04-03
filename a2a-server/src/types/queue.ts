@@ -5,7 +5,7 @@
  */
 
 import type { Job } from 'bullmq';
-import type { ProcessResult } from '../services/request-processor.interfaces.js';
+import type { ProcessResult } from '../services/core/request-processor/request-processor.interfaces.js';
 
 // ===========================================
 // Queue Priority

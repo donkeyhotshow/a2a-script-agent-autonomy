@@ -81,14 +81,7 @@ export interface ValidationError {
     path?: string[];
 }
 
-// Legacy — kept for action-request-processor compatibility
-export interface ActionRequest {
-    sessionId: string;
-    actionType: string;
-    context: Record<string, unknown>;
-    codeBlocks: unknown;
-    message?: string;
-}
+
 
 export interface RequestState {
     sessionId: string;

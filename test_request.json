@@ -1,9 +1,0 @@
-{
-  "model": "glm-4.7-flash",
-  "messages": [
-    {
-      "role": "user",
-      "content": "Hello, this is a test message to verify Z.AI routing through the proxy daemon"
-    }
-  ]
-}

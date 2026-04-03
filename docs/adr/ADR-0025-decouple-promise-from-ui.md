@@ -40,7 +40,7 @@ Implement server-side daemon polling and abstract status from Web UI:
 
 ### 1. Server-Side Daemon Polling
 
-Client API daemon (`vite-plugin-a2a/daemon/a2a-result-poll.js`) automatically polls A2A Server after receiving promiseId:
+Client API daemon (`a2a-client/packages/vite-plugin/daemon/a2a-result-poll.js`) automatically polls A2A Server after receiving promiseId:
 
 ```javascript
 // In stepRoutes.js POST /next handler
@@ -112,9 +112,9 @@ Web UI receives only these status values:
 
 **Files to modify:**
 
-1. `vite-plugin-a2a/routes/utils/web-session-dto.js` - Remove promiseId from `toPublicSession()`
-2. `vite-plugin-a2a/routes/stepRoutes.js` - Start daemon automatically after invoke
-3. `vite-plugin-a2a/routes/sessionRoutes.js` - Ensure GET /sessions/:id returns no promiseId
+1. `a2a-client/packages/vite-plugin/routes/utils/web-session-dto.js` - Remove promiseId from `toPublicSession()`
+2. `a2a-client/packages/vite-plugin/routes/stepRoutes.js` - Start daemon automatically after invoke
+3. `a2a-client/packages/vite-plugin/routes/sessionRoutes.js` - Ensure GET /sessions/:id returns no promiseId
 
 **Before:**
 ```javascript

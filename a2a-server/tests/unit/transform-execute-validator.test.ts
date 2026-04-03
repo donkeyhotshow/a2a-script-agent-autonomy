@@ -4,6 +4,7 @@ import {
     validateAgentExecuteShape,
     validateDialogExecuteShape,
     validateFormChoiceProcessResult,
+    validateResultShape,
     validateRouterResultShape,
 } from '../../src/services/core/request-processor/validators/transform-execute-validator.js';
 
@@ -127,6 +128,23 @@ describe('validateRouterResultShape', () => {
             execute: {form: {}},
         });
         expect(issues.some((i) => i.code === 'ROUTER_CHOICES_MISSING')).toBe(true);
+    });
+});
+
+describe('validateResultShape (legacy bare blobs)', () => {
+    it('flags single-key legacy { content }', () => {
+        const issues = validateResultShape({content: 'x'});
+        expect(issues.some((i) => i.code === 'RESULT_BARE_BLOB_CONTENT')).toBe(true);
+    });
+
+    it('flags single-key legacy { results }', () => {
+        const issues = validateResultShape({results: []});
+        expect(issues.some((i) => i.code === 'RESULT_BARE_BLOB_RESULTS')).toBe(true);
+    });
+
+    it('does not flag read-file action-key shape', () => {
+        const issues = validateResultShape({'read-file': {path: 'a.ts'}});
+        expect(issues).toHaveLength(0);
     });
 });
 

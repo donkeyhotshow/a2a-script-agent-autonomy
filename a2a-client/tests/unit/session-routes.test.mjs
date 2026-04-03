@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { toPublicSession } from '../../vite-plugin-a2a/routes/utils/session-projection-dto.js';
+import { toPublicSession } from '../../packages/vite-plugin/routes/utils/session-projection-dto.js';
 
 describe('sessionRoutes - debug context guard', () => {
     // Тесты для debug-only логики includeContext проверяются косвенно

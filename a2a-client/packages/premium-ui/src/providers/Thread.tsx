@@ -1,5 +1,5 @@
 import { validate } from "uuid";
-import { getApiKey } from "@/lib/api-key";
+import { getApiKey } from "@/lib/api-key.tsx";
 import { Thread } from "@langchain/langgraph-sdk";
 import { useQueryState } from "nuqs";
 import {
@@ -11,7 +11,7 @@ import {
   Dispatch,
   SetStateAction,
 } from "react";
-import { createClient } from "./client";
+import { createClient } from "./client.ts";
 
 interface ThreadContextType {
   getThreads: () => Promise<Thread[]>;

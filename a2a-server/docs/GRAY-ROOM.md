@@ -39,6 +39,20 @@ Client → Server
 | **Loop execution** | `GrayRoomOrchestrator.runLoop()` — same interrupt budget, transform, LLM cycle |
 | **Result merging** | `mergeTraceIntoResult()` → [`mergeInterruptTraceIntoContext`](../src/transform/interrupt-trace-contract.ts) — writes `context.workbench.slots.interruptTrace` only |
 
+### Trigger resolution order (`computeGrayRoomTrigger`)
+
+Single source of truth: [`computeGrayRoomTrigger()`](../src/services/core/request-processor/gray-room-orchestrator.ts) (exported wrappers: `detectGrayRoomTrigger`, `shouldUseGrayRoom`). Unit tests: [`tests/gray-room-trigger.test.ts`](../tests/gray-room-trigger.test.ts).
+
+| Step | Condition | If true |
+|------|-----------|---------|
+| 1 | `context.execution.grayRoomRequested === true` | **On** — `source: explicit_flag` (stops here) |
+| 2 | `flowControlHint` is `gray-room` or `gray_room` (call arg or `ctx.flowControlHint`) | **On** — `source: explicit_flag` |
+| 3 | `A2A_GRAY_ROOM_ENABLED` is an explicit opt-out token (`0`, `false`, `no`, `off`) | **Off** — `source: disabled` (unless step 1–2 already matched) |
+| 4 | `A2A_GRAY_ROOM_ENABLED` is unset, or set to an enable token (`1`, `true`, `yes`) — see `getGrayRoomEnabled()` | **On** — `source: env_enabled` |
+| 5 | Else: `execution.action` policy | `dialog` → `policy_dialog`; `agent` / `coder` / `auto-ai` / `analyze` → `policy_agent`; `task-decomposition` / `task` → `policy_task_decomposition`; otherwise **Off** — `disabled` |
+
+Env values that are neither enable nor disable tokens (e.g. arbitrary strings) fall through: gray room is off until **policy** (step 5) applies for known actions.
+
 ### Data flow boundaries
 
 - **Only** modifies `context.workbench` and `context.history` during execution.
@@ -148,6 +162,7 @@ Adding **`prompts/transforms/<your-name>/`** (with `server-transforms-*.json` an
 - **Thinking step** — Store structured reasoning in `context.workbench.slots.thinking`, then run the main LLM again with that context.
 - **RAG pagination** — `auto_rag_page` re-enters the main loop; optional **`@a2a/rag`** search when `data.query` and `A2A_RAG_PROJECT_PATH` / `data.projectPath` are set (see § Implemented `reason` values).
 - **`auto_read_file` / `clarify` / `interrupt.schema`** — implemented in `applyInterrupt` / the loop (`maxTurns` clamping applies per § Loop limits).
+- **Black Room algorithms** — `algorithm_invoke` routes deterministic tasks to local Ollama for cost-effective, consistent execution (see ADR-0058).
 
 ## Protocol: `interrupt` on transform output
 
@@ -185,6 +200,7 @@ The **response** transform must place `interrupt` on the same object that carrie
 | `auto_rag_page` | Merges `data`, sets `_interrupt_reason`, then **re-enters** the main loop (`continueLoop: true`). If **`data.query`** is non-empty and **`data.projectPath`** or env **`A2A_RAG_PROJECT_PATH`** is set, the server runs **`@a2a/rag`** (`createRAGClientService` → `initialize` → `search`), appends hits to **`context.ragResults`**, and adds **`context._server_rag_page`**. If query or path is missing, behavior is merge-only (no server search). | `true` |
 | `auto_read_file` | Reads `data.filePath` or `data.path` via the workspace `read-file` handler; merges into `context.files`. | `false` — returns with updated context and the same primary `execute`. |
 | `clarify` | Stores `data` under `context.workbench.slots.clarify`. | `false` — same as `auto_read_file` for loop semantics. |
+| `algorithm_invoke` | Routes to **Black Room** (Algorithm Mode) for deterministic execution on local Ollama. Requires `interrupt.algorithmId` and merges results into `context.workbench.slots.blackRoomContext`. | `false` — returns with algorithm results merged into context. |
 | *(anything else)* | Logged; loop stops; client gets current result **without** `interrupt` consumption beyond that. | `false` |
 
 ## Loop limits and truncation
@@ -222,11 +238,11 @@ The **response** transform must place `interrupt` on the same object that carrie
 
 ## Client visibility: `interruptTrace`
 
-Each completed dialog invoke may include **`context.workbench.slots.interruptTrace`**: an ordered array of [`ServerInterruptTraceEvent`](../src/transform/types.ts) objects (`llm_output`, `response_transform`, `interrupt_handler`, `request_rebuild`, `sidecar_llm`). The Web task-flow UI renders them as a collapsible **“Server LLM chain”** block (see `a2a-client/web/js/task-flow/render.js`).
+Each completed dialog invoke may include **`context.workbench.slots.interruptTrace`**: an ordered array of [`ServerInterruptTraceEvent`](../src/transform/types.ts) objects (`llm_output`, `response_transform`, `interrupt_handler`, `request_rebuild`, `sidecar_llm`). The Web task-flow UI renders them as a collapsible **“Server LLM chain”** block (see `a2a-client/packages/web/js/task-flow/render.js`).
 
 ## Client visibility: `grayRoom` (GR-S-08)
 
-Each invoke that runs [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts) merges **`context.workbench.slots.grayRoom`**: a [`GrayRoomControlEnvelope`](../src/transform/types.ts) (`enabled`, `planId`, `phase`, `maxTurns`, `turn`, `remainingBudget`, `status`, `lastReason`, `timestamps`, `traceRef`). Updated on every successful return from the loop (including `interrupt_truncated`). Failed paths (transform/LLM hard errors) do not write the slot. The Web task-flow UI renders a collapsible **Gray room** block via `buildGrayRoomHtml()` in [`a2a-client/web/js/task-flow/render-layout.js`](../../a2a-client/web/js/task-flow/render-layout.js) (alongside **Server LLM chain** / `interruptTrace`). Golden fixture: [`simulations/resilience-contract/6/response.json`](../../simulations/resilience-contract/6/response.json).
+Each invoke that runs [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts) merges **`context.workbench.slots.grayRoom`**: a [`GrayRoomControlEnvelope`](../src/transform/types.ts) (`enabled`, `planId`, `phase`, `maxTurns`, `turn`, `remainingBudget`, `status`, `lastReason`, `timestamps`, `traceRef`). Updated on every successful return from the loop (including `interrupt_truncated`). Failed paths (transform/LLM hard errors) do not write the slot. The Web task-flow UI renders a collapsible **Gray room** block via `buildGrayRoomHtml()` in [`a2a-client/packages/web/js/task-flow/render-layout.js`](../../a2a-client/packages/web/js/task-flow/render-layout.js) (alongside **Server LLM chain** / `interruptTrace`). Golden fixture: [`simulations/resilience-contract/6/response.json`](../../simulations/resilience-contract/6/response.json).
 
 ## Limitations (current code)
 

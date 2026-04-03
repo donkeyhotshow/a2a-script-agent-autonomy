@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildSessionViewModel, isCompletedViewModel } from '../../vite-plugin-a2a/routes/utils/session-view-model.js';
+import { buildSessionViewModel, isCompletedViewModel } from '../../packages/vite-plugin/routes/utils/session-view-model.js';
 
 describe('session-view-model', () => {
     it('returns completed model for empty payload', () => {

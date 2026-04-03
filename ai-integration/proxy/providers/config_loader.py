@@ -11,16 +11,35 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from .base import ProviderConfig
+from .. import config as proxy_config
 
 
 def _resolve_env_var(value: str) -> str:
-    """Resolve environment variable references like ${VAR:-default}"""
+    """Resolve environment variable references like ${VAR:-default}
+    Checks both os.environ and proxy_config (which loads from .env via pydantic-settings)"""
     def replace_var(match):
         var_expr = match.group(1)
         if ':-' in var_expr:
             var_name, default_value = var_expr.split(':-', 1)
-            return os.environ.get(var_name.strip(), default_value.strip())
-        return os.environ.get(var_expr, match.group(0))
+            var_name = var_name.strip()
+            default_value = default_value.strip()
+            # Check os.environ first, then proxy_config
+            env_val = os.environ.get(var_name)
+            if env_val is not None:
+                return env_val
+            config_val = getattr(proxy_config, var_name, None)
+            if config_val is not None:
+                return config_val
+            return default_value
+        var_name = var_expr.strip()
+        # Check os.environ first, then proxy_config
+        env_val = os.environ.get(var_name)
+        if env_val is not None:
+            return env_val
+        config_val = getattr(proxy_config, var_name, None)
+        if config_val is not None:
+            return config_val
+        return match.group(0)
     return re.sub(r'\$\{([^}]+)\}', replace_var, value)
 
 
@@ -155,14 +174,15 @@ def _default_config() -> ProvidersConfig:
     )
 
     # Z.AI (default cloud provider)
+    # Use proxy_config values which are loaded from .env via pydantic-settings
     config.providers['z_ai'] = ProviderConfig(
         name='z_ai',
         type='z_ai',
-        url=os.environ.get('Z_AI_BASE_URL', 'https://api.z.ai/api/paas/v4/'),
-        api_key=os.environ.get('Z_AI_API_KEY'),
+        url=getattr(proxy_config, 'Z_AI_BASE_URL', 'https://api.z.ai/api/paas/v4/'),
+        api_key=getattr(proxy_config, 'Z_AI_API_KEY', None),
         enabled=True,
         priority=0,
-        models=[os.environ.get('Z_AI_MODEL', 'glm-4.7-flash')],
+        models=[getattr(proxy_config, 'Z_AI_MODEL', 'glm-4.7-flash')],
         timeout=0,
         max_retries=2,
         request_delay_seconds=2.0,

@@ -6,7 +6,7 @@
         "a2a-client",
         "a2a-server",
         "ai-integration",
-        "a2a-client/web"
+        "@a2a-client/web"
     ],
     "scripts": {
         "dev": "start-all.bat",
@@ -21,7 +21,8 @@
         "monitor:daemon": "node monitor-and-process-tasks.js --daemon",
         "monitor:once": "node monitor-and-process-tasks.js --once",
         "monitor:reset": "node -e \"require('fs').unlinkSync('task-monitor-state.json')\" 2>nul || exit 0",
-        "test:direct-tests": "vitest run tests/direct-tests"
+        "test:direct-tests": "vitest run tests/direct-tests",
+        "verify:gray-room": "node scripts/verify-gray-room-state.mjs"
     },
     "devDependencies": {
         "@types/node": "^20.11.0",

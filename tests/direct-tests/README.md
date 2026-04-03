@@ -7,11 +7,15 @@
 | If you are debugging… | Use |
 |------------------------|-----|
 | Wrong `execute` / `result` keys, router beats, Client API session steps | [Dialog](#dialog), `dialog/run-dialog-direct-ollama.ps1`, `e2e-dialog-test.js` |
+| **Sticky router** (same `form.choices` again after a router choice, or `task`/`router` never clears) | `node tests/direct-tests/e2e-dialog-test.js --only=routerAgentNoLoop` — also `routerAgentNoLoopTaskShorthand`, `routerAgentNoLoopUtf8Task`, **`routerDialogNoLoop`** / **`routerDialogNoLoopTaskShorthand`** (after **dialog** choice), `routerWrongBeatMessage`. Replay: `replay-session-from-disk.js … --assert-no-sticky-router`. **Direct server invoke test:** `node tests/direct-tests/router-choice-transition-run.mjs` (also covered by `npm run test:direct-tests` when `GET {A2A_SERVER_URL}/health` is OK) |
+| **Replay a saved session folder** (`client-result.json` per step) | [replay-session-from-disk.js](#replay-saved-session-steps) — needs UTF-8 `replay-create.json` (or path arg) matching how the session was opened |
 | Stack reachability before deep JSON work | [run-checks.ps1](#hub-checks-by-stack-part) (`-Scope …`) |
 
 **See also:** [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) (golden sim contract — **after** direct reproduction).
 
-**Unit tests (no stack):** schema guards in [`lib/`](lib/) — run `npm run test:direct-tests` from repo root.
+**Vitest (`npm run test:direct-tests`):** schema guards in [`lib/`](lib/) always run; `router-choice-transition.test.mjs` runs live server checks only when `A2A_SERVER_URL` (default `http://localhost:3000`) responds on `/health`.
+
+**After `start-all.bat`:** [`run-post-start-all.ps1`](run-post-start-all.ps1) — hub (`run-checks.ps1` with Client **3001** / Web **5173**), Vitest, `router-choice-transition.test.mjs`, full `e2e-dialog-test.js`, `gray-room-test.js`, `test-dialog-flow.ps1`, `test-agent-flow.ps1`, `server-invoke-agent.ps1`. Set **`A2A_POST_START_SKIP_HEAVY=1`** to skip LLM-heavy steps (hub + Vitest + router + short e2e subset only).
 
 ---
 
@@ -22,6 +26,7 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 | Entry | Purpose |
 |-------|---------|
 | [run-checks.ps1](run-checks.ps1) | Hub: health checks by scope (LLM, ServerLLM, ClientServer, …) |
+| [run-post-start-all.ps1](run-post-start-all.ps1) | Chains hub + Vitest + node + PS1 flows (see *After start-all.bat* above); used by repo root `start-all.bat` |
 | [scripts/](scripts/) | Runners → `scripts/tests/` and root `scripts/` (prod-test, pre-release, web-ui-smoke-report) |
 | [dialog/](dialog/) | Dialog flow with direct Ollama (bypass ai-integration timeout) |
 | [rag/](rag/), [sdk/](sdk/), [ai-integration/](ai-integration/), [server/](server/) | Runners → packages (RAG, SDK, AI, sim) |
@@ -64,6 +69,24 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 ```
 
 ai-integration uses FORWARD_TIMEOUT_SECONDS=180 (set in start-ai-integration.bat) for slow models.
+
+## Replay saved session steps
+
+[`replay-session-from-disk.js`](replay-session-from-disk.js) creates a **new** session and reapplies each step’s `client-result.json` from a captured `a2a-client/storage/sessions/sess_*/` tree. Disk payloads with mojibake will not match a healthy UTF-8 UI — build **`replay-create.json`** in that folder (or pass a second path) with the same `mode` / `task` / `title` you used in the browser.
+
+```powershell
+# Inspect what would be sent (no HTTP)
+node tests/direct-tests/replay-session-from-disk.js a2a-client/storage/sessions/sess_EXAMPLE --dry-run
+
+# After writing replay-create.json next to the session (UTF-8), e.g. {"mode":"agent","task":"…","title":"…"}
+node tests/direct-tests/replay-session-from-disk.js a2a-client/storage/sessions/sess_EXAMPLE
+
+# Or pass create body explicitly
+node tests/direct-tests/replay-session-from-disk.js a2a-client/storage/sessions/sess_EXAMPLE path/to/create.json
+
+# Fail exit 1 if a router choice /next leaves the session on task/router with form.choices (dev: includeContext)
+node tests/direct-tests/replay-session-from-disk.js a2a-client/storage/sessions/sess_EXAMPLE --assert-no-sticky-router
+```
 
 ## Locations (do not move originals)
 
@@ -160,3 +183,22 @@ Level 1–3 suite: [scripts/tests/README.md](../../scripts/tests/README.md)
 ```powershell
 .\scripts\tests\run-all.ps1
 ```
+
+## Router Choice Transition Test
+
+Direct server-side test for the sticky router bug. Verifies that submitting `result.choice` transitions out of router step.
+
+```powershell
+# Requires: a2a-server on :3000, ai-integration on :11434 (or mock)
+node tests/direct-tests/router-choice-transition-run.mjs
+
+# With custom endpoints
+$env:A2A_SERVER_URL="http://localhost:3000"; $env:AI_HUB_URL="http://localhost:11434"; node tests/direct-tests/router-choice-transition-run.mjs
+```
+
+Tests:
+1. `dialog` choice → execution.action becomes "dialog", step !== "router"
+2. `agent` choice → execution.action becomes "agent"
+3. `task-decomposition` choice → execution.action becomes "task-decomposition"
+
+Fails with descriptive error if server re-emits router form after valid choice.

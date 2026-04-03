@@ -17,8 +17,28 @@ import type {ContextBlock, FileBlock} from '../../types/index.js';
 import {CURRENT_PROTOCOL_VERSION} from '../../protocol/versioning/protocol-versions.js';
 import {requestService, type RequestResult} from '../core/request/request.service.js';
 import {processRequestByPromiseId} from '../core/request-processor/request-processor.service.js';
+import {resolveExecution} from '../core/request-processor/normalization.js';
+import {ACTION_TO_SCHEMA} from '../../config/router-static.js';
 import {trackRequestStart} from './pipeline-observability.service.js';
 import {randomUUID} from 'node:crypto';
+
+/**
+ * Router beat + `result.choice` → dialog|agent|task-decomposition: set `transformSchema` on the
+ * invoke context so `determineRequestType` always routes to the dialog processor even if
+ * `execution` is only nested or routing heuristics drift. `resolveTransformSchema` then resolves
+ * without relying on `applyRouterPipelineChoice` alone.
+ */
+function applyRouterTransformSchemaHint(ctx: Record<string, unknown>): void {
+    const ex = resolveExecution(ctx);
+    const choice = (ctx['result'] as Record<string, unknown> | undefined)?.choice;
+    if (
+        ex?.['step'] === 'router' &&
+        typeof choice === 'string' &&
+        ACTION_TO_SCHEMA[choice]
+    ) {
+        ctx['transformSchema'] = ACTION_TO_SCHEMA[choice];
+    }
+}
 
 export interface InvokeInput {
     context?: unknown;
@@ -184,6 +204,8 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
         }
     }
 
+    applyRouterTransformSchemaHint(ctx);
+
     ensureContextSessionId(ctx);
 
     const topLlm =
@@ -206,7 +228,13 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
     // Track request start for observability
     trackRequestStart(promiseId);
 
-    if (input.sync) {
+    const explicitSync = input.sync === true;
+    const explicitAsync = input.sync === false;
+    const envDefaultSync =
+        process.env.DEFAULT_SYNC_MODE === '1' || process.env.DEFAULT_SYNC_MODE === 'true';
+    const useSync = explicitSync || (envDefaultSync && !explicitAsync);
+
+    if (useSync) {
         return runSyncInvokeChain(promiseId);
     }
 

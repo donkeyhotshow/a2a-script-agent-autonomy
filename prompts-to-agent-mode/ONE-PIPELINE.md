@@ -27,7 +27,7 @@ This document is the **single linear spine** for: run stack → drive the agent 
 | [`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md) | **Instrument:** launch indexed tasks through session dialog (`npm run monitor`) |
 | [`STACK-RUN.md`](STACK-RUN.md) | Live stack vs IDE vs invoke |
 | [`docs/OPERATOR-CURL.md`](../docs/OPERATOR-CURL.md) | Curl examples + driver checklist |
-| [`methodology/INDEX.md`](../methodology/INDEX.md) | Modes, metrics narrative, links to tasks/improvements |
+| [`methodology/INDEX.md`](../archive/methodology/INDEX.md) | Modes, metrics narrative, links to tasks/improvements |
 | [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md) | Depth checks beyond one happy path |
 | [`README.md`](README.md) | **Which** prompt file maps to **which** canonical source |
 | [`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md) | Root **master prompt** to run the full index (IDE or session `task`) |

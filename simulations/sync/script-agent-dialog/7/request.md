@@ -30,6 +30,10 @@ Mirror of request.json: user asks for vitest output after Example.spec is added.
       {
         "role": "user",
         "message": "Принял: введём Example.spec и запустим vitest после ручного анализа компонента."
+      },
+      {
+        "role": "assistant",
+        "message": "Принял задачу: напишем Example.spec и запустим vitest, дайте знать, если нужна дополнительная информация."
       }
     ],
     "workbench": {

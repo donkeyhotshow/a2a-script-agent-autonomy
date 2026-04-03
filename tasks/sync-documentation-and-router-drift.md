@@ -16,3 +16,10 @@ When changing golden `execute.form.choices`, compare ids and copy to `router-sta
 
 - `simulations/sync/agent/description.md`
 - `simulations/sync/script/1/response.json` — **scenario copy**: `title`/`description`/`label` text are English and specific to the script golden; **`id` values** match `staticTailChoices` (`dialog`, `agent`, `task-decomposition`, `fix-vue-imports`, `fix-laravel-namespaces-and-uses`). When changing shared static choices, keep these ids in sync.
+
+## Router choice `description` audit (2026-04-03)
+
+- Every `choices[]` object under `simulations/**` now includes a non-empty `description` (including nested `result.form.choices` and `server-transforms-request.json` router stubs).
+- Touched: `fix-vue-imports/1`, `fix-laravel-namespaces-and-uses/1`, `fix-vue-imports-decline/1` (server-transforms); `fix-vue-imports-decline/4`–`6` (`response.json` / `received.json`); `response.md` for decline `4`–`6` via `sim:check-md --fix`.
+- Runtime: `buildRouterForm` / `mergeRouterChoices` in [`a2a-server/src/config/router-static.ts`](../a2a-server/src/config/router-static.ts) already backfills `description` from `label` when missing; simulations still carry explicit text for contract clarity.
+- Re-run: `node scripts/audit-sim-choice-descriptions.mjs` (exits 1 if any gap).

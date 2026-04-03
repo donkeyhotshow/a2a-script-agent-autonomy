@@ -27,12 +27,30 @@ export function resolveExecution(ctx: Record<string, unknown>): Record<string, u
     return undefined;
 }
 
+/**
+ * Merge `result` from root and from `context.result` (nested envelope).
+ * Root wins on key conflicts (invoke puts `result` at root). Merging avoids losing `choice`
+ * when only one side holds it.
+ */
+export function resolveResultObject(ctx: Record<string, unknown>): Record<string, unknown> | undefined {
+    const inner = ctx['context'] as Record<string, unknown> | undefined;
+    const nested = inner?.['result'];
+    const root = ctx['result'];
+    const nestedObj =
+        nested && typeof nested === 'object' && !Array.isArray(nested) ? (nested as Record<string, unknown>) : {};
+    const rootObj =
+        root && typeof root === 'object' && !Array.isArray(root) ? (root as Record<string, unknown>) : {};
+    const merged = {...nestedObj, ...rootObj};
+    return Object.keys(merged).length > 0 ? merged : undefined;
+}
+
 export function resolveTransformSchema(ctx: Record<string, unknown>): string | null {
     const schema = ctx['transformSchema'] as string | undefined;
     if (schema && typeof schema === 'string') return schema;
     const exec = resolveExecution(ctx);
     const action = (exec?.action ?? ctx['action']) as string | undefined;
-    const hasMessage = (ctx['result'] as Record<string, unknown>)?.message ?? ctx['task'] ?? ctx['message'];
+    const res = resolveResultObject(ctx);
+    const hasMessage = res?.message ?? ctx['task'] ?? ctx['message'];
     if (action && hasMessage && ACTION_TO_SCHEMA[action]) {
         return ACTION_TO_SCHEMA[action];
     }
@@ -48,7 +66,14 @@ export function normalizeContext(
     requestMessage?: string
 ): Record<string, unknown> {
     const normalizedCtx = {...ctx} as Record<string, unknown>;
-    let result = (normalizedCtx['result'] as Record<string, unknown>) ?? {};
+    let result = resolveResultObject(normalizedCtx) ?? {};
+    const cid = normalizedCtx['choice_id'];
+    const sel = normalizedCtx['selected_choice'];
+    if (!result.choice && typeof cid === 'string' && cid.length > 0) {
+        result = {...result, choice: cid};
+    } else if (!result.choice && typeof sel === 'string' && sel.length > 0) {
+        result = {...result, choice: sel};
+    }
 
     // Использовать requestMessage как result.message если result.message отсутствует
     if (!result.message && requestMessage) {
@@ -58,12 +83,36 @@ export function normalizeContext(
 
     // Использовать task/message как result.message для LLM когда result.message все еще отсутствует
     if (!result.message && (normalizedCtx['task'] || normalizedCtx['message'])) {
-        normalizedCtx['result'] = {...result, message: normalizedCtx['task'] ?? normalizedCtx['message']};
+        result = {...result, message: normalizedCtx['task'] ?? normalizedCtx['message']};
+        normalizedCtx['result'] = result;
+    } else if (Object.keys(result).length > 0) {
+        normalizedCtx['result'] = result;
     }
+
+    applyRouterPipelineChoice(normalizedCtx);
 
     foldRootIntoNestedContext(normalizedCtx);
 
     return normalizedCtx;
+}
+
+/**
+ * After router form: `result.choice` is dialog|agent|task-decomposition — fold into execution so
+ * dialog processor + resolveTransformSchema see a normal LLM pipeline action (not action=task, step=router).
+ */
+function applyRouterPipelineChoice(ctx: Record<string, unknown>): void {
+    const exec = resolveExecution(ctx);
+    const res = resolveResultObject(ctx) ?? {};
+    const choice = typeof res['choice'] === 'string' ? res['choice'] : undefined;
+    if (exec?.['step'] !== 'router' || !choice || !ACTION_TO_SCHEMA[choice]) {
+        return;
+    }
+    const newExec = {...exec, action: choice, step: 'start'};
+    ctx['execution'] = newExec;
+    const nested = ctx['context'];
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+        (nested as Record<string, unknown>)['execution'] = newExec;
+    }
 }
 
 /**

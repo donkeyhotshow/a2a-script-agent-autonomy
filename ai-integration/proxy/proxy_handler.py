@@ -16,9 +16,15 @@ from typing import Optional, Any
 logger = logging.getLogger(__name__)
 
 from .config import (
-    OLLAMA_HOST, STORAGE_DIR, FORWARD_TIMEOUT, OLLAMA_AUTO_START,
-    SIMULATION_ENABLED, SIMULATION_DATA_PATH, PROMISE_DELAY_BEFORE_EXECUTE,
+    OLLAMA_HOST,
+    STORAGE_DIR,
+    FORWARD_TIMEOUT,
+    OLLAMA_AUTO_START,
+    SIMULATION_ENABLED,
+    SIMULATION_DATA_PATH,
+    PROMISE_DELAY_BEFORE_EXECUTE,
     PROMISE_DAEMON_ONLY,
+    Z_AI_API_KEY,
 )
 from .ollama_manager import get_ollama_manager, check_port_occupied, get_ollama_host_port
 from .ai_hub_config import (
@@ -40,6 +46,22 @@ from .request_processor import (
 from .response_handler import create_error_response, create_simulated_response, forward_response
 from .model_resolver import resolve_model_name
 from .caching import get_cache
+
+
+def _translate_ollama_to_openai_path(path: str) -> str:
+    """Translate Ollama-style API paths to OpenAI-compatible paths"""
+    path_norm = path.lstrip('/')
+    translations = {
+        'api/chat': 'chat/completions',
+        'api/generate': 'completions',
+        'api/embeddings': 'embeddings',
+        'v1/chat/completions': 'chat/completions',
+        'v1/completions': 'completions',
+        'v1/embeddings': 'embeddings',
+    }
+    if path_norm in translations:
+        return translations[path_norm]
+    return path_norm
 
 import requests
 
@@ -190,8 +212,25 @@ def handle_proxy_request(path: str, request) -> Response:
             provider_chain = router._get_provider_chain(model)
             if provider_chain:
                 provider_name, provider = provider_chain[0]
-                target_url = provider.config.url.rstrip('/') + '/' + path
-                logger.info(f"Routed request for model '{model}' to provider '{provider_name}' -> {target_url}")
+                # Translate path for OpenAI-compatible providers (non-Ollama)
+                provider_type = getattr(provider.config, 'type', '')
+                if provider_type in ('openai', 'z_ai'):
+                    translated_path = _translate_ollama_to_openai_path(path)
+                    target_url = provider.config.url.rstrip('/') + '/' + translated_path
+                    logger.info(f"Routed request for model '{model}' to provider '{provider_name}' -> {target_url} (translated from {path})")
+                else:
+                    target_url = provider.config.url.rstrip('/') + '/' + path
+                    logger.info(f"Routed request for model '{model}' to provider '{provider_name}' -> {target_url}")
+                # Add auth headers for upstream.
+                # Z.AI and other OpenAI-compatible providers expect Authorization: Bearer <key>
+                # per official docs: https://docs.z.ai/guides/overview/quick-start
+                api_key: Optional[str] = None
+                if hasattr(provider.config, 'get_api_key'):
+                    api_key = provider.config.get_api_key()
+                if not api_key and Z_AI_API_KEY:
+                    api_key = Z_AI_API_KEY
+                if api_key:
+                    headers['Authorization'] = f"Bearer {api_key}"
             else:
                 fallback_host = OLLAMA_HOST.rstrip('/') or OLLAMA_HOST
                 target_url = f"{fallback_host}/{path}"

@@ -4,7 +4,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import {GlobMatcher} from './glob-matcher';
+import {GlobMatcher} from './glob-matcher.js';
 
 export interface FileScannerConfig {
     rootPath?: string;

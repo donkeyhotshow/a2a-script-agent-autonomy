@@ -51,7 +51,7 @@ export {
 } from './response-path.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
-const DEFAULT_MODEL = 'qwen3:8b';
+const DEFAULT_MODEL = 'glm-4.7-flash';
 
 export class DialogRequestProcessor extends BaseRequestProcessor {
     private grayRoom: GrayRoomOrchestrator;
@@ -137,7 +137,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
 
             // Manual mode: must use outcome waiting_manual_llm so request processor does not overwrite status to completed
             if (llmResult.manualWait) {
-                logger.info('[DialogRequestProcessor] Manual LLM mode — waiting operator input', {promiseId});
+                logger.warn('[DialogRequestProcessor] Manual LLM mode — waiting operator input (no live LLM)', {promiseId});
                 const manualForm =
                     (llmResult.manualExecute?.form as Record<string, unknown> | undefined) ??
                     ({

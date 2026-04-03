@@ -66,7 +66,7 @@ Client API → A2A Server → AI Integration
 - `ai-integration/proxy/promise_routes.py` - Promise API endpoints
 - `ai-integration/proxy/promises.py` - Promise state management
 - `ai-integration/proxy/daemon.py` - Background processing
-- `a2a-client/vite-plugin-a2a/routes/stepRoutes.js` - `/async` polling
+- `a2a-client/packages/vite-plugin/routes/stepRoutes.js` - `/async` polling
 
 ### States
 - `pending` - Promise created, not yet processed
@@ -126,7 +126,7 @@ Step N                              Step N+1
 ### Key Files
 - `a2a-client/docs/RED-ROOM.md` - Full specification
 - `a2a-client/web/js/action-executor.js` - Tool execution
-- `a2a-client/vite-plugin-a2a/routes/stepRoutes.js` - Step persistence
+- `a2a-client/packages/vite-plugin/routes/stepRoutes.js` - Step persistence
 
 ---
 
@@ -351,7 +351,7 @@ storage/sessions/{sessionId}/
 
 ### Key Files
 - `a2a-client/docs/SESSION-STORAGE.md` - Full specification
-- `a2a-client/vite-plugin-a2a/routes/handlers/step-handlers.js` - File I/O
+- `a2a-client/packages/vite-plugin/routes/handlers/step-handlers.js` - File I/O
 
 ---
 

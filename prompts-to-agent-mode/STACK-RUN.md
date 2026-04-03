@@ -6,7 +6,7 @@ Every markdown file in this directory is an **indexed task prompt**. That does *
 
 To **start tasks through the Client API session dialog** automatically (create session → `next` → poll `async` → router choices), use the repo instrument:
 
-- **[`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** — `npm run monitor` / `npm run monitor:once`, env vars, failure hints, direct-tests.
+- **[`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** — `npm run monitor` / `npm run monitor:once`, env vars, failure hints, direct-tests, **promise-queue gate** when `PROMISE_DAEMON_ONLY` is on.
 - Entry: [`monitor-and-process-tasks.js`](../monitor-and-process-tasks.js) (modules under [`tests/monitor-tasks/`](../tests/monitor-tasks/)).
 
 Manual **curl** uses the **same** endpoints and beats; the monitor is the scripted equivalent.

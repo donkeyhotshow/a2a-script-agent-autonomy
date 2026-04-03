@@ -37,7 +37,7 @@ def health():
     from .ollama_manager import get_ollama_host_port, check_port_occupied
     from .ai_hub_config import _CONFIG_PATH, get_ai_hub_config
     from .caching import get_cache
-    from .config import SIMULATION_ENABLED
+    from .config import SIMULATION_ENABLED, PROMISE_DAEMON_ONLY
     
     ollama_host, ollama_port = get_ollama_host_port()
     ollama_available = check_port_occupied(ollama_host, ollama_port)
@@ -53,6 +53,7 @@ def health():
         "ai_hub_config": (_CONFIG_PATH or os.environ.get('AI_HUB_CONFIG', '')) or None,
         "ai_hub_rules": len(cfg.get('rules') or []),
         "simulation_enabled": SIMULATION_ENABLED,
+        "promise_daemon_only": PROMISE_DAEMON_ONLY,
         "cache": cache.status(),
     }
 

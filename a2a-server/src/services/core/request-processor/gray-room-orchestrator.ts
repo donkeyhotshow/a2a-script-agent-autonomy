@@ -6,13 +6,14 @@ import {mergeGrayRoomSlotIntoContext, mergeInterruptTraceIntoContext} from '../.
 import {executeReadFile} from '../../../actions/handlers/file-operations.js';
 import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
 import {pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
+import {BlackRoomOrchestrator} from '../black-room/black-room-orchestrator.js';
+import type {AlgorithmContext, AlgorithmData} from '../black-room/types.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
 import {validateDialogExecuteShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
 import {resolveExecution, resolveHistoryLength} from './normalization.js';
-import {resolveLlmModelFromContext} from './llm-model-resolver.js';
+import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
-const DEFAULT_MODEL = 'qwen3:8b';
 
 /** Default value for A2A_GRAY_ROOM_MAX_TURNS */
 const DEFAULT_GRAY_ROOM_MAX_TURNS = 10;
@@ -299,7 +300,7 @@ export class GrayRoomOrchestrator {
     constructor(options: GrayRoomOptions) {
         this.maxInterruptTurns = options.maxInterruptTurns ?? readGrayRoomInterruptBudget();
         this.aiHubUrl = (options.aiHubUrl ?? process.env.AI_HUB_URL ?? DEFAULT_AI_HUB).replace(/\/$/, '');
-        this.model = options.model ?? process.env.LLM_MODEL ?? process.env.Z_AI_MODEL ?? process.env.OLLAMA_MODEL ?? DEFAULT_MODEL;
+        this.model = options.model ?? grayRoomLlmModelFallback();
         this.promptsTransformsPath = options.promptsTransformsPath;
     }
 
@@ -510,7 +511,7 @@ export class GrayRoomOrchestrator {
             messages.push({role: 'user', content: requestMd});
 
             const subHeader = `${promiseId}-intr-${interruptBudget}`;
-            const llmModel = resolveLlmModelFromContext(workingCtx, this.model);
+            const llmModel = resolveGrayRoomLlmModelFromContext(workingCtx, this.model);
             const chatRes = await fetch(`${this.aiHubUrl}/api/chat?promise=1`, {
                 method: 'POST',
                 headers: {
@@ -649,7 +650,7 @@ export class GrayRoomOrchestrator {
                 ].join('\n');
 
                 try {
-                    const sidecarModel = resolveLlmModelFromContext(nextCtx, this.model);
+                    const sidecarModel = resolveGrayRoomLlmModelFromContext(nextCtx, this.model);
                     const chatRes = await fetch(`${this.aiHubUrl}/api/chat?promise=1`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-Server-Promise-Id': `${promiseId}-compress` },
@@ -685,7 +686,7 @@ export class GrayRoomOrchestrator {
                     JSON.stringify(nextCtx['context'] ?? {}, null, 2)
                 ].join('\n');
                 try {
-                    const sidecarModel = resolveLlmModelFromContext(nextCtx, this.model);
+                    const sidecarModel = resolveGrayRoomLlmModelFromContext(nextCtx, this.model);
                     const chatRes = await fetch(`${this.aiHubUrl}/api/chat?promise=1`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json', 'X-Server-Promise-Id': `${promiseId}-think` },
@@ -752,6 +753,90 @@ export class GrayRoomOrchestrator {
                 };
                 trace.push({ kind: 'sidecar_llm', purpose: 'clarify', ok: true, meta: 'slots.clarify' });
                 return { nextCtx, continueLoop: false };
+            }
+
+            case 'algorithm_invoke': {
+                const algorithmId = interrupt.algorithmId;
+                if (!algorithmId) {
+                    trace.push({ kind: 'black_room_start', algorithmId: 'unknown', timestamp: new Date().toISOString() });
+                    trace.push({
+                        kind: 'black_room_complete',
+                        algorithmId: 'unknown',
+                        status: 'failed',
+                        durationMs: 0,
+                        error: 'Missing algorithmId'
+                    });
+                    return { nextCtx, continueLoop: false };
+                }
+
+                const startTime = Date.now();
+                trace.push({ kind: 'black_room_start', algorithmId, timestamp: new Date().toISOString() });
+
+                try {
+                    const blackRoom = new BlackRoomOrchestrator({
+                        ollamaUrl: process.env.A2A_BLACK_ROOM_OLLAMA_URL,
+                        defaultModel: process.env.A2A_BLACK_ROOM_DEFAULT_MODEL,
+                        timeoutMs: parseInt(process.env.A2A_BLACK_ROOM_TIMEOUT_MS || '30000')
+                    });
+
+                    const algorithmContext: AlgorithmContext = {
+                        sessionId: (nextCtx['context'] as any)?.session_id || 'unknown',
+                        workbench: (nextCtx['context'] as any)?.workbench,
+                        history: nextCtx['history'] as any[],
+                        files: (nextCtx['context'] as any)?.files,
+                        ...nextCtx
+                    };
+
+                    const algorithmData: AlgorithmData = data || {};
+
+                    const result = await blackRoom.executeAlgorithm(algorithmId, algorithmContext, algorithmData);
+
+                    trace.push({
+                        kind: 'black_room_complete',
+                        algorithmId,
+                        status: result.status,
+                        durationMs: Date.now() - startTime,
+                        tokenCount: result.metrics?.tokensOut,
+                        error: result.error
+                    });
+
+                    if (result.status === 'completed' && result.output) {
+                        // Merge algorithm results into context
+                        const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
+                        const wb = (innerCtx['workbench'] as Record<string, unknown>) ?? {};
+                        const slots = (wb['slots'] as Record<string, unknown>) ?? {};
+                        const blackRoomSlots = (slots['blackRoomContext'] as Record<string, unknown>) ?? {};
+
+                        nextCtx = {
+                            ...nextCtx,
+                            context: {
+                                ...innerCtx,
+                                workbench: {
+                                    ...wb,
+                                    slots: {
+                                        ...slots,
+                                        blackRoomContext: {
+                                            ...blackRoomSlots,
+                                            [algorithmId]: result.output
+                                        }
+                                    }
+                                }
+                            }
+                        };
+                    }
+
+                    return { nextCtx, continueLoop: false };
+                } catch (error) {
+                    const errorMsg = String(error);
+                    trace.push({
+                        kind: 'black_room_complete',
+                        algorithmId,
+                        status: 'failed',
+                        durationMs: Date.now() - startTime,
+                        error: errorMsg
+                    });
+                    return { nextCtx, continueLoop: false };
+                }
             }
 
             default:

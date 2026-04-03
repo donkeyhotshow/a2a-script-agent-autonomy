@@ -8,7 +8,7 @@ import {
     saveSession,
     loadSession,
     resolveProjectPathForApi,
-} from '../../vite-plugin-a2a/storage/projectSessions.js';
+} from '../../packages/vite-plugin/storage/projectSessions.js';
 
 let storageDir;
 let repoA;

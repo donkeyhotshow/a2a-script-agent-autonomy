@@ -25,6 +25,8 @@ export interface ContextBlock {
     task?: string;
     /** LLM model id for AI Hub proxy (e.g. `glm-4.7-flash`, `qwen3:8b`); overrides env defaults. */
     llmModel?: string;
+    /** Optional override for gray-room sub-calls only (default: `A2A_GRAY_ROOM_LLM_MODEL` or qwen3:8b). */
+    grayRoomLlmModel?: string;
     /** Execution state for actions (new protocol format) */
     execution?: {
         /** Action ID (e.g., 'fix-vue-imports', 'coder') */
