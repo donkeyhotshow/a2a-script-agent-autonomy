@@ -96,19 +96,25 @@ class CleanupManager:
         current_time = time.time()
         deleted_count = 0
 
-        for item in self.storage_dir.iterdir():
-            if not item.is_dir() or not item.name.startswith('request_'):
-                continue
+        def _prune_request_dirs(base: Path) -> None:
+            nonlocal deleted_count
+            if not base.is_dir():
+                return
+            for item in base.iterdir():
+                if not item.is_dir() or not item.name.startswith('request_'):
+                    continue
+                try:
+                    age_seconds = current_time - item.stat().st_mtime
+                    if age_seconds > max_age_seconds:
+                        shutil.rmtree(item)
+                        deleted_count += 1
+                        logger.debug(f"Removed old log directory: {item.name}")
+                except Exception as e:
+                    logger.warning(f"Error processing log directory {item.name}: {e}")
 
-            try:
-                age_seconds = current_time - item.stat().st_mtime
-                if age_seconds > max_age_seconds:
-                    shutil.rmtree(item)
-                    deleted_count += 1
-                    logger.debug(f"Removed old log directory: {item.name}")
-
-            except Exception as e:
-                logger.warning(f"Error processing log directory {item.name}: {e}")
+        _prune_request_dirs(self.storage_dir / 'requests')
+        # Legacy: request_* lived directly under STORAGE_DIR before requests/ subfolder
+        _prune_request_dirs(self.storage_dir)
 
         if deleted_count > 0:
             logger.info(f"Cleaned up {deleted_count} old log directories (>{max_age_days} days)")
@@ -173,9 +179,18 @@ class CleanupManager:
             if promises_dir.exists():
                 stats['promises_count'] = len(list(promises_dir.rglob('*')))
 
-            # Count log directories
-            stats['logs_count'] = len([d for d in self.storage_dir.iterdir()
-                                     if d.is_dir() and d.name.startswith('request_')])
+            # Count log directories (canonical requests/ + legacy top-level request_*)
+            _req = self.storage_dir / 'requests'
+            log_dirs = []
+            if _req.is_dir():
+                log_dirs.extend(
+                    d for d in _req.iterdir() if d.is_dir() and d.name.startswith('request_')
+                )
+            log_dirs.extend(
+                d for d in self.storage_dir.iterdir()
+                if d.is_dir() and d.name.startswith('request_')
+            )
+            stats['logs_count'] = len(log_dirs)
 
             # Count results
             results_dir = self.storage_dir / 'results'

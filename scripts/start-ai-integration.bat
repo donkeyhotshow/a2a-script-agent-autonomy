@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
 REM Start ai-integration service only
+cd /d "%~dp0.."
 
 set PROXY_PORT=11434
 set OLLAMA_PORT=11435

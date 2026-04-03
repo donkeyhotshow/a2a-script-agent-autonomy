@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
 REM Start client-api service only
+cd /d "%~dp0.."
 
 set CLIENT_API_PORT=3001
 set PID_FILE=.pids.txt

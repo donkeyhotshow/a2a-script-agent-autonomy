@@ -5,6 +5,8 @@
 # Pattern: 1) Call kill-all.sh -> 2) Verify ports free -> 3) Clear .pids.txt -> 4) Start services
 
 set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
 OLLAMA_PORT=11435
 PROXY_PORT=11434

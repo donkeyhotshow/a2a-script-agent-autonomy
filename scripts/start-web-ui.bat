@@ -1,6 +1,8 @@
 @echo off
 chcp 65001 >nul
 REM Start web-ui service only
+REM Anchor to repo root so a2a-client\logs is never doubled when cwd is wrong.
+cd /d "%~dp0.."
 
 set WEB_PORT=5173
 set PID_FILE=.pids.txt

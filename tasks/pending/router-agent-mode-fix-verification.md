@@ -17,10 +17,11 @@ Session created with `mode: "agent"` was being forced through the task router, c
 
 | Test | Status | Notes |
 |------|--------|-------|
-| `execution.action` preservation | PASS | Now stays `"agent"` across all steps |
-| Router form suppression | PASS | No longer returns `form.choices` for agent mode |
-| Gray Room slot creation | BLOCKED | External issue - see below |
-| Full e2e dialog | BLOCKED | External issue - see below |
+| `isTaskRequest` unit tests | PASS | `a2a-server/tests/unit/base-processor-is-task-request.test.ts` — `step: new` → task path; `agent` + `step !== new` → not task |
+| `execution.action` preservation | PASS | Code path: `action-request-processor` direct LLM pipeline when not `isTaskRequest` |
+| Router form suppression | PASS | No router re-entry after pipeline step advances past `new` |
+| `gray-room-test.js` | NOT RUN | Client API `:5173` unreachable in this run (`fetch failed`); needs `start-all` + healthy LLM |
+| Gray Room slot / Red Room e2e | BLOCKED | Same as below when LLM returns 401/429 |
 
 ## Blocker
 **External AI provider issues:**
@@ -30,10 +31,10 @@ Session created with `mode: "agent"` was being forced through the task router, c
 These errors prevent LLM responses, causing `execute: null` and `message: "LLM recovery failed"`.
 
 ## Next Steps
-1. Resolve AI provider authentication/rate limiting
-2. Re-run `node tests/direct-tests/gray-room-test.js`
-3. Verify Gray Room slot created in `context.workbench.slots.grayRoom`
-4. Verify Red Room tool execution cycle works
+1. Start full stack (`start-all.bat`) so `CLIENT_API_URL` (5173) answers
+2. Resolve AI provider authentication/rate limiting if not using local Ollama
+3. Re-run `node tests/direct-tests/gray-room-test.js`
+4. Verify Gray Room slot in `context.workbench.slots.grayRoom` and Red Room tool cycle
 
 ## Commands to Verify
 ```powershell

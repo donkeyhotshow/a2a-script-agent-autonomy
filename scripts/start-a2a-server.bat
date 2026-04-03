@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
 REM Start a2a-server service only
+cd /d "%~dp0.."
 
 set SERVER_PORT=3000
 set PID_FILE=.pids.txt

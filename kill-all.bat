@@ -1,6 +1,7 @@
 @echo off
 chcp 65001 >nul
 setlocal EnableDelayedExpansion
+cd /d "%~dp0"
 
 set PID_FILE=.pids.txt
 set EXIT_CODE=0

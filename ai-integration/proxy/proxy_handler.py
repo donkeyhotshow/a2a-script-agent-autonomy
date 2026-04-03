@@ -183,7 +183,7 @@ def handle_proxy_request(path: str, request) -> Response:
             request_id = str(uuid.uuid4())[:8]
             unix_timestamp = int(datetime.datetime.now().timestamp())
             folder_name = f"request_{unix_timestamp}_{request_id}"
-            folder_path = os.path.join(STORAGE_DIR, folder_name)
+            folder_path = os.path.join(STORAGE_DIR, "requests", folder_name)
             os.makedirs(folder_path, exist_ok=True)
             req_data = create_request_log(request, body)
             save_request(folder_path, req_data)

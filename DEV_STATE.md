@@ -16,6 +16,8 @@ Current system state: **Stack готов** - все сервисы работа�
 
 **Recent (operator / parity batch):** Task Monitor with promise queue support; Client API multi-provider LLM routing; session storage improvements.
 
+**Fixed (artifact paths):** Windows `scripts\start-*.bat` and `start-all.bat` / `kill-all.bat` now `cd` to repo root via `%~dp0` so logs land in `a2a-client/logs`, `a2a-server/logs` (not nested `a2a-client/a2a-client/...`). `start-all.sh` / `start-all.ps1` anchor to script directory. Proxy request dumps from `proxy_handler.py` use `proxy_logs/requests/request_*` (aligned with `request_processor.py`); `cleanup.py` prunes both `requests/` and legacy top-level `request_*`.
+
 **Fixed:** Router no longer overwrites `execution.action` when session created with `mode: "agent"`. `isTaskRequest()` in `base-processor.ts` now checks if `execution.action` is already an LLM pipeline action and returns `false` to prevent forced routing. Added direct LLM pipeline handling in `action-request-processor.ts` for seeded agent mode.
 
 **Recent (client UI):** Async polling improvements; sticky router prevention with localized text mapping.

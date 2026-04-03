@@ -11,7 +11,7 @@ import {fetchLlmResponse, pollReadyThenFetch} from '../../../daemon/llm-hub-poll
 import {requestService} from '../request/request.service.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
-const DEFAULT_MODEL = 'glm-4.7-flash';
+const DEFAULT_MODEL = 'qwen3:8b';
 
 export interface LlmCallOptions {
     promptsTransformsPath: string;

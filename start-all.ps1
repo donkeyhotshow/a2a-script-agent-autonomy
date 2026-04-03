@@ -220,6 +220,7 @@ function Start-Service {
 # MAIN EXECUTION
 # ============================================================
 
+Set-Location $PSScriptRoot
 Write-Log "=== start-all.ps1 : Standardized service startup ===" 'STEP'
 
 # Step 1: Kill existing processes (unless skipped)
