@@ -85,7 +85,7 @@ export class AutonomyGlue {
     }
 
     // ── 2. Tool hints ──────────────────────────────────────────────────────
-    const hints = globalToolTracker.routingHints(
+    const hints = await globalToolTracker.routingHints(
       DEFAULT_CANDIDATE_TOOLS as unknown as string[],
       fsmState,
     );

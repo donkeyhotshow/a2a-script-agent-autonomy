@@ -1,13 +1,20 @@
 /**
  * ToolTracker — ADR-0066: Tool performance tracking and adaptive routing.
  *
- * Records every tool call so the agent can:
- *   1. Identify tools that fail most often
- *   2. Prefer alternative tools in similar FSM states
- *   3. Surface p95 latency regressions before they cascade
+ * Storage strategy (ADR-0066 §persistence):
+ *   Primary   — Redis sorted set per tool (key: `tool:calls:{tool_name}`,
+ *               score = timestamp, member = JSON-encoded ToolCallRecord).
+ *               Requires REDIS_URL env var (default: redis://localhost:6379).
+ *               TTL = 7 days per key.
+ *   Fallback  — In-memory Map (ring buffer, last 2 000 records per tool).
+ *               Used automatically when Redis is unavailable.
  *
- * Persisted in-memory (ring buffer, last 2000 records per tool).
- * Designed to be queried by PromptRouter to influence routing decisions.
+ * The tracker exposes:
+ *   record()            — persist a single call record
+ *   getProfile()        — compute performance stats for one tool
+ *   getAllProfiles()     — stats for all tracked tools
+ *   routingHints()      — scored recommendations for a candidate tool list
+ *   getCallsForSession()— all calls belonging to a session
  */
 
 import type { OrchestratorState } from '../core/orchestrator-kernel.js';
@@ -22,8 +29,8 @@ export interface ToolCallRecord {
   duration_ms: number;
   success: boolean;
   error_type?: 'timeout' | 'error' | 'invalid_output';
-  input_token_count: number;
-  output_quality: number;       // 0.0–1.0, estimated (0.5 default)
+  input_token_count?: number;
+  output_quality?: number;        // 0.0–1.0, estimated (0.5 default)
   fsm_state: OrchestratorState;
 }
 
@@ -46,9 +53,19 @@ export interface ToolRoutingHint {
   reason: string;
 }
 
-// ── Ring buffer ───────────────────────────────────────────────────────────────
+// ── Redis client type (dynamically imported) ──────────────────────────────────
 
-const RING_SIZE = 2000;
+interface RedisClient {
+  zadd(key: string, score: number, member: string): Promise<unknown>;
+  zrangebyscore(key: string, min: string | number, max: string | number): Promise<string[]>;
+  zremrangebyscore(key: string, min: string | number, max: string | number): Promise<unknown>;
+  expire(key: string, seconds: number): Promise<unknown>;
+  keys(pattern: string): Promise<string[]>;
+}
+
+// ── Ring buffer (in-memory fallback) ─────────────────────────────────────────
+
+const RING_SIZE = 2_000;
 
 class RingBuffer<T> {
   private readonly buf: T[] = [];
@@ -75,31 +92,110 @@ class RingBuffer<T> {
   }
 }
 
+// ── Redis key helpers ─────────────────────────────────────────────────────────
+
+const KEY_PREFIX = 'tool:calls:';
+const TTL_SECONDS = 7 * 24 * 60 * 60;   // 7 days
+
+function toolKey(toolName: string): string {
+  return `${KEY_PREFIX}${toolName}`;
+}
+
+// ── Try to connect to Redis ───────────────────────────────────────────────────
+
+async function tryConnectRedis(): Promise<RedisClient | null> {
+  try {
+    // Dynamic import so the module still loads when ioredis is absent
+    const ioredis = await import('ioredis');
+    const RedisConstructor = (ioredis.default ?? ioredis) as unknown as new (url: string) => RedisClient;
+    const url = process.env['REDIS_URL'] ?? 'redis://localhost:6379';
+    const client = new RedisConstructor(url);
+    // Probe with a harmless command
+    await (client as unknown as { ping(): Promise<string> }).ping();
+    return client;
+  } catch {
+    return null;
+  }
+}
+
 // ── ToolTracker ───────────────────────────────────────────────────────────────
 
 export class ToolTracker {
-  /** Per-tool call records */
-  private readonly records = new Map<string, RingBuffer<ToolCallRecord>>();
+  private redis: RedisClient | null = null;
+  private readonly memory = new Map<string, RingBuffer<ToolCallRecord>>();
+  private readonly initPromise: Promise<void>;
 
   constructor() {
+    this.initPromise = tryConnectRedis().then((client) => {
+      if (client) {
+        this.redis = client;
+      }
+    });
+
     // Subscribe to TOOL_RESULT events from the EventBus for automatic tracking
     globalEventBus.subscribe<ToolCallRecord>('TOOL_RESULT', (event) => {
-      setImmediate(() => this.record(event.payload));
+      setImmediate(() => { this.record(event.payload); });
     });
   }
 
   // ── record() ──────────────────────────────────────────────────────────────
 
   /**
-   * Record a tool call result. Called directly OR via EventBus subscription.
+   * Record a tool call result. Redis write is fire-and-forget; falls back to
+   * in-memory immediately so callers need not await.
    */
   record(call: ToolCallRecord): void {
-    let buf = this.records.get(call.tool_name);
+    void this._recordAsync(call);
+  }
+
+  private async _recordAsync(call: ToolCallRecord): Promise<void> {
+    await this.initPromise;
+
+    if (this.redis) {
+      try {
+        const key = toolKey(call.tool_name);
+        const member = JSON.stringify(call);
+        await this.redis.zadd(key, call.timestamp, member);
+        // Trim to last MAX_RECORDS_PER_TOOL entries by removing the oldest
+        const cutoffScore = call.timestamp - (TTL_SECONDS * 1_000);
+        await this.redis.zremrangebyscore(key, '-inf', cutoffScore);
+        await this.redis.expire(key, TTL_SECONDS);
+        return;
+      } catch (err) {
+        // Redis error — fall through to in-memory
+        console.warn('[ToolTracker] Redis write failed, using in-memory fallback:', err);
+        this.redis = null;
+      }
+    }
+
+    // In-memory fallback
+    let buf = this.memory.get(call.tool_name);
     if (!buf) {
       buf = new RingBuffer<ToolCallRecord>();
-      this.records.set(call.tool_name, buf);
+      this.memory.set(call.tool_name, buf);
     }
     buf.push(call);
+  }
+
+  // ── getCallsForTool() ─────────────────────────────────────────────────────
+
+  private async getCallsForTool(toolName: string): Promise<ToolCallRecord[]> {
+    await this.initPromise;
+
+    if (this.redis) {
+      try {
+        const members = await this.redis.zrangebyscore(
+          toolKey(toolName), '-inf', '+inf',
+        );
+        return members.map((m) => JSON.parse(m) as ToolCallRecord);
+      } catch (err) {
+        console.warn('[ToolTracker] Redis read failed, using in-memory fallback:', err);
+        this.redis = null;
+      }
+    }
+
+    const buf = this.memory.get(toolName);
+    return buf ? buf.toArray() : [];
   }
 
   // ── getProfile() ──────────────────────────────────────────────────────────
@@ -108,11 +204,9 @@ export class ToolTracker {
    * Compute the performance profile for a specific tool.
    * Returns null if the tool has never been called.
    */
-  getProfile(toolName: string): ToolPerformanceProfile | null {
-    const buf = this.records.get(toolName);
-    if (!buf || buf.length === 0) return null;
-
-    const calls = buf.toArray();
+  async getProfile(toolName: string): Promise<ToolPerformanceProfile | null> {
+    const calls = await this.getCallsForTool(toolName);
+    if (calls.length === 0) return null;
     return this._buildProfile(toolName, calls);
   }
 
@@ -121,14 +215,28 @@ export class ToolTracker {
   /**
    * Return profiles for all tracked tools.
    */
-  getAllProfiles(): ToolPerformanceProfile[] {
-    const profiles: ToolPerformanceProfile[] = [];
-    for (const [name, buf] of this.records) {
-      if (buf.length > 0) {
-        profiles.push(this._buildProfile(name, buf.toArray()));
+  async getAllProfiles(): Promise<ToolPerformanceProfile[]> {
+    await this.initPromise;
+
+    let toolNames: string[] = [];
+
+    if (this.redis) {
+      try {
+        const keys = await this.redis.keys(`${KEY_PREFIX}*`);
+        toolNames = keys.map((k) => k.slice(KEY_PREFIX.length));
+      } catch {
+        this.redis = null;
       }
     }
-    return profiles;
+
+    if (!this.redis) {
+      toolNames = [...this.memory.keys()];
+    }
+
+    const profiles = await Promise.all(
+      toolNames.map((name) => this.getProfile(name)),
+    );
+    return profiles.filter((p): p is ToolPerformanceProfile => p !== null);
   }
 
   // ── routingHints() ────────────────────────────────────────────────────────
@@ -138,13 +246,13 @@ export class ToolTracker {
    * return routing hints sorted by recommendation score (highest first).
    * Tools with no history get a neutral score of 0.5.
    */
-  routingHints(
+  async routingHints(
     candidates: string[],
     fsmState: OrchestratorState,
-  ): ToolRoutingHint[] {
-    return candidates
-      .map((name) => {
-        const profile = this.getProfile(name);
+  ): Promise<ToolRoutingHint[]> {
+    const hints = await Promise.all(
+      candidates.map(async (name) => {
+        const profile = await this.getProfile(name);
         if (!profile) {
           return { tool_name: name, score: 0.5, reason: 'No performance history.' };
         }
@@ -162,8 +270,9 @@ export class ToolTracker {
             `p95=${profile.p95_duration_ms}ms, ` +
             `recommendation=${profile.recommendation}`,
         };
-      })
-      .sort((a, b) => b.score - a.score);
+      }),
+    );
+    return hints.sort((a, b) => b.score - a.score);
   }
 
   // ── getCallsForSession() ──────────────────────────────────────────────────
@@ -171,14 +280,18 @@ export class ToolTracker {
   /**
    * Return all recorded calls for a session, across all tools.
    */
-  getCallsForSession(sessionId: string): ToolCallRecord[] {
-    const results: ToolCallRecord[] = [];
-    for (const buf of this.records.values()) {
-      for (const call of buf.toArray()) {
-        if (call.session_id === sessionId) results.push(call);
-      }
-    }
-    return results.sort((a, b) => a.timestamp - b.timestamp);
+  async getCallsForSession(sessionId: string): Promise<ToolCallRecord[]> {
+    const profiles = await this.getAllProfiles();
+    const toolNames = profiles.map((p) => p.tool_name);
+
+    const allCalls = await Promise.all(
+      toolNames.map((name) => this.getCallsForTool(name)),
+    );
+
+    return allCalls
+      .flat()
+      .filter((c) => c.session_id === sessionId)
+      .sort((a, b) => a.timestamp - b.timestamp);
   }
 
   // ── Private helpers ───────────────────────────────────────────────────────
@@ -201,7 +314,7 @@ export class ToolTracker {
     }
 
     const qualityAvg =
-      calls.reduce((s, c) => s + c.output_quality, 0) / Math.max(total, 1);
+      calls.reduce((s, c) => s + (c.output_quality ?? 0.5), 0) / Math.max(total, 1);
 
     // Per-state success rates
     const stateMap: Partial<Record<OrchestratorState, { success: number; total: number }>> = {};
@@ -240,15 +353,18 @@ export class ToolTracker {
   }
 }
 
-// ── Singleton ─────────────────────────────────────────────────────────────────
+// ── Singletons ────────────────────────────────────────────────────────────────
 
 /**
  * Process-singleton ToolTracker. Import and use directly:
  *
  * ```ts
- * import { globalToolTracker } from './monitoring/tool-tracker.js';
- * globalToolTracker.record({ tool_name: 'read-file', ... });
- * const hints = globalToolTracker.routingHints(['read-file', 'rag-search'], 'SCANNING');
+ * import { toolTracker } from './monitoring/tool-tracker.js';
+ * await toolTracker.record({ tool_name: 'read-file', ... });
+ * const hints = await toolTracker.routingHints(['read-file', 'rag-search'], 'SCANNING');
  * ```
  */
-export const globalToolTracker = new ToolTracker();
+export const toolTracker = new ToolTracker();
+
+/** @deprecated Use toolTracker instead */
+export const globalToolTracker = toolTracker;

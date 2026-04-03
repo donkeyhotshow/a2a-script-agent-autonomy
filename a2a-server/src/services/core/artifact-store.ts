@@ -48,7 +48,8 @@ export type ArtifactType =
   | 'REASONING_CHAIN'
   | 'EXECUTION_PLAN'
   | 'REPLAN_DECISION'
-  | 'JUDGMENT_RESULT';
+  | 'JUDGMENT_RESULT'
+  | 'POLICY_VIOLATION';
 
 /** Unique identifier for the component writing an artifact */
 export type ComponentId = string;
@@ -86,6 +87,7 @@ export const TTL_MS: Partial<Record<ArtifactType, number>> = {
   EXECUTION_PLAN:          14 * 24 * 60 * 60 * 1_000,  // 14 days
   REPLAN_DECISION:         14 * 24 * 60 * 60 * 1_000,  // 14 days
   JUDGMENT_RESULT:         14 * 24 * 60 * 60 * 1_000,  // 14 days
+  POLICY_VIOLATION:        14 * 24 * 60 * 60 * 1_000,  // 14 days
 };
 
 // ── Stored artifact shape ─────────────────────────────────────────────────────

@@ -3,11 +3,13 @@
  *
  * Built-in policies (always enforced, no config override):
  *   P001 — Block destructive ops without DRYRUN_DELTA artifact
- *   P002 — Block runaway loops (loop_count > P002_MAX_LOOPS)
- *   P003 — Block sessions exceeding max duration (P003_MAX_DURATION_MS)
- *   P004 — Warn on protected-branch writes without human approval
- *   P005 — Block unknown/unregistered FSM states
- *   P006 — Block write-file on paths matching deny-list patterns
+ *   P002 — Block execution on protected branch (main/master/production/prod)
+ *   P003 — Block when loop count exceeds 15
+ *   P004 — Block external_api_call without human approval
+ *   P005 — Warn when session exceeds 30 minutes
+ *
+ * Configurable (warn-level only) policies are loaded once at module init
+ * from `a2a-server/config/policies.json` (defaults to [] if missing).
  *
  * Usage:
  * ```ts
@@ -19,6 +21,10 @@
  * }
  * ```
  */
+
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -40,49 +46,63 @@ export interface PolicyViolation {
   message: string;
 }
 
+/** Shape of an entry in config/policies.json */
+interface ConfigurablePolicy {
+  policy_id: string;
+  /** Only 'warn' is allowed for user-defined policies */
+  severity: 'warn';
+  message: string;
+  description?: string;
+  /** Actions this policy applies to (empty/absent = all actions) */
+  actions?: string[];
+  /** Emit when loop_count exceeds this value */
+  max_loop_count?: number;
+  /** Emit when session_duration_ms exceeds this value (ms) */
+  max_session_ms?: number;
+}
+
 // ── Constants ─────────────────────────────────────────────────────────────────
 
-/** P002 — max loop count before blocking */
-const P002_MAX_LOOPS = 50;
-
-/** P003 — max session duration in ms before blocking (default: 15 min) */
-const P003_MAX_DURATION_MS = 15 * 60 * 1_000;
-
-/** P006 — path patterns that must never be overwritten by the agent */
-const P006_DENY_PATH_PATTERNS: RegExp[] = [
-  /node_modules[/\\]/,
-  /\.git[/\\]/,
-  /\.env$/,
-  /\.env\.local$/,
-  /\.env\.production$/,
-];
-
-/** Actions considered destructive for P001 */
+/** P001 — actions considered destructive */
 const DESTRUCTIVE_ACTIONS = new Set(['delete', 'write-file', 'edit-patch']);
 
-/** Valid FSM states for P005 */
-const VALID_FSM_STATES = new Set([
-  'IDLE',
-  'SCANNING',
-  'SYNTHESIZING',
-  'ENRICHING',
-  'EXECUTING',
-  'SELF_CORRECTING',
-  'WAITING_ON_HUMAN',
-  'VALIDATING',
-  'DELIVERING',
-  'STOPPED',
-  // allow the "unknown" fallback used when kernel is not wired
-  'EXECUTING',
-]);
+/** P002 — protected branch names (exact match) */
+const PROTECTED_BRANCHES = new Set(['main', 'master', 'production', 'prod']);
 
-/** Protected branch patterns for P004 */
-const PROTECTED_BRANCH_PATTERNS: RegExp[] = [
-  /^main$/,
-  /^master$/,
-  /^production$/,
-  /^release\//,
-];
+/** P003 — maximum autonomous loop count */
+const P003_MAX_LOOPS = 15;
+
+/** P004 — action gated on human approval */
+const P004_GATED_ACTION = 'external_api_call';
+
+/** P005 — session duration warning threshold (30 minutes) */
+const P005_WARN_SESSION_MS = 30 * 60 * 1_000;
+
+// ── Load configurable policies ────────────────────────────────────────────────
+
+function loadConfigurablePolicies(): ConfigurablePolicy[] {
+  try {
+    const __dirname = dirname(fileURLToPath(import.meta.url));
+    // Walk up: services/policy → services → src → a2a-server → config/
+    const configPath = join(__dirname, '..', '..', '..', 'config', 'policies.json');
+    const raw = readFileSync(configPath, 'utf8');
+    const parsed = JSON.parse(raw) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (p): p is ConfigurablePolicy =>
+        typeof p === 'object' &&
+        p !== null &&
+        'policy_id' in (p as object) &&
+        'message' in (p as object),
+    );
+  } catch {
+    // File missing or unreadable — silently use empty list
+    return [];
+  }
+}
+
+/** Configurable policies loaded once at module init (no hot-reload). */
+const CONFIGURABLE_POLICIES: ConfigurablePolicy[] = loadConfigurablePolicies();
 
 // ── PolicyEngine ──────────────────────────────────────────────────────────────
 
@@ -107,69 +127,74 @@ export class PolicyEngine {
       violations.push({
         policy_id: 'P001',
         severity: 'block',
-        message:
-          `Destructive action '${ctx.action}' blocked: no DRYRUN_DELTA artifact present. ` +
-          'Run a dry-run analysis first.',
+        message: 'Destructive action requires prior dry-run artifact',
       });
     }
 
-    // ── P002 — loop count limit ───────────────────────────────────────────
-    if (ctx.loop_count > P002_MAX_LOOPS) {
+    // ── P002 — block execution on protected branch ─────────────────────────
+    if (ctx.branch !== undefined && PROTECTED_BRANCHES.has(ctx.branch)) {
       violations.push({
         policy_id: 'P002',
         severity: 'block',
-        message:
-          `Loop count ${ctx.loop_count} exceeds maximum ${P002_MAX_LOOPS}. ` +
-          'Possible infinite loop detected.',
+        message: 'Direct execution on protected branch is forbidden',
       });
     }
 
-    // ── P003 — session duration limit ─────────────────────────────────────
-    if (ctx.session_duration_ms > P003_MAX_DURATION_MS) {
+    // ── P003 — loop count exceeded ────────────────────────────────────────
+    if (ctx.loop_count > P003_MAX_LOOPS) {
       violations.push({
         policy_id: 'P003',
         severity: 'block',
-        message:
-          `Session duration ${Math.round(ctx.session_duration_ms / 1_000)}s exceeds ` +
-          `maximum ${Math.round(P003_MAX_DURATION_MS / 1_000)}s.`,
+        message: 'Maximum autonomous loop count (15) exceeded',
       });
     }
 
-    // ── P004 — protected branch write without approval ────────────────────
-    const isProtectedBranch =
-      ctx.branch !== undefined &&
-      PROTECTED_BRANCH_PATTERNS.some((p) => p.test(ctx.branch!));
-
-    if (isProtectedBranch && DESTRUCTIVE_ACTIONS.has(ctx.action) && !ctx.has_human_approval) {
+    // ── P004 — external API without human approval ─────────────────────────
+    if (ctx.action === P004_GATED_ACTION && !ctx.has_human_approval) {
       violations.push({
         policy_id: 'P004',
-        severity: 'warn',
-        message:
-          `Writing to protected branch '${ctx.branch}' without human approval. ` +
-          'Proceed with caution.',
+        severity: 'block',
+        message: 'External API calls require human approval',
       });
     }
 
-    // ── P005 — unknown FSM state ──────────────────────────────────────────
-    if (ctx.fsm_state && !VALID_FSM_STATES.has(ctx.fsm_state)) {
+    // ── P005 — warn: long-running session ─────────────────────────────────
+    if (ctx.session_duration_ms > P005_WARN_SESSION_MS) {
       violations.push({
         policy_id: 'P005',
         severity: 'warn',
-        message: `Unknown FSM state '${ctx.fsm_state}' — kernel may be misconfigured.`,
+        message: 'Session running over 30 minutes',
       });
     }
 
-    // ── P006 — deny-list path check ───────────────────────────────────────
-    if (ctx.action === 'write-file' && Array.isArray(ctx.file_paths)) {
-      for (const fp of ctx.file_paths) {
-        if (P006_DENY_PATH_PATTERNS.some((p) => p.test(fp))) {
-          violations.push({
-            policy_id: 'P006',
-            severity: 'block',
-            message: `Write to protected path '${fp}' is not allowed.`,
-          });
-          break; // one violation per action is sufficient
-        }
+    // ── Configurable (warn-only) policies ─────────────────────────────────
+    for (const policy of CONFIGURABLE_POLICIES) {
+      let triggered = false;
+
+      if (
+        policy.max_loop_count !== undefined &&
+        ctx.loop_count > policy.max_loop_count
+      ) {
+        triggered = true;
+      } else if (
+        policy.max_session_ms !== undefined &&
+        ctx.session_duration_ms > policy.max_session_ms
+      ) {
+        triggered = true;
+      } else if (
+        Array.isArray(policy.actions) &&
+        policy.actions.length > 0 &&
+        policy.actions.includes(ctx.action)
+      ) {
+        triggered = true;
+      }
+
+      if (triggered) {
+        violations.push({
+          policy_id: policy.policy_id,
+          severity: 'warn',
+          message: policy.message,
+        });
       }
     }
 
