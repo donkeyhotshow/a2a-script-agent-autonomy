@@ -1,6 +1,8 @@
 import {Router, Request, Response, NextFunction} from 'express';
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const Ajv = require('ajv') as { new(opts?: Record<string, unknown>): { compile(schema: unknown): (data: unknown) => boolean } };
+import {createRequire} from 'node:module';
+const _require = createRequire(import.meta.url);
+// ajv is CJS; createRequire gives us the class directly and satisfies ESM + strict TS
+const Ajv = _require('ajv') as typeof import('ajv').default;
 import {readFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';

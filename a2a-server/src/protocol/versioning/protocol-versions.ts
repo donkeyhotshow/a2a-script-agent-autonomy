@@ -9,6 +9,6 @@ export const SUPPORTED_PROTOCOL_VERSIONS = ['1.0', '2.0'];
 /**
  * Check if version is supported
  */
-export function isSupportedVersion(version) {
+export function isSupportedVersion(version: string): boolean {
     return SUPPORTED_PROTOCOL_VERSIONS.includes(version);
 }
