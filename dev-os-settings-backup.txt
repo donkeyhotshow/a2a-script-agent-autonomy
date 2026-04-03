@@ -1,0 +1,39 @@
+Технологический стек машины (Dev OS Settings Backup)
+
+Операционная система:
+- Windows 10 Pro (версия 2009)
+
+Инструменты разработки:
+- Node.js: v25.1.0
+- npm: 11.6.2
+- Git: 2.53.0.windows.1
+- Python: 3.13.12
+- PowerShell: 7.x (pwsh.exe)
+
+Сервисы и порты (из AGENTS.md):
+- Ollama (LLM): порт 11435
+- AI Integration: порт 11434
+- A2A Server (TypeScript/Node.js): порт 3000
+- Vite (Web UI + Client API): порт 5173
+
+Архитектура проекта:
+- Клиент: JavaScript/VueFlow (vanilla JS, не React/Vue framework)
+- Сервер: TypeScript/Node.js (NodeNext module resolution)
+- AI: Ollama + AI Hub
+- База данных: a2a_test (тестовая)
+- Аутентификация: JWT, SKIP_AUTH=1 для dev
+
+Дополнительные настройки:
+- ENCRYPTION_KEY: 32 символа (обязательно)
+- JWT_SECRET: 32+ символа (обязательно)
+- DEFAULT_SYNC_MODE: 1 (по умолчанию)
+
+Проект: a2a-script-agent (Git репозиторий)
+
+Environment Details:
+Current time: 2026-04-03T22:42:25+03:00
+Active file: dev-os-settings-backup.txt
+Visible files:
+  dev-os-settings-backup.txt
+Open tabs:
+  dev-os-settings-backup.txt

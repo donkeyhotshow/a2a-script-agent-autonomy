@@ -1,5 +1,8 @@
 @echo off
-chcp 65001 >nul
+if not defined CMDEXTVERSION (
+    echo ERROR: Run from cmd.exe: cmd /c "%~f0"
+    exit /b 1
+)
 REM Start Ollama service only
 
 set OLLAMA_PORT=11435
@@ -9,9 +12,9 @@ set PID_FILE=.pids.txt
 echo [Ollama] Starting on port %OLLAMA_PORT%...
 
 REM Check if already running
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%OLLAMA_PORT%" ^| findstr "LISTENING"') do (
-    echo [Ollama] Already running on PID %%p
-    echo OLLAMA_PID=%%p >> %PID_FILE%
+for /f "tokens=5" %%A in ('netstat -ano ^| findstr ":%OLLAMA_PORT%" ^| findstr "LISTENING"') do (
+    echo [Ollama] Already running on PID %%A
+    (echo OLLAMA_PID=%%A)>>"%PID_FILE%"
     exit /b 0
 )
 
@@ -20,12 +23,12 @@ start "" cmd /c "set OLLAMA_HOST=0.0.0.0:%OLLAMA_PORT% && set OLLAMA_MODELS=%OLL
 powershell -Command "Start-Sleep -Seconds 3"
 
 REM Capture PID
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%OLLAMA_PORT%" ^| findstr "LISTENING"') do (
-    echo OLLAMA_PID=%%p >> %PID_FILE%
-    echo [Ollama] Started on PID %%p
+for /f "tokens=5" %%A in ('netstat -ano ^| findstr ":%OLLAMA_PORT%" ^| findstr "LISTENING"') do (
+    (echo OLLAMA_PID=%%A)>>"%PID_FILE%"
+    echo [Ollama] Started on PID %%A
     exit /b 0
 )
 
 echo [Ollama] Failed to start
-echo OLLAMA_PID= >> %PID_FILE%
+(echo OLLAMA_PID=)>>"%PID_FILE%"
 exit /b 1

@@ -1,6 +1,9 @@
 @echo off
-chcp 65001 >nul
-REM Start ai-integration service only
+if not defined CMDEXTVERSION (
+    echo ERROR: Run from cmd.exe: cmd /c "%~f0"
+    exit /b 1
+)
+REM UTF-8 console is set by start-all.bat; avoid chcp here (LF-only or Git Bash can misparse "chcp" as "cp").
 cd /d "%~dp0.."
 
 set PROXY_PORT=11434
@@ -11,9 +14,9 @@ set PID_FILE=.pids.txt
 echo [AI-Integration] Starting on port %PROXY_PORT%...
 
 REM Check if already running
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PROXY_PORT%" ^| findstr "LISTENING"') do (
-    echo [AI-Integration] Already running on PID %%p
-    echo AI_INTEGRATION_PID=%%p >> %PID_FILE%
+for /f "tokens=5" %%A in ('netstat -ano ^| findstr ":%PROXY_PORT%" ^| findstr "LISTENING"') do (
+    echo [AI-Integration] Already running on PID %%A
+    (echo AI_INTEGRATION_PID=%%A)>>"%PID_FILE%"
     exit /b 0
 )
 
@@ -31,12 +34,12 @@ cd ..
 powershell -Command "Start-Sleep -Seconds 5"
 
 REM Capture PID
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PROXY_PORT%" ^| findstr "LISTENING"') do (
-    echo AI_INTEGRATION_PID=%%p >> %PID_FILE%
-    echo [AI-Integration] Started on PID %%p
+for /f "tokens=5" %%A in ('netstat -ano ^| findstr ":%PROXY_PORT%" ^| findstr "LISTENING"') do (
+    (echo AI_INTEGRATION_PID=%%A)>>"%PID_FILE%"
+    echo [AI-Integration] Started on PID %%A
     exit /b 0
 )
 
 echo [AI-Integration] Failed to start
-echo AI_INTEGRATION_PID= >> %PID_FILE%
+(echo AI_INTEGRATION_PID=)>>"%PID_FILE%"
 exit /b 1

@@ -1,4 +1,8 @@
 @echo off
+if not defined CMDEXTVERSION (
+    echo ERROR: Run from cmd.exe: cmd /c "%~f0"
+    exit /b 1
+)
 chcp 65001 >nul
 setlocal EnableDelayedExpansion
 cd /d "%~dp0"

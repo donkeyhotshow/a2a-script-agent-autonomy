@@ -1,14 +1,117 @@
 @echo off
+if not defined CMDEXTVERSION (
+    echo ERROR: Run from cmd.exe (double-click this file or: cmd /c "%~f0")
+    exit /b 1
+)
 chcp 65001 >nul
-REM start-all.bat - Standardized service startup
-REM See docs/SYSTEM_STARTUP.md and AGENTS.md (live stack restart)
-REM
-REM Pattern: 1) Call kill-all.bat to clean environment -> 2) Verify ports free -> 3) Clear .pids.txt -> 4) Start services
-REM Restart policy: for ANY service refresh, run ONLY this script from repo root — not npm run dev inside a2a-server / a2a-client / sdk / etc.
+setlocal EnableDelayedExpansion
+goto :__MAIN__
 
+REM ---------- subroutines (must appear before main ends; CRLF line endings required) ----------
+
+:verify_port_free
+setlocal
+set PORT=%~1
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PORT%" ^| findstr "LISTENING"') do (
+    endlocal
+    exit /b 1
+)
+endlocal
+exit /b 0
+
+:wait_port_free
+setlocal EnableDelayedExpansion
+set PORT=%~1
+set MAX_ATTEMPTS=%~2
+set ATTEMPTS=0
+:wait_port_loop
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PORT%" ^| findstr "LISTENING"') do (
+    taskkill /F /PID %%p >nul 2>&1
+    set /a ATTEMPTS+=1
+    if !ATTEMPTS! geq %MAX_ATTEMPTS% (
+        endlocal
+        exit /b 1
+    )
+    ping -n 1 -w 500 localhost >nul
+    goto wait_port_loop
+)
+endlocal
+exit /b 0
+
+:wait_for_pid
+setlocal EnableDelayedExpansion
+set PORT=%~1
+set VAR_NAME=%~2
+set SVC_NAME=%~3
+set LOG_PATH=%~4
+set MAX_ATTEMPTS=%~5
+if "%MAX_ATTEMPTS%"=="" set MAX_ATTEMPTS=10
+set SLEEP_MS=%~6
+if "%SLEEP_MS%"=="" set SLEEP_MS=500
+set ATTEMPTS=0
+
+:pid_poll_loop
+setlocal EnableDelayedExpansion
+set FOUND_PID=
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PORT%" ^| findstr "LISTENING"') do (
+    if not defined FOUND_PID (
+        set FOUND_PID=%%p
+        echo %VAR_NAME%=%%p >> %PID_FILE%
+        echo [OK] %SVC_NAME% started (PID: %%p, log: %LOG_PATH%)
+    )
+)
+if defined FOUND_PID (
+    endlocal
+    exit /b 0
+)
+endlocal
+set /a ATTEMPTS+=1
+if !ATTEMPTS! geq %MAX_ATTEMPTS% (
+    echo [WARN] Could not determine %SVC_NAME% PID after %MAX_ATTEMPTS% attempts
+    endlocal
+    exit /b 1
+)
+powershell -Command "Start-Sleep -Milliseconds %SLEEP_MS%"
+goto pid_poll_loop
+
+:verify_and_capture_pid
+setlocal
+set PORT=%~1
+set VAR_NAME=%~2
+set SVC_NAME=%~3
+
+findstr /B "%VAR_NAME%=" %PID_FILE% >nul 2>&1
+if %errorlevel% equ 0 (
+    endlocal
+    exit /b 0
+)
+
+set FOUND_PID=
+for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PORT%" ^| findstr "LISTENING"') do (
+    if not defined FOUND_PID (
+        set FOUND_PID=%%p
+        echo %VAR_NAME%=%%p >> %PID_FILE%
+        echo [CAPTURED] %SVC_NAME% PID: %%p (late capture)
+    )
+)
+if defined FOUND_PID (
+    endlocal
+    exit /b 0
+)
+echo [MISSING] %SVC_NAME% - not running on port %PORT%
+endlocal
+exit /b 1
+
+:startup_failed
+echo.
+echo [FATAL] Could not free required port(s). Startup aborted.
+exit /b 1
+
+REM ---------- main ----------
+
+:__MAIN__
 cd /d "%~dp0"
 echo === start-all.bat : Standardized service startup ===
-setlocal EnableDelayedExpansion
 
 set PID_FILE=.pids.txt
 set OLLAMA_PORT=11435
@@ -138,119 +241,4 @@ if errorlevel 1 (
 ) else (
     echo [OK] Post-start direct tests passed.
 )
-goto :eof
-
-REM ==========================================
-REM Function: wait_for_pid - Polls for process to appear on port
-REM %1 = port number
-REM %2 = PID variable name (for .pids.txt)
-REM %3 = service name (for display)
-REM %4 = log path (for display)
-REM %5 = max attempts (default 10)
-REM %6 = sleep ms between attempts (default 500)
-REM ==========================================
-:wait_for_pid
-setlocal EnableDelayedExpansion
-set PORT=%~1
-set VAR_NAME=%~2
-set SVC_NAME=%~3
-set LOG_PATH=%~4
-set MAX_ATTEMPTS=%~5
-if "%MAX_ATTEMPTS%"=="" set MAX_ATTEMPTS=10
-set SLEEP_MS=%~6
-if "%SLEEP_MS%"=="" set SLEEP_MS=500
-set ATTEMPTS=0
-
-:pid_poll_loop
-setlocal EnableDelayedExpansion
-set FOUND_PID=
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PORT%" ^| findstr "LISTENING"') do (
-    if not defined FOUND_PID (
-        set FOUND_PID=%%p
-        echo %VAR_NAME%=%%p >> %PID_FILE%
-        echo [OK] %SVC_NAME% started (PID: %%p, log: %LOG_PATH%)
-    )
-)
-if defined FOUND_PID (
-    endlocal
-    exit /b 0
-)
-endlocal
-set /a ATTEMPTS+=1
-if !ATTEMPTS! geq %MAX_ATTEMPTS% (
-    echo [WARN] Could not determine %SVC_NAME% PID after %MAX_ATTEMPTS% attempts
-    endlocal
-    exit /b 1
-)
-powershell -Command "Start-Sleep -Milliseconds %SLEEP_MS%"
-goto pid_poll_loop
-
-REM ==========================================
-REM Function: verify_and_capture_pid - Final check for missing PIDs
-REM %1 = port number
-REM %2 = PID variable name
-REM %3 = service name
-REM ==========================================
-:verify_and_capture_pid
-setlocal
-set PORT=%~1
-set VAR_NAME=%~2
-set SVC_NAME=%~3
-
-REM Check if already in PID file
-findstr /B "%VAR_NAME%=" %PID_FILE% >nul 2>&1
-if %errorlevel% equ 0 (
-    endlocal
-    exit /b 0
-)
-
-REM Not found - try to capture now
-set FOUND_PID=
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PORT%" ^| findstr "LISTENING"') do (
-    if not defined FOUND_PID (
-        set FOUND_PID=%%p
-        echo %VAR_NAME%=%%p >> %PID_FILE%
-        echo [CAPTURED] %SVC_NAME% PID: %%p (late capture)
-    )
-)
-if defined FOUND_PID (
-    endlocal
-    exit /b 0
-)
-echo [MISSING] %SVC_NAME% - not running on port %PORT%
-endlocal
-exit /b 1
-
-:startup_failed
-echo.
-echo [FATAL] Could not free required port(s). Startup aborted.
-exit /b 1
-
-:verify_port_free
-setlocal
-set PORT=%~1
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PORT%" ^| findstr "LISTENING"') do (
-    endlocal
-    exit /b 1
-)
-endlocal
-exit /b 0
-
-:wait_port_free
-setlocal EnableDelayedExpansion
-set PORT=%~1
-set MAX_ATTEMPTS=%~2
-set ATTEMPTS=0
-:wait_port_loop
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%PORT%" ^| findstr "LISTENING"') do (
-    taskkill /F /PID %%p >nul 2>&1
-    set /a ATTEMPTS+=1
-    if !ATTEMPTS! geq %MAX_ATTEMPTS% (
-        endlocal
-        exit /b 1
-    )
-    ping -n 1 -w 500 localhost >nul
-    goto wait_port_loop
-)
-endlocal
-exit /b 0
+goto :EOF
