@@ -9,6 +9,18 @@ import {pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
 import {validateDialogExecuteShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
 import {SafetyLayer} from '../safety-layer/SafetyLayer.js';
+import {policyEngine} from '../../policy/policy-engine.js';
+import {AutonomyGlue} from '../../autonomy-glue.js';
+import {EpisodicMemory} from '../../memory/episodic-memory.js';
+import {ArtifactStore} from '../artifact-store.js';
+import {ReasoningEngine} from '../cognitive-engine.js';
+import {OrchestratorKernel, InvalidTransitionError} from '../orchestrator-kernel.js';
+import {globalToolTracker} from '../../monitoring/tool-tracker.js';
+
+// ── Module-level singletons for services wired into the loop ─────────────────
+const _episodicMemory = new EpisodicMemory();
+const _artifactStore = new ArtifactStore();
+const _reasoningEngine = new ReasoningEngine(_artifactStore);
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 const DEFAULT_MODEL = 'qwen3:8b';
@@ -320,7 +332,18 @@ export class GrayRoomOrchestrator {
         let activeSchemaName = schemaName;
         const trace: ServerInterruptTraceEvent[] = [];
         let turn = 0;
+        const sessionStartTime = Date.now();
+        const sessionId = promiseId;
         const startedAt = new Date().toISOString();
+
+        // ── FSM kernel — persists across iterations ───────────────────────
+        const kernel = new OrchestratorKernel('IDLE', sessionId);
+
+        // ── Loop-scoped extension state (not in GrayRoomControlEnvelope) ──
+        let lowConfidenceCount = 0;
+        let grayRoomStopReason: string | undefined;
+        const humanApproved = (workingCtx['humanApproved'] as boolean | undefined) ?? false;
+
         const grayRoom: GrayRoomControlEnvelope = {
             enabled: true,
             planId: promiseId,
@@ -347,6 +370,41 @@ export class GrayRoomOrchestrator {
                 chars: md.length,
             });
 
+            // ── FSM: first iteration — advance from IDLE → SCANNING ──────────
+            if (turn === 0) {
+                try { kernel.transition('scan_triggered', {}); } catch (e) { if (!(e instanceof InvalidTransitionError)) throw e; logger.debug('[GrayRoom] FSM scan_triggered skipped', {state: kernel.state}); }
+                try { kernel.transition('signals_found', {opportunity_set_exists: true}); } catch (e) { if (!(e instanceof InvalidTransitionError)) throw e; logger.debug('[GrayRoom] FSM signals_found skipped', {state: kernel.state}); }
+                try { kernel.transition('task_ready', {done_criteria_valid: true}); } catch (e) { if (!(e instanceof InvalidTransitionError)) throw e; logger.debug('[GrayRoom] FSM task_ready skipped', {state: kernel.state}); }
+                try { kernel.transition('enriched', {memory_available: true}); } catch (e) { if (!(e instanceof InvalidTransitionError)) throw e; logger.debug('[GrayRoom] FSM enriched skipped', {state: kernel.state}); }
+            }
+
+            // ── Step 4: EpisodicMemory injection (first iteration only) ─────
+            if (turn === 0 && !workingCtx['_memory_injected']) {
+                try {
+                    const taskDesc = (workingCtx['task_description'] ?? (workingCtx['messages'] as Array<{content: string}> | undefined)?.[0]?.content ?? '') as string;
+                    const recalls = await _episodicMemory.recall(taskDesc, 3);
+                    if (recalls.length > 0) {
+                        const lessons = recalls
+                            .flatMap((r) => r.applicable_lessons)
+                            .filter(Boolean)
+                            .slice(0, 5);
+                        if (lessons.length > 0) {
+                            const history = (workingCtx['history'] as Array<Record<string, unknown>> | undefined) ?? [];
+                            workingCtx = {
+                                ...workingCtx,
+                                history: [
+                                    {role: 'system', content: '[Memory] Lessons from similar tasks:\n' + lessons.join('\n')},
+                                    ...history,
+                                ],
+                                _memory_injected: true,
+                            };
+                        }
+                    }
+                } catch (err) {
+                    logger.warn('[GrayRoom] EpisodicMemory recall failed — continuing', {error: String(err)});
+                }
+            }
+
             const pair = await this.runResponseTransform(
                 activeSchemaName, workingCtx, md, isRecovered
             );
@@ -362,6 +420,29 @@ export class GrayRoomOrchestrator {
                 kind: 'response_transform',
                 interruptReason: interrupt?.reason,
             });
+
+            // ── Step 5: CognitiveEngine reasoning after LLM response ─────────
+            try {
+                const sessionArtifacts = await _artifactStore.query({session_id: sessionId});
+                const artifactIds = sessionArtifacts.map((a) => a.artifact_id);
+                const taskDesc = (workingCtx['task_description'] ?? '') as string;
+                const chain = await _reasoningEngine.reason(taskDesc, {...workingCtx, session_id: sessionId}, artifactIds);
+
+                const lastConf = chain.confidence_trajectory.at(-1) ?? 1;
+                if (lastConf < 0.4) {
+                    lowConfidenceCount++;
+                    if (lowConfidenceCount >= 2) {
+                        try {
+                            kernel.transition('loop_detected', {loop_signal_severity: 'moderate'});
+                        } catch (e) {
+                            if (!(e instanceof InvalidTransitionError)) throw e;
+                            logger.debug('[GrayRoom] FSM loop_detected skipped', {state: kernel.state});
+                        }
+                    }
+                }
+            } catch (err) {
+                logger.warn('[GrayRoom] CognitiveEngine failed — continuing', {error: String(err)});
+            }
 
             if (!interrupt) {
                 touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
@@ -397,6 +478,8 @@ export class GrayRoomOrchestrator {
                     remainingBudget: 0,
                     lastReason: interrupt.reason,
                 });
+                // FSM: max iterations reached — operator stop
+                try { kernel.transition('operator_stop', {}); } catch (e) { if (!(e instanceof InvalidTransitionError)) throw e; }
                 return this.mergeTraceIntoResult(
                     {...result, context: {...c, interrupt_truncated: true}} as ProcessResult,
                     trace,
@@ -404,6 +487,58 @@ export class GrayRoomOrchestrator {
                 );
             }
             interruptBudget--;
+
+            // ── Step 1: PolicyEngine check (synchronous, < 1ms) ──────────────
+            {
+                const execution = (workingCtx['execution'] as Record<string, unknown> | undefined);
+                const policyCtx = {
+                    action: (execution?.['action'] ?? 'dialog') as string,
+                    fsm_state: kernel.state,
+                    session_duration_ms: Date.now() - sessionStartTime,
+                    loop_count: turn,
+                    branch: (workingCtx['branch'] ?? (workingCtx['workbench'] as Record<string, unknown> | undefined)?.['branch']) as string | undefined,
+                    has_dryrun_artifact: false, // will be checked via query below
+                    has_human_approval: humanApproved,
+                };
+                if (policyEngine.isBlocked(policyCtx)) {
+                    const violations = policyEngine.evaluate(policyCtx);
+                    grayRoomStopReason = violations.find((v) => v.severity === 'block')?.message ?? 'policy_block';
+                    logger.warn('[GrayRoom] PolicyEngine blocked', {violations, turn});
+                    touchGrayRoom({phase: 'completed', status: 'truncated', turn, remainingBudget: 0, lastReason: 'policy_block'});
+                    try { kernel.transition('operator_stop', {}); } catch { /* ignored */ }
+                    const c = result.context as Record<string, unknown>;
+                    return this.mergeTraceIntoResult(
+                        {...result, context: {...c, policy_blocked: true, policy_stop_reason: grayRoomStopReason}} as ProcessResult,
+                        trace, grayRoom
+                    );
+                }
+            }
+
+            // ── Step 2: AutonomyGlue check ────────────────────────────────────
+            {
+                const autonomyDecision = await AutonomyGlue.decide(sessionId, kernel.state);
+                if (autonomyDecision.action === 'ABORT') {
+                    grayRoomStopReason = 'autonomy_abort';
+                    logger.warn('[GrayRoom] AutonomyGlue ABORT', {reason: autonomyDecision.reason, turn});
+                    touchGrayRoom({phase: 'completed', status: 'truncated', turn, remainingBudget: 0, lastReason: 'autonomy:abort'});
+                    try { kernel.transition('operator_stop', {}); } catch { /* ignored */ }
+                    const c = result.context as Record<string, unknown>;
+                    return this.mergeTraceIntoResult(
+                        {...result, context: {...c, autonomy_stopped: true, autonomy_reason: autonomyDecision.reason}} as ProcessResult,
+                        trace, grayRoom
+                    );
+                }
+                if (autonomyDecision.action === 'WAIT') {
+                    grayRoomStopReason = 'autonomy_wait';
+                    logger.info('[GrayRoom] AutonomyGlue WAIT — pausing for human', {reason: autonomyDecision.reason, turn});
+                    touchGrayRoom({phase: 'completed', status: 'truncated', turn, remainingBudget: 0, lastReason: 'autonomy:wait'});
+                    const c = result.context as Record<string, unknown>;
+                    return this.mergeTraceIntoResult(
+                        {...result, context: {...c, autonomy_waiting: true, autonomy_reason: autonomyDecision.reason}} as ProcessResult,
+                        trace, grayRoom
+                    );
+                }
+            }
 
             // ── ADR-0035: Safety Layer intercept ─────────────────────────────
             const thinkingSlot = (rawOutput.thinking_slot ?? workingCtx.thinking_slot) as Record<string, unknown> | undefined;
@@ -484,6 +619,8 @@ export class GrayRoomOrchestrator {
                 };
                 this.warnOnInvalidExecute(res.execute, 'grayRoom.finalize');
                 touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
+                // FSM: execution_complete → VALIDATING
+                try { kernel.transition('execution_complete', {}); } catch (e) { if (!(e instanceof InvalidTransitionError)) throw e; logger.debug('[GrayRoom] FSM execution_complete skipped', {state: kernel.state}); }
                 return this.mergeTraceIntoResult(res, trace, grayRoom);
             }
 
@@ -537,6 +674,8 @@ export class GrayRoomOrchestrator {
             if (chatRes.status !== 202) {
                 const errText = await chatRes.text();
                 logger.error('[GrayRoom] LLM promise init failed', {status: chatRes.status, error: errText});
+                // FSM: self-correction on LLM error
+                try { kernel.transition('loop_detected', {loop_signal_severity: 'moderate'}); } catch (e) { if (!(e instanceof InvalidTransitionError)) throw e; }
                 return {
                     outcome: 'failed',
                     error: `LLM error (gray room): ${chatRes.status} ${errText.slice(0, 200)}`,
@@ -555,6 +694,8 @@ export class GrayRoomOrchestrator {
             }
             md = nextMd;
             turn++;
+            // FSM: signal for the next LLM call iteration
+            try { kernel.transition('scan_triggered', {}); } catch (e) { if (!(e instanceof InvalidTransitionError)) throw e; logger.debug('[GrayRoom] FSM scan_triggered (next turn) skipped', {state: kernel.state}); }
         }
     }
 
@@ -723,24 +864,56 @@ export class GrayRoomOrchestrator {
                     trace.push({ kind: 'sidecar_llm', purpose: 'auto_read_file', ok: false, meta: 'missing_path' });
                     return { nextCtx, continueLoop: false };
                 }
-                const out = await executeReadFile({ filePath: fp });
-                if (out.success && out.content !== undefined) {
-                    const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-                    const prevFiles = (innerCtx['files'] as Record<string, string>) ?? {};
-                    nextCtx = { ...nextCtx, context: { ...innerCtx, files: { ...prevFiles, [fp]: out.content } } };
-                    trace.push({ kind: 'sidecar_llm', purpose: 'auto_read_file', ok: true, meta: fp });
-                } else {
-                    trace.push({ kind: 'sidecar_llm', purpose: 'auto_read_file', ok: false, meta: 'read_failed' });
+                const _t0_rf = Date.now();
+                let _rf_success = false;
+                try {
+                    const out = await executeReadFile({ filePath: fp });
+                    _rf_success = out.success;
+                    if (out.success && out.content !== undefined) {
+                        const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
+                        const prevFiles = (innerCtx['files'] as Record<string, string>) ?? {};
+                        nextCtx = { ...nextCtx, context: { ...innerCtx, files: { ...prevFiles, [fp]: out.content } } };
+                        trace.push({ kind: 'sidecar_llm', purpose: 'auto_read_file', ok: true, meta: fp });
+                    } else {
+                        trace.push({ kind: 'sidecar_llm', purpose: 'auto_read_file', ok: false, meta: 'read_failed' });
+                    }
+                } finally {
+                    globalToolTracker.record({
+                        tool_name: 'read-file',
+                        session_id: promiseId,
+                        timestamp: _t0_rf,
+                        duration_ms: Date.now() - _t0_rf,
+                        success: _rf_success,
+                        input_token_count: 0,
+                        output_quality: _rf_success ? 0.8 : 0,
+                        fsm_state: 'EXECUTING',
+                    });
                 }
                 return { nextCtx, continueLoop: false };
             }
 
             case 'auto_rag_page': {
-                const {nextCtx: afterRag, trace: ragTrace} = await mergeServerRagPageIntoContext(nextCtx, data);
-                nextCtx = afterRag;
-                if (ragTrace) trace.push(ragTrace);
-                const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-                nextCtx = { ...nextCtx, context: {...innerCtx, _interrupt_reason: reason, ...(data ?? {})} };
+                const _t0_rag = Date.now();
+                let _rag_success = false;
+                try {
+                    const {nextCtx: afterRag, trace: ragTrace} = await mergeServerRagPageIntoContext(nextCtx, data);
+                    nextCtx = afterRag;
+                    _rag_success = true;
+                    if (ragTrace) trace.push(ragTrace);
+                    const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
+                    nextCtx = { ...nextCtx, context: {...innerCtx, _interrupt_reason: reason, ...(data ?? {})} };
+                } finally {
+                    globalToolTracker.record({
+                        tool_name: 'rag-search',
+                        session_id: promiseId,
+                        timestamp: _t0_rag,
+                        duration_ms: Date.now() - _t0_rag,
+                        success: _rag_success,
+                        input_token_count: 0,
+                        output_quality: _rag_success ? 0.8 : 0,
+                        fsm_state: 'EXECUTING',
+                    });
+                }
                 return { nextCtx, continueLoop: true };
             }
 

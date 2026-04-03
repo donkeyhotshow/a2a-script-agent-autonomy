@@ -15,6 +15,7 @@ import {getPromptsTransformsPath} from '../../../transform/index.js';
 import type {RequestContext, ProcessResult} from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {GrayRoomOrchestrator, isDialogToolExecutePayload} from './gray-room-orchestrator.js';
+import {EpisodicMemory} from '../../memory/episodic-memory.js';
 import {
     resolveTransformSchema,
     normalizeContext,
@@ -50,6 +51,7 @@ const DEFAULT_MODEL = 'qwen3:8b';
 export class DialogRequestProcessor extends BaseRequestProcessor {
     private grayRoom: GrayRoomOrchestrator;
     private promptsTransformsPath: string;
+    private readonly episodicMemory = new EpisodicMemory();
 
     constructor(promptsTransformsPath?: string) {
         super('DialogRequestProcessor', {});
@@ -85,8 +87,11 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
         logger.info('[DialogRequestProcessor] Processing', {promiseId});
 
         const existingLlmId = ctx['llmPromiseId'] as string | undefined;
+        const sessionStartTime = Date.now();
 
         try {
+            let result: ProcessResult;
+
             if (existingLlmId) {
                 // Восстановление из существующего promise
                 const {recoverDialogFromLlmPromise} = await import('./response-path.js');
@@ -107,37 +112,71 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 // Получаем responseMd из контекста (gray room уже обработал ответ)
                 const responseMd = ctx['lastLlmResponse'] as string || '';
 
-                return this.grayRoom.runLoop(
+                result = await this.grayRoom.runLoop(
                     ctx,
                     schemaName,
                     responseMd,
                     promiseId,
                     false
                 );
+            } else {
+                // Выполняем LLM вызов
+                const llmResult = await executeLlmCall({
+                    promptsTransformsPath: this.promptsTransformsPath,
+                    schemaName,
+                    ctx,
+                    promiseId,
+                    base: aiHubUrl,
+                    model
+                });
+
+                if (!llmResult.success || !llmResult.responseMd) {
+                    return {outcome: 'failed', error: llmResult.error || 'LLM call failed'} as ProcessResult;
+                }
+
+                // Запускаем gray room loop с ответом от LLM
+                result = await this.grayRoom.runLoop(
+                    ctx,
+                    schemaName,
+                    llmResult.responseMd,
+                    promiseId,
+                    false
+                );
             }
 
-            // Выполняем LLM вызов
-            const llmResult = await executeLlmCall({
-                promptsTransformsPath: this.promptsTransformsPath,
-                schemaName,
-                ctx,
-                promiseId,
-                base: aiHubUrl,
-                model
-            });
+            // ── Task 2: Save episodic memory on session end ────────────────
+            const sessionEndTime = Date.now();
+            const grayRoomCtx = (result.context ?? {}) as Record<string, unknown>;
+            const isStopped = grayRoomCtx['policy_blocked'] === true ||
+                grayRoomCtx['autonomy_stopped'] === true ||
+                grayRoomCtx['safety_stop'] === true;
+            const outcome = result.outcome === 'completed' && !isStopped ? 'success' : 'failure';
+            const failureReason = isStopped
+                ? ((grayRoomCtx['policy_stop_reason'] ?? grayRoomCtx['autonomy_reason'] ?? 'stopped') as string)
+                : result.outcome !== 'completed' ? (result.error ?? 'unknown') : undefined;
 
-            if (!llmResult.success || !llmResult.responseMd) {
-                return {outcome: 'failed', error: llmResult.error || 'LLM call failed'} as ProcessResult;
+            try {
+                await this.episodicMemory.save({
+                    session_id: promiseId,
+                    task_description: (ctx['task_description'] ?? (ctx['messages'] as Array<{content: string}> | undefined)?.[0]?.content ?? '') as string,
+                    task_embedding: [],
+                    outcome,
+                    failure_reason: failureReason,
+                    lessons: [],
+                    artifacts_produced: [],
+                    confidence_final: 0,
+                    duration_ms: sessionEndTime - sessionStartTime,
+                    loop_count: 0,
+                    strategies_used: [(ctx['execution'] as Record<string, unknown> | undefined)?.['action'] as string ?? 'dialog'],
+                    strategies_that_worked: outcome === 'success' ? [(ctx['execution'] as Record<string, unknown> | undefined)?.['action'] as string ?? 'dialog'] : [],
+                    strategies_that_failed: outcome !== 'success' ? [(ctx['execution'] as Record<string, unknown> | undefined)?.['action'] as string ?? 'dialog'] : [],
+                    created_at: sessionEndTime,
+                });
+            } catch (err) {
+                logger.warn('[Dialog] EpisodicMemory save failed — non-blocking', {error: String(err)});
             }
 
-            // Запускаем gray room loop с ответом от LLM
-            return this.grayRoom.runLoop(
-                ctx,
-                schemaName,
-                llmResult.responseMd,
-                promiseId,
-                false
-            );
+            return result;
         } catch (err) {
             logger.error('[DialogRequestProcessor] Failed', {error: String(err)});
             return {
