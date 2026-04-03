@@ -75,6 +75,105 @@ const ArtifactCard: FC<Props> = ({ artifact, onInspect }) => {
     );
   }
 
+  // ── POLICY_VIOLATION ──────────────────────────────────────────────────────
+  if (artifact.artifact_type === 'POLICY_VIOLATION') {
+    const d = artifact.data as { policy_id?: string; severity?: string; message?: string };
+    const isBlock = d.severity === 'block';
+    return (
+      <div className={`rounded border p-3 text-sm ${isBlock ? 'border-red-800 bg-red-950/30' : 'border-amber-800 bg-amber-950/30'}`}>
+        {toolbar}
+        <div className="flex items-center gap-2 mb-2">
+          <span className={`px-1.5 py-0.5 rounded text-xs font-mono ${isBlock ? 'bg-red-900 text-red-300' : 'bg-amber-900 text-amber-300'}`}>
+            {d.policy_id ?? 'UNKNOWN'}
+          </span>
+          <span className={`px-1.5 py-0.5 rounded text-xs font-mono uppercase ${isBlock ? 'bg-red-900 text-red-400' : 'bg-amber-900 text-amber-400'}`}>
+            {d.severity ?? 'unknown'}
+          </span>
+        </div>
+        <p className={`text-sm ${isBlock ? 'text-red-200' : 'text-amber-200'}`}>{d.message}</p>
+      </div>
+    );
+  }
+
+  // ── JUDGMENT_RESULT ───────────────────────────────────────────────────────
+  if (artifact.artifact_type === 'JUDGMENT_RESULT') {
+    const d = artifact.data as {
+      approved?: boolean;
+      overall_score?: number;
+      blocking_issues?: string[];
+      judge_reasoning?: string;
+    };
+    const approved = d.approved ?? false;
+    const score = typeof d.overall_score === 'number' ? d.overall_score : null;
+    const issues = Array.isArray(d.blocking_issues) ? d.blocking_issues : [];
+    return (
+      <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3 text-sm">
+        {toolbar}
+        <div className="flex items-center gap-2 mb-2">
+          <span className={`px-1.5 py-0.5 rounded text-xs font-mono ${approved ? 'bg-emerald-900 text-emerald-300' : 'bg-red-900 text-red-300'}`}>
+            {approved ? '✓ Approved' : '✗ Rejected'}
+          </span>
+          {score !== null && (
+            <span className="text-zinc-400 text-xs font-mono">
+              Score: <span className="text-zinc-200">{(score * 100).toFixed(0)}%</span>
+            </span>
+          )}
+        </div>
+        {issues.length > 0 && (
+          <ul className="mb-2 space-y-0.5">
+            {issues.map((issue, i) => (
+              <li key={i} className="text-xs text-red-300 flex items-start gap-1">
+                <span className="text-red-500 shrink-0">•</span> {issue}
+              </li>
+            ))}
+          </ul>
+        )}
+        {d.judge_reasoning && (
+          <p className="text-xs text-zinc-400 italic">{d.judge_reasoning}</p>
+        )}
+      </div>
+    );
+  }
+
+  // ── TOOL_PROFILE ──────────────────────────────────────────────────────────
+  if (artifact.artifact_type === 'TOOL_PROFILE') {
+    const d = artifact.data as {
+      tool_name?: string;
+      success_rate?: number;
+      trending?: string;
+      avg_duration_ms?: number;
+      p95_duration_ms?: number;
+    };
+    const trendColor =
+      d.trending === 'up' ? 'bg-emerald-900 text-emerald-300'
+      : d.trending === 'down' ? 'bg-red-900 text-red-300'
+      : 'bg-zinc-800 text-zinc-400';
+    return (
+      <div className="rounded border border-zinc-800 bg-zinc-950/60 p-3 text-sm">
+        {toolbar}
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
+          <span className="text-zinc-200 font-mono text-xs">{d.tool_name ?? 'unknown'}</span>
+          {d.trending && (
+            <span className={`px-1.5 py-0.5 rounded text-xs font-mono ${trendColor}`}>
+              {d.trending}
+            </span>
+          )}
+        </div>
+        <div className="flex gap-4 text-xs text-zinc-400">
+          {typeof d.success_rate === 'number' && (
+            <span>Success: <span className="text-zinc-200">{(d.success_rate * 100).toFixed(0)}%</span></span>
+          )}
+          {typeof d.avg_duration_ms === 'number' && (
+            <span>Avg: <span className="text-zinc-200">{d.avg_duration_ms}ms</span></span>
+          )}
+          {typeof d.p95_duration_ms === 'number' && (
+            <span>p95: <span className="text-zinc-200">{d.p95_duration_ms}ms</span></span>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   // Default generic card
   return (
     <div className={`rounded border p-3 text-sm ${SEVERITY_COLORS[sev]}`}>

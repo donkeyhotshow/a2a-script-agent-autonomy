@@ -22,7 +22,7 @@ import BottomPanel from './BottomPanel';
 import PreflightView from './PreflightView';
 
 type RightTab = 'taskflow' | 'evidence' | 'waiting';
-type BottomTab = 'terminal' | 'storage' | 'raw' | 'steering';
+type BottomTab = 'terminal' | 'storage' | 'raw' | 'steering' | 'agentcard';
 
 const AgentConsole: FC = () => {
   const [selectedProject, setSelectedProject] = useQueryState('project', { defaultValue: 'proj_001' });

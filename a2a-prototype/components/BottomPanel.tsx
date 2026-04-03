@@ -5,8 +5,9 @@ import TerminalPanel from './TerminalPanel';
 import StorageTab from './StorageTab';
 import RawStateTab from './RawStateTab';
 import IntentPanel from './IntentPanel';
+import AgentCard from './AgentCard';
 
-type BottomTab = 'terminal' | 'storage' | 'raw' | 'steering';
+type BottomTab = 'terminal' | 'storage' | 'raw' | 'steering' | 'agentcard';
 
 interface Props {
   activeTab: BottomTab;
@@ -20,10 +21,11 @@ interface Props {
 }
 
 const TABS: { id: BottomTab; label: string }[] = [
-  { id: 'terminal', label: 'Terminal' },
-  { id: 'storage',  label: 'Storage' },
-  { id: 'raw',      label: 'Raw State' },
-  { id: 'steering', label: '↺ Steering' },
+  { id: 'terminal',  label: 'Terminal' },
+  { id: 'storage',   label: 'Storage' },
+  { id: 'raw',       label: 'Raw State' },
+  { id: 'steering',  label: '↺ Steering' },
+  { id: 'agentcard', label: 'Agent Card' },
 ];
 
 const BottomPanel: FC<Props> = ({
@@ -53,6 +55,7 @@ const BottomPanel: FC<Props> = ({
         {activeTab === 'steering' && (
           <IntentPanel session={session} intents={steeringIntents} onSteer={onSteer} />
         )}
+        {activeTab === 'agentcard' && <AgentCard />}
       </div>
     </div>
   );
