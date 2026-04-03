@@ -25,6 +25,14 @@ except ImportError:
     HAS_PYDANTIC = False
     print("Warning: pydantic not installed. Using legacy configuration.")
 
+# Always resolve ai-integration/.env (this file lives at ai-integration/proxy/config.py).
+_AI_INTEGRATION_ENV = Path(__file__).resolve().parent.parent / '.env'
+_ENV_FILE_TUPLE = (
+    (str(_AI_INTEGRATION_ENV), '.env')
+    if _AI_INTEGRATION_ENV.is_file()
+    else ('.env',)
+)
+
 
 # ===========================================
 # Legacy Configuration (Fallback)
@@ -122,7 +130,7 @@ if HAS_PYDANTIC:
         """
         
         model_config = SettingsConfigDict(
-            env_file='.env',
+            env_file=_ENV_FILE_TUPLE,
             env_file_encoding='utf-8',
             case_sensitive=False,
             extra='ignore',  # Ignore extra env vars not defined here

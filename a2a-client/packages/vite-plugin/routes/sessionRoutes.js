@@ -165,7 +165,7 @@ export function createSessionRoutes({ cwd }) {
                 ? listSessions(getProjectPathForSessions(cwd))
                 : listNewSessions(cwd);
             res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ sessions }));
+            res.end(JSON.stringify({ success: true, sessions, count: sessions.length }));
             return;
         }
 
@@ -173,7 +173,8 @@ export function createSessionRoutes({ cwd }) {
             parseJsonBody(req, res, (d) => {
                 const session = buildNewSessionFromRequest({ cwd, d, storageMode });
                 res.setHeader('Content-Type', 'application/json');
-                res.end(JSON.stringify({ success: true, session: toPublicSession(session, false) }));
+                // Create response includes full context (execution seeds, etc.) for tests and drivers.
+                res.end(JSON.stringify({ success: true, session: toPublicSession(session, true) }));
             });
             return;
         }

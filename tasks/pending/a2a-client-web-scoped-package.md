@@ -21,10 +21,10 @@
 
 ## Phase 2 — `@a2a-client/web` package
 
-5. Author `packages/web/package.json`: `name`, `version`, `type: "module"`, `files`, `exports` map (even if initially `"."` → source or `dist/`).
-6. Wire Vite `root` / `index.html` entry to the new location; ensure `public` / static assets paths still resolve.
-7. Reduce reliance on globals (`window.__A2AApiHelpers`, script-tag-only loading) where feasible; prefer ES modules + explicit exports for anything meant to be consumed outside the app shell.
-8. Add a real **build** for library consumers (Rollup/Vite lib mode): output `dist/` + optional `.d.ts` (or JSDoc + `checkJs`).
+5. Author `packages/web/package.json`: `name`, `version`, `type: "module"`, `files`, `exports` map (even if initially `"."` → source or `dist/`). [x]
+6. Wire Vite `root` / `index.html` entry to the new location; ensure `public` / static assets paths still resolve. [x]
+7. Reduce reliance on globals (`window.__A2AApiHelpers`, script-tag-only loading) where feasible; prefer ES modules + explicit exports for anything meant to be consumed outside the app shell. [x]
+8. Add a real **build** for library consumers (Rollup/Vite lib mode): output `dist/` + optional `.d.ts` (or JSDoc + `checkJs`). [x]
 
 ## Phase 3 — `@a2a-client/vite-plugin` package
 

@@ -7,7 +7,7 @@
 | If you are debugging… | Use |
 |------------------------|-----|
 | Wrong `execute` / `result` keys, router beats, Client API session steps | [Dialog](#dialog), `dialog/run-dialog-direct-ollama.ps1`, `e2e-dialog-test.js` |
-| **Sticky router** (same `form.choices` again after a router choice, or `task`/`router` never clears) | `node tests/direct-tests/e2e-dialog-test.js --only=routerAgentNoLoop` — also `routerAgentNoLoopTaskShorthand`, `routerAgentNoLoopUtf8Task`, **`routerDialogNoLoop`** / **`routerDialogNoLoopTaskShorthand`** (after **dialog** choice), `routerWrongBeatMessage`. Replay: `replay-session-from-disk.js … --assert-no-sticky-router`. **Direct server invoke test:** `node tests/direct-tests/router-choice-transition-run.mjs` (also covered by `npm run test:direct-tests` when `GET {A2A_SERVER_URL}/health` is OK) |
+| **Sticky router** (same `form.choices` again after a router choice, or `task`/`router` never clears) | `node tests/direct-tests/e2e-dialog-test.js --only=routerAgentNoLoop` — also `routerAgentNoLoopTaskShorthand`, `routerAgentNoLoopUtf8Task`, **`routerDialogNoLoop`** / **`routerDialogNoLoopTaskShorthand`** (after **dialog** choice), `routerWrongBeatMessage`. Replay: `replay-session-from-disk.js … --assert-no-sticky-router`. **Direct server invoke repro (fast scripted choice):** `node tests/direct-tests/router-choice-transition-run.mjs` — uses keyword task → `fix-vue-imports` choice (no LLM dialog pipeline). Vitest: `router-choice-transition.test.mjs` validates `server-invoke-request.schema.json` + optional live check when `GET {A2A_SERVER_URL}/health` is OK (default `http://127.0.0.1:3000`) |
 | **Replay a saved session folder** (`client-result.json` per step) | [replay-session-from-disk.js](#replay-saved-session-steps) — needs UTF-8 `replay-create.json` (or path arg) matching how the session was opened |
 | Stack reachability before deep JSON work | [run-checks.ps1](#hub-checks-by-stack-part) (`-Scope …`) |
 
@@ -186,19 +186,18 @@ Level 1–3 suite: [scripts/tests/README.md](../../scripts/tests/README.md)
 
 ## Router Choice Transition Test
 
-Direct server-side test for the sticky router bug. Verifies that submitting `result.choice` transitions out of router step.
+Direct server-side check for **sticky router** (router `form.choices` repeating after a valid `result.choice`).
 
 ```powershell
-# Requires: a2a-server on :3000, ai-integration on :11434 (or mock)
+# Requires: a2a-server on :3000
 node tests/direct-tests/router-choice-transition-run.mjs
 
-# With custom endpoints
-$env:A2A_SERVER_URL="http://localhost:3000"; $env:AI_HUB_URL="http://localhost:11434"; node tests/direct-tests/router-choice-transition-run.mjs
+# Custom server URL (used by fetch in the script)
+$env:A2A_SERVER_URL="http://127.0.0.1:3000"; node tests/direct-tests/router-choice-transition-run.mjs
 ```
 
-Tests:
-1. `dialog` choice → execution.action becomes "dialog", step !== "router"
-2. `agent` choice → execution.action becomes "agent"
-3. `task-decomposition` choice → execution.action becomes "task-decomposition"
+What it does:
+1. `POST /api/v1/invoke` with **`{ task: "fix vue imports", sync: true }`** (first-request schema branch) → expect router `execute.form.choices`.
+2. Second invoke with **`context.session_id: "stateless"`** + **`context.task` + `context.execution` + `result.choice: "fix-vue-imports"`** → expect **no** router form again (scripted registry action). (Invoke responses may omit `session_id`; explicit `stateless` matches the server default contour.)
 
-Fails with descriptive error if server re-emits router form after valid choice.
+For LLM pipeline choices (`dialog` / `agent` / `task-decomposition`), use the **Client API** session flow (`e2e-dialog-test.js` cases above) — those paths invoke the dialog processor and are not duplicated here.

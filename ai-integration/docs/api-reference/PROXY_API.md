@@ -4,6 +4,12 @@
 
 This document provides comprehensive API reference for the AI Integration proxy module. The proxy acts as an intermediary between clients and LLM providers (Ollama, OpenAI, HuggingFace).
 
+**Auth forwarding policy (mandatory):**
+
+- Clients **MUST NOT** forward their own `Authorization` / `API-Key` / similar provider credentials through this proxy.
+- The proxy is the **only** place that injects upstream auth headers (for example, it builds `Authorization: Bearer <Z_AI_API_KEY>` when calling Z.AI, based on its own config / `.env`).
+- Any incoming auth headers from the client are ignored for upstream provider calls; do not rely on “header passthrough” from the app or a2a-server to Z.AI/Ollama.
+
 ## Base URL
 
 ```

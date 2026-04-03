@@ -2,6 +2,10 @@
 
 Guidance for agents working in this repository.
 
+**Self-Upgrade in one sentence:** **doing work** here always has **two phases**:  
+1) **Execute concrete tasks** from `tasks/` + `DEV_STATE` in the IDE.  
+2) **When those are empty, immediately switch to driving prompts through the Client API or `monitor-and-process-tasks.js`**, let those sessions surface new, testable tasks, and write them back into `tasks/` + `DEV_STATE` instead of stopping.
+
 ## Quick Reference
 
 | Topic | Reference |
@@ -28,7 +32,8 @@ Guidance for agents working in this repository.
 
 1. **Prune** — Trim root and module `DEV_STATE.md` and any checklists: drop completed items, duplicates, noise.
 2. **Discover** — Scan code, simulations, risks, backlog for real, testable work.
-3. **Write** — Add concrete tasks to `DEV_STATE` and `tasks/pending/` as needed, **then** continue the normal execute cycle.
+3. **Write** — Add concrete tasks to `DEV_STATE` and `tasks/pending/` as needed.
+4. **Then drive the stack** — If, after (1)–(3), there is still no concrete work item to pick up, that is **not** a stop signal. It is an instruction to **hit the Client API or monitor**: create or resume sessions via `/api/a2a/sessions` (or `monitor-and-process-tasks.js` + `prompts-to-agent-mode/`) and let those runs surface new, testable tasks that you then write back into `DEV_STATE` + `tasks/`.
 
 Stopping with an empty queue **without** (1)–(3) is a protocol violation. Full rationale: [DEV_STATE Protocol](#dev-state-protocol); task wording: [methodology/tasks.md](archive/methodology/tasks.md).
 

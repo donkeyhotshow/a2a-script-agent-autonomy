@@ -4,6 +4,7 @@ Main proxy logic for forwarding requests to Ollama
 Uses modular architecture with separate processors
 """
 import os
+import sys
 import json
 import logging
 import uuid
@@ -170,7 +171,8 @@ def handle_proxy_request(path: str, request) -> Response:
             mgr.start()
     
     try:
-        headers = _prepare_headers(request)
+        # Base headers from incoming request (for content-type, etc.)
+        base_headers = _prepare_headers(request)
         body, body_json = _get_body(request)
         promise_requested = _check_promise_requested(request, body_json)
         forward_args = _get_forward_args(request)
@@ -229,8 +231,16 @@ def handle_proxy_request(path: str, request) -> Response:
                     api_key = provider.config.get_api_key()
                 if not api_key and Z_AI_API_KEY:
                     api_key = Z_AI_API_KEY
+                # Build upstream headers independently from client auth:
+                # we only keep a small safe subset and inject our own Authorization.
+                upstream_headers: dict[str, Any] = {}
+                for hk, hv in base_headers.items():
+                    lk = str(hk).lower()
+                    if lk in ('content-type', 'accept', 'accept-language', 'user-agent'):
+                        upstream_headers[hk] = hv
                 if api_key:
-                    headers['Authorization'] = f"Bearer {api_key}"
+                    upstream_headers['Authorization'] = f"Bearer {api_key}"
+                headers = upstream_headers
             else:
                 fallback_host = OLLAMA_HOST.rstrip('/') or OLLAMA_HOST
                 target_url = f"{fallback_host}/{path}"
@@ -338,6 +348,14 @@ def handle_proxy_request(path: str, request) -> Response:
             if should_log:
                 try:
                     _write_json_file(os.path.join(folder_path, 'forwarded_request.json'), body_json)
+                    hdr_safe = dict(headers)
+                    auth = hdr_safe.get('Authorization') or hdr_safe.get('authorization')
+                    if auth:
+                        hdr_safe['Authorization'] = 'Bearer ***' if str(auth).startswith('Bearer ') else '***'
+                    for k in list(hdr_safe.keys()):
+                        if str(k).lower() == 'api-key':
+                            hdr_safe[k] = '***'
+                    _write_json_file(os.path.join(folder_path, 'forwarded_headers.json'), hdr_safe)
                 except Exception as e:
                     logger.debug(f"Failed to save forwarded request: {e}")
         else:
@@ -460,6 +478,18 @@ def handle_proxy_request(path: str, request) -> Response:
             
             def _job():
                 try:
+                    debug_payload = {
+                        "method": method_snapshot,
+                        "url": target_url,
+                        "headers": headers_snapshot,
+                        "params": args_snapshot,
+                        "body_json": body_json_snapshot,
+                    }
+                    debug_path = os.path.join(STORAGE_DIR, "debug-request-latest.json")
+                    _write_json_file(debug_path, debug_payload)
+                except Exception as e:
+                    logger.debug(f"Failed to write debug request payload: {e}")
+                try:
                     if simulate_snapshot is not None:
                         delay_ms = simulate_snapshot.get('delay_ms')
                         try:
@@ -519,12 +549,10 @@ def handle_proxy_request(path: str, request) -> Response:
                     if should_log and folder_path:
                         save_response(folder_path, {"error": "promise_error", "message": str(e)})
             
-            # When daemon_only: only daemon executes real requests; simulate runs inline (fast)
-            run_inline = (not PROMISE_DAEMON_ONLY) or (simulate_snapshot is not None)
-            if run_inline:
-                if PROMISE_DELAY_BEFORE_EXECUTE > 0:
-                    time.sleep(PROMISE_DELAY_BEFORE_EXECUTE)
-                _PROMISE_EXECUTOR.submit(_job)
+            # TEMP: always run promise job inline so debug payload is written immediately.
+            if PROMISE_DELAY_BEFORE_EXECUTE > 0:
+                time.sleep(PROMISE_DELAY_BEFORE_EXECUTE)
+            _PROMISE_EXECUTOR.submit(_job)
             
             return Response(
                 _json_bytes({"promiseId": promise.promise_id, "status": "pending"}),
@@ -532,7 +560,7 @@ def handle_proxy_request(path: str, request) -> Response:
                 mimetype='application/json',
             )
         
-        # Cache check before request to Ollama
+        # Cache check before request to upstream (Ollama or external provider)
         cache = get_cache()
         cache_key = cache.build_key("ollama", {"path": path, "body": body_json})
         
@@ -542,7 +570,7 @@ def handle_proxy_request(path: str, request) -> Response:
             logger.debug(f"Cache hit for key: {cache_key[:16]}...")
             return Response(cached['body'], status=cached['status'], content_type='application/json')
         
-        # Forward request to Ollama
+        # Forward request to upstream (Ollama or external provider)
         if request.method == 'GET':
             resp = requests.get(target_url, params=forward_args, headers=headers, timeout=FORWARD_TIMEOUT)
         elif request.method == 'POST':
@@ -553,6 +581,25 @@ def handle_proxy_request(path: str, request) -> Response:
             resp = requests.delete(target_url, headers=headers, timeout=FORWARD_TIMEOUT)
         else:
             resp = requests.request(request.method, target_url, data=body, headers=headers, timeout=FORWARD_TIMEOUT)
+        
+        # Normalize upstream auth error code: Z.AI sometimes returns code 1001 with 401.
+        # 401 статус оставляем, но меняем machine-readable code, чтобы 1001 не просачивался в систему.
+        if resp.status_code == 401 and resp.headers.get('Content-Type', '').startswith('application/json'):
+            try:
+                err_obj = resp.json()
+            except Exception:
+                err_obj = None
+            if isinstance(err_obj, dict):
+                err = err_obj.get('error') or {}
+                if isinstance(err, dict) and str(err.get('code')) == '1001':
+                    err['code'] = 'upstream_auth_failed'
+                    err.setdefault('message', 'Upstream authentication failed')
+                    err_obj['error'] = err
+                    from .promises import _json_bytes as _json_bytes_local
+                    patched_body = _json_bytes_local(err_obj)
+                    # Patch resp for downstream logging/forwarding
+                    resp._content = patched_body
+                    resp.headers['Content-Length'] = str(len(patched_body))
         
         # Save to cache after successful response
         if resp.status_code == 200:

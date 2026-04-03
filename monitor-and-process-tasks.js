@@ -1,3 +1,9 @@
+// Self-Upgrade monitor:
+// When `tasks/` + `tasks/pending/` are empty, this script is the
+// second phase of the self-upgrade loop — it drives prompts through
+// the Client API, lets sessions produce new concrete tasks, and those
+// tasks must be written back into `tasks/` + `DEV_STATE` instead of stopping.
+
 import axios from 'axios';
 import dotenv from 'dotenv';
 

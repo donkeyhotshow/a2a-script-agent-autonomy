@@ -3,20 +3,14 @@
  * Requires a running a2a-server (see tests/direct-tests/README.md).
  */
 
-import {
-  testAgentChoice,
-  testRouterTransition,
-  testTaskDecompositionChoice,
-} from './router-choice-transition-core.mjs';
+import { scriptedRouterChoiceNoStickyRouter } from './router-choice-transition-lib.mjs';
 
 async function main() {
-  console.log('=== Router Choice Transition Tests ===\n');
+  console.log('=== Router choice (scripted path, no sticky router) ===\n');
 
   try {
-    await testRouterTransition();
-    await testAgentChoice();
-    await testTaskDecompositionChoice();
-    console.log('\n=== All tests passed! ===');
+    await scriptedRouterChoiceNoStickyRouter();
+    console.log('\n=== OK ===');
     process.exit(0);
   } catch (err) {
     console.error('\n[FAIL]', err.message);

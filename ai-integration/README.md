@@ -13,6 +13,12 @@
 - **Async Promises**: Поддержка `promiseId` → `POST /api/promises/create` → потом `result`. При **`PROMISE_DAEMON_ONLY=true`** (по умолчанию) реальный форвард на провайдера выполняет **очередь/daemon** или ручной **`POST /promise/<id>/execute`**; см. [`docs/workflows/WORKFLOWS.md`](docs/workflows/WORKFLOWS.md). Поле **`promise_daemon_only`** в **`GET /health`** использует Task Monitor (см. корневой **`MONITOR-QUICK-START.md`**).
 - **OllamaManager**: Управление локальным Ollama (старт/стоп/health) — используется только при необходимости.
 
+### Политика авторизации (без форварда)
+
+- Клиентские сервисы (Web UI, a2a-server, любые внешние клиенты) **не должны** прокидывать свои `Authorization` / `API-Key` заголовки до LLM.
+- Proxy сам собирает upstream‑хедеры для провайдера (например, `Authorization: Bearer Z_AI_API_KEY` для Z.AI) на основе собственной конфигурации и `.env`.
+- Входящие auth‑хедеры используются только для аутентификации самого клиента (если включено), но **никогда не пробрасываются** дальше в Z.AI/Ollama — это сознательно запрещённый сценарий.
+
 ## Установка
 
 ### Вариант 1: Ручная установка

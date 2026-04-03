@@ -31,7 +31,23 @@ class TaskMonitorDaemon {
     // Get task files
     const taskFiles = await this.getTaskFiles();
     if (taskFiles.length === 0) {
-      console.error('No task files found in prompts-to-agent-mode directory');
+      console.error('No task files found in prompts-to-agent-mode directory.');
+      console.error(
+        [
+          '',
+          'Self-upgrade protocol reminder:',
+          '  - Engineering specs live in tasks/*.md and tasks/pending/.',
+          '  - Stack-queue prompts live in prompts-to-agent-mode/ (this monitor reads them).',
+          '  - When the engineering queue is empty, the next step is NOT to stop,',
+          '    but to drive the stack via the Client API or this monitor, then write',
+          '    concrete follow-up work back into tasks/ and DEV_STATE.',
+          '',
+          'See tasks/README.md → "Self-Upgrade order (policy)" for the full loop,',
+          'and docs/OPERATOR-CURL.md for direct Client API examples.'
+        ].join('\n')
+      );
+      this.state.status = 'idle';
+      this.saveState();
       return;
     }
 
