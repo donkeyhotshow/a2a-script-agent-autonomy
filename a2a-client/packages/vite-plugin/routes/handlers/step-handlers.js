@@ -3,6 +3,7 @@
  * No routing, no fs, no proxy - just data processing
  */
 
+import { mergeResponseContext } from '@a2a-client/shared/a2a-invoke-builders.mjs';
 import { isValidSessionId } from '../middleware/validators.js';
 import { buildExecuteProjection } from '../utils/execute-projection-dto.js';
 import {
@@ -86,8 +87,8 @@ export function buildStepRecordFromPromise({ sessionId, stepNum, serverResponse,
         stepRecord.result = serverResponse.result;
     }
     
-    // Merge context from server response or fallback
-    const ctx = serverResponse.context || fallbackContext || {};
+    // Same merge as buildStepRecord (unwrap data.context + pickInvokeContextPatch)
+    const ctx = mergeResponseContext(fallbackContext || {}, serverResponse);
     if (Object.keys(ctx).length > 0) {
         stepRecord.context = ctx;
     }

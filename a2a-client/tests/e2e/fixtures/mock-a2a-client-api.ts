@@ -5,6 +5,9 @@ import type {Page} from '@playwright/test';
 import {fixtures} from './index.js';
 
 export async function installMockA2aClientApi(page: Page): Promise<void> {
+    /** In-memory list so POST /sessions is visible on the next GET /sessions (taskbar refresh). */
+    const sessionsList: Array<Record<string, unknown>> = [...fixtures.sessions.data];
+
     await page.route('**/api/a2a/projects', async (route) => {
         await route.fulfill({
             status: 200,
@@ -23,7 +26,7 @@ export async function installMockA2aClientApi(page: Page): Promise<void> {
             return route.fulfill({
                 status: 200,
                 contentType: 'application/json',
-                body: JSON.stringify({sessions: fixtures.sessions.data})
+                body: JSON.stringify({sessions: sessionsList})
             });
         }
 
@@ -35,6 +38,7 @@ export async function installMockA2aClientApi(page: Page): Promise<void> {
                 createdAt: new Date().toISOString(),
                 messages: []
             };
+            sessionsList.unshift(newSession);
             return route.fulfill({
                 status: 200,
                 contentType: 'application/json',
@@ -45,7 +49,7 @@ export async function installMockA2aClientApi(page: Page): Promise<void> {
         const one = pathname.match(/^\/api\/a2a\/sessions\/([^/]+)$/);
         if (method === 'GET' && one) {
             const id = one[1];
-            const fromList = fixtures.sessions.data.find((s: {id: string}) => s.id === id);
+            const fromList = sessionsList.find((s) => s.id === id);
             const data = fromList || {...fixtures.session.data, id};
             return route.fulfill({
                 status: 200,

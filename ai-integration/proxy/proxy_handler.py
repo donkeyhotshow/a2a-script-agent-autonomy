@@ -545,7 +545,7 @@ def handle_proxy_request(path: str, request) -> Response:
                             "promised": True,
                         })
                 except Exception as e:
-                    _promise_reset_pending(promise.promise_id)
+                    _promise_reset_pending(promise.promise_id, delay_seconds=10.0)
                     if should_log and folder_path:
                         save_response(folder_path, {"error": "promise_error", "message": str(e)})
             

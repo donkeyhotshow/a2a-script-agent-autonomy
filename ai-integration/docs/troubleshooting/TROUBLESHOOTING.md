@@ -174,6 +174,35 @@ netstat -ano | findstr "11435"
 
 ---
 
+### 9. Upstream API key: limits, auth, and flaky first response
+
+**Symptom:** `proxy_logs/promises/<id>/body.md` contains JSON such as `{"error":{"code":"1302","message":"Rate limit reached for requests"}}`, or HTTP **401** with `code` **1001** (sometimes rewritten — see below).
+
+**What the provider is doing**
+
+- **Rate limit (e.g. code 1302)** — Expected operational condition: the key or account is throttled. Not a defect in this repo. Back off, reduce concurrency, or adjust quota/plan upstream.
+- **Auth / key problems (e.g. code 1001 with 401)** — Upstream authentication failure (wrong or expired key, or account state). The proxy normalizes Z.AI-style **1001** on JSON **401** responses to a stable machine code (`upstream_auth_failed`) so opaque **1001** does not spread through the stack; see `proxy/proxy_handler.py`.
+- **Policy depends on key / account type** — The same key can get **different** errors (limit vs auth vs other blocks) depending on **provider-side rules** applied to that key. Do not assume one code always means the same human cause.
+
+**Retries**
+
+- The **first** call may fail while a **later retry** succeeds (burst windows, transient throttle, cold routing). That is **normal** provider behavior: retry with backoff; do not treat it automatically as a bug in the proxy or a2a-server.
+
+**Diagnosis**
+
+```bash
+# Per-promise logged request/response bodies (including upstream JSON errors)
+dir ai-integration\proxy_logs\promises
+```
+
+**Solutions**
+
+- **1302 / rate limit:** Wait, retry, lower parallel load.
+- **401 / auth:** Fix provider credentials in proxy config (e.g. `Z_AI_API_KEY`), restart the proxy, confirm account status with the provider.
+- **Malformed LLM step JSON** (e.g. multiple keys under `execute`) is a **different** class of problem — A2A contract / model output; use `tests/direct-tests/validators/` and project action-key rules, not this section.
+
+---
+
 ## Debug Commands
 
 ### Full Health Check
@@ -221,6 +250,7 @@ curl http://localhost:11434/metrics
 | Component | Location |
 |-----------|----------|
 | Proxy logs | `ai-integration/proxy_logs/requests/request_*/` |
+| Promise upstream bodies (debug) | `ai-integration/proxy_logs/promises/<promiseId>/body.md` |
 | Promise storage | `ai-integration/storage/promises/` |
 | Cache | `ai-integration/storage/cache/` |
 | Ollama logs | `ollama logs` |

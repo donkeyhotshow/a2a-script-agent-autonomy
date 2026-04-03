@@ -21,6 +21,7 @@
 
 ## Recent (2026-04-03)
 
+- **Gray Room `mergeTraceIntoResult`**: Always merge `interruptTrace` + `workbench.slots.grayRoom` even when `ProcessResult.context` is missing (finalize path could leave context undefined; early return dropped the slot and broke `e2e-dialog-test.js` `redGrayRoom`).
 - **Agent + dialog prompts (`agent-request.md`, `dialog-request.md`)**: Tool turns: assistant line in **`execute.message`** next to the tool key (no top-level **`message`**). **`append-to-array`** prefers **`llm.execute.message`** then **`llm.message`**. Dialog: **`execute.message`** required for nested **`form.textarea`**; legacy **`form.input[]`** unchanged. **Not** `execute.dialog` as a tool. Agent aligned with **`simulations/`** for `step` names and shapes.
 - **Router step**: `context.execution.routerAnalysis` is omitted unless `shared/router-static-choices.json` → `routerConfig.autoSelectionEnabled` is true (default **false**). Router choices are always explicit user/monitor `POST …/next` with `result.choice`.
 - **`DEFAULT_SYNC_MODE`**: `invoke.service` now treats `DEFAULT_SYNC_MODE=1` / `true` as default synchronous `/invoke` (unless `sync: false`). Matches integration tests and AGENTS.md.

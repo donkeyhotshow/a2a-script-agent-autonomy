@@ -298,3 +298,14 @@ All endpoints may return error responses:
   "details": {}
 }
 ```
+
+### Upstream provider JSON errors (Z.AI and others)
+
+Forwarded chat/generate bodies may contain the provider’s own JSON error object (logged under `proxy_logs/promises/<id>/body.md`). Meaning depends on **HTTP status** and **provider policy** for the API key (rate limit vs auth vs other blocks); the first request can fail and a retry can succeed (transient throttle).
+
+| Upstream `error.code` (typical) | Meaning | Operator action |
+|---------------------------------|---------|-----------------|
+| `1302` | Rate limit | Expected; backoff, fewer parallel calls |
+| `1001` (with HTTP **401**) | Auth failure (Z.AI) | Fix key in proxy env; proxy may rewrite to `upstream_auth_failed` |
+
+Details and retries: [`docs/troubleshooting/TROUBLESHOOTING.md`](../troubleshooting/TROUBLESHOOTING.md) (section *Upstream API key: limits, auth, and flaky first response*).

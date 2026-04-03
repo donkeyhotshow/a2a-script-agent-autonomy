@@ -109,9 +109,13 @@ function applyRouterPipelineChoice(ctx: Record<string, unknown>): void {
     }
     const newExec = {...exec, action: choice, step: 'start'};
     ctx['execution'] = newExec;
+    // Do not reuse an LLM promise from a prior hop (e.g. router classification); recovery would fail
+    // and re-emit the router form or error. New pipeline starts fresh.
+    delete ctx['llmPromiseId'];
     const nested = ctx['context'];
     if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
         (nested as Record<string, unknown>)['execution'] = newExec;
+        delete (nested as Record<string, unknown>)['llmPromiseId'];
     }
 }
 

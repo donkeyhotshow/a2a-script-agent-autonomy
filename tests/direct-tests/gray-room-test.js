@@ -244,6 +244,9 @@ async function main() {
     await testGrayRoomChain();
     console.log('✓ Gray Room chain test passed');
 
+    // Brief pause between suites: reduces libuv/HTTP teardown races on some Windows Node builds (UV_HANDLE_CLOSING).
+    await sleep(500);
+
     // Test Red Room tool execution
     await testRedRoomToolExecution();
     console.log('✓ Red Room tool execution test passed');

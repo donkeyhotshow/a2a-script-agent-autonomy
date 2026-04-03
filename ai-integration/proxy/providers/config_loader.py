@@ -13,6 +13,20 @@ from typing import Any, Dict, List, Optional
 from .base import ProviderConfig
 from .. import config as proxy_config
 
+# Ollama local — no Bearer; stored as explicit api_key row in settings
+OLLAMA_API_KEY_PLACEHOLDER = "__OLLAMA_LOCAL__"
+
+
+@dataclass
+class ApiKeyEntry:
+    """One upstream credential: global id + logical provider name."""
+
+    id: str
+    provider: str
+    secret: str
+    enabled: bool = True
+    priority: int = 100
+
 
 def _resolve_env_var(value: str) -> str:
     """Resolve environment variable references like ${VAR:-default}

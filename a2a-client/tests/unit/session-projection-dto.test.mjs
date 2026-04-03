@@ -16,7 +16,7 @@ describe('session-projection-dto', () => {
         });
     });
 
-    it('projects public session and strips context + transport promiseId', () => {
+    it('projects public session with slim context.execution + strips transport promiseId', () => {
         const projected = toPublicSession({
             id: 'sess_1',
             title: 'Test',
@@ -28,7 +28,9 @@ describe('session-projection-dto', () => {
             },
         });
 
-        expect(projected.context).toBeUndefined();
+        expect(projected.context).toEqual({
+            execution: { action: 'agent', step: 'read_code' },
+        });
         expect(projected.promiseId).toBeUndefined();
         expect(projected.asyncPending).toBe(false);
         expect(projected.promiseStatus).toBe(null);
@@ -63,7 +65,10 @@ describe('session-projection-dto', () => {
             execute: { message: 'done' },
         };
         const projected = toPublicSession(session, false);
-        expect(projected.context).toBeUndefined();
+        expect(projected.context).toEqual({
+            execution: { action: 'agent', step: 'read_code' },
+        });
+        expect(projected.context?.workbench).toBeUndefined();
         expect(projected.workbench).toBeUndefined();
     });
 

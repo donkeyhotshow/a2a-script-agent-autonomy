@@ -28,6 +28,8 @@ Current operational state for the `ai-integration` module.
 | Ollama | 11435 | Expected healthy |
 | Promise daemon | n/a | Enabled via config |
 
+**2026-04-03:** Promise completion (`proxy/promises.py`): `_promise_set_done` no longer marks a promise `done` when the upstream LLM returns a non-2xx HTTP status or a JSON body with a provider `error` (e.g. `401`/`429`); the promise is stored as `status=error` with `rec.error` and the raw response body for debugging.
+
 ---
 
 ## Fast Checks
@@ -96,6 +98,17 @@ curl http://localhost:11435/api/tags
 
 ## Resilience Features (AI-01)
 
+### Promise Retry Mechanism (Completed 2026-04-03)
+
+Implemented in [`proxy/promises.py`](proxy/promises.py) and [`proxy/daemon.py`](proxy/daemon.py):
+
+- **Error state handling**: Promises with errors are not skipped; instead marked for retry
+- **Delayed retry**: Error promises scheduled for retry after 10-second delay using `next_attempt_at` timestamp
+- **Daemon collection**: Modified `_collect_pending_promises()` to include error promises ready for retry
+- **Consistent delay**: All error conditions (network failures, missing snapshots) use 10-second delay before retry
+- **Status preservation**: Error promises remain in 'error' status until daemon processes them, then reset to 'pending'
+- **Verified**: Test script confirmed error promises become eligible for retry after delay expires
+
 ### Provider Connection Resilience
 
 Implemented in [`proxy/providers/ollama_provider.py`](proxy/providers/ollama_provider.py):
@@ -146,7 +159,8 @@ Returns provider connection status:
 - [scripts/cleanup-old-artifacts.py](scripts/cleanup-old-artifacts.py) (enhanced: +cache cleanup, 7d logs, 14d pending, 30d completed)
 - [scripts/tests/daemon_resilience.py](scripts/tests/daemon_resilience.py)
 - [docs/api-reference/PROXY_API.md](docs/api-reference/PROXY_API.md)
-- [docs/troubleshooting/TROUBLESHOOTING.md](docs/troubleshooting/TROUBLESHOOTING.md)
+- [docs/troubleshooting/TROUBLESHOOTING.md](docs/troubleshooting/TROUBLESHOOTING.md) — §9 upstream key limits (1302), auth (1001/401), retry behavior
+- PROXY_API.md subsection *Upstream provider JSON errors* — code table + link to §9
 
 ---
 
@@ -161,4 +175,4 @@ Returns provider connection status:
 
 ---
 
-Updated: 2026-04-03
+Updated: 2026-04-03 (Promise retry mechanism implemented)

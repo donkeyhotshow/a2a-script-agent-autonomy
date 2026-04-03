@@ -73,9 +73,9 @@ test.describe('A2A Client with Mocks', () => {
         await page.goto('/');
         await page.waitForLoadState('networkidle');
         
-        // Check session panel exists
-        const sessionPanel = page.locator('[data-testid="session-panel"]');
-        await expect(sessionPanel).toBeVisible({ timeout: 10000 });
+        // Task shell (taskbar) is always mounted after init; session windows use .pui-panel when opened
+        const taskbar = page.locator('.taskbar');
+        await expect(taskbar).toBeVisible({ timeout: 10000 });
     });
 
     test('should handle form response from mock server', async ({ page }) => {

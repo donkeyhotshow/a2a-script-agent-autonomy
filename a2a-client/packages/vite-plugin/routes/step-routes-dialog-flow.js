@@ -150,6 +150,12 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                 mergedContext.execution = { ...prevStepData.context.execution };
             }
 
+            // Router beat B: a new pipeline choice must not carry llmPromiseId from the prior router/classify hop
+            // (server dialog processor would attempt LLM recovery and fail).
+            if (hasChoices && submitResult && typeof submitResult.choice === 'string') {
+                delete mergedContext.llmPromiseId;
+            }
+
             const effectiveTask = submitResult?.message;
             console.log(
                 '[VitePlugin] Building request - effectiveTask:',
@@ -183,12 +189,19 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                 effectiveTask.trim().length > 0 &&
                 !hasChoices;
 
+            // Router beat B (pipeline choice): force sync invoke so the server processes this request
+            // immediately (waitTerminalRequest + processRequestByPromiseId). Without sync, async-only
+            // mode relies on the queue tick; pending rows with retryAfter are invisible to listPending and
+            // the Client API can poll forever with stale router execute.
+            const syncRouterChoice =
+                hasChoices && submitResult && typeof submitResult.choice === 'string';
+
             const contextForServer = sanitizeContextForServer(mergedContext);
             const requestToServer = {
                 context: contextForServer,
                 result: submitResult,
                 ...(effectiveTask ? { task: effectiveTask } : {}),
-                ...(shouldSyncInvoke ? { sync: true } : {}),
+                ...(shouldSyncInvoke || syncRouterChoice ? { sync: true } : {}),
             };
 
             stepHandlers.saveRequestToServer(cwd, sessionId, nextStepNum, requestToServer);

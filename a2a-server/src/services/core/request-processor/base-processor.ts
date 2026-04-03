@@ -12,6 +12,8 @@ import type {
     ValidationResult
 } from './request-processor.interfaces.js';
 import type {CodeBlock} from '../../../types/entity.types.js';
+import {resolveExecution} from './normalization.js';
+import {LLM_PIPELINE_ACTIONS} from '../../../config/router-static.js';
 
 /**
  * Base processor configuration
@@ -263,10 +265,19 @@ export abstract class BaseRequestProcessor {
 
     /**
      * Check if this is a task request
+     * Returns false if execution.action is already set to an LLM pipeline action (e.g., agent mode seeded from session create)
      */
     protected isTaskRequest(ctx: Record<string, unknown>): boolean {
         const actionType = this.getActionType(ctx);
-        return actionType === 'task_request' || actionType === undefined;
+        if (actionType === 'task_request') return true;
+        if (actionType !== undefined) return false;
+        // actionType is undefined - check if execution.action is already an LLM pipeline action
+        const exec = resolveExecution(ctx);
+        const execAction = exec?.['action'] as string | undefined;
+        if (execAction && LLM_PIPELINE_ACTIONS.includes(execAction)) {
+            return false; // Already in LLM pipeline, not a new task request
+        }
+        return true;
     }
 
     /**

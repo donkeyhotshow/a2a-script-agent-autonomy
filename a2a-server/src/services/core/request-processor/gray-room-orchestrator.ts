@@ -850,8 +850,10 @@ export class GrayRoomOrchestrator {
         trace: ServerInterruptTraceEvent[],
         grayRoom?: GrayRoomControlEnvelope
     ): ProcessResult {
-        if (!result.context) return result;
-        let ctx = result.context as Record<string, unknown>;
+        let ctx: Record<string, unknown> =
+            result.context && typeof result.context === 'object' && !Array.isArray(result.context)
+                ? (result.context as Record<string, unknown>)
+                : {};
         if (trace.length > 0) {
             ctx = mergeInterruptTraceIntoContext(ctx, trace);
         }

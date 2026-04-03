@@ -11,11 +11,11 @@ async function main() {
   try {
     await scriptedRouterChoiceNoStickyRouter();
     console.log('\n=== OK ===');
-    process.exit(0);
+    process.exitCode = 0;
   } catch (err) {
     console.error('\n[FAIL]', err.message);
     console.error(err.stack);
-    process.exit(1);
+    process.exitCode = 1;
   }
 }
 

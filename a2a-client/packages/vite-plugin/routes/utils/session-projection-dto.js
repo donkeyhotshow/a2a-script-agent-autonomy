@@ -253,11 +253,20 @@ export function toPublicSession(session, includeContext = false) {
     if (rest.execute !== undefined) {
         base.execute = buildExecuteProjection(rest.execute, { context: fullContext });
     }
-    // Public-safe context slice (mode seeds, task) — full workbench/history only with includeContext=1.
+    // Public-safe context slice: task/projectId + minimal execution (pipeline/routing) —
+    // full workbench/history only with includeContext=1.
     if (fullContext && typeof fullContext === 'object') {
         const slim = {};
         if (typeof fullContext.task === 'string') slim.task = fullContext.task;
         if (typeof fullContext.projectId === 'string') slim.projectId = fullContext.projectId;
+        const ex = fullContext.execution;
+        if (ex && typeof ex === 'object' && !Array.isArray(ex)) {
+            const execSlim = {};
+            if (typeof ex.action === 'string') execSlim.action = ex.action;
+            if (typeof ex.step === 'string') execSlim.step = ex.step;
+            if (typeof ex.status === 'string') execSlim.status = ex.status;
+            if (Object.keys(execSlim).length > 0) slim.execution = execSlim;
+        }
         if (Object.keys(slim).length > 0) base.context = slim;
     }
     // Attach coarse-grained stage for Web UI / adapters.

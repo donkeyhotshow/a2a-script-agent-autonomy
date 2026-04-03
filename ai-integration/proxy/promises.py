@@ -35,6 +35,7 @@ class PromiseRecord:
     result_content_type: Optional[str] = None
     result_body_path: Optional[str] = None
     error: Optional[str] = None
+    next_attempt_at: Optional[float] = None  # Timestamp when next attempt can be made
 
 
 _PROMISES_LOCK = __import__('threading').Lock()
@@ -73,7 +74,7 @@ def _promise_prune_expired() -> None:
                 continue
             updated_at = meta.get('updated_at')
             try:
-                updated_at = float(updated_at)
+                updated_at = float(updated_at) if updated_at is not None else 0.0
             except Exception:
                 continue
             if updated_at < cutoff:
@@ -107,6 +108,7 @@ def _load_promise_from_disk(promise_id: str) -> Optional[PromiseRecord]:
             result_content_type=meta.get('result_content_type'),
             result_body_path=meta.get('result_body_path'),
             error=meta.get('error'),
+            next_attempt_at=meta.get('next_attempt_at'),
         )
         return rec
     except Exception:
@@ -180,19 +182,128 @@ def create_promise(*, method: str, path: str, target_url: str, log_folder: str, 
     return rec
 
 
+def _failure_retry_at(status_code: int) -> float:
+    """When to allow daemon retry after an upstream LLM failure (see _collect_pending_promises)."""
+    now = time.time()
+    if status_code >= 500:
+        return now + 30.0
+    if status_code == 429:
+        return now + 120.0
+    if status_code in (401, 403):
+        return now + 365.0 * 86400 * 10  # auth/config: avoid tight retry loops
+    return now + 60.0
+
+
+def _llm_upstream_failure_message(status_code: int, body: bytes, content_type: Optional[str]) -> Optional[str]:
+    """
+    If the upstream response must NOT be treated as a successful LLM completion, return a short message.
+    Otherwise return None (caller may mark promise done).
+    """
+    if status_code < 200 or status_code >= 300:
+        return _format_upstream_http_error(status_code, body, content_type)
+
+    ct = content_type or ''
+    if body and 'json' in ct.lower():
+        parsed = _safe_json_loads(body)
+        if isinstance(parsed, dict) and 'error' in parsed:
+            err = parsed.get('error')
+            if isinstance(err, dict):
+                msg = err.get('message') or err.get('msg') or err.get('code')
+                if msg is not None:
+                    return f"provider_error: {msg}"
+                return f"provider_error: {json.dumps(err, ensure_ascii=False)[:800]}"
+            if isinstance(err, str):
+                return f"provider_error: {err}"
+            return 'provider_error: upstream JSON contains "error" field'
+    return None
+
+
+def _format_upstream_http_error(status_code: int, body: bytes, content_type: Optional[str]) -> str:
+    if body and content_type and 'json' in content_type.lower():
+        parsed = _safe_json_loads(body)
+        if isinstance(parsed, dict):
+            err = parsed.get('error')
+            if isinstance(err, dict):
+                msg = err.get('message') or err.get('msg') or err.get('code')
+                if msg is not None:
+                    return f"HTTP {status_code}: {msg}"
+            if isinstance(err, str):
+                return f"HTTP {status_code}: {err}"
+            return f"HTTP {status_code}: {json.dumps(parsed, ensure_ascii=False)[:800]}"
+    preview = (body[:400] or b'').decode('utf-8', errors='replace')
+    return f"HTTP {status_code}: {preview}"
+
+
+def _promise_set_failed_llm(
+    promise_id: str,
+    *,
+    status_code: int,
+    headers: dict,
+    body: bytes,
+    user_message: str,
+) -> None:
+    """Mark promise as error: persist raw body for debugging; do not expose as successful completion."""
+    rec = get_promise(promise_id)
+    if rec is None:
+        return
+    os.makedirs(_promise_folder(promise_id), exist_ok=True)
+
+    content_type = headers.get('Content-Type') if isinstance(headers, dict) else None
+    if not isinstance(content_type, str) or not content_type.strip():
+        content_type = 'application/octet-stream'
+
+    folder = _promise_folder(promise_id)
+    body_path = _promise_body_path(promise_id)
+    with open(body_path, 'wb') as f:
+        f.write(body or b'')
+
+    if body and content_type and 'json' in content_type.lower():
+        parsed = _safe_json_loads(body)
+        if isinstance(parsed, dict):
+            raw_json_path = os.path.join(folder, 'body_raw.json')
+            _write_json_file(raw_json_path, parsed)
+
+    rec.status = 'error'
+    rec.updated_at = time.time()
+    rec.error = user_message
+    rec.result_status_code = int(status_code)
+    rec.result_headers = {str(k): str(v) for k, v in (headers or {}).items()}
+    rec.result_content_type = content_type
+    rec.result_body_path = body_path
+    rec.next_attempt_at = _failure_retry_at(int(status_code))
+    _save_promise(rec)
+    logger.warning(
+        'Promise %s failed upstream LLM: %s (http=%s)',
+        promise_id,
+        user_message[:500],
+        status_code,
+    )
+
+
 def _promise_set_done(promise_id: str, *, status_code: int, headers: dict, body: bytes) -> None:
     rec = get_promise(promise_id)
     if rec is None:
         return
     os.makedirs(_promise_folder(promise_id), exist_ok=True)
 
-    # Detect JSON LLM envelope once so we can both:
-    # - keep the raw provider payload for debugging
-    # - store only assistant content into body.md for the stack.
     content_type = headers.get('Content-Type') if isinstance(headers, dict) else None
     if not isinstance(content_type, str) or not content_type.strip():
         content_type = 'application/octet-stream'
 
+    fail_msg = _llm_upstream_failure_message(int(status_code), body or b'', content_type)
+    if fail_msg:
+        _promise_set_failed_llm(
+            promise_id,
+            status_code=int(status_code),
+            headers=dict(headers or {}),
+            body=body or b'',
+            user_message=fail_msg,
+        )
+        return
+
+    # Detect JSON LLM envelope once so we can both:
+    # - keep the raw provider payload for debugging
+    # - store only assistant content into body.md for the stack.
     # Normalize LLM JSON responses (e.g., GLM/OpenAI-style) so that body.md
     # contains only the assistant content text instead of the full provider envelope.
     body_to_store = body or b''
@@ -218,31 +329,44 @@ def _promise_set_done(promise_id: str, *, status_code: int, headers: dict, body:
     rec.result_content_type = content_type
     rec.result_body_path = body_path
     rec.error = None
+    rec.next_attempt_at = None
     _save_promise(rec)
 
 
-def _promise_set_error(promise_id: str, *, error: str) -> None:
+def _promise_set_error(promise_id: str, *, error: str, delay_seconds: float = 10.0) -> None:
     rec = get_promise(promise_id)
     if rec is None:
         return
     rec.status = 'error'
     rec.updated_at = time.time()
     rec.error = str(error)
+    rec.next_attempt_at = time.time() + delay_seconds
     _save_promise(rec)
 
 
-def _promise_reset_pending(promise_id: str) -> bool:
-    """Reset error/done promise to pending for retry."""
+def _promise_reset_pending(promise_id: str, delay_seconds: float = 0.0) -> bool:
+    """Reset error/done promise to pending for retry.
+    
+    If delay_seconds > 0, sets status to 'error' and schedules retry after delay.
+    If delay_seconds = 0, sets status to 'pending' for immediate retry.
+    """
     rec = get_promise(promise_id)
     if rec is None:
         return False
-    rec.status = 'pending'
     rec.updated_at = time.time()
     rec.error = None
     rec.result_status_code = None
     rec.result_headers = None
     rec.result_content_type = None
     rec.result_body_path = None
+    
+    if delay_seconds > 0:
+        rec.status = 'error'
+        rec.next_attempt_at = time.time() + delay_seconds
+    else:
+        rec.status = 'pending'
+        rec.next_attempt_at = None
+        
     _save_promise(rec)
     return True
 
@@ -291,10 +415,11 @@ def _load_request_snapshot(log_folder: str) -> Optional[dict]:
 
 
 def _collect_pending_promises() -> list[PromiseRecord]:
-    """Collect only truly pending promises (not error ones)."""
+    """Collect promises that are ready to be processed: pending or error with past next_attempt_at."""
     pending: list[PromiseRecord] = []
     if not os.path.isdir(PROMISES_DIR):
         return pending
+    now = time.time()
     for entry in os.listdir(PROMISES_DIR):
         if not entry:
             continue
@@ -302,8 +427,16 @@ def _collect_pending_promises() -> list[PromiseRecord]:
             rec = get_promise(entry)
         except Exception:
             continue
-        if rec and rec.status == 'pending':
+        if rec is None:
+            continue
+        # Include if status is pending
+        if rec.status == 'pending':
             pending.append(rec)
+        # Include if status is error and next_attempt_at is in the past (or None/0)
+        elif rec.status == 'error':
+            next_attempt = rec.next_attempt_at or 0
+            if next_attempt <= now:
+                pending.append(rec)
     pending.sort(key=lambda rec: rec.created_at or 0)
     return pending
 
@@ -435,7 +568,7 @@ def create_request_log(request_obj, body_data: bytes = None):
     if body_data is not None:
         body_text = body_data.decode('utf-8', errors='replace') if isinstance(body_data, bytes) else body_data
     else:
-        body_text = request_obj.get_data(as_text=True) if request_obj.method in ['POST', 'PUT', 'PATCH'] else None
+        body_text = request_obj.get_data(as_text=True) if request_obj.method in ['POST', 'PUT', 'PATCH'] else ""
     
     return {
         "method": request_obj.method,

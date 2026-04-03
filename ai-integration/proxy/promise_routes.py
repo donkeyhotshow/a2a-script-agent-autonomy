@@ -106,7 +106,7 @@ def _run_execute_in_background(promise_id: str, rec, request_snapshot: dict) -> 
                 logger.debug(f"Failed to save response: {e}")
         logger.info(f"Promise {promise_id} executed in background → {resp.status_code}")
     except requests.RequestException as exc:
-        _promise_reset_pending(promise_id)
+        _promise_reset_pending(promise_id, delay_seconds=10.0)
         if rec.log_folder:
             try:
                 save_response(rec.log_folder, {"error": "execute_failed", "message": str(exc)})

@@ -135,6 +135,26 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
             return this.handleTaskRequest(sessionId, promiseId, ctx);
         }
 
+        // Handle direct LLM pipeline action (session seeded with mode:agent/mode:dialog without explicit action type)
+        const execDirect = resolveExecution(ctx);
+        const directAction = execDirect?.['action'] as string | undefined;
+        if (directAction && LLM_PIPELINE_ACTIONS.includes(directAction)) {
+            logger.info('[ActionRequestProcessor] Direct LLM pipeline action detected', {
+                action: directAction,
+                sessionId,
+            });
+            const patchedContext = {
+                ...ctx,
+                transformSchema: ACTION_TO_SCHEMA[directAction] ?? directAction,
+                execution: { ...execDirect, action: directAction, step: execDirect?.['step'] ?? 'start' },
+            };
+            const patchedRequest: RequestContext = {
+                ...request,
+                context: patchedContext,
+            };
+            return dialogRequestProcessor.process(patchedRequest);
+        }
+
         // Unknown action type
         logger.warn('[ActionRequestProcessor] Unknown action type', {actionType});
         return {

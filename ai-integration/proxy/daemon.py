@@ -223,14 +223,29 @@ class PromiseDaemon:
     
     def _execute_promise(self, promise_id: str) -> None:
         """Execute a promise by calling /promise/<id>/execute."""
-        # First verify the promise is still pending
+        # First verify the promise is still pending or ready for retry
         rec = get_promise(promise_id)
         if rec is None:
             logger.warning(f"Promise {promise_id} not found")
             return
-        if rec.status != 'pending':
+        if rec.status == 'done':
             logger.debug(f"Promise {promise_id} already processed (status={rec.status})")
             return
+
+        # If status is error but it's ready for retry, reset to pending
+        if rec.status == 'error':
+            now = time.time()
+            next_attempt = rec.next_attempt_at or 0
+            if next_attempt <= now:
+                logger.info(f"Promise {promise_id} retrying after error")
+                _promise_reset_pending(promise_id)
+                rec = get_promise(promise_id)  # Re-fetch after reset
+                if rec is None or rec.status != 'pending':
+                    logger.warning(f"Failed to reset promise {promise_id} to pending")
+                    return
+            else:
+                logger.debug(f"Promise {promise_id} not yet ready for retry (next_attempt_at={next_attempt})")
+                return
         
         # Check if promise has simulate config - if so, skip daemon execution (inline job handles it)
         # This can be disabled with DAEMON_SKIP_SIMULATE=false
@@ -241,8 +256,8 @@ class PromiseDaemon:
         # Load request snapshot
         request_snapshot = _load_request_snapshot(rec.log_folder)
         if not request_snapshot:
-            logger.warning(f"Request snapshot missing for {promise_id}, will retry")
-            _promise_reset_pending(promise_id)
+            logger.warning(f"Request snapshot missing for {promise_id}, will retry in 10 seconds")
+            _promise_reset_pending(promise_id, delay_seconds=10.0)
             return
         
         # Prepare request
@@ -320,8 +335,8 @@ class PromiseDaemon:
             logger.info(f"Promise {promise_id} executed → result {resp.status_code}")
             
         except requests.RequestException as e:
-            _promise_reset_pending(promise_id)
-            logger.error(f"Request failed for {promise_id}: {e}, will retry")
+            _promise_reset_pending(promise_id, delay_seconds=10.0)
+            logger.error(f"Request failed for {promise_id}: {e}, will retry in 10 seconds")
 
 
 # Global daemon instance

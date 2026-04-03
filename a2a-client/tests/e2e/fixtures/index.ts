@@ -412,6 +412,7 @@ export const fixtures = {
         data: [
             {
                 id: 'session_001',
+                title: 'исправить импорты',
                 status: 'active',
                 createdAt: '2026-02-25T10:00:00Z',
                 messages: [
