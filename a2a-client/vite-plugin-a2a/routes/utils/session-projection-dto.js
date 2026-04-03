@@ -221,9 +221,6 @@ export function toPublicSession(session, includeContext = false) {
     // Public-safe context slice (mode seeds, task) — full workbench/history only with includeContext=1.
     if (fullContext && typeof fullContext === 'object') {
         const slim = {};
-        if (fullContext.execution && typeof fullContext.execution === 'object') {
-            slim.execution = { ...fullContext.execution };
-        }
         if (typeof fullContext.task === 'string') slim.task = fullContext.task;
         if (typeof fullContext.projectId === 'string') slim.projectId = fullContext.projectId;
         if (Object.keys(slim).length > 0) base.context = slim;
@@ -257,7 +254,6 @@ export function toMinimalNextAck({ success, step, promiseId, error }) {
         accepted: true,
         step,
         asyncPending,
-        ...(promiseId ? { promiseId } : {}),
     };
 
 }

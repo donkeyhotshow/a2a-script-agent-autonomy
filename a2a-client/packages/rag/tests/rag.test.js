@@ -4,13 +4,13 @@
  */
 
 import {describe, it, expect, beforeEach, vi} from 'vitest';
-import {RAGIndexer} from '../../src/indexer.js';
-import {RAGSearcher} from '../../src/searcher.js';
-import {ChunkManager} from '../../src/chunk-manager.js';
-import {BM25} from '../../src/bm25.js';
-import {HybridSearch} from '../../src/hybrid-search.js';
-import {Reranker} from '../../src/reranker.js';
-import {QueryUnderstanding} from '../../src/query-understanding.js';
+import {RAGIndexer} from '../src/indexer.ts';
+import {RAGSearcher} from '../src/searcher.ts';
+import {ChunkManager} from '../src/chunk-manager.ts';
+import {BM25} from '../src/bm25.ts';
+import {HybridSearch} from '../src/hybrid-search.ts';
+import {Reranker} from '../src/reranker.ts';
+import {QueryUnderstanding} from '../src/query-understanding.ts';
 
 // Mock dependencies
 vi.mock('meilisearch', () => ({

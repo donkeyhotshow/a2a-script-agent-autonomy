@@ -2,7 +2,7 @@
 
 **Scope:** Only `.md` files **in this directory** (no subfolders) are read by **`monitor-and-process-tasks.js`** by default. Each one should be a task the **live stack can drive** (Client API: `POST /api/a2a/sessions` with `mode: "agent"`, then `/next` + `/async`). **Docs, methodology, ADR, sim-authoring, and module-plan prompts** live under **[`../tasks/ide-prompts/`](../tasks/ide-prompts/README.md)** — use them in the IDE **before** or **without** session automation.
 
-**When to run this queue (policy):** Treat **`tasks/*.md`**, **`tasks/pending/`**, and **[`tasks/ide-prompts/`](../tasks/ide-prompts/README.md)** as **primary** work. Start **`npm run monitor`** / full-spectrum session prompts **after** those items are under control (or explicitly deprioritized). The monitor does not gate on that; it is documented operator order — see **[`tasks/README.md`](../tasks/README.md)** (*Self-Upgrade order*).
+**When to run this queue (policy):** Treat **`tasks/*.md`**, **`tasks/pending/`**, and **[`tasks/ide-prompts/`](../tasks/ide-prompts/README.md)** as **primary** work. Start **`npm run monitor`** / full-spectrum session prompts **after** those items are under control (or explicitly deprioritized). The monitor does not gate on that; it is documented operator order — see **[`tasks/README.md`](../tasks/README.md)** (*Self-Upgrade order*). **Before a large monitor pass or full index:** archive valuable **`a2a-client/storage/sessions/*`** trees (same doc, step 2; [`GLOSSARY.md`](../GLOSSARY.md) *Session archival*).
 
 **If you run the live stack:** read **[STACK-RUN.md](STACK-RUN.md)** first.
 

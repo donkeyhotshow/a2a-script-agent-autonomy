@@ -49,13 +49,13 @@ describe('stepRoutes composition root', () => {
         mockedHandleAsyncFlow.mockReturnValue(false);
     });
 
-    it('delegates to router flow first and short-circuits', () => {
+    it('delegates to router flow first and short-circuits', async () => {
         mockedHandleRouterFlow.mockReturnValue(true);
         const middleware = createStepRoutes({ cwd: '/tmp/project' });
         const next = vi.fn();
         const { req, res } = createReqRes('/api/a2a/sessions/sess_1/latest');
 
-        middleware(req, res, next);
+        await middleware(req, res, next);
 
         expect(mockedHandleRouterFlow).toHaveBeenCalledTimes(1);
         expect(mockedHandleNextStep).not.toHaveBeenCalled();
@@ -63,13 +63,13 @@ describe('stepRoutes composition root', () => {
         expect(next).not.toHaveBeenCalled();
     });
 
-    it('falls through router -> dialog -> async chain', () => {
+    it('falls through router -> dialog -> async chain', async () => {
         mockedHandleAsyncFlow.mockReturnValue(true);
         const middleware = createStepRoutes({ cwd: '/tmp/project' });
         const next = vi.fn();
         const { req, res } = createReqRes('/api/a2a/sessions/sess_1/async');
 
-        middleware(req, res, next);
+        await middleware(req, res, next);
 
         expect(mockedHandleRouterFlow).toHaveBeenCalledTimes(1);
         expect(mockedHandleNextStep).toHaveBeenCalledTimes(1);
