@@ -17,6 +17,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 import { assert, assertGrayRoomSlot as assertGrayRoomSlotCore } from './lib/a2a-schema-guards.mjs';
+import {recordClientSession, recordServerPromise} from './artifacts-registry.js';
 
 const CLIENT_API_URL = process.env.CLIENT_API_URL || 'http://localhost:5173';
 const SERVER_URL = process.env.SERVER_URL || 'http://localhost:3000';
@@ -39,7 +40,12 @@ async function createSession(body = {}) {
   if (!response.ok) {
     throw new Error(`Failed to create session: ${response.status}`);
   }
-  return response.json();
+  const session = await response.json();
+  const sessionId = session.session?.id || session.id;
+  if (sessionId) {
+    await recordClientSession(sessionId);
+  }
+  return session;
 }
 
 async function sendNext(sessionId, body) {
@@ -54,7 +60,11 @@ async function sendNext(sessionId, body) {
   if (!response.ok) {
     throw new Error(`next failed: ${response.status} - ${await response.text()}`);
   }
-  return response.json();
+  const ack = await response.json();
+  if (ack && typeof ack === 'object' && ack.promiseId) {
+    await recordServerPromise(ack.promiseId);
+  }
+  return ack;
 }
 
 async function pollAsyncSettled(sessionId, maxWaitMs = 120_000, stepMs = 500) {
@@ -77,6 +87,44 @@ async function getSession(sessionId) {
   return response.json();
 }
 
+function unwrapSessionBody(body) {
+  return body.session ?? body;
+}
+
+/** First user text hits router; pick agent before expecting Gray Room on LLM turns. */
+async function navigatePastRouterToAgent(sessionId) {
+  for (let i = 0; i < 22; i++) {
+    let body = await getSession(sessionId);
+    let s = unwrapSessionBody(body);
+    if (s.asyncPending) {
+      await pollAsyncSettled(sessionId, 120_000);
+      body = await getSession(sessionId);
+      s = unwrapSessionBody(body);
+    }
+    const ex = s.execute;
+    const choices = ex?.form?.choices;
+    const inputs = ex?.form?.input;
+    if (Array.isArray(choices) && choices.length > 0) {
+      const pick = choices.find((c) => c && c.id === 'agent')?.id;
+      assert(pick, 'router missing agent choice');
+      const ack = await sendNext(sessionId, { result: { choice: pick } });
+      assert(ack.success === true, 'router pick agent');
+      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      return;
+    }
+    if (Array.isArray(inputs) && inputs.length > 0 && !choices?.length) {
+      const ack = await sendNext(sessionId, {
+        result: { message: 'gray-room-test: task direction for router' },
+      });
+      assert(ack.success === true, 'task direction /next');
+      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      continue;
+    }
+    return;
+  }
+  throw new Error('navigatePastRouterToAgent exceeded max iterations');
+}
+
 async function testGrayRoomChain() {
   console.log('Testing Gray Room LLM chain execution...');
 
@@ -88,6 +136,8 @@ async function testGrayRoomChain() {
   const sessionId = sessionBody.session?.id || sessionBody.id;
 
   console.log(`Created session: ${sessionId}`);
+
+  await navigatePastRouterToAgent(sessionId);
 
   // Send initial task to start agent processing
   const nextBody = await sendNext(sessionId, { result: { message: 'Start agent processing for Gray Room test' } });
@@ -119,6 +169,8 @@ async function testRedRoomToolExecution() {
   const sessionId = sessionBody.session?.id || sessionBody.id;
 
   console.log(`Created session: ${sessionId}`);
+
+  await navigatePastRouterToAgent(sessionId);
 
   // Prompt for tool execution to trigger Red Room
   const promptText = 'Please execute a read-file operation on README.md to test Red Room.';

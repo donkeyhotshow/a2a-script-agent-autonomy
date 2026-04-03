@@ -48,9 +48,22 @@ describe('validateDialogExecuteShape', () => {
         expect(issues).toHaveLength(0);
     });
 
-    it('flags form-only chat shape when execute.message is missing', () => {
+    it('accepts legacy form.input[] without execute.message (goldens e.g. dialog/2)', () => {
         const issues = validateDialogExecuteShape({
             form: {input: [{name: 'message', label: 'Message', required: true}]},
+        } as any);
+        expect(issues).toHaveLength(0);
+    });
+
+    it('flags Pattern A form.textarea without execute.message', () => {
+        const issues = validateDialogExecuteShape({
+            form: {
+                textarea: {
+                    name: 'message',
+                    label: 'Details',
+                    required: true,
+                },
+            },
         } as any);
         expect(issues.some((i) => i.code === 'DIALOG_EXECUTE_MESSAGE_MISSING')).toBe(true);
     });

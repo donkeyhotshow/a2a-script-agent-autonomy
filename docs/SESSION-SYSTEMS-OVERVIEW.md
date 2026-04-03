@@ -475,6 +475,23 @@ Server Response                     Client Action
 
 ---
 
+## Execution mode parity (script / dialog / agent)
+
+One **action key** per `execute` and per `result` ([`AGENTS.md`](../AGENTS.md)). Operators and goldens should treat **script** as first-class alongside dialog and agent:
+
+| Concern | Script | Dialog | Agent |
+|--------|--------|--------|-------|
+| **execute** | Same rule: one key (`form`, `script`, `run-script`, `execute-command`, `message`, …). Router uses `execute.form.choices` like other modes. | `form`, `message`, … | Tools + `form` / `message` |
+| **result** | `result.script`, `result.run-script`, `result.execute-command`, `result.choice`, `result.message` — one key per turn. | `result.message`, `result.choice` | Tool results + `message` / `choice` |
+| **context.history** | Can accumulate rows compatible with agent shape (`role`, `message`, optional `step` / `action`). Reference: `simulations/sync/script/` steps 4–10. | Per user/assistant turns | Tool loop |
+| **context.workbench** | Same `sections` / `slots` model; script goldens include non-empty `sections` mid-chain where parity matters. | Same | Same (+ gray-room `slots` in some flows) |
+| **Web DTO / received.json** | `buildWebExecute` strips client-only keys; pending script may surface as `attachments.pendingClientAction`. | Same sanitizer | Same |
+| **Session storage** | Steps under `a2a-client/storage/sessions/`; rebuild from highest step with `server-response.json`. | Same | Same |
+
+**E2E smoke:** `scripts/e2e-client-api-replay-sync-script.mjs` replays Client API `client.json` bodies (sync script path).
+
+---
+
 ## 8. Key Configuration
 
 ### Environment Variables

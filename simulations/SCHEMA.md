@@ -2,6 +2,8 @@
 
 **Debugging broken JSON shapes:** do **not** start here. Reproduce the issue in [`tests/direct-tests/README.md`](../tests/direct-tests/README.md) first (mandatory order in [`AGENTS.md`](../AGENTS.md)), then return to simulations once the shape is clear.
 
+**Offline validators** (flag specific errors — router descriptions, MD/JSON drift, execute/message shape): [`tests/direct-tests/validators/README.md`](../tests/direct-tests/validators/README.md); from repo root e.g. `npm run audit:sim-choice-descriptions`, `npm run sim:check-md`.
+
 Align all simulations to avoid redundant or conflicting values.
 
 ## SDK / client golden (`@a2a/sdk`)

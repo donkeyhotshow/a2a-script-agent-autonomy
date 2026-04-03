@@ -2,8 +2,9 @@
 /**
  * Offline checks for sequence queue + predictions in a session context snapshot.
  * Usage:
- *   node scripts/verify-gray-room-state.mjs <path-to-json>
- *   node scripts/verify-gray-room-state.mjs --stdin   # read JSON from stdin
+ *   node tests/direct-tests/validators/verify-gray-room-state.mjs <path-to-json>
+ *   npm run verify:gray-room -- <path-to-json>
+ *   node tests/direct-tests/validators/verify-gray-room-state.mjs --stdin   # read JSON from stdin
  *
  * Accepted shapes:
  *   { "context": { "workbench", "history", "operationHistory" } }
@@ -123,7 +124,8 @@ function verify(context) {
 
 function readInput(argv) {
     if (argv.includes('--help') || argv.includes('-h')) {
-        console.log(`Usage: node scripts/verify-gray-room-state.mjs <file.json> | --stdin`);
+        console.log(`Usage: node tests/direct-tests/validators/verify-gray-room-state.mjs <file.json> | --stdin`);
+        console.log(`       npm run verify:gray-room -- <file.json>`);
         process.exit(0);
     }
     if (argv.includes('--stdin')) {

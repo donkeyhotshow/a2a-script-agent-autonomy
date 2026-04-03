@@ -106,9 +106,13 @@ if ($prom1b) {
     $r1b = Invoke-RestMethod -Uri "$ClientUrl/api/a2a/sessions/$sessionId" -Headers $SessionHeader -TimeoutSec 15
 }
 
-if (-not $r1b.execute.form.choices) { Fail "No execute.form.choices after /next" }
-if ($r1b.execute.form.choices.Count -lt 2) { Fail "Expected at least 2 choices" }
-Ok "execute.form.choices ($($r1b.execute.form.choices.Count) items)"
+# /next ack may omit execute; hydrate from GET /sessions/:id (same as web UI)
+$s1b = Invoke-RestMethod -Uri "$ClientUrl/api/a2a/sessions/$sessionId" -Headers $SessionHeader -TimeoutSec 15
+$ex1b = $s1b
+if ($null -ne $s1b.session) { $ex1b = $s1b.session }
+if (-not $ex1b.execute.form.choices) { Fail "No execute.form.choices after /next" }
+if ($ex1b.execute.form.choices.Count -lt 2) { Fail "Expected at least 2 choices" }
+Ok "execute.form.choices ($($ex1b.execute.form.choices.Count) items)"
 
 # Step 2: choice "dialog" -> expect input form
 Write-Step 2 "Select choice 'dialog' -> expect input form"

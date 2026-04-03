@@ -26,3 +26,4 @@ The AI Integration proxy serves multiple providers (Z.AI, Ollama, virtual models
 - `a2a-server/src/services/core/request-processor/llm-model-resolver.ts`
 - `ai-integration/proxy/proxy_handler.py` (`_handle_api_tags_unified`)
 - ADR-0058 (Black/Gray split) — complementary routing story
+- **Implementation map:** proxy `/api/tags` aggregation + model-based routing; a2a-server propagates `llmModel` / `context.llmModel`; Client API `POST /api/a2a/sessions` accepts `llmModel` and Settings default; optional per-session UI picker remains backlog. Sims: [`simulations/LLM-BACKEND-MAP.md`](../../simulations/LLM-BACKEND-MAP.md), [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) (*LLM provider / model*).

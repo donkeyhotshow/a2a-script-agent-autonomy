@@ -22,4 +22,4 @@ When changing golden `execute.form.choices`, compare ids and copy to `router-sta
 - Every `choices[]` object under `simulations/**` now includes a non-empty `description` (including nested `result.form.choices` and `server-transforms-request.json` router stubs).
 - Touched: `fix-vue-imports/1`, `fix-laravel-namespaces-and-uses/1`, `fix-vue-imports-decline/1` (server-transforms); `fix-vue-imports-decline/4`–`6` (`response.json` / `received.json`); `response.md` for decline `4`–`6` via `sim:check-md --fix`.
 - Runtime: `buildRouterForm` / `mergeRouterChoices` in [`a2a-server/src/config/router-static.ts`](../a2a-server/src/config/router-static.ts) already backfills `description` from `label` when missing; simulations still carry explicit text for contract clarity.
-- Re-run: `node scripts/audit-sim-choice-descriptions.mjs` (exits 1 if any gap).
+- Re-run: `npm run audit:sim-choice-descriptions` (exits 1 if any gap).

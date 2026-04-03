@@ -185,7 +185,7 @@ def _default_config() -> ProvidersConfig:
         models=[getattr(proxy_config, 'Z_AI_MODEL', 'glm-4.7-flash')],
         timeout=0,
         max_retries=2,
-        request_delay_seconds=2.0,
+        request_delay_seconds=10.0,
     )
     
     # OpenRouter

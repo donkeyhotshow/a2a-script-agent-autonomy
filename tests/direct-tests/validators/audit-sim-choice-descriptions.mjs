@@ -34,7 +34,7 @@ function audit(obj, file, hits) {
     for (const k of Object.keys(obj)) audit(obj[k], file, hits);
 }
 
-const root = join(__dirname, '..', 'simulations');
+const root = join(__dirname, '..', '..', '..', 'simulations');
 const hits = [];
 for (const f of walkJson(root)) {
     let j;

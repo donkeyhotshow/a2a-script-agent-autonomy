@@ -185,13 +185,31 @@ def _promise_set_done(promise_id: str, *, status_code: int, headers: dict, body:
     if rec is None:
         return
     os.makedirs(_promise_folder(promise_id), exist_ok=True)
-    body_path = _promise_body_path(promise_id)
-    with open(body_path, 'wb') as f:
-        f.write(body or b'')
 
+    # Detect JSON LLM envelope once so we can both:
+    # - keep the raw provider payload for debugging
+    # - store only assistant content into body.md for the stack.
     content_type = headers.get('Content-Type') if isinstance(headers, dict) else None
     if not isinstance(content_type, str) or not content_type.strip():
         content_type = 'application/octet-stream'
+
+    # Normalize LLM JSON responses (e.g., GLM/OpenAI-style) so that body.md
+    # contains only the assistant content text instead of the full provider envelope.
+    body_to_store = body or b''
+    parsed_json_for_debug = None
+    if body and content_type and 'json' in content_type.lower():
+        parsed_json_for_debug = _safe_json_loads(body)
+    body_to_store = _extract_llm_content_for_body_md(body_to_store, content_type)
+
+    folder = _promise_folder(promise_id)
+    body_path = _promise_body_path(promise_id)
+    with open(body_path, 'wb') as f:
+        f.write(body_to_store)
+
+    # Save raw provider JSON separately if available, to avoid losing envelope.
+    if isinstance(parsed_json_for_debug, dict):
+        raw_json_path = os.path.join(folder, 'body_raw.json')
+        _write_json_file(raw_json_path, parsed_json_for_debug)
 
     rec.status = 'done'
     rec.updated_at = time.time()
@@ -273,6 +291,7 @@ def _load_request_snapshot(log_folder: str) -> Optional[dict]:
 
 
 def _collect_pending_promises() -> list[PromiseRecord]:
+    """Collect only truly pending promises (not error ones)."""
     pending: list[PromiseRecord] = []
     if not os.path.isdir(PROMISES_DIR):
         return pending
@@ -283,12 +302,28 @@ def _collect_pending_promises() -> list[PromiseRecord]:
             rec = get_promise(entry)
         except Exception:
             continue
-        if rec and rec.status in ('pending', 'error'):
-            if rec.status == 'error':
-                _promise_reset_pending(entry)
+        if rec and rec.status == 'pending':
             pending.append(rec)
     pending.sort(key=lambda rec: rec.created_at or 0)
     return pending
+
+
+def _collect_error_promises() -> list[PromiseRecord]:
+    """Collect promises that are in error state."""
+    errors: list[PromiseRecord] = []
+    if not os.path.isdir(PROMISES_DIR):
+        return errors
+    for entry in os.listdir(PROMISES_DIR):
+        if not entry:
+            continue
+        try:
+            rec = get_promise(entry)
+        except Exception:
+            continue
+        if rec and rec.status == 'error':
+            errors.append(rec)
+    errors.sort(key=lambda rec: rec.created_at or 0)
+    return errors
 
 
 def _collect_ready_promises() -> list[PromiseRecord]:
@@ -410,3 +445,36 @@ def create_request_log(request_obj, body_data: bytes = None):
         "args": dict(request_obj.args),
         "body": body_text
     }
+
+
+def _extract_llm_content_for_body_md(body: bytes, content_type: Optional[str]) -> bytes:
+    """
+    For LLM provider JSON responses (e.g. GLM / OpenAI-style),
+    extract the assistant message content and store only that
+    in body.md so upper layers see the plain model answer.
+    """
+    if not body:
+        return body
+
+    if not content_type or 'json' not in content_type.lower():
+        return body
+
+    parsed = _safe_json_loads(body)
+    if not isinstance(parsed, dict):
+        return body
+
+    content: Optional[str] = None
+    choices = parsed.get('choices')
+    if isinstance(choices, list) and choices:
+        first = choices[0] or {}
+        if isinstance(first, dict):
+            message = first.get('message') or {}
+            if isinstance(message, dict):
+                maybe_content = message.get('content')
+                if isinstance(maybe_content, str):
+                    content = maybe_content
+
+    if isinstance(content, str) and content.strip():
+        return content.encode('utf-8')
+
+    return body

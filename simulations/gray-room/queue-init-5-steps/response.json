@@ -1,0 +1,61 @@
+{
+  "context": {
+    "task": "Initialize a sequence with 5 steps for gray room processing",
+    "execution": {
+      "action": "agent",
+      "step": "idle"
+    },
+    "workbench": {
+      "sections": {
+        "sequence": {
+          "steps": [
+            {
+              "id": "step-1",
+              "title": "Initialize System",
+              "goal": "Set up basic configuration",
+              "exit_criteria": ["config_ready"],
+              "dependencies": [],
+              "status": "in_progress"
+            },
+            {
+              "id": "step-2",
+              "title": "Load Dependencies",
+              "goal": "Install required packages",
+              "exit_criteria": ["deps_loaded"],
+              "dependencies": ["step-1"],
+              "status": "pending"
+            },
+            {
+              "id": "step-3",
+              "title": "Configure Environment",
+              "goal": "Set environment variables",
+              "exit_criteria": ["env_configured"],
+              "dependencies": ["step-2"],
+              "status": "pending"
+            },
+            {
+              "id": "step-4",
+              "title": "Run Initial Tests",
+              "goal": "Execute test suite",
+              "exit_criteria": ["tests_passed"],
+              "dependencies": ["step-3"],
+              "status": "pending"
+            },
+            {
+              "id": "step-5",
+              "title": "Deploy Application",
+              "goal": "Deploy to staging environment",
+              "exit_criteria": ["deployed"],
+              "dependencies": ["step-4"],
+              "status": "pending"
+            }
+          ],
+          "headIndex": 0
+        }
+      }
+    }
+  },
+  "execute": {
+    "message": "Queue initialized with 5 steps"
+  }
+}

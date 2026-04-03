@@ -18,6 +18,16 @@ Repo norms that override the default “answer once and exit” habit live in [`
 | 5 | **Polling not continued** | Async: `POST …/next` then poll `GET …/async` (and/or hydrate session) until settled. | Fixed retry budget + backoff; do not treat ack-only `next` as completion. |
 | 6 | **Server-only invoke** | Do not drive **session** workflows with `POST /api/v1/invoke` alone; use Client API on `5173` (`/api/a2a/*`). See [`AGENTS.md`](../AGENTS.md) Unified manual path, [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md). | Always create session + `next` + poll on Client API base URL. |
 
+### Task Monitor / daemon (self-upgrade)
+
+| # | Trap | Mitigation |
+|---|------|------------|
+| 15 | **Router idle / “no result”** | `monitor-and-process-tasks.js` auto-submits router **choice** in order **`agent` → `task-decomposition` → `dialog` → first** when needed; re-sends task text on idle task forms; completion path retries the same gate. |
+| 16 | **Stale session id** | After storage prune, `GET /api/a2a/sessions/{id}` may return **404** — create a new session or re-run the monitor; old `promiseId` values are stale unless still valid on `:3000`. |
+| 17 | **DELETE while async** | `DELETE /api/a2a/sessions/:id` returns **409** when flat or project storage has an in-flight promise (`getProjectModeInflightPromise`). |
+
+**Client API:** one `GET /sessions/:id` handler so `?includeContext=1` is not shadowed by a branch that only returns messages.
+
 ## 3. Task and environment
 
 | # | Trap | Cursor agent | Client API driver |

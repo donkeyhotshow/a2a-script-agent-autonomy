@@ -81,9 +81,10 @@ export function getPromptsTransformsPath(): string {
 
 /**
  * Find first existing transform file. Lookup order:
- * 1. {schema}-{step}-{type}.json
- * 2. {schema}-{type}.json
- * 3. server-transforms-{type}.json
+ * 1. prompts/{schema}/server-transforms-{type}.json (schema-local override)
+ * 2. {schema}-{step}-{type}.json
+ * 3. {schema}-{type}.json
+ * 4. server-transforms-{type}.json
  * When forceServerTransforms: true, use server-transforms-{type}.json; **dialog** response also tries **dialog-llm-response.json** first (workbench + same parse/execute as generic).
  */
 async function resolveTransformFile(
@@ -94,14 +95,14 @@ async function resolveTransformFile(
   forceServerTransforms?: boolean
 ): Promise<string> {
   const candidates: string[] = [];
-  
+
   // Map schema names to their transform files
   const schemaMapping: Record<string, string> = {
     'agent': 'agent',
     'task-decomposition': 'task-decomposition',
   };
   const mappedSchema = schemaMapping[schemaName] || schemaName;
-  
+
   if (forceServerTransforms) {
     if (mappedSchema === 'coder' && type === 'request') {
       candidates.push(path.resolve(dir, 'coder-request.json'));
@@ -111,6 +112,9 @@ async function resolveTransformFile(
     }
     candidates.push(path.resolve(dir, `server-transforms-${type}.json`));
   } else {
+    // Schema-local override: prompts/{schema}/server-transforms-{type}.json
+    candidates.push(path.resolve(dir, '..', mappedSchema, `server-transforms-${type}.json`));
+
     if (step !== undefined && step > 0) {
       candidates.push(path.resolve(dir, `${mappedSchema}-${step}-${type}.json`));
     }
@@ -131,7 +135,7 @@ async function resolveTransformFile(
 
 /**
  * Load transform pipeline from prompts/transforms for a schema (and optional step).
- * Uses same lookup order as runPromptsTransform.
+ * Uses same lookup order as runPromptsTransform: schema-local → step-specific → schema-specific → global.
  */
 export async function loadPromptsTransform(
   promptsTransformsDir: string,
@@ -149,7 +153,7 @@ export async function loadPromptsTransform(
 
 /**
  * Run transforms from prompts/transforms/
- * Lookup: {schema}-{step}-{type}.json → {schema}-{type}.json → server-transforms-{type}.json
+ * Lookup: prompts/{schema}/server-transforms-{type}.json → {schema}-{step}-{type}.json → {schema}-{type}.json → server-transforms-{type}.json
  * For request type: substitutes {{TEMPLATE_NAME}} when using server-transforms-request.json
  * forceServerTransforms: use server-transforms-*.json only (for LLM pipeline; dialog-request.json is form-only).
  *

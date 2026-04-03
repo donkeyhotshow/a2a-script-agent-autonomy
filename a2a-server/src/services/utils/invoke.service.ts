@@ -17,7 +17,7 @@ import type {ContextBlock, FileBlock} from '../../types/index.js';
 import {CURRENT_PROTOCOL_VERSION} from '../../protocol/versioning/protocol-versions.js';
 import {requestService, type RequestResult} from '../core/request/request.service.js';
 import {processRequestByPromiseId} from '../core/request-processor/request-processor.service.js';
-import {resolveExecution} from '../core/request-processor/normalization.js';
+import {resolveExecution, resolveResultObject} from '../core/request-processor/normalization.js';
 import {ACTION_TO_SCHEMA} from '../../config/router-static.js';
 import {trackRequestStart} from './pipeline-observability.service.js';
 import {randomUUID} from 'node:crypto';
@@ -30,10 +30,11 @@ import {randomUUID} from 'node:crypto';
  */
 function applyRouterTransformSchemaHint(ctx: Record<string, unknown>): void {
     const ex = resolveExecution(ctx);
-    const choice = (ctx['result'] as Record<string, unknown> | undefined)?.choice;
+    const res = resolveResultObject(ctx);
+    const choice = typeof res?.choice === 'string' ? res.choice : undefined;
     if (
         ex?.['step'] === 'router' &&
-        typeof choice === 'string' &&
+        choice &&
         ACTION_TO_SCHEMA[choice]
     ) {
         ctx['transformSchema'] = ACTION_TO_SCHEMA[choice];

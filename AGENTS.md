@@ -18,6 +18,7 @@ Guidance for agents working in this repository.
 | **Master prompt (run full prompt index + loop)** | **[`START-FULL-SPECTRUM.md`](START-FULL-SPECTRUM.md)** — root; paste Agent block into IDE or session `task` |
 | **Sessions / curl / agent tests** | Same surface: not `invoke` alone — [technical notes](#sessions-tests-and-agent-mode-where-to-send-http) |
 | **Schema debugging start point** | **[`tests/direct-tests/README.md`](tests/direct-tests/README.md)** — reproduce shape issues here first, then sims/e2e |
+| **Offline validators (LLM / execute shape, sessions, sims)** | **[`tests/direct-tests/validators/README.md`](tests/direct-tests/validators/README.md)** — scripts flag contract mistakes (e.g. top-level `message` + tool vs `execute.message`); run from repo root: `scan-promise-bodies`, `scan-session-responses`, `verify:gray-room`, `audit:sim-choice-descriptions`, `sim:check-md` |
 | Imports | **Server / NodeNext:** `.js` on relative imports. **`premium-ui`:** `@/` (Vite) — [`.cursor/rules/code-hierarchy.mdc`](.cursor/rules/code-hierarchy.mdc) |
 | Test ENCRYPTION_KEY | Exactly 32 characters |
 | Test DB | `a2a_test` (not `a2a_server`) |
@@ -126,6 +127,8 @@ Driver-oriented step list: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) → 
 
 ### 0. Schema Debugging Entry Point (MANDATORY)
 For schema-level debugging, start with **[`tests/direct-tests/README.md`](tests/direct-tests/README.md)** (section *Schema debugging — start here*). Reproduce and isolate the shape issue there before moving to session-flow checks, simulations (`sim:lint` / `sim:validate`), or full end-to-end runs. [`simulations/SCHEMA.md`](simulations/SCHEMA.md) points here so sim authors do not skip this step.
+
+**Validators** (high-signal, offline checks — not Vitest): **[`tests/direct-tests/validators/README.md`](tests/direct-tests/validators/README.md)**. They print concrete problems (wrong assistant-line placement, missing router `description`, MD/JSON drift in sim mirrors, gray-room snapshot consistency). Use them when debugging LLM outputs, proxy logs, or saved sessions before chasing issues in full UI flows.
 
 ### 1. Imports with Path Aliases
 Use `.js` extension: `import x from '@/services/x.js'` (NodeNext module resolution)

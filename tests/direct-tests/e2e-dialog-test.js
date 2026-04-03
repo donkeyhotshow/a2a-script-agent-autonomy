@@ -31,6 +31,7 @@ import {
   assertSingleActionKey,
   assertWaitingPublicSessionShape,
 } from './lib/a2a-schema-guards.mjs';
+import {recordClientSession, recordServerPromise} from './artifacts-registry.js';
 
 const SERVER_URL = process.env.A2A_SERVER_URL || 'http://localhost:3000';
 const CLIENT_API_URL = process.env.CLIENT_API_URL || 'http://localhost:5173';
@@ -61,6 +62,9 @@ async function createSession(body = {}) {
   const session = await response.json();
   const sessionId =
     session.session?.id || session.id || session.sessionId || session.ID;
+  if (sessionId) {
+    await recordClientSession(sessionId);
+  }
   return { sessionId, raw: session };
 }
 
@@ -77,7 +81,11 @@ async function sendNext(sessionId, body) {
     const error = await response.text();
     throw new Error(`next failed: ${response.status} - ${error}`);
   }
-  return response.json();
+  const ack = await response.json();
+  if (ack && typeof ack === 'object' && ack.promiseId) {
+    await recordServerPromise(ack.promiseId);
+  }
+  return ack;
 }
 
 async function getSession(sessionId, opts = {}) {
@@ -799,6 +807,38 @@ function hasCanonicalToolExecute(execute) {
   );
 }
 
+/** After mode:agent seed, first user text goes to router; pick agent before LLM / Gray Room probes. */
+async function navigateThroughRouterToAgent(sessionId, label) {
+  for (let i = 0; i < 22; i++) {
+    let pub = unwrapPublicSession(await getSession(sessionId));
+    if (pub.asyncPending) {
+      await pollAsyncSettled(sessionId, 120_000);
+      pub = unwrapPublicSession(await getSession(sessionId));
+    }
+    const ex = pub.execute;
+    const choices = ex?.form?.choices;
+    const inputs = ex?.form?.input;
+    if (Array.isArray(choices) && choices.length > 0) {
+      const pick = choices.find((c) => c && c.id === 'agent')?.id;
+      assert(pick, `${label}: router missing agent choice`);
+      const ack = await sendNext(sessionId, { result: { choice: pick } });
+      assert(ack?.success !== false, `${label}: router pick agent`);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      return;
+    }
+    if (Array.isArray(inputs) && inputs.length > 0 && !choices?.length) {
+      const ack = await sendNext(sessionId, {
+        result: { message: `${label}: task direction for router` },
+      });
+      assert(ack?.success !== false, `${label}: task direction`);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      continue;
+    }
+    return;
+  }
+  throw new Error(`${label}: navigateThroughRouterToAgent exceeded max iterations`);
+}
+
 /** Raw tool keys must not appear on GET /sessions/:id Web DTO (WEB_UI_PROTOCOL execute projection). */
 function assertNoRawToolKeysOnWebExecute(execute, label) {
   if (!execute || typeof execute !== 'object') return;
@@ -821,6 +861,8 @@ function assertNoRawToolKeysOnWebExecute(execute, label) {
 async function caseRedAndGrayRoomCycle() {
   const { sessionId } = await createSession({ mode: 'agent', task: 'Red/Gray room coverage test' });
   assert(sessionId, 'session id');
+
+  await navigateThroughRouterToAgent(sessionId, 'redGrayRoom');
 
   const fullProbe = await getSession(sessionId, { includeContext: true });
   if (fullProbe == null) {

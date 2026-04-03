@@ -17,10 +17,11 @@ ${flowControlHint}
 
 ### A — Continue the conversation (default and REQUIRED)
 
+Put the assistant line **only** under **`execute.message`** (not a top-level **`message`** field). Response transforms append that line to `context.history` (see `append-to-array` coalesce in dialog pipeline). **`execute`** may contain **`message`** and **`form`** together for this pattern.
+
 ```json
 {
   "step": "response",
-  "message": "your reply to the user in the same language",
   "execute": {
     "message": "your reply to the user in the same language",
     "form": {
@@ -37,7 +38,7 @@ ${flowControlHint}
 
 ### B — ONLY when user explicitly requests a tool (VERY RARE)
 
-Use **exactly one** key inside `execute` (no `form` / nested `message` in `execute` for that turn). Allowed tool keys: **`rag-search`**, **`read-file`**, **`write-file`**, **`list-directory`**, **`grep-search`**, **`execute-command`**, **`script`**.
+Put the assistant line in **`execute.message`**, then add **one** tool key in the **same** `execute` object (no **top-level** `message`). Allowed tool keys: **`rag-search`**, **`read-file`**, **`write-file`**, **`list-directory`**, **`grep-search`**, **`execute-command`**, **`script`**.
 
 NEVER use Pattern B unless the user explicitly asks to search, read, or write files. Examples of when to use Pattern B:
 - User says: "search for JWT authentication"
@@ -49,13 +50,13 @@ Examples of when to use Pattern A (default):
 - User asks a question → Pattern A
 - User gives a command without specifying a tool → Pattern A
 
-Always set **`message`** to a short user-facing line (what you are doing / what you will do with the result next).
+For **Pattern A**, set the user-facing line in **`execute.message`** only (no top-level `message`). For **Pattern B**, set **`execute.message`** plus **one** tool key — same rule (no top-level `message`).
 
 ```json
 {
   "step": "response",
-  "message": "Searching the repo for how auth is wired.",
   "execute": {
+    "message": "Searching the repo for how auth is wired.",
     "rag-search": { "query": "JWT authentication middleware", "page": 1, "pageSize": 10 }
   },
   "completed": false
@@ -65,8 +66,8 @@ Always set **`message`** to a short user-facing line (what you are doing / what 
 ```json
 {
   "step": "response",
-  "message": "Reading the file you mentioned.",
   "execute": {
+    "message": "Reading the file you mentioned.",
     "read-file": { "path": "src/config.ts" }
   },
   "completed": false
@@ -92,5 +93,5 @@ Latest user input from `result.message` is merged into `context.history` before 
 - Do not include any text outside the JSON document (no commentary, no explanations, just the JSON).
 - Reuse the history in `context.history` to keep answers grounded in what the user already said.
 - Maintain the tone of the conversation and never fabricate requirements.
-- **Either** pattern A (`message` + `form` in `execute`) **or** pattern B (single tool key in `execute`) — never both styles mixed in one `execute` object.
+- **Either** pattern A (`execute.message` + `execute.form`) **or** pattern B (`execute.message` + one tool key) — **no** top-level `message` when `execute` carries tools or `form`.
 - **CRITICAL: For Pattern A in dialog mode, ALWAYS use `textarea` NOT `input`** — textarea allows multi-line messages, which is the expected behavior for dialog.

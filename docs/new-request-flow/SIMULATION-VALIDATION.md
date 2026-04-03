@@ -226,3 +226,17 @@ npm run sim:validate -- --sim agent-coder/3 --verbose
 # Тестирование всех симуляций
 npm run sim:validate -- --all --verbose
 ```
+
+## Sync golden conventions (English)
+
+Repo hygiene for `simulations/sync/**` and related tooling (see also [`simulations/sync/README.md`](../../simulations/sync/README.md), [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md)):
+
+| Topic | Convention |
+|-------|--------------|
+| **Step contract (S8)** | `npm run sim:validate -- --all --step-contract` and `npm run sim:contract-report` should stay clean; prefer chunked `passthrough` transforms where extra steps would only add warnings. |
+| **Substeps `N-sub-M` (S9)** | `sim:validate --all` includes substeps by default; use `--skip-substeps` to exclude. |
+| **MD mirrors (S11)** | Steps with `request.json` / `response.json` should have `request.md` / `response.md` (first fenced `json` block = sibling JSON). Regenerator: `scripts/gen-sim-md-mirrors.mjs` (sync + async trees). Verify: `npm run sim:check-md -- --fail`. |
+| **Form `choices` (S13)** | Every `execute.form.choices[]` entry should include a non-empty `description`; align with [`shared/router-static-choices.json`](../../shared/router-static-choices.json) for stable router ids. |
+| **CLI alignment** | Root / `a2a-server` `package.json` scripts: `sim:lint`, `sim:validate` (with `--path`, `--sim`, `--under`, `--prefix` where supported), `sim:check-md`, `sim:contract-report` — described in `simulations/sync/README.md`. |
+
+**Gray Room example:** `simulations/gray-room/queue-init-5-steps/` — golden for queue init (five steps, `headIndex`, first step `in_progress`); schema reference [`docs/references/sequence-schema.json`](../references/sequence-schema.json).

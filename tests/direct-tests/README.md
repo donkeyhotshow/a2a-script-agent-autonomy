@@ -4,6 +4,8 @@
 
 **Mandatory order** (same as [`AGENTS.md`](../../AGENTS.md)): reproduce and isolate **execute/result JSON shape** problems in **`tests/direct-tests`** first (dialog runners, `e2e-dialog-test.js`, health checks). Only after that escalate to full session flows, **`npm run sim:lint` / `sim:validate`**, or heavy e2e. This folder is the repo’s **first** stop for schema debugging — not simulations.
 
+**Validators** ([`validators/README.md`](validators/README.md)) are **standalone scripts** (not Vitest) that **list concrete contract mistakes** — very useful before deep UI or sim debugging. They cover LLM/proxy `body.md`, session `server-response.json`, gray-room snapshots, router `choices[].description`, and sim `request.md`/`response.md` vs `*.json` drift (`npm run sim:check-md`). Run from repo root; see the validators README for the full table.
+
 | If you are debugging… | Use |
 |------------------------|-----|
 | Wrong `execute` / `result` keys, router beats, Client API session steps | [Dialog](#dialog), `dialog/run-dialog-direct-ollama.ps1`, `e2e-dialog-test.js` |
@@ -25,6 +27,11 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 
 | Entry | Purpose |
 |-------|---------|
+| [validators/](validators/) | Standalone validators (not Vitest); see [validators/README.md](validators/README.md) |
+| [validators/scan-promise-bodies.mjs](validators/scan-promise-bodies.mjs) | `npm run scan-promise-bodies` — proxy promise `body.md` LLM JSON |
+| [validators/scan-session-responses.mjs](validators/scan-session-responses.mjs) | `npm run scan-session-responses` — `storage/sessions/**/server-response.json` (same shape rules; noisy) |
+| [validators/verify-gray-room-state.mjs](validators/verify-gray-room-state.mjs) | `npm run verify:gray-room -- <snapshot.json>` — sequence / workbench snapshot |
+| [validators/audit-sim-choice-descriptions.mjs](validators/audit-sim-choice-descriptions.mjs) | `npm run audit:sim-choice-descriptions` — simulation `choices[].description` |
 | [run-checks.ps1](run-checks.ps1) | Hub: health checks by scope (LLM, ServerLLM, ClientServer, …) |
 | [run-post-start-all.ps1](run-post-start-all.ps1) | Chains hub + Vitest + node + PS1 flows (see *After start-all.bat* above); used by repo root `start-all.bat` |
 | [scripts/](scripts/) | Runners → `scripts/tests/` and root `scripts/` (prod-test, pre-release, web-ui-smoke-report) |
@@ -69,6 +76,23 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 ```
 
 ai-integration uses FORWARD_TIMEOUT_SECONDS=180 (set in start-ai-integration.bat) for slow models.
+
+## Artifact tracking and cleanup
+
+Direct Node-based tests (`e2e-dialog-test.js`, `gray-room-test.js`) record the client sessions and server promiseIds they create into `artifacts-registry.json` in this folder.
+
+To remove those artifacts and run ai-integration cleanup after a batch of direct tests:
+
+```powershell
+.\tests\direct-tests\cleanup-artifacts.ps1
+```
+
+What it does:
+
+- Deletes recorded Client API sessions via `DELETE /api/a2a/sessions/:id`
+- Deletes matching A2A Server request files from `a2a-server/storage/requests/{promiseId}.json`
+- Runs `tests/direct-tests/ai-integration/run-test-cleanup.ps1` to clear ai-integration requests/promises/cache
+- Clears `tests/direct-tests/artifacts-registry.json`
 
 ## Replay saved session steps
 

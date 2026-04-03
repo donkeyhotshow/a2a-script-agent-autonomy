@@ -60,6 +60,18 @@ export function determineRequestType(context: Record<string, unknown>): RequestT
         return 'simulation';
     }
 
+    // First beat (task input form): classify via action processor (router), even when POST /sessions
+    // seeded execution.action as agent|dialog|task-decomposition (mode on create).
+    // Must NOT run when the client submitted a router choice (beat B): if merged execution was lost
+    // and fell back to step "new", we'd otherwise re-enter handleTaskRequest and re-emit the router form.
+    const firstBeatText =
+        (typeof result?.message === 'string' && result.message.trim()) ||
+        (typeof task === 'string' && task.trim()) ||
+        (typeof message === 'string' && message.trim());
+    if (execStep === 'new' && firstBeatText && !choiceRaw) {
+        return 'action';
+    }
+
     // Transform pipeline / LLM: transformSchema, or execution.action in LLM modes + (message/task or router choice)
     const llmActions = [...LLM_PIPELINE_ACTIONS] as string[];
     if (

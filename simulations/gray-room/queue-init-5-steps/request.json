@@ -1,5 +1,4 @@
 {
-  "version": "1.0",
   "context": {
     "task": "Initialize a sequence with 5 steps for gray room processing",
     "execution": {
@@ -7,7 +6,12 @@
       "step": "start"
     },
     "workbench": {
-      "sections": {}
+      "sections": {
+        "sequence": {
+          "steps": [],
+          "headIndex": 0
+        }
+      }
     }
   }
 }

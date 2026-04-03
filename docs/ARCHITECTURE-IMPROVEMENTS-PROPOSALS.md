@@ -89,6 +89,16 @@ type AgentDelegation = {
 
 **UI:** SequenceInspector.vue with drag-drop reordering.
 
+**Implementation checklist** (plans: `prompts/system-collection/gray-room-implementation-plan.md`, `sequence-control.md`, `gray-room-overview.md`):
+
+1. **Sequence schema** — [`docs/references/sequence-schema.json`](../references/sequence-schema.json); queue persistence belongs in **Client API** session storage / `context`, not a stateful `POST /api/v1/sequence` on a2a-server.
+2. **step_complete** — `action-request-processor.ts` + `sequence-workbench.ts`: validate head, advance `headIndex`, history / `operationHistory`, `final_prediction` when pending ≤ 2 (UI + Client API persistence remain).
+3. **Client UI** — Agent form + queue from `context.workbench.sections.sequence` (view/edit/reorder/blocked; optional `sequence_edits` until confirm).
+4. **Client API** — `GET/PUT /api/a2a/sessions/:id/sequence` → `sequence.json` under session storage (`sessionRoutes.js`).
+5. **Goldens** — `simulations/gray-room/` (queue init, step completion, look-ahead edits, final prediction); extend `simulations/SCHEMA.md` for sequence rules when ready.
+6. **Validation** — `tests/direct-tests/validators/verify-gray-room-state.mjs`; root `npm run verify:gray-room -- <file.json>` (optional stdin).
+7. **Prompts vs queue** — `step_prompts.md` templates are guidance; **`context.workbench.sections.sequence` is source of truth** for execution state.
+
 ---
 
 ### B2. Predictive Step Generation
@@ -184,5 +194,37 @@ validateSchema(request, RequestSchema);
 ```
 
 **Benefits:** Fail fast on contract violations.
+
+---
+
+## Category D: Technical debt, backlog notes, and doc links
+
+### D1. Legacy payloads, sim gaps, Gray Room surface
+**Status:** Partial (see tests and module docs)
+
+- **Gray Room triggers:** resolution order and policy matrix — [`a2a-server/docs/GRAY-ROOM.md`](../../a2a-server/docs/GRAY-ROOM.md); tests: `a2a-server/tests/gray-room-trigger.test.ts`.
+- **Legacy result blobs:** `validateResultShape` in `transform-execute-validator.ts` — locked by `a2a-server/tests/unit/transform-execute-validator.test.ts`.
+- **Async goldens:** `simulations/async/README.md` documents what sync goldens exclude (retries, loader timing); `promise-lifecycle` is the async shape baseline.
+- **Still open:** narrow or remove `ActionRequest` legacy export where safe; full E2E for polling retries / `execute.wait`.
+
+### D2. Process normalization — follow-ups
+Cross-cutting items after gray-room + response transform `interrupt` passthrough:
+
+- **Per-schema overrides:** if a schema adds its own `server-transforms-response.json` beside `*-request.md`, mirror the `interrupt` `copy` step there (today one root [`server-transforms-response.json`](../../a2a-server/prompts/transforms/server-transforms-response.json)).
+- **compress_history:** gray-room may dual-write root `history` and `context.history`; `resolveHistoryLength` prefers root — see `a2a-server/tests/normalization-history-length.test.ts`.
+
+A longer prioritized improvement table (P1–P4) lived in task history; key themes overlap **A2**, **B1**, **C1**, and ADR-0058 / multi-provider work.
+
+### D3. Test coverage — vitest exclusions cleared
+Previously excluded suites (`neurons-v2`, `rag-entity-integration`, `auth.middleware`, etc.) were reviewed; exclusions removed from `a2a-server/vitest.config.ts` where tests were restored, updated, or deleted. Full `npm run test` in `a2a-server` is the gate.
+
+### D4. RAG package tests
+`a2a-client/packages/rag/tests/rag.test.js` exercises indexer/searcher/chunk/BM25/hybrid/reranker/query-understanding (no placeholder `expect(true)` stubs).
+
+### D5. Canonical methodology path
+Indexed task methodology lives under [`archive/methodology/`](../../archive/methodology/) (not a root `methodology/` folder). Links from [`AGENTS.md`](../../AGENTS.md) point there.
+
+### D6. NodeNext vs bundled UI imports
+**Norm:** [`.cursor/rules/code-hierarchy.mdc`](../../.cursor/rules/code-hierarchy.mdc) — `a2a-server` / Node packages use **`.js` on relative imports**; `premium-ui` may use **`@/`** as resolved by Vite; `@a2a/execution` barrel + file-scanner chain uses `.js` relatives. [`AGENTS.md`](../../AGENTS.md) *Imports* row matches.
 
 ---

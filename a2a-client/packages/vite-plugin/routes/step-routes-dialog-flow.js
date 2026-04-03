@@ -138,6 +138,18 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                 mergedContext.llmModel = sessionContext.llmModel;
             }
 
+            // Router beat B: choice submit must keep execution.step === 'router' (not session seed agent/new).
+            if (
+                hasChoices &&
+                submitResult &&
+                typeof submitResult.choice === 'string' &&
+                prevStepData?.context?.execution &&
+                typeof prevStepData.context.execution === 'object' &&
+                prevStepData.context.execution.step === 'router'
+            ) {
+                mergedContext.execution = { ...prevStepData.context.execution };
+            }
+
             const effectiveTask = submitResult?.message;
             console.log(
                 '[VitePlugin] Building request - effectiveTask:',
@@ -164,12 +176,12 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
             }
 
             // First beat (task form, step new): run sync invoke so router execute is returned immediately.
-            // Async-only here left the session showing stale step-1 execute until poll completed.
+            // Applies to task *or* mode-seeded agent|dialog|… (same input form); not router choice submits.
             const shouldSyncInvoke =
-                execAction === 'task' &&
                 execStep === 'new' &&
                 typeof effectiveTask === 'string' &&
-                effectiveTask.trim().length > 0;
+                effectiveTask.trim().length > 0 &&
+                !hasChoices;
 
             const contextForServer = sanitizeContextForServer(mergedContext);
             const requestToServer = {

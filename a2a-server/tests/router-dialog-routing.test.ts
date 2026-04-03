@@ -26,6 +26,31 @@ describe('resolveResultObject', () => {
     });
 });
 
+describe('determineRequestType first beat (router classification)', () => {
+    it('routes to action when step is new even if execution was seeded as agent (mode on create)', () => {
+        expect(
+            determineRequestType({
+                session_id: 'stateless',
+                execution: {action: 'agent', step: 'new'},
+                result: {message: 'hello task'},
+                task: 'hello task',
+            })
+        ).toBe('action');
+    });
+
+    it('does not treat router choice as first beat when step is wrongly still "new" (stale merge)', () => {
+        expect(
+            determineRequestType({
+                session_id: 'stateless',
+                execution: {action: 'agent', step: 'new'},
+                task: 'List files',
+                result: {choice: 'agent'},
+                choice_id: 'agent',
+            })
+        ).toBe('dialog');
+    });
+});
+
 describe('determineRequestType router + LLM choice', () => {
     const routerCtx = {
         session_id: 'stateless',

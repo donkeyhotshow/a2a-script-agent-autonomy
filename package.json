@@ -15,6 +15,8 @@
         "sim:validate": "npm --prefix a2a-server run sim:validate --",
         "sim:quality": "npm --prefix a2a-server run sim:quality",
         "sim:contract-report": "npm --prefix a2a-server run sim:contract-report --",
+        "sim:check-md": "npm --prefix a2a-server run sim:check-md --",
+        "sim:check-md:fix": "npm --prefix a2a-server run sim:check-md:fix --",
         "gate:cleanup": "npm --prefix a2a-server run gate:cleanup",
         "agent-runner": "node scripts/agent-dialog-runner.mjs",
         "monitor": "node monitor-and-process-tasks.js",
@@ -22,7 +24,10 @@
         "monitor:once": "node monitor-and-process-tasks.js --once",
         "monitor:reset": "node -e \"require('fs').unlinkSync('task-monitor-state.json')\" 2>nul || exit 0",
         "test:direct-tests": "vitest run tests/direct-tests",
-        "verify:gray-room": "node scripts/verify-gray-room-state.mjs"
+        "scan-promise-bodies": "node tests/direct-tests/validators/scan-promise-bodies.mjs",
+        "scan-session-responses": "node tests/direct-tests/validators/scan-session-responses.mjs",
+        "verify:gray-room": "node tests/direct-tests/validators/verify-gray-room-state.mjs",
+        "audit:sim-choice-descriptions": "node tests/direct-tests/validators/audit-sim-choice-descriptions.mjs"
     },
     "devDependencies": {
         "@types/node": "^20.11.0",

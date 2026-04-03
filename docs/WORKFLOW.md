@@ -124,6 +124,10 @@ Algorithm execution mode for deterministic operations on **local Ollama**:
 - **"professional"** -> **Code module** (client): RAG hit post-processing (ranking, snippets, clustering, optional micro-synthesis)—not an LLM persona.
 - **"analyst"** / **"ignore autodetector"** -> **Code module** (client/host): recursive walk = ignore detection + structure metrics for safe list/read—not an LLM persona.
 
+## Task Monitor metrics
+
+`monitor-and-process-tasks.js` emits logs that `scripts/orchestrator-metrics.js` aggregates into [`runtime/metrics.json`](../runtime/metrics.json) (per-day totals, provider mix). Refresh on demand: `node scripts/orchestrator-metrics.js --record`. See root [`DEV_STATE.md`](../DEV_STATE.md) / `work/STATE.md` when tracking orchestrator health.
+
 ## Related Documentation
 - [`a2a-server/docs/GRAY-ROOM.md`](../../a2a-server/docs/GRAY-ROOM.md) - Подробная документация (242 строки)
 - [`docs/adr/ADR-0029-server-interrupt-loop.md`](adr/ADR-0029-server-interrupt-loop.md) - ADR решения
