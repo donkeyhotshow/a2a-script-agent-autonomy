@@ -437,3 +437,18 @@ export class GrayRoomOrchestrator {
         logger.warn('[GrayRoom] Transform execute validation warnings', { source, issues: issues.map(i => i.code) });
     }
 }
+
+export {
+    detectGrayRoomTrigger,
+    shouldUseGrayRoom,
+    isGrayRoomEnabled,
+    getConfiguredMaxTurns,
+    readGrayRoomInterruptBudget,
+    type GrayRoomTriggerResult
+} from './gray-room-trigger.js';
+
+export {
+    DIALOG_TOOL_EXECUTE_KEYS,
+    isDialogToolExecutePayload,
+    type GrayRoomOptions
+} from './gray-room-utils.js';

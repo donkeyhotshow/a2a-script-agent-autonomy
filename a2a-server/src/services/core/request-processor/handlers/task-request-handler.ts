@@ -4,17 +4,17 @@
  * Handles processing of new task requests, proposing actions
  */
 
-import {logger} from '../../../utils/logger.js';
-import {actionProcessor} from '../../../actions/action-processor.js';
-import {actionRegistry} from '../../../actions/action-registry.js';
-import type {ActionDefinition} from '../../../actions/types.js';
+import {logger} from '../../../../utils/logger.js';
+import {actionProcessor} from '../../../../actions/action-processor.js';
+import {actionRegistry} from '../../../../actions/action-registry.js';
+import type {ActionDefinition} from '../../../../actions/types.js';
 import type {
     RequestContext,
     ProcessResult,
     ProcessOutcome,
 } from '../request-processor.interfaces.js';
-import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../../../config/router-static.js';
-import {dialogRequestProcessor} from './dialog-request-processor.js';
+import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../../../../config/router-static.js';
+import {dialogRequestProcessor} from '../dialog-request-processor.js';
 
 /**
  * Parse task text from various context formats

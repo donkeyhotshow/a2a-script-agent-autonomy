@@ -1,6 +1,7 @@
 // Scan a2a-client/storage/sessions/**/server-response.json with the same execute/message
 // rules as scan-promise-bodies (noisy while debugging — optional CI use).
 // Run from repo root: node tests/direct-tests/validators/scan-session-responses.mjs
+// Flags: --skip-if-missing, --strict (exit 1 if any issue)
 
 import fs from 'fs';
 import path from 'path';
@@ -10,6 +11,9 @@ import { analyzeLlmExecuteShape } from './lib/check-llm-execute-shape.mjs';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.join(__dirname, '..', '..', '..');
 const SESSIONS_ROOT = path.join(REPO_ROOT, 'a2a-client', 'storage', 'sessions');
+const argv = new Set(process.argv.slice(2));
+const skipIfMissing = argv.has('--skip-if-missing');
+const strict = argv.has('--strict');
 
 function collectServerResponseFiles(dir, out = []) {
   if (!fs.existsSync(dir)) return out;
@@ -26,6 +30,10 @@ function collectServerResponseFiles(dir, out = []) {
 
 function scan() {
   if (!fs.existsSync(SESSIONS_ROOT)) {
+    if (skipIfMissing) {
+      console.log('[scan-session-responses] SKIP (no dir):', SESSIONS_ROOT);
+      process.exit(0);
+    }
     console.error('No folder:', SESSIONS_ROOT);
     process.exit(1);
   }
@@ -51,13 +59,15 @@ function scan() {
 
   if (issues.length === 0) {
     console.log(`No contract issues in ${files.length} server-response.json file(s).`);
-    return;
+    process.exit(0);
   }
 
   console.log(`Found ${issues.length} issue(s) in session server-response.json:\n`);
   for (const i of issues) {
     console.log(`${i.id}  [${i.code}]  ${i.detail}`);
   }
+  if (strict) process.exit(1);
+  process.exit(0);
 }
 
 scan();

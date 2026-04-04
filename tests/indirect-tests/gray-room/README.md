@@ -30,6 +30,13 @@ Snapshot must expose `context` (or top-level `workbench` for `extractContext`).
 
 - Existing workbench/sequence checks: `npm run verify:gray-room -- <file>` (`tests/direct-tests/validators/verify-gray-room-state.mjs`) — focuses on **sequence** / predictions / `operationHistory`, not the interrupt handler column.
 
-## Example
+## Fixtures (run via `npm run test:indirect`)
 
-`fixtures/example-horizontal-snapshot.json` + `example-horizontal.spec.json` — run via `npm run test:indirect`.
+| Snapshot | Spec | Handler chain |
+|----------|------|----------------|
+| `example-horizontal-snapshot.json` | `example-horizontal.spec.json` | toy example |
+| `compress-history-snapshot.json` | `compress-history.spec.json` | `compress_history` |
+| `clarify-snapshot.json` | `clarify.spec.json` | `clarify` |
+| `algorithm-invoke-snapshot.json` | `algorithm-invoke.spec.json` | `algorithm_invoke` |
+
+Spec format is always `expectedHandlerReasons` + `match` (`exact` | `subsequence`) — see above.

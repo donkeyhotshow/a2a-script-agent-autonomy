@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "hooks": {
+    "afterAgentResponse": [
+      {
+        "command": "node scripts/cursor-hook-ticker.mjs --once"
+      }
+    ]
+  }
+}

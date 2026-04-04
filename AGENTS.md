@@ -19,6 +19,7 @@ Guidance for agents working in this repository.
 | **Sessions / curl / agent tests** | Same surface: not `invoke` alone — [technical notes](#sessions-tests-and-agent-mode-where-to-send-http) |
 | **Schema debugging start point** | **[`tests/direct-tests/README.md`](tests/direct-tests/README.md)** — reproduce shape issues here first, then sims/e2e |
 | **Offline validators (LLM / execute shape, sessions, sims)** | **[`tests/direct-tests/validators/README.md`](tests/direct-tests/validators/README.md)** — scripts flag contract mistakes (e.g. top-level `message` + tool vs `execute.message`); run from repo root: `scan-promise-bodies`, `scan-session-responses`, `verify:gray-room`, `audit:sim-choice-descriptions`, `sim:check-md` |
+| **Papa–Mama gang / battle recon** | **`npm run test:gang`** — Mama then Papa (live stack). **`npm run test:recon`** — strict artifacts + `sim:validate:all:contract` + `REQUIRE_ASYNC_PIPELINE` on E2E; **`npm run test:recon:mama`** — offline only. CLI: `node tests/papa-mama-gang.mjs --help`. [`PAPA-MAMA.md`](PAPA-MAMA.md), [`GLOSSARY.md`](GLOSSARY.md) (*Battle recon*) |
 | Imports | **Server / NodeNext:** `.js` on relative imports. **`premium-ui`:** `@/` (Vite) — [`.cursor/rules/code-hierarchy.mdc`](.cursor/rules/code-hierarchy.mdc) |
 | Test ENCRYPTION_KEY | Exactly 32 characters |
 | Test DB | `a2a_test` (not `a2a_server`) |
@@ -208,6 +209,8 @@ Note: Server always applies transforms; `response.md` optional (no LLM).
 | A2A_BLACK_ROOM_DEFAULT_MODEL | Default Ollama model for algorithms (default: llama3.1:8b) | No |
 | A2A_BLACK_ROOM_TIMEOUT_MS | Timeout for algorithm execution (default: 30000ms) | No |
 | A2A_ALGORITHM_REGISTRY_PATH | Path to algorithm templates (default: ./prompts/algorithms/) | No |
+
+**Black Room — agent duty:** When work touches Black Room, **remind the operator** to **pick a brick** (one explicit critique angle) before expanding the module — see [`docs/BLACK-ROOM.md`](docs/BLACK-ROOM.md) (*Reminder chain*).
 
 ---
 
