@@ -1,0 +1,61 @@
+---
+description: Code organization and file hierarchy rules
+globs: **/*.{ts,js,json}
+alwaysApply: true
+---
+
+# Code Hierarchy Rules
+
+## File Organization
+
+```
+repo-root/
+├── a2a-client/          # Client-side code
+│   ├── packages/         # SDK packages
+│   ├── web/             # Web UI
+│   └── packages/vite-plugin/ # Vite plugin (@a2a-client/vite-plugin) — Client API routes
+├── a2a-server/          # Server-side code
+│   └── src/
+│       ├── services/    # Business logic
+│       ├── actions/      # Action definitions
+│       └── daemon/       # Background processes
+├── ai-integration/        # AI proxy layer
+├── docs/                 # Documentation
+├── tasks/                # Pending work
+└── simulations/          # Test simulations
+```
+
+## Import Rules
+
+### NodeNext (a2a-server, ai-integration TypeScript)
+
+- **Always** use `.js` extension on **relative** imports (TypeScript emits `.js`; Node resolves the `.ts` source): `import x from './x.js'`
+- Use NodeNext module resolution
+- Never use extensionless relative imports in those packages
+
+```typescript
+// ❌ BAD
+import { service } from './services/my-service';
+
+// ✅ GOOD
+import { service } from './services/my-service.js';
+```
+
+### Bundled UI (`a2a-client/packages/premium-ui`)
+
+- Vite/React packages may use **`@/` path aliases** with **`.ts` / `.tsx` / extensionless** imports as resolved by the bundler. This does **not** replace the NodeNext rule for **server** code.
+- `@a2a/execution` — barrel + `file-scanner` chain use **`.js` relatives** (NodeNext); optional standalone `tsconfig` for the package remains (see `tasks/pending/hierarchy-client-packages-import-policy.md`).
+
+## Module Boundaries
+
+| Module | Responsibility | Public API |
+|--------|---------------|------------|
+| a2a-client | UI + Client API | `/api/a2a/*` routes |
+| a2a-server | Core logic + LLM | `/api/v1/invoke` |
+| ai-integration | Proxy to Ollama | Port 11434 |
+
+## Cross-Module Rules
+
+- Client API **strips** `projectId`/`sessionId` before proxying to server
+- Server assigns `context.session_id` (`srv_sess_*`)
+- Never pass storage IDs to stateless server

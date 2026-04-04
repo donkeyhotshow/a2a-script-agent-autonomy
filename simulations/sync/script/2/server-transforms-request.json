@@ -1,0 +1,36 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "fix-vue-imports",
+        "step": "scope_confirm"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "form": {
+          "title": "Confirm scope",
+          "description": "Server asks for a path root before running in-browser script phase A.",
+          "input": [
+            {
+              "name": "message",
+              "type": "text",
+              "label": "Repository root (.)",
+              "required": true
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

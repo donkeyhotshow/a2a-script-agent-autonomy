@@ -1,0 +1,1 @@
+{"step":"message-only","message":"I need one preference before editing package.json.","execute":{"message":"I need one preference before editing package.json."},"interrupt":{"reason":"clarify","data":{"questions":["Pick ORM: Prisma vs TypeORM"],"blocking":true}},"completed":true}

@@ -1,0 +1,4 @@
+{
+  "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
+  "projectId": "123"
+}

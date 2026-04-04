@@ -1,0 +1,40 @@
+# `fix-vue-imports-batched/4` — request
+
+Mirror of `request.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports-batched",
+      "step": "search-exporter",
+      "progress": {
+        "totalFiles": 50,
+        "currentFile": 1
+      }
+    },
+    "vite_config": {
+      "file": "vite.config.js"
+    },
+    "aliases": {
+      "@": "resources/js",
+      "~": "resources"
+    }
+  },
+  "result": {
+    "rag-search": {
+      "results": [
+        {
+          "file": "resources/js/components/Header.vue",
+          "score": 0.95,
+          "snippet": "export class Header extends Component"
+        }
+      ],
+      "files": [
+        "resources/js/components/Header.vue"
+      ]
+    }
+  }
+}
+```

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deriveSessionStage } from '../../vite-plugin-a2a/routes/utils/session-stage-machine.js';
+import { deriveSessionStage } from '../../packages/vite-plugin/routes/utils/session-stage-machine.js';
 
 describe('session-stage-machine', () => {
     describe('deriveSessionStage', () => {
@@ -117,7 +117,7 @@ describe('session-stage-machine', () => {
                 const stage = deriveSessionStage({
                     execute: {
                         message: 'Reading file content',
-                        form: { input: [{ name: 'result', label: 'Result' }] },
+                        attachments: { readFiles: [{ path: '/tmp/x' }] },
                     },
                     context: { execution: { action: 'agent' } },
                 });
@@ -162,7 +162,7 @@ describe('session-stage-machine', () => {
                 const stage = deriveSessionStage({
                     execute: {
                         form: {
-                            textarea: { name: 'message', label: 'Message' },
+                            textarea: { name: 'task', label: 'Message' },
                         },
                     },
                 });
@@ -258,7 +258,7 @@ describe('session-stage-machine', () => {
                 expect(deriveSessionStage({ context: { execution: { action: 'router' } }, execute: { form: { choices: [{ id: 'a' }] } } })).toBe('routing');
                 expect(deriveSessionStage({ context: { execution: { action: 'agent' } }, execute: { form: { choices: [{ id: 'a' }] } } })).toBe('routing');
 
-                // Agent takes precedence over dialog-input
+                // Agent without a dialog-style form → tool loop; agent + task form → dialog-input (see below)
                 expect(deriveSessionStage({ context: { execution: { action: 'agent' } }, execute: { message: 'test' } })).toBe('agent-tool-loop');
             });
 
@@ -269,11 +269,11 @@ describe('session-stage-machine', () => {
                     context: { execution: { action: 'router' } },
                 })).toBe('routing');
 
-                // Agent action forces agent-tool-loop
+                // Agent + task-style form is still a dialog-input beat (not tool loop)
                 expect(deriveSessionStage({
                     execute: { form: { input: [{ name: 'x' }] } },
                     context: { execution: { action: 'agent' } },
-                })).toBe('agent-tool-loop');
+                })).toBe('dialog-input');
 
                 // Dialog action forces dialog-input
                 expect(deriveSessionStage({

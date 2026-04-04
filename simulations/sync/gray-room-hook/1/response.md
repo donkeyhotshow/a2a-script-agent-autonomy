@@ -1,0 +1,24 @@
+# Step 1 — response
+
+Golden: `response.json`. First JSON fence matches `response.json`.
+
+```json
+{
+  "context": {
+    "task": "Gray room hook — baseline dialog (no interrupt in golden)",
+    "execution": {
+      "action": "dialog",
+      "step": "message-only"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Hello — this step models a final reply with no interrupt substeps."
+      }
+    ]
+  },
+  "execute": {
+    "message": "Acknowledged. No interrupt directive in this golden; gray-room loop would exit after one response transform."
+  }
+}
+```

@@ -1,6 +1,8 @@
 # Simulations schema (canonical)
 
-**Debugging broken JSON shapes:** do **not** start here. Reproduce the issue in [`scripts/direct-tests/README.md`](../scripts/direct-tests/README.md) first (mandatory order in [`AGENTS.md`](../AGENTS.md)), then return to simulations once the shape is clear.
+**Debugging broken JSON shapes:** do **not** start here. Reproduce the issue in [`tests/direct-tests/README.md`](../tests/direct-tests/README.md) first (mandatory order in [`AGENTS.md`](../AGENTS.md)), then return to simulations once the shape is clear.
+
+**Offline validators** (flag specific errors — router descriptions, MD/JSON drift, execute/message shape): [`tests/direct-tests/validators/README.md`](../tests/direct-tests/validators/README.md); from repo root e.g. `npm run audit:sim-choice-descriptions`, `npm run sim:check-md`.
 
 Align all simulations to avoid redundant or conflicting values.
 
@@ -19,20 +21,16 @@ Simulations are the **contract tests** for the Web + Client API: `received.json`
 
 When improving the client, upgrade the matching `received.json` / `response.json` first, then align code.
 
-## Scope: simulations vs runtime
+## Scope: sync vs async goldens
 
-**Simulations do NOT cover** promise-related flows and async infrastructure:
+- **`simulations/sync/`** — Immediate **invoke-shaped** request/response contract (no transport-only `promiseId` in
+  fixtures). Does not try to model polling or the raw `{ promiseId }` ack.
+- **`simulations/async/`** — Same per-step file bundle, but documents **async lifecycle** semantics: in-flight vs
+  terminal snapshots, `context.execution` while processing, and completed/failed/cancelled-style terminals. Transport
+  fields such as top-level `promiseId` are stripped during `sim:validate` normalization (see `async/README.md`).
 
-- `execute.wait` — loading/wait indicator while server processes
-- `promiseId` — async request polling
-- Polling, retries, timeout handling
-
-Simulations describe the **sync request-response contract** (client.json → received.json). Runtime systems add promise
-handling on top; that logic is outside simulation scope.
-
-> **Async simulations:** See `simulations/async/` directory for full async protocol simulations including `promiseId`
-lifecycle, polling patterns, and `execute.wait` handling. Sync simulations in `simulations/sync/` cover the immediate
-request-response contract.
+Runtime Client API still implements polling, retries, and `execute.wait`; goldens focus on **payload shapes** merged into
+session state, not the HTTP polling loop itself.
 
 > **Примечание о context:** Поля внутри `context` курируются системой. Стандартные поля: `execution`, `history`,
 > `files`, `scratchpad`, `scratchpad_ops`, `workbench`. Остальные (`vite_config`, `aliases` и т.д.) — свободный формат.
@@ -65,10 +63,10 @@ Canonical files (Web ↔ Client API и Client API ↔ Server ↔ LLM):
 - **`response.json`** — Server → Client API: canonical **single action key** under `execute` (`rag-search`, `read-file`,
   `form`, …). Used for chaining, SDK merge, and RAG/script automation.
 - **`received.json`** — Client API → Web: **sanitized** `execute` for the UI. Client-only actions are removed (including
-  `list-directory`, `grep-search`, `file-exists`, `edit-patch`, `run-script`); the Web layer exposes `message`, optional
+  `list-directory`, `grep-search`, `file-exists`, `edit-patch`, `run-script`, and **`script`** DSL payloads); the Web layer exposes `message`, optional
   `llmMessage`, optional `attachments` (`readFiles`, `writtenFiles`, `ragQuery`, `shellCommand`, `listDirectoryPath`,
-  grep fields, `fileExistsPath`, `editPatchPath`, `runScriptId`, `pendingClientAction`), and keeps `form` when present.
-  Implementation: `a2a-client/vite-plugin-a2a/routes/utils/execute-projection-dto.js` (`buildExecuteProjection`), SDK
+  grep fields, `fileExistsPath`, `editPatchPath`, `runScriptId`, `pendingClientAction` — for `execute.script`, use **`pendingClientAction: "script"`** plus the synthetic **“Running script…”** `message` when the model did not already set one), and keeps `form` when present. **Parity with dialog/agent** is “same projection rules for whatever the server emitted”; **central** multi-step golden: [`simulations/sync/script/`](sync/script/) (10 steps, scripted pipeline + Web DTO); see [`tasks/script-dialog-agent-response-parity.md`](../tasks/script-dialog-agent-response-parity.md).
+  Implementation: `a2a-client/packages/vite-plugin/routes/utils/execute-projection-dto.js` (`buildExecuteProjection`), SDK
   `packages/sdk/src/server/lib/web-execute-dto.ts`. Checklist for client fixture authoring:
   `a2a-client/docs/GOLDEN-SIMULATIONS-CHECKLIST.md`. Debug: `GET /sessions/:id?includeContext=1` returns unsanitized
   session data.
@@ -118,23 +116,30 @@ Some legacy or router-only steps **omit** per-step `server-transforms-request.js
 | File                    | Purpose                                                                                                                                                                                                                                                                                                                                                                             |
 |-------------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `interrupt.md`          | **Documentation only.** Describes how [**gray room**](../a2a-server/docs/GRAY-ROOM.md) (server `interrupt` chain) could apply at this step: sample LLM JSON with `interrupt`, compress output, transform snippet. **Not** part of the client sync pipeline; `sim-lint` does not require it.                                                                                           |
-| **`N-sub-M/`** (folder) | **Sister folder next to step `N/`** (`M` = 1,2,3,…). **Server interrupt-loop** goldens only: `request.*` / `response.*` + server-transforms. The Web client does **not** see substeps — one user invoke → server may run several internal LLM/transform turns → **one** outbound payload (step `N` `response.json` / `received.json`). Substeps document internal request/response shapes and **`response.json`** `context.workbench.slots.interruptTrace`. Pattern: `^\d+-sub-\d+$`. **No** `client.json` / `received.json`. `sim-lint` checks JSON syntax and execute rules; `sim-validate` does not treat substeps as standalone simulations. |
+| **`N-sub-M/`** (folder) | **Sister folder next to step `N/`** (`M` = 1,2,3,…). **Server interrupt-loop** goldens only: `request.*` / `response.*` + server-transforms. The Web client does **not** see substeps — one user invoke → server may run several internal LLM/transform turns → **one** outbound payload (step `N` `response.json` / `received.json`). Substeps document internal request/response shapes and **`response.json`** `context.workbench.slots.interruptTrace`. Pattern: `^\d+-sub-\d+$`. **No** `client.json` / `received.json`. `sim-lint` checks JSON when linting the parent scenario folder; `sim-validate --all` **includes** substeps by default (`--skip-substeps` to omit). |
 
 Examples: [`agent-auto-ai/6/interrupt.md`](agent-auto-ai/6/interrupt.md); substeps: [
 `6-sub-1/`](agent-auto-ai/6-sub-1/) … [`6-sub-4/`](agent-auto-ai/6-sub-4/).
+
+## LLM provider / model (what sims represent)
+
+Simulations test **payload shape**, not live Z.AI vs Ollama. **`request.md` / `response.md`** are fixtures: they do not prove routing.
+
+- **Runtime** model list and routing live in **ai-integration** (`GET /api/tags`, per-request `model`) → see [`LLM-BACKEND-MAP.md`](LLM-BACKEND-MAP.md) for ports, “fixture vs live”, and an optional YAML header for `request.md` so authors state assumed `provider` + `model`.
+- **Future:** when the server stores `model` (and optional provider) on invoke, document the exact `context` paths in `request.json` here and add a targeted golden (tracked in [`tasks/pending/multi-provider-model-selection.md`](../tasks/pending/multi-provider-model-selection.md)).
 
 ## Примеры Web ↔ Client API
 
 | Файл                                        | Направление      | Что показывает                                                                                              |
 |---------------------------------------------|------------------|-------------------------------------------------------------------------------------------------------------|
-| `simulations/agent/1/client.json`           | Web → Client API | UI отправляет начальный `task` с `projectId`, чтобы создать сессию и показывать прогресс.                   |
-| `simulations/agent/1/received.json`         | Client API → Web | Клиент получает `execute.form.choices` (роутер: dialog, agent, task-decomposition, fix-vue-imports и т.д.). |
-| `simulations/agent-coder/2/client.json`     | Web → Client API | После выбора режима агента web отправляет `result.choice` / идентификаторы сессии.                          |
-| `simulations/agent-coder/2/received.json`   | Client API → Web | Следующий шаг agent-coder (например форма `message`).                                                       |
-| `simulations/agent-coder/1/client.json`     | Web → Client API | Начальный запрос на помощь с кодом (роутер).                                                                |
-| `simulations/agent-coder/1/received.json`   | Client API → Web | Ответ роутера с выбором режимов.                                                                            |
-| `simulations/agent-analyze/3/client.json`   | Web → Client API | Результат RAG-поиска для анализа архитектуры.                                                               |
-| `simulations/agent-analyze/3/received.json` | Client API → Web | Форма с результатами анализа и вариантами продолжения.                                                      |
+| `simulations/sync/agent/1/client.json`           | Web → Client API | UI отправляет начальный `task` с `projectId`, чтобы создать сессию и показывать прогресс.                   |
+| `simulations/sync/agent/1/received.json`         | Client API → Web | Клиент получает `execute.form.choices` (роутер: dialog, agent, task-decomposition, fix-vue-imports и т.д.). |
+| `simulations/sync/agent-coder/2/client.json`     | Web → Client API | После выбора режима агента web отправляет `result.choice` / идентификаторы сессии.                          |
+| `simulations/sync/agent-coder/2/received.json`   | Client API → Web | Следующий шаг agent-coder (например форма `message`).                                                       |
+| `simulations/sync/agent-coder/1/client.json`     | Web → Client API | Начальный запрос на помощь с кодом (роутер).                                                                |
+| `simulations/sync/agent-coder/1/received.json`   | Client API → Web | Ответ роутера с выбором режимов.                                                                            |
+| `simulations/sync/agent-analyze/3/client.json`   | Web → Client API | Результат RAG-поиска для анализа архитектуры.                                                               |
+| `simulations/sync/agent-analyze/3/received.json` | Client API → Web | Форма с результатами анализа и вариантами продолжения.                                                      |
 
 ## Request
 

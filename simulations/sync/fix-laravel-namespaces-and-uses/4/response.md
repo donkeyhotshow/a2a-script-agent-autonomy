@@ -1,0 +1,48 @@
+# `fix-laravel-namespaces-and-uses/4` — response
+
+Mirror of `response.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "виправити namespace та use у Laravel PHP файлах",
+    "execution": {
+      "action": "fix-laravel-namespaces-and-uses",
+      "step": "laravel-use-apply"
+    },
+    "workbench": {
+      "sections": {
+        "currentTask": "виправити namespace та use у Laravel PHP файлах"
+      }
+    }
+  },
+  "execute": {
+    "script": {
+      "input": {
+        "patches": [
+          {
+            "file": "features/business/checkout/app/Http/Controllers/CheckoutApiController.php",
+            "line": 8,
+            "from": "App\\Features\\Business\\Checkout\\Service\\CheckoutService",
+            "to": "App\\Features\\Business\\Checkout\\Services\\CheckoutService"
+          },
+          {
+            "file": "features/business/profile/app/Http/Controllers/ProfileController.php",
+            "line": 14,
+            "from": "App\\Models\\User",
+            "to": "App\\Features\\Business\\Users\\Models\\User"
+          },
+          {
+            "file": "features/business/payments/app/Http/Controllers/Api/PaymentController.php",
+            "line": 7,
+            "from": "App\\Features\\Business\\Checkout\\Model\\Order",
+            "to": "App\\Features\\Business\\Checkout\\Models\\Order"
+          }
+        ]
+      },
+      "output": "fixed_files[]",
+      "code": "const { readFileSync, writeFileSync } = require('node:fs');\n\nconst byFile = new Map();\nfor (const p of input.patches) {\n  if (!byFile.has(p.file)) byFile.set(p.file, []);\n  byFile.get(p.file).push(p);\n}\n\nconst fixed = [];\nfor (const [file, patches] of byFile) {\n  const lines = readFileSync(file, 'utf8').split('\\n');\n  let changes = 0;\n  for (const p of patches.sort((a, b) => b.line - a.line)) {\n    const i = p.line - 1;\n    if (i >= 0 && i < lines.length) {\n      const orig = lines[i];\n      const fix = orig.split(p.from).join(p.to);\n      if (orig !== fix) {\n        lines[i] = fix;\n        changes++;\n      }\n    }\n  }\n  if (changes > 0) {\n    writeFileSync(file, lines.join('\\n'), 'utf8');\n    fixed.push({ file, changes });\n  }\n}\nreturn { fixed_files: fixed };"
+    }
+  }
+}
+```

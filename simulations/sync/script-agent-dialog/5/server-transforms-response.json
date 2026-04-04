@@ -1,0 +1,42 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "parse-json-from-md",
+      "fromFile": "response.md",
+      "jsonPath": "$",
+      "to": "$llm"
+    },
+    {
+      "op": "copy",
+      "from": "$.context",
+      "to": "$.context"
+    },
+    {
+      "op": "append-to-array",
+      "to": "$.context.history",
+      "value": {
+        "role": "assistant",
+        "message": "$.llm.message"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "dialog",
+        "step": "follow_up_directive"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "form": {
+          "title": "Plan follow-up work",
+          "description": "Ваша новая инструкция: Example.spec + vitest. Напишите, как продолжить."
+        }
+      }
+    }
+  ]
+}

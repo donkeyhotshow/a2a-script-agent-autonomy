@@ -1,17 +1,25 @@
-# Ollama Proxy Service
+# AI Integration Proxy (Z.AI first, Ollama optional)
 
-**Live stack:** Start or restart the **whole** coordinated stack from the repo root: **`.\start-all.bat`** (Windows) or **`./start-all.sh`** (Linux/macOS). Do not treat this folder’s standalone run instructions as the way to restart the monorepo stack.
+**Live stack:** Start or restart the **whole** coordinated stack from the repo root: **`.\start-all.bat`** (Windows) or **`./start-all.sh`** (Linux/macOS). The proxy routes requests to the configured providers (Z.AI by default, with Ollama/Groq/OpenRouter fallbacks) and logs every call with optional simulation hooks.
 
-Прокси-сервис для перехвата и логирования запросов к Ollama с поддержкой ML-симуляции rnj-L.
+**Documentation index:** [`docs/README.md`](docs/README.md) — providers/`api_keys`, API reference, testing, troubleshooting.
+
+Самостоятельный прокси объединяет несколько LLM-поставщиков: по умолчанию это Z.AI (`glm-4.7-flash`), а локальная Ollama выступает как дополнительный источник моделей, который добавляется в `/api/tags` только если доступен.
 
 ## Возможности
 
-- **Базовый прокси**: Перенаправляет запросы с порта 11434 на 11435
-- **Логирование**: Сохраняет каждый запрос в отдельную папку с request.json и response.json
-- **ML Симуляция**: Обучение на истории rnj-1 и симуляция ответов как rnj-L при высокой уверенности
-- **Model Mapping**: Маппинг имен моделей + правила роутинга через `AI_HUB_CONFIG`
-- **Async Promises**:异步模式 через `promiseId` + получение результата позже
-- **Ollama Manager**: Автоматический старт/остановка Ollama
+- **Маршрутизация между провайдерами**: Z.AI (по умолчанию) + fallback (Ollama, Groq, OpenRouter, HuggingFace, Cohere и т.д.) — правила задаются в `AI_HUB_CONFIG` / `providers.json`.
+- **Логирование**: Каждый запрос сохраняется в отдельную папку (`proxy_logs/requests/request_*`) с `request.json` и `response.json`.
+- **ML-симуляция**: Симуляции rnj-L / rnj-1 и правила `simulate`/`set_model`.
+- **Маппинг моделей + конфигурация**: `AI_HUB_CONFIG` + `providers.json` позволяют переадресовать `model`, вставлять `virtual_models` и наблюдать `api/tags`.
+- **Async Promises**: Поддержка `promiseId` → `POST /api/promises/create` → потом `result`. При **`PROMISE_DAEMON_ONLY=true`** (по умолчанию) реальный форвард на провайдера выполняет **очередь/daemon** или ручной **`POST /promise/<id>/execute`**; см. [`docs/workflows/WORKFLOWS.md`](docs/workflows/WORKFLOWS.md). Поле **`promise_daemon_only`** в **`GET /health`** использует Task Monitor (см. корневой **`MONITOR-QUICK-START.md`**).
+- **OllamaManager**: Управление локальным Ollama (старт/стоп/health) — используется только при необходимости.
+
+### Политика авторизации (без форварда)
+
+- Клиентские сервисы (Web UI, a2a-server, любые внешние клиенты) **не должны** прокидывать свои `Authorization` / `API-Key` заголовки до LLM.
+- Proxy сам собирает upstream‑хедеры для провайдера (например, `Authorization: Bearer …` для Z.AI) на основе **`config/providers.json`** (`api_keys` и провайдеры); см. [`docs/configuration/PROVIDERS_AND_API_KEYS.md`](docs/configuration/PROVIDERS_AND_API_KEYS.md). Ключи **не** должны храниться в `.env`, если политика команды — только JSON-конфиг.
+- Входящие auth‑хедеры используются только для аутентификации самого клиента (если включено), но **никогда не пробрасываются** дальше в Z.AI/Ollama — это сознательно запрещённый сценарий.
 
 ## Установка
 
@@ -62,12 +70,20 @@ python -m proxy
 
 ## Конфигурация
 
+Пул ключей и провайдеры: **`config/providers.json`** — подробно [`docs/configuration/PROVIDERS_AND_API_KEYS.md`](docs/configuration/PROVIDERS_AND_API_KEYS.md).
+
+**Первый запуск после clone:** `python scripts/ensure-providers-config.py` (копирует `config/providers.example.json` → `config/providers.json`, если файла нет), затем вставьте ключи Z.AI в JSON. Файл `config/providers.json` в `.gitignore`.
+
 Переменные окружения:
 
 | Переменная              | По умолчанию           | Описание                        |
 |-------------------------|------------------------|---------------------------------|
 | PROXY_PORT              | 11434                  | Порт прокси                     |
-| OLLAMA_HOST             | http://localhost:11435 | Хост реальной Ollama            |
+| DEFAULT_PROVIDER        | z_ai                    | Имя провайдера по умолчанию (можно переопределить через `providers.json`). |
+| Z_AI_BASE_URL           | https://api.z.ai/api/paas/v4/ | Базовый URL для Z.AI (по умолчанию). |
+| Z_AI_MODEL              | glm-4.7-flash           | Модель Z.AI по умолчанию.        |
+| Z_AI_API_KEY            | -                       | Опционально; основной источник ключей — `config/providers.json` → `api_keys` (см. [`docs/configuration/PROVIDERS_AND_API_KEYS.md`](docs/configuration/PROVIDERS_AND_API_KEYS.md)). |
+| OLLAMA_HOST             | http://localhost:11435 | Хост локальной Ollama (фолбэк, необязательный). |
 | STORAGE_DIR             | proxy_logs             | Папка для логов                 |
 | SIMULATION_ENABLED      | false                  | Включить ML симуляцию           |
 | SIMULATION_DATA_PATH    | simulation_data        | Папка данных симуляции          |
@@ -107,7 +123,7 @@ python -m proxy
 ```
 
 ### `/health/ready` - Readiness Probe
-Проверка готовности прокси к обработке запросов. Возвращает HTTP 200 только если Ollama доступна.
+Проверка готовности прокси к обработке запросов. Возвращает HTTP 200 если доступен текущий default-провайдер (Z.AI по умолчанию). Если по умолчанию стоит `ollama`, то поведение прежнее: при недоступной Ollama — HTTP 503.
 
 ```json
 {
@@ -173,9 +189,10 @@ ai-integration/
 │   └── ai-hub.config.example.json
 │
 └── proxy_logs/                # Логи запросов
-    └── request_*/
-        ├── request.json
-        └── response.json
+    └── requests/                  # Папка для запросов
+        └── request_*/
+            ├── request.json
+            └── response.json
 ```
 
 ## API Endpoints
@@ -192,6 +209,10 @@ ai-integration/
 - `POST /api/promises/create` - Создать promise
 - `GET /api/promises/<id>/status` - Статус promise
 - `GET /api/promises/<id>/result` - Получить результат
+
+---
+
+`GET /api/tags` собирает единый список: модели из конфигурации включённых облачных провайдеров (например Z.AI), затем живой ответ `OLLAMA_HOST/api/tags` (если сервер доступен), затем `virtual_models` из AI Hub config. У каждой записи есть поле `provider` (`z_ai`, `ollama`, `virtual`, …) для выбора бэкенда.
 
 ### Симуляция (когда SIMULATION_ENABLED=true)
 

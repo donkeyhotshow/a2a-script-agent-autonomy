@@ -3,7 +3,8 @@
 ## Type
 
 **Actions** — synchronous `execute.script` chain, then **`execute-command`** for Composer ([`SCHEMA.md`](../SCHEMA.md)
-action-key shape).
+action-key shape). Full multi-phase scripted pattern (Vue-centric central golden): **`sync/script`**
+([`../script/description.md`](../script/description.md)).
 
 ## Flow
 

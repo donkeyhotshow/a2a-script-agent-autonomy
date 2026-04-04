@@ -1,0 +1,14 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "pick-context",
+      "include": ["execution", "task", "history", "workbench"]
+    }
+  ]
+}

@@ -145,7 +145,6 @@ class SessionPersistenceTester {
       delete (window as any).SessionManager;
       delete (window as any).PlasticineUI;
       delete (window as any).SSEClient;
-      delete (window as any).WebSocketClient;
 
       // @deprecated localStorage/sessionStorage deprecated - use StorageAPI
       // Clear StorageAPI if available

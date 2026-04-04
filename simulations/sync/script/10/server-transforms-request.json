@@ -1,0 +1,37 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "fix-vue-imports",
+        "step": "await_next",
+        "status": "completed"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "form": {
+          "title": "Script central — next",
+          "description": "Optional follow-up; same closing pattern as sync/agent/15.",
+          "input": [
+            {
+              "name": "message",
+              "type": "text",
+              "label": "Next instruction",
+              "required": false
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

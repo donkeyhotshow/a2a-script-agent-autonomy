@@ -25,6 +25,14 @@ except ImportError:
     HAS_PYDANTIC = False
     print("Warning: pydantic not installed. Using legacy configuration.")
 
+# Always resolve ai-integration/.env (this file lives at ai-integration/proxy/config.py).
+_AI_INTEGRATION_ENV = Path(__file__).resolve().parent.parent / '.env'
+_ENV_FILE_TUPLE = (
+    (str(_AI_INTEGRATION_ENV), '.env')
+    if _AI_INTEGRATION_ENV.is_file()
+    else ('.env',)
+)
+
 
 # ===========================================
 # Legacy Configuration (Fallback)
@@ -52,9 +60,8 @@ class LegacyConfig:
     STORAGE_DIR = os.environ.get('STORAGE_DIR', 'proxy_logs')
     PROMISES_DIR = os.environ.get('PROMISES_DIR', os.path.join(STORAGE_DIR, 'promises'))
     
-    # Request Handling Configuration (0 = no timeout)
-    # Timeout tuning for qwen3:8b: CONNECT_TIMEOUT=10s, REQUEST_TIMEOUT=120s
-    _ft = int(os.environ.get('FORWARD_TIMEOUT_SECONDS', '120'))
+    # Request Handling Configuration (0 = no timeout on forwarded LLM requests)
+    _ft = int(os.environ.get('FORWARD_TIMEOUT_SECONDS', '0'))
     FORWARD_TIMEOUT_SECONDS = _ft
     FORWARD_TIMEOUT = None if _ft == 0 else _ft
     PROMISE_TTL_SECONDS = int(os.environ.get('PROMISE_TTL_SECONDS', '86400'))
@@ -90,9 +97,12 @@ class LegacyConfig:
     PROVIDERS_CONFIG = os.environ.get('PROVIDERS_CONFIG', 'config/providers.json')
     DEFAULT_PROVIDER = os.environ.get('DEFAULT_PROVIDER', 'ollama')
     ENABLE_FALLBACK = os.environ.get('ENABLE_FALLBACK', 'true').lower() in {'1', 'true', 'yes', 'y', 'on', 't'}
-    PROVIDER_TIMEOUT = int(os.environ.get('PROVIDER_TIMEOUT', '30'))  # 30s for Ollama; use 120s for slow external providers
+    PROVIDER_TIMEOUT = int(os.environ.get('PROVIDER_TIMEOUT', '0'))  # 0 = no aiohttp total limit on LLM calls
     
     # Provider API Keys
+    Z_AI_API_KEY = os.environ.get('Z_AI_API_KEY', '')
+    Z_AI_BASE_URL = os.environ.get('Z_AI_BASE_URL', 'https://api.z.ai/api/paas/v4/')
+    Z_AI_MODEL = os.environ.get('Z_AI_MODEL', 'glm-4.7-flash')
     OPENROUTER_API_KEY = os.environ.get('OPENROUTER_API_KEY', '')
     GROQ_API_KEY = os.environ.get('GROQ_API_KEY', '')
     HF_TOKEN = os.environ.get('HF_TOKEN', '')
@@ -120,7 +130,7 @@ if HAS_PYDANTIC:
         """
         
         model_config = SettingsConfigDict(
-            env_file='.env',
+            env_file=_ENV_FILE_TUPLE,
             env_file_encoding='utf-8',
             case_sensitive=False,
             extra='ignore',  # Ignore extra env vars not defined here
@@ -174,12 +184,9 @@ if HAS_PYDANTIC:
         # ===========================================
         # Request Handling Configuration
         # ===========================================
-        # Timeout tuning for qwen3:8b model:
-        # - CONNECT_TIMEOUT (provider_timeout): 10s - connection should establish quickly
-        # - REQUEST_TIMEOUT (forward_timeout_seconds): 120s - typical request completion time
-        # - LLM_TIMEOUT (ollama_timeout): 180s - allows for slow model responses
-        forward_timeout_seconds: int = 120
-        """Timeout for forwarding requests in seconds. Default 120s for qwen3:8b slow responses."""
+        # forward_timeout_seconds: 0 = unlimited (wait for upstream). Set env for a cap.
+        forward_timeout_seconds: int = 0
+        """Timeout for forwarding requests in seconds. 0 = no limit."""
         
         promise_ttl_seconds: int = 86400
         """Time-to-live for promises in seconds (24 hours)."""
@@ -256,36 +263,39 @@ if HAS_PYDANTIC:
         providers_config: str = 'config/providers.json'
         """Path to providers configuration JSON file."""
         
-        default_provider: str = 'ollama'
-        """Default LLM provider to use."""
+        default_provider: str = 'z_ai'
+        """Default LLM provider to use (Z.AI by default, Ollama stays as optional fallback)."""
         
         enable_fallback: bool = True
         """Enable fallback chain between providers."""
         
-        provider_timeout: int = 30
+        provider_timeout: int = 0
         """
-        Provider request timeout in seconds.
-        
-        Recommended values:
-        - 10s: For fast local models (connection establish timeout only)
-        - 30s: Default for Ollama (local provider)
-        - 120s: For slow external providers (OpenRouter, Groq, etc.)
-        
+        aiohttp total timeout for provider sessions (seconds). 0 = no limit.
         Set via PROVIDER_TIMEOUT environment variable.
         """
         
         # ===========================================
         # Provider API Keys
         # ===========================================
+        z_ai_api_key: Optional[str] = None
+        """Z.AI API key (https://z.ai)."""
+
+        z_ai_base_url: str = "https://api.z.ai/api/paas/v4/"
+        """Z.AI base URL."""
+
+        z_ai_model: str = "glm-4.7-flash"
+        """Z.AI default model."""
+
         openrouter_api_key: Optional[str] = None
         """OpenRouter API key (https://openrouter.ai)."""
-        
+
         groq_api_key: Optional[str] = None
         """Groq API key (https://groq.com)."""
-        
+
         hf_token: Optional[str] = None
         """HuggingFace API token (https://huggingface.co)."""
-        
+
         cohere_api_key: Optional[str] = None
         """Cohere API key (https://cohere.com)."""
 
@@ -360,6 +370,14 @@ if HAS_PYDANTIC:
             """0 = no timeout, positive = seconds."""
             if v < 0:
                 raise ValueError('forward_timeout_seconds must be >= 0')
+            return v
+
+        @field_validator('provider_timeout')
+        @classmethod
+        def validate_provider_timeout(cls, v: int) -> int:
+            """0 = no aiohttp total limit on provider sessions."""
+            if v < 0:
+                raise ValueError('provider_timeout must be >= 0')
             return v
         
         @field_validator('log_level', mode='before')
@@ -446,6 +464,9 @@ if HAS_PYDANTIC:
     DEFAULT_PROVIDER = settings.default_provider
     ENABLE_FALLBACK = settings.enable_fallback
     PROVIDER_TIMEOUT = settings.provider_timeout
+    Z_AI_API_KEY = settings.z_ai_api_key or ''
+    Z_AI_BASE_URL = settings.z_ai_base_url
+    Z_AI_MODEL = settings.z_ai_model
     OPENROUTER_API_KEY = settings.openrouter_api_key or ''
     GROQ_API_KEY = settings.groq_api_key or ''
     HF_TOKEN = settings.hf_token or ''
@@ -500,6 +521,9 @@ else:
     DEFAULT_PROVIDER = legacy.DEFAULT_PROVIDER
     ENABLE_FALLBACK = legacy.ENABLE_FALLBACK
     PROVIDER_TIMEOUT = legacy.PROVIDER_TIMEOUT
+    Z_AI_API_KEY = legacy.Z_AI_API_KEY
+    Z_AI_BASE_URL = legacy.Z_AI_BASE_URL
+    Z_AI_MODEL = legacy.Z_AI_MODEL
     OPENROUTER_API_KEY = legacy.OPENROUTER_API_KEY
     GROQ_API_KEY = legacy.GROQ_API_KEY
     HF_TOKEN = legacy.HF_TOKEN

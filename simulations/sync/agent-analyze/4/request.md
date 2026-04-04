@@ -9,8 +9,44 @@
 
 ```json
 {
-  "message": "текст з підтвердженими фактами та розбіжностями",
-  "continue": {}
+  "context": {
+    "task": "аналіз",
+    "execution": {
+      "action": "agent",
+      "step": "4"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "опиши поточну архітектуру бекенду"
+      },
+      {
+        "role": "assistant",
+        "message": "Шукаю документи по архітектурі бекенду.",
+        "action": "rag-search"
+      }
+    ]
+  },
+  "result": {
+    "rag-search": {
+      "results": [
+        {
+          "file": "docs/ARCHITECTURE.md",
+          "score": 0.92,
+          "snippet": "## Backend\n\n- API layer (Express), service layer, DB (Postgres)."
+        },
+        {
+          "file": "README.md",
+          "score": 0.88,
+          "snippet": "Сервіси: auth, request-processor. Порт 3000."
+        }
+      ],
+      "files": [
+        "docs/ARCHITECTURE.md",
+        "README.md"
+      ]
+    }
+  }
 }
 ```
 

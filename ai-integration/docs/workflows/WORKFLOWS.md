@@ -42,6 +42,8 @@ curl -X POST http://localhost:11434/promise/{id}/execute
 curl http://localhost:11434/promise/{id}/response
 ```
 
+`GET http://localhost:11434/health` includes **`promise_daemon_only`** (boolean) so operators and the repo **Task Monitor** can detect this mode without reading env files.
+
 ---
 
 ## 2. Daemon Auto-Processing Flow

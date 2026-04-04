@@ -1,6 +1,6 @@
 # API Testing Plan (Session + Red Room)
 
-**Operators / LLM agents:** Do not report "full verification" after create + one `/next` + one `/async` only. Run **all** sections below through the **Minimal Acceptance Checklist** (or document what failed after deliberate extra turns). See repo root [`START-PROMPT-UNLIM.md`](../../START-PROMPT-UNLIM.md) → *Ручные испытания Client API*.
+**Operators / LLM agents:** Do not report "full verification" after create + one `/next` + one `/async` only. Run **all** sections below through the **Minimal Acceptance Checklist** (or document what failed after deliberate extra turns). For **automated** session dialog over indexed tasks, use **[`MONITOR-QUICK-START.md`](../../MONITOR-QUICK-START.md)**; for contract details see [`AGENTS.md`](../../AGENTS.md) → *Unified manual path* and *Router dialog*. Copy-paste prompts aligned to §1–§5: [`prompts-to-agent-mode/README.md`](../../prompts-to-agent-mode/README.md) (`client-api-01` … `client-api-05`).
 
 **Invalid report:** Any conclusion like "all steps completed" / "full manual verification" / "API works" without either (a) every checklist item below addressed with evidence, or (b) an explicit list of checklist items still not reproduced after **extra** `/next` turns aimed at tool `execute` — treat as **non-compliant**; revise the run, do not ship the summary.
 

@@ -21,7 +21,7 @@ Postgres).\n- README згадує сервіси auth та request-processor, п
 ],
 "input": [
 {
-"name": "message",
+"name": "task",
 "type": "text",
 "label": "Запит для пошуку (якщо продовжуєте)",
 "required": false

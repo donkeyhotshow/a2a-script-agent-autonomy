@@ -36,14 +36,58 @@ Examples of possible steps (you may reuse or extend and combine them as needed):
 
 ```json
 {
-  "step": "fs_discover",
-  "message": "your immediate response to the user",
-  "execute": {
-    "rag-search": {
-      "query": ""
-    }
-  },
-  "completed": false
+  "context": {
+    "task": "Add GET /health returning JSON { ok: true }; wire the route in src/app.js.",
+    "execution": {
+      "action": "agent",
+      "step": "read_code"
+    },
+    "workbench": {
+      "sections": {
+        "scratchpad": {
+          "locate_started": true,
+          "rag_ok": true,
+          "listed_src": true
+        },
+        "files": {
+          "src/app.js": "const express = require('express');\nconst app = express();\nmodule.exports = app;\n"
+        }
+      }
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Add GET /health returning JSON { ok: true }; wire the route in src/app.js."
+      },
+      {
+        "role": "assistant",
+        "step": "inspect_structure",
+        "message": "Running paginated RAG to find the Express entrypoint."
+      },
+      {
+        "role": "system",
+        "message": "RAG: src/app.js (page 1, pageSize 10, total 1, hasMore false)"
+      },
+      {
+        "role": "assistant",
+        "step": "read_code",
+        "message": "Listing src/ to confirm layout before reading app.js."
+      },
+      {
+        "role": "system",
+        "message": "Listed src/: app.js, routes/"
+      },
+      {
+        "role": "assistant",
+        "step": "read_code",
+        "message": "Reading src/app.js to see how to mount a new route."
+      },
+      {
+        "role": "system",
+        "message": "Read src/app.js (3 lines)"
+      }
+    ]
+  }
 }
 ```
 

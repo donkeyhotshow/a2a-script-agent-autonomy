@@ -15,11 +15,39 @@
 import {parseContextBlock} from '../../protocol/context-parser.js';
 import type {ContextBlock, FileBlock} from '../../types/index.js';
 import {CURRENT_PROTOCOL_VERSION} from '../../protocol/versioning/protocol-versions.js';
-import {requestService} from '../core/request/request.service.js';
+import {
+    requestService,
+    type RequestResult,
+    humanizeUpstreamErrorMessage,
+} from '../core/request/request.service.js';
+import {processRequestByPromiseId} from '../core/request-processor/request-processor.service.js';
+import {resolveExecution, resolveResultObject} from '../core/request-processor/normalization.js';
+import {ACTION_TO_SCHEMA} from '../../config/router-static.js';
 import {trackRequestStart} from './pipeline-observability.service.js';
+import {randomUUID} from 'node:crypto';
+
+/**
+ * Router beat + `result.choice` → dialog|agent|task-decomposition: set `transformSchema` on the
+ * invoke context so `resolveTransformSchema` succeeds after normalization. Routing still goes
+ * through the action processor first (`exec.step === router` + pipeline choice → `handleRouterChoice`).
+ */
+function applyRouterTransformSchemaHint(ctx: Record<string, unknown>): void {
+    const ex = resolveExecution(ctx);
+    const res = resolveResultObject(ctx);
+    const choice = typeof res?.choice === 'string' ? res.choice : undefined;
+    if (
+        ex?.['step'] === 'router' &&
+        choice &&
+        ACTION_TO_SCHEMA[choice]
+    ) {
+        ctx['transformSchema'] = ACTION_TO_SCHEMA[choice];
+    }
+}
 
 export interface InvokeInput {
     context?: unknown;
+    /** Overrides LLM model for this invoke (stored on context as `llmModel` for dialog / gray room). */
+    llmModel?: string;
     task?: string;  // Top-level task field for action_proposal
     message?: string;
     action?: string;  // action type: task_request, approve_action, step_result, action_selection
@@ -35,7 +63,115 @@ export interface InvokeResult {
     promiseId?: string;
     execute?: Record<string, unknown>;
     context?: Record<string, unknown>;
+    message?: string;
     sync?: boolean;
+}
+
+async function waitTerminalRequest(promiseId: string, maxMs: number): Promise<RequestResult | null> {
+    const deadline = Date.now() + maxMs;
+    while (Date.now() < deadline) {
+        const row = await requestService.getResult(promiseId);
+        // Storage may not be visible for a tick after create — retry instead of aborting sync chain.
+        if (!row) {
+            await new Promise((r) => setTimeout(r, 30));
+            continue;
+        }
+        if (row.status === 'completed' || row.status === 'failed') {
+            return row;
+        }
+        if (row.status === 'pending') {
+            await processRequestByPromiseId(promiseId);
+        } else {
+            await new Promise((r) => setTimeout(r, 30));
+        }
+    }
+    return null;
+}
+
+function syncFailureUserMessage(terminal: RequestResult): string | undefined {
+    const pr = terminal.result as Record<string, unknown> | undefined;
+    if (typeof pr?.error === 'string') {
+        return humanizeUpstreamErrorMessage(pr.error);
+    }
+    const te = terminal.error as Record<string, unknown> | null | undefined;
+    if (te && typeof te.message === 'string') {
+        return humanizeUpstreamErrorMessage(te.message);
+    }
+    return undefined;
+}
+
+async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> {
+    let current = rootPromiseId;
+    const hopMax = 16;
+    const waitMs = 120_000;
+
+    for (let hop = 0; hop < hopMax; hop++) {
+        const terminal = await waitTerminalRequest(current, waitMs);
+        if (!terminal) {
+            return {promiseId: rootPromiseId};
+        }
+
+        const pr = terminal.result as Record<string, unknown> | undefined;
+
+        if (terminal.status === 'failed') {
+            const ex = pr?.execute as Record<string, unknown> | undefined;
+            return {
+                sync: true,
+                execute:
+                    ex && typeof ex === 'object'
+                        ? ex
+                        : ({wait: {message: 'Request failed'}} as Record<string, unknown>),
+                context: pr?.context as Record<string, unknown> | undefined,
+                message: syncFailureUserMessage(terminal),
+            };
+        }
+
+        const follow =
+            pr && typeof pr['followUpRequestId'] === 'string'
+                ? (pr['followUpRequestId'] as string)
+                : '';
+        if (follow) {
+            current = follow;
+            continue;
+        }
+
+        const ex = pr?.execute as Record<string, unknown> | undefined;
+        return {
+            sync: true,
+            execute:
+                ex && typeof ex === 'object'
+                    ? ex
+                    : ({wait: {message: 'Working…'}} as Record<string, unknown>),
+            context: pr?.context as Record<string, unknown> | undefined,
+        };
+    }
+
+    return {promiseId: rootPromiseId};
+}
+
+function ensureContextSessionId(ctx: Record<string, unknown>): string {
+    const current = typeof ctx['session_id'] === 'string' ? ctx['session_id'].trim() : '';
+    if (current && current.toLowerCase() !== 'stateless') {
+        ctx['session_id'] = current;
+        return current;
+    }
+    const generated = `srv_sess_${randomUUID()}`;
+    ctx['session_id'] = generated;
+    return generated;
+}
+
+/** Client API / storage identifiers — not part of LLM or stateless invoke contract; strip so prompts never see them. */
+function stripClientStorageIdsFromContext(ctx: Record<string, unknown>): void {
+    delete ctx['projectId'];
+    delete ctx['projectRoot'];
+    delete ctx['sessionId'];
+    const nested = ctx['context'];
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+        const n = nested as Record<string, unknown>;
+        delete n['projectId'];
+        delete n['projectRoot'];
+        delete n['sessionId'];
+    }
 }
 
 export async function invoke(clientId: string, input: InvokeInput): Promise<InvokeResult> {
@@ -101,6 +237,19 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
         }
     }
 
+    applyRouterTransformSchemaHint(ctx);
+
+    ensureContextSessionId(ctx);
+    stripClientStorageIdsFromContext(ctx);
+
+    const topLlm =
+        typeof input.llmModel === 'string' && input.llmModel.trim()
+            ? input.llmModel.trim()
+            : undefined;
+    if (topLlm) {
+        ctx['llmModel'] = topLlm;
+    }
+
     const message = input.message ?? input.task ?? (result && typeof result === 'object' ? (result as Record<string, unknown>).message as string : undefined);
 
     const {promiseId} = await requestService.create({
@@ -112,6 +261,16 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
     
     // Track request start for observability
     trackRequestStart(promiseId);
+
+    const explicitSync = input.sync === true;
+    const explicitAsync = input.sync === false;
+    const envDefaultSync =
+        process.env.DEFAULT_SYNC_MODE === '1' || process.env.DEFAULT_SYNC_MODE === 'true';
+    const useSync = explicitSync || (envDefaultSync && !explicitAsync);
+
+    if (useSync) {
+        return runSyncInvokeChain(promiseId);
+    }
 
     return {promiseId};
 }

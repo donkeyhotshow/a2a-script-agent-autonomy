@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Applying patch…",
+    "attachments": {
+      "editPatchPath": "simulations/sync/agent/.e2e-fixture.md"
+    }
+  }
+}

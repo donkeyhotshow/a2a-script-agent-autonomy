@@ -1,0 +1,16 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Searching for calculateTotal in .",
+    "attachments": {
+      "matches": [
+        {
+          "file": "utils/helpers.js",
+          "line": 1,
+          "content": "function calculateTotal(items) {"
+        }
+      ]
+    }
+  }
+}

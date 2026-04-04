@@ -18,6 +18,8 @@ describe('shared client-api-envelope helpers', () => {
             completed: false,
             failed: false,
             asyncPending: true,
+            requestPhase: null,
+            retryAfter: null,
         });
 
         expect(normalizePromisePollStatus({ status: 'completed' })).toEqual({
@@ -25,6 +27,20 @@ describe('shared client-api-envelope helpers', () => {
             completed: true,
             failed: false,
             asyncPending: false,
+            requestPhase: null,
+            retryAfter: null,
+        });
+
+        expect(
+            normalizePromisePollStatus({
+                status: 'processing',
+                requestPhase: 'llm_waiting',
+                retryAfter: '2099-01-01T00:00:00.000Z',
+            })
+        ).toMatchObject({
+            status: 'processing',
+            requestPhase: 'llm_waiting',
+            retryAfter: '2099-01-01T00:00:00.000Z',
         });
     });
 });

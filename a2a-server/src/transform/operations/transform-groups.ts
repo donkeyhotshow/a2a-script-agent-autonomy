@@ -88,12 +88,15 @@ export async function applyDrop(
   if (parts.length === 0) return;
 
   let obj: unknown = context.$out;
+  const lastPart = parts[parts.length - 1];
   for (let i = 0; i < parts.length - 1; i++) {
     if (!obj || typeof obj !== 'object') return;
-    obj = (obj as Record<string, unknown>)[parts[i]!];
+    const part = parts[i];
+    if (part === undefined) return;
+    obj = (obj as Record<string, unknown>)[part];
   }
-  if (obj && typeof obj === 'object') {
-    delete (obj as Record<string, unknown>)[parts[parts.length - 1]!];
+  if (lastPart !== undefined && obj && typeof obj === 'object') {
+    delete (obj as Record<string, unknown>)[lastPart];
   }
 }
 

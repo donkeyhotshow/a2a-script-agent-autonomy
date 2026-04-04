@@ -1,0 +1,15 @@
+{
+  "context": {
+    "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
+    "execution": { "action": "dialog", "step": "completed" },
+    "history": [
+      { "role": "user", "message": "fix: resolve import error and add comprehensive tests..." }
+    ]
+  },
+  "execute": {
+    "message": "Готово! Коммит создан.\n\n```\nfix: resolve import error and add comprehensive tests\n\n- Auto-fix Vue imports in Example.vue\n- Add 9 tests with 85% coverage\n- Cover props, empty state, loading, error, events, slots\n```\n\nСессия завершена. Чем ещё могу помочь?"
+  },
+  "result": {
+    "completed": true
+  }
+}

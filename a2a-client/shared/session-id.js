@@ -1,5 +1,5 @@
 /**
- * Session ID rules shared by Vite Client API (`vite-plugin-a2a`) and `@a2a/sdk` routes.
+ * Session ID rules shared by Vite Client API (`@a2a-client/vite-plugin`) and `@a2a/sdk` routes.
  */
 
 export const SAFE_SEGMENT = /^[a-zA-Z0-9_-]+$/;

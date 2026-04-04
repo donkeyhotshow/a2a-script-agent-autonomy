@@ -66,7 +66,7 @@ Client API → A2A Server → AI Integration
 - `ai-integration/proxy/promise_routes.py` - Promise API endpoints
 - `ai-integration/proxy/promises.py` - Promise state management
 - `ai-integration/proxy/daemon.py` - Background processing
-- `a2a-client/vite-plugin-a2a/routes/stepRoutes.js` - `/async` polling
+- `a2a-client/packages/vite-plugin/routes/stepRoutes.js` - `/async` polling
 
 ### States
 - `pending` - Promise created, not yet processed
@@ -126,7 +126,7 @@ Step N                              Step N+1
 ### Key Files
 - `a2a-client/docs/RED-ROOM.md` - Full specification
 - `a2a-client/web/js/action-executor.js` - Tool execution
-- `a2a-client/vite-plugin-a2a/routes/stepRoutes.js` - Step persistence
+- `a2a-client/packages/vite-plugin/routes/stepRoutes.js` - Step persistence
 
 ---
 
@@ -351,7 +351,7 @@ storage/sessions/{sessionId}/
 
 ### Key Files
 - `a2a-client/docs/SESSION-STORAGE.md` - Full specification
-- `a2a-client/vite-plugin-a2a/routes/handlers/step-handlers.js` - File I/O
+- `a2a-client/packages/vite-plugin/routes/handlers/step-handlers.js` - File I/O
 
 ---
 
@@ -472,6 +472,23 @@ Server Response                     Client Action
                                     │ (final step state)     │
                                     └─────────────────────────┘
 ```
+
+---
+
+## Execution mode parity (script / dialog / agent)
+
+One **action key** per `execute` and per `result` ([`AGENTS.md`](../AGENTS.md)). Operators and goldens should treat **script** as first-class alongside dialog and agent:
+
+| Concern | Script | Dialog | Agent |
+|--------|--------|--------|-------|
+| **execute** | Same rule: one key (`form`, `script`, `run-script`, `execute-command`, `message`, …). Router uses `execute.form.choices` like other modes. | `form`, `message`, … | Tools + `form` / `message` |
+| **result** | `result.script`, `result.run-script`, `result.execute-command`, `result.choice`, `result.message` — one key per turn. | `result.message`, `result.choice` | Tool results + `message` / `choice` |
+| **context.history** | Can accumulate rows compatible with agent shape (`role`, `message`, optional `step` / `action`). Reference: `simulations/sync/script/` steps 4–10. | Per user/assistant turns | Tool loop |
+| **context.workbench** | Same `sections` / `slots` model; script goldens include non-empty `sections` mid-chain where parity matters. | Same | Same (+ gray-room `slots` in some flows) |
+| **Web DTO / received.json** | `buildWebExecute` strips client-only keys; pending script may surface as `attachments.pendingClientAction`. | Same sanitizer | Same |
+| **Session storage** | Steps under `a2a-client/storage/sessions/`; rebuild from highest step with `server-response.json`. | Same | Same |
+
+**E2E smoke:** `scripts/e2e-client-api-replay-sync-script.mjs` replays Client API `client.json` bodies (sync script path).
 
 ---
 

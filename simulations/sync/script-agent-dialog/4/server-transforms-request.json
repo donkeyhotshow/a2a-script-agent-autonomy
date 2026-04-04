@@ -1,0 +1,65 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "dialog",
+        "step": "request"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.context.history",
+      "value": [
+        {
+          "role": "user",
+          "message": "При запуске dev-сервера вылетает ошибка Cannot find module @/components/Missing из resources/js/components/Example.vue."
+        },
+        {
+          "role": "assistant",
+          "message": "Ошибка импорта: Vue не может найти @/components/Missing в resources/js/components/Example.vue."
+        },
+        {
+          "role": "assistant",
+          "message": "Автоматический скрипт fix-vue-imports применил патч: импорт назад заменён на '@/components/Missing', можно продолжать."
+        }
+      ]
+    },
+    {
+      "op": "set",
+      "path": "$.context.workbench",
+      "value": {
+        "sections": {
+          "autoScriptTrigger": {
+            "scriptId": "fix-vue-imports",
+            "triggeredBy": "assistant",
+            "errorMessage": "Cannot find module @/components/Missing referenced from Example.vue",
+            "file": "resources/js/components/Example.vue",
+            "autoRun": true,
+            "filesModified": [
+              "resources/js/components/Example.vue"
+            ],
+            "lastOutput": "Replaced './Missing' with '@/components/Missing' in Example.vue."
+          }
+        }
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "form": {
+          "title": "Message",
+          "description": "Автоматический скрипт fix-vue-imports применил патч, продолжайте разговор."
+        }
+      }
+    }
+  ]
+}

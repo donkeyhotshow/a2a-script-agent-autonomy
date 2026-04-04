@@ -6,7 +6,7 @@ SDK (`a2a-client/packages/sdk`) — Express API и логика сессий; к
 
 **Live stack:** For normal full-stack development, start/restart only from the **repository root** (`.\start-all.bat` / `./start-all.sh`). The `npm start` / standalone SDK flow below is for SDK-only work, not for replacing root orchestration.
 
-**Important:** In Vite dev, the **browser usually hits `vite-plugin-a2a` first**, not this process, for `/api/a2a/*`. See [`docs/CLIENT_API_WEB_SDK.md`](../docs/CLIENT_API_WEB_SDK.md).
+**Important:** In Vite dev, the **browser usually hits `@a2a-client/vite-plugin` first**, not this process, for `/api/a2a/*`. See [`docs/CLIENT_API_WEB_SDK.md`](../docs/CLIENT_API_WEB_SDK.md).
 
 ## Архитектура
 
@@ -71,7 +71,7 @@ Same router is mounted at multiple prefixes:
 }
 ```
 
-Сокращение: поле **`task`** со значением **`id`** выбора, если предыдущий шаг уже показывал **choices** (как `buildSubmitResult` в `vite-plugin-a2a`).
+Сокращение: поле **`task`** со значением **`id`** выбора, если предыдущий шаг уже показывал **choices** (как `buildSubmitResult` в `packages/vite-plugin/routes/step-routes-router-flow.js`).
 
 Legacy / отдельный маршрут SDK: `POST .../action` с телом `{ "choice": "..." }` — см. `sessions-async.ts`.
 

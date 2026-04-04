@@ -37,7 +37,7 @@ def health():
     from .ollama_manager import get_ollama_host_port, check_port_occupied
     from .ai_hub_config import _CONFIG_PATH, get_ai_hub_config
     from .caching import get_cache
-    from .config import SIMULATION_ENABLED
+    from .config import SIMULATION_ENABLED, PROMISE_DAEMON_ONLY
     
     ollama_host, ollama_port = get_ollama_host_port()
     ollama_available = check_port_occupied(ollama_host, ollama_port)
@@ -53,6 +53,7 @@ def health():
         "ai_hub_config": (_CONFIG_PATH or os.environ.get('AI_HUB_CONFIG', '')) or None,
         "ai_hub_rules": len(cfg.get('rules') or []),
         "simulation_enabled": SIMULATION_ENABLED,
+        "promise_daemon_only": PROMISE_DAEMON_ONLY,
         "cache": cache.status(),
     }
 
@@ -91,22 +92,28 @@ def health_ready():
     """Проверка готовности прокси к обработке запросов (readiness probe)"""
     from .ollama_manager import get_ollama_host_port, check_port_occupied
     from .caching import get_cache
+    from .providers import get_router
     
     ollama_host, ollama_port = get_ollama_host_port()
     ollama_available = check_port_occupied(ollama_host, ollama_port)
     cache = get_cache()
+
+    router = get_router()
+    default_provider = getattr(router.config, 'default_provider', None)
+    requires_ollama = default_provider == 'ollama'
     
-    # Прокси готов только если Ollama доступна
-    if not ollama_available:
+    if requires_ollama and not ollama_available:
         return {
             "status": "not_ready",
             "reason": "ollama_not_available",
+            "default_provider": default_provider,
             "ollama_host": ollama_host,
             "ollama_port": ollama_port,
         }, 503
     
     return {
         "status": "ready",
-        "ollama_available": True,
+        "default_provider": default_provider,
+        "ollama_available": ollama_available,
         "cache_status": cache.status().get('status', 'unknown'),
     }

@@ -1,0 +1,9 @@
+{
+  "context": {
+    "task": "простий діалог без форми",
+    "execution": {
+      "action": "dialog",
+      "step": "message-only"
+    }
+  }
+}

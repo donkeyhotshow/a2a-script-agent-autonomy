@@ -1,0 +1,18 @@
+{
+  "context": {
+    "task": "Gray room clarify — dialog golden (structured clarify slot + trace)",
+    "execution": {
+      "action": "dialog",
+      "step": "message-only"
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Which ORM should we use?"
+      }
+    ]
+  }
+}

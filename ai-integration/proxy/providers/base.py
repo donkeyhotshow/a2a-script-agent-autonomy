@@ -32,10 +32,11 @@ class ProviderConfig:
     api_key: Optional[str] = None
     models: List[str] = field(default_factory=list)
     fallback_models: Dict[str, str] = field(default_factory=dict)
-    timeout: int = 30
+    timeout: int = 0  # 0 = no aiohttp total limit on LLM requests
     max_retries: int = 3
     retry_delay: float = 1.0
     rate_limit_rpm: Optional[int] = None  # Requests per minute
+    request_delay_seconds: Optional[float] = None  # Delay between requests after response
     
     def get_api_key(self) -> Optional[str]:
         """Get API key, resolving environment variable references"""
@@ -88,6 +89,16 @@ class LLMProvider(ABC):
         self._request_count = 0
         self._error_count = 0
         self._lock = asyncio.Lock()
+        
+        # Rate limiting
+        self._rate_limit_lock = asyncio.Lock()
+        self._request_times: List[float] = []
+        self._rate_limit_rpm = config.rate_limit_rpm
+        
+        # Request delay after response
+        self._request_delay_lock = asyncio.Lock()
+        self._last_request_time: Optional[float] = None
+        self._request_delay_seconds = config.request_delay_seconds
     
     @abstractmethod
     async def generate(
@@ -167,6 +178,22 @@ class LLMProvider(ABC):
         """
         pass
     
+    def get_capabilities(self) -> Dict[str, Any]:
+        """
+        Get provider capabilities and supported features.
+        
+        Returns:
+            Dict with capability information
+        """
+        return {
+            "supports_chat": True,
+            "supports_generation": True,
+            "supports_embeddings": True,
+            "supports_streaming": False,
+            "models": self.config.models,
+            "rate_limit_rpm": self.config.rate_limit_rpm,
+        }
+    
     def supports_model(self, model: str) -> bool:
         """
         Check if provider supports a specific model.
@@ -201,6 +228,56 @@ class LLMProvider(ABC):
             return self.config.fallback_models[model]
         return None
     
+    async def _check_rate_limit(self) -> None:
+        """
+        Check and enforce rate limiting.
+        
+        Raises:
+            Exception: If rate limit exceeded
+        """
+        if not self._rate_limit_rpm:
+            return
+            
+        async with self._rate_limit_lock:
+            now = time.time()
+            # Remove requests older than 1 minute
+            self._request_times = [t for t in self._request_times if now - t < 60]
+            
+            if len(self._request_times) >= self._rate_limit_rpm:
+                # Calculate wait time
+                oldest_request = min(self._request_times)
+                wait_time = 60 - (now - oldest_request)
+                if wait_time > 0:
+                    await asyncio.sleep(wait_time)
+            
+            self._request_times.append(now)
+    
+    async def _check_request_delay(self) -> None:
+        """
+        Check and enforce delay between requests after response.
+        
+        This ensures a minimum delay between consecutive requests.
+        """
+        if not self._request_delay_seconds or self._request_delay_seconds <= 0:
+            return
+            
+        async with self._request_delay_lock:
+            now = time.time()
+            if self._last_request_time is not None:
+                time_since_last = now - self._last_request_time
+                if time_since_last < self._request_delay_seconds:
+                    delay_needed = self._request_delay_seconds - time_since_last
+                    await asyncio.sleep(delay_needed)
+    
+    async def _mark_request_completed(self) -> None:
+        """
+        Mark that a request has been completed (response received).
+        This starts the delay timer for the next request.
+        """
+        if self._request_delay_seconds and self._request_delay_seconds > 0:
+            async with self._request_delay_lock:
+                self._last_request_time = time.time()
+    
     def get_status(self) -> Dict[str, Any]:
         """Get provider status information"""
         status = {
@@ -229,6 +306,10 @@ class LLMProvider(ABC):
             self._request_count += 1
             if not success:
                 self._error_count += 1
+        
+        # Mark request completed for delay tracking
+        if success:
+            await self._mark_request_completed()
     
     async def _with_retry(self, operation, *args, **kwargs):
         """Execute operation with retry logic"""

@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { loadNewSession } from '../../vite-plugin-a2a/storage/newSessions.js';
+import { loadNewSession } from '../../packages/vite-plugin/storage/newSessions.js';
 
 describe('newSessions corruption handling', () => {
     let tmpDir;

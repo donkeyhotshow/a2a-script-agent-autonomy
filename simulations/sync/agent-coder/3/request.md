@@ -8,12 +8,25 @@ most relevant files before answering.
 
 ```json
 {
-  "message": "a short summary or instruction for the user",
-  "action": "continue",
-  "params": {
-    "query": "",
-    "path": "",
-    "command": ""
+  "context": {
+    "task": "допоможи розібратись з кодом",
+    "execution": {
+      "action": "agent",
+      "step": "3"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "допоможи розібратись з кодом"
+      },
+      {
+        "role": "system",
+        "message": "Роутер запропонував вибір: dialog, agent, task-decomposition, fix-vue-imports. Користувач обрав 'agent' → coder."
+      }
+    ]
+  },
+  "result": {
+    "message": "як працює система авторизації?"
   }
 }
 ```

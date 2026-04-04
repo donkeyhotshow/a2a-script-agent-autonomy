@@ -33,6 +33,12 @@ export function pickInvokeContextPatch(src) {
     if (typeof o.version === 'string') {
         out.version = o.version;
     }
+    if (typeof o.session_id === 'string' && o.session_id.startsWith('srv_sess_')) {
+        out.session_id = o.session_id;
+    }
+    if (typeof o.llmModel === 'string' && o.llmModel.length > 0) {
+        out.llmModel = o.llmModel;
+    }
     if (o.vite_config && typeof o.vite_config === 'object' && !Array.isArray(o.vite_config)) {
         out.vite_config = o.vite_config;
     }

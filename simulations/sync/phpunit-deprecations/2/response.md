@@ -1,0 +1,30 @@
+# `phpunit-deprecations/2` — response
+
+Mirror of `response.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "знайти застарілі PHPUnit методи",
+    "workbench": {
+      "sections": {}
+    },
+    "execution": {
+      "action": "phpunit-deprecations",
+      "step": "scan-phpunit"
+    }
+  },
+  "execute": {
+    "script": {
+      "input": {
+        "rootDir": ".",
+        "patterns": [
+          "tests/**/*.php"
+        ]
+      },
+      "output": "phpunit_files[]",
+      "code": "scan-phpunit"
+    }
+  }
+}
+```

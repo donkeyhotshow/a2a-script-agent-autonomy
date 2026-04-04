@@ -5,6 +5,7 @@ import {config} from './config/index.js';
 import {logger} from './utils/logger.js';
 import {startRequestProcessor, stopRequestProcessor} from './daemon/request-processor-daemon.js';
 import {actionRegistry} from './actions/action-registry.js';
+import {algorithmRegistry} from './services/core/black-room/algorithm-registry.js';
 import {getPromptsTransformsPath} from './transform/index.js';
 
 // Create HTTP server
@@ -16,6 +17,15 @@ async function bootstrap(): Promise<void> {
         logger.info('[Bootstrap] Action registry loaded', {count: actionRegistry.count});
     } catch (err) {
         logger.error('[Bootstrap] Action registry load failed — router will use empty registry / fallback', {
+            error: err instanceof Error ? err.message : String(err),
+        });
+    }
+
+    try {
+        await algorithmRegistry.loadFromDirectory();
+        logger.info('[Bootstrap] Algorithm registry loaded', {count: algorithmRegistry.count()});
+    } catch (err) {
+        logger.error('[Bootstrap] Algorithm registry load failed — Black Room will use empty registry', {
             error: err instanceof Error ? err.message : String(err),
         });
     }

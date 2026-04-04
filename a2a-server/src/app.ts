@@ -23,7 +23,12 @@ app.use(express.urlencoded({extended: true, limit: '10mb'}));
 app.use(requestLogger);
 
 app.get('/health', (_req: Request, res: Response) => {
-    res.json({status: 'ok', timestamp: new Date().toISOString(), version: process.env.npm_package_version || '1.0.0'});
+    res.json({
+        status: 'ok',
+        mode: 'stateless',
+        timestamp: new Date().toISOString(),
+        version: process.env.npm_package_version || '1.0.0',
+    });
 });
 
 // Prometheus metrics endpoint

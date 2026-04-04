@@ -1,0 +1,6 @@
+{
+  "execute": {
+    "message": "Запускаю тесты с покрытием...",
+    "pendingClientAction": "script"
+  }
+}

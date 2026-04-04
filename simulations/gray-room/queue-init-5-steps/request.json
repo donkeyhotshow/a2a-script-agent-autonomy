@@ -1,0 +1,17 @@
+{
+  "context": {
+    "task": "Initialize a sequence with 5 steps for gray room processing",
+    "execution": {
+      "action": "task",
+      "step": "start"
+    },
+    "workbench": {
+      "sections": {
+        "sequence": {
+          "steps": [],
+          "headIndex": 0
+        }
+      }
+    }
+  }
+}

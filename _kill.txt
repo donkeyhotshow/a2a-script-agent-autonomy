@@ -1,0 +1,67 @@
+=== kill-all.bat : Dual-verification process termination ===
+
+[INIT] Loading PIDs from .pids.txt...
+  Loaded:   = 
+  Loaded: OLLAMA_PID = 3284 
+  Loaded: AI_INTEGRATION_PID = %p 
+  Loaded: A2A_SERVER_PID = 5180 
+  Loaded: CLIENT_API_PID = 27560 
+  Loaded: WEB_UI_PID = 17336 
+
+=== Phase 1: Kill by port ===
+
+[1] Ollama (port 11434)
+  [OK] Port 11434 free
+
+[1] ai-integration (port 11434)
+  [OK] Port 11434 free
+
+[1] a2a-server (port 3000)
+  Port 3000 occupied by PID 5180 - killing...
+  [OK] Killed PID 5180 
+  Port 3000 occupied by PID 5180 - killing...
+  [ERROR] Failed to kill PID 5180
+
+[1] client-api (port 3001)
+  Port 3001 occupied by PID 27560 - killing...
+  [OK] Killed PID 27560 
+
+[1] web-ui (port 5173)
+  Port 5173 occupied by PID 17336 - killing...
+  [OK] Killed PID 17336 
+
+=== Phase 2: Verify ports are free ===
+  [OK] Ollama port 11434 verified free
+  [OK] ai-integration port 11435 verified free
+  [OK] a2a-server port 3000 verified free
+  [OK] client-api port 3001 verified free
+  [OK] web-ui port 5173 verified free
+
+=== Phase 3: Kill by PID and process name ===
+
+[3] Ollama
+  Killing by PID 3284...
+  [OK] PID 3284 not running
+
+[3] ai-integration
+  Killing by PID %p...
+  [OK] PID %p not running
+
+[3] a2a-server
+  Killing by PID 5180...
+  [OK] PID 5180 not running
+  [OK] Killed node.exe
+
+[3] client-api
+  Killing by PID 27560...
+  [OK] PID 27560 not running
+
+[3] web-ui
+  Killing by PID 17336...
+  [OK] PID 17336 not running
+
+=== Phase 5: Verify processes gone and cleanup ===
+
+[OK] Deleted .pids.txt
+
+=== Termination complete (exit code: 0) ===

@@ -1,0 +1,7 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "I need one preference before editing package.json."
+  }
+}

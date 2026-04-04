@@ -15,7 +15,7 @@
 1. **`POST /api/a2a/sessions`** — создать сессию (локально); опционально `task`, `mode`, `projectId` / `projectRoot`.
 2. **Первый `POST /api/a2a/sessions/:id/next`** — **направление работы**: `result.message` или сокращённо поле **`task`** как **свободный текст** (пока нет `execute.form.choices` на предыдущем шаге).
 3. Client API вызывает **`POST /api/v1/invoke`**; сервер (keyword-router) часто возвращает **`execute.form.choices`**.
-4. **Второй `POST .../next`** — выбор варианта: **`result.choice`** = **`id`** из `choices` (то же поле **`task`** интерпретируется как **id выбора**, если на шаге уже были choices — см. `buildSubmitResult` в `vite-plugin-a2a/routes/step-routes-router-flow.js`).
+4. **Второй `POST .../next`** — выбор варианта: **`result.choice`** = **`id`** из `choices` (то же поле **`task`** интерпретируется как **id выбора**, если на шаге уже были choices — см. `buildSubmitResult` в `a2a-client/packages/vite-plugin/routes/step-routes-router-flow.js`).
 
 Типовые **`id`** при отсутствии keyword-match: **`dialog`**, **`agent`**, **`task-decomposition`** — см. **[`shared/router-static-choices.json`](../../shared/router-static-choices.json)** и fallback в [`action-request-processor.ts`](../../a2a-server/src/services/core/request-processor/action-request-processor.ts). При совпадении ключевых слов в тексте задачи список может быть другим (например `fix-vue-imports`).
 

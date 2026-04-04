@@ -11,11 +11,16 @@
   },
   "execute": {
     "form": {
-      "textarea": {
-        "name": "message",
-        "label": "Повідомлення",
-        "required": true
-      }
+      "title": "Повідомлення",
+      "description": "Введіть повідомлення для продовження діалогу.",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
     }
   }
 }

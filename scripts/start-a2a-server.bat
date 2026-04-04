@@ -1,6 +1,10 @@
 @echo off
-chcp 65001 >nul
+if not defined CMDEXTVERSION (
+    echo ERROR: Run from cmd.exe: cmd /c "%~f0"
+    exit /b 1
+)
 REM Start a2a-server service only
+cd /d "%~dp0.."
 
 set SERVER_PORT=3000
 set PID_FILE=.pids.txt
@@ -8,9 +12,9 @@ set PID_FILE=.pids.txt
 echo [A2A-Server] Starting on port %SERVER_PORT%...
 
 REM Check if already running
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%SERVER_PORT%" ^| findstr "LISTENING"') do (
-    echo [A2A-Server] Already running on PID %%p
-    echo A2A_SERVER_PID=%%p >> %PID_FILE%
+for /f "tokens=5" %%A in ('netstat -ano ^| findstr ":%SERVER_PORT%" ^| findstr "LISTENING"') do (
+    echo [A2A-Server] Already running on PID %%A
+    (echo A2A_SERVER_PID=%%A)>>"%PID_FILE%"
     exit /b 0
 )
 
@@ -23,12 +27,12 @@ start "a2a-server" /d "a2a-server" cmd /c "npm run dev:no-auth ^> logs\server.lo
 powershell -Command "Start-Sleep -Seconds 10"
 
 REM Capture PID
-for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%SERVER_PORT%" ^| findstr "LISTENING"') do (
-    echo A2A_SERVER_PID=%%p >> %PID_FILE%
-    echo [A2A-Server] Started on PID %%p
+for /f "tokens=5" %%A in ('netstat -ano ^| findstr ":%SERVER_PORT%" ^| findstr "LISTENING"') do (
+    (echo A2A_SERVER_PID=%%A)>>"%PID_FILE%"
+    echo [A2A-Server] Started on PID %%A
     exit /b 0
 )
 
 echo [A2A-Server] Failed to start
-echo A2A_SERVER_PID= >> %PID_FILE%
+(echo A2A_SERVER_PID=)>>"%PID_FILE%"
 exit /b 1

@@ -36,7 +36,7 @@ export class GlobMatcher {
         let regexStr = '';
         let i = 0;
         while (i < pattern.length) {
-            const char = pattern[i];
+            const char = pattern.charAt(i);
             if (char === '*' && pattern[i + 1] === '*') {
                 if (pattern[i + 2] === '/') {
                     regexStr += '(?:.*[/\\\\])?';

@@ -2,6 +2,7 @@
  * Reporters — CLI output and entrypoint for sim-validate
  */
 
+import {existsSync} from 'node:fs';
 import {join} from 'node:path';
 import {parseArgs, printHelp, getAllSimulations, SIMULATIONS_DIR} from './scanner.js';
 import {validateSimulation, type SimulationValidationResult, type ValidateOptions} from './validators.js';
@@ -22,10 +23,17 @@ export function main(): void {
     let targets: {path: string; name: string}[] = [];
 
     if (args.all) {
-        targets = getAllSimulations();
+        targets = getAllSimulations(args.includeSubsteps);
     } else if (args.sim) {
         const name = args.sim.replace(/\\/g, '/');
-        const path = join(SIMULATIONS_DIR, ...name.split('/').filter(Boolean));
+        const parts = name.split('/').filter(Boolean);
+        let path = join(SIMULATIONS_DIR, ...parts);
+        if (!existsSync(path)) {
+            const underSync = join(SIMULATIONS_DIR, 'sync', ...parts);
+            if (existsSync(underSync)) {
+                path = underSync;
+            }
+        }
         targets = [{path, name}];
     } else {
         console.error('Error: specify --sim <name> or --all\n');

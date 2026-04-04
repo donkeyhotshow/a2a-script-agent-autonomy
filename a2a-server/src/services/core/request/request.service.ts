@@ -61,6 +61,36 @@ export function isRetryableError(err: string): boolean {
     return /fetch failed|econnrefused|etimedout|network|timeout|socket hang up/.test(s);
 }
 
+/**
+ * User-visible copy for invoke/session paths. Never mention proxy, Ollama, or ports — details stay in server logs.
+ */
+export const CLIENT_SAFE_PROCESSING_ERROR = "We couldn't complete this step. Please try again.";
+
+/**
+ * Map upstream/network failures to a client-safe string. Non-infrastructure messages pass through.
+ */
+export function humanizeUpstreamErrorMessage(raw: string): string {
+    const s = String(raw ?? '').trim();
+    if (!s) return CLIENT_SAFE_PROCESSING_ERROR;
+    const low = s.toLowerCase();
+    if (low === 'fetch failed' || low === 'failed to fetch') {
+        return CLIENT_SAFE_PROCESSING_ERROR;
+    }
+    if (/econnrefused|connect econnrefused/i.test(s)) {
+        return CLIENT_SAFE_PROCESSING_ERROR;
+    }
+    if (/etimedout|timed out/i.test(s) && !/read\s+(timed?\s*out|timeout)/i.test(s)) {
+        return CLIENT_SAFE_PROCESSING_ERROR;
+    }
+    if (isRetryableError(s)) {
+        return CLIENT_SAFE_PROCESSING_ERROR;
+    }
+    if (/llm response fetch failed|^llm error:/i.test(s)) {
+        return CLIENT_SAFE_PROCESSING_ERROR;
+    }
+    return s;
+}
+
 let storageSingleton: RequestFileStorage | null = null;
 function getRequestStorage(): RequestFileStorage {
     if (!storageSingleton) {
@@ -147,7 +177,7 @@ export class RequestService {
         if (status === 'completed' || status === 'failed') req.completedAt = now;
         if (result !== undefined) req.result = result;
         if (error !== undefined) req.error = error;
-        if (status === 'completed' && result !== undefined) {
+        if ((status === 'completed' || status === 'failed') && result !== undefined) {
             const outCtx = result['context'] as Record<string, unknown> | undefined;
             if (outCtx && typeof outCtx === 'object' && !Array.isArray(outCtx)) {
                 req.context = {...(req.context as Record<string, unknown>), ...outCtx};
@@ -297,6 +327,20 @@ export class RequestService {
     }
 
     /**
+     * Claim a specific pending request (for sync /invoke — same transition as getNextPending).
+     */
+    async claimPendingByPromiseId(promiseId: string): Promise<RequestResult | null> {
+        const req = await getRequestStorage().load(promiseId);
+        if (!req || req.status !== 'pending') return null;
+        req.status = 'processing';
+        req.startedAt = new Date();
+        (req as RequestResult).retryAfter = undefined;
+        await getRequestStorage().save(req);
+        logger.info('Claimed request by promiseId', {promiseId, retryCount: req.retryCount});
+        return req;
+    }
+
+    /**
      * Get queue length
      */
     async getQueueLength(): Promise<number> {
@@ -325,6 +369,21 @@ export class RequestService {
             retentionMs,
             maxFiles: maxFiles > 0 ? maxFiles : undefined,
         });
+    }
+
+    /**
+     * Shallow-merge fields into the stored request `context` (for UI: `requestPhase`, etc.).
+     */
+    async patchRequestContext(promiseId: string, patch: Record<string, unknown>): Promise<boolean> {
+        const req = await getRequestStorage().load(promiseId);
+        if (!req) return false;
+        const prev =
+            req.context && typeof req.context === 'object' && !Array.isArray(req.context)
+                ? (req.context as Record<string, unknown>)
+                : {};
+        req.context = {...prev, ...patch};
+        await getRequestStorage().save(req);
+        return true;
     }
 
     /**

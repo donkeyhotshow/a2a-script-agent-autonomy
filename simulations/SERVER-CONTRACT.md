@@ -12,11 +12,13 @@ Together, the goldens show **end-to-end contract behavior** for:
 
 | Layer | What is fixed by fixtures |
 |-------|---------------------------|
-| **Server** | `request.json` / `response.json`: single action key under `execute`, action-key `result`, `context` (`execution`, `history`, `workbench`, …), transforms (`server-transforms-*.json`). |
+| **Server** | `request.json` / `response.json`: single action key under `execute`, action-key `result`, `context` (`execution`, `history` as **array**, `workbench`, …), transforms (`server-transforms-*.json`). |
 | **Client API → Web** | `received.json`: Web execute DTO after sanitization (no client-only tool keys under top-level `execute`; see `buildWebExecute` in client code). |
 | **Flows** | Router choices, dialog + LLM tool turns, agent coder/smart paths, analyze/RAG-style steps, deterministic “fix” actions, task decomposition, orchestration, invoke edge cases, gray-room **internal** traces. |
 
 So: **simulations show how the system is designed to work** for the sync contract; they are the **reference** when changing processors, transforms, or the Client API merge.
+
+**Client → Server:** `POST /api/v1/invoke` body `context.history` must be an array (use `[]` when empty). [`a2a-client/shared/a2a-invoke-builders.mjs`](../../a2a-client/shared/a2a-invoke-builders.mjs) (`sanitizeContextForServer`) enforces that for Vite + SDK invoke builders.
 
 `sim-lint --all` currently validates **89** registered step/scenario roots (each named like `scenario/step` or a root scenario with `request.json`).
 
@@ -65,7 +67,7 @@ These are **known blind spots**, not necessarily bugs:
 | **Markdown vs JSON** | `request.md` / `response.md` can drift from sibling `.json`; there is no strict CI equality check. Use [`SIM-AUDIT-WORKBOOK.md`](./SIM-AUDIT-WORKBOOK.md). |
 | **Execute allowlist** | `VALID_EXECUTE_TYPES` in `a2a-server/scripts/sim-lint.ts` must stay aligned with real handlers and transforms when adding tools. |
 | **Two HTTP surfaces** | Full web app uses Client API + session store; `POST /api/v1/invoke` is the server core. Goldens align with the **protocol contract**; see repo `AGENTS.md` for endpoint confusion. |
-| **Substep validation** | `sim-validate` does not treat each `N-sub-M/` as a standalone end-user simulation (by design). |
+| **Substep validation** | `sim-validate --all` **includes** `N-sub-M/` folders by default (use `--skip-substeps` to exclude). Fixtures must still satisfy the same `response.json` shape rules as numeric steps. |
 
 When server behavior changes, update **code and goldens together** so `sim:lint` / `sim:validate` stay green.
 

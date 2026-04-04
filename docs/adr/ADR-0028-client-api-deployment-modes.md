@@ -7,7 +7,7 @@ Date: 2026-03-24
 
 The Web UI must talk to a **Client API** that owns sessions, storage paths, and proxying to the stateless A2A Server. Two deployment shapes exist in the repo:
 
-1. **Vite dev stack (`a2a-client`, port 5173)** — `vite-plugin-a2a` serves Client API routes under **`/api/a2a/*`** on the same origin as the web app (no separate HTTP server port for API in typical dev).
+1. **Vite dev stack (`a2a-client`, port 5173)** — `@a2a-client/vite-plugin` serves Client API routes under **`/api/a2a/*`** on the same origin as the web app (no separate HTTP server port for API in typical dev).
 2. **Standalone SDK server (`a2a-client/packages/sdk`, often port 3001)** — an Express (or compatible) server for headless clients, tooling, or layouts where the UI is not served by Vite.
 
 Documentation historically referred to “Client API on 3001” only, which mismatched the primary web developer path and produced wrong troubleshooting and curl examples.

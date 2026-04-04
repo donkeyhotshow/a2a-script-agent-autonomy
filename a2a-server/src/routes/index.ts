@@ -1,13 +1,13 @@
 import {Router, Request, Response, NextFunction} from 'express';
-import {createRequire} from 'node:module';
-const _require = createRequire(import.meta.url);
-// ajv is CJS; createRequire gives us the class directly and satisfies ESM + strict TS
-const Ajv = _require('ajv') as typeof import('ajv').default;
+import Ajv from 'ajv';
 import {readFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {invoke} from '../services/utils/invoke.service.js';
 import requestsRouter from './requests.routes.js';
+import type { FileBlock } from '../types/index.js';
+
+const ajv = new (Ajv as any)({strict: false, allErrors: true, validateFormats: false});
 
 const router = Router();
 
@@ -21,7 +21,6 @@ const SERVER_INVOKE_REQUEST_SCHEMA_PATH = join(
     '../../../docs/new-request-flow/json-schemas/server-invoke-request.schema.json'
 );
 
-const ajv = new Ajv({strict: false, allErrors: true, validateFormats: false});
 let validateInvokeRequestBody: ((data: unknown) => boolean) | null = null;
 try {
     const schema = JSON.parse(readFileSync(SERVER_INVOKE_REQUEST_SCHEMA_PATH, 'utf-8'));
@@ -82,7 +81,7 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
             task: body.task,
             context: body.context,
             message: body.message,
-            code_blocks: body.code_blocks as unknown as import('../types/index.js').FileBlock[] | undefined,
+            code_blocks: body.code_blocks as FileBlock[] | undefined,
             action: body.action,
             selectedAction: body.selectedAction,
             stepId: body.stepId,
@@ -91,6 +90,26 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
             sync: body.sync,
         });
 
+        // Sync chain timed out or could not attach a terminal payload — must poll by promiseId, not empty sync JSON.
+        const pid = invokeResult.promiseId;
+        const incomplete =
+            typeof pid === 'string' &&
+            pid.length > 0 &&
+            invokeResult.execute === undefined &&
+            invokeResult.message === undefined &&
+            invokeResult.context === undefined;
+        if (incomplete) {
+            res.json({
+                success: true,
+                data: {
+                    promiseId: pid,
+                    status: 'pending',
+                    pollUrl: `/requests/${pid}`,
+                }
+            });
+            return;
+        }
+
         // Synchronous response
         if (invokeResult.sync || body.sync) {
             res.json({
@@ -98,6 +117,7 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
                 data: {
                     sync: true,
                     execute: invokeResult.execute,
+                    message: invokeResult.message,
                     context: invokeResult.context,
                 }
             });

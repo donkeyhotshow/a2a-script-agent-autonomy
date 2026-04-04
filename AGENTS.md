@@ -2,15 +2,24 @@
 
 Guidance for agents working in this repository.
 
+**Self-Upgrade in one sentence:** **doing work** here always has **two phases**:  
+1) **Execute concrete tasks** from `tasks/` + `DEV_STATE` in the IDE.  
+2) **When those are empty, immediately switch to driving prompts through the Client API or `monitor-and-process-tasks.js`**, let those sessions surface new, testable tasks, and write them back into `tasks/` + `DEV_STATE` instead of stopping.
+
 ## Quick Reference
 
 | Topic | Reference |
 |-------|-----------|
 | **Windows live stack restart** | **`start-all.bat`** from repo root only — not per-service `npm run dev` ([`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md)) |
 | **Unified manual path** | **Client API only:** create session → **`mode: "agent"`** (or `execution.action`) → **`task`** → `next` + poll `async` — [Unified manual path](#unified-manual-path-client-api) |
+| **Backlog prompts (live stack)** | **[`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md)** + **[`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md)** — indexed tasks; **must** use Client API as the UI (`sessions` / `next` / `async` + seed `mode: "agent"`), not `invoke` alone |
+| **Self-Upgrade order (policy)** | Do **`tasks/`** + **[`tasks/ide-prompts/`](tasks/ide-prompts/README.md)** first; **before large monitor / session volume**, archive needed **`a2a-client/storage/sessions/`** trees ([`tasks/README.md`](tasks/README.md) step 2); run **`prompts-to-agent-mode/`** / monitor **after** — not enforced in code; **[`tasks/README.md`](tasks/README.md)** (*Self-Upgrade order*) |
+| **Single pipeline (API → prompts → observe → improve)** | **[`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md)** — linear sequence + failure classes + doc map |
+| **Master prompt (run full prompt index + loop)** | **[`START-FULL-SPECTRUM.md`](START-FULL-SPECTRUM.md)** — root; paste Agent block into IDE or session `task` |
 | **Sessions / curl / agent tests** | Same surface: not `invoke` alone — [technical notes](#sessions-tests-and-agent-mode-where-to-send-http) |
-| **Schema debugging start point** | **[`scripts/direct-tests/README.md`](scripts/direct-tests/README.md)** — reproduce shape issues here first, then sims/e2e |
-| Imports | `.js` suffix with NodeNext resolution |
+| **Schema debugging start point** | **[`tests/direct-tests/README.md`](tests/direct-tests/README.md)** — reproduce shape issues here first, then sims/e2e |
+| **Offline validators (LLM / execute shape, sessions, sims)** | **[`tests/direct-tests/validators/README.md`](tests/direct-tests/validators/README.md)** — scripts flag contract mistakes (e.g. top-level `message` + tool vs `execute.message`); run from repo root: `scan-promise-bodies`, `scan-session-responses`, `verify:gray-room`, `audit:sim-choice-descriptions`, `sim:check-md` |
+| Imports | **Server / NodeNext:** `.js` on relative imports. **`premium-ui`:** `@/` (Vite) — [`.cursor/rules/code-hierarchy.mdc`](.cursor/rules/code-hierarchy.mdc) |
 | Test ENCRYPTION_KEY | Exactly 32 characters |
 | Test DB | `a2a_test` (not `a2a_server`) |
 | Action-Key Shape | ONE action per execute/result |
@@ -24,9 +33,10 @@ Guidance for agents working in this repository.
 
 1. **Prune** — Trim root and module `DEV_STATE.md` and any checklists: drop completed items, duplicates, noise.
 2. **Discover** — Scan code, simulations, risks, backlog for real, testable work.
-3. **Write** — Add concrete tasks to `DEV_STATE` and `tasks/pending/` as needed, **then** continue the normal execute cycle.
+3. **Write** — Add concrete tasks to `DEV_STATE` and `tasks/pending/` as needed.
+4. **Then drive the stack** — If, after (1)–(3), there is still no concrete work item to pick up, that is **not** a stop signal. It is an instruction to **hit the Client API or monitor**: create or resume sessions via `/api/a2a/sessions` (or `monitor-and-process-tasks.js` + `prompts-to-agent-mode/`) and let those runs surface new, testable tasks that you then write back into `DEV_STATE` + `tasks/`.
 
-Stopping with an empty queue **without** (1)–(3) is a protocol violation. Full rationale: [DEV_STATE Protocol](#dev-state-protocol); task wording: [methodology/tasks.md](methodology/tasks.md).
+Stopping with an empty queue **without** (1)–(3) is a protocol violation. Full rationale: [DEV_STATE Protocol](#dev-state-protocol); task wording: [methodology/tasks.md](archive/methodology/tasks.md).
 
 **Minimal or vague user prompt is not a stop signal.** Silence, a one-liner, or no restated acceptance criteria does **not** mean “single turn then exit.” Keep iterating until stated criteria are met (or until you have honestly blocked and logged why). If there is no pending task text, still run (1)–(3) above instead of stopping. A stuck session after `next` is usually a **router contract** issue—inspect `GET …/sessions/{id}` and send **`message`** vs **`choice`** per [Router dialog](#router-dialog-two-beats--read-this); that is a fix, not an excuse to halt.
 
@@ -38,7 +48,7 @@ This repo’s **one integration contour** for driving the stack after a **manual
 
 ### Steps (normative)
 
-1. **Create a new session** — `POST /api/a2a/sessions` on the Client API base URL (default dev: `http://localhost:5173`). Standalone SDK uses the **same path contract** on its own origin/port; see [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md). Optional on the same request: **`projectId`** / **`projectRoot`** (project storage), **`task`** (seed `context.task`), **`mode`** or **`execution`** (seed `context.execution` — see [`session-create-initial.js`](a2a-client/vite-plugin-a2a/routes/utils/session-create-initial.js)).
+1. **Create a new session** — `POST /api/a2a/sessions` on the Client API base URL (default dev: `http://localhost:5173`). Standalone SDK uses the **same path contract** on its own origin/port; see [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md). Optional on the same request: **`projectId`** / **`projectRoot`** (project storage), **`task`** (seed `context.task`), **`mode`** or **`execution`** (seed `context.execution` — see [`session-create-initial.js`](a2a-client/packages/vite-plugin/routes/utils/session-create-initial.js)).
 2. **Drive turns with `POST /api/a2a/sessions/{id}/next`**, then poll **`GET /api/a2a/sessions/{id}/async`** (and/or **`GET …/sessions/{id}`** to hydrate `execute`) until the step settles — same contract as the web UI.
 
 ### Router dialog (two beats — read this)
@@ -48,7 +58,7 @@ The flow is **not** a single “send everything once” form. It mirrors the **t
 1. **Beat A — direction of work** — Right after create, the session usually exposes `execute.form` with a **text task field** (“Enter your task”). The first `POST …/next` must carry that text as **`result.message`** (or use the shorthand **`task`** field in the JSON body; the plugin maps it to `message` when the prior step had **no** `form.choices`). The server then classifies the request and may return a **router** screen.
 2. **Beat B — pick a pipeline (e.g. Agent)** — When the latest server-backed `execute.form` includes **`choices`** (each with stable **`id`**, `label`, optional `description`, `type` such as `agent` / `dialog`), the UI shows **buttons** instead of free text. The next `POST …/next` must send **`result.choice`** set to the chosen row’s **`id`**. Shorthand: put that id in the top-level **`task`** field — if the previous step had choices, the same `task` key is interpreted as **`choice`**, not free text:
 
-```46:51:a2a-client/vite-plugin-a2a/routes/step-routes-router-flow.js
+```46:51:a2a-client/packages/vite-plugin/routes/step-routes-router-flow.js
 export function buildSubmitResult({ body, hasChoices }) {
     const { result, task } = body || {};
     if (result) return result;
@@ -59,7 +69,7 @@ export function buildSubmitResult({ body, hasChoices }) {
 
 The coarse UI stage for that router screen is **`routing`** (choices or `execution.action === 'router'` / step `routing`):
 
-```41:47:a2a-client/vite-plugin-a2a/routes/utils/session-stage-machine.js
+```41:47:a2a-client/packages/vite-plugin/routes/utils/session-stage-machine.js
     const hasChoices = !!(form && Array.isArray(form.choices) && form.choices.length > 0);
 
     // Router stage: explicit routing form with choices.
@@ -70,7 +80,7 @@ The coarse UI stage for that router screen is **`routing`** (choices or `executi
 
 **Operator shortcut:** seed **`mode: "agent"`** (or `execution.action: "agent"`) on `POST /sessions` so `context.execution` starts in the agent pipeline; the server may still emit intermediate forms depending on prompts — always **inspect `GET …/sessions/{id}`** (`includeContext=1` when debugging) before composing the next body.
 
-**Stable choice `id` values (fallback router, no keyword match):** `dialog`, `agent`, `task-decomposition` — canonical copy in **[`shared/router-static-choices.json`](shared/router-static-choices.json)**; server implementation: [`a2a-server/src/services/core/request-processor/action-request-processor.ts`](a2a-server/src/services/core/request-processor/action-request-processor.ts). With keyword matches, choices use **action registry** ids (e.g. `fix-vue-imports`).
+**Stable choice `id` values (fallback router, no keyword match):** `dialog`, `agent`, `task-decomposition` — canonical labels/descriptions/registered examples in **[`shared/router-static-choices.json`](shared/router-static-choices.json)** (`staticTailChoices`); server implementation: [`a2a-server/src/services/core/request-processor/action-request-processor.ts`](a2a-server/src/services/core/request-processor/action-request-processor.ts). With keyword matches, choices use **action registry** ids (same file lists examples such as `fix-vue-imports`, `fix-laravel-namespaces-and-uses`).
 
 ### Minimal example (seed agent + task on create)
 
@@ -87,7 +97,7 @@ Content-Type: application/json
 
 You still run **`/next`** + poll **`/async`** afterward; the two-beat router may or may not appear depending on the server response.
 
-Implementation: [`session-create-initial.js`](a2a-client/vite-plugin-a2a/routes/utils/session-create-initial.js) (also `POST .../sessions/task-add` and `.../task-execute`).
+Implementation: [`session-create-initial.js`](a2a-client/packages/vite-plugin/routes/utils/session-create-initial.js) (also `POST .../sessions/task-add` and `.../task-execute`).
 
 Operator narrative and curl: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 
@@ -102,7 +112,7 @@ Two surfaces: **IDE / Cursor agent** (edits repo, runs tools) vs **Client API se
 | Wrong router beat | Read `GET …/sessions/{id}`; send **`message`** / `task` as text when there are **no** `form.choices`; send **`choice`** / `task` as **choice `id`** when choices exist. | Scripted rule: after each response, **inspect** `execute.form`; branch body shape before next `/next`. |
 | Stopped after `/next` ack | N/A | Poll **`GET …/async`** until final; **`GET …/sessions/{id}`** if unsure. |
 | Raw `invoke` only | Prefer Client API for session persistence; use server direct only as **documented** workaround. | Default path: **`POST /sessions`** → `/next` → `/async`, not `POST /api/v1/invoke` alone. |
-| Stack / promise pending | Diagnose ports (`AGENTS.md` Debugging), retry with backoff; log env (Ollama, AI hub). | Same; do not declare failure on first `pending`. |
+| Stack / promise pending | Diagnose ports (`AGENTS.md` Debugging), retry with backoff; log env (Ollama, AI hub). If Ollama is **actively generating**, do **not** restart the stack — [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) → *Ollama is generating — pause other work*. If Ollama is **idle** but status stays `processing`, treat as **stuck**. | Same; do not declare failure on first `pending`. After you confirm the model is working on the request, avoid parallel load / restarts until `async` settles. If Ollama is **idle** but status stays `processing`, treat as **stuck** — same section. |
 | 401 / 400 (auth, `ENCRYPTION_KEY`) | Fix `.env` (32-char key, `JWT_SECRET`); retry. | Same. |
 | “Need more context” loop-killer | State assumptions, proceed, verify; don’t halt on questions unless the user must decide. | Seed **`mode: "agent"`** + concrete **`task`** on create when allowed. |
 | No definition of done | Add tests, checklist, or sim run before declaring complete. | Use [`a2a-client/docs/api-testing-plan.md`](a2a-client/docs/api-testing-plan.md) for manual Client API depth. |
@@ -116,7 +126,9 @@ Driver-oriented step list: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) → 
 ## Critical Rules
 
 ### 0. Schema Debugging Entry Point (MANDATORY)
-For schema-level debugging, start with **[`scripts/direct-tests/README.md`](scripts/direct-tests/README.md)** (section *Schema debugging — start here*). Reproduce and isolate the shape issue there before moving to session-flow checks, simulations (`sim:lint` / `sim:validate`), or full end-to-end runs. [`simulations/SCHEMA.md`](simulations/SCHEMA.md) points here so sim authors do not skip this step.
+For schema-level debugging, start with **[`tests/direct-tests/README.md`](tests/direct-tests/README.md)** (section *Schema debugging — start here*). Reproduce and isolate the shape issue there before moving to session-flow checks, simulations (`sim:lint` / `sim:validate`), or full end-to-end runs. [`simulations/SCHEMA.md`](simulations/SCHEMA.md) points here so sim authors do not skip this step.
+
+**Validators** (high-signal, offline checks — not Vitest): **[`tests/direct-tests/validators/README.md`](tests/direct-tests/validators/README.md)**. They print concrete problems (wrong assistant-line placement, missing router `description`, MD/JSON drift in sim mirrors, gray-room snapshot consistency). Use them when debugging LLM outputs, proxy logs, or saved sessions before chasing issues in full UI flows.
 
 ### 1. Imports with Path Aliases
 Use `.js` extension: `import x from '@/services/x.js'` (NodeNext module resolution)
@@ -170,7 +182,7 @@ Enable sync with `DEFAULT_SYNC_MODE=1` or request `sync: true`.
 - `context.history` — execution records
 - `context.execution` — current state (action, step, progress)
 - `context.workbench` — structured state (`sections`, optional `batch`, optional `slots`)
-- `context.session_id` — session identifier
+- `context.session_id` — server-assigned session identifier (`srv_sess_*`); the client never forwards its own storage `sessionId`
 - `context.operationHistory[]` — lightweight operation tracking (llm_call, transform, interrupt, etc.) for debug/audit
 
 ### Simulation Pipeline
@@ -190,6 +202,12 @@ Note: Server always applies transforms; `response.md` optional (no LLM).
 | ENCRYPTION_KEY | 32 chars | Yes |
 | JWT_SECRET | 32+ chars | Yes |
 | DEFAULT_SYNC_MODE | 1 | No |
+| A2A_GRAY_ROOM_ENABLED | unset or `1` = on; `0`/`false` = off | No |
+| A2A_BLACK_ROOM_ENABLED | Enable Black Room (Algorithm Mode) | No |
+| A2A_BLACK_ROOM_OLLAMA_URL | Ollama URL for Black Room (default: http://localhost:11435) | No |
+| A2A_BLACK_ROOM_DEFAULT_MODEL | Default Ollama model for algorithms (default: llama3.1:8b) | No |
+| A2A_BLACK_ROOM_TIMEOUT_MS | Timeout for algorithm execution (default: 30000ms) | No |
+| A2A_ALGORITHM_REGISTRY_PATH | Path to algorithm templates (default: ./prompts/algorithms/) | No |
 
 ---
 
@@ -199,6 +217,10 @@ Note: Server always applies transforms; `response.md` optional (no LLM).
 Web UI (5173) → Client API (5173/api/a2a) → A2A Server (3000) → AI Hub (11434)
       ↓ Session Storage ↓                           → Ollama (11435)
 ```
+
+### Invoke payload privacy
+- The Client API keeps the human-facing `sessionId`/`projectId` confined to `a2a-client/storage/…` and **strips them** before proxying to `/api/v1/invoke`. Project metadata (`projectId`/`projectRoot`) and any camelCase `sessionId` are removed before the server ever sees the payload.
+- The stateless A2A Server always assigns its own `context.session_id` (currently `srv_sess_<uuid>`), returns it inside the response context, and the Client API reuses that server-issued token for follow-up invokes. That lets multi-step actions stay bound to a server session without leaking project or storage identifiers.
 
 ### Ports
 | Port | Service | Role |
@@ -277,6 +299,7 @@ curl http://localhost:5173/api/a2a/projects    # Client API
 # Test async (2-minute timeout typical)
 curl http://localhost:3000/api/v1/requests/{promiseId}/result
 # Check status, wait, retry if "processing"
+# While "processing": confirm Ollama is actually generating (e.g. curl http://localhost:11435/api/ps) before restarts; see docs/OPERATOR-CURL.md → "Ollama is generating — pause other work"
 ```
 
 ---
@@ -302,7 +325,7 @@ cd a2a-client && npm test
 | 404 on `/invoke` | Use `/api/v1/invoke` |
 | 400 on `/steps` | Check execute/messages/context fields |
 | 401 Unauthorized | Set JWT_SECRET (32+ chars); use SKIP_AUTH=1 (dev) |
-| Promise stays "pending" | Check Ollama, AI Hub, LLM response time (2 min) |
+| Promise stays "pending" | Check Ollama, AI Hub, LLM response time (2 min). If status is `processing`, **first** confirm Ollama (or proxy) is **actively generating**; **then** pause other work (no stack restart, no parallel load on the same Ollama, no extra `/next` spam) until the call completes — [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) → *Ollama is generating — pause other work*. If Ollama is **idle** but status stays `processing`, treat as **stuck**. |
 | Session not found | Verify ID format `sess_{timestamp}_{random}` |
 | LLM not responding | Check Ollama models: `curl http://localhost:11435/api/tags` |
 
@@ -310,7 +333,7 @@ cd a2a-client && npm test
 
 ## Architecture Decisions (ADRs)
 
-See [docs/adr/README.md](docs/adr/README.md) for full index (includes **Tooling**: orchestrated ADR compliance via Client API — [methodology/adr-compliance-orchestrator.md](methodology/adr-compliance-orchestrator.md)):
+See [docs/adr/README.md](docs/adr/README.md) for full index (includes **Tooling**: orchestrated ADR compliance via Client API — [methodology/adr-compliance-orchestrator.md](archive/methodology/adr-compliance-orchestrator.md)):
 - **ADR-0026** — Server LLM request prep (result → history)
 - **ADR-0027** — Canonical docs map
 - **ADR-0028** — Vite `/api/a2a` vs SDK Client API
@@ -385,4 +408,5 @@ Confirm previous phase passed and is stable.
 | [simulations/SCHEMA.md](simulations/SCHEMA.md) | Simulation contract |
 | [docs/ENV-MATRIX.md](docs/ENV-MATRIX.md) | Environment matrix |
 | [docs/agent-iteration-traps.md](docs/agent-iteration-traps.md) | Why iteration stops (low-context); mitigations (Cursor vs Client API driver) |
+| [prompts-to-agent-mode/README.md](prompts-to-agent-mode/README.md) | Indexed task prompts; live stack = Client API + `mode: "agent"` |
 | Module state files | [a2a-client/DEV_STATE.md](a2a-client/DEV_STATE.md), [a2a-server/DEV_STATE.md](a2a-server/DEV_STATE.md), [ai-integration/DEV_STATE.md](ai-integration/DEV_STATE.md) |

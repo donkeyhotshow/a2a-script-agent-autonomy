@@ -112,15 +112,15 @@ def check_simulation(proxy_url: str, timeout: float) -> bool:
 
 
 def check_log_storage(project_root: Path) -> bool:
-    path = project_root / "proxy_logs"
+    path = project_root / "proxy_logs" / "requests"
     if not path.exists():
-        logging.warning("proxy_logs directory (%s) does not exist.", path)
+        logging.warning("proxy_logs/requests directory (%s) does not exist.", path)
         return False
     entries = list(path.glob("request_*"))
     if not entries:
-        logging.warning("No request_* directories found under proxy_logs.")
+        logging.warning("No request_* directories found under proxy_logs/requests.")
         return False
-    logging.info("Found %d request_* directories under proxy_logs.", len(entries))
+    logging.info("Found %d request_* directories under proxy_logs/requests.", len(entries))
     return True
 
 

@@ -1,0 +1,6 @@
+{
+  "sessionId": "sess_test_dialog",
+  "result": {
+    "message": "Какие улучшения можно сделать в Example.vue? Есть идеи по рефакторингу?"
+  }
+}

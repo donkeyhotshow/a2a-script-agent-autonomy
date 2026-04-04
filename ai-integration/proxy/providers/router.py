@@ -17,7 +17,7 @@ from .base import (
     EmbeddingResult,
 )
 from .ollama_provider import OllamaProvider
-from .openai_compatible_provider import OpenAICompatibleProvider, OpenRouterProvider, GroqProvider, CohereProvider
+from .openai_compatible_provider import OpenAICompatibleProvider, OpenRouterProvider, GroqProvider, CohereProvider, ZAIProvider
 from .huggingface_provider import HuggingFaceProvider
 from .config_loader import load_providers_config, ProvidersConfig
 
@@ -29,6 +29,7 @@ PROVIDER_REGISTRY: Dict[str, Type[LLMProvider]] = {
     'openrouter': OpenRouterProvider,
     'groq': GroqProvider,
     'cohere': CohereProvider,
+    'z_ai': ZAIProvider,
     'huggingface': HuggingFaceProvider,
 }
 
@@ -84,6 +85,65 @@ class ProviderRouter:
                 await provider.close()
         self._initialized = False
     
+    def _resolve_model(self, model: str) -> str:
+        """
+        Resolve model name without destroying multi-provider selection.
+
+        When Z.AI is default, only models that no registered provider claims
+        are left unchanged (or mapped via the default provider's resolve_model).
+        Ollama-local names like qwen3:8b must not be rewritten to the Z.AI default.
+        """
+        if not model or not str(model).strip():
+            if not self._initialized:
+                return (model or "").strip()
+            return self._get_default_model()
+        model = str(model).strip()
+        if not self._initialized:
+            return model
+        for _name, provider in self._providers.items():
+            if provider.supports_model(model):
+                return model
+        dp_name = self.config.default_provider
+        if dp_name in self._providers:
+            p = self._providers[dp_name]
+            resolved = p.resolve_model(model)
+            if resolved:
+                return resolved
+        return model
+
+    def tag_entries_from_non_ollama_providers(self) -> list[dict[str, Any]]:
+        """
+        Ollama-shaped tag rows for models declared on non-Ollama providers (e.g. z_ai).
+        Live Ollama /api/tags is merged separately in the proxy handler.
+        """
+        out: list[dict[str, Any]] = []
+        if not self._initialized:
+            return out
+        for name, provider in self._providers.items():
+            if provider.config.type == "ollama":
+                continue
+            if not provider.config.enabled:
+                continue
+            keys = self.config.get_api_keys_for_provider(name)
+            key_id = keys[0].id if keys else None
+            for m in provider.config.models:
+                if not m or not str(m).strip():
+                    continue
+                mid = str(m).strip()
+                row = {
+                    "name": mid,
+                    "model": mid,
+                    "modified_at": "",
+                    "size": 0,
+                    "digest": "",
+                    "details": {},
+                    "provider": name,
+                }
+                if key_id:
+                    row["api_key_id"] = key_id
+                out.append(row)
+        return out
+    
     # ========================================================================
     # Core Routing Methods
     # ========================================================================
@@ -117,6 +177,7 @@ class ProviderRouter:
             await self.initialize()
         
         model = model or self._get_default_model()
+        model = self._resolve_model(model)  # Apply model redirects
         enable_fallback = enable_fallback if enable_fallback is not None else self.config.enable_fallback
         
         # Get providers to try
@@ -163,6 +224,7 @@ class ProviderRouter:
             await self.initialize()
         
         model = model or self._get_default_model()
+        model = self._resolve_model(model)  # Apply model redirects
         enable_fallback = enable_fallback if enable_fallback is not None else self.config.enable_fallback
         
         providers = self._get_provider_chain(model, preferred_provider, enable_fallback)

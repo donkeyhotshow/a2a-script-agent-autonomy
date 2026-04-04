@@ -1,0 +1,12 @@
+{
+  "context": {
+    "task": "тест обробки неправильного вибору",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    }
+  },
+  "result": {
+    "choice": "valid-choice"
+  }
+}

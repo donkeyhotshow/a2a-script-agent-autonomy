@@ -520,7 +520,6 @@ a2a-server/tests/
 │
 ├── services/                    # Тесты сервисов
 │   ├── document-writer.service.test.ts
-│   ├── framework-detector.test.ts
 │   └── ...
 │
 ├── fixtures/                    # Тестовые данные

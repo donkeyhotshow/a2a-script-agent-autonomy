@@ -1,0 +1,24 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "rag-search": {
+      "results": [
+        {
+          "file": "simulations/SCHEMA.md",
+          "score": 0.92,
+          "snippet": "Simulations schema (canonical)"
+        },
+        {
+          "file": "simulations/sync/agent/description.md",
+          "score": 0.88,
+          "snippet": "# agent"
+        }
+      ],
+      "files": [
+        "simulations/SCHEMA.md",
+        "simulations/sync/agent/description.md"
+      ]
+    }
+  }
+}

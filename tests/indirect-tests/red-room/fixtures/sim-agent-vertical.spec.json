@@ -1,0 +1,24 @@
+{
+  "description": "Realistic vertical: simulations/sync/agent — router choices → agent dialog (grounded in golden fixtures)",
+  "steps": [
+    {
+      "readFrom": "simulations/sync/agent/1/response.json",
+      "expect": {
+        "executeSingleKey": true,
+        "executeAction": "form",
+        "formChoicesMin": 4,
+        "executionAction": "task",
+        "executionStep": "router"
+      }
+    },
+    {
+      "readFrom": "simulations/sync/agent/2/response.json",
+      "expect": {
+        "executeSingleKey": true,
+        "executeAction": "form",
+        "executionAction": "agent",
+        "executionStep": "request"
+      }
+    }
+  ]
+}

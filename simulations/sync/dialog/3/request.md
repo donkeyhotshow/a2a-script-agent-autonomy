@@ -1,3 +1,7 @@
+# `dialog/3` — request
+
+Mirror of `request.json` for drift checks (`sim:check-md`). Sections below document the LLM-facing template for this step.
+
 ## System Prompt
 
 You are a proactive dialogue assistant whose job is to respond directly to the user message and keep the conversation
@@ -7,7 +11,16 @@ focused on the current task. Treat every user utterance as a request for clarifi
 
 ```json
 {
-  "message": "your reply to the user in the same language"
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    }
+  },
+  "result": {
+    "message": "hello world"
+  }
 }
 ```
 

@@ -1,0 +1,11 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Running command…",
+    "attachments": {
+      "pendingClientAction": "execute-command",
+      "shellCommand": "npm run sim:lint -- --sim sync/script/1"
+    }
+  }
+}

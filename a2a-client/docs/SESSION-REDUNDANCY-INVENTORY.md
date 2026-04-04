@@ -2,17 +2,17 @@
 
 Date: 2026-03-27
 Owner: a2a-client code cleanup
-Scope: session-related modules in `vite-plugin-a2a/routes/utils`, route flows, and web session runtime
+Scope: session-related modules in `packages/vite-plugin/routes/utils`, route flows, and web session runtime
 
 ## Module Inventory
 
 | Area | Module | Responsibility | Current role |
 |---|---|---|---|
-| Session DTO projection | `vite-plugin-a2a/routes/utils/session-projection-dto.js` | Public session shape, async meta attach, stage derivation | Keep as boundary owner |
-| Session stage classification | `vite-plugin-a2a/routes/utils/session-stage-machine.js` | Coarse stage (`routing`, `dialog-input`, `agent-tool-loop`, `awaiting-async`, `completed`) | Keep |
-| Session UI view model | `vite-plugin-a2a/routes/utils/session-view-model.js` | UI kind classification (`choice-form`, `input-form`, `message+form`, `message-only`, `completed`) | Keep |
-| Timeline from step artifacts | `vite-plugin-a2a/routes/utils/message-timeline.js` | Build deterministic merged timeline from persisted step files | Keep |
-| Timeline from canonical history | `vite-plugin-a2a/routes/utils/history-projection.js` | Normalize `context.history` to deterministic timeline records | Keep |
+| Session DTO projection | `packages/vite-plugin/routes/utils/session-projection-dto.js` | Public session shape, async meta attach, stage derivation | Keep as boundary owner |
+| Session stage classification | `packages/vite-plugin/routes/utils/session-stage-machine.js` | Coarse stage (`routing`, `dialog-input`, `agent-tool-loop`, `awaiting-async`, `completed`) | Keep |
+| Session UI view model | `packages/vite-plugin/routes/utils/session-view-model.js` | UI kind classification (`choice-form`, `input-form`, `message+form`, `message-only`, `completed`) | Keep |
+| Timeline from step artifacts | `packages/vite-plugin/routes/utils/message-timeline.js` | Build deterministic merged timeline from persisted step files | Keep |
+| Timeline from canonical history | `packages/vite-plugin/routes/utils/history-projection.js` | Normalize `context.history` to deterministic timeline records | Keep |
 | Session runtime state | `web/js/session-data.js` | Browser store core and runtime message normalization | Keep |
 
 ## Overlap Map (same/near-same responsibility in 2+ places)

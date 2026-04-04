@@ -59,6 +59,37 @@ describe('buildWebExecute', () => {
         expect(out.message).toBeUndefined();
     });
 
+    it('adds Running script message when script + form (SCHEMA.md Web DTO)', () => {
+        const form = { title: 'Message', description: 'Continue.' };
+        const out = buildWebExecute({
+            form,
+            script: { code: 'return 1', input: {}, output: 'x' },
+        });
+        expect(out.script).toBeUndefined();
+        expect(out.message).toBe('Running script…');
+        expect(out.attachments.pendingClientAction).toBe('script');
+        expect(out.form).toEqual(form);
+    });
+
+    it('augments form-only execute from autoScriptTrigger workbench (post run-script)', () => {
+        const form = { title: 'Message', description: 'Patch applied.' };
+        const context = {
+            workbench: {
+                sections: {
+                    autoScriptTrigger: {
+                        scriptId: 'fix-vue-imports',
+                        lastOutput: "Replaced './Missing' with '@/components/Missing' in Example.vue.",
+                        filesModified: ['resources/js/components/Example.vue'],
+                    },
+                },
+            },
+        };
+        const out = buildWebExecute({ form }, { context });
+        expect(out.message).toBe('Running script…');
+        expect(out.attachments.runScriptId).toBe('fix-vue-imports');
+        expect(out.form).toEqual(form);
+    });
+
     it('maps list-directory and grep-search', () => {
         const a = buildWebExecute({ 'list-directory': { path: 'src/' } });
         expect(a['list-directory']).toBeUndefined();

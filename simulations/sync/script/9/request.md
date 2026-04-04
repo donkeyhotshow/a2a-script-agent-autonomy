@@ -1,0 +1,58 @@
+# Step 9 — request (execute-command result)
+
+Mirror of request.json for prompt pipeline / sim:check-md.
+
+```json
+{
+  "context": {
+    "task": "Script central E2E (sync/script): router → scope form → script×3 ↔ client → run-script → gate → command → summary → follow-up.",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "shell_check"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Scope: fix-vue-imports on app/Example.vue"
+      },
+      {
+        "role": "system",
+        "message": "script vue-import-detect: one broken import"
+      },
+      {
+        "role": "assistant",
+        "message": "script vue-import-resolve: proposed patch ./Missing to @/components/Missing"
+      }
+    ],
+    "workbench": {
+      "sections": {
+        "vueImportFix": {
+          "broken_imports": [
+            {
+              "file": "app/Example.vue",
+              "line": 2,
+              "specifier": "./Missing"
+            }
+          ],
+          "patches": [
+            {
+              "file": "app/Example.vue",
+              "line": 2,
+              "from": "./Missing",
+              "to": "@/components/Missing"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "result": {
+    "execute-command": {
+      "command": "npm run sim:lint -- --sim sync/script/1",
+      "exitCode": 0,
+      "stdout": "ok\n",
+      "stderr": ""
+    }
+  }
+}
+```

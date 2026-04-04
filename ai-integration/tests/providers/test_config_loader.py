@@ -103,7 +103,7 @@ class TestDefaultConfig:
         
         assert "ollama" in config.providers
         assert config.providers["ollama"].type == "ollama"
-        assert config.default_provider == "ollama"
+        assert config.default_provider == "z_ai"
     
     def test_default_has_cloud_providers(self):
         """Test default config includes cloud providers"""
@@ -118,7 +118,7 @@ class TestDefaultConfig:
         """Test default fallback chain"""
         config = _default_config()
         
-        assert config.fallback_chain == ["ollama", "groq", "openrouter"]
+        assert config.fallback_chain == ["z_ai", "ollama", "groq", "openrouter"]
 
 
 class TestLoadProvidersConfig:

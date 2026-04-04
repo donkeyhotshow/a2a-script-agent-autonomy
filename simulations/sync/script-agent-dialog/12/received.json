@@ -1,0 +1,14 @@
+{
+  "execute": {
+    "form": {
+      "title": "Рефакторинг",
+      "description": "Применить выбранные улучшения?",
+      "choices": [
+        { "id": "all", "label": "Все сразу", "description": "Применить все 5 рекомендаций" },
+        { "id": "typescript", "label": "Только TypeScript", "description": "Добавить типизацию" },
+        { "id": "composables", "label": "Extract composables", "description": "Вынести логику в useExample.ts" },
+        { "id": "none", "label": "Пропустить", "description": "Оставить как есть" }
+      ]
+    }
+  }
+}

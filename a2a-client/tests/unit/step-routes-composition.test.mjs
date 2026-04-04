@@ -12,23 +12,23 @@ const {
     mockedHandleAsyncFlow: vi.fn(() => false),
 }));
 
-vi.mock('../../vite-plugin-a2a/routes/middleware/validators.js', () => ({
+vi.mock('../../packages/vite-plugin/routes/middleware/validators.js', () => ({
     getStorageMode: mockedGetStorageMode,
 }));
 
-vi.mock('../../vite-plugin-a2a/routes/step-routes-router-flow.js', () => ({
+vi.mock('../../packages/vite-plugin/routes/step-routes-router-flow.js', () => ({
     handleRouterFlow: mockedHandleRouterFlow,
 }));
 
-vi.mock('../../vite-plugin-a2a/routes/step-routes-dialog-flow.js', () => ({
+vi.mock('../../packages/vite-plugin/routes/step-routes-dialog-flow.js', () => ({
     handleNextStep: mockedHandleNextStep,
 }));
 
-vi.mock('../../vite-plugin-a2a/routes/step-routes-async-flow.js', () => ({
+vi.mock('../../packages/vite-plugin/routes/step-routes-async-flow.js', () => ({
     handleAsyncFlow: mockedHandleAsyncFlow,
 }));
 
-import { createStepRoutes } from '../../vite-plugin-a2a/routes/stepRoutes.js';
+import { createStepRoutes } from '../../packages/vite-plugin/routes/stepRoutes.js';
 
 function createReqRes(url, method = 'GET') {
     return {
@@ -49,13 +49,13 @@ describe('stepRoutes composition root', () => {
         mockedHandleAsyncFlow.mockReturnValue(false);
     });
 
-    it('delegates to router flow first and short-circuits', () => {
+    it('delegates to router flow first and short-circuits', async () => {
         mockedHandleRouterFlow.mockReturnValue(true);
         const middleware = createStepRoutes({ cwd: '/tmp/project' });
         const next = vi.fn();
         const { req, res } = createReqRes('/api/a2a/sessions/sess_1/latest');
 
-        middleware(req, res, next);
+        await middleware(req, res, next);
 
         expect(mockedHandleRouterFlow).toHaveBeenCalledTimes(1);
         expect(mockedHandleNextStep).not.toHaveBeenCalled();
@@ -63,13 +63,13 @@ describe('stepRoutes composition root', () => {
         expect(next).not.toHaveBeenCalled();
     });
 
-    it('falls through router -> dialog -> async chain', () => {
+    it('falls through router -> dialog -> async chain', async () => {
         mockedHandleAsyncFlow.mockReturnValue(true);
         const middleware = createStepRoutes({ cwd: '/tmp/project' });
         const next = vi.fn();
         const { req, res } = createReqRes('/api/a2a/sessions/sess_1/async');
 
-        middleware(req, res, next);
+        await middleware(req, res, next);
 
         expect(mockedHandleRouterFlow).toHaveBeenCalledTimes(1);
         expect(mockedHandleNextStep).toHaveBeenCalledTimes(1);

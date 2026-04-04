@@ -1,5 +1,5 @@
 /**
- * Unit tests for vite-plugin-a2a storage modules
+ * Unit tests for packages/vite-plugin storage modules
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
@@ -25,9 +25,13 @@ import {
   loadRequestToServer,
   loadStepFile,
   clearStepSessionsParentRegistry,
-} from '../../vite-plugin-a2a/storage/newSessions.js';
-import { getActiveAsyncWork } from '../../vite-plugin-a2a/routes/utils/session-projection-dto.js';
-import { collectSessionMessagesFlat } from '../../vite-plugin-a2a/routes/utils/message-timeline.js';
+  registerStepSessionsParent,
+} from '../../packages/vite-plugin/storage/newSessions.js';
+import {
+  getActiveAsyncWork,
+  getProjectModeInflightPromise,
+} from '../../packages/vite-plugin/routes/utils/session-projection-dto.js';
+import { collectSessionMessagesFlat } from '../../packages/vite-plugin/routes/utils/message-timeline.js';
 
 let testDir;
 
@@ -178,5 +182,40 @@ describe('newSessions storage', () => {
     deleteNewSession(cwd, sessionId);
     const loaded = loadNewSession(cwd, sessionId);
     expect(loaded).toBeNull();
+  });
+
+  it('getProjectModeInflightPromise finds pending server-promise under project session-steps', () => {
+    const projectPath = path.join(testDir, 'fake-project-root');
+    const sid = 'sess_project_inflight';
+    const stepsRoot = path.join(projectPath, '.a2a', 'session-steps');
+    fs.mkdirSync(stepsRoot, { recursive: true });
+    registerStepSessionsParent(sid, stepsRoot);
+    try {
+      saveNewStep(cwd, sid, 1, { execute: {}, messages: [], context: {} });
+      saveServerPromise(cwd, sid, 2, { promiseId: 'prom_proj', status: 'pending' });
+    } finally {
+      registerStepSessionsParent(sid, null);
+    }
+    const hit = getProjectModeInflightPromise(cwd, sid, projectPath, { promiseId: null });
+    expect(hit?.promiseId).toBe('prom_proj');
+    fs.rmSync(path.join(stepsRoot, sid), { recursive: true, force: true });
+  });
+
+  it('getProjectModeInflightPromise falls back to session snapshot when no step files', () => {
+    const projectPath = path.join(testDir, 'fake-project-root-2');
+    const hit = getProjectModeInflightPromise(cwd, 'sess_no_steps', projectPath, {
+      promiseId: 'prom_snap',
+      promiseStatus: 'processing',
+    });
+    expect(hit?.promiseId).toBe('prom_snap');
+  });
+
+  it('getProjectModeInflightPromise ignores completed snapshot promise', () => {
+    const projectPath = path.join(testDir, 'fake-project-root-3');
+    const hit = getProjectModeInflightPromise(cwd, 'sess_done', projectPath, {
+      promiseId: 'prom_old',
+      promiseStatus: 'completed',
+    });
+    expect(hit).toBeNull();
   });
 });

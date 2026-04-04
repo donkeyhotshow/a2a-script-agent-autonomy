@@ -1,6 +1,6 @@
 #!/bin/bash
 # kill-all.sh - Standardized dual-verification process termination
-# Following docs/troubleshooting/standardize-stop-scripts.md
+# See docs/SYSTEM_STARTUP.md and AGENTS.md (live stack restart)
 #
 # Pattern: 1) Kill by port -> 2) Verify port free -> 3) Kill by PID/name -> 4) Verify processes gone -> 5) Clear .pids.txt
 

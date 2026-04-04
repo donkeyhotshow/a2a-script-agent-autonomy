@@ -1,0 +1,71 @@
+{
+  "context": {
+    "task": "Gray room clarify — dialog golden (structured clarify slot + trace)",
+    "execution": {
+      "action": "dialog",
+      "step": "message-only"
+    },
+    "workbench": {
+      "sections": {},
+      "slots": {
+        "clarify": {
+          "questions": ["Pick ORM: Prisma vs TypeORM"],
+          "blocking": true
+        },
+        "interruptTrace": [
+          {
+            "kind": "llm_output",
+            "phase": "primary",
+            "chars": 281
+          },
+          {
+            "kind": "response_transform",
+            "interruptReason": "clarify"
+          },
+          {
+            "kind": "sidecar_llm",
+            "purpose": "clarify",
+            "ok": true,
+            "meta": "slots.clarify"
+          },
+          {
+            "kind": "interrupt_handler",
+            "reason": "clarify",
+            "continueLoop": false
+          }
+        ],
+        "grayRoom": {
+          "enabled": true,
+          "planId": "sess-gray-clarify-1",
+          "phase": "completed",
+          "maxTurns": 10,
+          "turn": 0,
+          "remainingBudget": 9,
+          "status": "completed",
+          "lastReason": "clarify",
+          "timestamps": {
+            "startedAt": "2026-04-03T10:00:00.000Z",
+            "lastUpdateAt": "2026-04-03T10:00:00.100Z"
+          },
+          "traceRef": {
+            "length": 4
+          }
+        }
+      }
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Which ORM should we use?"
+      },
+      {
+        "role": "assistant",
+        "step": "message-only",
+        "message": "I need one preference before editing package.json."
+      }
+    ]
+  },
+  "execute": {
+    "message": "I need one preference before editing package.json."
+  }
+}

@@ -15,12 +15,13 @@ export type ListDirectoryEntry = { name: string; type?: string; size?: number };
 export type ListDirectoryResult = { path: string; entries: ListDirectoryEntry[]; error?: string };
 
 /** Read file and return protocol shape */
-export async function readFileForResult(filePath: string, options?: { encoding?: string }): Promise<ReadFileResult> {
+export async function readFileForResult(filePath: string, options?: { encoding?: BufferEncoding }): Promise<ReadFileResult> {
     try {
-        const content = await fs.readFile(filePath, options?.encoding || 'utf8');
+        const encoding = options?.encoding ?? 'utf8';
+        const content = await fs.readFile(filePath, {encoding});
         return {
             path: filePath,
-            content: typeof content === 'string' ? content : content.toString()
+            content
         };
     } catch (error) {
         throw new Error(`Failed to read file ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -36,6 +37,7 @@ export async function writeFileForResult(filePath: string, content: string): Pro
         await fs.writeFile(filePath, content, 'utf8');
         return {
             path: filePath,
+            success: true,
             written: true
         };
     } catch (error) {

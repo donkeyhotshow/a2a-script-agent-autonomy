@@ -3,7 +3,7 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 
-import { kvGet } from '../../vite-plugin-a2a/storage/kv.js';
+import { kvGet } from '../../packages/vite-plugin/storage/kv.js';
 
 describe('kv parse errors', () => {
     let tmpDir;

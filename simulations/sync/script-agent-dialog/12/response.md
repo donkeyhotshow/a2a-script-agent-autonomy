@@ -1,0 +1,63 @@
+# Step 12 — response (LLM provides refactoring suggestions)
+
+LLM provides actionable refactoring recommendations with a choice form.
+
+```json
+{
+  "context": {
+    "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
+    "execution": {
+      "action": "dialog",
+      "step": "refactoring"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Какие улучшения можно сделать в Example.vue? Есть идеи по рефакторингу?"
+      },
+      {
+        "role": "assistant",
+        "message": "Вот основные рекомендации:\n\n1. **Extract composables** — вынести логику в composable useExample.ts\n2. **TypeScript** — добавить типизацию props и emit\n3. **Lazy loading** — использовать defineAsyncComponent для тяжёлых частей\n4. **Error boundaries** — добавить ErrorBoundary компонент\n5. **Memoization** — кешировать вычисляемые свойства через computed\n\nХотите применить какие-то из этих улучшений?"
+      }
+    ],
+    "workbench": {
+      "sections": {
+        "autoScriptTrigger": {
+          "scriptId": "fix-vue-imports",
+          "triggeredBy": "assistant",
+          "file": "resources/js/components/Example.vue",
+          "autoRun": true
+        }
+      }
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Рефакторинг",
+      "description": "Применить выбранные улучшения?",
+      "choices": [
+        {
+          "id": "all",
+          "label": "Все сразу",
+          "description": "Применить все 5 рекомендаций"
+        },
+        {
+          "id": "typescript",
+          "label": "Только TypeScript",
+          "description": "Добавить типизацию"
+        },
+        {
+          "id": "composables",
+          "label": "Extract composables",
+          "description": "Вынести логику в useExample.ts"
+        },
+        {
+          "id": "none",
+          "label": "Пропустить",
+          "description": "Оставить как есть"
+        }
+      ]
+    }
+  }
+}
+```

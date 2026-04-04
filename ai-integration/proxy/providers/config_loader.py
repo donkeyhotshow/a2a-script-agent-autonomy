@@ -6,24 +6,117 @@ Loads and manages provider configurations from JSON file.
 
 import json
 import os
+import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 from .base import ProviderConfig
+from .. import config as proxy_config
+
+# Ollama local — no Bearer; stored as explicit api_key row in settings
+OLLAMA_API_KEY_PLACEHOLDER = "__OLLAMA_LOCAL__"
+
+
+@dataclass
+class ApiKeyEntry:
+    """One upstream credential: global id + logical provider name."""
+
+    id: str
+    provider: str
+    secret: str
+    enabled: bool = True
+    priority: int = 100
+
+
+def _resolve_env_var(value: str) -> str:
+    """Resolve environment variable references like ${VAR:-default}
+    Checks both os.environ and proxy_config (which loads from .env via pydantic-settings)"""
+    def replace_var(match):
+        var_expr = match.group(1)
+        if ':-' in var_expr:
+            var_name, default_value = var_expr.split(':-', 1)
+            var_name = var_name.strip()
+            default_value = default_value.strip()
+            # Check os.environ first, then proxy_config
+            env_val = os.environ.get(var_name)
+            if env_val is not None:
+                return env_val
+            config_val = getattr(proxy_config, var_name, None)
+            if config_val is not None:
+                return config_val
+            return default_value
+        var_name = var_expr.strip()
+        # Check os.environ first, then proxy_config
+        env_val = os.environ.get(var_name)
+        if env_val is not None:
+            return env_val
+        config_val = getattr(proxy_config, var_name, None)
+        if config_val is not None:
+            return config_val
+        return match.group(0)
+    return re.sub(r'\$\{([^}]+)\}', replace_var, value)
+
+
+def _resolve_env_vars_in_dict(data: Dict[str, Any]) -> Dict[str, Any]:
+    """Recursively resolve environment variables in a dictionary"""
+    result = {}
+    for key, value in data.items():
+        if isinstance(value, str):
+            result[key] = _resolve_env_var(value)
+        elif isinstance(value, dict):
+            result[key] = _resolve_env_vars_in_dict(value)
+        elif isinstance(value, list):
+            result[key] = [_resolve_env_var(item) if isinstance(item, str) else item for item in value]
+        else:
+            result[key] = value
+    return result
 
 
 @dataclass
 class ProvidersConfig:
     """Complete providers configuration"""
     providers: Dict[str, ProviderConfig] = field(default_factory=dict)
-    default_provider: str = "ollama"
+    api_keys: List[ApiKeyEntry] = field(default_factory=list)
+    default_provider: str = "z_ai"
     fallback_chain: List[str] = field(default_factory=list)
     enable_fallback: bool = True
-    provider_timeout: int = 30
+    provider_timeout: int = 0
     
     def get_provider(self, name: str) -> Optional[ProviderConfig]:
         """Get provider config by name"""
         return self.providers.get(name)
+
+    def get_api_keys_for_provider(self, provider_name: str) -> List[ApiKeyEntry]:
+        """Enabled keys for this provider, sorted by priority (lower first)."""
+        rows = [
+            k
+            for k in self.api_keys
+            if k.provider == provider_name and k.enabled and (k.secret or "").strip()
+        ]
+        rows.sort(key=lambda x: (x.priority, x.id))
+        if rows:
+            return rows
+        # Legacy: single api_key on ProviderConfig
+        pc = self.providers.get(provider_name)
+        if not pc:
+            return []
+        raw = pc.api_key
+        resolved = None
+        if raw and str(raw).startswith("${") and str(raw).endswith("}"):
+            resolved = pc.get_api_key()
+        elif raw:
+            resolved = str(raw)
+        if resolved:
+            return [
+                ApiKeyEntry(
+                    id=f"{provider_name}-legacy",
+                    provider=provider_name,
+                    secret=resolved,
+                    enabled=True,
+                    priority=0,
+                )
+            ]
+        return []
     
     def get_enabled_providers(self) -> List[ProviderConfig]:
         """Get all enabled providers sorted by priority"""
@@ -56,6 +149,7 @@ def load_providers_config(config_path: Optional[str] = None) -> ProvidersConfig:
         config_paths = [
             os.environ.get('PROVIDERS_CONFIG', ''),
             'config/providers.json',
+            'config/providers.example.json',
             'proxy/providers.json',
             os.path.expanduser('~/.config/a2a-ai-hub/providers.json'),
         ]
@@ -81,6 +175,9 @@ def _parse_config(data: Dict[str, Any]) -> ProvidersConfig:
     """Parse configuration from JSON data"""
     config = ProvidersConfig()
     
+    # Resolve environment variables in entire config
+    data = _resolve_env_vars_in_dict(data)
+    
     # Parse providers
     providers_data = data.get('providers', {})
     for name, provider_data in providers_data.items():
@@ -93,19 +190,96 @@ def _parse_config(data: Dict[str, Any]) -> ProvidersConfig:
             api_key=provider_data.get('api_key'),
             models=provider_data.get('models', []),
             fallback_models=provider_data.get('fallback_models', {}),
-            timeout=provider_data.get('timeout', 30),
+            timeout=provider_data.get('timeout', 0) or 0,
             max_retries=provider_data.get('max_retries', 3),
             retry_delay=provider_data.get('retry_delay', 1.0),
             rate_limit_rpm=provider_data.get('rate_limit_rpm'),
+            request_delay_seconds=provider_data.get('request_delay_seconds'),
         )
     
     # Parse other settings
     config.default_provider = data.get('default_provider', 'ollama')
     config.fallback_chain = data.get('fallback_chain', [])
     config.enable_fallback = data.get('enable_fallback', True)
-    config.provider_timeout = data.get('provider_timeout', 30)
-    
+    config.provider_timeout = data.get('provider_timeout', 0) or 0
+
+    raw_keys = data.get("api_keys")
+    if isinstance(raw_keys, list):
+        for item in raw_keys:
+            if not isinstance(item, dict):
+                continue
+            kid = str(item.get("id") or "").strip()
+            prov = str(item.get("provider") or "").strip()
+            if not kid or not prov:
+                continue
+            sec_raw = item.get("secret")
+            if sec_raw is None:
+                sec_raw = item.get("api_key")
+            if not isinstance(sec_raw, str):
+                sec_raw = ""
+            secret = _resolve_env_var(sec_raw) if sec_raw else ""
+            if not secret and prov == "ollama":
+                secret = OLLAMA_API_KEY_PLACEHOLDER
+            if not secret:
+                continue
+            enabled = bool(item.get("enabled", True))
+            try:
+                priority = int(item.get("priority", 100))
+            except (TypeError, ValueError):
+                priority = 100
+            config.api_keys.append(
+                ApiKeyEntry(
+                    id=kid,
+                    provider=prov,
+                    secret=secret,
+                    enabled=enabled,
+                    priority=priority,
+                )
+            )
+
+    _backfill_api_keys_from_providers(config)
+
     return config
+
+
+def _backfill_api_keys_from_providers(config: ProvidersConfig) -> None:
+    """Ensure Ollama placeholder row; add legacy provider secrets when a provider has no keys."""
+    if "ollama" in config.providers and not any(k.provider == "ollama" for k in config.api_keys):
+        config.api_keys.append(
+            ApiKeyEntry(
+                id="ollama-local",
+                provider="ollama",
+                secret=OLLAMA_API_KEY_PLACEHOLDER,
+                enabled=config.providers["ollama"].enabled,
+                priority=int(config.providers["ollama"].priority),
+            )
+        )
+
+    by_prov: Dict[str, List[ApiKeyEntry]] = {}
+    for k in config.api_keys:
+        by_prov.setdefault(k.provider, []).append(k)
+
+    for name, pc in config.providers.items():
+        if pc.type == "ollama":
+            continue
+        if not pc.enabled:
+            continue
+        if by_prov.get(name):
+            continue
+        secret = None
+        if pc.api_key:
+            secret = pc.get_api_key()
+        if not secret:
+            continue
+        entry = ApiKeyEntry(
+            id=f"{name}-legacy",
+            provider=name,
+            secret=secret,
+            enabled=True,
+            priority=int(pc.priority),
+        )
+        config.api_keys.append(entry)
+        by_prov.setdefault(name, []).append(entry)
 
 
 def _default_config() -> ProvidersConfig:
@@ -120,7 +294,22 @@ def _default_config() -> ProvidersConfig:
         enabled=True,
         priority=1,
         models=['qwen3:8b', 'mistral', 'codellama'],
-        timeout=60,
+        timeout=0,
+    )
+
+    # Z.AI (default cloud provider)
+    # Use proxy_config values which are loaded from .env via pydantic-settings
+    config.providers['z_ai'] = ProviderConfig(
+        name='z_ai',
+        type='z_ai',
+        url=getattr(proxy_config, 'Z_AI_BASE_URL', 'https://api.z.ai/api/paas/v4/'),
+        api_key=getattr(proxy_config, 'Z_AI_API_KEY', None),
+        enabled=True,
+        priority=0,
+        models=[getattr(proxy_config, 'Z_AI_MODEL', 'glm-4.7-flash')],
+        timeout=0,
+        max_retries=2,
+        request_delay_seconds=10.0,
     )
     
     # OpenRouter
@@ -140,7 +329,7 @@ def _default_config() -> ProvidersConfig:
             'qwen3:8b': 'meta-llama/llama-3-8b-instruct',
             'mistral': 'mistralai/mistral-7b-instruct',
         },
-        timeout=30,
+        timeout=0,
     )
     
     # Groq
@@ -160,7 +349,7 @@ def _default_config() -> ProvidersConfig:
             'qwen3:8b': 'qwen3-8b-8192',
             'mistral': 'mixtral-8x7b-32768',
         },
-        timeout=30,
+        timeout=0,
     )
     
     # HuggingFace (disabled by default)
@@ -175,7 +364,7 @@ def _default_config() -> ProvidersConfig:
             'meta-llama/Llama-2-7b-chat-hf',
             'mistralai/Mistral-7B-v0.1',
         ],
-        timeout=30,
+        timeout=0,
     )
     
     # Cohere
@@ -190,12 +379,16 @@ def _default_config() -> ProvidersConfig:
             'command-r',
             'command-r-plus',
         ],
-        timeout=30,
+        timeout=0,
     )
     
     # Default fallback chain
-    config.fallback_chain = ['ollama', 'groq', 'openrouter']
-    
+    config.fallback_chain = ['z_ai', 'ollama', 'groq', 'openrouter']
+
+    config.default_provider = 'z_ai'
+
+    _backfill_api_keys_from_providers(config)
+
     return config
 
 
@@ -214,7 +407,19 @@ def save_providers_config(config: ProvidersConfig, path: str):
         "enable_fallback": config.enable_fallback,
         "provider_timeout": config.provider_timeout,
     }
-    
+
+    if config.api_keys:
+        data["api_keys"] = [
+            {
+                "id": k.id,
+                "provider": k.provider,
+                "secret": k.secret,
+                "enabled": k.enabled,
+                "priority": k.priority,
+            }
+            for k in config.api_keys
+        ]
+
     for name, provider in config.providers.items():
         data["providers"][name] = {
             "type": provider.type,

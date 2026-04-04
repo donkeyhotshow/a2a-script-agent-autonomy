@@ -1,0 +1,19 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$out.execute",
+      "value": {
+        "read-file": {
+          "path": "utils/helpers.js"
+        }
+      }
+    }
+  ]
+}

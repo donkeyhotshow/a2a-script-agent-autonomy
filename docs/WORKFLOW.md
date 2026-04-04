@@ -2,9 +2,9 @@
 
 This document defines the base linear flow and operational terms used in the project.
 
-**Operator control plane:** the live stack is used as a **sub-agent**—called with **HTTP** (e.g. **`curl`** on the Client API), not the browser UI; the IDE agent is the caller. See [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) and [`START-PROMPT-UNLIM.md`](../START-PROMPT-UNLIM.md).
+**Operator control plane:** the live stack is used as a **sub-agent**—driven by **HTTP** on the Client API: **`Task Monitor`** ([`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)) for indexed tasks through session dialog, or **`curl`** for manual turns. See [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md).
 
-**Empty task queue:** **not** “nothing to do.” Prune root/module [`DEV_STATE.md`](../DEV_STATE.md), discover work (code, sims, risks), write tasks into `DEV_STATE` / `tasks/pending/`. See [`AGENTS.md`](../AGENTS.md) — **“Empty queue — mandatory”** (under Quick Reference) + DEV_STATE Protocol — and [`methodology/tasks.md`](../methodology/tasks.md).
+**Empty task queue:** **not** “nothing to do.” Prune root/module [`DEV_STATE.md`](../DEV_STATE.md), discover work (code, sims, risks), write tasks into `DEV_STATE` / `tasks/pending/`. See [`AGENTS.md`](../AGENTS.md) — **“Empty queue — mandatory”** (under Quick Reference) + DEV_STATE Protocol — and [`methodology/tasks.md`](../archive/methodology/tasks.md).
 
 ## Flow Diagram
 
@@ -46,7 +46,7 @@ Client/UI   Client API      Server/Core       LLM/External AI
 
 **Placement:** extend the client indexer/search pipeline and/or the agent RAG chain so “Professional” runs **after** base retrieval and **before** or **while** results are shown or sent onward.
 
-**Implementation hooks (current codebase):** `packages/rag` searcher / chunk + ranking pipeline; Vite Client API agent RAG chain (`vite-plugin-a2a/routes/utils/agent-rag-chain.js`). “Professional” is the named home for **intelligent output shaping** in that neighborhood.
+**Implementation hooks (current codebase):** `packages/rag` searcher / chunk + ranking pipeline; Vite Client API agent RAG chain (`a2a-client/packages/vite-plugin/routes/utils/agent-rag-chain.js`). “Professional” is the named home for **intelligent output shaping** in that neighborhood.
 
 **Possible techniques** (pick as needed; all client-local unless you deliberately call the server):
 
@@ -104,10 +104,15 @@ Server-driven LLM/transform substeps before final client response:
 
 ### Black Room
 
-Future smart loop inside `ai-integration` proxy:
+Algorithm execution mode for deterministic operations on **local Ollama**:
 
-- Planned area for proxy-side autonomous optimization logic.
-- Out of current implementation scope.
+- **Purpose:** Run pre-defined algorithms (pattern matching, context gathering, edits) on local LLM instead of paid API
+- **Trigger:** `interrupt.reason: "algorithm_invoke"` from Gray Room
+- **Algorithm IDs:** `ctx-gather-*`, `edit-apply-*`, `pattern-match-*`, `validate-*`
+- **Historical context:** Session state passed to Ollama via system prompt
+- **Cost:** Free (local compute) vs paid API for Prompt Mode
+- **Status:** Proposed per [ADR-0058](./adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md)
+- **Doc:** [`a2a-server/docs/BLACK-ROOM.md`](../a2a-server/docs/BLACK-ROOM.md)
 
 ## Phrase Mapping
 
@@ -118,6 +123,10 @@ Future smart loop inside `ai-integration` proxy:
 - **"expert"** -> **Code module** (client): console-script handler; normalizes build/test/tool logs into structured input—not an LLM persona.
 - **"professional"** -> **Code module** (client): RAG hit post-processing (ranking, snippets, clustering, optional micro-synthesis)—not an LLM persona.
 - **"analyst"** / **"ignore autodetector"** -> **Code module** (client/host): recursive walk = ignore detection + structure metrics for safe list/read—not an LLM persona.
+
+## Task Monitor metrics
+
+`monitor-and-process-tasks.js` emits logs that `scripts/orchestrator-metrics.js` aggregates into [`runtime/metrics.json`](../runtime/metrics.json) (per-day totals, provider mix). Refresh on demand: `node scripts/orchestrator-metrics.js --record`. See root [`DEV_STATE.md`](../DEV_STATE.md) / `work/STATE.md` when tracking orchestrator health.
 
 ## Related Documentation
 - [`a2a-server/docs/GRAY-ROOM.md`](../../a2a-server/docs/GRAY-ROOM.md) - Подробная документация (242 строки)

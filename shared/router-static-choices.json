@@ -6,6 +6,12 @@
     "agent": "agent",
     "task-decomposition": "task-decomposition"
   },
+  "routerConfig": {
+    "autoSelectionEnabled": false,
+    "minKeywordMatches": 2,
+    "confidenceThreshold": 0.5,
+    "defaultPriorityOrder": ["agent", "task-decomposition", "dialog"]
+  },
   "staticTailChoices": [
     {
       "id": "dialog",

@@ -154,17 +154,31 @@ export interface GrayRoomControlEnvelope {
 
 export interface InterruptDirective {
   /** Type of interrupt — determines server behavior */
-  reason: 'compress_history' | 'auto_read_file' | 'auto_rag_page' | 'thinking' | 'clarify' | string;
+  reason: 'compress_history' | 'auto_read_file' | 'auto_rag_page' | 'thinking' | 'clarify' | 'algorithm_invoke' | string;
   /** Tightens remaining interrupt budget with the global cap (see GRAY-ROOM). */
   maxTurns?: number;
   /** Override transform schema for the interrupt turn */
   schema?: string;
   /** Extra context fields to merge before the interrupt turn */
   context?: Record<string, unknown>;
-  /** Auxiliary data (e.g. file path for auto_read_file, RAG params for auto_rag_page) */
+  /** Auxiliary data (e.g. file path for auto_read_file, RAG params for auto_rag_page, algorithm params for algorithm_invoke) */
   data?: Record<string, unknown>;
   /** Emit from response transform / LLM JSON so triggers are data-driven, not server-hardcoded. */
   when?: InterruptWhenClause;
+  /** Algorithm ID for algorithm_invoke interrupts */
+  algorithmId?: string;
+  /** Context profile for algorithm execution */
+  contextProfile?: string;
+}
+
+/**
+ * Specific interrupt directive for Black Room algorithm invocation
+ */
+export interface BlackRoomInterruptDirective extends Omit<InterruptDirective, 'reason'> {
+  reason: 'algorithm_invoke';
+  algorithmId: string;
+  contextProfile?: string;
+  data: Record<string, unknown>;
 }
 
 /**
@@ -178,7 +192,9 @@ export type ServerInterruptTraceEvent =
   | { kind: 'interrupt_handler'; reason: string; continueLoop: boolean; note?: string }
   | { kind: 'interrupt_skipped'; reason: string; detail?: string }
   | { kind: 'request_rebuild' }
-  | { kind: 'sidecar_llm'; purpose: 'compress_history' | 'thinking' | 'auto_read_file' | 'clarify' | 'auto_rag_page'; ok: boolean; meta?: string };
+  | { kind: 'sidecar_llm'; purpose: 'compress_history' | 'thinking' | 'auto_read_file' | 'clarify' | 'auto_rag_page'; ok: boolean; meta?: string }
+  | { kind: 'black_room_start'; algorithmId: string; timestamp: string }
+  | { kind: 'black_room_complete'; algorithmId: string; status: 'completed' | 'failed' | 'timeout'; durationMs: number; tokenCount?: number; error?: string };
 
 /**
  * Pipeline document type

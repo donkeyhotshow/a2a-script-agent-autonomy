@@ -1,0 +1,14 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "run-script": {
+      "scriptId": "fix-vue-imports",
+      "success": true,
+      "output": "Replaced './Missing' with '@/components/Missing' in Example.vue.",
+      "filesModified": [
+        "resources/js/components/Example.vue"
+      ]
+    }
+  }
+}

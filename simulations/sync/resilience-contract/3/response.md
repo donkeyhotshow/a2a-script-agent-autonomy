@@ -1,0 +1,50 @@
+# `resilience-contract/3` — copy of `response.json` for drift checks
+
+**Not model output.** Fixture mirror only (`sim:check-md`).
+
+```json
+{
+  "context": {
+    "task": "Golden: resilience contract (paginated RAG drain, read-file queue, human gate).",
+    "execution": {
+      "action": "agent",
+      "step": "rag_drain"
+    },
+    "scratchpad": {
+      "rag_offset": 2,
+      "rag_has_more": false
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Golden: resilience contract (paginated RAG drain, read-file queue, human gate)."
+      },
+      {
+        "role": "assistant",
+        "step": "human_gate",
+        "message": "Confirmed: starting paginated RAG (page 1)."
+      },
+      {
+        "role": "system",
+        "message": "RAG page 1: docs/RAG.md, docs/OPS.md (hasMore true)"
+      },
+      {
+        "role": "assistant",
+        "step": "rag_drain",
+        "message": "Draining RAG page 2 (final page)."
+      }
+    ]
+  },
+  "execute": {
+    "rag-search": {
+      "query": "resilience pagination drain",
+      "limit": 2,
+      "page": 2,
+      "pageSize": 2
+    }
+  }
+}
+```

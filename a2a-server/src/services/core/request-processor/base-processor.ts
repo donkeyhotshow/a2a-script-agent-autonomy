@@ -12,6 +12,8 @@ import type {
     ValidationResult
 } from './request-processor.interfaces.js';
 import type {CodeBlock} from '../../../types/entity.types.js';
+import {resolveExecution} from './normalization.js';
+import {LLM_PIPELINE_ACTIONS} from '../../../config/router-static.js';
 
 /**
  * Base processor configuration
@@ -21,6 +23,10 @@ export interface BaseProcessorConfig {
     retryDelay: number;
     timeout: number;
     enableValidation: boolean;
+    simulationsBasePath?: string;
+    promptsTransformsPath?: string;
+    enableReplay?: boolean;
+    defaultSimulation?: string | null;
 }
 
 /**
@@ -43,7 +49,11 @@ export type RequestType = 'action' | 'simulation' | 'form' | 'dialog' | 'neuron'
  */
 export abstract class BaseRequestProcessor {
     public config: BaseProcessorConfig;
-    protected processorName: string;
+    public processorName: string;
+
+    public getProcessorName(): string {
+        return this.processorName;
+    }
 
     constructor(processorName: string, config: Partial<BaseProcessorConfig> = {}) {
         this.processorName = processorName;
@@ -206,10 +216,17 @@ export abstract class BaseRequestProcessor {
             return null;
         };
         const nestedCtx = ctx['context'] as Record<string, unknown> | undefined;
+        const resultObj = ctx['result'];
+        const resultMsg =
+            resultObj && typeof resultObj === 'object' && !Array.isArray(resultObj)
+                ? toStr((resultObj as Record<string, unknown>)['message'])
+                : null;
+        // Prefer explicit message/result.message over task (task can be stale on context when user submits a new line).
         return (
+            toStr(ctx['message']) ??
+            resultMsg ??
             toStr(ctx['task']) ??
             toStr(ctx['new_task']) ??
-            toStr(ctx['message']) ??
             toStr(nestedCtx?.['task']) ??
             ''
         );
@@ -241,15 +258,32 @@ export abstract class BaseRequestProcessor {
      */
     protected isStepResult(ctx: Record<string, unknown>): boolean {
         const actionType = this.getActionType(ctx);
-        return actionType === 'step_result' || Boolean(ctx['continue'] && ctx['step_result']);
+        const hasContinue = Boolean(ctx['continue']);
+        const hasStepResult = Boolean(ctx['step_result']);
+        return actionType === 'step_result' || (hasContinue && hasStepResult);
     }
 
     /**
      * Check if this is a task request
+     * Returns false if execution.action is already set to an LLM pipeline action (e.g., agent mode seeded from session create)
      */
     protected isTaskRequest(ctx: Record<string, unknown>): boolean {
         const actionType = this.getActionType(ctx);
-        return actionType === 'task_request' || actionType === undefined;
+        if (actionType === 'task_request') return true;
+        if (actionType !== undefined) return false;
+        const exec = resolveExecution(ctx);
+        const execAction = exec?.['action'] as string | undefined;
+        const execStep = exec?.['step'] as string | undefined;
+        if (execAction && LLM_PIPELINE_ACTIONS.includes(execAction)) {
+            // POST /sessions with mode:agent|dialog|… seeds execution with step "new" — still Beat A/B
+            // (task text + router); not yet in the LLM pipeline. Router / handleTaskRequest sets
+            // task+router; pipeline runs after e.g. step "start".
+            if (execStep === 'new') {
+                return true;
+            }
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -271,7 +305,7 @@ export class ProcessorRegistry {
      */
     register(type: RequestType, processor: BaseRequestProcessor): void {
         this.processors.set(type, processor);
-        logger.info('[ProcessorRegistry] Registered processor', {type, processor: (processor as unknown as {processorName: string}).processorName});
+        logger.info('[ProcessorRegistry] Registered processor', {type, processor: processor.processorName});
     }
 
     /**

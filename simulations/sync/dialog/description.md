@@ -1,4 +1,4 @@
-﻿# Dialog Simulation - AI-Actions
+# Dialog Simulation - AI-Actions
 
 ## Тип: AI-Actions
 
@@ -29,7 +29,7 @@ request.json → server-transforms-request.json → response.json
 
 | Шаг | Request                       | Response                                                                   |
 |-----|-------------------------------|----------------------------------------------------------------------------|
-| 1   | result.message: "диалог"      | execute.form.choices (router: dialog / agent / task-decomposition)         |
+| 1   | result.message: "диалог"      | execute.form.choices (router; extended set — see `1/response.json` / `1/response.md`) |
 | 2   | result.choice: "dialog"       | execute.form[message], execution.action = "dialog", step = "request" |
 | 3   | result.message: "hello world" | LLM → history +1, execution.step = "request", execute.message + form.input |
 | 4   | result.message: "Дякую!"      | execution.step = "completed", execute.message + form.input                 |
@@ -42,7 +42,7 @@ request.json → server-transforms-request.json → response.json
 ## Структура файлов
 
 ```
-simulations/dialog/
+simulations/sync/dialog/
 ├── description.md
 ├── WORKFLOW.md
 ├── analysis.md
@@ -50,9 +50,11 @@ simulations/dialog/
 │   ├── client.json
 │   ├── request.json
 │   ├── server-transforms-request.json
+│   ├── request.md
+│   ├── response.md
 │   ├── response.json
 │   └── received.json
-├── 2/                          # З LLM
+├── 2/                          # Без LLM: після вибору dialog (див. WORKFLOW.md)
 │   ├── client.json
 │   ├── request.json
 │   ├── server-transforms-request.json
@@ -83,6 +85,6 @@ simulations/dialog/
 
 ## Нотатки
 
-- Крок 1 — без LLM, має тільки `server-transforms-request.json`
-- Кроки 2, 3, 4 — з LLM, мають повний пайпайн з request.md/response.md
+- Кроки 1–2 — без LLM у контури `request → server-transforms-request → response.json` (деталі — [`WORKFLOW.md`](WORKFLOW.md)); `request.md` / `response.md` — дзеркала та супутні артефакти для аудиту.
+- Кроки 3–4 — з LLM: повний ланцюжок з `request.md` / `response.md`.
 

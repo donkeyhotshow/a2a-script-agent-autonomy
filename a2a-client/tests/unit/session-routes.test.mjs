@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { toPublicSession } from '../../vite-plugin-a2a/routes/utils/session-projection-dto.js';
+import { toPublicSession } from '../../packages/vite-plugin/routes/utils/session-projection-dto.js';
 
 describe('sessionRoutes - debug context guard', () => {
     // Тесты для debug-only логики includeContext проверяются косвенно
@@ -25,7 +25,7 @@ describe('sessionRoutes - debug context guard', () => {
 });
 
 describe('sessionRoutes - UI does not depend on raw context.workbench', () => {
-    it('strips context from public session by default (includeContext=false)', () => {
+    it('strips workbench from public session by default (includeContext=false)', () => {
         const session = {
             id: 'sess_test',
             title: 'Test',
@@ -36,11 +36,11 @@ describe('sessionRoutes - UI does not depend on raw context.workbench', () => {
             execute: { form: { title: 'Test' } }
         };
         
-        // When projected with includeContext=false, workbench should be hidden
+        // When projected with includeContext=false, workbench should be hidden; execution stays slim
         const projected = toPublicSession(session, false);
         
-        // Context should be completely removed - UI doesn't depend on raw workbench
-        expect(projected.context).toBeUndefined();
+        expect(projected.context).toEqual({ execution: { action: 'task' } });
+        expect(projected.context?.workbench).toBeUndefined();
     });
 
     it('keeps context only when explicitly requesting debug mode', () => {
@@ -54,9 +54,10 @@ describe('sessionRoutes - UI does not depend on raw context.workbench', () => {
             execute: { form: { title: 'Test' } }
         };
         
-        // Default behavior (includeContext=false) strips context
+        // Default behavior (includeContext=false): slim context only (no workbench)
         const projectedDefault = toPublicSession(session, false);
-        expect(projectedDefault.context).toBeUndefined();
+        expect(projectedDefault.context).toEqual({ execution: { action: 'task' } });
+        expect(projectedDefault.context?.workbench).toBeUndefined();
         
         // Explicit includeContext=true keeps context for debugging
         const projectedDebug = toPublicSession(session, true);
@@ -85,8 +86,8 @@ describe('sessionRoutes - UI does not depend on raw context.workbench', () => {
         
         const projected = toPublicSession(sessionWithDeepWorkbench, false);
         
-        // Context is completely removed - no workbench leakage to UI
-        expect(projected.context).toBeUndefined();
+        expect(projected.context).toEqual({ execution: { action: 'agent', step: 'execute' } });
+        expect(projected.context?.workbench).toBeUndefined();
         expect(projected.workbench).toBeUndefined();
     });
 });

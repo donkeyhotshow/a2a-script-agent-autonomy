@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "file-exists": {
+      "path": "a2a-server/scripts/sim-validate.ts",
+      "exists": true
+    }
+  }
+}

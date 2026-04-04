@@ -1,0 +1,15 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "script": {
+      "broken_imports": [
+        {
+          "file": "app/Example.vue",
+          "line": 2,
+          "specifier": "./Missing"
+        }
+      ]
+    }
+  }
+}

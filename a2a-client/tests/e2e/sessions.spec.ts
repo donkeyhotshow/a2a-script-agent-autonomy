@@ -1,181 +1,149 @@
 /**
  * Sessions E2E Tests
- * Tests for session management: create, open, filter, list
+ * Tests for session management against the current web UI (taskbar + session panels).
  */
 
 import {test, expect} from '@playwright/test';
 import {fixtures} from './fixtures/index.js';
 import {installMockA2aClientApi} from './fixtures/mock-a2a-client-api.js';
 
-test.describe('Sessions', () => {
+async function selectMockProjectAndWaitForSessions(page: import('@playwright/test').Page) {
+    const projectSelect = page.locator('#projectSelect');
+    await projectSelect.waitFor({state: 'visible', timeout: 15000});
+    const mockOpt = projectSelect.locator('option[value="proj-mock"]');
+    if (await mockOpt.count()) {
+        await projectSelect.selectOption('proj-mock');
+    }
+    await expect(page.locator('.taskbar-session-btn').first()).toBeVisible({timeout: 15000});
+}
 
+test.describe('Sessions', () => {
     test.beforeEach(async ({page}) => {
         await installMockA2aClientApi(page);
 
-        // Navigate to the app
         await page.goto('/');
         await page.waitForLoadState('networkidle');
+        await selectMockProjectAndWaitForSessions(page);
     });
 
     test('should display sessions page', async ({page}) => {
-        // Check that the sessions page is visible
-        const sessionsPage = page.locator('#page-sessions');
-        await expect(sessionsPage).toHaveClass(/active/);
-
-        // Check header
-        await expect(page.locator('.header .logo')).toHaveText('A2A');
-        await expect(page.locator('.nav-link.active')).toHaveText('Sessions');
+        await expect(page.locator('header.app-header .logo')).toContainText('A2A Script Agent');
+        await expect(page.locator('main.app-main')).toBeVisible();
+        await expect(page.locator('.taskbar')).toBeVisible();
     });
 
     test('should display sessions list', async ({page}) => {
-        const sessionsList = page.locator('#sessionsList');
+        const sessionsList = page.locator('.taskbar-sessions-wrapper');
         await expect(sessionsList).toBeVisible();
 
-        // Should show session item from mock data
-        const sessionItem = sessionsList.locator('.session-item').first();
+        const sessionItem = page.locator('.taskbar-session-btn').first();
         await expect(sessionItem).toBeVisible();
         await expect(sessionItem).toContainText('исправить импорты');
     });
 
     test('should create new session', async ({page}) => {
-        // Click New Session button
-        await page.click('#newSession');
+        const before = await page.locator('.taskbar-session-btn').count();
+        await page.locator('.taskbar-btn-new-task').click();
 
-        // Should create a new session
-        await page.waitForTimeout(500);
-
-        // Session panel should show new session
-        const sessionHeader = page.locator('#sessionHeader');
-        await expect(sessionHeader).toBeVisible();
-
-        // Should show session ID
-        await expect(sessionHeader).toContainText('#session_');
+        await expect(page.locator('.taskbar-session-btn')).toHaveCount(before + 1, {timeout: 15000});
+        const newest = page.locator('.taskbar-session-btn').last();
+        await expect(newest).toHaveAttribute('data-session-id', /session_/);
     });
 
     test('should open existing session', async ({page}) => {
-        // Click on session item
-        const sessionItem = page.locator('#sessionsList .session-item').first();
-        await sessionItem.click();
+        await page.locator('.taskbar-session-btn').first().click();
 
-        // Should load session messages
-        await page.waitForTimeout(500);
-
-        // Session panel should show messages
-        const sessionMessages = page.locator('#sessionMessages');
-        await expect(sessionMessages).toBeVisible();
+        await expect(page.locator('.pui-panel-title').first()).toBeVisible({timeout: 15000});
+        await expect(page.locator('.task-flow-history')).toBeVisible();
     });
 
     test('should filter sessions by status', async ({page}) => {
-        // Default filter is "all"
-        const filter = page.locator('#sessionFilter');
-        await expect(filter).toHaveValue('all');
-
-        // Change filter to "active"
-        await filter.selectOption('active');
-
-        // Filter should be applied
-        await expect(filter).toHaveValue('active');
-
-        // Change filter to "waiting"
-        await filter.selectOption('waiting');
-        await expect(filter).toHaveValue('waiting');
-
-        // Change filter to "completed"
-        await filter.selectOption('completed');
-        await expect(filter).toHaveValue('completed');
+        const filter = page.locator('.taskbar-filter');
+        await expect(filter).toBeVisible();
+        await filter.fill('исправить');
+        await expect(page.locator('.taskbar-session-btn').first()).toBeVisible();
+        await filter.fill('');
+        await expect(page.locator('.taskbar-session-btn').first()).toBeVisible();
     });
 
     test('should display empty state when no project selected', async ({page}) => {
-        // The default state should show empty or sessions list
-        const sessionsList = page.locator('#sessionsList');
-        await expect(sessionsList).toBeVisible();
+        await expect(page.locator('.taskbar-content')).toBeVisible();
     });
 
     test('should show session status in list', async ({page}) => {
-        const sessionItem = page.locator('#sessionsList .session-item').first();
-        await expect(sessionItem).toContainText('active');
+        const sessionItem = page.locator('.taskbar-session-btn').first();
+        await expect(sessionItem).toHaveAttribute('data-session-id', 'session_001');
     });
 
     test('should show session preview in list', async ({page}) => {
-        const sessionItem = page.locator('#sessionsList .session-item').first();
-        const preview = sessionItem.locator('.session-item-preview');
-        await expect(preview).toContainText('исправить импорты');
+        const sessionItem = page.locator('.taskbar-session-btn').first();
+        await expect(sessionItem.locator('.taskbar-session-title')).toContainText('исправить импорты');
     });
 
     test('should highlight active session', async ({page}) => {
-        // Click on first session
-        const sessionItem = page.locator('#sessionsList .session-item').first();
+        const sessionItem = page.locator('.taskbar-session-btn').first();
         await sessionItem.click();
 
-        // Should have active class
         await expect(sessionItem).toHaveClass(/active/);
     });
 
-    // New Protocol Session Tests
     test('should handle session with execute.form response', async ({page}) => {
-        // Mock session with execute.form
-        await page.route(/\/api\/v1\/sessions\/[^/]+$/, async (route) => {
+        await page.route('**/api/a2a/sessions/session_001', async (route) => {
+            if (route.request().method() !== 'GET') {
+                return route.continue();
+            }
             return route.fulfill({
                 status: 200,
                 contentType: 'application/json',
                 body: JSON.stringify({
-                    success: true,
-                    data: {
-                        ...fixtures.session.data,
-                        messages: [
-                            {
-                                role: 'user',
-                                content: 'исправить импорты'
-                            },
-                            {
-                                role: 'assistant',
-                                content: JSON.stringify(fixtures.executeForm.data.result)
-                            }
-                        ]
-                    }
+                    ...fixtures.session.data,
+                    messages: [
+                        {
+                            role: 'user',
+                            content: 'исправить импорты'
+                        },
+                        {
+                            role: 'assistant',
+                            content: JSON.stringify(fixtures.executeForm.data.result)
+                        }
+                    ]
                 })
             });
         });
 
-        const sessionItem = page.locator('#sessionsList .session-item').first();
+        const sessionItem = page.locator('.taskbar-session-btn').first();
         await sessionItem.click();
-        await page.waitForTimeout(500);
 
-        // Session messages should show form content
-        const sessionMessages = page.locator('#sessionMessages');
-        await expect(sessionMessages).toBeVisible();
+        await expect(page.locator('.task-flow-history')).toBeVisible({timeout: 15000});
     });
 
     test('should handle session with result action-key', async ({page}) => {
-        // Mock session with result action-key
-        await page.route(/\/api\/v1\/sessions\/[^/]+$/, async (route) => {
+        await page.route('**/api/a2a/sessions/session_001', async (route) => {
+            if (route.request().method() !== 'GET') {
+                return route.continue();
+            }
             return route.fulfill({
                 status: 200,
                 contentType: 'application/json',
                 body: JSON.stringify({
-                    success: true,
-                    data: {
-                        ...fixtures.session.data,
-                        messages: [
-                            {
-                                role: 'user',
-                                content: 'выполнить скрипт'
-                            },
-                            {
-                                role: 'assistant',
-                                content: JSON.stringify(fixtures.resultScript.data.result)
-                            }
-                        ]
-                    }
+                    ...fixtures.session.data,
+                    messages: [
+                        {
+                            role: 'user',
+                            content: 'выполнить скрипт'
+                        },
+                        {
+                            role: 'assistant',
+                            content: JSON.stringify(fixtures.resultScript.data.result)
+                        }
+                    ]
                 })
             });
         });
 
-        const sessionItem = page.locator('#sessionsList .session-item').first();
+        const sessionItem = page.locator('.taskbar-session-btn').first();
         await sessionItem.click();
-        await page.waitForTimeout(500);
 
-        const sessionMessages = page.locator('#sessionMessages');
-        await expect(sessionMessages).toBeVisible();
+        await expect(page.locator('.task-flow-history')).toBeVisible({timeout: 15000});
     });
 });

@@ -22,7 +22,7 @@ api-client, script-runner.\n\n**Розбіжності:**\n- В ARCHITECTURE.md 
 ],
 "input": [
 {
-"name": "message",
+"name": "task",
 "type": "text",
 "label": "Запит для пошуку (якщо продовжуєте)",
 "required": false

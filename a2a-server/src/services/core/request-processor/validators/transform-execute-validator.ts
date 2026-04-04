@@ -42,10 +42,11 @@ export function validateDialogExecuteShape(execute: ProcessResult['execute'] | u
         });
         return issues;
     }
-    const toolKeys: string[] = [...SINGLE_TOOL_EXECUTE_KEYS];
-    const activeToolKeys = keys.filter((k) => toolKeys.includes(k));
+    const toolKeys = [...SINGLE_TOOL_EXECUTE_KEYS];
+    const activeToolKeys = keys.filter((k) => toolKeys.includes(k as typeof toolKeys[number]));
     const hasForm = typeof ex['form'] === 'object' && ex['form'] !== null;
-    const hasMessage = typeof ex['message'] === 'string' && ex['message'].trim().length > 0;
+    const hasExecuteMessage =
+        typeof ex['message'] === 'string' && (ex['message'] as string).trim().length > 0;
     const actionKeys = activeToolKeys.length + (hasForm ? 1 : 0);
     if (actionKeys > 1) {
         issues.push({
@@ -63,13 +64,19 @@ export function validateDialogExecuteShape(execute: ProcessResult['execute'] | u
             message: 'Dialog execute shape is neither chat form nor single tool action',
         });
     }
-    // Router / routing forms use `form.choices` only (no assistant line) — do not require execute.message.
     const formObj = hasForm ? (ex['form'] as Record<string, unknown>) : undefined;
     const isRouterChoicesForm = Boolean(formObj && Array.isArray(formObj['choices']));
-    if (hasForm && !hasMessage && !isRouterChoicesForm) {
+    // Pattern A in prompts uses nested `form.textarea` (not legacy `form.input[]` goldens like dialog/2).
+    const isTextareaObjectForm = Boolean(
+        formObj &&
+            typeof formObj['textarea'] === 'object' &&
+            formObj['textarea'] !== null &&
+            !Array.isArray(formObj['textarea'])
+    );
+    if (hasForm && !hasExecuteMessage && !isRouterChoicesForm && isTextareaObjectForm) {
         issues.push({
             code: 'DIALOG_EXECUTE_MESSAGE_MISSING',
-            message: 'Dialog chat response has form but no execute.message',
+            message: 'Dialog Pattern A (form.textarea) requires execute.message',
         });
     }
     return issues;
@@ -115,6 +122,66 @@ export function validateRouterResultShape(result: ProcessResult): TransformExecu
             message: 'Router transform returned empty choices array',
         });
     }
+    return issues;
+}
+
+/**
+ * Validate LLM output shape for top-level message conflicts and execute message issues.
+ * This catches TOP_LEVEL_MESSAGE_WITH_TOOL, DUPLICATE_TOP_AND_EXECUTE_MESSAGE, etc.
+ */
+export function validateLlmOutputShape(result: ProcessResult | Record<string, unknown>): TransformExecuteValidationIssue[] {
+    const issues: TransformExecuteValidationIssue[] = [];
+    if (!result || typeof result !== 'object') {
+        return issues;
+    }
+
+    const topMsg = typeof result.message === 'string' ? result.message.trim() : '';
+    const ex = result.execute as Record<string, unknown> | undefined;
+    
+    if (!ex || typeof ex !== 'object' || Array.isArray(ex)) {
+        return issues;
+    }
+
+    const exKeys = Object.keys(ex).filter((k) => ex[k] !== undefined && ex[k] !== null);
+    const toolKeys = [...SINGLE_TOOL_EXECUTE_KEYS];
+    const activeToolKeys = exKeys.filter((k) => toolKeys.includes(k as typeof toolKeys[number]));
+    const exMsg = typeof ex['message'] === 'string' ? (ex['message'] as string).trim() : '';
+    const hasForm = typeof ex['form'] === 'object' && ex['form'] !== null;
+
+    if (topMsg && activeToolKeys.length > 0) {
+        issues.push({
+            code: 'TOP_LEVEL_MESSAGE_WITH_TOOL',
+            message: `tools=[${activeToolKeys.join(',')}] — move assistant line to execute.message next to tool`,
+        });
+    }
+
+    if (topMsg && exMsg && topMsg === exMsg) {
+        issues.push({
+            code: 'DUPLICATE_TOP_AND_EXECUTE_MESSAGE',
+            message: hasForm || activeToolKeys.length > 0 ? 'same text in two places' : 'same text; execute should use form or tool, not message-only',
+        });
+    }
+
+    if (topMsg && exMsg && topMsg !== exMsg && activeToolKeys.length > 0) {
+        issues.push({
+            code: 'TOP_AND_EXECUTE_MESSAGE_MISMATCH',
+            message: 'top-level message differs from execute.message while tools present',
+        });
+    }
+
+    if (
+        exKeys.length === 1 &&
+        exMsg &&
+        !hasForm &&
+        activeToolKeys.length === 0 &&
+        !(topMsg && topMsg === exMsg)
+    ) {
+        issues.push({
+            code: 'EXECUTE_MESSAGE_ONLY',
+            message: 'execute has only message string — expected form or tool keys',
+        });
+    }
+
     return issues;
 }
 
@@ -206,7 +273,7 @@ export function shouldEnforceTransformStrictMode(): boolean {
  * Validate agent transform execute shape
  * Agent responses must follow either single-tool or chat-shape patterns:
  * - single-tool: exactly one tool key (rag-search, read-file, write-file, etc.)
- * - chat-shape: message + optional form (for dialog step or completed)
+ * - chat-shape: `execute.message` and/or `execute.form` (history coalesces top-level LLM `message` or `execute.message`)
  * No mixed execute shapes allowed.
  */
 export function validateAgentExecuteShape(execute: ProcessResult['execute'] | undefined): TransformExecuteValidationIssue[] {
@@ -227,8 +294,8 @@ export function validateAgentExecuteShape(execute: ProcessResult['execute'] | un
         });
         return issues;
     }
-    const toolKeys: string[] = [...SINGLE_TOOL_EXECUTE_KEYS];
-    const activeToolKeys = keys.filter((k) => toolKeys.includes(k));
+    const toolKeys = [...SINGLE_TOOL_EXECUTE_KEYS];
+    const activeToolKeys = keys.filter((k) => toolKeys.includes(k as typeof toolKeys[number]));
     const hasForm = typeof ex['form'] === 'object' && ex['form'] !== null;
     const hasMessage = typeof ex['message'] === 'string' && ex['message'].trim().length > 0;
     const actionKeys = activeToolKeys.length + (hasForm ? 1 : 0);
@@ -252,11 +319,6 @@ export function validateAgentExecuteShape(execute: ProcessResult['execute'] | un
         // Empty execute with message is allowed (completed state)
         return issues;
     }
-    if (hasForm && !hasMessage) {
-        issues.push({
-            code: 'AGENT_EXECUTE_FORM_WITHOUT_MESSAGE',
-            message: 'Agent chat response has form but no execute.message',
-        });
-    }
+    // Form-only `execute` is allowed for agent: assistant line may be top-level LLM `message` only (see append coalesce).
     return issues;
 }

@@ -1,0 +1,30 @@
+{
+  "context": {
+    "task": "sequence queue",
+    "execution": {
+      "action": "agent",
+      "step": "idle"
+    },
+    "workbench": {
+      "sections": {
+        "sequence": {
+          "steps": [
+            {
+              "id": "s1",
+              "title": "First",
+              "goal": "Do work",
+              "exit_criteria": ["done"],
+              "prompt_reference": "step_prompts.md#s1",
+              "dependencies": [],
+              "status": "pending"
+            }
+          ],
+          "headIndex": 0
+        }
+      }
+    }
+  },
+  "execute": {
+    "message": "Sequence scaffold OK"
+  }
+}

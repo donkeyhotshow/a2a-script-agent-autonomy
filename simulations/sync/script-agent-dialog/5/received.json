@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Plan follow-up work",
+      "description": "Ваша новая инструкция: Example.spec + vitest. Напишите, как продолжить."
+    }
+  }
+}

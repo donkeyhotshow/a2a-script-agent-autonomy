@@ -20,7 +20,7 @@ import {
 import {getStorageDir} from '../../services/storage.js';
 import {serverFetch, getServerBaseUrl} from '../../services/index.js';
 import {applyAgentRagChainAfterSyncInvoke} from '../../lib/agent-rag-chain.js';
-import {extractA2aExecute} from '../../lib/a2a-invoke-builders.js';
+import {extractA2aExecute, sanitizeInvokeBodyForA2aUpstream} from '../../lib/a2a-invoke-builders.js';
 import {pickInvokeContextPatch} from '../../lib/context-invoke-patch.js';
 import {buildWebExecute, sanitizeApiRecordExecuteFields} from '../../lib/web-execute-dto.js';
 import {buildInitialInvokeRequestBody} from '../../../lib/first-invoke-payload.js';
@@ -85,16 +85,17 @@ async function invokeAndPersistContinuation(params: {
     let ackStep = nextStep;
     try {
         const serverBase = await getServerBaseUrl();
-        const err = validateRequestToServer({ context: requestBody.context as Record<string, unknown> });
+        const upstreamBody = sanitizeInvokeBodyForA2aUpstream(requestBody) as Record<string, unknown>;
+        const err = validateRequestToServer({ context: upstreamBody.context as Record<string, unknown> });
         if (err) {
             res.status(400).json({ success: false, error: { code: 'INVALID_REQUEST', message: err } });
             return null;
         }
         await saveRequestToServer(sessionId, nextStep, {
             step: nextStep,
-            ...requestBody,
+            ...upstreamBody,
         });
-        const upstream = await serverFetch('POST', serverBase, '/api/v1/invoke', requestBody);
+        const upstream = await serverFetch('POST', serverBase, '/api/v1/invoke', upstreamBody);
         serverResponse = await upstream.json().catch(() => null);
         if (!upstream.ok || !serverResponse) {
             res.status(upstream.status >= 400 ? upstream.status : 502).json({
@@ -239,7 +240,6 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
         const requestBody = {
             context: {
                 version: '2.0',
-                session_id: sessionId,
                 execution: { action: 'action', step: body.choice },
                 ...session.context,
             },
@@ -335,7 +335,6 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
             task: messageText, // Используем messageText из result
             context: {
                 version: '2.0',
-                session_id: sessionId,
                 execution: { action: 'continue', step: 'next' },
                 ...session.context,
             },

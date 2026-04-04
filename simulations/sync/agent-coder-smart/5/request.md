@@ -9,7 +9,16 @@
 {
   "context": {
     "task": "створи задачу і виконай",
-    "execution": { "action": "agent", "step": "rag-research-plan" },
+    "execution": {
+      "action": "agent",
+      "step": "rag-research-plan"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "додати логінування в API та оновити тести"
+      }
+    ],
     "workbench": {
       "sections": {
         "section1": "додати логінування в API та оновити тести",
@@ -17,9 +26,25 @@
       }
     }
   },
-  "ragResults": [
-    { "file": "src/routes/api.js", "snippet": "router.use(authMiddleware);" },
-    { "file": "tests/api.test.js", "snippet": "describe('POST /login'" }
-  ]
+  "result": {
+    "rag-search": {
+      "results": [
+        {
+          "file": "src/routes/api.js",
+          "score": 0.9,
+          "snippet": "router.use(authMiddleware);"
+        },
+        {
+          "file": "tests/api.test.js",
+          "score": 0.85,
+          "snippet": "describe('POST /login'"
+        }
+      ],
+      "files": [
+        "src/routes/api.js",
+        "tests/api.test.js"
+      ]
+    }
+  }
 }
 ```

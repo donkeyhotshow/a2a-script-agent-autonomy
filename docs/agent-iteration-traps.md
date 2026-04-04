@@ -6,7 +6,7 @@ Repo norms that override the default “answer once and exit” habit live in [`
 
 | # | Trap | Cursor agent | Client API driver |
 |---|------|----------------|-------------------|
-| 1 | **Empty queue = finish** | Treat empty `tasks/pending/` as **prune → discover → write**, then continue. See [`AGENTS.md`](../AGENTS.md) DEV_STATE Protocol, [`methodology/tasks.md`](../methodology/tasks.md). | Same: driver does not “complete the repo”; human/agent loop owns queue. |
+| 1 | **Empty queue = finish** | Treat empty `tasks/pending/` as **prune → discover → write**, then continue. See [`AGENTS.md`](../AGENTS.md) DEV_STATE Protocol, [`methodology/tasks.md`](../archive/methodology/tasks.md). | Same: driver does not “complete the repo”; human/agent loop owns queue. |
 | 2 | **Vague prompt = one-shot** | Rule: continue until stated acceptance criteria or a **logged blocker**; define “done” (tests, checklist, files). | Scripts should have explicit exit conditions (step settled, max polls, error class). |
 | 3 | **Silence / one-liner = stop** | [`AGENTS.md`](../AGENTS.md): minimal user text is **not** permission to halt after one turn. | N/A unless the driver stops on empty stdin—avoid that unless intentional. |
 
@@ -18,13 +18,23 @@ Repo norms that override the default “answer once and exit” habit live in [`
 | 5 | **Polling not continued** | Async: `POST …/next` then poll `GET …/async` (and/or hydrate session) until settled. | Fixed retry budget + backoff; do not treat ack-only `next` as completion. |
 | 6 | **Server-only invoke** | Do not drive **session** workflows with `POST /api/v1/invoke` alone; use Client API on `5173` (`/api/a2a/*`). See [`AGENTS.md`](../AGENTS.md) Unified manual path, [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md). | Always create session + `next` + poll on Client API base URL. |
 
+### Task Monitor / daemon (self-upgrade)
+
+| # | Trap | Mitigation |
+|---|------|------------|
+| 15 | **Router idle / “no result”** | `monitor-and-process-tasks.js` auto-submits router **choice** in order **`agent` → `task-decomposition` → `dialog` → first** when needed; re-sends task text on idle task forms; completion path retries the same gate. |
+| 16 | **Stale session id** | After storage prune, `GET /api/a2a/sessions/{id}` may return **404** — create a new session or re-run the monitor; old `promiseId` values are stale unless still valid on `:3000`. |
+| 17 | **DELETE while async** | `DELETE /api/a2a/sessions/:id` returns **409** when flat or project storage has an in-flight promise (`getProjectModeInflightPromise`). |
+
+**Client API:** one `GET /sessions/:id` handler so `?includeContext=1` is not shadowed by a branch that only returns messages.
+
 ## 3. Task and environment
 
 | # | Trap | Cursor agent | Client API driver |
 |---|------|----------------|-------------------|
-| 7 | **Stack down / pending promise** | Retry with backoff; run health checks from [`AGENTS.md`](../AGENTS.md) Debugging. | Same; log `promiseId` and poll until terminal state or timeout. |
+| 7 | **Stack down / pending promise / restart during inference** | Retry with backoff; run health checks from [`AGENTS.md`](../AGENTS.md) Debugging. If status is `processing`, **confirm** Ollama is actually generating (e.g. `GET http://localhost:11435/api/ps`) **before** `kill-all` / `start-all` — [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) → *Ollama is generating — pause other work*. | Same; log `promiseId` and poll until terminal state or timeout. If Ollama is idle but still `processing`, treat as **stuck** (same doc). |
 | 8 | **Auth / env** | `JWT_SECRET` (32+ chars), `ENCRYPTION_KEY` exactly 32 chars, `SKIP_AUTH=1` in dev as documented. Fix env, retry—do not stop on first 401/400 without diagnosis. | Surface HTTP status and response body in logs. |
-| 9 | **Started from sims/e2e for schema bug** | For schema/action-key shape failures, start at `scripts/direct-tests` first, then escalate (session flow -> sims -> e2e). See [`AGENTS.md`](../AGENTS.md), [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md). | Same escalation order; avoid burning retries on high-latency e2e before direct reproduction. |
+| 9 | **Started from sims/e2e for schema bug** | For schema/action-key shape failures, start at `tests/direct-tests` first, then escalate (session flow -> sims -> e2e). See [`AGENTS.md`](../AGENTS.md), [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md). | Same escalation order; avoid burning retries on high-latency e2e before direct reproduction. |
 
 ## 4. Model / behavior
 
@@ -44,5 +54,5 @@ Repo norms that override the default “answer once and exit” habit live in [`
 ## Quick links
 
 - [`AGENTS.md`](../AGENTS.md) — empty queue, router two beats, Client API path, checklist  
-- [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) — operator curl walkthrough  
-- [`methodology/tasks.md`](../methodology/tasks.md) — task wording and queue protocol  
+- [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) — operator curl walkthrough; *Ollama is generating — pause other work*  
+- [`methodology/tasks.md`](../archive/methodology/tasks.md) — task wording and queue protocol  

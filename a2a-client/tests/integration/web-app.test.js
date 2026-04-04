@@ -19,7 +19,7 @@ beforeAll(async () => {
 
 describe('Web App integration', () => {
     it('should have valid index.html structure with TaskFlow', () => {
-        const htmlPath = path.resolve(__dirname, '../../web/index.html');
+        const htmlPath = path.resolve(__dirname, '../../packages/web/index.html');
         const html = fs.readFileSync(htmlPath, 'utf8');
         // Check for TaskFlow scripts (new architecture)
         expect(html).toContain('js/task-flow/render.js');
@@ -33,7 +33,7 @@ describe('Web App integration', () => {
     });
 
     it('should have TaskFlow files', () => {
-        const flowDir = path.resolve(__dirname, '../../web/js/task-flow');
+        const flowDir = path.resolve(__dirname, '../../packages/web/js/task-flow');
         expect(fs.existsSync(path.join(flowDir, 'render.js'))).toBe(true);
         expect(fs.existsSync(path.join(flowDir, 'loader.js'))).toBe(true);
         expect(fs.existsSync(path.join(flowDir, 'tasks.js'))).toBe(true);

@@ -1,0 +1,102 @@
+# Step 9 — response (LLM suggests test improvements)
+
+LLM provides detailed suggestions for additional test cases.
+
+```json
+{
+  "context": {
+    "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
+    "execution": {
+      "action": "dialog",
+      "step": "test_suggestions"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "При запуске dev-сервера вылетает ошибка Cannot find module @/components/Missing из resources/js/components/Example.vue."
+      },
+      {
+        "role": "assistant",
+        "message": "Ошибка импорта: Vue не может найти @/components/Missing в resources/js/components/Example.vue."
+      },
+      {
+        "role": "assistant",
+        "message": "Автоматический скрипт fix-vue-imports применил патч: импорт обратно заменён на '@/components/Missing', можно продолжать."
+      },
+      {
+        "role": "user",
+        "message": "Теперь после исправления нужно добавить тест Example.spec и прогнать vitest."
+      },
+      {
+        "role": "user",
+        "message": "Принял: введём Example.spec и запустим vitest после ручного анализа компонента."
+      },
+      {
+        "role": "assistant",
+        "message": "Принял задачу: напишем Example.spec и запустим vitest, дайте знать, если нужна дополнительная информация."
+      },
+      {
+        "role": "user",
+        "message": "Пожалуйста, прогоните vitest на Example.spec и отдайте вывод."
+      },
+      {
+        "role": "assistant",
+        "message": "Vitest run: 1 test, 0 failed."
+      },
+      {
+        "role": "user",
+        "message": "А что ещё можно протестировать в этом компоненте? Какие edge cases стоит покрыть?"
+      },
+      {
+        "role": "assistant",
+        "message": "Вот что стоит добавить:\n\n1. **Props validation** — тест с невалидными props (отсутствующие, неверного типа)\n2. **Empty state** — рендер с пустыми данными\n3. **Loading state** — индикатор загрузки\n4. **Error boundary** — обработка ошибок\n5. **Event testing** — проверка emit событий с разными payload\n6. **Slot content** — если есть slots, протестировать их\n\nХотите, чтобы я добавил эти тесты в Example.spec?"
+      }
+    ],
+    "workbench": {
+      "sections": {
+        "autoScriptTrigger": {
+          "scriptId": "fix-vue-imports",
+          "triggeredBy": "assistant",
+          "errorMessage": "Cannot find module @/components/Missing referenced from Example.vue",
+          "file": "resources/js/components/Example.vue",
+          "autoRun": true,
+          "filesModified": [
+            "resources/js/components/Example.vue"
+          ],
+          "lastOutput": "Replaced './Missing' with '@/components/Missing' in Example.vue."
+        }
+      }
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Дополнительные тесты",
+      "description": "Хотите добавить предложенные тесты в Example.spec?",
+      "choices": [
+        {
+          "id": "add_tests",
+          "label": "Да, добавь все тесты",
+          "description": "Добавить все 6 предложенных тестов в Example.spec"
+        },
+        {
+          "id": "add_some",
+          "label": "Выборочно",
+          "description": "Выберу конкретные тесты вручную"
+        },
+        {
+          "id": "skip",
+          "label": "Пропустить",
+          "description": "Вернуться к основной задаче"
+        }
+      ]
+    }
+  }
+}
+```
+
+## Explanation
+
+The LLM:
+1. Provides detailed test case suggestions with explanations
+2. Creates a form for the user to choose how to proceed
+3. Sets execution step to "test_suggestions" for tracking

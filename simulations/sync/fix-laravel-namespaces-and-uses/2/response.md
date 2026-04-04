@@ -1,0 +1,29 @@
+# `fix-laravel-namespaces-and-uses/2` — response
+
+Mirror of `response.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "виправити namespace та use у Laravel PHP файлах",
+    "execution": {
+      "action": "fix-laravel-namespaces-and-uses",
+      "step": "laravel-use-detect"
+    },
+    "workbench": {
+      "sections": {
+        "currentTask": "виправити namespace та use у Laravel PHP файлах"
+      }
+    }
+  },
+  "execute": {
+    "script": {
+      "input": {
+        "rootDir": "."
+      },
+      "output": "broken_uses[]",
+      "code": "const { readdirSync, readFileSync, existsSync } = require('node:fs');\nconst { join, resolve } = require('node:path');\n\nfunction walkPhp(dir, out) {\n  if (!existsSync(dir)) return;\n  for (const e of readdirSync(dir, { withFileTypes: true })) {\n    const p = join(dir, e.name);\n    if (e.isDirectory()) {\n      if (['vendor', 'node_modules', '.git'].includes(e.name)) continue;\n      walkPhp(p, out);\n    } else if (e.name.endsWith('.php')) out.push(p);\n  }\n}\n\nfunction fqcnToAbs(root, fqcn) {\n  const parts = fqcn.split('\\\\').filter(Boolean);\n  if (parts[0] !== 'App') return null;\n  if (parts[1] === 'Features' && parts[2] === 'Business' && parts.length >= 5) {\n    const feature = parts[3];\n    const tail = parts.slice(4);\n    if (!tail.length) return null;\n    const file = tail[tail.length - 1] + '.php';\n    const featureDir = feature.charAt(0).toLowerCase() + feature.slice(1);\n    return join(root, \"features\", \"business\", featureDir, \"app\", ...tail.slice(0, -1), file);\n  }\n  const segs = parts.slice(1);\n  if (!segs.length) return null;\n  const file = segs[segs.length - 1] + '.php';\n  return join(root, \"app\", ...segs.slice(0, -1), file);\n}\n\nconst DEMO = [\n  { file: 'features/business/checkout/app/Http/Controllers/CheckoutApiController.php', line: 8, fqcn: 'App\\\\Features\\\\Business\\\\Checkout\\\\Service\\\\CheckoutService' },\n  { file: 'features/business/profile/app/Http/Controllers/ProfileController.php', line: 14, fqcn: 'App\\\\Models\\\\User' },\n  { file: 'features/business/payments/app/Http/Controllers/Api/PaymentController.php', line: 7, fqcn: 'App\\\\Features\\\\Business\\\\Checkout\\\\Model\\\\Order' }\n];\n\nconst root = resolve(input.rootDir || '.');\nconst files = [];\nfor (const sub of ['app', 'features']) walkPhp(join(root, sub), files);\n\nconst broken = [];\nconst useLine = /^\\s*use\\s+([^;]+);/;\n\nfor (const file of files) {\n  const lines = readFileSync(file, 'utf8').split('\\n');\n  for (let i = 0; i < lines.length; i++) {\n    const m = lines[i].match(useLine);\n    if (!m) continue;\n    let stmt = m[1].trim().split(/\\s+as\\s+/i)[0].trim();\n    if (stmt.indexOf('{') !== -1) continue;\n    if (!stmt.includes('\\\\')) continue;\n    const abs = fqcnToAbs(root, stmt);\n    if (abs && !existsSync(abs)) {\n      const normRoot = root.replace(/\\\\/g, '/');\n      const rel = file.replace(/\\\\/g, '/').replace(normRoot + '/', '');\n      broken.push({ file: rel, line: i + 1, fqcn: stmt });\n    }\n  }\n}\n\nreturn { broken_uses: broken.length ? broken : DEMO };"
+    }
+  }
+}
+```

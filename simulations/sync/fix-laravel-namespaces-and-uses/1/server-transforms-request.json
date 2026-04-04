@@ -17,19 +17,23 @@
           "choices": [
             {
               "id": "fix-laravel-namespaces-and-uses",
-              "label": "Laravel: namespace та use"
+              "label": "Laravel: namespace та use",
+              "description": "Скриптований сценарій для PHP namespace та use."
             },
             {
               "id": "fix-vue-imports",
-              "label": "Виправити Vue імпорти"
+              "label": "Виправити Vue імпорти",
+              "description": "Скриптований сценарій для виправлення імпортів у Vue."
             },
             {
               "id": "auto-ai",
-              "label": "AI асистент"
+              "label": "AI асистент",
+              "description": "LLM пропонує виконувані дії з контексту сесії."
             },
             {
               "id": "task-decomposition",
-              "label": "Декомпозиція задач"
+              "label": "Декомпозиція задач",
+              "description": "Розбиття задачі на підзадачі та план виконання."
             }
           ]
         }

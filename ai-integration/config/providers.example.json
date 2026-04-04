@@ -1,0 +1,112 @@
+{
+  "api_keys": [
+    {
+      "id": "ollama-local",
+      "provider": "ollama",
+      "secret": "__OLLAMA_LOCAL__",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "id": "z-ai-primary",
+      "provider": "z_ai",
+      "secret": "PASTE_PRIMARY_Z_AI_KEY_HERE",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "id": "z-ai-secondary",
+      "provider": "z_ai",
+      "secret": "PASTE_SECONDARY_Z_AI_KEY_HERE",
+      "enabled": true,
+      "priority": 2
+    }
+  ],
+  "providers": {
+    "ollama": {
+      "type": "ollama",
+      "url": "${OLLAMA_HOST:-http://localhost:11435}",
+      "enabled": false,
+      "priority": 1,
+      "models": ["qwen3:8b"],
+      "timeout": 0,
+      "max_retries": 3
+    },
+    "openrouter": {
+      "type": "openai",
+      "url": "https://openrouter.ai/api/v1",
+      "api_key": "${OPENROUTER_API_KEY}",
+      "enabled": false,
+      "priority": 2,
+      "models": [
+        "meta-llama/llama-3-8b-instruct",
+        "mistralai/mistral-7b-instruct",
+        "google/gemma-7b-it",
+        "nousresearch/hermes-3-llama-3.1-405b"
+      ],
+      "fallback_models": {
+        "qwen3:8b": "meta-llama/llama-3-8b-instruct",
+        "mistral": "mistralai/mistral-7b-instruct"
+      },
+      "timeout": 0,
+      "max_retries": 2
+    },
+    "groq": {
+      "type": "openai",
+      "url": "https://api.groq.com/openai/v1",
+      "api_key": "${GROQ_API_KEY}",
+      "enabled": false,
+      "priority": 3,
+      "models": [
+        "qwen3-8b-8192",
+        "qwen3-70b-8192",
+        "mixtral-8x7b-32768",
+        "gemma2-9b-it"
+      ],
+      "fallback_models": {
+        "qwen3:8b": "qwen3-8b-8192",
+        "mistral": "mixtral-8x7b-32768"
+      },
+      "timeout": 0,
+      "max_retries": 2
+    },
+    "huggingface": {
+      "type": "huggingface",
+      "url": "https://api-inference.huggingface.co",
+      "api_key": "${HF_TOKEN}",
+      "enabled": false,
+      "priority": 4,
+      "models": [
+        "meta-llama/Llama-2-7b-chat-hf",
+        "mistralai/Mistral-7B-v0.1"
+      ],
+      "timeout": 0,
+      "max_retries": 1
+    },
+    "cohere": {
+      "type": "openai",
+      "url": "https://api.cohere.ai/v1",
+      "api_key": "${COHERE_API_KEY}",
+      "enabled": false,
+      "priority": 5,
+      "models": ["command-r", "command-r-plus"],
+      "timeout": 0,
+      "max_retries": 2
+    },
+    "z_ai": {
+      "type": "z_ai",
+      "url": "${Z_AI_BASE_URL:-https://api.z.ai/api/paas/v4/}",
+      "api_key": "PASTE_PRIMARY_Z_AI_KEY_HERE",
+      "enabled": true,
+      "priority": 6,
+      "models": ["${Z_AI_MODEL:-glm-4.7-flash}"],
+      "timeout": 0,
+      "max_retries": 2,
+      "request_delay_seconds": 10.0
+    }
+  },
+  "default_provider": "z_ai",
+  "fallback_chain": ["z_ai", "ollama", "groq", "openrouter"],
+  "enable_fallback": true,
+  "provider_timeout": 0
+}

@@ -26,19 +26,18 @@ export function query<T = unknown>(obj: unknown, path: string): T | undefined {
     jsonPath = dollar + '.' + path;
   }
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const results = (JSONPath({
+  const results = JSONPath({
     path: jsonPath,
-    json: obj as any,
+    json: obj as object,
     resultType: 'all'
-  }) as unknown) as Array<{value: unknown}>;
+  }) as unknown as Array<{ value: unknown }>;
   
-  if (results.length === 0) {
+  if (!results || results.length === 0) {
     return undefined;
   }
   
   // Return the first result for simple queries
-  return results[0]!.value as T;
+  return results[0]?.value as T;
 }
 
 /**
@@ -83,8 +82,12 @@ export function set(obj: Record<string, unknown>, path: string, value: unknown):
   let current: unknown = obj;
   
   for (let i = 0; i < parts.length - 1; i++) {
-    const part = parts[i]!;
-    const nextPart = parts[i + 1]!
+    const part = parts[i];
+    const nextPart = parts[i + 1];
+    
+    if (!part) {
+      break;
+    }
     
     if (current === undefined || current === null) {
       break;
@@ -99,7 +102,7 @@ export function set(obj: Record<string, unknown>, path: string, value: unknown):
     // Create intermediate objects/arrays as needed
     if (!(part in currentObj)) {
       // Check if next part looks like an array index
-      if (/^\d+$/.test(nextPart)) {
+      if (nextPart && /^\d+$/.test(nextPart)) {
         currentObj[part] = [];
       } else {
         currentObj[part] = {};
@@ -110,11 +113,13 @@ export function set(obj: Record<string, unknown>, path: string, value: unknown):
   }
   
   // Set the final value
-  const lastPart = parts[parts.length - 1]!;
-  if (current !== undefined && current !== null && typeof current === 'object') {
-    (current as Record<string, unknown>)[lastPart] = value;
-  } else if (parts.length === 1) {
-    obj[lastPart] = value;
+  const lastPart = parts[parts.length - 1];
+  if (lastPart !== undefined) {
+    if (current !== undefined && current !== null && typeof current === 'object') {
+      (current as Record<string, unknown>)[lastPart] = value;
+    } else if (parts.length === 1) {
+      obj[lastPart] = value;
+    }
   }
   
   return obj;
@@ -208,9 +213,11 @@ export function resolveTemplates(
       // Add text before the match
       parts.push(str.slice(lastIndex, match.index));
       // Add resolved value
-      const path = match[1] ?? '';
-      const resolved = query(context, path);
-      parts.push(resolved !== undefined ? String(resolved) : '');
+      const path = match[1];
+      if (path) {
+        const resolved = query(context, path);
+        parts.push(resolved !== undefined ? String(resolved) : '');
+      }
       lastIndex = match.index + match[0].length;
     }
     
@@ -252,15 +259,11 @@ export function exists(obj: unknown, path: string): boolean {
  * Looks for JSON blocks (```json ... ```) or raw JSON
  */
 export function extractJsonFromMarkdown(md: string): unknown {
-  // DEBUG: Log the raw response for debugging
-  console.log('[DEBUG extractJsonFromMarkdown] Raw response:', md);
-  
   // Try to find JSON code block
   const jsonBlockMatch = md.match(/```json\s*([\s\S]*?)\s*```/);
-  if (jsonBlockMatch) {
-    console.log('[DEBUG extractJsonFromMarkdown] Found JSON block');
+  if (jsonBlockMatch && jsonBlockMatch[1]) {
     try {
-      return JSON.parse(jsonBlockMatch[1]!);
+      return JSON.parse(jsonBlockMatch[1]);
     } catch {
       // Fall through to try raw JSON
     }
@@ -268,23 +271,18 @@ export function extractJsonFromMarkdown(md: string): unknown {
   
   // Try to find any code block
   const codeBlockMatch = md.match(/```\s*([\s\S]*?)\s*```/);
-  if (codeBlockMatch) {
-    console.log('[DEBUG extractJsonFromMarkdown] Found generic code block');
+  if (codeBlockMatch && codeBlockMatch[1]) {
     try {
-      return JSON.parse(codeBlockMatch[1]!);
+      return JSON.parse(codeBlockMatch[1]);
     } catch {
       // Fall through to try raw
     }
   }
   
   // Try parsing the entire content as JSON
-  console.log('[DEBUG extractJsonFromMarkdown] Trying to parse as raw JSON');
   try {
-    const parsed = JSON.parse(md);
-    console.log('[DEBUG extractJsonFromMarkdown] Raw JSON parse succeeded');
-    return parsed;
+    return JSON.parse(md);
   } catch {
-    console.log('[DEBUG extractJsonFromMarkdown] Raw JSON parse failed');
     // Return the raw content if no valid JSON found
     return md;
   }

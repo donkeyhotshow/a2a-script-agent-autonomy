@@ -7,7 +7,7 @@
 "description": "Файл прочитано: модуль експортує register, login, verifyToken (JWT + bcrypt). Що розглянути далі?",
 "input": [
 {
-"name": "message",
+"name": "task",
 "type": "text",
 "label": "Повідомлення",
 "placeholder": "Наступне питання або команда",

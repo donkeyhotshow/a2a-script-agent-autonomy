@@ -166,6 +166,12 @@ def _setup_request_middleware():
 
 
 def main():
+    # Fix for Windows asyncio event loop issues  
+    if sys.platform == 'win32':
+        import asyncio
+        # Use ProactorEventLoopPolicy for better Windows compatibility with aiohttp
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
+    
     print(f"{'=' * 50}")
     print(f"Ollama Proxy Service")
     print(f"{'=' * 50}")

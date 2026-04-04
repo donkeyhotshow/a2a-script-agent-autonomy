@@ -1,0 +1,24 @@
+{
+  "description": "Sample vertical dialog: router form with choices → dialog task form",
+  "steps": [
+    {
+      "readFrom": "1/server-response.json",
+      "expect": {
+        "executeSingleKey": true,
+        "executeAction": "form",
+        "formChoicesMin": 2,
+        "executionAction": "router",
+        "executionStep": "routing"
+      }
+    },
+    {
+      "readFrom": "2/server-response.json",
+      "expect": {
+        "executeSingleKey": true,
+        "executeAction": "form",
+        "executionAction": "dialog",
+        "executionStep": "task"
+      }
+    }
+  ]
+}

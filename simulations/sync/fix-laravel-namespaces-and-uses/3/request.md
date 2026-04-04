@@ -1,0 +1,36 @@
+# `fix-laravel-namespaces-and-uses/3` — request
+
+Mirror of `request.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "виправити namespace та use у Laravel PHP файлах",
+    "execution": {
+      "action": "fix-laravel-namespaces-and-uses",
+      "step": "laravel-use-detect"
+    }
+  },
+  "result": {
+    "script": {
+      "broken_uses": [
+        {
+          "file": "features/business/checkout/app/Http/Controllers/CheckoutApiController.php",
+          "line": 8,
+          "fqcn": "App\\Features\\Business\\Checkout\\Service\\CheckoutService"
+        },
+        {
+          "file": "features/business/profile/app/Http/Controllers/ProfileController.php",
+          "line": 14,
+          "fqcn": "App\\Models\\User"
+        },
+        {
+          "file": "features/business/payments/app/Http/Controllers/Api/PaymentController.php",
+          "line": 7,
+          "fqcn": "App\\Features\\Business\\Checkout\\Model\\Order"
+        }
+      ]
+    }
+  }
+}
+```

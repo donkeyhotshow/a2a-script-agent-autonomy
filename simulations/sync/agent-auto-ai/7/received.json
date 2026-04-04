@@ -8,7 +8,8 @@
       "choices": [
         {
           "id": "done",
-          "label": "OK"
+          "label": "OK",
+          "description": "Задача завершена, файлы созданы"
         }
       ]
     }

@@ -26,19 +26,18 @@ export function query<T = unknown>(obj: unknown, path: string): T | undefined {
     jsonPath = dollar + '.' + path;
   }
   
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const results = (JSONPath({
+  const results = JSONPath({
     path: jsonPath,
-    json: obj as any,
+    json: obj as object,
     resultType: 'all'
-  }) as unknown) as Array<{value: unknown}>;
+  }) as unknown as Array<{ value: unknown }>;
   
-  if (results.length === 0) {
+  if (!results || results.length === 0) {
     return undefined;
   }
   
   // Return the first result for simple queries
-  return results[0]!.value as T;
+  return results[0]?.value as T;
 }
 
 /**
@@ -83,8 +82,12 @@ export function set(obj: Record<string, unknown>, path: string, value: unknown):
   let current: unknown = obj;
   
   for (let i = 0; i < parts.length - 1; i++) {
-    const part = parts[i]!;
-    const nextPart = parts[i + 1]!
+    const part = parts[i];
+    const nextPart = parts[i + 1];
+    
+    if (!part) {
+      break;
+    }
     
     if (current === undefined || current === null) {
       break;
@@ -99,7 +102,7 @@ export function set(obj: Record<string, unknown>, path: string, value: unknown):
     // Create intermediate objects/arrays as needed
     if (!(part in currentObj)) {
       // Check if next part looks like an array index
-      if (/^\d+$/.test(nextPart)) {
+      if (nextPart && /^\d+$/.test(nextPart)) {
         currentObj[part] = [];
       } else {
         currentObj[part] = {};
@@ -110,10 +113,10 @@ export function set(obj: Record<string, unknown>, path: string, value: unknown):
   }
   
   // Set the final value
-  const lastPart = parts[parts.length - 1]!;
-  if (current !== undefined && current !== null && typeof current === 'object') {
+  const lastPart = parts[parts.length - 1];
+  if (lastPart && current !== undefined && current !== null && typeof current === 'object') {
     (current as Record<string, unknown>)[lastPart] = value;
-  } else if (parts.length === 1) {
+  } else if (parts.length === 1 && lastPart) {
     obj[lastPart] = value;
   }
   
@@ -208,9 +211,11 @@ export function resolveTemplates(
       // Add text before the match
       parts.push(str.slice(lastIndex, match.index));
       // Add resolved value
-      const path = match[1] ?? '';
-      const resolved = query(context, path);
-      parts.push(resolved !== undefined ? String(resolved) : '');
+      const path = match[1];
+      if (path) {
+        const resolved = query(context, path);
+        parts.push(resolved !== undefined ? String(resolved) : '');
+      }
       lastIndex = match.index + match[0].length;
     }
     

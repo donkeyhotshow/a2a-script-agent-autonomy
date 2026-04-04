@@ -1,0 +1,50 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "dialog",
+        "step": "run_tests"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.context.workbench",
+      "value": {
+        "sections": {
+          "autoScriptTrigger": {
+            "scriptId": "fix-vue-imports",
+            "triggeredBy": "assistant",
+            "errorMessage": "Cannot find module @/components/Missing referenced from Example.vue",
+            "file": "resources/js/components/Example.vue",
+            "autoRun": true,
+            "filesModified": [
+              "resources/js/components/Example.vue"
+            ],
+            "lastOutput": "Replaced './Missing' with '@/components/Missing' in Example.vue."
+          }
+        }
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.execute",
+      "value": {
+        "run-script": {
+          "scriptId": "test",
+          "params": {
+            "scope": "resources/js/components/Example.spec",
+            "coverage": false
+          }
+        }
+      }
+    }
+  ]
+}

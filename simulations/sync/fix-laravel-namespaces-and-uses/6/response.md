@@ -1,0 +1,40 @@
+# `fix-laravel-namespaces-and-uses/6` — response
+
+Mirror of `response.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "виправити namespace та use у Laravel PHP файлах",
+    "execution": {
+      "action": "fix-laravel-namespaces-and-uses",
+      "step": "laravel-composer-autoload",
+      "status": "completed"
+    },
+    "workbench": {
+      "sections": {
+        "currentTask": "виправити namespace та use у Laravel PHP файлах"
+      }
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Composer autoload оновлено",
+      "description": "Очистили 3 артефакти, composer dump-autoload завершився кодом 0.",
+      "choices": [
+        {
+          "id": "ok",
+          "label": "OK",
+          "description": "Завершити виконання"
+        }
+      ]
+    }
+  },
+  "result": {
+    "script": {
+      "cleanup_count": 3,
+      "composer_exit_code": 0
+    }
+  }
+}
+```

@@ -5,15 +5,43 @@
  * - step_result - processing results from executed steps
  * - task_request - proposing actions for new tasks
  * - approve_action - starting action execution after approval
+ * - step_complete - confirming step completion
  */
 
 import {logger} from '../../../utils/logger.js';
 import {actionProcessor} from '../../../actions/action-processor.js';
 import {actionRegistry} from '../../../actions/action-registry.js';
 import type {ActionDefinition} from '../../../actions/types.js';
-import type {RequestContext, ProcessResult, ProcessOutcome} from './request-processor.interfaces.js';
+import type {
+    RequestContext,
+    ProcessResult,
+    ProcessOutcome,
+} from '../request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
-import {buildRouterForm} from '../../../config/router-static.js';
+import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../../../config/router-static.js';
+import {applySequenceStepComplete} from './sequence-workbench.js';
+import {resolveExecution, resolveResultObject} from './normalization.js';
+import {dialogRequestProcessor} from './dialog-request-processor.js';
+
+// Import extracted handlers
+import {
+    handleStepResult as handleStepResultFn
+} from './handlers/step-result-handler.js';
+import {
+    handleRouterChoice as handleRouterChoiceFn,
+    pickRouterSubmitChoice as pickRouterSubmitChoiceFn
+} from './handlers/router-choice-handler.js';
+import {
+    handleTaskRequest as handleTaskRequestFn,
+    parseTaskText as parseTaskTextFn,
+    analyzeTaskForAutoRouting as analyzeTaskForAutoRoutingFn
+} from './handlers/task-request-handler.js';
+import {
+    handleStepComplete as handleStepCompleteFn
+} from './handlers/step-complete-handler.js';
+import {
+    handleApproveAction as handleApproveActionFn
+} from './handlers/approve-action-handler.ts';
 
 /**
  * Action request processor configuration
@@ -21,6 +49,9 @@ import {buildRouterForm} from '../../../config/router-static.js';
 export interface ActionProcessorConfig {
     maxRetries: number;
     enableStepTracking: boolean;
+    retryDelay: number;
+    timeout: number;
+    enableValidation: boolean;
 }
 
 /**
@@ -29,10 +60,14 @@ export interface ActionProcessorConfig {
  */
 export class ActionRequestProcessor extends BaseRequestProcessor {
     constructor(config: Partial<ActionProcessorConfig> = {}) {
-        super('ActionRequestProcessor', {});
+        super('ActionRequestProcessor', config);
         this.config = {
-            ...this.config,
-            maxRetries: config.maxRetries ?? 3,
+            maxRetries: 3,
+            retryDelay: 1000,
+            timeout: 30000,
+            enableValidation: true,
+            enableStepTracking: true,
+            ...config
         };
     }
 
@@ -44,7 +79,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         const actionType = this.getActionType(ctx);
 
         // Can handle action-specific types
-        if (actionType === 'step_result' || actionType === 'task_request' || actionType === 'approve_action') {
+        if (actionType === 'step_result' || actionType === 'task_request' || actionType === 'approve_action' || actionType === 'step_complete') {
             return true;
         }
 
@@ -89,6 +124,18 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
             promiseId
         });
 
+        // Handle router choice (invoke also sets choice_id; result may be absent on some paths)
+        const execForRouter = resolveExecution(ctx);
+        const routerChoice = this.pickRouterSubmitChoice(ctx);
+        const onRouterStep = execForRouter?.['step'] === 'router';
+        if (onRouterStep && routerChoice) {
+            logger.info('[ActionRequestProcessor] Router choice detected', {
+                choice: routerChoice,
+                execution: execForRouter,
+            });
+            return this.handleRouterChoice(sessionId, promiseId, ctx, request);
+        }
+
         // Handle step_result
         if (this.isStepResult(ctx)) {
             return this.handleStepResult(sessionId, promiseId, ctx);
@@ -99,9 +146,34 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
             return this.handleApproveAction(sessionId, promiseId, ctx);
         }
 
+        // Handle step_complete
+        if (this.isStepComplete(ctx)) {
+            return this.handleStepComplete(sessionId, promiseId, ctx);
+        }
+
         // Handle task_request (default)
         if (this.isTaskRequest(ctx)) {
             return this.handleTaskRequest(sessionId, promiseId, ctx);
+        }
+
+        // Handle direct LLM pipeline action (session seeded with mode:agent/mode:dialog without explicit action type)
+        const execDirect = resolveExecution(ctx);
+        const directAction = execDirect?.['action'] as string | undefined;
+        if (directAction && LLM_PIPELINE_ACTIONS.includes(directAction)) {
+            logger.info('[ActionRequestProcessor] Direct LLM pipeline action detected', {
+                action: directAction,
+                sessionId,
+            });
+            const patchedContext = {
+                ...ctx,
+                transformSchema: ACTION_TO_SCHEMA[directAction] ?? directAction,
+                execution: { ...execDirect, action: directAction, step: execDirect?.['step'] ?? 'start' },
+            };
+            const patchedRequest: RequestContext = {
+                ...request,
+                context: patchedContext,
+            };
+            return dialogRequestProcessor.process(patchedRequest);
         }
 
         // Unknown action type
@@ -120,131 +192,89 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         _promiseId: string,
         ctx: Record<string, unknown>
     ): Promise<ProcessResult> {
-        const stepId = ctx['stepId'] as string || ctx['step_id'] as string;
-        const stepResult = ctx['stepResult'] || ctx['step_result'];
-
-        logger.info('[ActionRequestProcessor] Processing step_result', {stepId, sessionId});
-
-        if (!stepId || !stepResult) {
-            logger.warn('[ActionRequestProcessor] Missing stepId or stepResult', {stepId, stepResult});
-        }
-
-        const result = await actionProcessor.processStepResult(sessionId, stepId, stepResult);
-
-        if (result.continue) {
-            const fromMessage = result.message.execute;
-            return {
-                outcome: 'completed',
-                context: result.message.context as unknown as import('./request-processor.interfaces.js').ProcessResult['context'],
-                activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
-                execute: fromMessage as unknown as import('./request-processor.interfaces.js').ExecuteCommand,
-            };
-        }
-        return {
-            outcome: 'completed',
-            context: result.message.context as unknown as import('./request-processor.interfaces.js').ProcessResult['context'],
-            activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
-            execute: (result.message.execute ?? {
-                message: result.message.message || 'Action completed',
-            }) as unknown as import('./request-processor.interfaces.js').ExecuteCommand,
-        };
+        return handleStepResultFn(sessionId, _promiseId, ctx);
     }
 
     /**
-     * Handle approve_action - client approved selected action, start execution
+     * Handle router choice submission - process user's choice from router form
      */
-    private async handleApproveAction(
+    private async handleRouterChoice(
         sessionId: string,
         _promiseId: string,
-        ctx: Record<string, unknown>
+        ctx: Record<string, unknown>,
+        request: RequestContext
     ): Promise<ProcessResult> {
-        logger.info('[ActionRequestProcessor] Processing approve_action', {
-            selectedAction: ctx['selectedAction'],
-        });
-
-        const selectedAction = ctx['selectedAction'] as { actionId: string } | undefined;
-
-        if (!selectedAction?.actionId) {
-            logger.warn('[ActionRequestProcessor] Missing selectedAction.actionId');
-        }
-
-        // Start action execution
-        const actionResult = await actionProcessor.approveAction(sessionId, selectedAction?.actionId || '');
-
-        const fromMessage = actionResult.message.execute;
-        return {
-            outcome: 'completed',
-            context: actionResult.message.context as unknown as import('./request-processor.interfaces.js').ProcessResult['context'],
-            activated_neuron_ids: actionResult.actionId ? [actionResult.actionId] : undefined,
-            execute: fromMessage as unknown as import('./request-processor.interfaces.js').ExecuteCommand,
-        };
+        return handleRouterChoiceFn(sessionId, _promiseId, ctx, request);
     }
 
     /**
      * Handle task_request - client sends new task, propose actions
      */
     private async handleTaskRequest(
-        _sessionId: string,
+        sessionId: string,
         _promiseId: string,
         ctx: Record<string, unknown>
     ): Promise<ProcessResult> {
-        const taskText = this.parseTaskText(ctx);
+        return handleTaskRequestFn(sessionId, _promiseId, ctx);
+    }
 
-        if (!taskText) {
-            logger.warn('[ActionRequestProcessor] No task text found in request');
-            return {
-                outcome: 'failed',
-                error: 'No task text found in request'
-            } as ProcessResult;
-        }
+    /**
+     * Parse task text from various context formats
+     */
+    protected parseTaskText(ctx: Record<string, unknown>): string {
+        return parseTaskTextFn(ctx);
+    }
 
-        logger.info('[ActionRequestProcessor] Processing task_request', {
-            taskText: taskText.substring(0, 50)
-        });
+    /**
+     * Analyze task description to determine suitability for automatic router selection
+     * @param taskDescription - The task text to analyze
+     * @returns Analysis result with suitability score and preferred choice
+     */
+    private analyzeTaskForAutoRouting(taskDescription: string): {
+        suitable: boolean;
+        confidence: number;
+        preferredChoice: string | null;
+        reason: string;
+    } {
+        return analyzeTaskForAutoRoutingFn(taskDescription);
+    }
 
-        // Use keyword-based routing - skip LLM transform
-        // Find matching actions based on task keywords
-        const keywordMatches = actionRegistry.findAction(taskText);
-        const candidates = keywordMatches.filter(m => m.matchScore >= 0.3);
-        const actionsToUse: ActionDefinition[] = candidates.map(m => m.action);
+    /**
+     * Check if this is a step complete request
+     */
+    protected isStepComplete(ctx: Record<string, unknown>): boolean {
+        return this.getActionType(ctx) === 'step_complete';
+    }
 
-        // Build choices from keyword matches
-        let rankedChoices: Array<{id: string, label: string, description: string}> = [];
-        
-        if (actionsToUse.length > 0) {
-            // Use keyword-matched actions as choices, sorted by score
-            rankedChoices = actionsToUse.map(action => ({
-                id: action.id,
-                label: action.title || action.id,
-                description: action.description || ''
-            }));
-            logger.info('[ActionRequestProcessor] Found keyword-matched actions', {
-                count: rankedChoices.length,
-                actionIds: rankedChoices.map(c => c.id)
-            });
-        } else {
-            // No keyword matches - use default fallback choices
-            logger.info('[ActionRequestProcessor] No keyword matches, using default choices');
-            rankedChoices = [
-                { id: 'dialog', label: 'AI діалог з користувачем', description: 'Вільний текстовий діалог з моделлю без інструментів коду.' },
-                { id: 'agent', label: 'Agent (універсальний режим)', description: 'Агент з інструментами: пошук по коду, файли, команди.' },
-                { id: 'task-decomposition', label: 'Декомпозиція задачі', description: 'Розбиття задачі на підзадачі та план виконання.' }
-            ];
-        }
-        
-        return {
-            outcome: 'action_proposal',
-            context: {
-                execution: {
-                    action: 'task',
-                    step: 'router'
-                },
-                task: taskText
-            } as unknown as import('./request-processor.interfaces.js').ProcessResult['context'],
-            execute: {
-                form: buildRouterForm(rankedChoices)
-            }
-        };
+    /**
+     * Handle step_complete - client confirms step completion
+     */
+    private handleStepComplete(
+        sessionId: string,
+        _promiseId: string,
+        ctx: Record<string, unknown>
+    ): ProcessResult {
+        return handleStepCompleteFn(sessionId, _promiseId, ctx);
+    }
+
+    /**
+     * Handle approve_action - client confirms action execution
+     */
+    private async handleApproveAction(
+        sessionId: string,
+        _promiseId: string,
+        ctx: Record<string, unknown>
+    ): Promise<ProcessResult> {
+        return handleApproveActionFn(sessionId, _promiseId, ctx);
+    }
+
+    /**
+     * Extract router submit choice from context
+     * Checks various places where choice might be stored in form submissions
+     */
+    private pickRouterSubmitChoice(ctx: Record<string, unknown>): string | undefined {
+        return pickRouterSubmitChoiceFn(ctx);
     }
 }
+
 export const actionRequestProcessor = new ActionRequestProcessor();

@@ -1,0 +1,52 @@
+# `form-validation-error/3` — response
+
+Mirror of `response.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "форма з помилкою валідації",
+    "execution": {
+      "action": "dialog",
+      "step": "completed"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Тест форми з помилкою валідації"
+      },
+      {
+        "role": "assistant",
+        "step": "router",
+        "message": "Введіть ваш вік"
+      },
+      {
+        "role": "user",
+        "message": "15"
+      },
+      {
+        "role": "assistant",
+        "step": "request",
+        "message": "Помилка валідації: вік має бути 1-10"
+      },
+      {
+        "role": "user",
+        "message": "5"
+      }
+    ]
+  },
+  "execute": {
+    "form": {
+      "title": "Дякую",
+      "description": "Ваш вік (5) прийнято.",
+      "choices": [
+        {
+          "id": "done",
+          "label": "OK",
+          "description": "Завершити"
+        }
+      ]
+    }
+  }
+}
+```

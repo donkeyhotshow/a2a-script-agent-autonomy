@@ -6,7 +6,7 @@
  * **Writer (runtime):** `GrayRoomOrchestrator` merges the accumulated trace here before returning
  * (`mergeInterruptTraceIntoContext`). Do not add parallel roots (e.g. `context.interruptTrace`).
  *
- * **Reader (UI):** `a2a-client/web/js/task-flow/render-layout.js` — `slots?.interruptTrace`.
+ * **Reader (UI):** `a2a-client/packages/web/js/task-flow/render-layout.js` — `slots?.interruptTrace`.
  * Session docs: `a2a-client/docs/SESSION-READ-MODEL.md`, `docs/SESSION-SYSTEMS-OVERVIEW.md`.
  *
  * **Goldens:** Substeps `N-sub-M` and parent step `response.json` may carry trace; see `simulations/SCHEMA.md`.

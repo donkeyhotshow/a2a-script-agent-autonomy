@@ -28,7 +28,9 @@ Canonical cross-module environment alignment for client, server, and ai-integrat
 | `LLM_POLL_TIMEOUT_MS` | `3600000` | `3600000` | `<= 86400000` | Primary server poll timeout (overrides legacy, capped at 24h). |
 | `PROMISE_TTL_SECONDS` | `86400` | `86400` | `>= LLM_POLL_TIMEOUT_MS/1000` | ai-integration promise retention window. |
 | `DAEMON_POLL_INTERVAL` | `4.0` | `4.0` | `4.0` (or tuned) | ai-integration daemon cadence in seconds. |
-| `A2A_MAX_INTERRUPT_TURNS` | `10` | `10` | `10` (or policy-driven) | Gray room budget per invoke. |
+| `A2A_MAX_INTERRUPT_TURNS` | `10` | `10` | `10` (or policy-driven) | Gray room interrupt budget per invoke (overrides `A2A_GRAY_ROOM_MAX_TURNS` when set). |
+| `A2A_GRAY_ROOM_ENABLED` | unset (=on) or `1` | unset or `1` | policy | Default **on** when unset; set `0`/`false`/`off` to skip interrupt expansion (one response transform). |
+| `A2A_GRAY_ROOM_MAX_TURNS` | `10` | `10` | tuned | Fallback budget when `A2A_MAX_INTERRUPT_TURNS` unset. |
 | `A2A_COMPRESS_HISTORY_MIN_ENTRIES` | `0` | `0` | `0` or tuned | Skip compress sidecar under threshold. |
 
 ## Baseline Rules

@@ -1,0 +1,65 @@
+# Step 10 — response (await_next form)
+
+Mirror of response.json.
+
+```json
+{
+  "context": {
+    "task": "Script central E2E (sync/script): router → scope form → script×3 ↔ client → run-script → gate → command → summary → follow-up.",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "await_next",
+      "status": "completed"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Scope: fix-vue-imports on app/Example.vue"
+      },
+      {
+        "role": "system",
+        "message": "script vue-import-detect: one broken import"
+      },
+      {
+        "role": "assistant",
+        "message": "script vue-import-resolve: proposed patch ./Missing to @/components/Missing"
+      }
+    ],
+    "workbench": {
+      "sections": {
+        "vueImportFix": {
+          "broken_imports": [
+            {
+              "file": "app/Example.vue",
+              "line": 2,
+              "specifier": "./Missing"
+            }
+          ],
+          "patches": [
+            {
+              "file": "app/Example.vue",
+              "line": 2,
+              "from": "./Missing",
+              "to": "@/components/Missing"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Script central — next",
+      "description": "Optional follow-up; same closing pattern as sync/agent/15.",
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Next instruction",
+          "required": false
+        }
+      ]
+    }
+  }
+}
+```

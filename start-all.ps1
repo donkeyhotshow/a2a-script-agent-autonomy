@@ -11,7 +11,7 @@
     5. Capture and save PIDs
     6. Verify services are ready via health checks
 .NOTES
-    Following docs/troubleshooting/standardize-stop-scripts.md
+    See docs/SYSTEM_STARTUP.md and AGENTS.md (live stack restart)
 #>
 
 [CmdletBinding()]
@@ -220,6 +220,7 @@ function Start-Service {
 # MAIN EXECUTION
 # ============================================================
 
+Set-Location $PSScriptRoot
 Write-Log "=== start-all.ps1 : Standardized service startup ===" 'STEP'
 
 # Step 1: Kill existing processes (unless skipped)

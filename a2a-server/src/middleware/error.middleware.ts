@@ -60,9 +60,7 @@ export function errorHandler(
 
         const response: ApiResponse<never> = {
             success: false,
-            error: {
-                ...errorPayload,
-            } as unknown as import('../types/index.js').ApiError,
+            error: errorPayload as { code: string; message: string },
         };
 
         res.status(err.statusCode).json(response);

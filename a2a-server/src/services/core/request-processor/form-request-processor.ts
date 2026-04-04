@@ -150,7 +150,7 @@ export class FormRequestProcessor extends BaseRequestProcessor {
         }
 
         // Default: return available forms
-        return this.handleListForms();
+        return this.handleListForms(ctx);
     }
 
 
@@ -176,7 +176,7 @@ export class FormRequestProcessor extends BaseRequestProcessor {
         // Validate form data
         const validationErrors = await this.validateFormData(form, formData);
         if (validationErrors.length > 0) {
-            return {
+            const result: ProcessResult = {
                 outcome: 'failed' as ProcessOutcome,
                 error: 'Form validation failed',
                 validationErrors,
@@ -186,7 +186,9 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                         choices: form.choices
                     }
                 }
-            } as ProcessResult;
+            };
+
+            return result;
         }
 
         // Process the submission
@@ -223,14 +225,17 @@ export class FormRequestProcessor extends BaseRequestProcessor {
         logger.info('[FormRequestProcessor] Handling choice selection', {choiceId, formId});
 
         if (!choiceId) {
-            return {
+            const result: ProcessResult = {
                 outcome: 'failed' as ProcessOutcome,
                 error: 'No choice selected'
-            } as ProcessResult;
+            };
+
+            return result;
         }
 
         const pipelineInput = {...ctx, choice_id: choiceId, form_id: formId};
         const result = await runFormChoicePipeline(pipelineInput);
+
         return result;
     }
 
@@ -244,13 +249,15 @@ export class FormRequestProcessor extends BaseRequestProcessor {
 
         const form = this.forms.get(formId);
         if (!form) {
-            return {
+            const result: ProcessResult = {
                 outcome: 'failed' as ProcessOutcome,
                 error: `Form not found: ${formId}`
-            } as ProcessResult;
+            };
+
+            return result;
         }
 
-        return {
+        const result: ProcessResult = {
             outcome: 'completed',
             message: 'Form definition',
             form: {
@@ -266,24 +273,28 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     choices: form.choices
                 }
             }
-        } as ProcessResult;
+        };
+
+        return result;
     }
 
     /**
      * Handle list forms request
      */
-    private async handleListForms(): Promise<ProcessResult> {
+    private async handleListForms(ctx: Record<string, unknown>): Promise<ProcessResult> {
         const availableForms = Array.from(this.forms.values()).map(f => ({
             id: f.id,
             title: f.title,
             description: f.description
         }));
 
-        return {
+        const result: ProcessResult = {
             outcome: 'completed',
             message: 'Available forms',
             forms: availableForms
-        } as ProcessResult;
+        };
+
+        return result;
     }
 
     /**

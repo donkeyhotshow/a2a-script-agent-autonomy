@@ -19,6 +19,7 @@ from .base import (
     ChatMessage,
     EmbeddingResult,
 )
+from .http_utils import aiohttp_llm_timeout
 
 logger = logging.getLogger('ai-proxy.ollama')
 
@@ -90,6 +91,10 @@ class OllamaProvider(LLMProvider):
         """
         session = await self._get_session()
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
+        
+        # Check rate limit and request delay
+        await self._check_rate_limit()
+        await self._check_request_delay()
         
         last_exception = None
         
@@ -165,7 +170,7 @@ class OllamaProvider(LLMProvider):
         """Get or create aiohttp session"""
         if self.session is None or self.session.closed:
             self.session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout)
+                timeout=aiohttp_llm_timeout(self.config.timeout)
             )
         return self.session
     
@@ -371,3 +376,11 @@ class OllamaProvider(LLMProvider):
         """Close the aiohttp session"""
         if self.session and not self.session.closed:
             await self.session.close()
+    
+    def get_capabilities(self) -> Dict[str, Any]:
+        """Get Ollama provider capabilities"""
+        caps = super().get_capabilities()
+        caps["supports_streaming"] = True  # Ollama supports streaming
+        caps["local"] = True
+        caps["api_version"] = "ollama"
+        return caps

@@ -1,10 +1,12 @@
 #!/bin/bash
 # start-all.sh - Standardized service startup
-# Following docs/troubleshooting/standardize-stop-scripts.md
+# See docs/SYSTEM_STARTUP.md and AGENTS.md (live stack restart)
 #
 # Pattern: 1) Call kill-all.sh -> 2) Verify ports free -> 3) Clear .pids.txt -> 4) Start services
 
 set -e
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR"
 
 OLLAMA_PORT=11435
 PROXY_PORT=11434
@@ -166,6 +168,7 @@ echo ""
 log STEP "Step 5/8" "Starting ai-integration on port $PROXY_PORT..."
 
 cd ai-integration
+python scripts/ensure-providers-config.py || { log WARN "ai-integration: ensure-providers-config failed (missing config/providers.example.json?)"; exit 1; }
 export OLLAMA_HOST="http://localhost:$OLLAMA_PORT"
 python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port $PROXY_PORT &
 AI_PID=$!

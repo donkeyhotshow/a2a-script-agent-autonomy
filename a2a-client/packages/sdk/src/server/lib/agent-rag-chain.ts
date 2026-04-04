@@ -6,7 +6,12 @@ import { RAGSearcher } from '@a2a/rag';
 import { saveRequestToServer, saveServerResponse } from '../services/step-storage.js';
 import { serverFetch, getServerBaseUrl } from '../services/upstream.service.js';
 import { loadProjects } from '../services/projects.service.js';
-import { extractA2aExecute, mergeResponseContext } from './a2a-invoke-builders.js';
+import {
+    extractA2aExecute,
+    mergeResponseContext,
+    sanitizeContextForServer,
+    sanitizeInvokeBodyForA2aUpstream,
+} from './a2a-invoke-builders.js';
 import { parseA2aInvokeResponse } from '../../client-api-envelope.js';
 import { getMaxRagChainDepth } from '../../../../../shared/agent-rag-chain-depth.mjs';
 
@@ -87,7 +92,11 @@ export async function applyAgentRagChainAfterSyncInvoke(options: {
         const ragResult = await runRagSearch(projectPath, ragPayload);
         stepNum += 1;
 
-        const body = { context: ctx, result: { 'rag-search': ragResult } };
+        const contextForServer = sanitizeContextForServer(ctx);
+        const body = sanitizeInvokeBodyForA2aUpstream({
+            context: contextForServer,
+            result: { 'rag-search': ragResult },
+        }) as Record<string, unknown>;
         await saveRequestToServer(sessionId, stepNum, { step: stepNum, ...body });
 
         const upstream = await serverFetch('POST', serverBase, '/api/v1/invoke', body);
@@ -111,7 +120,7 @@ export async function applyAgentRagChainAfterSyncInvoke(options: {
 
         await saveServerResponse(sessionId, stepNum, { step: stepNum, ...data });
         lastResp = json;
-        ctx = mergeResponseContext(sessionId, ctx, json);
+        ctx = mergeResponseContext(ctx, json);
     }
 
     return { finalStep: stepNum, finalResponse: lastResp, finalContext: ctx };

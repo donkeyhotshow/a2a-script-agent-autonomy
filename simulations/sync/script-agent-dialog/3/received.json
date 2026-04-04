@@ -1,0 +1,11 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Auto run-script fix-vue-imports",
+    "attachments": {
+      "runScriptId": "fix-vue-imports",
+      "pendingClientAction": "run-script"
+    }
+  }
+}

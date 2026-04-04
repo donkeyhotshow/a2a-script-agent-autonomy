@@ -1,0 +1,20 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Помилка валідації",
+      "description": "Вік повинен бути від 1 до 10. Ви ввели 15.",
+      "input": [
+        {
+          "name": "age",
+          "type": "number",
+          "label": "Вік",
+          "required": true,
+          "placeholder": "Введіть число від 1 до 10",
+          "value": 15
+        }
+      ]
+    }
+  }
+}

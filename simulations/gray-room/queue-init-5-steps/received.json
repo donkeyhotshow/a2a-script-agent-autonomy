@@ -1,0 +1,7 @@
+{
+  "projectId": "default",
+  "sessionId": "sess_gray_room_queue_init",
+  "execute": {
+    "message": "Queue initialized with 5 steps"
+  }
+}

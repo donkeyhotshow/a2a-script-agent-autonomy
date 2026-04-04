@@ -21,8 +21,8 @@
             "step": { "type": "string" },
             "status": {
               "type": "string",
-              "enum": ["completed"],
-              "description": "Present and equal to 'completed' on final step."
+              "enum": ["completed", "failed", "cancelled"],
+              "description": "Optional terminal hint in context.execution: completed on success; failed/cancelled on error or abort (aligns with request storage and poll `/requests/:id/result`)."
             }
           },
           "additionalProperties": true

@@ -1,0 +1,23 @@
+{
+  "context": {
+    "workbench": {
+      "slots": {
+        "interruptTrace": [
+          { "kind": "llm_output", "phase": "primary", "chars": 120 },
+          { "kind": "response_transform", "interruptReason": "thinking" },
+          { "kind": "interrupt_handler", "reason": "thinking", "continueLoop": true },
+          { "kind": "request_rebuild" },
+          { "kind": "llm_output", "phase": "follow_up", "chars": 80 },
+          { "kind": "response_transform", "interruptReason": "auto_read_file" },
+          { "kind": "interrupt_handler", "reason": "auto_read_file", "continueLoop": false }
+        ],
+        "grayRoom": {
+          "enabled": true,
+          "phase": "completed",
+          "status": "completed",
+          "turn": 2
+        }
+      }
+    }
+  }
+}

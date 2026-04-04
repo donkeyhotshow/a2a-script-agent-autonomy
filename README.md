@@ -24,7 +24,15 @@ At the repo root on Windows, `npm run dev` is an alias for `start-all.bat` — t
 | Step-based storage | Numbered folders in Client API |
 | DEV_STATE methodology | Always update before/after work |
 
+## Implementation preferences
+
+**Simplicity first:** prefer the straightforward implementation over shaving bytes or cycles — performance and payload size are secondary unless something is proven to be a bottleneck. **Unification** (one contract, one code path where it makes sense) and **JSON-first** APIs and artifacts (easy to inspect, log, validate, and align across Client API ↔ server ↔ tests) are explicit goals.
+
 ---
+
+## Full-spectrum agent run (master prompt)
+
+Open **[`START-FULL-SPECTRUM.md`](START-FULL-SPECTRUM.md)** and copy the **Agent prompt** block into Cursor **or** into `POST /api/a2a/sessions` (`mode: "agent"`, field `task`). That file indexes the full `prompts-to-agent-mode/` surface plus methodology and Client API checks. Linear spine: [`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md). Curl detail: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 
 ## Quick Start
 
@@ -72,7 +80,7 @@ start-all.bat
 kill-all.bat
 ```
 
-These scripts follow the pattern from `docs/troubleshooting/standardize-stop-scripts.md`:
+These scripts follow the port-kill / verify / PID cleanup pattern documented in [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md) and [`AGENTS.md`](AGENTS.md) (live stack restart):
 1. **Kill by port**: Find processes listening on service ports and terminate them
 2. **Verify port free**: Confirm no process remains on the port
 3. **Kill by PID/process name**: Terminate from `.pids.txt` and by executable patterns
@@ -146,11 +154,13 @@ See [System Startup Documentation](docs/SYSTEM_STARTUP.md) for details.
 
 ### Testing
 
-**Sessions and E2E / operator flows:** Exercises that create a **session**, send turns, or poll **async** should target the **Client API** — default dev base `http://localhost:5173` and paths `/api/a2a/*` (same as the web UI). The A2A Server on `:3000` is **`/api/v1/invoke`** only (stateless). **Agent mode** is reflected in **session `context`** (e.g. `execution.action`), not a separate HTTP route. Details: root [`AGENTS.md`](AGENTS.md) (“Sessions, tests, and agent mode”), [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md), [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
+**Sessions and E2E / operator flows:** Exercises that create a **session**, send turns, or poll **async** should target the **Client API** — default dev base `http://localhost:5173` and paths `/api/a2a/*` (same as the web UI). The A2A Server on `:3000` is **`/api/v1/invoke`** only (stateless). **Agent mode** is reflected in **session `context`** (e.g. `execution.action`), not a separate HTTP route. **Indexed operator prompts:** [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md); **how to run them on the live stack** (Client API vs `invoke`): [`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md). Seed `mode: "agent"` on create. Details: root [`AGENTS.md`](AGENTS.md) (“Sessions, tests, and agent mode”), [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md), [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 
-**Schema debugging order (mandatory):** start with **[scripts/direct-tests/README.md](scripts/direct-tests/README.md#schema-debugging--start-here)** — reproduce and isolate payload-shape issues there first; escalate to session flow, then simulations, then full e2e.
+**Schema debugging order (mandatory):** start with **[tests/direct-tests/README.md](tests/direct-tests/README.md#schema-debugging--start-here)** — reproduce and isolate payload-shape issues there first; escalate to session flow, then simulations, then full e2e.
 
-- **Health checks by stack part** (no service startup): [scripts/direct-tests/run-checks.ps1](scripts/direct-tests/run-checks.ps1) — `.\scripts\direct-tests\run-checks.ps1 -Scope LLM | ServerLLM | ClientServer | ClientServerLLM | WebClient | WebClientServer | Full`. Full index: [scripts/direct-tests/README.md](scripts/direct-tests/README.md).
+- **Validators** (recommended offline checks — they **point at specific contract errors**): [tests/direct-tests/validators/README.md](tests/direct-tests/validators/README.md). Examples: `npm run scan-promise-bodies` (proxy LLM `body.md`), `npm run scan-session-responses` (`storage/sessions/**/server-response.json`), `npm run verify:gray-room`, `npm run audit:sim-choice-descriptions`, `npm run sim:check-md` (sim MD vs JSON drift). Same rules for execute/message shape are shared in `validators/lib/check-llm-execute-shape.mjs`.
+
+- **Health checks by stack part** (no service startup): [tests/direct-tests/run-checks.ps1](tests/direct-tests/run-checks.ps1) — `.\tests\direct-tests\run-checks.ps1 -Scope LLM | ServerLLM | ClientServer | ClientServerLLM | WebClient | WebClientServer | Full`. Full index: [tests/direct-tests/README.md](tests/direct-tests/README.md).
 - **Level 1–3 suite**: `.\scripts\tests\run-all.ps1` — see [scripts/tests/README.md](scripts/tests/README.md).
 
 #### Web UI Smoke Test
@@ -262,10 +272,12 @@ The a2a-server component is now production-ready with:
 | Document | Purpose |
 |----------|---------|
 | [AGENTS.md](AGENTS.md) | Agent and repo conventions; API and architecture pointers |
+| [prompts-to-agent-mode/README.md](prompts-to-agent-mode/README.md) | Task prompt index |
+| [prompts-to-agent-mode/STACK-RUN.md](prompts-to-agent-mode/STACK-RUN.md) | **Required read** before HTTP-driving those prompts: Client API + `mode: "agent"` (not `invoke` alone) |
 | [New request flow](docs/new-request-flow/) | Protocol, data flow, server architecture (canonical) |
 | [System Startup](docs/SYSTEM_STARTUP.md) | Port allocation, conflict detection, health gating |
 | [Machine-Readable Docs](docs/DOCUMENTATION-MACHINE-READABLE.md) | Documentation requirements for parsing |
-| [Troubleshooting](docs/troubleshooting/standardize-stop-scripts.md) | Standardized stop scripts guide |
+| [System Startup](docs/SYSTEM_STARTUP.md) | `start-all` / `kill-all`, ports, stack restart (canonical) |
 
 ### Documentation Requirements (Machine-Readable)
 

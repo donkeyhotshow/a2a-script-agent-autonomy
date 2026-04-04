@@ -1,0 +1,7 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Auto summary: scan → resolve → lint-fix → audit merge → operator proceed → sim:lint exit 0. Central golden sync/script (10 steps) complete."
+  }
+}

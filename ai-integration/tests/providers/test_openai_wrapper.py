@@ -183,7 +183,7 @@ class TestOpenAIEndpoints:
     
     def test_chat_completions_endpoint(self, client, mock_router):
         """Test /v1/chat/completions endpoint"""
-        response = client.post('/chat/completions', json={
+        response = client.post('/v1/chat/completions', json={
             "model": "test-model",
             "messages": [{"role": "user", "content": "Hello"}],
         })
@@ -195,7 +195,7 @@ class TestOpenAIEndpoints:
     
     def test_chat_completions_missing_messages(self, client, mock_router):
         """Test chat completions with missing messages"""
-        response = client.post('/chat/completions', json={
+        response = client.post('/v1/chat/completions', json={
             "model": "test-model",
         })
         
@@ -205,7 +205,7 @@ class TestOpenAIEndpoints:
     
     def test_completions_endpoint(self, client, mock_router):
         """Test /v1/completions endpoint"""
-        response = client.post('/completions', json={
+        response = client.post('/v1/completions', json={
             "model": "test-model",
             "prompt": "Hello",
         })
@@ -217,7 +217,7 @@ class TestOpenAIEndpoints:
     
     def test_embeddings_endpoint(self, client, mock_router):
         """Test /v1/embeddings endpoint"""
-        response = client.post('/embeddings', json={
+        response = client.post('/v1/embeddings', json={
             "model": "embed-model",
             "input": "Hello world",
         })
@@ -229,7 +229,7 @@ class TestOpenAIEndpoints:
     
     def test_list_models_endpoint(self, client, mock_router):
         """Test /v1/models endpoint"""
-        response = client.get('/models')
+        response = client.get('/v1/models')
         
         assert response.status_code == 200
         data = json.loads(response.data)
@@ -239,7 +239,7 @@ class TestOpenAIEndpoints:
     
     def test_list_providers_endpoint(self, client, mock_router):
         """Test /v1/providers endpoint"""
-        response = client.get('/providers')
+        response = client.get('/v1/providers')
         
         assert response.status_code == 200
         data = json.loads(response.data)

@@ -1,0 +1,5 @@
+{
+  "description": "Sample gray-room chain: thinking then auto_read_file",
+  "expectedHandlerReasons": ["thinking", "auto_read_file"],
+  "match": "exact"
+}

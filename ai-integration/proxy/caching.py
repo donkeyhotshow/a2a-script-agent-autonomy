@@ -66,6 +66,14 @@ class _FileCache:
         except Exception:
             return
 
+    def delete(self, key: str) -> None:
+        path = self._path_for(key)
+        try:
+            if os.path.isfile(path):
+                os.remove(path)
+        except Exception:
+            return
+
 
 class ProxyCache:
     """
@@ -95,6 +103,10 @@ class ProxyCache:
 
     def set(self, key: str, value: Dict[str, Any], ttl: Optional[int] = None) -> None:
         self._file.set(key, value, ttl=ttl)
+
+    def delete(self, key: str) -> None:
+        """Remove a cache entry (e.g. poisoned 200 + provider error JSON)."""
+        self._file.delete(key)
 
     def status(self) -> Dict[str, Any]:
         """Return cache backend status for /health."""

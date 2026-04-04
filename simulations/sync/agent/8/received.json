@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Checking path…",
+    "attachments": {
+      "fileExistsPath": "a2a-server/scripts/sim-validate.ts"
+    }
+  }
+}

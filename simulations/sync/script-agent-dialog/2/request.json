@@ -1,0 +1,15 @@
+{
+  "context": {
+    "task": "script-agent-dialog: auto run fix-vue-imports when agent flags import errors.",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    },
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "result": {
+    "choice": "dialog"
+  }
+}

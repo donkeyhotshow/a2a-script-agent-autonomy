@@ -1,0 +1,16 @@
+{
+  "session": {
+    "execute": {
+      "form": {
+        "title": "Route",
+        "choices": [
+          { "id": "dialog", "label": "Dialog" },
+          { "id": "agent", "label": "Agent" }
+        ]
+      }
+    },
+    "context": {
+      "execution": { "action": "router", "step": "routing" }
+    }
+  }
+}

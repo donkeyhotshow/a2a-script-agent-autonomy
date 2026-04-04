@@ -96,7 +96,7 @@ Run from **repository root**. Expect **no hits** unless noted.
   rg -n 'result"\s*:\s*\{\s*"content"' -g "*.json" simulations
   ```
 
-- **`received.json`:** client-only tool keys must not appear under top-level **`execute`** (they may appear under **`result`** as action-key payloads). Adjust the pattern if new tool keys are added to the protocol; align with [`a2a-client/vite-plugin-a2a/routes/utils/web-execute-dto.js`](../a2a-client/vite-plugin-a2a/routes/utils/web-execute-dto.js) / SDK `web-execute-dto`.
+- **`received.json`:** client-only tool keys must not appear under top-level **`execute`** (they may appear under **`result`** as action-key payloads). Adjust the pattern if new tool keys are added to the protocol; align with [`a2a-client/packages/vite-plugin/routes/utils/web-execute-dto.js`](../a2a-client/packages/vite-plugin/routes/utils/web-execute-dto.js) / SDK `web-execute-dto`.
 
   ```bash
   rg -n '"rag-search"\s*:|"read-file"\s*:|"write-file"\s*:|"execute-command"\s*:|"script"\s*:\s*\{|"list-directory"\s*:|"grep-search"\s*:|"file-exists"\s*:|"edit-patch"\s*:|"run-script"\s*:' -g "**/received.json" simulations

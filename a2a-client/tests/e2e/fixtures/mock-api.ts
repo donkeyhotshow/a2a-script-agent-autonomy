@@ -30,7 +30,7 @@ export function createMockApiHandler(page) {
         });
     });
 
-    // Client API: /api/a2a/sessions (same shape as vite-plugin-a2a)
+    // Client API: /api/a2a/sessions (same shape as @a2a-client/vite-plugin)
     page.route('**/api/a2a/sessions**', async (route) => {
         const method = route.request().method();
         const pathname = new URL(route.request().url()).pathname;

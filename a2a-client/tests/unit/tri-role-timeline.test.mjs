@@ -3,8 +3,8 @@
  * merge behavior, and JSON round-trip (storage-style) without reordering loss.
  */
 import { describe, it, expect } from 'vitest';
-import { projectHistoryTimeline } from '../../vite-plugin-a2a/routes/utils/history-projection.js';
-import { mergeDialogHistoryForInvoke } from '../../vite-plugin-a2a/routes/utils/builders.js';
+import { projectHistoryTimeline } from '../../packages/vite-plugin/routes/utils/history-projection.js';
+import { mergeDialogHistoryForInvoke } from '../../packages/vite-plugin/routes/utils/builders.js';
 
 /** Interleaved chain typical of tool + Red Room (system) lines. */
 const MIXED_HISTORY = [

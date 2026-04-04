@@ -359,8 +359,19 @@ const FILE_TYPE_CONFIGS: {[key: string]: FileTypeConfig} = {
     'server-transforms-response.json': {schema: 'server-transform.schema.json', required: false},
 };
 
-export function detectFileType(filename: string): FileTypeConfig | null {
-    return FILE_TYPE_CONFIGS[filename] || null;
+// Substep-specific configs (server-side only, no client.json/received.json)
+const SUBSTEP_FILE_TYPE_CONFIGS: {[key: string]: FileTypeConfig} = {
+    'request.json': {schema: 'server-invoke-request.schema.json', required: true},
+    'response.json': {schema: 'server-invoke-response-execute.schema.json', required: true},
+    'client.json': {schema: null, required: false},
+    'received.json': {schema: null, required: false},
+    'server-transforms-request.json': {schema: 'server-transform.schema.json', required: false},
+    'server-transforms-response.json': {schema: 'server-transform.schema.json', required: false},
+};
+
+export function detectFileType(filename: string, isSubstep = false): FileTypeConfig | null {
+    const configs = isSubstep ? SUBSTEP_FILE_TYPE_CONFIGS : FILE_TYPE_CONFIGS;
+    return configs[filename] || null;
 }
 
 // ============================================
@@ -408,11 +419,73 @@ export function validateTransformReferencedFiles(simPath: string, transformFilen
     return warnings;
 }
 
+/**
+ * When `context.workbench.sections.sequence` is present in response.json, enforce minimal shape
+ * (aligned with docs/references/sequence-schema.json).
+ */
+export function collectSequenceWorkbenchWarnings(sequenceVal: unknown, filename: string): string[] {
+    const out: string[] = [];
+    const prefix = `${filename} context.workbench.sections.sequence:`;
+
+    if (Array.isArray(sequenceVal)) {
+        sequenceVal.forEach((step, i) => {
+            if (!step || typeof step !== 'object') {
+                out.push(`${prefix} [${i}] must be an object`);
+                return;
+            }
+            const s = step as Record<string, unknown>;
+            if (typeof s['id'] !== 'string') {
+                out.push(`${prefix} [${i}].id must be a string`);
+            }
+            if (typeof s['title'] !== 'string') {
+                out.push(`${prefix} [${i}].title must be a string`);
+            }
+            if (typeof s['status'] !== 'string') {
+                out.push(`${prefix} [${i}].status must be a string`);
+            }
+        });
+        return out;
+    }
+
+    if (sequenceVal && typeof sequenceVal === 'object' && !Array.isArray(sequenceVal)) {
+        const o = sequenceVal as Record<string, unknown>;
+        const steps = o['steps'];
+        const headIndex = o['headIndex'];
+        if (!Array.isArray(steps)) {
+            out.push(`${prefix} object form requires "steps" array`);
+            return out;
+        }
+        if (typeof headIndex === 'number' && (headIndex < 0 || headIndex >= steps.length)) {
+            out.push(`${prefix} headIndex out of range for steps.length`);
+        }
+        steps.forEach((step: unknown, i: number) => {
+            if (!step || typeof step !== 'object') {
+                out.push(`${prefix} steps[${i}] must be an object`);
+                return;
+            }
+            const s = step as Record<string, unknown>;
+            if (typeof s['id'] !== 'string') {
+                out.push(`${prefix} steps[${i}].id must be a string`);
+            }
+            if (typeof s['title'] !== 'string') {
+                out.push(`${prefix} steps[${i}].title must be a string`);
+            }
+            if (typeof s['status'] !== 'string') {
+                out.push(`${prefix} steps[${i}].status must be a string`);
+            }
+        });
+        return out;
+    }
+
+    out.push(`${prefix} must be a non-null array or { steps, headIndex? }`);
+    return out;
+}
+
 // ============================================
 // File validation
 // ============================================
 
-export function validateFile(filePath: string, filename: string, opts: ValidateOptions): FileValidationResult {
+export function validateFile(filePath: string, filename: string, opts: ValidateOptions, isSubstep = false): FileValidationResult {
     const result: FileValidationResult = {
         file: filename,
         valid: true,
@@ -422,7 +495,7 @@ export function validateFile(filePath: string, filename: string, opts: ValidateO
 
     // Проверка существования файла
     if (!existsSync(filePath)) {
-        const fileConfig = detectFileType(filename);
+        const fileConfig = detectFileType(filename, isSubstep);
         if (fileConfig?.required) {
             result.valid = false;
             result.errors.push({
@@ -454,7 +527,7 @@ export function validateFile(filePath: string, filename: string, opts: ValidateO
     }
 
     // Определение типа файла и валидация
-    const fileConfig = detectFileType(filename);
+    const fileConfig = detectFileType(filename, isSubstep);
     if (typeof fileConfig?.schema === 'string' && fileConfig.schema.length > 0) {
         const isTransformFile =
             filename === 'server-transforms-request.json' || filename === 'server-transforms-response.json';
@@ -470,6 +543,16 @@ export function validateFile(filePath: string, filename: string, opts: ValidateO
         }
     } else if (!fileConfig) {
         result.warnings.push(`No schema defined for: ${filename}`);
+    }
+
+    if (filename === 'response.json' && data && typeof data === 'object' && data !== null && !Array.isArray(data)) {
+        const ctx = (data as Record<string, unknown>)['context'] as Record<string, unknown> | undefined;
+        const seq = ctx?.['workbench'] as Record<string, unknown> | undefined;
+        const sections = seq?.['sections'] as Record<string, unknown> | undefined;
+        const sequenceVal = sections?.['sequence'];
+        if (sequenceVal !== undefined && sequenceVal !== null) {
+            result.warnings.push(...collectSequenceWorkbenchWarnings(sequenceVal, filename));
+        }
     }
 
     if (
@@ -526,13 +609,17 @@ export function validateSimulation(simPath: string, simName: string, opts: Valid
     }
 
     // Валидация каждого файла
-    const requiredFiles = ['request.json', 'response.json', 'client.json', 'received.json'];
+    const isSubstep = simName.includes('-sub-');
+    // Substeps have different required files (server-side only, no client/received)
+    const requiredFiles = isSubstep
+        ? ['request.json', 'response.json']
+        : ['request.json', 'response.json', 'client.json', 'received.json'];
     const optionalFiles = ['server-transforms-request.json', 'server-transforms-response.json'];
     const allFiles = [...requiredFiles, ...optionalFiles];
 
     for (const filename of allFiles) {
         const filePath = join(simPath, filename);
-        const fileResult = validateFile(filePath, filename, opts);
+        const fileResult = validateFile(filePath, filename, opts, isSubstep);
         result.files.push(fileResult);
 
         if (!fileResult.valid) {

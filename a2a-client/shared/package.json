@@ -1,0 +1,16 @@
+{
+  "name": "@a2a-client/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared Client API / web helpers (imported by vite-plugin, SDK, tests)",
+  "exports": {
+    "./agent-rag-chain-depth.mjs": "./agent-rag-chain-depth.mjs",
+    "./client-api-envelope.mjs": "./client-api-envelope.mjs",
+    "./context-invoke-patch.mjs": "./context-invoke-patch.mjs",
+    "./a2a-invoke-builders.mjs": "./a2a-invoke-builders.mjs",
+    "./a2a-server-base.js": "./a2a-server-base.js",
+    "./web-execute-dto.mjs": "./web-execute-dto.mjs",
+    "./session-id.js": "./session-id.js"
+  }
+}

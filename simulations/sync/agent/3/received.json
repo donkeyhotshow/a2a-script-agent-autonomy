@@ -1,0 +1,17 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Підтвердження",
+      "description": "Запустити ланцюжок workspace + shell + script у фікстурах симуляції?",
+      "choices": [
+        {
+          "id": "proceed_agent_toolchain",
+          "label": "Так, пройти всі execute-типи",
+          "description": "RAG → list → read → grep → exists → patch → write → command → run-script → script → message."
+        }
+      ]
+    }
+  }
+}

@@ -52,4 +52,9 @@ describe('pickInvokeContextPatch', () => {
             aliases: { '@': 'src' },
         });
     });
+
+    it('passes llmModel when non-empty', () => {
+        expect(pickInvokeContextPatch({ llmModel: 'qwen3:8b', junk: 1 })).toEqual({ llmModel: 'qwen3:8b' });
+        expect(pickInvokeContextPatch({ llmModel: '' })).toEqual({});
+    });
 });

@@ -21,12 +21,13 @@ import {
 import type {
     RequestContext,
     ProcessResult
-} from './request-processor.interfaces.js';
+} from '../request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {
     validateAgentExecuteShape,
     validateDialogExecuteShape,
     validateResultShape,
+    validateLlmOutputShape,
     shouldEnforceTransformStrictMode
 } from './validators/transform-execute-validator.js';
 
@@ -54,17 +55,35 @@ export interface SimulationContext {
  * Handles simulation and replay scenarios
  */
 export class SimulationRequestProcessor extends BaseRequestProcessor {
-    private simConfig: SimulationConfig;
-
     constructor(config: Partial<SimulationConfig> = {}) {
-        super('SimulationRequestProcessor', {});
-        this.simConfig = {
-            simulationsBasePath: process.env['SIMULATIONS_PATH'] || './simulations',
-            promptsTransformsPath: getPromptsTransformsPath(),
-            enableReplay: true,
-            defaultSimulation: null,
+        super('SimulationRequestProcessor', config);
+        this.config = {
+            maxRetries: 3,
+            retryDelay: 1000,
+            timeout: 30000,
+            enableValidation: true,
+            simulationsBasePath: (config.simulationsBasePath ?? process.env.SIMULATIONS_PATH) || './simulations',
+            promptsTransformsPath: config.promptsTransformsPath ?? getPromptsTransformsPath(),
+            enableReplay: config.enableReplay ?? true,
+            defaultSimulation: config.defaultSimulation ?? null,
             ...config
         };
+    }
+
+    get simulationsBasePath(): string {
+        return this.simulationsBasePath as string ?? './simulations';
+    }
+
+    get promptsTransformsPath(): string {
+        return this.promptsTransformsPath as string ?? getPromptsTransformsPath();
+    }
+
+    get enableReplay(): boolean {
+        return this.config.enableReplay as boolean ?? true;
+    }
+
+    get defaultSimulation(): string | null {
+        return this.config.defaultSimulation as string | null ?? null;
     }
 
     /**
@@ -165,11 +184,11 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
 
             // Apply transforms from prompts/transforms (schema from simulation name)
             let requestData = requestContent ? JSON.parse(requestContent) : ctx;
-            const simulationDir = path.join(this.simConfig.simulationsBasePath, simContext.simulationName, String(simContext.stepNumber));
+            const simulationDir = path.join(this.simulationsBasePath, simContext.simulationName, String(simContext.stepNumber));
             const schemaName = SIMULATION_TO_SCHEMA[simContext.simulationName] ?? simContext.simulationName;
 
             const requestTransformResult = await runPromptsTransform(
-                this.simConfig.promptsTransformsPath,
+                this.promptsTransformsPath,
                 schemaName,
                 requestData,
                 'request',
@@ -198,9 +217,9 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
             }
 
             // Apply response transforms from prompts/transforms (baseDir = simulation dir for response.md)
-            let responseData: Record<string, unknown> = { context: requestData['context'] ?? requestData, llm: { response: responseContent } };
+            let responseData: Record<string, unknown> = { context: requestData.context ?? requestData, llm: { response: responseContent }, execute: {}, result: {} };
             const responseTransformResult = await runPromptsTransform(
-                this.simConfig.promptsTransformsPath,
+                this.promptsTransformsPath,
                 schemaName,
                 responseData,
                 'response',
@@ -215,25 +234,25 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                 responseData = responseTransformResult.output;
                 
                 // Validate execute shape based on schema type (agent or dialog)
-                this.validateTransformExecute(schemaName, responseData['execute'] as import('./request-processor.interfaces.js').ExecuteCommand | undefined, 'simulation.response');
+                this.validateTransformExecute(schemaName, responseData.execute, 'simulation.response');
                 
                 // Validate result shape (action-key format)
-                this.validateTransformResult(responseData['result'], 'simulation.response');
+                this.validateTransformResult(responseData.result, 'simulation.response');
             }
 
-            return {
-                outcome: 'completed',
-                message: 'Simulation replay completed',
-                simulation: {
-                    name: simContext.simulationName,
-                    step: simContext.stepNumber,
-                    mode: 'replay'
-                },
-                content: responseData,
-                execute: {
-                    message: `Replayed simulation: ${simContext.simulationName}, step ${simContext.stepNumber}`
-                }
-            } as ProcessResult;
+              return {
+                  outcome: 'completed',
+                  message: 'Simulation replay completed',
+                  simulation: {
+                      name: simContext.simulationName,
+                      step: simContext.stepNumber,
+                      mode: 'replay'
+                  },
+                  content: responseData,
+                  execute: {
+                      message: `Replayed simulation: ${simContext.simulationName}, step ${simContext.stepNumber}`
+                  }
+              } as ProcessResult;
 
         } catch (error) {
             logger.error('[SimulationRequestProcessor] Replay failed', {
@@ -268,25 +287,25 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
             timestamp: new Date().toISOString()
         };
 
-        return {
-            outcome: 'completed',
-            message: 'Simulation scenario initialized',
-            simulation: {
-                name: simContext.simulationName,
-                mode: 'record',
-                data: simulationData
-            },
-            execute: {
-                message: `Started simulation: ${simContext.simulationName}`
-            }
-        } as ProcessResult;
+          return {
+              outcome: 'completed',
+              message: 'Simulation scenario initialized',
+              simulation: {
+                  name: simContext.simulationName,
+                  mode: 'record',
+                  data: simulationData
+              },
+              execute: {
+                  message: `Started simulation: ${simContext.simulationName}`
+              }
+          } as ProcessResult;
     }
 
     /**
      * Load simulation request.json from file
      */
     private async loadSimulationRequest(simulationName: string, step: number): Promise<string | null> {
-        const simulationDir = path.join(this.simConfig.simulationsBasePath, simulationName, String(step));
+        const simulationDir = path.join(this.simulationsBasePath, simulationName, String(step));
         const requestPath = path.join(simulationDir, 'request.json');
 
         if (!existsSync(requestPath)) {
@@ -315,7 +334,7 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
      * Load simulation response from file
      */
     private async loadSimulationResponse(simulationName: string, step: number): Promise<string | null> {
-        const simulationDir = path.join(this.simConfig.simulationsBasePath, simulationName, String(step));
+        const simulationDir = path.join(this.simulationsBasePath, simulationName, String(step));
         const responsePath = path.join(simulationDir, 'response.md');
 
         if (!existsSync(responsePath)) {
@@ -350,7 +369,7 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
     ): Promise<Record<string, unknown> | null> {
         const schemaName = SIMULATION_TO_SCHEMA[simulationName] ?? simulationName;
         const pipeline = await loadPromptsTransform(
-            this.simConfig.promptsTransformsPath,
+            this.promptsTransformsPath,
             schemaName,
             type,
             step
@@ -368,10 +387,10 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
         input: Record<string, unknown>
     ): Promise<Record<string, unknown>> {
         const schemaName = SIMULATION_TO_SCHEMA[simulationName] ?? simulationName;
-        const simulationDir = path.join(this.simConfig.simulationsBasePath, simulationName, String(step));
+        const simulationDir = path.join(this.simulationsBasePath, simulationName, String(step));
 
         const result = await runPromptsTransform(
-            this.simConfig.promptsTransformsPath,
+            this.promptsTransformsPath,
             schemaName,
             input,
             type,
@@ -408,7 +427,7 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
      * Validate simulation exists
      */
     async validateSimulation(simulationName: string): Promise<boolean> {
-        const simulationDir = path.join(this.simConfig.simulationsBasePath, simulationName);
+        const simulationDir = path.join(this.simulationsBasePath, simulationName);
         return existsSync(simulationDir);
     }
 
@@ -430,7 +449,10 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
             schemaName === 'fix-laravel-namespaces-and-uses';
         
         const validator = isAgentSchema ? validateAgentExecuteShape : validateDialogExecuteShape;
-        const issues = validator(execute);
+        const issues = [
+            ...validator(execute),
+            ...validateLlmOutputShape({ message: rawOutput.message as string, execute })
+        ];
         
         if (issues.length > 0) {
             if (shouldEnforceTransformStrictMode()) {

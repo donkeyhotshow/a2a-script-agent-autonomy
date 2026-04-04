@@ -5,8 +5,8 @@
     "form": {
       "input": [
         {
-          "name": "message",
-          "type": "text",
+          "name": "task",
+          "type": "textarea",
           "label": "Повідомлення",
           "required": true
         }

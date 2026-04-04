@@ -19,7 +19,7 @@
 паролів",
 "input": [
 {
-"name": "message",
+"name": "task",
 "type": "text",
 "label": "Ваше наступне питання або команда"
 }

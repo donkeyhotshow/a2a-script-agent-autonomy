@@ -27,13 +27,15 @@ export interface CliArgs {
     strict: boolean;
     /** SCHEMA.md no-LLM step transform contract (optional warnings). */
     stepContract: boolean;
+    /** If false, skip `N-sub-M` folders (not recommended; default true). */
+    includeSubsteps: boolean;
 }
 
 // ============================================
 // Scanner: list simulations
 // ============================================
 
-export function getAllSimulations(): {path: string; name: string}[] {
+export function getAllSimulations(includeSubsteps = false): {path: string; name: string}[] {
     const simulations: {path: string; name: string}[] = [];
 
     if (!existsSync(SIMULATIONS_DIR)) {
@@ -52,23 +54,45 @@ export function getAllSimulations(): {path: string; name: string}[] {
 
             for (const subEntry of subEntries) {
                 if (!subEntry.isDirectory()) continue;
-                if (substepDirRe.test(subEntry.name)) continue; // Skip "3-sub-1"
+                if (!includeSubsteps && substepDirRe.test(subEntry.name)) continue;
 
                 const simBaseDir = join(subDir, subEntry.name);
                 const simBaseEntries = readdirSync(simBaseDir, {withFileTypes: true});
 
                 // Check if this simulation has step folders (numeric directories like "1", "2", "3")
                 let hasStepFolders = false;
+                const numericStepNames: string[] = [];
+                const substepNames: string[] = [];
                 for (const stepEntry of simBaseEntries) {
                     if (!stepEntry.isDirectory()) continue;
                     if (stepDirRe.test(stepEntry.name)) {
                         hasStepFolders = true;
-                        // This is a step folder (e.g., "1", "4", "7")
-                        simulations.push({
-                            path: join(simBaseDir, stepEntry.name),
-                            name: `${entry.name}/${subEntry.name}/${stepEntry.name}`
-                        });
+                        numericStepNames.push(stepEntry.name);
+                    } else if (includeSubsteps && substepDirRe.test(stepEntry.name)) {
+                        substepNames.push(stepEntry.name);
                     }
+                }
+                numericStepNames.sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+                substepNames.sort((a, b) => {
+                    const ma = a.match(/^(\d+)-sub-(\d+)$/);
+                    const mb = b.match(/^(\d+)-sub-(\d+)$/);
+                    if (ma && mb) {
+                        const d = parseInt(ma[1], 10) - parseInt(mb[1], 10);
+                        return d !== 0 ? d : parseInt(ma[2], 10) - parseInt(mb[2], 10);
+                    }
+                    return a.localeCompare(b);
+                });
+                for (const stepName of numericStepNames) {
+                    simulations.push({
+                        path: join(simBaseDir, stepName),
+                        name: `${entry.name}/${subEntry.name}/${stepName}`
+                    });
+                }
+                for (const stepName of substepNames) {
+                    simulations.push({
+                        path: join(simBaseDir, stepName),
+                        name: `${entry.name}/${subEntry.name}/${stepName}`
+                    });
                 }
 
                 // If no step folders, add as legacy nested simulation or flat structure
@@ -131,6 +155,8 @@ export function parseArgs(): CliArgs {
         help: args.includes('--help') || args.includes('-h'),
         strict: args.includes('--strict'),
         stepContract: args.includes('--step-contract'),
+        /** Substeps (`N-sub-M`) are included by default; opt out with `--skip-substeps`. */
+        includeSubsteps: !args.includes('--skip-substeps'),
     };
 }
 
@@ -147,6 +173,7 @@ export function printHelp() {
   --verbose, -v      Подробный вывод
   --strict           Без нормализации (сырой JSON против схемы)
   --step-contract    Доп. предупреждения: no-LLM шаги и server-transforms-*.json (см. simulations/SCHEMA.md)
+  --skip-substeps    Исключить подпапки substeps (например, "3-sub-1") из --all
   --help, -h         Показать эту справку
 
 По умолчанию request/response нормализуются: снимаются promiseId/даты, обёртка success/data,

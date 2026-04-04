@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mergeDialogHistoryForInvoke } from '../../vite-plugin-a2a/routes/utils/builders.js';
+import { mergeDialogHistoryForInvoke } from '../../packages/vite-plugin/routes/utils/builders.js';
 
 describe('mergeDialogHistoryForInvoke', () => {
     it('appends user after assistant', () => {

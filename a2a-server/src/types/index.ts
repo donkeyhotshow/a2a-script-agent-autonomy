@@ -23,6 +23,10 @@ export interface ContextBlock {
     errors?: ProtocolError[];
     /** Task from client (for action processing) */
     task?: string;
+    /** LLM model id for AI Hub proxy (e.g. `glm-4.7-flash`, `qwen3:8b`); overrides env defaults. */
+    llmModel?: string;
+    /** Optional override for gray-room sub-calls only (default: `A2A_GRAY_ROOM_LLM_MODEL` or qwen3:8b). */
+    grayRoomLlmModel?: string;
     /** Execution state for actions (new protocol format) */
     execution?: {
         /** Action ID (e.g., 'fix-vue-imports', 'coder') */
@@ -34,6 +38,10 @@ export interface ContextBlock {
         /** History of executed steps */
         history?: Array<{ step: string; result?: unknown }>;
     };
+    /** Project ID from client */
+    projectId?: string;
+    /** Client session ID */
+    sessionId?: string;
 }
 
 export interface Task {
@@ -312,6 +320,10 @@ export interface RequestContextBlock {
     frameworks?: Record<string, unknown>;
     /** Original task from client */
     new_task?: string[];
+    /** Project ID from client */
+    projectId?: string;
+    /** Client session ID */
+    sessionId?: string;
 }
 
 /**

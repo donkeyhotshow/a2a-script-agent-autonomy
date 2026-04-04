@@ -1,0 +1,13 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "run-script": {
+      "scriptId": "test",
+      "success": true,
+      "output": "Vitest run: 1 test, 0 failed.",
+      "filesModified": [],
+      "duration": 4200
+    }
+  }
+}

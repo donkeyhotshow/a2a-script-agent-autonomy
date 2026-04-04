@@ -1,0 +1,26 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "dialog",
+        "step": "adding_tests"
+      }
+    },
+    {
+      "op": "append-to-array",
+      "to": "$.context.history",
+      "value": {
+        "role": "system",
+        "message": "choice: add_tests"
+      }
+    }
+  ]
+}

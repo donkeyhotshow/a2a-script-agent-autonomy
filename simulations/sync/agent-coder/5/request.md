@@ -28,12 +28,41 @@
 
 ```json
 {
-  "message": "твоя відповідь користувачу",
-  "action": "дія яку виконати",
-  "params": {
-    "query": "натуральний запит для RAG",
-    "file": "шлях до файлу",
-    "command": "команда для виконання"
+  "context": {
+    "task": "допоможи розібратись з кодом",
+    "execution": {
+      "action": "agent",
+      "step": "5"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "як працює система авторизації?"
+      },
+      {
+        "role": "assistant",
+        "message": "Щоб відповісти на це питання, мені потрібно спочатку пошукати в коді про авторизацію.",
+        "action": "rag-search"
+      },
+      {
+        "role": "system",
+        "message": "RAG знайшов: src/auth.js, src/middleware/auth.ts, src/utils/jwt.js"
+      },
+      {
+        "role": "assistant",
+        "message": "Знайшов файли авторизації. Зараз прочитаю основний файл.",
+        "action": "read-file",
+        "params": {
+          "file": "src/auth.js"
+        }
+      }
+    ]
+  },
+  "result": {
+    "read-file": {
+      "path": "src/auth.js",
+      "content": "const jwt = require('jsonwebtoken');\nconst bcrypt = require('bcrypt');\n\nconst JWT_SECRET = process.env.JWT_SECRET || 'secret-key';\nconst JWT_EXPIRES_IN = '24h';\n\n// Реєстрація нового користувача\nasync function register(email, password) {\n  const hashedPassword = await bcrypt.hash(password, 10);\n  // Логіка збереження користувача в БД\n  return { email, id: 1 };\n}\n\n// Вхід користувача\nasync function login(email, password) {\n  // Перевірка пароля\n  const isValid = await bcrypt.compare(password, storedHash);\n  if (!isValid) {\n    throw new Error('Invalid credentials');\n  }\n  \n  // Генерація токену\n  const token = jwt.sign({ email }, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });\n  return { token, user: { email } };\n}\n\n// Верифікація токену\nfunction verifyToken(token) {\n  return jwt.verify(token, JWT_SECRET);\n}\n\nmodule.exports = { register, login, verifyToken };"
+    }
   }
 }
 ```

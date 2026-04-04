@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { projectHistoryTimeline } from '../../vite-plugin-a2a/routes/utils/history-projection.js';
+import { projectHistoryTimeline } from '../../packages/vite-plugin/routes/utils/history-projection.js';
 
 describe('projectHistoryTimeline', () => {
     it('projects basic user/assistant entries in order', () => {

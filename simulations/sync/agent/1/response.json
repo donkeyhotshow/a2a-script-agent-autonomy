@@ -1,6 +1,6 @@
 {
   "context": {
-    "task": "допоможи з кодом",
+    "task": "Повний контракт agent у a2a-script-agent: золота simulations/sync/agent і всі типи execute, які бачить web-клієнт.",
     "execution": {
       "action": "task",
       "step": "router"
@@ -9,7 +9,9 @@
       "sections": {
         "scratchpad": {
           "mode": "agent",
-          "initialized": true
+          "initialized": true,
+          "repo": "org-carrier/a2a-script-agent",
+          "focus": "simulations/sync/agent"
         },
         "files": {}
       }
@@ -23,22 +25,27 @@
         {
           "id": "dialog",
           "label": "AI діалог з користувачем",
-          "description": "Free-form chat; follow-up forms in later steps."
+          "description": "Вільний текстовий діалог з моделлю без інструментів коду."
         },
         {
           "id": "agent",
-          "label": "Agent",
-          "description": "Universal agent: analyze, code, review — LLM decides the next action."
+          "label": "Agent (універсальний режим)",
+          "description": "Агент з інструментами: пошук по коду, файли, команди."
         },
         {
           "id": "task-decomposition",
           "label": "Декомпозиція задачі",
-          "description": "Split a goal into ordered subtasks and track progress."
+          "description": "Розбиття задачі на підзадачі та план виконання."
         },
         {
           "id": "fix-vue-imports",
           "label": "Виправлення Vue imports",
-          "description": "Scripted Vue 2→3 import fixes (no LLM)."
+          "description": "Скриптований сценарій для виправлення імпортів у Vue."
+        },
+        {
+          "id": "fix-laravel-namespaces-and-uses",
+          "label": "Laravel: namespace та use",
+          "description": "Скриптований сценарій для PHP namespace та use."
         }
       ]
     }

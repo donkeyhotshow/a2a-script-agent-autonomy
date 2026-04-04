@@ -218,6 +218,27 @@ async function applyAppendToArray(
   
   // Resolve templates in the value
   const resolvedValue = resolveTemplates(value, context.$out);
+  // Assistant line: prefer `llm.execute.message` (tool + form turns), then top-level `llm.message` (legacy / completion-only).
+  if (
+    resolvedValue &&
+    typeof resolvedValue === 'object' &&
+    !Array.isArray(resolvedValue) &&
+    'message' in (resolvedValue as Record<string, unknown>)
+  ) {
+    const rv = resolvedValue as Record<string, unknown>;
+    const cur = typeof rv.message === 'string' ? rv.message.trim() : '';
+    if (!cur) {
+      const llm = context.$out['llm'] as Record<string, unknown> | undefined;
+      const top = typeof llm?.['message'] === 'string' ? String(llm['message']).trim() : '';
+      const exec = llm?.['execute'] as Record<string, unknown> | undefined;
+      const execMsg =
+        exec && typeof exec['message'] === 'string' ? String(exec['message']).trim() : '';
+      const line = execMsg || top;
+      if (line) {
+        rv.message = line;
+      }
+    }
+  }
   if (
     resolvedValue &&
     typeof resolvedValue === 'object' &&
@@ -313,15 +334,12 @@ async function applyRenderMarkdown(
     templateData = context.input;
   } else {
     // Try JSONPath
-    templateData = query<Record<string, unknown>>(context.$out, data) 
-      || query<Record<string, unknown>>(context.input, data)
-      || (() => {
-        // DEBUG: Log when fallback to empty object happens
-        console.log(`[DEBUG operations.ts] JSONPath fallback to {} for data: ${data}`);
-        return {};
-      })();
+    templateData =
+      query<Record<string, unknown>>(context.$out, data) ||
+      query<Record<string, unknown>>(context.input, data) ||
+      ({}) as Record<string, unknown>;
   }
-  
+
   // Create a clean context for template resolution (without internal properties)
   const cleanContext: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(context.$out)) {

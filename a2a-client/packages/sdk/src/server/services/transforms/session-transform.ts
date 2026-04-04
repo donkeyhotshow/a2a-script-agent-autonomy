@@ -63,7 +63,8 @@ export async function updateSessionWithServerResponse(
         if (hadExistingContext) {
             console.warn('[SESSION TRANSFORM] Context existed before execute update, keys:', Object.keys(updatedSession.context));
         }
-        updatedSession.context.execute = buildWebExecute(serverResponse.execute) ?? undefined;
+        updatedSession.context.execute =
+            buildWebExecute(serverResponse.execute, { context: updatedSession.context }) ?? undefined;
         
         // Check for form choices and extract them
         if (serverResponse.execute.form) {
@@ -184,7 +185,8 @@ export async function updateSessionWithStatusResponse(
     // Update execute information from status response
     if (statusResponse?.execute) {
         updatedSession.context = updatedSession.context || {};
-        updatedSession.context.execute = buildWebExecute(statusResponse.execute) ?? undefined;
+        updatedSession.context.execute =
+            buildWebExecute(statusResponse.execute, { context: updatedSession.context }) ?? undefined;
     }
     
     // Update messages from status response

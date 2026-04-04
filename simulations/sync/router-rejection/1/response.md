@@ -1,0 +1,33 @@
+# `router-rejection/1` — response
+
+Mirror of `response.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "тест обробки неправильного вибору",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Оберіть опцію",
+      "description": "Цей тест демонструє обробку неправильного вибору.",
+      "choices": [
+        {
+          "id": "valid-choice",
+          "label": "Валідний вибір",
+          "description": "Нормальний вибір, який пройде"
+        },
+        {
+          "id": "invalid-choice",
+          "label": "Невалідний вибір",
+          "description": "Цей вибір викличе помилку валідації"
+        }
+      ]
+    }
+  }
+}
+```

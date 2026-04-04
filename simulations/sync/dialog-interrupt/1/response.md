@@ -1,0 +1,35 @@
+# `dialog-interrupt/1` — mirror of `response.json` for drift checks
+
+Fixture mirror (`sim:check-md`), not live model output.
+
+```json
+{
+  "context": {
+    "task": "Dialog interrupt golden — when clause vs short history",
+    "execution": {
+      "action": "dialog",
+      "step": "message-only"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "One user line only."
+      },
+      {
+        "role": "assistant",
+        "step": "message-only",
+        "message": "Reply while transform carries an interrupt skipped by historyMinLength."
+      }
+    ]
+  },
+  "execute": {
+    "message": "Reply while transform carries an interrupt skipped by historyMinLength."
+  },
+  "interrupt": {
+    "reason": "clarify",
+    "when": {
+      "historyMinLength": 5
+    }
+  }
+}
+```

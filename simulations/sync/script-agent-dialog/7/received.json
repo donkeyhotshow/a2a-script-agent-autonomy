@@ -1,0 +1,11 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Running vitest…",
+    "attachments": {
+      "runScriptId": "test",
+      "pendingClientAction": "run-script"
+    }
+  }
+}

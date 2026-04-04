@@ -3,10 +3,10 @@
  * Use scanWithIgnore() to scan then filter by .gitignore/.cursorignore/.a2aignore.
  */
 
-import {FileScanner} from './file-scanner';
-import {IgnoreDetector} from './ignore-detector';
-import type {ScanResult, ScannedFile, FileScannerConfig} from './file-scanner';
-import type {IgnoreDetectorConfig} from './ignore-detector';
+import {FileScanner} from './file-scanner.js';
+import {IgnoreDetector} from './ignore-detector.js';
+import type {ScanResult, ScannedFile, FileScannerConfig} from './file-scanner.js';
+import type {IgnoreDetectorConfig} from './ignore-detector.js';
 
 export interface ScanWithIgnoreConfig extends IgnoreDetectorConfig, FileScannerConfig {
     rootPath?: string;

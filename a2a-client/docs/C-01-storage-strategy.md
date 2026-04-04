@@ -11,7 +11,7 @@ Choose and document canonical `A2A_CLIENT_STORAGE_DIR` strategy (repo-local vs h
 
 ### Current Implementation
 
-**Primary storage module:** [`vite-plugin-a2a/storage/root.js`](vite-plugin-a2a/storage/root.js)
+**Primary storage module:** [`../packages/vite-plugin/storage/root.js`](../packages/vite-plugin/storage/root.js)
 ```javascript
 export function getStorageRoot() {
   if (process.env.A2A_CLIENT_STORAGE_DIR) return process.env.A2A_CLIENT_STORAGE_DIR;

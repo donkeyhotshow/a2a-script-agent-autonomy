@@ -9,6 +9,7 @@ import json
 import time
 from typing import Any, Dict, List, Optional
 
+from .http_utils import aiohttp_llm_timeout
 from .base import (
     LLMProvider,
     ProviderConfig,
@@ -41,7 +42,7 @@ class HuggingFaceProvider(LLMProvider):
         """Get or create aiohttp session"""
         if self.session is None or self.session.closed:
             self.session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=self.config.timeout),
+                timeout=aiohttp_llm_timeout(self.config.timeout),
                 headers=self.headers
             )
         return self.session
@@ -87,6 +88,9 @@ class HuggingFaceProvider(LLMProvider):
         session = await self._get_session()
         
         try:
+            await self._check_rate_limit()
+            await self._check_request_delay()
+            
             async with session.post(
                 f"{self.base_url}/models/{resolved_model}",
                 json=payload
@@ -175,6 +179,9 @@ class HuggingFaceProvider(LLMProvider):
         session = await self._get_session()
         
         try:
+            await self._check_rate_limit()
+            await self._check_request_delay()
+            
             embeddings = []
             for text in texts:
                 payload = {"inputs": text}
@@ -237,3 +244,10 @@ class HuggingFaceProvider(LLMProvider):
         """Close the aiohttp session"""
         if self.session and not self.session.closed:
             await self.session.close()
+    
+    def get_capabilities(self) -> Dict[str, Any]:
+        """Get HuggingFace provider capabilities"""
+        caps = super().get_capabilities()
+        caps["supports_embeddings"] = True
+        caps["api_version"] = "huggingface-inference"
+        return caps

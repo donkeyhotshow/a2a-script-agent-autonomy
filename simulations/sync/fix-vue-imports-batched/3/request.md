@@ -1,0 +1,29 @@
+# `fix-vue-imports-batched/3` — request
+
+Mirror of `request.json` for prompt pipeline / `sim:check-md`.
+
+```json
+{
+  "context": {
+    "task": "виправити імпорти у vue компонентах",
+    "execution": {
+      "action": "fix-vue-imports-batched",
+      "step": "request-files-to-fix"
+    },
+    "vite_config": {
+      "file": "vite.config.js"
+    },
+    "aliases": {
+      "@": "resources/js",
+      "~": "resources"
+    }
+  },
+  "result": {
+    "script": {
+      "broken_imports_count": 50,
+      "files_saved_locally": true,
+      "message": "Знайдено 50 файлів з зламаними імпортами. Зберігаю список локально для покрокової обробки."
+    }
+  }
+}
+```
