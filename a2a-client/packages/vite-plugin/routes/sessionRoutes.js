@@ -191,8 +191,60 @@ export function createSessionRoutes({ cwd }) {
 
         // Defer /sessions/:id/next to the step routes middleware.
         const nextMatch = p.match(/^\/sessions\/([^\/]+)\/next$/);
+        const haltMatch = p.match(/^\/sessions\/([^\/]+)\/halt$/);
+        const trajectoryMatch = p.match(/^\/sessions\/([^\/]+)\/trajectory$/);
+
         if (req.method === 'POST' && nextMatch) {
             return next();
+        }
+
+        if (req.method === 'GET' && trajectoryMatch) {
+            const sessionId = trajectoryMatch[1];
+            if (!isValidSessionId(sessionId)) {
+                res.writeHead(400).end(JSON.stringify({ error: 'Invalid session ID' }));
+                return;
+            }
+            const session = getSession(cwd, sessionId);
+            if (!session) {
+                res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
+                return;
+            }
+            // Simple trajectory export: all steps concatenated
+            const trajectory = {
+                id: sessionId,
+                task: session.context?.task,
+                steps: session.steps || []
+            };
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify(trajectory, null, 2));
+            return;
+        }
+
+        if (req.method === 'DELETE' && haltMatch) {
+            const sessionId = haltMatch[1];
+            if (!isValidSessionId(sessionId)) {
+                res.writeHead(400).end(JSON.stringify({ error: 'Invalid session ID' }));
+                return;
+            }
+            const active = getActiveAsyncWork(cwd, sessionId);
+            if (active?.promiseId) {
+                // Call server to halt
+                try {
+                    const serverPort = process.env.A2A_SERVER_PORT || '3000';
+                    const haltUrl = `http://localhost:${serverPort}/api/v1/requests/${active.promiseId}/halt`;
+                    const haltRes = await fetch(haltUrl, { method: 'POST' });
+                    if (haltRes.ok) {
+                        res.setHeader('Content-Type', 'application/json');
+                        res.end(JSON.stringify({ success: true, halted: true, promiseId: active.promiseId }));
+                        return;
+                    }
+                } catch (e) {
+                    console.error('[Halt] Server call failed', e);
+                }
+            }
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ success: true, halted: false, message: 'No active promise found' }));
+            return;
         }
 
         if (req.method === 'POST' && p === '/sessions/task-execute') {

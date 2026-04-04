@@ -50,7 +50,13 @@ export type ArtifactType =
   | 'REPLAN_DECISION'
   | 'JUDGMENT_RESULT'
   | 'POLICY_VIOLATION'
-  | 'VISION_QA_RESULT';
+  | 'VISION_QA_RESULT'
+  | 'ANALYZER_INSIGHTS'
+  | 'SKILL_EVOLUTION'
+  | 'SKILL_ORACLE_TEST'
+  | 'COGNITION_PRIORS'
+  | 'RAG_LAYER_TRACE'
+  | 'VERIFICATION_RESULT';
 
 /** Unique identifier for the component writing an artifact */
 export type ComponentId = string;
@@ -90,6 +96,12 @@ export const TTL_MS: Partial<Record<ArtifactType, number>> = {
   JUDGMENT_RESULT:         14 * 24 * 60 * 60 * 1_000,  // 14 days
   POLICY_VIOLATION:        14 * 24 * 60 * 60 * 1_000,  // 14 days
   VISION_QA_RESULT:        14 * 24 * 60 * 60 * 1_000,  // 14 days
+  ANALYZER_INSIGHTS:       3  * 24 * 60 * 60 * 1_000,  // 3 days
+  SKILL_EVOLUTION:         30 * 24 * 60 * 60 * 1_000,  // 30 days
+  SKILL_ORACLE_TEST:       7  * 24 * 60 * 60 * 1_000,  // 7 days
+  COGNITION_PRIORS:        1  * 24 * 60 * 60 * 1_000,  // 1 day
+  RAG_LAYER_TRACE:         1  * 24 * 60 * 60 * 1_000,  // 1 day
+  VERIFICATION_RESULT:     7  * 24 * 60 * 60 * 1_000,  // 7 days
 };
 
 // ── Stored artifact shape ─────────────────────────────────────────────────────
@@ -322,3 +334,6 @@ export class ArtifactStore {
     return this.writers;
   }
 }
+
+export const globalArtifactStore = new ArtifactStore();
+

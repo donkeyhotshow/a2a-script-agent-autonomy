@@ -25,6 +25,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
+import { globalArtifactStore } from '../core/artifact-store.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -111,8 +112,25 @@ export class PolicyEngine {
    * Fast path — returns true when any blocking violation exists.
    * Synchronous, zero I/O, < 1 ms.
    */
-  isBlocked(ctx: PolicyContext): boolean {
-    return this.evaluate(ctx).some((v) => v.severity === 'block');
+  isBlocked(ctx: PolicyContext, sessionId?: string): boolean {
+    const violations = this.evaluate(ctx);
+    const blocked = violations.find((v) => v.severity === 'block');
+    
+    if (blocked && sessionId) {
+      void globalArtifactStore.write({
+        type: 'POLICY_VIOLATION',
+        session_id: sessionId,
+        severity: 'critical',
+        summary: `Policy ${blocked.policy_id} blocked action: ${blocked.message}`,
+        data: {
+          policy_id: blocked.policy_id,
+          message: blocked.message,
+          context: ctx as unknown as Record<string, unknown>
+        }
+      }, 'PolicyEngine');
+    }
+    
+    return !!blocked;
   }
 
   /**

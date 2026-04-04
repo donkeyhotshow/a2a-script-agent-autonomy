@@ -1,0 +1,140 @@
+import { exec } from 'child_process';
+import { promisify } from 'util';
+import path from 'path';
+import { NodeVM } from 'vm2';
+import { globalArtifactStore } from './artifact-store.js';
+
+const execAsync = promisify(exec);
+
+export interface VerificationResult {
+  file_path: string;
+  stage: 'zero_stage' | 'hero_stage' | 'guardrails';
+  passed: boolean;
+  errors?: string[];
+  output?: string;
+  timestamp: string;
+}
+
+const RESTRICTED_PATTERNS = [
+  { regex: /rm\s+-rf\s+\//, msg: 'Root/Recursive deletion attempt' },
+  { regex: /chmod\s+777/, msg: 'Insecure permission change' },
+  { regex: /process\.exit/, msg: 'Process termination attempt' },
+  { regex: /eval\(/, msg: 'Dynamic code execution (eval)' },
+  { regex: /child_process/, msg: 'Subprocess creation attempt' },
+];
+
+export class SWEVerifier {
+  private readonly COMPONENT_ID = 'SWEVerifier';
+
+  constructor() {
+    globalArtifactStore.registerWriter('VERIFICATION_RESULT', this.COMPONENT_ID);
+  }
+
+  async verify(filePath: string, content: string): Promise<VerificationResult> {
+    const ext = path.extname(filePath).toLowerCase();
+
+    // 0. Guardrails (Static Analysis)
+    for (const pattern of RESTRICTED_PATTERNS) {
+      if (pattern.regex.test(content)) {
+        const res: VerificationResult = {
+          file_path: filePath,
+          stage: 'guardrails',
+          passed: false,
+          errors: [`Security violation: ${pattern.msg}`],
+          timestamp: new Date().toISOString()
+        };
+        await this.emitArtifact(res);
+        return res;
+      }
+    }
+
+    // 1. Zero-stage semantic check
+    let zeroStagePassed = true;
+    const errors: string[] = [];
+
+    if (ext === '.json') {
+      try {
+        JSON.parse(content);
+      } catch (e) {
+        zeroStagePassed = false;
+        errors.push(`JSON parsing error: ${(e as Error).message}`);
+      }
+    } else if (ext === '.js') {
+      try {
+        const vm = new NodeVM({
+          console: 'off',
+          sandbox: {},
+          require: { builtin: [], external: false }
+        });
+        vm.run(content, filePath);
+      } catch (e) {
+        // VM run failed - could be syntax or semantic error
+        zeroStagePassed = false;
+        errors.push(`VM semantic check failed: ${(e as Error).message}`);
+      }
+    }
+
+    if (!zeroStagePassed) {
+      const res: VerificationResult = {
+        file_path: filePath,
+        stage: 'zero_stage',
+        passed: false,
+        errors,
+        timestamp: new Date().toISOString()
+      };
+      await this.emitArtifact(res);
+      return res;
+    }
+
+    // 2. Hero-stage sandbox execution
+    const testCommand = process.env.TEST_COMMAND;
+    if (testCommand) {
+      try {
+        const { stdout, stderr } = await execAsync(testCommand, { timeout: 30000 });
+        const res: VerificationResult = {
+          file_path: filePath,
+          stage: 'hero_stage',
+          passed: true,
+          output: stdout + '\n' + stderr,
+          timestamp: new Date().toISOString()
+        };
+        await this.emitArtifact(res);
+        return res;
+      } catch (e: any) {
+        const res: VerificationResult = {
+          file_path: filePath,
+          stage: 'hero_stage',
+          passed: false,
+          errors: [e.message, e.stdout, e.stderr].filter(Boolean),
+          timestamp: new Date().toISOString()
+        };
+        await this.emitArtifact(res);
+        return res;
+      }
+    }
+
+    // Implicit pass
+    const res: VerificationResult = {
+      file_path: filePath,
+      stage: 'hero_stage',
+      passed: true,
+      timestamp: new Date().toISOString()
+    };
+    await this.emitArtifact(res);
+    return res;
+  }
+
+  private async emitArtifact(res: VerificationResult) {
+    await globalArtifactStore.write({
+      artifact_id: `verify-${Date.now()}`,
+      artifact_type: 'VERIFICATION_RESULT',
+      session_id: 'unknown',
+      turn_id: 'unknown',
+      created_at: res.timestamp,
+      schema_version: '1.0',
+      data: res as unknown as Record<string, unknown>,
+      summary: `SWEVerifier: ${res.file_path} [${res.stage}] -> ${res.passed ? 'PASS' : 'FAIL'}`,
+      severity: res.passed ? 'info' : 'error',
+    }, this.COMPONENT_ID);
+  }
+}

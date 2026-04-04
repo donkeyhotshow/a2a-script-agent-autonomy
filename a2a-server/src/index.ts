@@ -7,6 +7,10 @@ import {startRequestProcessor, stopRequestProcessor} from './daemon/request-proc
 import {actionRegistry} from './actions/action-registry.js';
 import {algorithmRegistry} from './services/core/black-room/algorithm-registry.js';
 import {getPromptsTransformsPath} from './transform/index.js';
+import {globalArtifactStore} from './services/core/artifact-store.js';
+import {llmService} from './services/llm/llm-service.js';
+import {ultraContextService} from './services/context/ultracontext.service.js';
+import {peerRelay} from './services/p2p/relay.js';
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -50,6 +54,19 @@ async function bootstrap(): Promise<void> {
     }
 
     startRequestProcessor(config.requestProcessorIntervalMs);
+
+    // ADR-0079: Nightly ArtifactStore purge (every 6 hours)
+    setInterval(() => {
+        const purged = globalArtifactStore.purgeExpired();
+        if (purged > 0) {
+            logger.info('[ArtifactStore] Routine purge completed', { purged });
+        }
+    }, 6 * 60 * 60 * 1000);
+
+    // ADR-0080+: Initialize distributed services
+    logger.info('[A2A] Initializing Distributed Core 2.5...');
+    llmService.chat({ messages: [] }).catch(() => {}); // Warm up
+    peerRelay.joinRoom('main', 'server-01');
 
     server.listen(config.port, () => {
         logger.info(`A2A Server started (Simulation Mode)`, {

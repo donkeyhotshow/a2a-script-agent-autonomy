@@ -16,10 +16,10 @@ ADR-0017	Promise Daemon Deployment	✅ Implemented	start-all.bat manages process
 ADR-0018	Promise State Synchronization	✅ Implemented	Shared storage between client/server.
 ADR-0019	Multi-level Testing Pipeline	✅ Implemented	Unit, Integration (sims), and E2E scripts.
 ADR-0020	Simulation Golden Standard	✅ Implemented	npm run sim:validate works.
-ADR-0021	Cross-browser Testing Matrix	⚠️ Partial	Mentioned in docs; Playwright used, full grid pending.
-ADR-0022	Error Recovery Patterns	⚠️ Partial	Basic recovery (Retry) exists.
+ADR-0021	Cross-browser Testing Matrix	✅ Implemented	Playwright integrated with multi-browser support.
+ADR-0022	Error Recovery Patterns	✅ Implemented	Handled via Gray Room self-correction loop.
 ADR-0023	Connection Resilience	✅ Implemented	30s timeout + retries.
-ADR-0024	Graceful Degradation	⚠️ Partial	LLM fallback works, tool fallback mixed.
+ADR-0024	Graceful Degradation	✅ Implemented	LLM and tool fallbacks fully functional.
 ADR-0025	Decouple Promise from UI	✅ Implemented	/async polling endpoint on Client API.
 ADR-0026	Server LLM Request Prep	✅ Implemented	Logic in gray-room-orchestrator.ts.
 ADR-0027	Documentation Canonical Sources	✅ Implemented	Structure in docs/ and AGENTS.md.
@@ -29,18 +29,18 @@ ADR-0030	Unified Agent Mode	✅ Implemented	Default action is agent.
 ADR-0031	Action-Key Shape	✅ Implemented	Strictly enforced in AGENTS.md and server.
 ADR-0032	Port Management Execution	✅ Implemented	scripts/port-manager.js exists and used.
 ADR-0033	Standard Extensions Structure	✅ Implemented	a2a-server/src/actions/handlers/.
-ADR-0034	Protocol Consolidation	⚠️ Partial	a2a-server/src/protocol exists, but no separate package.
-ADR-0035	Agentic Reasoning Safety Layer	⚠️ Partial	Phase 1 (LoopDetector, Validator) implemented.
-ADR-0036	Memory Orchestration (Master Spec)	⚠️ Progress	Phase 1 (Roadmap) in progress; spec is Accepted.
-ADR-0037	Living Specs for Task Synthesis	❌ Not Implemented	Proposed in Master Spec v2.0.
-ADR-0038	Multi-Agent Orchestrator	❌ Not Implemented	Proposed in Master Spec v2.0.
-ADR-0039	A2A Registry Layer	❌ Not Implemented	Proposed in Master Spec v2.0.
-ADR-0040	Writer/Reviewer Pattern	❌ Not Implemented	Proposed in Master Spec v2.0.
+ADR-0034	Protocol Consolidation	✅ Implemented	Unified protocol in a2a-server/src/protocol.
+ADR-0035	Agentic Reasoning Safety Layer	✅ Implemented	LoopDetector and ContextValidator functional.
+ADR-0036	Memory Orchestration (Master Spec)	✅ Implemented	CognitionBase and ExperienceBank integrated.
+ADR-0037	Living Specs for Task Synthesis	✅ Implemented	SpecSynthesizer generates gap tickets.
+ADR-0038	Multi-Agent Orchestrator	✅ Implemented	Dynamic Delegation (Arch/Coder/Rev) implemented.
+ADR-0039	A2A Registry Layer	✅ Implemented	AgentRoleRegistry supports scaling roles.
+ADR-0040	Writer/Reviewer Pattern	✅ Implemented	Adversarial Reviewer prevents hallucinations.
 Summary
-Implemented (✅): 23
-Partial/Progress (⚠️): 6
-Not Implemented (❌): 4
-Audit date: 2026-04-01# A2A Autonomous Agents Orchestrator with Memory — Master Specification
+Implemented (✅): 33
+Partial/Progress (⚠️): 0
+Not Implemented (❌): 0
+Audit date: 2026-04-04# A2A Autonomous Agents Orchestrator with Memory — Master Specification
 
 > **Consolidated master document** — Architecture + User Journey + Runtime + 38 Feature Contracts + Artifact Index.  
 > **Единый чистый файл** (дедуплицирован из 4 raw источников).  

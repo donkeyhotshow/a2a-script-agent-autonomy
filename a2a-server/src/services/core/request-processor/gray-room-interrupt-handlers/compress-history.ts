@@ -5,6 +5,9 @@ import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../trans
  * Handle compress_history interrupt
  * Compresses conversation history into 3-7 short entries
  */
+import { AgentSwing } from '../../agent-swing.js';
+import { pollReadyThenFetch } from '../../../../daemon/llm-hub-poll.js';
+
 export async function handleCompressHistory(
     interrupt: InterruptDirective,
     ctx: Record<string, unknown>,
@@ -21,39 +24,27 @@ export async function handleCompressHistory(
         return { nextCtx, continueLoop: false };
     }
     
-    const compressPrompt = [
-        'Compress the following conversation history into 3–7 short entries (JSON array of {"role":"system"|"assistant"|"user","message":"..."}).',
-        'Preserve enough detail to continue the task: user goal, constraints, unresolved steps, file paths touched, last assistant intent.',
-        'Respond with ONLY the JSON array, no prose.',
-        '',
-        'History:',
-        JSON.stringify(history, null, 2)
-    ].join('\n');
-
     try {
-        const sidecarModel = resolveGrayRoomLlmModelFromContext(nextCtx, model);
-        const chatRes = await fetch(`${aiHubUrl}/api/chat?promise=1`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Server-Promise-Id': `${promiseId}-compress` },
-            body: JSON.stringify({ model: sidecarModel, messages: [{ role: 'user', content: compressPrompt }], stream: false }),
-        });
+        const swing = new AgentSwing();
+        const result = await swing.compressWithLookahead(
+            history, 
+            nextCtx, 
+            promiseId, 
+            aiHubUrl, 
+            model, 
+            pollReadyThenFetch
+        );
         
-        if (chatRes.status === 202) {
-            const initData = (await chatRes.json()) as { promiseId?: string };
-            if (initData?.promiseId) {
-                const compressed = await pollReadyThenFetch(aiHubUrl, initData.promiseId);
-                if (compressed) {
-                    const parsed = JSON.parse(compressed.trim());
-                    if (Array.isArray(parsed)) {
-                        const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-                        nextCtx = { ...nextCtx, history: parsed, context: {...innerCtx, history: parsed} };
-                        trace.push({ kind: 'sidecar_llm', purpose: 'compress_history', ok: true, meta: `from=${history.length} to=${parsed.length}` });
-                    }
-                }
-            }
-        }
+        const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
+        nextCtx = { ...nextCtx, history: result.best_history, context: {...innerCtx, history: result.best_history} };
+        trace.push({ 
+            kind: 'sidecar_llm', 
+            purpose: 'compress_history_swing', 
+            ok: true, 
+            meta: `from=${history.length} to=${result.best_history.length} score=${result.score.toFixed(2)} options=${result.options_considered}` 
+        });
     } catch (err) {
-        console.warn('[GrayRoom:compress_history] Failed', { error: String(err) });
+        console.warn('[GrayRoom:compress_history] AgentSwing Failed', { error: String(err) });
         trace.push({ kind: 'sidecar_llm', purpose: 'compress_history', ok: false, meta: 'error' });
     }
     

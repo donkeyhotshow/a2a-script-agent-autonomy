@@ -1,0 +1,35 @@
+name: CI
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+      
+      - name: Install dependencies (root)
+        run: npm ci
+        
+      - name: Test a2a-server
+        run: |
+          cd a2a-server
+          npm ci
+          npm test
+          
+      - name: Lint a2a-server
+        run: |
+          cd a2a-server
+          npm run lint
+          
+      - name: Build a2a-server (TS check)
+        run: |
+          cd a2a-server
+          npm run build

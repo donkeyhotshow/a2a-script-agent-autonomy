@@ -1,1 +1,0 @@
-priority-6 is enormous; scanning must be scripted. Do not mirror bulk data into this repo.

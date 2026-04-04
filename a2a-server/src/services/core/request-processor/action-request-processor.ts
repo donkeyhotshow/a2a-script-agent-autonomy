@@ -41,7 +41,7 @@ import {
 } from './handlers/step-complete-handler.js';
 import {
     handleApproveAction as handleApproveActionFn
-} from './handlers/approve-action-handler.ts';
+} from './handlers/approve-action-handler.js';
 
 /**
  * Action request processor configuration

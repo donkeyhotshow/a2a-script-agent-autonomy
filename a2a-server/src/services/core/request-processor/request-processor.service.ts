@@ -403,5 +403,13 @@ export function stopRequestProcessor(): void {
     }
 }
 
+/**
+ * Halt an active request by promiseId.
+ */
+export function haltRequest(promiseId: string): boolean {
+    const { GrayRoomOrchestrator } = require('./gray-room-orchestrator.js');
+    return GrayRoomOrchestrator.halt(promiseId);
+}
+
 // Re-export types for compatibility
 export type {ProcessResult, ProcessOutcome, Task, TaskAnalysis};

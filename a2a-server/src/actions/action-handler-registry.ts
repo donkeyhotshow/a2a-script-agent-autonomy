@@ -6,6 +6,7 @@
 
 import {logger} from '../utils/logger.js';
 import * as handlers from './handlers/index.js';
+import {SkillEvolver} from '../services/core/skill-evolver.js';
 
 export type ActionType =
     | 'read-file'
@@ -51,6 +52,8 @@ const DEFAULT_HANDLERS: Record<ActionType, ActionHandler> = {
 class ActionHandlerRegistry {
     private handlers: Map<ActionType, ActionHandler> = new Map();
     private initialized = false;
+    private errorTracker: Map<ActionType, string[]> = new Map();
+    private skillEvolver = new SkillEvolver();
 
     constructor() {
         this.registerDefaultHandlers();
@@ -99,6 +102,15 @@ class ActionHandlerRegistry {
 
         try {
             const result = await handler(input, context);
+            const isLogicalFailure = result && typeof result === 'object' && 'success' in result && result.success === false;
+
+            if (isLogicalFailure) {
+                const errStr = (result as Record<string, unknown>).error as string | undefined || 'Logical failure';
+                await this.recordFailure(actionType as ActionType, errStr, context);
+            } else {
+                // Clear errors on success
+                this.errorTracker.delete(actionType as ActionType);
+            }
 
             logger.info('[ActionHandlerRegistry] Action executed successfully', {
                 actionType,
@@ -112,7 +124,24 @@ class ActionHandlerRegistry {
                 sessionId: context.sessionId,
                 error: String(error),
             });
+            await this.recordFailure(actionType as ActionType, String(error), context);
             throw error;
+        }
+    }
+
+    private async recordFailure(actionType: ActionType, errorStr: string, context: ActionHandlerContext) {
+        const errors = this.errorTracker.get(actionType) || [];
+        errors.push(errorStr);
+        this.errorTracker.set(actionType, errors);
+
+        if (errors.length >= 3) {
+            try {
+                const proposal = await this.skillEvolver.evolve(actionType, errors, context);
+                logger.warn(`[ActionHandlerRegistry] SkillEvolver triggered for ${actionType}`, { proposal });
+            } catch (e) {
+                logger.error('[ActionHandlerRegistry] SkillEvolver failed', { error: String(e) });
+            }
+            this.errorTracker.delete(actionType); // Reset after evolution
         }
     }
 

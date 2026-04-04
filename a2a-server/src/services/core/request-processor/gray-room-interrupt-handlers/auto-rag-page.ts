@@ -1,9 +1,9 @@
-import {mergeServerRagPageIntoContext} from '../../../rag/auto-rag-page-server.js';
+import {ProgressiveRetriever} from '../../../rag/progressive-retriever.js';
 import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
 
 /**
  * Handle auto_rag_page interrupt
- * Merges RAG page content into context
+ * Merges RAG page content into context via ProgressiveRetriever
  */
 export async function handleAutoRagPage(
     interrupt: InterruptDirective,
@@ -14,10 +14,9 @@ export async function handleAutoRagPage(
     trace: ServerInterruptTraceEvent[]
 ): Promise<{ nextCtx: Record<string, unknown>; continueLoop: boolean }> {
     const nextCtx = { ...ctx };
-    const {nextCtx: afterRag, trace: ragTrace} = await mergeServerRagPageIntoContext(nextCtx, interrupt.data);
-    nextCtx = afterRag;
+    const retriever = new ProgressiveRetriever();
+    const {nextCtx: afterRag, trace: ragTrace} = await retriever.retrieve(nextCtx, interrupt.data);
+    const innerCtx = (afterRag['context'] as Record<string, unknown>) ?? {};
     if (ragTrace) trace.push(ragTrace);
-    const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-    nextCtx = { ...nextCtx, context: {...innerCtx, _interrupt_reason: interrupt.reason, ...(interrupt.data ?? {})} };
-    return { nextCtx, continueLoop: true };
+    return { nextCtx: { ...afterRag, context: {...innerCtx, _interrupt_reason: interrupt.reason, ...(interrupt.data ?? {})} }, continueLoop: true };
 }

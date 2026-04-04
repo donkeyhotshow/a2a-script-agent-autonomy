@@ -25,13 +25,11 @@ import {
     readGrayRoomInterruptBudget,
     shouldUseGrayRoom
 } from './gray-room-trigger.js';
-import {
-    resolveTransformSchema,
-    normalizeContext,
-    extractSchemaName,
-    resolveResultObject
-} from './normalization.js';
+import {resolveTransformSchema, normalizeContext, extractSchemaName, resolveResultObject} from './normalization.js';
 import {resolveLlmModelFromContext} from './llm-model-resolver.js';
+import {CognitionBase} from './cognition-base.js';
+import {EpisodicMemory} from '../memory/episodic-memory.js';
+import {globalDesignReasoner} from '../hierarchical-design-reasoner.js';
 
 export {isDialogToolExecutePayload};
 export {resolveTransformSchema, normalizeContext, extractSchemaName};
@@ -161,6 +159,44 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 );
 
                 return grayRoomResult;
+            }
+
+            if (!existingLlmId) {
+                // Внедрение априорных знаний через CognitionBase (ADR-0062)
+                try {
+                    const cognition = new CognitionBase();
+                    const episodic = new EpisodicMemory();
+                    const topic = (ctx['task'] as string) || (ctx['message'] as string) || 'general';
+                    const sessionId = (ctx['session_id'] as string) || 'startup';
+                    
+                    const priors = await cognition.injectPriors(
+                        topic,
+                        sessionId,
+                        { query: async () => [] }, // LessonStore stub
+                        { query: async () => [] }, // PatternStore stub
+                        episodic
+                    );
+                    
+                    const priorStr = cognition.formatForContext(priors);
+                    if (priorStr && typeof ctx['message'] === 'string') {
+                        ctx['message'] = ctx['message'] + '\n\n' + priorStr;
+                    }
+                } catch (err) {
+                    logger.warn('[DialogRequestProcessor] CognitionBase injection failed', { error: String(err) });
+                }
+
+                // -- HIERARCHICAL DESIGN RESONER (ADR-0061) --
+                const taskText = (ctx['task'] as string) || (ctx['message'] as string) || '';
+                const isUITask = /ui|component|style|design|vue|react|html|css|layout|aesthetic|premium/i.test(taskText);
+                if (isUITask) {
+                    try {
+                        const manifesto = await globalDesignReasoner.generateManifesto(taskText, ctx);
+                        ctx['message'] = `[DESIGN_MANIFESTO_INJECTED]\n${manifesto.raw_manifesto}\n\n[USER_TASK]\n${ctx['message']}`;
+                        logger.info('[DialogRequestProcessor] Design manifesto injected into message');
+                    } catch (err) {
+                        logger.warn('[DialogRequestProcessor] DesignReasoner failed', { error: String(err) });
+                    }
+                }
             }
 
             const llmResult = await executeLlmCall({

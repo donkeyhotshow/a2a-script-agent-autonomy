@@ -3,6 +3,7 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type {WriteFileActionInput, WriteFileActionOutput} from './types.js';
 import {validatePath} from './security.js';
+import {SWEVerifier} from '../../../services/core/swe-verifier.js';
 
 export async function executeWriteFile(
     input: WriteFileActionInput
@@ -49,17 +50,46 @@ export async function executeWriteFile(
         await fs.writeFile(fullPath, input.content, encoding);
         const bytesWritten = Buffer.byteLength(input.content, encoding);
 
+        // -- SWEVerifier Integration (ADR-0066) --
+        let verificationPassed = true;
+        let verificationErrors: string[] | undefined;
+        try {
+            const verifier = new SWEVerifier();
+            const verification = await verifier.verify(fullPath, input.content);
+            if (!verification.passed) {
+                verificationPassed = false;
+                verificationErrors = verification.errors || [];
+                logger.warn('[write-file] SWEVerifier validation failed', { 
+                    filePath: input.filePath, 
+                    errors: verificationErrors 
+                });
+            } else {
+                logger.info('[write-file] SWEVerifier pass', { 
+                    filePath: input.filePath, stage: verification.stage 
+                });
+            }
+        } catch (e) {
+            logger.error('[write-file] SWEVerifier internal error', { error: String(e) });
+        }
+        // ----------------------------------------
+
         logger.info('[write-file] File written successfully', {
             filePath: input.filePath,
             bytesWritten,
         });
 
-        return {
-            success: true,
+        const output: any = {
+            success: verificationPassed,
             filePath: input.filePath,
             bytesWritten,
             backupPath,
         };
+        
+        if (!verificationPassed) {
+            output.error = `Verification Failed: ${verificationErrors?.join(', ')}`;
+        }
+
+        return output;
     } catch (error) {
         logger.error('[write-file] Execution failed', {error: String(error)});
         return {

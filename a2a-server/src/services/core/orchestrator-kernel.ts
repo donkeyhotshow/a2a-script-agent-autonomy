@@ -25,6 +25,8 @@ export type OrchestratorState =
   | 'SELF_CORRECTING'
   | 'WAITING_ON_HUMAN'
   | 'VALIDATING'
+  | 'REVIEWING'
+  | 'DEBATING'
   | 'DELIVERING'
   | 'STOPPED';
 
@@ -48,6 +50,9 @@ export type OrchestratorEvent =
   | 'expired'
   | 'all_pass'
   | 'any_fail'
+  | 'review_passed'
+  | 'review_failed'
+  | 'debate_resolved'
   | 'delivered'
   | 'branch_violation'
   | 'emergency_stop'
@@ -72,7 +77,9 @@ export type TransitionArtifactType =
   | 'DONECRITERIA_RESULT'
   | 'BRANCH_INTEGRITY'
   | 'DRYRUN_DELTA'
-  | 'OPPORTUNITY_SUPPRESSION';
+  | 'OPPORTUNITY_SUPPRESSION'
+  | 'REVIEW_RESULT'
+  | 'DEBATE_OUTCOME';
 
 // ── Guard context passed to guard functions ──────────────────────────────────
 
@@ -253,8 +260,26 @@ const FSM_TABLE: TransitionTable = {
       artifact: 'VALIDATION_SUMMARY',
     },
     any_fail: {
-      to: 'WAITING_ON_HUMAN',
+      to: 'REVIEWING',
       artifact: 'DONECRITERIA_RESULT',
+    },
+  },
+
+  REVIEWING: {
+    review_passed: {
+      to: 'EXECUTING',
+      artifact: 'REVIEW_RESULT',
+    },
+    review_failed: {
+      to: 'DEBATING',
+      artifact: 'REVIEW_RESULT',
+    },
+  },
+
+  DEBATING: {
+    debate_resolved: {
+      to: 'EXECUTING',
+      artifact: 'DEBATE_OUTCOME',
     },
   },
 

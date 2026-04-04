@@ -12,6 +12,10 @@ import type {ProcessResult} from './request-processor.interfaces.js';
 import {validateDialogExecuteShape, validateLlmOutputShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
 import {resolveExecution, resolveHistoryLength} from './normalization.js';
 import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver.js';
+import {globalArtifactStore} from '../artifact-store.js';
+import {DedicatedAnalyzer} from '../analyzer.js';
+import {globalExperienceBank} from '../../memory/experience-bank.js';
+import {globalMcpRegistry} from '../../mcp/registry.js';
 
 // Import trigger detection logic
 import {
@@ -38,6 +42,12 @@ import {handleAutoReadFile} from './gray-room-interrupt-handlers/auto-read-file.
 import {handleAutoRagPage} from './gray-room-interrupt-handlers/auto-rag-page.js';
 import {handleClarify} from './gray-room-interrupt-handlers/clarify.js';
 import {handleAlgorithmInvoke} from './gray-room-interrupt-handlers/algorithm-invoke.js';
+import {globalVisionTester} from '../vision-tester.js';
+import {globalRoleRegistry, AgentRole} from '../agent-role-registry.js';
+import {globalSafetyLayer} from '../safety-layer.js';
+import {globalIntentGate} from '../intent-gate.js';
+import {decisionCell} from './decision-cell.js';
+import {bugFixer} from '../../llm/bug-fixer.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 
@@ -46,6 +56,7 @@ export class GrayRoomOrchestrator {
     private aiHubUrl: string;
     private model: string;
     private promptsTransformsPath: string;
+    private static activeControllers = new Map<string, AbortController>();
 
     constructor(options: GrayRoomOptions) {
         this.maxInterruptTurns = options.maxInterruptTurns ?? readGrayRoomInterruptBudget();
@@ -86,13 +97,58 @@ export class GrayRoomOrchestrator {
             traceRef: {length: 0},
         };
 
+        const controller = new AbortController();
+        GrayRoomOrchestrator.activeControllers.set(promiseId, controller);
+
         const touchGrayRoom = (patch: Partial<GrayRoomControlEnvelope>): void => {
             Object.assign(grayRoom, patch);
             grayRoom.timestamps = {startedAt, lastUpdateAt: new Date().toISOString()};
             grayRoom.traceRef = {length: trace.length};
         };
 
-        for (;;) {
+        // -- SAFETY & INTENT INITIALIZATION (ADR-0035 / ADR-0050) --
+        globalSafetyLayer.reset();
+        globalIntentGate.lockIntent((workingCtx['task'] as string) || '');
+        // ---------------------------------------------------------
+
+        // Event-driven Actor Model Step
+        return new Promise<ProcessResult>((resolve) => {
+            const processTick = async () => {
+                if (controller.signal.aborted) {
+                    logger.warn('[GrayRoom] Externally halted!', { promiseId });
+                    GrayRoomOrchestrator.activeControllers.delete(promiseId);
+                    resolve({
+                        outcome: 'failed',
+                        error: 'Task halted by operator',
+                        context: workingCtx
+                    } as ProcessResult);
+                    return;
+                }
+
+                // -- SAFETY INTERCEPT (ADR-0035 / ADR-0050) --
+                const safety = globalSafetyLayer.intercept(workingCtx);
+                if (safety.halt) {
+                    logger.error('[GrayRoom] Safety halt!', { reason: safety.reason });
+                    resolve({
+                        outcome: 'failed',
+                        error: safety.reason || 'Safety violation detected',
+                        context: workingCtx
+                    } as ProcessResult);
+                    return;
+                }
+                // --------------------------------------------
+
+                // -- EXPERIENCE BANK (PRE) --
+            try {
+                const exprs = await globalExperienceBank.getRelevantExperiences(JSON.stringify(workingCtx).slice(0, 500));
+                if (exprs.length > 0) {
+                    workingCtx['relevant_experiences'] = exprs.map(e => e.action_payload);
+                }
+            } catch (err) {
+                logger.warn('[GrayRoom] ExperienceBank get failure', { error: String(err) });
+            }
+            // --------------------------
+
             touchGrayRoom({phase: 'response_transform', turn, remainingBudget: interruptBudget});
             trace.push({
                 kind: 'llm_output',
@@ -106,10 +162,36 @@ export class GrayRoomOrchestrator {
             isRecovered = false;
 
             if (!pair) {
-                return {outcome: 'failed', error: 'Response transform failed'} as ProcessResult;
+                resolve({outcome: 'failed', error: 'Response transform failed'} as ProcessResult);
+                return;
             }
 
             const {result, rawOutput} = pair;
+
+            // -- MCP TOOL BRIDGE (ADR-0078) --
+            const executeCall = (result.execute as Record<string, any>);
+            if (executeCall) {
+                const actionName = Object.keys(executeCall)[0];
+                const mcpTool = globalMcpRegistry.getTool(actionName);
+                if (mcpTool) {
+                    logger.info('[GrayRoom] Executing MCP Tool', { actionName });
+                    try {
+                        const mcpResult = await mcpTool.execute(executeCall[actionName]);
+                        result.result = { [actionName]: mcpResult };
+                    } catch (e) {
+                        logger.error('[GrayRoom] MCP Tool failed, triggering BugFixer', { actionName, error: e.message });
+                        const fix = await bugFixer.fix(JSON.stringify(executeCall[actionName]), e.message);
+                        if (fix.fixed) {
+                            logger.info('[GrayRoom] BugFixer produced a patch', { actionName });
+                            result.result = { error: e.message, bugfix_analysis: fix.analysis, recommended_patch: fix.patches };
+                        } else {
+                            result.result = { error: e.message };
+                        }
+                    }
+                }
+            }
+            // --------------------------------
+
             const interrupt = this.extractInterrupt(rawOutput);
             trace.push({
                 kind: 'response_transform',
@@ -129,12 +211,29 @@ export class GrayRoomOrchestrator {
                     remainingBudget: interruptBudget,
                     lastReason: interrupt.reason,
                 });
-                return this.mergeTraceIntoResult(result, trace, grayRoom);
+                resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
+                return;
             }
 
             if (!interrupt) {
-                touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
-                return this.mergeTraceIntoResult(result, trace, grayRoom);
+                // -- DECISION CELL FINAL CHECK (ADR-0088) --
+                const decision = await decisionCell.decide(
+                    (workingCtx['session_id'] as string) || promiseId,
+                    (workingCtx['task'] as string) || '',
+                    workingCtx
+                );
+                if (decision.done) {
+                    touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
+                    resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
+                    return;
+                } else if (decision.retry) {
+                    logger.info('[GrayRoom] DecisionCell requested retry', { reason: decision.reason });
+                    // Continue loop instead of exit
+                } else {
+                    touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
+                    resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
+                    return;
+                }
             }
 
             if (!this.interruptWhenSatisfied(interrupt, workingCtx)) {
@@ -166,13 +265,131 @@ export class GrayRoomOrchestrator {
                     remainingBudget: 0,
                     lastReason: interrupt.reason,
                 });
-                return this.mergeTraceIntoResult(
+                resolve(this.mergeTraceIntoResult(
                     {...result, context: {...c, interrupt_truncated: true}} as ProcessResult,
                     trace,
                     grayRoom
-                );
+                ));
+                return;
             }
             interruptBudget--;
+
+            // -- DEDICATED ANALYZER INTEGRATION (ADR-0060) --
+            const analyzer = new DedicatedAnalyzer(globalArtifactStore);
+            const currentConfidence = (workingCtx['confidence'] as number) ?? 0.5;
+            
+            // Note: We need a way to get artifacts, but for now we'll pass an empty array or query globalArtifactStore if needed.
+            // ADR: Insights are extracted from history and artifacts.
+            const responseArtifacts = await globalArtifactStore.query({ turn_id: `turn-${turn}` });
+            const sessionHistory = (workingCtx['history'] as unknown[]) ?? [];
+            
+            const insights = await analyzer.analyze(
+                responseArtifacts,
+                sessionHistory,
+                currentConfidence,
+                turn
+            );
+
+            // Inject insights into next iteration via thinkingSlot
+            workingCtx = {
+                ...workingCtx,
+                thinkingSlot: {
+                    ...((workingCtx['thinkingSlot'] as Record<string, unknown>) ?? {}),
+                    analyzer_insights: insights,
+                    recommended_strategy: insights.recommended_strategy,
+                }
+            };
+            
+            // -- EXPERIENCE BANK (POST) --
+            try {
+                await globalExperienceBank.recordTurn(
+                    (workingCtx['session_id'] as string) || 'unknown',
+                    `turn-${turn}`,
+                    JSON.stringify(workingCtx),
+                    { type: 'interrupt', payload: interrupt.reason },
+                    insights.confidence_delta
+                );
+            } catch (err) {
+                logger.warn('[GrayRoom] ExperienceBank record failure', { error: String(err) });
+            }
+            // ------------------------------------------------
+
+            logger.info('[GrayRoom] Iteration start', { turn, state: currentState });
+
+            // -- AGENT ROLE INTEGRATION (ADR-0038) --
+            const activeRole = globalRoleRegistry.getRoleForState(currentState);
+            const roleInstruction = globalRoleRegistry.getInstruction(activeRole);
+            workingCtx = { 
+                ...workingCtx, 
+                agent_role: activeRole,
+                system_instruction_override: roleInstruction 
+            };
+            logger.info('[GrayRoom] Role assigned', { role: activeRole });
+            // ---------------------------------------
+
+            // -- VISION QA INTEGRATION (ADR-0060) --
+            let lastOutcome = (workingCtx['result'] as Record<string, any>)?.['outcome'] || 'noop';
+
+            // -- OVERRIDE OUTCOME FOR REVIEW/DEBATE (ADR-0038) --
+            if (currentState === OrchestratorState.REVIEWING && workingCtx['REVIEW_RESULT']) {
+                const res = workingCtx['REVIEW_RESULT'] as any;
+                lastOutcome = res.passed ? 'review_passed' : 'review_failed';
+                // Clear result for next turns if necessary, or let kernel handle it
+            }
+            if (currentState === OrchestratorState.DEBATING && workingCtx['DEBATE_OUTCOME']) {
+                lastOutcome = 'debate_resolved';
+            }
+            // --------------------------------------------------
+
+            const {nextState, artifact} = this.kernel.transition(currentState, lastOutcome, workingCtx);
+            const lastAction = (workingCtx['execute'] as Record<string, any>)?.['write-file'] || 
+                               (workingCtx['execute'] as Record<string, any>)?.['edit-file'];
+            const isUIChange = lastAction && (
+                lastAction.path?.endsWith('.html') || 
+                lastAction.path?.endsWith('.css') || 
+                lastAction.path?.endsWith('.vue') || 
+                lastAction.path?.endsWith('.tsx') ||
+                lastAction.path?.endsWith('.jsx')
+            );
+
+            if (isUIChange) {
+                try {
+                    // Logic to determine internal URL - usually a dev server
+                    const devUrl = 'http://localhost:5173'; // Default Vite port
+                    const screenshotPath = `storage/screenshots/turn-${turn}.png`;
+                    await globalVisionTester.captureScreenshot(devUrl, screenshotPath);
+                    const visionResult = await globalVisionTester.performVisualQA(screenshotPath, (workingCtx['task'] as string) || 'UI matching manifesto');
+                    
+                    if (!visionResult.passed) {
+                        workingCtx = {
+                            ...workingCtx,
+                            visual_critique: visionResult.critique,
+                            thinkingSlot: {
+                                ...((workingCtx['thinkingSlot'] as Record<string, unknown>) ?? {}),
+                                visual_feedback: visionResult.critique
+                            }
+                        };
+                        logger.warn('[GrayRoom] Vision QA failed, injecting critique', { critique: visionResult.critique });
+                    } else {
+                        logger.info('[GrayRoom] Vision QA passed');
+                    }
+                } catch (err) {
+                    logger.info('[GrayRoom] Transitioning state', { from: currentState, to: nextState });
+                    currentState = nextState;
+                }
+            }
+            // --------------------------------------
+
+            // -- SPECIAL HANDLING FOR REVIEWING STATE --
+            if (currentState === OrchestratorState.REVIEWING) {
+                logger.info('[GrayRoom] Entering Review Phase');
+                // The REVIEWER will analyze the work done in EXECUTING
+                // We'll give it the context and ask for a critique.
+                // For now, we trigger an LLM-based critique turn.
+                // In a real implementation, this might be a specialized transform.
+                workingCtx['task'] = `Review the recent execution. Find bugs or design flaws. Return 'passed: true' or 'passed: false' with critique.`;
+            }
+            // -----------------------------------------
 
             const {nextCtx, continueLoop} = await this.applyInterrupt(
                 interrupt, workingCtx, promiseId, trace
@@ -209,7 +426,8 @@ export class GrayRoomOrchestrator {
                 };
                 this.warnOnInvalidExecute(res, 'grayRoom.finalize');
                 touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
-                return this.mergeTraceIntoResult(res, trace, grayRoom);
+                resolve(this.mergeTraceIntoResult(res, trace, grayRoom));
+                return;
             }
 
             workingCtx = nextCtx;
@@ -234,12 +452,13 @@ export class GrayRoomOrchestrator {
                 'request',
                 {forceServerTransforms: true, outputDir}
             );
-            
+
             if (!requestTransformResult.success) {
-                return {
+                resolve({
                     outcome: 'failed',
                     error: requestTransformResult.error || 'Request transform failed (gray room loop)',
-                } as ProcessResult;
+                } as ProcessResult);
+                return;
             }
 
             trace.push({kind: 'request_rebuild'});
@@ -247,16 +466,20 @@ export class GrayRoomOrchestrator {
             const files = (requestTransformResult.files as Record<string, string>) || {};
             const requestMd = files['request.md'];
             if (!requestMd) {
-                return {
+                resolve({
                     outcome: 'failed',
-                    error: 'Request transform did not produce request.md (gray room loop)',
-                } as ProcessResult;
+                    error: 'Request transform did not produce request.md (gray room)',
+                } as ProcessResult);
+                return;
             }
 
-            const systemMd = files['system.md'];
+            const systemMdFromDisk = files['system.md'] || '';
+            const override = (workingCtx['system_instruction_override'] as string) || '';
+            const finalSystemContent = override ? `${override}\n---\n${systemMdFromDisk}` : systemMdFromDisk;
+
             const messages: Array<{role: string; content: string}> = [];
-            if (typeof systemMd === 'string' && systemMd.trim().length > 0) {
-                messages.push({role: 'system', content: systemMd});
+            if (finalSystemContent.trim().length > 0) {
+                messages.push({role: 'system', content: finalSystemContent});
             }
             messages.push({role: 'user', content: requestMd});
 
@@ -278,25 +501,56 @@ export class GrayRoomOrchestrator {
             if (chatRes.status !== 202) {
                 const errText = await chatRes.text();
                 logger.error('[GrayRoom] LLM promise init failed', {status: chatRes.status, error: errText});
-                return {
+                resolve({
                     outcome: 'failed',
                     error: `LLM error (gray room): ${chatRes.status} ${errText.slice(0, 200)}`,
-                } as ProcessResult;
+                } as ProcessResult);
+                return;
             }
 
             const initData = (await chatRes.json()) as {promiseId?: string};
             const subLlmId = initData?.promiseId;
             if (!subLlmId) {
-                return {outcome: 'failed', error: 'No promiseId in LLM response (gray room)'} as ProcessResult;
+                resolve({outcome: 'failed', error: 'No promiseId in LLM response (gray room)'} as ProcessResult);
+                return;
             }
 
             const nextMd = await pollReadyThenFetch(this.aiHubUrl, subLlmId);
             if (!nextMd) {
-                return {outcome: 'failed', error: 'LLM response fetch failed (gray room)'} as ProcessResult;
+                resolve({outcome: 'failed', error: 'LLM response fetch failed (gray room)'} as ProcessResult);
+                return;
             }
             md = nextMd;
             turn++;
-        }
+
+            // -- HANDLE REVIEW OUTCOME (ADR-0038) --
+            if (currentState === OrchestratorState.REVIEWING) {
+                const isPassed = md.toLowerCase().includes('passed: true');
+                const result = {
+                    passed: isPassed,
+                    critique: md,
+                    turn: turn
+                };
+                workingCtx['REVIEW_RESULT'] = result;
+                
+                if (isPassed) {
+                    logger.info('[GrayRoom] Review passed');
+                    // We need a way to trigger review_passed event
+                    // The simplest way is to inject an interrupt that the kernel understands
+                    // Or let the next iteration handle the transition
+                } else {
+                    logger.warn('[GrayRoom] Review failed');
+                }
+            }
+            // -------------------------------------
+            
+            // Queue next tick instead of blocking for-loop
+            setImmediate(processTick);
+        };
+        
+        // Start the actor loop
+        setImmediate(processTick);
+    });
     }
 
     private async createTempDir(): Promise<string> {
@@ -405,6 +659,19 @@ export class GrayRoomOrchestrator {
                 logger.warn('[GrayRoom] Unknown reason', { reason });
                 return { nextCtx, continueLoop: false };
         }
+    }
+
+    /**
+     * Halt an active gray room loop by promiseId.
+     */
+    static halt(promiseId: string): boolean {
+        const controller = this.activeControllers.get(promiseId);
+        if (controller) {
+            controller.abort();
+            this.activeControllers.delete(promiseId);
+            return true;
+        }
+        return false;
     }
 
     private mergeTraceIntoResult(
