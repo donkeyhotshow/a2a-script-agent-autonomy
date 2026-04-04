@@ -11,6 +11,7 @@ import {register} from './utils/metrics.js';
 import registryRegisterRouter from './api/registry/register.js';
 import registryRouteRouter from './api/registry/route.js';
 import registryHealthRouter from './api/registry/health.js';
+import toolsEvolveRouter from './api/tools-evolve.js';
 
 const app: Express = express();
 
@@ -46,6 +47,7 @@ app.use('/api/a2a/sessions', sessionsRouter);
 app.use('/api/registry/register', registryRegisterRouter);
 app.use('/api/registry/route', registryRouteRouter);
 app.use('/api/registry', registryHealthRouter);
+app.use('/api/tools', toolsEvolveRouter);
 
 app.use((_req: Request, res: Response) => {
     res.status(404).json({success: false, error: {code: 'NOT_FOUND', message: 'Not found'}});

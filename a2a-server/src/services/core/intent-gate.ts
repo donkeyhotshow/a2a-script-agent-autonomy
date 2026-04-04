@@ -1,39 +1,163 @@
 import { createLogger } from '../utils/logger.js';
+import { llmService } from '../../llm/llm-service.js';
 
 const logger = createLogger('IntentGate');
+
+export interface DriftCheckResult {
+    hasDrift: boolean;
+    confidence: number;
+    reason: string;
+}
+
+/**
+ * Validate drift detection response
+ */
+function validateDriftResult(raw: unknown): DriftCheckResult | null {
+    if (!raw || typeof raw !== 'object') return null;
+    const obj = raw as Record<string, unknown>;
+    const hasDrift = typeof obj.hasDrift === 'boolean' ? obj.hasDrift : null;
+    if (hasDrift === null) return null;
+    
+    return {
+        hasDrift,
+        confidence: typeof obj.confidence === 'number' ? Math.max(0, Math.min(1, obj.confidence)) : 0.5,
+        reason: typeof obj.reason === 'string' ? obj.reason : 'No reason provided'
+    };
+}
 
 export class IntentGate {
     private originalIntent: string = '';
     private lastPlan: string = '';
+    private turnCount: number = 0;
+    private readonly MAX_TURNS_BEFORE_CHECK = 5; // Check every 5 turns
 
     /**
      * Set the initial intent and lock it
      */
     public lockIntent(intent: string): void {
         this.originalIntent = intent;
+        this.turnCount = 0;
         logger.info('[IntentGate] Intent locked', { intent: intent.slice(0, 50) + '...' });
     }
 
     /**
-     * Check for drift against the locked intent
-     * In a production system, this would be an LLM-based semantic comparison.
-     * Here we implement a placeholder for semantic verification.
+     * Increment turn counter - call after each GrayRoom iteration
      */
-    public checkDrift(currentPlan: string, context: Record<string, any>): boolean {
+    public incrementTurn(): void {
+        this.turnCount++;
+    }
+
+    /**
+     * Get current turn count
+     */
+    public getTurnCount(): number {
+        return this.turnCount;
+    }
+
+    /**
+     * Check for semantic drift against the locked intent (ADR-0050)
+     * Uses LLM-based comparison when turn count exceeds threshold
+     */
+    public async checkDrift(currentPlan: string, context: Record<string, any>): Promise<DriftCheckResult> {
         this.lastPlan = currentPlan;
         
-        // Semantic Drift Check logic (Simplified)
-        // If the task changes radically (e.g. from "fix bug" to "delete all files")
-        // we should flag it.
+        // Quick heuristics: detect obvious stop-words indicating radical shift
+        const radicalPhrases = ['delete all', 'remove everything', 'drop database', 'rm -rf'];
+        const planLower = currentPlan.toLowerCase();
         
-        // Placeholder: detect if common stop-words or radical shifts occur.
-        // In reality, this triggers a small LLM call: "Is [currentPlan] still pursuing [originalIntent]?"
-        
-        return false; // No drift detected by default in current logic
+        for (const phrase of radicalPhrases) {
+            if (planLower.includes(phrase)) {
+                logger.warn('[IntentGate] Radical shift detected via heuristics', { 
+                    phrase,
+                    originalIntent: this.originalIntent.slice(0, 30)
+                });
+                return { hasDrift: true, confidence: 1.0, reason: `Radical phrase detected: ${phrase}` };
+            }
+        }
+
+        // Only run LLM check every N turns to avoid excessive calls
+        if (this.turnCount < this.MAX_TURNS_BEFORE_CHECK) {
+            logger.debug('[IntentGate] Skipping LLM drift check', { turn: this.turnCount });
+            return { hasDrift: false, confidence: 0.0, reason: 'Below turn threshold' };
+        }
+
+        logger.info('[IntentGate] Running semantic drift check', { 
+            turn: this.turnCount,
+            originalIntent: this.originalIntent.slice(0, 30),
+            currentPlan: currentPlan.slice(0, 30)
+        });
+
+        try {
+            const response = await llmService.chat({
+                messages: [
+                    { 
+                        role: 'system', 
+                        content: `You are a semantic drift detector. 
+Compare the ORIGINAL INTENT with the CURRENT PLAN to determine if the agent has drifted.
+Original Intent: "${this.originalIntent}"
+Current Plan: "${currentPlan}"
+
+Output VALID JSON ONLY:
+{ "hasDrift": boolean, "confidence": 0.0-1.0, "reason": "..." }
+
+Drift means the current plan no longer meaningfully pursues the original intent.
+` },
+                    { 
+                        role: 'user', 
+                        content: `Original: "${this.originalIntent}"\nCurrent: "${currentPlan}"\nContext: ${JSON.stringify(context).slice(0, 500)}` 
+                    }
+                ]
+            });
+
+            const content = response.content?.trim() || '';
+            
+            // Try JSON extraction
+            let result: DriftCheckResult | null = null;
+            try {
+                const parsed = JSON.parse(content);
+                result = validateDriftResult(parsed);
+            } catch {
+                const jsonMatch = content.match(/\{[\s\S]*\}/);
+                if (jsonMatch) {
+                    try {
+                        const parsed = JSON.parse(jsonMatch[0]);
+                        result = validateDriftResult(parsed);
+                    } catch {
+                        // Fall through
+                    }
+                }
+            }
+
+            if (result) {
+                if (result.hasDrift) {
+                    logger.error('[IntentGate] Semantic drift detected', { 
+                        confidence: result.confidence,
+                        reason: result.reason 
+                    });
+                }
+                return result;
+            }
+
+            // Fallback: heuristic only
+            return { hasDrift: false, confidence: 0.3, reason: 'Parse failed - heuristic fallback' };
+            
+        } catch (err) {
+            logger.error('[IntentGate] Drift check failed', { error: String(err) });
+            return { hasDrift: false, confidence: 0.0, reason: `Error: ${String(err).slice(0, 50)}` };
+        }
     }
 
     public getLockedIntent(): string {
         return this.originalIntent;
+    }
+
+    /**
+     * Reset the intent gate (for new session)
+     */
+    public reset(): void {
+        this.originalIntent = '';
+        this.lastPlan = '';
+        this.turnCount = 0;
     }
 }
 

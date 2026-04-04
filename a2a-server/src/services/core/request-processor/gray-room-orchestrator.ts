@@ -48,6 +48,9 @@ import {globalSafetyLayer} from '../safety-layer.js';
 import {globalIntentGate} from '../intent-gate.js';
 import {decisionCell} from './decision-cell.js';
 import {bugFixer} from '../../llm/bug-fixer.js';
+import {repoMapService} from '../../context/repo-map.service.js';
+import {llmService} from '../../llm/llm-service.js';
+import {contextDiscoveryService} from '../../context/context-discovery.service.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 
@@ -109,6 +112,25 @@ export class GrayRoomOrchestrator {
         // -- SAFETY & INTENT INITIALIZATION (ADR-0035 / ADR-0050) --
         globalSafetyLayer.reset();
         globalIntentGate.lockIntent((workingCtx['task'] as string) || '');
+        const sessionStartTime = Date.now();
+        
+        // ADR-0092: Generate Project Repo Map for structural awareness
+        const repoRoot = (workingCtx['projectRoot'] as string) || process.cwd();
+        try {
+            const projectMap = await repoMapService.generateMapMd(repoRoot);
+            workingCtx['repo_map'] = projectMap;
+        } catch (e) {
+            logger.warn('[GrayRoom] Failed to generate RepoMap', { error: String(e) });
+        }
+        // -------------------------------------------------------------
+
+        // ADR-0093: Internal Debate for the first turn to refine the plan
+        if (turn === 0 && processInterrupts) {
+            logger.info('[GrayRoom] Running ADR-0093 Internal Debate');
+            const debateResult = await llmService.debate((workingCtx['task'] as string) || '', workingCtx);
+            md = debateResult.plan;
+            workingCtx['debate_consensus'] = debateResult.consensus;
+        }
         // ---------------------------------------------------------
 
         // Event-driven Actor Model Step
@@ -222,10 +244,52 @@ export class GrayRoomOrchestrator {
                     (workingCtx['task'] as string) || '',
                     workingCtx
                 );
+                
+                // -- INTENT DRIFT CHECK (ADR-0050) --
+                // Check for drift every 5 turns after initial passes
+                if (globalIntentGate.getTurnCount() >= 5) {
+                    const executeKey = Object.keys(result.execute || {}).find(k => 
+                        k !== 'noop' && k !== 'message' && k !== 'form'
+                    );
+                    const currentPlan = executeKey || (workingCtx['task'] as string) || '';
+                    
+                    const driftCheck = await globalIntentGate.checkDrift(currentPlan, workingCtx);
+                    if (driftCheck.hasDrift && driftCheck.confidence > 0.7) {
+                        logger.error('[GrayRoom] Intent drift detected - halting', { 
+                            confidence: driftCheck.confidence,
+                            reason: driftCheck.reason 
+                        });
+                        touchGrayRoom({
+                            phase: 'completed',
+                            status: 'halted',
+                            turn,
+                            remainingBudget: interruptBudget,
+                            lastReason: `intent_drift: ${driftCheck.reason}`,
+                        });
+                        resolve(this.mergeTraceIntoResult(
+                            {...result, context: {...workingCtx, intent_drift_detected: true}} as ProcessResult,
+                            trace,
+                            grayRoom
+                        ));
+                        return;
+                    }
+                }
+                // ------------------------------------
+                
                 if (decision.done) {
-                    touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
-                    resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
-                    return;
+                    // ADR-0095: Instead of completing immediately, enter SIEGE_REVIEW
+                    logger.info('[GrayRoom] DecisionCell marked done. Entering SIEGE_REVIEW');
+                    const reviewResult = await globalRoleRegistry.executeSyndicateReview(workingCtx);
+                    if (reviewResult.passed) {
+                        logger.info('[GrayRoom] SIEGE_REVIEW passed. Completing session.');
+                        touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
+                        resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
+                        return;
+                    } else {
+                        logger.warn('[GrayRoom] SIEGE_REVIEW failed. Forcing extra turn for corrections.', { reason: reviewResult.reason });
+                        workingCtx['task'] = `[SIEGE REVIEW FAILED] ${reviewResult.reason}\n\nPlease correct these issues.`;
+                        // Continue loop
+                    }
                 } else if (decision.retry) {
                     logger.info('[GrayRoom] DecisionCell requested retry', { reason: decision.reason });
                     // Continue loop instead of exit
@@ -522,6 +586,30 @@ export class GrayRoomOrchestrator {
             }
             md = nextMd;
             turn++;
+            
+            // -- INTENT GATE TURN COUNT (ADR-0050) --
+            globalIntentGate.incrementTurn();
+            
+            // -- HARD TIMEOUT CIRCUIT BREAKER --
+            const elapsedMs = Date.now() - sessionStartTime;
+            const HARD_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes hard cap
+            if (elapsedMs >= HARD_TIMEOUT_MS) {
+                logger.error('[GrayRoom] Hard timeout reached', { elapsedMs, turn });
+                touchGrayRoom({
+                    phase: 'completed',
+                    status: 'truncated',
+                    turn,
+                    remainingBudget: 0,
+                    lastReason: 'hard_timeout',
+                });
+                resolve(this.mergeTraceIntoResult(
+                    {...result, context: {...c, hard_timeout: true}} as ProcessResult,
+                    trace,
+                    grayRoom
+                ));
+                return;
+            }
+            // -----------------------------------
 
             // -- HANDLE REVIEW OUTCOME (ADR-0038) --
             if (currentState === OrchestratorState.REVIEWING) {

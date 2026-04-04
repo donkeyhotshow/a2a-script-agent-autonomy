@@ -1,4 +1,5 @@
 import { logger } from '../../utils/logger.js';
+import { contextDiscoveryService } from '../context/context-discovery.service.js';
 
 /**
  * MCP 28-Tool Registry (ADR-0075)
@@ -49,13 +50,14 @@ export class McpRegistry {
 
 export const globalMcpRegistry = McpRegistry.getInstance();
 
-// Seed with default tools (placeholder for the 28 tools)
+// ADR-0094: JIT Context Search tool
 globalMcpRegistry.registerTool({
-  name: 'code_search',
-  description: 'Search for code patterns in the repository',
+  name: 'context_search',
+  description: 'Search for code patterns, symbols, and keywords in the repository (JIT Context)',
   parameters: { query: 'string' },
   execute: async (args) => {
-    // Implementation would go here
-    return { results: [], count: 0 };
+    const rootPath = process.cwd();
+    const results = await contextDiscoveryService.searchSymbols(args.query, rootPath);
+    return { results, count: results.length };
   }
 });

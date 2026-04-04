@@ -1,4 +1,6 @@
 import { OrchestratorState } from './orchestrator-kernel.js';
+import { llmService } from '../../llm/llm-service.js';
+import { logger } from '../../../utils/logger.js';
 
 export enum AgentRole {
     ARCHITECT = 'ARCHITECT',
@@ -17,14 +19,18 @@ export class AgentRoleRegistry {
 
     constructor() {
         this.roles.set(AgentRole.ARCHITECT, `
-You are the LEAD ARCHITECT. Your goal is high-level design and compliance with ADRs.
-Before coding starts, you provide the 'Design Manifesto'.
+You are the LEAD ARCHITECT (Planner). Your goal is high-level design and compliance.
+[ARCHITECT/EDITOR SPLIT]: You MUST NOT call execution tools like 'write-file', 'edit-file', or 'run-command'.
+Instead, analyze the task, perform the necessary reasoning, and output a concise, step-by-step 'Design Plan' or 'Manifesto'.
+Your output will be passed to the EDITOR for execution.
 Focus on: modularity, scalability, and technical debt prevention.
 `);
         this.roles.set(AgentRole.IMPLEMENTER, `
-You are the IMPLEMENTER (Coder). Your goal is to write minimal, clean, and correct code.
-Follow the Architect's instructions and the User's task strictly.
-Focus on: readability, unit tests, and the fastest path to a working solution.
+You are the EDITOR (Implementer/Execution Agent).
+[ARCHITECT/EDITOR SPLIT]: Your ONLY job is to execute the tools required by the Architect's plan.
+DO NOT output any reasoning, chain of thought, or conversational text.
+ONLY output the specific JSON block to trigger an MCP tool, file edit, or command.
+Keep your output token usage to the absolute minimum. You are a fast, silent executor.
 `);
         this.roles.set(AgentRole.REVIEWER, `
 You are the ADVERSARIAL REVIEWER (Writer/Reviewer Pattern - ADR-0040). 
@@ -57,12 +63,52 @@ If they disagree, you make the final call or suggest a compromise path.
             case OrchestratorState.EXECUTING:
             case OrchestratorState.SELF_CORRECTING:
                 return AgentRole.IMPLEMENTER;
-            case OrchestratorState.REVIEWING:
+            case 'REVIEWING':
+            case 'SIEGE_REVIEW':
                 return AgentRole.REVIEWER;
-            case OrchestratorState.DEBATING:
+            case 'DEBATING':
                 return AgentRole.META_AGENT;
             default:
                 return AgentRole.IMPLEMENTER;
+        }
+    }
+
+    async executeSyndicateReview(ctx: Record<string, any>): Promise<{passed: boolean; reason?: string}> {
+        logger.info('[AgentRoleRegistry] Executing Syndicate Review (Siege Architecture)');
+        const reviewerPrompt = this.getInstruction(AgentRole.REVIEWER);
+        const task = ctx['task'] as string || 'Unknown task';
+        const contextDump = JSON.stringify(ctx).slice(0, 3000); // Send partial context to reviewer
+        
+        const reviewReq = `
+System Instruction:
+${reviewerPrompt}
+
+Task being evaluated:
+${task}
+
+Current Context / Execution Results:
+${contextDump}
+
+Please review the context and execution results provided. You must output valid JSON.
+{
+  "passed": boolean,
+  "reason": "String explaining the reason if passed is false, or compliment if true"
+}
+`;
+        try {
+            const chatResult = await llmService.chat({
+                messages: [{ role: 'user', content: reviewReq }]
+            });
+            const resultText = chatResult.message.content;
+            const jsonStr = resultText.substring(resultText.indexOf('{'), resultText.lastIndexOf('}') + 1);
+            const parsed = JSON.parse(jsonStr);
+            return {
+                passed: !!parsed.passed,
+                reason: parsed.reason || 'No reason provided'
+            };
+        } catch (e) {
+            logger.error('[AgentRoleRegistry] Syndicate review failed to parse', { error: String(e) });
+            return { passed: false, reason: 'Reviewer agent failed to parse or execute: ' + String(e) };
         }
     }
 }

@@ -27,6 +27,7 @@ export type OrchestratorState =
   | 'VALIDATING'
   | 'REVIEWING'
   | 'DEBATING'
+  | 'SIEGE_REVIEW'
   | 'DELIVERING'
   | 'STOPPED';
 
@@ -56,7 +57,9 @@ export type OrchestratorEvent =
   | 'delivered'
   | 'branch_violation'
   | 'emergency_stop'
-  | 'operator_stop';
+  | 'operator_stop'
+  | 'siege_passed'
+  | 'siege_failed';
 
 // ── Artifact types emitted on transitions ────────────────────────────────────
 
@@ -79,7 +82,8 @@ export type TransitionArtifactType =
   | 'DRYRUN_DELTA'
   | 'OPPORTUNITY_SUPPRESSION'
   | 'REVIEW_RESULT'
-  | 'DEBATE_OUTCOME';
+  | 'DEBATE_OUTCOME'
+  | 'SIEGE_RESULT';
 
 // ── Guard context passed to guard functions ──────────────────────────────────
 
@@ -255,13 +259,24 @@ const FSM_TABLE: TransitionTable = {
 
   VALIDATING: {
     all_pass: {
-      to: 'DELIVERING',
+      to: 'SIEGE_REVIEW',
       guard: (ctx) => ctx.criteria_pass === true,
       artifact: 'VALIDATION_SUMMARY',
     },
     any_fail: {
       to: 'REVIEWING',
       artifact: 'DONECRITERIA_RESULT',
+    },
+  },
+
+  SIEGE_REVIEW: {
+    siege_passed: {
+      to: 'DELIVERING',
+      artifact: 'SIEGE_RESULT',
+    },
+    siege_failed: {
+      to: 'SELF_CORRECTING',
+      artifact: 'SIEGE_RESULT',
     },
   },
 

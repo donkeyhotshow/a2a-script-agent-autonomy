@@ -79,12 +79,41 @@ export class LlmService {
     const data = await res.json() as any;
     return {
       content: data.message?.content || '',
-      model: data.model,
       usage: {
         promptTokens: data.prompt_eval_count || 0,
         completionTokens: data.eval_count || 0,
         totalTokens: (data.prompt_eval_count || 0) + (data.eval_count || 0)
       }
+    };
+  }
+
+  async debate(task: string, context: any): Promise<{ plan: string; consensus: string }> {
+    logger.info('[LlmService] Starting internal debate', { task: task.slice(0, 30) });
+    
+    const architectResponse = await this.chat({
+      messages: [
+        { role: 'system', content: 'You are the Architect. Propose a detailed implementation plan.' },
+        { role: 'user', content: `Task: ${task}\nContext: ${JSON.stringify(context).slice(0, 500)}` }
+      ]
+    });
+
+    const criticResponse = await this.chat({
+      messages: [
+        { role: 'system', content: 'You are the Critic. Evaluate the plan for bugs and flaws.' },
+        { role: 'user', content: `Plan: ${architectResponse.content}` }
+      ]
+    });
+
+    const finalResponse = await this.chat({
+      messages: [
+        { role: 'system', content: 'You are the Architect (Refining). Update your plan based on feedback.' },
+        { role: 'user', content: `Original Plan: ${architectResponse.content}\nCritic Feedback: ${criticResponse.content}` }
+      ]
+    });
+
+    return { 
+      plan: finalResponse.content, 
+      consensus: criticResponse.content 
     };
   }
 }

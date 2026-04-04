@@ -8,25 +8,97 @@ export interface Decision {
   retry: boolean;
 }
 
+/**
+ * Validate Decision output from LLM - ensures contract compliance
+ */
+function validateDecision(raw: unknown): Decision | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const obj = raw as Record<string, unknown>;
+  const validActions = ['done', 'retry', 'halt', 'continue'];
+  const action = typeof obj.action === 'string' && validActions.includes(obj.action.toLowerCase()) 
+    ? obj.action.toLowerCase() 
+    : null;
+  if (!action) return null;
+  
+  return {
+    action,
+    reason: typeof obj.reason === 'string' ? obj.reason : 'No reason provided',
+    done: typeof obj.done === 'boolean' ? obj.done : action === 'done',
+    retry: typeof obj.retry === 'boolean' ? obj.retry : action === 'retry'
+  };
+}
+
+/**
+ * Fallback decision when LLM fails or returns invalid JSON
+ */
+function fallbackDecision(error: string): Decision {
+  logger.warn('[DecisionCell] Using fallback decision', { error });
+  return { 
+    action: 'halt', 
+    reason: `Fallback: ${error}`, 
+    done: false, 
+    retry: false 
+  };
+}
+
 export class DecisionCell {
+  private consecutiveErrors: number = 0;
+  
   async decide(sessionId: string, task: string, context: any): Promise<Decision> {
     logger.info('[DecisionCell] Evaluating state', { sessionId });
 
     const response = await llmService.chat({
       messages: [
-        { role: 'system', content: 'You are a decision cell. Analyze the current context and task. Decide if the task is "done", needs "retry" (and with what action), or should "halt". Output JSON: { "action": "...", "reason": "...", "done": boolean, "retry": boolean }' },
+        { role: 'system', content: 'You are a decision cell. Analyze the current context and task. Decide if the task is "done", needs "retry" (and with what action), or should "halt". Output valid JSON ONLY: { "action": "done|retry|halt|continue", "reason": "...", "done": boolean, "retry": boolean }' },
         { role: 'user', content: `Task: ${task}\nContext: ${JSON.stringify(context, null, 2)}` }
       ]
     });
 
+    // Try to extract and validate JSON from response
+    const content = response.content?.trim() || '';
+    let decision: Decision | null = null;
+    
+    // Try direct JSON parse first
     try {
-      const decision = JSON.parse(response.content) as Decision;
-      logger.info('[DecisionCell] Decision made', { sessionId, action: decision.action, done: decision.done });
-      return decision;
-    } catch (e) {
-      logger.error('[DecisionCell] Parse error', { sessionId, error: e });
-      return { action: 'halt', reason: 'Failed to parse decision', done: false, retry: false };
+      const parsed = JSON.parse(content);
+      decision = validateDecision(parsed);
+    } catch {
+      // Try JSON extraction if direct parse fails
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const parsed = JSON.parse(jsonMatch[0]);
+          decision = validateDecision(parsed);
+        } catch {
+          // Fall through to fallback
+        }
+      }
     }
+
+    if (decision) {
+      this.consecutiveErrors = 0;
+      logger.info('[DecisionCell] Decision made', { 
+        sessionId, 
+        action: decision.action, 
+        done: decision.done,
+        retry: decision.retry 
+      });
+      return decision;
+    }
+
+    // Track consecutive errors for circuit breaking
+    this.consecutiveErrors++;
+    const isCircuitBroken = this.consecutiveErrors >= 3;
+    
+    if (isCircuitBroken) {
+      logger.error('[DecisionCell] Circuit broken - too many errors', { 
+        sessionId, 
+        errors: this.consecutiveErrors 
+      });
+      return fallbackDecision('Circuit broken after 3 consecutive failures');
+    }
+
+    return fallbackDecision(`Invalid response: ${content.slice(0, 100)}`);
   }
 }
 
