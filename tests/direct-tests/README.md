@@ -17,7 +17,22 @@
 
 **Vitest (`npm run test:direct-tests`):** schema guards in [`lib/`](lib/) always run; `router-choice-transition.test.mjs` runs live server checks only when `A2A_SERVER_URL` (default `http://localhost:3000`) responds on `/health`.
 
-**After `start-all.bat`:** [`run-post-start-all.ps1`](run-post-start-all.ps1) — hub (`run-checks.ps1` with Client **3001** / Web **5173**), Vitest, `router-choice-transition.test.mjs`, full `e2e-dialog-test.js`, `gray-room-test.js`, `test-dialog-flow.ps1`, `test-agent-flow.ps1`, `server-invoke-agent.ps1`. Set **`A2A_POST_START_SKIP_HEAVY=1`** to skip LLM-heavy steps (hub + Vitest + router + short e2e subset only).
+**Hardening / reduce LLM work:**
+- `--only=case1,case2` — run specific cases only (e.g., `--only=routerAgentNoLoop,routerDialogNoLoop`)
+- `E2E_DIRECT_LOW_LLM=1` — enables both merges below
+- `E2E_DIRECT_MERGE_INVOKE=1` — one sync invoke replaces 3 cases (3→1 LLM)
+- `E2E_DIRECT_MERGE_CLIENT_SESSION_SCHEMA=1` — one session replaces 9 cases (9→1 session)
+
+Subset examples:
+```powershell
+# Router regression only (fast, LLM-light)
+node tests/direct-tests/e2e-dialog-test.js --only=routerAgentNoLoop,routerAgentNoLoopTaskShorthand,routerAgentNoLoopUtf8Task,routerDialogNoLoop,routerDialogNoLoopTaskShorthand,routerWrongBeatMessage
+
+# Health checks only (no LLM)
+node tests/direct-tests/e2e-dialog-test.js --only=clientProjects,serverHealth,serverHealthJson
+```
+
+**Manual full direct suite (Papa):** [`run-post-start-all.ps1`](run-post-start-all.ps1) — hub (`run-checks.ps1` with Client **3001** / Web **5173**), Vitest, `router-choice-transition.test.mjs`, full `e2e-dialog-test.js`, `gray-room-test.js`, `test-dialog-flow.ps1`, `test-agent-flow.ps1`, `server-invoke-agent.ps1`. Set **`A2A_POST_START_SKIP_HEAVY=1`** to skip LLM-heavy steps (hub + Vitest + router + short e2e subset only). **`start-all.bat` does not run this** — see [PAPA-MAMA.md](../../PAPA-MAMA.md).
 
 ---
 
@@ -33,7 +48,7 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 | [validators/verify-gray-room-state.mjs](validators/verify-gray-room-state.mjs) | `npm run verify:gray-room -- <snapshot.json>` — sequence / workbench snapshot |
 | [validators/audit-sim-choice-descriptions.mjs](validators/audit-sim-choice-descriptions.mjs) | `npm run audit:sim-choice-descriptions` — simulation `choices[].description` |
 | [run-checks.ps1](run-checks.ps1) | Hub: health checks by scope (LLM, ServerLLM, ClientServer, …) |
-| [run-post-start-all.ps1](run-post-start-all.ps1) | Chains hub + Vitest + node + PS1 flows (see *After start-all.bat* above); used by repo root `start-all.bat` |
+| [run-post-start-all.ps1](run-post-start-all.ps1) | Chains hub + Vitest + node + PS1 flows; run manually after the stack is up ([PAPA-MAMA.md](../../PAPA-MAMA.md)) |
 | [scripts/](scripts/) | Runners → `scripts/tests/` and root `scripts/` (prod-test, pre-release, web-ui-smoke-report) |
 | [dialog/](dialog/) | Dialog flow with direct Ollama (bypass ai-integration timeout) |
 | [rag/](rag/), [sdk/](sdk/), [ai-integration/](ai-integration/), [server/](server/) | Runners → packages (RAG, SDK, AI, sim) |

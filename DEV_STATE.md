@@ -16,11 +16,29 @@ Current system state: **Stack готов** - все сервисы работа�
 
 **Recent (operator / parity batch):** Task Monitor with promise queue support; Client API multi-provider LLM routing; session storage improvements.
 
+**Fixed:** Added check in dialog request processor to return initial form directly from request transform for dialog schema without user input, before attempting LLM call.
+
 **Fixed (artifact paths):** Windows `scripts\start-*.bat` and `start-all.bat` / `kill-all.bat` now `cd` to repo root via `%~dp0` so logs land in `a2a-client/logs`, `a2a-server/logs` (not nested `a2a-client/a2a-client/...`). `start-all.sh` / `start-all.ps1` anchor to script directory. Proxy request dumps from `proxy_handler.py` use `proxy_logs/requests/request_*` (aligned with `request_processor.py`); `cleanup.py` prunes both `requests/` and legacy top-level `request_*`.
 
 **Fixed:** Router no longer overwrites `execution.action` when session created with `mode: "agent"`. `isTaskRequest()` in `base-processor.ts` now checks if `execution.action` is already an LLM pipeline action and returns `false` to prevent forced routing. Added direct LLM pipeline handling in `action-request-processor.ts` for seeded agent mode.
 
 **Fixed (router beat B, 2026-04-03):** `determineRequestType` routes `execution.step === 'router'` + pipeline `result.choice` to **action** first so `handleRouterChoice` patches `execution` before dialog. Dialog processor failed outcomes now include normalized `context`; `request.service` `updateStatus` merges `result.context` on **failed** as well as **completed** (sticky `task`/`router` after LLM errors).
+
+**Papa–Mama test matrix (2026-04-04):** Added realistic Mama fixture `sim-agent-vertical.spec.json` using `simulations/sync/agent/*` goldens; updated `run-all.mjs` (7/7 green). Documented Papa hardening (`--only`, `E2E_DIRECT_LOW_LLM`, merge flags) in `tests/direct-tests/README.md`. Failure class matrix documented in `tests/indirect-tests/README.md`. Proposals doc: [`tasks/pending/test-architecture-proposals.md`](tasks/pending/test-architecture-proposals.md) — глубокий анализ выполнен:
+- Gray room: 3/6 handlers имеют fixtures (missing: compress_history, clarify, algorithm_invoke chains)
+- Execute shape: 0 violations в 29 категориях simulations (сканер `audit-execute-shape-explore.mjs`)
+- Runtime validators: 5+ валидаторов в `transform-execute-validator.ts` (dialog/agent/result/router)
+- Sticky router: логика переходов документирована (valid vs STICKY_ROUTER/ACTION_JUMP)
+- Идеальные варианты: A (Unified Auditor), B (Live Drift Detector), C (Simulation-First)
+- **Papa & Mama Gang:** Создан единый оркестратор `tests/papa-mama-gang.mjs` (`npm run test:gang`), который последовательно запускает смену Мамы (оффлайн проверки, юнит-тесты сервера и клиента, симуляции) и смену Папы (E2E на живом стеке). Документировано в `PAPA-MAMA.md`. Добавлена философия "Zero Trust": если скрипт зелёный, значит мы плохо искали. Новые проблемы должны вшиваться в скрипт (мы злопамятные).
+
+**Extended deep search findings (2026-04-04):**
+- Validator gaps: `TOP_LEVEL_MESSAGE_WITH_TOOL`, `DUPLICATE_TOP_AND_EXECUTE_MESSAGE`, `EXECUTE_MESSAGE_ONLY` — есть в `check-llm-execute-shape.mjs`, но **не в** `transform-execute-validator.ts` (runtime не проверяет)
+- Form-choice pipeline gap: `form-choice-pipeline.ts:33` валидирует `formProcessResult`, но не `execute` shape
+- Strict mode policy: `A2A_TRANSFORM_STRICT` работает, но нет documented policy когда включать (CI vs dev)
+- Black Room: `black-room-orchestrator.ts` не имеет unit/integration тестов, нет Mama fixtures для `algorithm_invoke`
+- Client API: `step-routes-dialog-flow.js:435` возвращает 502 при parse error, но нет тестов на recovery (stuck step)
+- New proposals added: #8 (missing validators), #9 (form-choice validation), #10 (strict mode policy), #11 (Black Room tests), #12 (Client API recovery)
 
 **Recent (client UI):** Async polling improvements; sticky router prevention with localized text mapping.
 

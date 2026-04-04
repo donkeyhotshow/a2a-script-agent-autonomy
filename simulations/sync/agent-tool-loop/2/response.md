@@ -24,7 +24,7 @@ Mirror of `response.json` for prompt pipeline / `sim:check-md`.
     "form": {
       "input": [
         {
-          "name": "message",
+          "name": "task",
           "type": "text",
           "label": "Повідомлення",
           "required": true

@@ -1,1 +1,6 @@
-export { extractA2aExecute, mergeResponseContext, sanitizeContextForServer } from '../../../../../shared/a2a-invoke-builders.mjs';
+export {
+    extractA2aExecute,
+    mergeResponseContext,
+    sanitizeContextForServer,
+    sanitizeInvokeBodyForA2aUpstream,
+} from '../../../../../shared/a2a-invoke-builders.mjs';

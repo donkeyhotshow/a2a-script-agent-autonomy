@@ -20,7 +20,7 @@ Mirror of response.json.
       "description": "Server asks for a path root before running in-browser script phase A.",
       "input": [
         {
-          "name": "message",
+          "name": "task",
           "type": "text",
           "label": "Repository root (.)",
           "required": true

@@ -7,7 +7,7 @@
 "description": "Будь ласка! Звертайся ще, якщо будуть питання про код.",
 "input": [
 {
-"name": "message",
+"name": "task",
 "type": "text",
 "label": "Повідомлення",
 "placeholder": "Про що ще хочеш запитати?",

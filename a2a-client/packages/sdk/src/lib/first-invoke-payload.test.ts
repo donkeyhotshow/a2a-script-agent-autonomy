@@ -17,15 +17,23 @@ describe('first-invoke-payload (T003)', () => {
         expect(ROUTER_NEW_TASK_EXECUTION).toEqual(golden.context.execution);
     });
 
-    it('buildInitialInvokeRequestBody sets execution and result.message', () => {
+    it('buildInitialInvokeRequestBody sets execution and result.message; strips client scope from context', () => {
         const body = buildInitialInvokeRequestBody({
             sessionId: 'sess_x',
             task: 'hello',
-            extraContext: { task: 'hello' },
+            extraContext: {
+                task: 'hello',
+                projectId: 'proj_a',
+                sessionId: 'sess_x',
+                projectRoot: '/tmp/p',
+            },
         });
         expect(body.context.execution).toEqual({ action: 'task', step: 'new' });
         expect(body.result).toEqual({ message: 'hello' });
-        expect(body.context.session_id).toBe('sess_x');
+        expect(body.context.session_id).toBeUndefined();
+        expect(body.context.sessionId).toBeUndefined();
+        expect(body.context.projectId).toBeUndefined();
+        expect(body.context.projectRoot).toBeUndefined();
         expect(body.context.version).toBe('2.0');
     });
 });

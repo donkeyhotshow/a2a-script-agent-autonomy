@@ -6,6 +6,7 @@ import {
     validateFormChoiceProcessResult,
     validateResultShape,
     validateRouterResultShape,
+    validateLlmOutputShape,
 } from '../../src/services/core/request-processor/validators/transform-execute-validator.js';
 
 describe('validateDialogExecuteShape', () => {
@@ -157,6 +158,53 @@ describe('validateResultShape (legacy bare blobs)', () => {
 
     it('does not flag read-file action-key shape', () => {
         const issues = validateResultShape({'read-file': {path: 'a.ts'}});
+        expect(issues).toHaveLength(0);
+    });
+});
+
+describe('validateLlmOutputShape', () => {
+    it('flags TOP_LEVEL_MESSAGE_WITH_TOOL', () => {
+        const issues = validateLlmOutputShape({
+            message: 'Here is the file',
+            execute: { 'read-file': { path: 'a.ts' } }
+        } as any);
+        expect(issues.some(i => i.code === 'TOP_LEVEL_MESSAGE_WITH_TOOL')).toBe(true);
+    });
+
+    it('flags DUPLICATE_TOP_AND_EXECUTE_MESSAGE', () => {
+        const issues = validateLlmOutputShape({
+            message: 'Same text',
+            execute: { message: 'Same text', form: {} }
+        } as any);
+        expect(issues.some(i => i.code === 'DUPLICATE_TOP_AND_EXECUTE_MESSAGE')).toBe(true);
+    });
+
+    it('flags TOP_AND_EXECUTE_MESSAGE_MISMATCH', () => {
+        const issues = validateLlmOutputShape({
+            message: 'Different text',
+            execute: { message: 'Some other text', 'read-file': { path: 'a.ts' } }
+        } as any);
+        expect(issues.some(i => i.code === 'TOP_AND_EXECUTE_MESSAGE_MISMATCH')).toBe(true);
+    });
+
+    it('flags EXECUTE_MESSAGE_ONLY', () => {
+        const issues = validateLlmOutputShape({
+            execute: { message: 'Only message here' }
+        } as any);
+        expect(issues.some(i => i.code === 'EXECUTE_MESSAGE_ONLY')).toBe(true);
+    });
+
+    it('accepts valid execute.message + tool (Pattern B)', () => {
+        const issues = validateLlmOutputShape({
+            execute: { message: 'Reading file', 'read-file': { path: 'a.ts' } }
+        } as any);
+        expect(issues).toHaveLength(0);
+    });
+
+    it('accepts valid execute.message + form (Pattern A)', () => {
+        const issues = validateLlmOutputShape({
+            execute: { message: 'Please fill', form: { choices: [] } }
+        } as any);
         expect(issues).toHaveLength(0);
     });
 });

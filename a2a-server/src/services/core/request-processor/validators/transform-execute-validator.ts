@@ -126,6 +126,66 @@ export function validateRouterResultShape(result: ProcessResult): TransformExecu
 }
 
 /**
+ * Validate LLM output shape for top-level message conflicts and execute message issues.
+ * This catches TOP_LEVEL_MESSAGE_WITH_TOOL, DUPLICATE_TOP_AND_EXECUTE_MESSAGE, etc.
+ */
+export function validateLlmOutputShape(result: ProcessResult | Record<string, unknown>): TransformExecuteValidationIssue[] {
+    const issues: TransformExecuteValidationIssue[] = [];
+    if (!result || typeof result !== 'object') {
+        return issues;
+    }
+
+    const topMsg = typeof result.message === 'string' ? result.message.trim() : '';
+    const ex = result.execute as Record<string, unknown> | undefined;
+    
+    if (!ex || typeof ex !== 'object' || Array.isArray(ex)) {
+        return issues;
+    }
+
+    const exKeys = Object.keys(ex).filter((k) => ex[k] !== undefined && ex[k] !== null);
+    const toolKeys = [...SINGLE_TOOL_EXECUTE_KEYS];
+    const activeToolKeys = exKeys.filter((k) => toolKeys.includes(k as typeof toolKeys[number]));
+    const exMsg = typeof ex['message'] === 'string' ? (ex['message'] as string).trim() : '';
+    const hasForm = typeof ex['form'] === 'object' && ex['form'] !== null;
+
+    if (topMsg && activeToolKeys.length > 0) {
+        issues.push({
+            code: 'TOP_LEVEL_MESSAGE_WITH_TOOL',
+            message: `tools=[${activeToolKeys.join(',')}] — move assistant line to execute.message next to tool`,
+        });
+    }
+
+    if (topMsg && exMsg && topMsg === exMsg) {
+        issues.push({
+            code: 'DUPLICATE_TOP_AND_EXECUTE_MESSAGE',
+            message: hasForm || activeToolKeys.length > 0 ? 'same text in two places' : 'same text; execute should use form or tool, not message-only',
+        });
+    }
+
+    if (topMsg && exMsg && topMsg !== exMsg && activeToolKeys.length > 0) {
+        issues.push({
+            code: 'TOP_AND_EXECUTE_MESSAGE_MISMATCH',
+            message: 'top-level message differs from execute.message while tools present',
+        });
+    }
+
+    if (
+        exKeys.length === 1 &&
+        exMsg &&
+        !hasForm &&
+        activeToolKeys.length === 0 &&
+        !(topMsg && topMsg === exMsg)
+    ) {
+        issues.push({
+            code: 'EXECUTE_MESSAGE_ONLY',
+            message: 'execute has only message string — expected form or tool keys',
+        });
+    }
+
+    return issues;
+}
+
+/**
  * Validate result shape (action-key format)
  * Result must follow canonical format: { "<action-type>": { ... } }
  * Cannot be bare blob like { "content": "..." } or { "results": [...] }

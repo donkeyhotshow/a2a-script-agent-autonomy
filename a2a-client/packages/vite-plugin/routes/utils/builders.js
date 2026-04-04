@@ -9,9 +9,16 @@ import {
     extractA2aExecute,
     mergeResponseContext,
     sanitizeContextForServer,
+    sanitizeInvokeBodyForA2aUpstream,
 } from '@a2a-client/shared/a2a-invoke-builders.mjs';
 
-export { pickInvokeContextPatch, extractA2aExecute, mergeResponseContext, sanitizeContextForServer };
+export {
+    pickInvokeContextPatch,
+    extractA2aExecute,
+    mergeResponseContext,
+    sanitizeContextForServer,
+    sanitizeInvokeBodyForA2aUpstream,
+};
 
 /**
  * A2A Server wraps payloads as { success: true, data: { execute, context, ... } }.
@@ -64,15 +71,13 @@ export function buildStepRecord({ sessionId, stepNum, serverResponse, messages =
     const context = mergeResponseContext(fallbackContext, serverResponse);
 
     const execute = extractA2aExecute(serverResponse);
-    
-    // Note: step number is derived from folder path, not stored in JSON
-    // timestamp is a technical field, not part of protocol
+
     const payload = {
-        execute: execute ?? null,
+        ...(execute != null && typeof execute === 'object' ? {execute} : {}),
         context,
         messages
     };
-    
+
     return payload;
 }
 

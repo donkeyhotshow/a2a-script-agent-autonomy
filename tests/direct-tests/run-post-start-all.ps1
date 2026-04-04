@@ -1,11 +1,13 @@
 <#
 .SYNOPSIS
-    Run all post-start direct integration tests (hub + vitest + node + PS1 flows).
+    Run all direct integration tests (hub + vitest + node + PS1 flows) — manual after stack start.
 .DESCRIPTION
+    Not invoked by start-all.bat (see PAPA-MAMA.md). Run when you want Papa-layer verification.
     Client API port 3001, Web 5173 (matches scripts/start-client-api.bat / start-web-ui.bat).
     Child .ps1 scripts are run in separate processes so their exit does not stop this runner.
     Set A2A_POST_START_SKIP_HEAVY=1 to skip long LLM-heavy steps (full e2e, gray-room, dialog/agent PS1, server-invoke);
     a short e2e smoke subset still runs.
+    For full e2e with fewer LLM calls / sessions: set E2E_DIRECT_LOW_LLM=1 for the e2e-dialog-test.js step (see script header).
 .EXAMPLE
     .\tests\direct-tests\run-post-start-all.ps1
 #>

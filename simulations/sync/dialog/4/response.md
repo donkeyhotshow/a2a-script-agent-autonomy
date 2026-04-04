@@ -5,7 +5,7 @@
 "message": "Будь ласка!",
 "form": {
 "textarea": {
-"name": "message",
+"name": "task",
 "label": "Повідомлення",
 "required": true
 }

@@ -16,7 +16,7 @@
     "form": {
       "input": [
         {
-          "name": "message",
+          "name": "task",
           "type": "textarea",
           "label": "Task description",
           "required": true

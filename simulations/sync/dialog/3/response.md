@@ -5,7 +5,7 @@
 "message": "hello world",
 "form": {
 "textarea": {
-"name": "message",
+"name": "task",
 "label": "Повідомлення",
 "required": true
 }

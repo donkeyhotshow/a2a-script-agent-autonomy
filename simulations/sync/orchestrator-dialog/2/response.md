@@ -19,7 +19,7 @@
       "title": "Describe the coordination job",
       "input": [
         {
-          "name": "message",
+          "name": "task",
           "type": "textarea",
           "label": "What exactly should I orchestrate?",
           "required": true,

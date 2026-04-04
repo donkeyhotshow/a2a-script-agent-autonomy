@@ -20,7 +20,7 @@
       "description": "Введіть повідомлення для продовження діалогу.",
       "input": [
         {
-          "name": "message",
+          "name": "task",
           "type": "text",
           "label": "Повідомлення",
           "required": true

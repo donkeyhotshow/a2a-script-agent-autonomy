@@ -114,9 +114,13 @@ async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> 
         const pr = terminal.result as Record<string, unknown> | undefined;
 
         if (terminal.status === 'failed') {
+            const ex = pr?.execute as Record<string, unknown> | undefined;
             return {
                 sync: true,
-                execute: pr?.execute as Record<string, unknown> | undefined,
+                execute:
+                    ex && typeof ex === 'object'
+                        ? ex
+                        : ({wait: {message: 'Request failed'}} as Record<string, unknown>),
                 context: pr?.context as Record<string, unknown> | undefined,
                 message: syncFailureUserMessage(terminal),
             };
@@ -131,9 +135,13 @@ async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> 
             continue;
         }
 
+        const ex = pr?.execute as Record<string, unknown> | undefined;
         return {
             sync: true,
-            execute: pr?.execute as Record<string, unknown> | undefined,
+            execute:
+                ex && typeof ex === 'object'
+                    ? ex
+                    : ({wait: {message: 'Working…'}} as Record<string, unknown>),
             context: pr?.context as Record<string, unknown> | undefined,
         };
     }
@@ -150,6 +158,20 @@ function ensureContextSessionId(ctx: Record<string, unknown>): string {
     const generated = `srv_sess_${randomUUID()}`;
     ctx['session_id'] = generated;
     return generated;
+}
+
+/** Client API / storage identifiers — not part of LLM or stateless invoke contract; strip so prompts never see them. */
+function stripClientStorageIdsFromContext(ctx: Record<string, unknown>): void {
+    delete ctx['projectId'];
+    delete ctx['projectRoot'];
+    delete ctx['sessionId'];
+    const nested = ctx['context'];
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+        const n = nested as Record<string, unknown>;
+        delete n['projectId'];
+        delete n['projectRoot'];
+        delete n['sessionId'];
+    }
 }
 
 export async function invoke(clientId: string, input: InvokeInput): Promise<InvokeResult> {
@@ -218,6 +240,7 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
     applyRouterTransformSchemaHint(ctx);
 
     ensureContextSessionId(ctx);
+    stripClientStorageIdsFromContext(ctx);
 
     const topLlm =
         typeof input.llmModel === 'string' && input.llmModel.trim()

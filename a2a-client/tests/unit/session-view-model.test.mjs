@@ -39,7 +39,7 @@ describe('session-view-model', () => {
             execute: {
                 message: 'Describe your task',
                 form: {
-                    textarea: { name: 'message', label: 'Task' },
+                    textarea: { name: 'task', label: 'Task' },
                 },
             },
         });

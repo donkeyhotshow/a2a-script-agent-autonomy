@@ -17,14 +17,19 @@ import type {RequestContext, ProcessResult} from './request-processor.interfaces
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {
     GrayRoomOrchestrator,
-    isDialogToolExecutePayload,
+} from './gray-room-orchestrator.js';
+import {
+    isDialogToolExecutePayload
+} from './gray-room-utils.js';
+import {
     readGrayRoomInterruptBudget,
     shouldUseGrayRoom
-} from './gray-room-orchestrator.js';
+} from './gray-room-trigger.js';
 import {
     resolveTransformSchema,
     normalizeContext,
-    extractSchemaName
+    extractSchemaName,
+    resolveResultObject
 } from './normalization.js';
 import {resolveLlmModelFromContext} from './llm-model-resolver.js';
 
@@ -52,7 +57,6 @@ export {
 } from './response-path.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
-const DEFAULT_MODEL = 'glm-4.7-flash';
 
 function dialogFailedWithContext(ctx: Record<string, unknown>, error: string): ProcessResult {
     return {
@@ -88,11 +92,6 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
         const {executeLlmCall} = await import('./llm-orchestration.js');
 
         const ctx = normalizeContext(context, requestMessage);
-        // Preserve projectId from original context if it exists
-        if (context.projectId) {
-            ctx.projectId = context.projectId;
-        }
-        // Preserve session_id from original context if it exists
         if (context.session_id) {
             ctx.session_id = context.session_id;
         }
@@ -105,13 +104,33 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
 
         const schemaName = extractSchemaName(schema);
         const aiHubUrl = process.env.AI_HUB_URL || DEFAULT_AI_HUB;
-        const model = resolveLlmModelFromContext(ctx, process.env.LLM_MODEL || process.env.Z_AI_MODEL || process.env.OLLAMA_MODEL || DEFAULT_MODEL);
+        const model = resolveLlmModelFromContext(ctx);
 
         logger.info('[DialogRequestProcessor] Processing', {promiseId});
 
         const existingLlmId = ctx['llmPromiseId'] as string | undefined;
 
         try {
+            // Check for dialog schema without user input to return initial form directly
+            if (schemaName === 'dialog' && !resolveResultObject(ctx)?.message) {
+                return {
+                    outcome: 'success',
+                    execute: {
+                        form: {
+                            input: [
+                                {
+                                    name: 'task',
+                                    type: 'text',
+                                    label: 'Enter your task',
+                                    required: true
+                                }
+                            ]
+                        }
+                    },
+                    context: ctx as RequestContextBlock
+                };
+            }
+
             if (existingLlmId) {
                 // Восстановление из существующего promise
                 const {recoverDialogFromLlmPromise} = await import('./response-path.js');
@@ -140,18 +159,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                     false,
                     grayRoomChain
                 );
-                
-                // Include sessionId in returned context if session_id exists in input
-                if (grayRoomResult.context && typeof grayRoomResult.context === 'object' && !Array.isArray(grayRoomResult.context)) {
-                    const sessionIdValue = ctx['session_id'];
-                    if (sessionIdValue && typeof sessionIdValue === 'string') {
-                        grayRoomResult.context = {
-                            ...grayRoomResult.context,
-                            sessionId: sessionIdValue
-                        };
-                    }
-                }
-                
+
                 return grayRoomResult;
             }
 
@@ -178,7 +186,6 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 grayRoomChain
             );
             
-            // Include sessionId, projectId, and client sessionId in returned context
             if (grayRoomResult.context && typeof grayRoomResult.context === 'object' && !Array.isArray(grayRoomResult.context)) {
                 const sessionIdValue = ctx['session_id'];
                 if (sessionIdValue && typeof sessionIdValue === 'string') {
@@ -187,14 +194,8 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                         session_id: sessionIdValue
                     };
                 }
-                if (typeof ctx.projectId === 'string') {
-                    (grayRoomResult.context as any).projectId = ctx.projectId;
-                }
-                if (typeof ctx.sessionId === 'string') {
-                    (grayRoomResult.context as any).sessionId = ctx.sessionId;
-                }
             }
-            
+
             return grayRoomResult;
         } catch (err) {
             logger.error('[DialogRequestProcessor] Failed', {error: String(err)});

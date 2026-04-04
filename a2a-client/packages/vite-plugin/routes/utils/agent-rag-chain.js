@@ -16,6 +16,7 @@ import {
     extractA2aExecute,
     mergeResponseContext,
     sanitizeContextForServer,
+    sanitizeInvokeBodyForA2aUpstream,
 } from './builders.js';
 import { getMaxRagChainDepth } from '@a2a-client/shared/agent-rag-chain-depth.mjs';
 import { getProjectPathForSessions } from '../../storage/projectSessions.js';
@@ -180,7 +181,10 @@ export async function chainSyncInvokesForAgentTools({
 
         stepNum += 1;
         const contextForServer = sanitizeContextForServer(ctx);
-        const nextBody = { context: contextForServer, result: { [toolOut.key]: toolOut.value } };
+        const nextBody = sanitizeInvokeBodyForA2aUpstream({
+            context: contextForServer,
+            result: { [toolOut.key]: toolOut.value },
+        });
 
         const stepDir = stepHandlers.getNewStepDir(cwd, sessionId, stepNum);
         if (!fs.existsSync(stepDir)) {

@@ -26,7 +26,7 @@ Put the assistant line **only** under **`execute.message`** (not a top-level **`
     "message": "your reply to the user in the same language",
     "form": {
       "textarea": {
-        "name": "message",
+        "name": "task",
         "label": "Повідомлення",
         "required": true
       }

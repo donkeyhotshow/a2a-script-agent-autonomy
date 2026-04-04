@@ -27,6 +27,7 @@ import {
     validateAgentExecuteShape,
     validateDialogExecuteShape,
     validateResultShape,
+    validateLlmOutputShape,
     shouldEnforceTransformStrictMode
 } from './validators/transform-execute-validator.js';
 
@@ -239,15 +240,6 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                 this.validateTransformResult(responseData.result, 'simulation.response');
             }
 
-          // Include projectId and sessionId in context if they exist in input context
-          const resultContext: Record<string, unknown> = {};
-          if (typeof ctx.projectId === 'string') {
-              resultContext.projectId = ctx.projectId;
-          }
-          if (typeof ctx.sessionId === 'string') {
-              resultContext.sessionId = ctx.sessionId;
-          }
-
               return {
                   outcome: 'completed',
                   message: 'Simulation replay completed',
@@ -256,7 +248,6 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                       step: simContext.stepNumber,
                       mode: 'replay'
                   },
-                  context: resultContext,
                   content: responseData,
                   execute: {
                       message: `Replayed simulation: ${simContext.simulationName}, step ${simContext.stepNumber}`
@@ -296,15 +287,6 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
             timestamp: new Date().toISOString()
         };
 
-          // Include projectId and sessionId in context if they exist in input context
-          const resultContext: Record<string, unknown> = {};
-          if (typeof ctx.projectId === 'string') {
-              resultContext.projectId = ctx.projectId;
-          }
-          if (typeof ctx.sessionId === 'string') {
-              resultContext.sessionId = ctx.sessionId;
-          }
-
           return {
               outcome: 'completed',
               message: 'Simulation scenario initialized',
@@ -313,7 +295,6 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                   mode: 'record',
                   data: simulationData
               },
-              context: resultContext,
               execute: {
                   message: `Started simulation: ${simContext.simulationName}`
               }
@@ -468,7 +449,10 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
             schemaName === 'fix-laravel-namespaces-and-uses';
         
         const validator = isAgentSchema ? validateAgentExecuteShape : validateDialogExecuteShape;
-        const issues = validator(execute);
+        const issues = [
+            ...validator(execute),
+            ...validateLlmOutputShape({ message: rawOutput.message as string, execute })
+        ];
         
         if (issues.length > 0) {
             if (shouldEnforceTransformStrictMode()) {

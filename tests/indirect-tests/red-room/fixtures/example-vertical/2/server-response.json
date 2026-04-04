@@ -1,0 +1,13 @@
+{
+  "session": {
+    "execute": {
+      "form": {
+        "title": "Task",
+        "fields": [{ "id": "task", "type": "text" }]
+      }
+    },
+    "context": {
+      "execution": { "action": "dialog", "step": "task" }
+    }
+  }
+}

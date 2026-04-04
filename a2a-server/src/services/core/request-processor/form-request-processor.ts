@@ -187,12 +187,7 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                     }
                 }
             };
-            
-            // Include projectId in context if present
-            if (ctx['projectId']) {
-                result.context = { ...(result.context || {}), projectId: ctx['projectId'] };
-            }
-            
+
             return result;
         }
 
@@ -234,26 +229,13 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                 outcome: 'failed' as ProcessOutcome,
                 error: 'No choice selected'
             };
-            
-            // Include projectId in context if present
-            if (ctx['projectId']) {
-                result.context = { projectId: ctx['projectId'] };
-            }
-            
+
             return result;
         }
 
         const pipelineInput = {...ctx, choice_id: choiceId, form_id: formId};
         const result = await runFormChoicePipeline(pipelineInput);
-        
-            // Include projectId and sessionId in context if present
-            if (typeof ctx['projectId'] === 'string' || typeof ctx['sessionId'] === 'string') {
-                result.context = {
-                    ...(typeof ctx['projectId'] === 'string' ? { projectId: ctx['projectId'] } : {}),
-                    ...(typeof ctx['sessionId'] === 'string' ? { sessionId: ctx['sessionId'] } : {})
-                };
-            }
-        
+
         return result;
     }
 
@@ -271,12 +253,7 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                 outcome: 'failed' as ProcessOutcome,
                 error: `Form not found: ${formId}`
             };
-            
-            // Include projectId in context if present
-            if (ctx['projectId']) {
-                result.context = { projectId: ctx['projectId'] };
-            }
-            
+
             return result;
         }
 
@@ -297,12 +274,7 @@ export class FormRequestProcessor extends BaseRequestProcessor {
                 }
             }
         };
-        
-            // Include projectId in context if present
-            if (ctx['projectId']) {
-                result.context = { ...(result.context || {}), projectId: ctx['projectId'] };
-            }
-        
+
         return result;
     }
 
@@ -321,16 +293,7 @@ export class FormRequestProcessor extends BaseRequestProcessor {
             message: 'Available forms',
             forms: availableForms
         };
-        
-        // Include projectId and sessionId in context if present
-        if (typeof ctx['projectId'] === 'string' || typeof ctx['sessionId'] === 'string') {
-            result.context = {
-                ...(result.context || {}),
-                ...(typeof ctx['projectId'] === 'string' ? { projectId: ctx['projectId'] } : {}),
-                ...(typeof ctx['sessionId'] === 'string' ? { sessionId: ctx['sessionId'] } : {})
-            };
-        }
-        
+
         return result;
     }
 

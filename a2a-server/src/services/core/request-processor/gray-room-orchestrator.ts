@@ -9,287 +9,37 @@ import {pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
 import {BlackRoomOrchestrator} from '../black-room/black-room-orchestrator.js';
 import type {AlgorithmContext, AlgorithmData} from '../black-room/types.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
-import {validateDialogExecuteShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
+import {validateDialogExecuteShape, validateLlmOutputShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
 import {resolveExecution, resolveHistoryLength} from './normalization.js';
 import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver.js';
 
+// Import trigger detection logic
+import {
+    detectGrayRoomTrigger,
+    shouldUseGrayRoom,
+    isGrayRoomEnabled,
+    getConfiguredMaxTurns,
+    readGrayRoomInterruptBudget,
+    GrayRoomTriggerResult
+} from './gray-room-trigger.js';
+
+// Import utilities
+import {
+    DIALOG_TOOL_EXECUTE_KEYS,
+    isDialogToolExecutePayload,
+    mergeGrayRoomFinalizeInnerContext,
+    GrayRoomOptions
+} from './gray-room-utils.js';
+
+// Import interrupt handlers
+import {handleCompressHistory} from './gray-room-interrupt-handlers/compress-history.js';
+import {handleThinking} from './gray-room-interrupt-handlers/thinking.js';
+import {handleAutoReadFile} from './gray-room-interrupt-handlers/auto-read-file.js';
+import {handleAutoRagPage} from './gray-room-interrupt-handlers/auto-rag-page.js';
+import {handleClarify} from './gray-room-interrupt-handlers/clarify.js';
+import {handleAlgorithmInvoke} from './gray-room-interrupt-handlers/algorithm-invoke.js';
+
 const DEFAULT_AI_HUB = 'http://localhost:11434';
-
-/** Default value for A2A_GRAY_ROOM_MAX_TURNS */
-const DEFAULT_GRAY_ROOM_MAX_TURNS = 10;
-
-/** When `A2A_GRAY_ROOM_ENABLED` is unset, gray room interrupt chain is on (set to `0`/`false` to disable). */
-const DEFAULT_GRAY_ROOM_ENABLED = true;
-
-/**
- * Merge transform `context` with handler output for gray-room finalize (`continueLoop: false`).
- * Handlers update `nextCtx.context` (workbench.slots, files, compressed history); using only
- * `rawOutput.context` would drop those updates.
- */
-export function mergeGrayRoomFinalizeInnerContext(
-    rawInner: Record<string, unknown> | undefined,
-    nextCtx: Record<string, unknown>
-): Record<string, unknown> | undefined {
-    const nextInner = nextCtx['context'] as Record<string, unknown> | undefined;
-    if (!nextInner || typeof nextInner !== 'object' || Array.isArray(nextInner)) {
-        return rawInner;
-    }
-    if (!rawInner) {
-        return nextInner;
-    }
-    const rwb = rawInner['workbench'];
-    const nwb = nextInner['workbench'];
-    let workbenchMerged: Record<string, unknown> | undefined;
-    if (rwb && typeof rwb === 'object' && !Array.isArray(rwb) && nwb && typeof nwb === 'object' && !Array.isArray(nwb)) {
-        const ra = rwb as Record<string, unknown>;
-        const nb = nwb as Record<string, unknown>;
-        const rs = ra['sections'];
-        const ns = nb['sections'];
-        const rsl = ra['slots'];
-        const nsl = nb['slots'];
-        workbenchMerged = {
-            ...ra,
-            ...nb,
-            ...(rs || ns
-                ? {
-                      sections: {
-                          ...(typeof rs === 'object' && rs && !Array.isArray(rs) ? (rs as Record<string, unknown>) : {}),
-                          ...(typeof ns === 'object' && ns && !Array.isArray(ns) ? (ns as Record<string, unknown>) : {}),
-                      },
-                  }
-                : {}),
-            ...(rsl || nsl
-                ? {
-                      slots: {
-                          ...(typeof rsl === 'object' && rsl && !Array.isArray(rsl) ? (rsl as Record<string, unknown>) : {}),
-                          ...(typeof nsl === 'object' && nsl && !Array.isArray(nsl) ? (nsl as Record<string, unknown>) : {}),
-                      },
-                  }
-                : {}),
-        };
-    } else if (nwb && typeof nwb === 'object' && !Array.isArray(nwb)) {
-        workbenchMerged = nwb as Record<string, unknown>;
-    } else if (rwb && typeof rwb === 'object' && !Array.isArray(rwb)) {
-        workbenchMerged = rwb as Record<string, unknown>;
-    }
-
-    return {
-        ...rawInner,
-        ...nextInner,
-        ...(workbenchMerged !== undefined ? {workbench: workbenchMerged} : {}),
-        ...(Array.isArray(nextInner['history']) ? {history: nextInner['history']} : {}),
-        ...(nextInner['files'] && typeof nextInner['files'] === 'object' && !Array.isArray(nextInner['files'])
-            ? {files: nextInner['files']}
-            : {}),
-    };
-}
-
-/**
- * Gray Room Trigger Configuration
- * 
- * Controls when gray room loop should be activated.
- * Priority: (1) explicit flag in context.execution.grayRoomRequested, (2) env toggle, (3) policy for request types
- */
-export interface GrayRoomTriggerConfig {
-    /** Enable/disable gray room globally (env override) */
-    enabled?: boolean;
-    /** Maximum number of gray room turns (env override) */
-    maxTurns?: number;
-    /** Enable gray room only for specific actions (policy) */
-    allowedActions?: string[];
-}
-
-/**
- * Trigger sources for gray room activation
- */
-export type GrayRoomTriggerSource =
-    | 'env_enabled' // Global env toggle or default-on when unset
-    | 'explicit_flag' // context.execution.grayRoomRequested / flowControlHint gray-room
-    | 'policy_dialog' // Policy: action = dialog
-    | 'policy_agent' // Policy: action = agent
-    | 'policy_task_decomposition' // Policy: action = task-decomposition
-    | 'disabled'; // Gray room disabled (explicit A2A_GRAY_ROOM_ENABLED=0, …)
-
-/**
- * Gray Room trigger detection result
- */
-export interface GrayRoomTriggerResult {
-    /** Whether gray room should be triggered */
-    shouldTrigger: boolean;
-    /** Source that triggered gray room */
-    source: GrayRoomTriggerSource;
-    /** Max turns allowed (null if disabled) */
-    maxTurns: number | null;
-}
-
-/** True when `A2A_GRAY_ROOM_ENABLED` is set to a disabling token (explicit opt-out). */
-function isGrayRoomExplicitlyDisabled(): boolean {
-    const v = process.env.A2A_GRAY_ROOM_ENABLED;
-    if (v === undefined || v === null) return false;
-    const s = String(v).trim().toLowerCase();
-    if (s === '') return false;
-    return s === '0' || s === 'false' || s === 'no' || s === 'off';
-}
-
-function resolveFlowControlHint(
-    ctx: Record<string, unknown>,
-    flowControlHint?: string
-): string | undefined {
-    if (typeof flowControlHint === 'string' && flowControlHint.trim() !== '') {
-        return flowControlHint;
-    }
-    const h = ctx['flowControlHint'];
-    return typeof h === 'string' && h.trim() !== '' ? h : undefined;
-}
-
-/**
- * Shared trigger resolution for `shouldUseGrayRoom` / `detectGrayRoomTrigger`.
- */
-function computeGrayRoomTrigger(
-    ctx: Record<string, unknown>,
-    flowControlHint?: string
-): GrayRoomTriggerResult {
-    const execution = resolveExecution(ctx);
-    const explicitFlag = execution?.['grayRoomRequested'];
-    const maxTurns = getGrayRoomMaxTurns();
-
-    if (explicitFlag === true) {
-        return {shouldTrigger: true, source: 'explicit_flag', maxTurns};
-    }
-
-    const hint = resolveFlowControlHint(ctx, flowControlHint);
-    if (hint === 'gray-room' || hint === 'gray_room') {
-        return {shouldTrigger: true, source: 'explicit_flag', maxTurns}; // same bucket as explicit request
-    }
-
-    if (isGrayRoomExplicitlyDisabled()) {
-        return {shouldTrigger: false, source: 'disabled', maxTurns: null};
-    }
-
-    if (getGrayRoomEnabled()) {
-        return {shouldTrigger: true, source: 'env_enabled', maxTurns};
-    }
-
-    const action = execution?.['action'] as string | undefined;
-
-    if (action === 'dialog') {
-        return {shouldTrigger: true, source: 'policy_dialog', maxTurns};
-    }
-
-    if (action === 'agent' || action === 'coder' || action === 'auto-ai' || action === 'analyze') {
-        return {shouldTrigger: true, source: 'policy_agent', maxTurns};
-    }
-
-    if (action === 'task-decomposition' || action === 'task') {
-        return {shouldTrigger: true, source: 'policy_task_decomposition', maxTurns};
-    }
-
-    return {shouldTrigger: false, source: 'disabled', maxTurns: null};
-}
-
-/**
- * Check if gray room should be triggered based on request context
- *
- * @param ctx - Request context (normalized invoke / dialog shape)
- */
-export function detectGrayRoomTrigger(ctx: Record<string, unknown>): GrayRoomTriggerResult {
-    return computeGrayRoomTrigger(ctx, undefined);
-}
-
-/**
- * Get A2A_GRAY_ROOM_ENABLED from environment (default: {@link DEFAULT_GRAY_ROOM_ENABLED})
- */
-function getGrayRoomEnabled(): boolean {
-    const envValue = process.env.A2A_GRAY_ROOM_ENABLED;
-    if (envValue === undefined || envValue === null) {
-        return DEFAULT_GRAY_ROOM_ENABLED;
-    }
-    const normalized = envValue.toLowerCase().trim();
-    return normalized === '1' || normalized === 'true' || normalized === 'yes';
-}
-
-/**
- * Get A2A_GRAY_ROOM_MAX_TURNS from environment (default: 10)
- */
-function getGrayRoomMaxTurns(): number {
-    const envValue = process.env.A2A_GRAY_ROOM_MAX_TURNS;
-    if (envValue === undefined || envValue === null) {
-        return DEFAULT_GRAY_ROOM_MAX_TURNS;
-    }
-    const parsed = parseInt(envValue, 10);
-    if (Number.isNaN(parsed) || parsed < 1) {
-        return DEFAULT_GRAY_ROOM_MAX_TURNS;
-    }
-    return Math.min(parsed, 100); // Cap at 100 turns
-}
-
-/**
- * Whether to run the full interrupt chain (vs one response-transform pass that ignores `interrupt`).
- *
- * @param ctx - Request context
- * @param flowControlHint - Optional; otherwise read from `ctx.flowControlHint` when present
- */
-export function shouldUseGrayRoom(ctx: Record<string, unknown>, flowControlHint?: string): GrayRoomTriggerResult {
-    return computeGrayRoomTrigger(ctx, flowControlHint);
-}
-
-/** Interrupt budget for `GrayRoomOrchestrator` (env `A2A_MAX_INTERRUPT_TURNS` or `A2A_GRAY_ROOM_MAX_TURNS`). */
-export function readGrayRoomInterruptBudget(): number {
-    const raw = process.env.A2A_MAX_INTERRUPT_TURNS;
-    if (raw !== undefined && raw !== null && String(raw).trim() !== '') {
-        const n = parseInt(String(raw), 10);
-        if (Number.isFinite(n) && n >= 1) {
-            return Math.min(n, 100);
-        }
-    }
-    return getGrayRoomMaxTurns();
-}
-
-/**
- * Get current gray room enabled state (for diagnostics)
- */
-export function isGrayRoomEnabled(): boolean {
-    return getGrayRoomEnabled();
-}
-
-/**
- * Get current gray room max turns (for diagnostics)
- */
-export function getConfiguredMaxTurns(): number {
-    return getGrayRoomMaxTurns();
-}
-
-/** Single-key `execute` payloads that must pass through to the client (tool rounds). */
-export const DIALOG_TOOL_EXECUTE_KEYS = [
-    'rag-search',
-    'read-file',
-    'write-file',
-    'execute-command',
-    'list-directory',
-    'grep-search',
-    'script',
-] as const;
-
-/** True when `execute` is a single allowed dialog tool key (tool round, not form/chat). */
-export function isDialogToolExecutePayload(
-    execute: Record<string, unknown> | null | undefined
-): boolean {
-    if (!execute || typeof execute !== 'object' || Array.isArray(execute)) {
-        return false;
-    }
-    const keys = Object.keys(execute);
-    if (keys.length !== 1) {
-        return false;
-    }
-    return (DIALOG_TOOL_EXECUTE_KEYS as readonly string[]).includes(keys[0]!);
-}
-
-export interface GrayRoomOptions {
-    maxInterruptTurns?: number;
-    aiHubUrl?: string;
-    model?: string;
-    promptsTransformsPath: string;
-}
 
 export class GrayRoomOrchestrator {
     private maxInterruptTurns: number;
@@ -457,7 +207,7 @@ export class GrayRoomOrchestrator {
                     context: mergedInner,
                     execute: normalizedExecute,
                 };
-                this.warnOnInvalidExecute(res.execute, 'grayRoom.finalize');
+                this.warnOnInvalidExecute(res, 'grayRoom.finalize');
                 touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
                 return this.mergeTraceIntoResult(res, trace, grayRoom);
             }
@@ -595,7 +345,7 @@ export class GrayRoomOrchestrator {
                 execute: rawOutput.execute as ProcessResult['execute'] | undefined,
                 ...(interruptPassthrough ? {interrupt: interruptPassthrough} : {}),
             };
-            this.warnOnInvalidExecute(result.execute, 'runResponseTransform');
+            this.warnOnInvalidExecute(result, 'runResponseTransform');
 
             return {rawOutput, result};
         } catch (err) {
@@ -634,211 +384,23 @@ export class GrayRoomOrchestrator {
 
         switch (reason) {
             case 'compress_history': {
-                const history = (nextCtx['history'] as any[]) || (nextCtx['context'] as any)?.history || [];
-                if (!Array.isArray(history) || history.length === 0) {
-                    trace.push({ kind: 'sidecar_llm', purpose: 'compress_history', ok: true, meta: 'skipped_empty_history' });
-                    return { nextCtx, continueLoop: false };
-                }
-                
-                const compressPrompt = [
-                    'Compress the following conversation history into 3–7 short entries (JSON array of {"role":"system"|"assistant"|"user","message":"..."}).',
-                    'Preserve enough detail to continue the task: user goal, constraints, unresolved steps, file paths touched, last assistant intent.',
-                    'Respond with ONLY the JSON array, no prose.',
-                    '',
-                    'History:',
-                    JSON.stringify(history, null, 2)
-                ].join('\n');
-
-                try {
-                    const sidecarModel = resolveGrayRoomLlmModelFromContext(nextCtx, this.model);
-                    const chatRes = await fetch(`${this.aiHubUrl}/api/chat?promise=1`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-Server-Promise-Id': `${promiseId}-compress` },
-                        body: JSON.stringify({ model: sidecarModel, messages: [{ role: 'user', content: compressPrompt }], stream: false }),
-                    });
-                    if (chatRes.status === 202) {
-                        const initData = (await chatRes.json()) as { promiseId?: string };
-                        if (initData?.promiseId) {
-                            const compressed = await pollReadyThenFetch(this.aiHubUrl, initData.promiseId);
-                            if (compressed) {
-                                const parsed = JSON.parse(compressed.trim());
-                                if (Array.isArray(parsed)) {
-                                    const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-                                    nextCtx = { ...nextCtx, history: parsed, context: {...innerCtx, history: parsed} };
-                                    trace.push({ kind: 'sidecar_llm', purpose: 'compress_history', ok: true, meta: `from=${history.length} to=${parsed.length}` });
-                                }
-                            }
-                        }
-                    }
-                } catch (err) {
-                    logger.warn('[GrayRoom:compress_history] Failed', { error: String(err) });
-                    trace.push({ kind: 'sidecar_llm', purpose: 'compress_history', ok: false, meta: 'error' });
-                }
-                return { nextCtx, continueLoop: false };
+                return await handleCompressHistory(interrupt, ctx, promiseId, this.aiHubUrl, this.model, trace);
             }
-
             case 'thinking': {
-                const thinkingPrompt = [
-                    'Think step by step about the current task state. Be concise.',
-                    'Return JSON: {"thinking": "your reasoning", "next_action": "what to do next"}',
-                    '',
-                    'Context:',
-                    JSON.stringify(nextCtx['context'] ?? {}, null, 2)
-                ].join('\n');
-                try {
-                    const sidecarModel = resolveGrayRoomLlmModelFromContext(nextCtx, this.model);
-                    const chatRes = await fetch(`${this.aiHubUrl}/api/chat?promise=1`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'X-Server-Promise-Id': `${promiseId}-think` },
-                        body: JSON.stringify({ model: sidecarModel, messages: [{ role: 'user', content: thinkingPrompt }], stream: false }),
-                    });
-                    if (chatRes.status === 202) {
-                        const initData = (await chatRes.json()) as { promiseId?: string };
-                        if (initData?.promiseId) {
-                            const thinkMd = await pollReadyThenFetch(this.aiHubUrl, initData.promiseId);
-                            if (thinkMd) {
-                                const parsed = JSON.parse(thinkMd.trim());
-                                const innerCtx = nextCtx['context'] as Record<string, unknown>;
-                                const wb = (innerCtx['workbench'] as Record<string, unknown>) ?? {};
-                                const slots = (wb['slots'] as Record<string, unknown>) ?? {};
-                                nextCtx = {
-                                    ...nextCtx,
-                                    context: { ...innerCtx, workbench: { ...wb, slots: { ...slots, thinking: parsed } } }
-                                };
-                                trace.push({ kind: 'sidecar_llm', purpose: 'thinking', ok: true, meta: 'slots.thinking' });
-                            }
-                        }
-                    }
-                } catch (err) {
-                    logger.warn('[GrayRoom:thinking] Failed', { error: String(err) });
-                    trace.push({ kind: 'sidecar_llm', purpose: 'thinking', ok: false, meta: 'error' });
-                }
-                return { nextCtx, continueLoop: true };
+                return await handleThinking(interrupt, ctx, promiseId, this.aiHubUrl, this.model, trace);
             }
-
             case 'auto_read_file': {
-                const fp = (data?.filePath || data?.path) as string;
-                if (!fp) {
-                    trace.push({ kind: 'sidecar_llm', purpose: 'auto_read_file', ok: false, meta: 'missing_path' });
-                    return { nextCtx, continueLoop: false };
-                }
-                const out = await executeReadFile({ filePath: fp });
-                if (out.success && out.content !== undefined) {
-                    const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-                    const prevFiles = (innerCtx['files'] as Record<string, string>) ?? {};
-                    nextCtx = { ...nextCtx, context: { ...innerCtx, files: { ...prevFiles, [fp]: out.content } } };
-                    trace.push({ kind: 'sidecar_llm', purpose: 'auto_read_file', ok: true, meta: fp });
-                } else {
-                    trace.push({ kind: 'sidecar_llm', purpose: 'auto_read_file', ok: false, meta: 'read_failed' });
-                }
-                return { nextCtx, continueLoop: false };
+                return await handleAutoReadFile(interrupt, ctx, promiseId, this.aiHubUrl, this.model, trace);
             }
-
             case 'auto_rag_page': {
-                const {nextCtx: afterRag, trace: ragTrace} = await mergeServerRagPageIntoContext(nextCtx, data);
-                nextCtx = afterRag;
-                if (ragTrace) trace.push(ragTrace);
-                const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-                nextCtx = { ...nextCtx, context: {...innerCtx, _interrupt_reason: reason, ...(data ?? {})} };
-                return { nextCtx, continueLoop: true };
+                return await handleAutoRagPage(interrupt, ctx, promiseId, this.aiHubUrl, this.model, trace);
             }
-
             case 'clarify': {
-                const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-                const wb = (innerCtx['workbench'] as Record<string, unknown>) ?? {};
-                const slots = (wb['slots'] as Record<string, unknown>) ?? {};
-                nextCtx = {
-                    ...nextCtx,
-                    context: { ...innerCtx, workbench: { ...wb, slots: { ...slots, clarify: data ?? {} } } }
-                };
-                trace.push({ kind: 'sidecar_llm', purpose: 'clarify', ok: true, meta: 'slots.clarify' });
-                return { nextCtx, continueLoop: false };
+                return await handleClarify(interrupt, ctx, promiseId, this.aiHubUrl, this.model, trace);
             }
-
             case 'algorithm_invoke': {
-                const algorithmId = interrupt.algorithmId;
-                if (!algorithmId) {
-                    trace.push({ kind: 'black_room_start', algorithmId: 'unknown', timestamp: new Date().toISOString() });
-                    trace.push({
-                        kind: 'black_room_complete',
-                        algorithmId: 'unknown',
-                        status: 'failed',
-                        durationMs: 0,
-                        error: 'Missing algorithmId'
-                    });
-                    return { nextCtx, continueLoop: false };
-                }
-
-                const startTime = Date.now();
-                trace.push({ kind: 'black_room_start', algorithmId, timestamp: new Date().toISOString() });
-
-                try {
-                    const blackRoom = new BlackRoomOrchestrator({
-                        ollamaUrl: process.env.A2A_BLACK_ROOM_OLLAMA_URL,
-                        defaultModel: process.env.A2A_BLACK_ROOM_DEFAULT_MODEL,
-                        timeoutMs: parseInt(process.env.A2A_BLACK_ROOM_TIMEOUT_MS || '30000')
-                    });
-
-                    const algorithmContext: AlgorithmContext = {
-                        sessionId: (nextCtx['context'] as any)?.session_id || 'unknown',
-                        workbench: (nextCtx['context'] as any)?.workbench,
-                        history: nextCtx['history'] as any[],
-                        files: (nextCtx['context'] as any)?.files,
-                        ...nextCtx
-                    };
-
-                    const algorithmData: AlgorithmData = data || {};
-
-                    const result = await blackRoom.executeAlgorithm(algorithmId, algorithmContext, algorithmData);
-
-                    trace.push({
-                        kind: 'black_room_complete',
-                        algorithmId,
-                        status: result.status,
-                        durationMs: Date.now() - startTime,
-                        tokenCount: result.metrics?.tokensOut,
-                        error: result.error
-                    });
-
-                    if (result.status === 'completed' && result.output) {
-                        // Merge algorithm results into context
-                        const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-                        const wb = (innerCtx['workbench'] as Record<string, unknown>) ?? {};
-                        const slots = (wb['slots'] as Record<string, unknown>) ?? {};
-                        const blackRoomSlots = (slots['blackRoomContext'] as Record<string, unknown>) ?? {};
-
-                        nextCtx = {
-                            ...nextCtx,
-                            context: {
-                                ...innerCtx,
-                                workbench: {
-                                    ...wb,
-                                    slots: {
-                                        ...slots,
-                                        blackRoomContext: {
-                                            ...blackRoomSlots,
-                                            [algorithmId]: result.output
-                                        }
-                                    }
-                                }
-                            }
-                        };
-                    }
-
-                    return { nextCtx, continueLoop: false };
-                } catch (error) {
-                    const errorMsg = String(error);
-                    trace.push({
-                        kind: 'black_room_complete',
-                        algorithmId,
-                        status: 'failed',
-                        durationMs: Date.now() - startTime,
-                        error: errorMsg
-                    });
-                    return { nextCtx, continueLoop: false };
-                }
+                return await handleAlgorithmInvoke(interrupt, ctx, promiseId, this.aiHubUrl, this.model, trace);
             }
-
             default:
                 logger.warn('[GrayRoom] Unknown reason', { reason });
                 return { nextCtx, continueLoop: false };
@@ -863,8 +425,11 @@ export class GrayRoomOrchestrator {
         return {...result, context: ctx};
     }
 
-    private warnOnInvalidExecute(execute: ProcessResult['execute'] | undefined, source: string): void {
-        const issues = validateDialogExecuteShape(execute);
+    private warnOnInvalidExecute(result: ProcessResult, source: string): void {
+        const issues = [
+            ...validateDialogExecuteShape(result.execute),
+            ...validateLlmOutputShape(result)
+        ];
         if (issues.length === 0) return;
         if (shouldEnforceTransformStrictMode()) {
             throw new Error(`Gray room transform contract violation (${source}): ${issues.map(i => i.code).join(', ')}`);

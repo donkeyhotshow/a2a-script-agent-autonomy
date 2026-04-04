@@ -162,7 +162,7 @@ describe('session-stage-machine', () => {
                 const stage = deriveSessionStage({
                     execute: {
                         form: {
-                            textarea: { name: 'message', label: 'Message' },
+                            textarea: { name: 'task', label: 'Message' },
                         },
                     },
                 });

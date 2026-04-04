@@ -9,6 +9,7 @@ import {
     mergeResponseContext,
     pickInvokeContextPatch,
     sanitizeContextForServer,
+    sanitizeInvokeBodyForA2aUpstream,
     unwrapA2aResponse,
 } from './utils/builders.js';
 import { toMinimalNextAck } from './utils/session-projection-dto.js';
@@ -137,8 +138,14 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
              if (sessionContext.llmModel && !mergedContext.llmModel) {
                  mergedContext.llmModel = sessionContext.llmModel;
              }
-             // Add client sessionId to mergedContext
-             mergedContext.sessionId = sessionId;
+            // Client API: keep storage session id + project scope on session.context (stripped before /invoke).
+            mergedContext.sessionId = sessionId;
+            if (sessionContext.projectId) {
+                mergedContext.projectId = sessionContext.projectId;
+            }
+            if (sessionContext.projectRoot) {
+                mergedContext.projectRoot = sessionContext.projectRoot;
+            }
 
             // Router beat B: choice submit must keep execution.step === 'router' (not session seed agent/new).
             if (
@@ -199,12 +206,12 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                 hasChoices && submitResult && typeof submitResult.choice === 'string';
 
             const contextForServer = sanitizeContextForServer(mergedContext);
-            const requestToServer = {
+            const requestToServer = sanitizeInvokeBodyForA2aUpstream({
                 context: contextForServer,
                 result: submitResult,
                 ...(effectiveTask ? { task: effectiveTask } : {}),
                 ...(shouldSyncInvoke || syncRouterChoice ? { sync: true } : {}),
-            };
+            });
 
             stepHandlers.saveRequestToServer(cwd, sessionId, nextStepNum, requestToServer);
 

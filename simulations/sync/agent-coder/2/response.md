@@ -18,7 +18,7 @@ Mirror of `response.json` for prompt pipeline / `sim:check-md`.
       "description": "Опишіть питання або зміни в коді; далі Coder використає RAG і роботу з файлами.",
       "input": [
         {
-          "name": "message",
+          "name": "task",
           "type": "text",
           "label": "Повідомлення",
           "required": true

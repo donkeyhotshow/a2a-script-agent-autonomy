@@ -10,6 +10,8 @@ import {logger} from '../../../utils/logger.js';
 import {
     shouldEnforceTransformStrictMode,
     validateFormChoiceProcessResult,
+    validateDialogExecuteShape,
+    validateLlmOutputShape,
 } from './validators/transform-execute-validator.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -30,7 +32,11 @@ export async function runFormChoicePipeline(input: Record<string, unknown>): Pro
         throw new Error(errMsg);
     }
     const processResult = buildProcessResultFromForm(fp, input);
-    const issues = validateFormChoiceProcessResult(processResult);
+    const issues = [
+        ...validateFormChoiceProcessResult(processResult),
+        ...validateDialogExecuteShape(processResult.execute),
+        ...validateLlmOutputShape(processResult)
+    ];
     if (issues.length > 0) {
         if (shouldEnforceTransformStrictMode()) {
             const codes = issues.map((i) => i.code).join(', ');

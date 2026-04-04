@@ -20,7 +20,7 @@ Mirror of `response.json` (not LLM output). Single `execute` action key.
       "description": "Монорепо a2a-script-agent. Далі — повний ланцюжок інструментів agent (як у agent-coder-smart + workspace tools).",
       "input": [
         {
-          "name": "message",
+          "name": "task",
           "type": "text",
           "label": "Повідомлення",
           "required": true

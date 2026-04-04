@@ -7,10 +7,12 @@
 import {logger} from '../../../utils/logger.js';
 import {getPromptsTransformsPath} from '../../../transform/index.js';
 import {
-    GrayRoomOrchestrator,
+    GrayRoomOrchestrator
+} from './gray-room-orchestrator.js';
+import {
     readGrayRoomInterruptBudget,
     shouldUseGrayRoom
-} from './gray-room-orchestrator.js';
+} from './gray-room-trigger.js';
 import {resolveTransformSchema, extractSchemaName} from './normalization.js';
 import {recoverLlmPromise} from './llm-orchestration.js';
 

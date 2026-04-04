@@ -16,7 +16,7 @@
     "form": {
       "input": [
         {
-          "name": "message",
+          "name": "task",
           "type": "text",
           "label": "Task doc content",
           "required": true

@@ -5,6 +5,7 @@
  * - step_result - processing results from executed steps
  * - task_request - proposing actions for new tasks
  * - approve_action - starting action execution after approval
+ * - step_complete - confirming step completion
  */
 
 import {logger} from '../../../utils/logger.js';
@@ -21,6 +22,26 @@ import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} 
 import {applySequenceStepComplete} from './sequence-workbench.js';
 import {resolveExecution, resolveResultObject} from './normalization.js';
 import {dialogRequestProcessor} from './dialog-request-processor.js';
+
+// Import extracted handlers
+import {
+    handleStepResult as handleStepResultFn
+} from './handlers/step-result-handler.js';
+import {
+    handleRouterChoice as handleRouterChoiceFn,
+    pickRouterSubmitChoice as pickRouterSubmitChoiceFn
+} from './handlers/router-choice-handler.js';
+import {
+    handleTaskRequest as handleTaskRequestFn,
+    parseTaskText as parseTaskTextFn,
+    analyzeTaskForAutoRouting as analyzeTaskForAutoRoutingFn
+} from './handlers/task-request-handler.js';
+import {
+    handleStepComplete as handleStepCompleteFn
+} from './handlers/step-complete-handler.js';
+import {
+    handleApproveAction as handleApproveActionFn
+} from './handlers/approve-action-handler.ts';
 
 /**
  * Action request processor configuration
@@ -171,53 +192,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         _promiseId: string,
         ctx: Record<string, unknown>
     ): Promise<ProcessResult> {
-        const stepId = ctx['stepId'] as string || ctx['step_id'] as string;
-        const stepResult = ctx['stepResult'] || ctx['step_result'];
-
-        logger.info('[ActionRequestProcessor] Processing step_result', {stepId, sessionId});
-
-        if (!stepId || !stepResult) {
-            logger.warn('[ActionRequestProcessor] Missing stepId or stepResult', {stepId, stepResult});
-        }
-
-        const result = await actionProcessor.processStepResult(sessionId, stepId, stepResult);
-
-        if (result.continue) {
-            const fromMessage = result.message.execute;
-            const resultContext = { ...result.message.context };
-            // Include sessionId in context if it exists in input
-            const sessionIdValue = ctx['session_id'];
-            if (sessionIdValue && typeof sessionIdValue === 'string') {
-                (resultContext as any)['session_id'] = sessionIdValue;
-            }
-            // Include projectId and client sessionId in context if they exist in input
-            if (typeof ctx.projectId === 'string') {
-                resultContext.projectId = ctx.projectId;
-            }
-            if (typeof ctx.sessionId === 'string') {
-                resultContext.sessionId = ctx.sessionId;
-            }
-            return {
-                outcome: 'completed',
-                context: resultContext,
-                activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
-                execute: fromMessage,
-            };
-        }
-        const resultContext = { ...result.message.context };
-        // Include sessionId in context if it exists in input
-        const sessionIdValue = ctx['session_id'];
-        if (sessionIdValue && typeof sessionIdValue === 'string') {
-            (resultContext as any)['session_id'] = sessionIdValue;
-        }
-        return {
-            outcome: 'completed',
-            context: resultContext,
-            activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
-            execute: result.message.execute ?? {
-                message: result.message.message || 'Action completed',
-            },
-        };
+        return handleStepResultFn(sessionId, _promiseId, ctx);
     }
 
     /**
@@ -229,112 +204,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         ctx: Record<string, unknown>,
         request: RequestContext
     ): Promise<ProcessResult> {
-        const choiceId = this.pickRouterSubmitChoice(ctx);
-        const inner = ctx['context'] as Record<string, unknown> | undefined;
-        const taskText =
-            (typeof ctx['task'] === 'string' ? ctx['task'] : '') ||
-            (inner && typeof inner['task'] === 'string' ? (inner['task'] as string) : '');
-
-        logger.info('[ActionRequestProcessor] Processing router choice', {
-            choice: choiceId,
-            sessionId,
-        });
-
-        if (!choiceId) {
-            logger.warn('[ActionRequestProcessor] Missing choice in router submission');
-            return {
-                outcome: 'failed' as ProcessOutcome,
-                error: 'Missing choice'
-            } as ProcessResult;
-        }
-
-        // LLM pipelines: run request transforms + LLM (same as direct dialog routing)
-        if (LLM_PIPELINE_ACTIONS.includes(choiceId)) {
-            logger.info('[ActionRequestProcessor] Delegating router choice to dialog pipeline', {choiceId});
-            // CRITICAL FIX: Pre-apply router pipeline choice before delegating to dialog processor.
-            // The dialog processor's normalizeContext also calls applyRouterPipelineChoice, but we ensure
-            // the request context is properly seeded with the choice and transformSchema hint here.
-            // This prevents the transform from re-emitting the router form.
-            const patchedContext = {
-                ...ctx,
-                transformSchema: ACTION_TO_SCHEMA[choiceId] ?? choiceId,
-                execution: { action: choiceId, step: 'start' },
-                result: { ...(ctx['result'] as Record<string, unknown> ?? {}), choice: choiceId },
-            };
-            // Include sessionId in context if it exists in input
-            if (ctx['session_id']) {
-                patchedContext['session_id'] = ctx['session_id'];
-            }
-            const patchedRequest: RequestContext = {
-                ...request,
-                context: patchedContext,
-            };
-            return dialogRequestProcessor.process(patchedRequest);
-        }
-
-        // Get action definition for scripted actions
-        const actionDef = actionRegistry.getAction(choiceId);
-        if (!actionDef) {
-            logger.warn('[ActionRequestProcessor] Action not found for choice', { choiceId });
-            return {
-                outcome: 'failed' as ProcessOutcome,
-                error: `Action not found: ${choiceId}`
-            } as ProcessResult;
-        }
-
-        // Execute the selected scripted action directly
-        try {
-            // Process as a task request to start the action
-            const actionResult = await actionProcessor.processTaskRequest(sessionId, taskText);
-
-            if (actionResult.continue) {
-                // Action is executing, return the execute command
-                const resultContext = { 
-                    ...(actionResult.message.context || {}) 
-                };
-                // Include sessionId in context if it exists in input
-                if (ctx['session_id'] && typeof ctx['session_id'] === 'string') {
-                    resultContext['session_id'] = ctx['session_id'];
-                }
-                return {
-                    outcome: 'completed',
-                    context: resultContext,
-                    execute: actionResult.message.execute ?? {
-                        message: actionResult.message.message || 'Action started',
-                    },
-                    activated_neuron_ids: actionResult.actionId ? [actionResult.actionId] : undefined,
-                };
-            } else {
-                // Action completed immediately
-                const resultContext = { 
-                    ...(actionResult.message.context || {}) 
-                };
-                // Include sessionId in context if it exists in input
-                if (ctx['session_id'] && typeof ctx['session_id'] === 'string') {
-                    resultContext['session_id'] = ctx['session_id'];
-                }
-                return {
-                    outcome: 'completed',
-                    context: resultContext,
-                    execute: actionResult.message.execute ?? {
-                        message: actionResult.message.message || 'Action completed',
-                    },
-                    activated_neuron_ids: actionResult.actionId ? [actionResult.actionId] : undefined,
-                };
-            }
-        } catch (error) {
-            logger.error('[ActionRequestProcessor] Error executing router choice', { error, choiceId });
-            const errorContext: Record<string, unknown> = {};
-            // Include sessionId in context if it exists in input
-            if (ctx['session_id'] && typeof ctx['session_id'] === 'string') {
-                errorContext['session_id'] = ctx['session_id'];
-            }
-            return {
-                outcome: 'failed' as ProcessOutcome,
-                context: errorContext,
-                error: `Failed to execute action: ${error instanceof Error ? error.message : String(error)}`
-            } as ProcessResult;
-        }
+        return handleRouterChoiceFn(sessionId, _promiseId, ctx, request);
     }
 
     /**
@@ -345,82 +215,14 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         _promiseId: string,
         ctx: Record<string, unknown>
     ): Promise<ProcessResult> {
-        const taskText = this.parseTaskText(ctx);
+        return handleTaskRequestFn(sessionId, _promiseId, ctx);
+    }
 
-        if (!taskText) {
-            logger.warn('[ActionRequestProcessor] No task text found in request');
-            return {
-                outcome: 'failed',
-                error: 'No task text found in request'
-            } as ProcessResult;
-        }
-
-        logger.info('[ActionRequestProcessor] Processing task_request', {
-            taskText: taskText.substring(0, 50)
-        });
-
-        // Use keyword-based routing - skip LLM transform
-        // Find matching actions based on task keywords
-        const keywordMatches = actionRegistry.findAction(taskText);
-        const candidates = keywordMatches.filter(m => m.matchScore >= 0.3);
-        const actionsToUse: ActionDefinition[] = candidates.map(m => m.action);
-
-        // Build choices from keyword matches
-        let rankedChoices: Array<{id: string, label: string, description: string}> = [];
-        
-        if (actionsToUse.length > 0) {
-            // Use keyword-matched actions as choices, sorted by score
-            rankedChoices = actionsToUse.map(action => ({
-                id: action.id,
-                label: action.title || action.id,
-                description: action.description || ''
-            }));
-            logger.info('[ActionRequestProcessor] Found keyword-matched actions', {
-                count: rankedChoices.length,
-                actionIds: rankedChoices.map(c => c.id)
-            });
-        } else {
-            // No keyword matches - use default fallback choices
-            logger.info('[ActionRequestProcessor] No keyword matches, using default choices');
-            rankedChoices = [
-                { id: 'dialog', label: 'AI діалог з користувачем', description: 'Вільний текстовий діалог з моделлю без інструментів коду.' },
-                { id: 'agent', label: 'Agent (універсальний режим)', description: 'Агент з інструментами: пошук по коду, файли, команди.' },
-                { id: 'task-decomposition', label: 'Декомпозиція задачі', description: 'Розбиття задачі на підзадачі та план виконання.' }
-            ];
-        }
-
-        const execution: Record<string, unknown> = {
-            action: 'task',
-            step: 'router',
-        };
-        if (ROUTER_CONFIG.autoSelectionEnabled) {
-            execution.routerAnalysis = this.analyzeTaskForAutoRouting(taskText);
-        }
-
-        const resultContext: Record<string, unknown> = {
-            execution,
-            task: taskText
-        };
-        // Include sessionId in context if it exists in input
-        const sessionIdValue = ctx['session_id'];
-        if (sessionIdValue && typeof sessionIdValue === 'string') {
-            (resultContext as any)['session_id'] = sessionIdValue;
-        }
-        // Include projectId and client sessionId in context if they exist in input
-        if (typeof ctx.projectId === 'string') {
-            resultContext.projectId = ctx.projectId;
-        }
-        if (typeof ctx.sessionId === 'string') {
-            resultContext.sessionId = ctx.sessionId;
-        }
-         
-        return {
-            outcome: 'completed',
-            context: resultContext,
-            execute: {
-                form: buildRouterForm(rankedChoices)
-            }
-        };
+    /**
+     * Parse task text from various context formats
+     */
+    protected parseTaskText(ctx: Record<string, unknown>): string {
+        return parseTaskTextFn(ctx);
     }
 
     /**
@@ -434,69 +236,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         preferredChoice: string | null;
         reason: string;
     } {
-        if (!taskDescription || typeof taskDescription !== 'string') {
-            return { suitable: false, confidence: 0, preferredChoice: null, reason: 'No task description' };
-        }
-
-        const text = taskDescription.toLowerCase().trim();
-        const scores = { agent: 0, 'task-decomposition': 0, dialog: 0 };
-
-        // Keywords that strongly indicate agent usage
-        const agentKeywords = [
-            'search', 'find', 'grep', 'code', 'file', 'edit', 'modify', 'create', 'delete',
-            'run', 'execute', 'command', 'script', 'tool', 'fix', 'bug', 'error',
-            'implement', 'add', 'update', 'refactor', 'debug', 'test', 'lint'
-        ];
-
-        // Keywords that indicate task decomposition
-        const decompositionKeywords = [
-            'plan', 'break down', 'steps', 'phases', 'organize', 'structure',
-            'multiple', 'several', 'various', 'complex', 'large', 'comprehensive'
-        ];
-
-        // Keywords that indicate dialog preference
-        const dialogKeywords = [
-            'explain', 'tell me', 'what is', 'how does', 'describe', 'conversation',
-            'chat', 'discuss', 'question', 'ask', 'answer',
-            'dialog', 'диалог', 'діалог',
-        ];
-
-        // Score based on keyword presence
-        agentKeywords.forEach(keyword => {
-            if (text.includes(keyword)) scores.agent += 1;
-        });
-
-        decompositionKeywords.forEach(keyword => {
-            if (text.includes(keyword)) scores['task-decomposition'] += 1;
-        });
-
-        dialogKeywords.forEach(keyword => {
-            if (text.includes(keyword)) scores.dialog += 1;
-        });
-
-        // Find the highest scoring choice
-        const maxScore = Math.max(...Object.values(scores));
-        let preferredChoice: string | null = null;
-        if (maxScore > 0) {
-            for (const [choice, score] of Object.entries(scores)) {
-                if (score === maxScore) {
-                    preferredChoice = choice as string;
-                    break;
-                }
-            }
-        }
-
-        // Determine suitability using router configuration
-        const totalKeywords = Object.values(scores).reduce((sum, score) => sum + score, 0);
-        const suitable = totalKeywords >= ROUTER_CONFIG.minKeywordMatches;
-        const confidence = totalKeywords > 0 ? Math.min(totalKeywords / 5, 1) : 0;
-
-        return {
-            suitable,
-            confidence,
-            preferredChoice: preferredChoice as string | null,
-            reason: suitable ? `Detected ${preferredChoice} pattern with ${totalKeywords} keyword matches` : `Insufficient keywords (${totalKeywords}) for confident auto-selection`
-        };
+        return analyzeTaskForAutoRoutingFn(taskDescription);
     }
 
     /**
@@ -514,50 +254,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         _promiseId: string,
         ctx: Record<string, unknown>
     ): ProcessResult {
-        logger.info('[ActionRequestProcessor] Processing step_complete', {
-            stepId: ctx['stepId'],
-            sessionId
-        });
-
-        const stepId = ctx['stepId'] as string;
-
-        if (!stepId) {
-            logger.warn('[ActionRequestProcessor] Missing stepId in step_complete');
-            return {
-                outcome: 'failed' as ProcessOutcome,
-                error: 'Missing stepId'
-            } as ProcessResult;
-        }
-
-        const applied = applySequenceStepComplete(ctx, stepId);
-        if (!applied.ok) {
-            logger.warn('[ActionRequestProcessor] step_complete failed', {error: applied.error, sessionId});
-            return {
-                outcome: 'failed' as ProcessOutcome,
-                error: applied.error,
-            } as ProcessResult;
-        }
-
-        logger.info('[ActionRequestProcessor] Step completed (workbench sequence)', {
-            sessionId,
-            completedStepId: stepId,
-        });
-
-        const resultContext = { ...(applied.context as ProcessResult['context']) };
-        // Include sessionId in context if it exists in input
-        if (ctx['session_id']) {
-            resultContext['session_id'] = ctx['session_id'];
-        }
-        
-        return {
-            outcome: 'completed',
-            context: resultContext,
-            execute: {
-                dialog: {
-                    message: `Step ${stepId} completed successfully.`,
-                },
-            },
-        };
+        return handleStepCompleteFn(sessionId, _promiseId, ctx);
     }
 
     /**
@@ -568,38 +265,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         _promiseId: string,
         ctx: Record<string, unknown>
     ): Promise<ProcessResult> {
-        logger.info('[ActionRequestProcessor] Processing approve_action', {
-            actionId: ctx['action_id'] || ctx['actionId'],
-            sessionId
-        });
-
-        const actionId = ctx['action_id'] as string || ctx['actionId'] as string;
-
-        if (!actionId) {
-            logger.warn('[ActionRequestProcessor] Missing actionId in approve_action');
-            return {
-                outcome: 'failed' as ProcessOutcome,
-                error: 'Missing actionId'
-            } as ProcessResult;
-        }
-
-        // Delegate to action processor
-        const result = await actionProcessor.approveAction(sessionId, actionId);
-        
-        // Include sessionId in context if it exists in input
-        if (ctx['session_id'] && typeof ctx['session_id'] === 'string') {
-            const resultContext = { ...result.message.context };
-            (resultContext as any)['session_id'] = ctx['session_id'];
-            return {
-                ...result,
-                message: {
-                    ...result.message,
-                    context: resultContext
-                }
-            };
-        }
-        
-        return result;
+        return handleApproveActionFn(sessionId, _promiseId, ctx);
     }
 
     /**
@@ -607,37 +273,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
      * Checks various places where choice might be stored in form submissions
      */
     private pickRouterSubmitChoice(ctx: Record<string, unknown>): string | undefined {
-        // Check direct choice property
-        if (ctx['choice'] && typeof ctx['choice'] === 'string') {
-            return ctx['choice'];
-        }
-
-        // Check result.choice (common in form submissions)
-        const result = ctx['result'];
-        if (result && typeof result === 'object' && 'choice' in result && typeof (result as any)['choice'] === 'string') {
-            return (result as any)['choice'];
-        }
-
-        // Check message.choice
-        const message = ctx['message'];
-        if (message && typeof message === 'object' && 'choice' in message && typeof (message as any)['choice'] === 'string') {
-            return (message as any)['choice'];
-        }
-
-        // Check execute.choice
-        const execute = ctx['execute'];
-        if (execute && typeof execute === 'object' && 'choice' in execute && typeof (execute as any)['choice'] === 'string') {
-            return (execute as any)['choice'];
-        }
-
-        // Check task as shorthand for choice (when form had choices)
-        if (ctx['task'] && typeof ctx['task'] === 'string') {
-            // This follows the same logic as in buildSubmitResult function
-            // where task is interpreted as choice when there were choices in previous step
-            return ctx['task'];
-        }
-
-        return undefined;
+        return pickRouterSubmitChoiceFn(ctx);
     }
 }
 

@@ -1,6 +1,6 @@
 @echo off
 if not defined CMDEXTVERSION (
-    echo ERROR: Run from cmd.exe (double-click this file or: cmd /c "%~f0")
+    echo ERROR: Run from cmd.exe. Double-click this file or: cmd /c "%~f0"
     exit /b 1
 )
 chcp 65001 >nul
@@ -233,12 +233,6 @@ type %PID_FILE%
 echo.
 echo To stop all services, run: kill-all.bat
 echo.
-echo [Post-start] Full direct-tests suite (hub, vitest, router, e2e, gray-room, PS1 flows^)...
-echo   Faster: set A2A_POST_START_SKIP_HEAVY=1 before start-all (hub+vitest+router+e2e smoke^).
-powershell -ExecutionPolicy Bypass -File ".\tests\direct-tests\run-post-start-all.ps1"
-if errorlevel 1 (
-    echo [WARN] Post-start direct tests reported issues. See output above.
-) else (
-    echo [OK] Post-start direct tests passed.
-)
+echo Stack verification is manual: see PAPA-MAMA.md (Papa = direct, Mama = indirect^).
+echo   Example: powershell -ExecutionPolicy Bypass -File ".\tests\direct-tests\run-post-start-all.ps1"
 goto :EOF

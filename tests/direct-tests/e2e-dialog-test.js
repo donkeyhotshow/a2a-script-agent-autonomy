@@ -10,6 +10,12 @@
  * Env: A2A_SERVER_URL, CLIENT_API_URL
  * Optional: REQUIRE_ASYNC_PIPELINE=1 — fail if dialog /next does not go async or no in-flight /async seen
  *
+ * Fewer LLM round-trips / sessions (same assertions, merged runners):
+ *   E2E_DIRECT_LOW_LLM=1 — enables both merges below
+ *   E2E_DIRECT_MERGE_INVOKE=1 — one sync invoke replaces invokeSyncEnvelope + invokeHello + invokeSyncShape (3→1 LLM)
+ *   E2E_DIRECT_MERGE_CLIENT_SESSION_SCHEMA=1 — one session replaces asyncAfterCreate, waitingAsyncIdle, waitingGetSession,
+ *     waitingLatest, waitingMessagesExecute, sessionMessages, getSessionIncludeContext, nextResultMessage, nextTaskShorthand (9→1 session)
+ *
  * Full agent-mode dialog chain: node …/e2e-dialog-test.js --only=agentDialogWorkflow
  * (mode:agent → router → choice dialog → hello → thanks; mirrors test-dialog-flow.ps1, uses /async poll).
  * Router regression: --only=routerAgentNoLoop,routerAgentNoLoopTaskShorthand,routerAgentNoLoopUtf8Task,routerDialogNoLoop,routerDialogNoLoopTaskShorthand,routerWrongBeatMessage
@@ -206,6 +212,26 @@ async function postInvokeRaw(payload) {
   return { status: response.status, body };
 }
 
+/** Poll GET /api/v1/requests/:id/result until terminal status (async invoke). */
+async function pollServerRequestResult(promiseId, maxWaitMs = 120_000, stepMs = 500) {
+  const deadline = Date.now() + maxWaitMs;
+  const url = `${SERVER_URL}/api/v1/requests/${encodeURIComponent(promiseId)}/result`;
+  while (Date.now() < deadline) {
+    const r = await fetch(url);
+    if (!r.ok) {
+      await sleep(stepMs);
+      continue;
+    }
+    const wrap = await r.json();
+    const st = wrap?.data?.status;
+    if (st === 'completed' || st === 'failed' || st === 'cancelled') {
+      return wrap;
+    }
+    await sleep(stepMs);
+  }
+  return null;
+}
+
 // --- cases ---
 
 async function caseClientProjects() {
@@ -239,15 +265,21 @@ async function caseInvokeUnknownRootProperty400() {
 
 async function caseInvokeContextFollowupShape() {
   const { status, body } = await postInvokeRaw({
-    sync: true,
+    sync: false,
     context: {
       task: 'follow-up invoke schema',
       execution: { action: 'dialog', step: 'init' },
     },
   });
   assert(status === 200, `context-only invoke: ${status}`);
-  assert(body?.success !== false, 'follow-up invoke success');
-  const data = body?.data;
+  assert(body?.success !== false, 'follow-up invoke ack success');
+  const pid = body?.data?.promiseId;
+  assert(typeof pid === 'string' && pid.length > 0, 'follow-up async promiseId');
+  await recordServerPromise(pid);
+  const terminal = await pollServerRequestResult(pid);
+  assert(terminal, 'follow-up invoke poll timeout');
+  const data = terminal.data;
+  assert(data?.status === 'completed', `follow-up invoke terminal: ${data?.status} ${JSON.stringify(data?.error)}`);
   if (data?.execute && typeof data.execute === 'object') {
     assertExecuteSingleKeyOrDialogMessageForm(data.execute, 'follow-up data.execute');
   }
@@ -308,15 +340,19 @@ async function caseDialogModeSeed() {
   assert(ctx?.execution?.action === 'dialog', 'expected execution.action dialog');
 }
 
-async function caseAsyncEndpointAfterCreate() {
-  const { sessionId } = await createSession({ title: 'async probe' });
+/** @param {{ sessionId?: string }} [opts] */
+async function caseAsyncEndpointAfterCreate(opts = {}) {
+  const sessionId =
+    opts.sessionId ?? (await createSession({ title: 'async probe' })).sessionId;
   const j = await fetchJson(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
   assert(typeof j.asyncPending === 'boolean', 'expected asyncPending boolean');
 }
 
 /** GET /async when no in-flight promise — idle envelope (WEB_UI_PROTOCOL lifecycle). */
-async function caseWaitingAsyncIdleEnvelope() {
-  const { sessionId } = await createSession({ title: 'async idle envelope' });
+/** @param {{ sessionId?: string }} [opts] */
+async function caseWaitingAsyncIdleEnvelope(opts = {}) {
+  const sessionId =
+    opts.sessionId ?? (await createSession({ title: 'async idle envelope' })).sessionId;
   const j = await fetchJson(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
   assert(j.asyncPending === false, 'idle: asyncPending false');
   assert(j.completed === true, 'idle: completed true');
@@ -326,15 +362,19 @@ async function caseWaitingAsyncIdleEnvelope() {
 }
 
 /** GET /sessions/:id public DTO — loader fields + no transport id (WEB_UI_PROTOCOL). */
-async function caseWaitingGetSessionSchema() {
-  const { sessionId } = await createSession({ title: 'waiting GET session' });
+/** @param {{ sessionId?: string }} [opts] */
+async function caseWaitingGetSessionSchema(opts = {}) {
+  const sessionId =
+    opts.sessionId ?? (await createSession({ title: 'waiting GET session' })).sessionId;
   const body = await fetchJson(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}`);
   assertWaitingPublicSessionShape(unwrapPublicSession(body), 'GET session');
 }
 
 /** GET /sessions/:id/latest — nested session matches public loader schema. */
-async function caseWaitingLatestSessionSchema() {
-  const { sessionId } = await createSession({ title: 'waiting latest' });
+/** @param {{ sessionId?: string }} [opts] */
+async function caseWaitingLatestSessionSchema(opts = {}) {
+  const sessionId =
+    opts.sessionId ?? (await createSession({ title: 'waiting latest' })).sessionId;
   const j = await fetchJson(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/latest`);
   assert(j.session && typeof j.session === 'object', 'latest.session object');
   assertWaitingPublicSessionShape(j.session, 'GET latest.session');
@@ -418,8 +458,10 @@ async function caseWaitingAsyncPipeline() {
 }
 
 /** GET /messages?withExecute=1 — projected execute + loader fields (sessionRoutes). */
-async function caseWaitingMessagesWithExecute() {
-  const { sessionId } = await createSession({ title: 'messages withExecute' });
+/** @param {{ sessionId?: string }} [opts] */
+async function caseWaitingMessagesWithExecute(opts = {}) {
+  const sessionId =
+    opts.sessionId ?? (await createSession({ title: 'messages withExecute' })).sessionId;
   const j = await fetchJson(
     `${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/messages?withExecute=1`
   );
@@ -431,8 +473,10 @@ async function caseWaitingMessagesWithExecute() {
   assert(mps === null || typeof mps === 'string', 'withExecute: promiseStatus');
 }
 
-async function caseSessionMessagesEndpoint() {
-  const { sessionId } = await createSession({ title: 'messages probe' });
+/** @param {{ sessionId?: string }} [opts] */
+async function caseSessionMessagesEndpoint(opts = {}) {
+  const sessionId =
+    opts.sessionId ?? (await createSession({ title: 'messages probe' })).sessionId;
   const j = await fetchJson(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/messages`);
   assert(j.sessionId === sessionId, 'messages payload sessionId');
   assert(Array.isArray(j.messages), 'expected messages array');
@@ -442,14 +486,18 @@ async function caseSessionMessagesEndpoint() {
   assert(typeof j.currentStep === 'number', 'messages.currentStep number');
 }
 
-async function caseNextResultMessageShape() {
-  const { sessionId } = await createSession({ title: 'result.message' });
+/** @param {{ sessionId?: string }} [opts] */
+async function caseNextResultMessageShape(opts = {}) {
+  const sessionId =
+    opts.sessionId ?? (await createSession({ title: 'result.message' })).sessionId;
   const ack = await sendNext(sessionId, { result: { message: 'typed result.message' } });
   assert(ack != null, 'next ack');
 }
 
-async function caseGetSessionIncludeContextDev() {
-  const { sessionId } = await createSession({ title: 'includeContext' });
+/** @param {{ sessionId?: string }} [opts] */
+async function caseGetSessionIncludeContextDev(opts = {}) {
+  const sessionId =
+    opts.sessionId ?? (await createSession({ title: 'includeContext' })).sessionId;
   const response = await fetch(
     `${CLIENT_API_URL}/api/a2a/sessions/${sessionId}?includeContext=1`
   );
@@ -912,8 +960,10 @@ async function caseAgentSeededSession() {
   assert(action === 'agent', `expected execution.action agent, got ${action}`);
 }
 
-async function caseNextTaskShorthand() {
-  const { sessionId } = await createSession({ title: 'Shorthand', task: 'ping' });
+/** @param {{ sessionId?: string }} [opts] */
+async function caseNextTaskShorthand(opts = {}) {
+  const sessionId =
+    opts.sessionId ?? (await createSession({ title: 'Shorthand', task: 'ping' })).sessionId;
   assert(sessionId, 'session id');
   const ack = await sendNext(sessionId, { task: 'second line' });
   assert(ack != null, 'next ack');
@@ -927,6 +977,89 @@ async function caseInvokeSyncShape() {
     const keys = Object.keys(data.execute).filter((k) => !k.startsWith('_'));
     assert(keys.length === 1, `execute must have exactly one key, got: ${keys.join(',')}`);
   }
+}
+
+/** Single sync invoke: assertions from invokeSyncEnvelope + invokeHello + invokeSyncShape. */
+async function caseMergedInvokeHelloEnvelopeShape() {
+  const invokeResult = await invokeDirect('Hello');
+  assert(invokeResult.success === true, 'sync envelope success');
+  assert(invokeResult.success !== false, 'invoke should not report success=false');
+  const data = invokeResult.data;
+  assert(data && data.sync === true, 'data.sync true');
+  assert(
+    data.execute !== undefined || data.message !== undefined || data.context !== undefined,
+    'data has execute, message, or context'
+  );
+  if (data?.execute) {
+    assertSingleActionKey(data.execute, 'invoke data.execute');
+  }
+  if (data?.result) {
+    assertSingleActionKey(data.result, 'invoke data.result');
+  }
+  if (data.execute && typeof data.execute === 'object') {
+    const keys = Object.keys(data.execute).filter((k) => !k.startsWith('_'));
+    assert(keys.length === 1, `execute must have exactly one key, got: ${keys.join(',')}`);
+  }
+}
+
+/** One Client API session: async/idle/GET/latest/messages/includeContext + two /next shapes. */
+async function caseMergedClientSessionSchema() {
+  const { sessionId } = await createSession({
+    title: 'merged client API schema',
+    task: 'ping',
+  });
+  assert(sessionId, 'session id');
+  const o = { sessionId };
+  await caseAsyncEndpointAfterCreate(o);
+  await caseWaitingAsyncIdleEnvelope(o);
+  await caseWaitingGetSessionSchema(o);
+  await caseWaitingLatestSessionSchema(o);
+  await caseWaitingMessagesWithExecute(o);
+  await caseSessionMessagesEndpoint(o);
+  await caseGetSessionIncludeContextDev(o);
+  await caseNextResultMessageShape(o);
+  await caseNextTaskShorthand(o);
+}
+
+function collectMergeFlags() {
+  const low = process.env.E2E_DIRECT_LOW_LLM === '1';
+  return {
+    mergeInvoke: low || process.env.E2E_DIRECT_MERGE_INVOKE === '1',
+    mergeClientSessionSchema:
+      low || process.env.E2E_DIRECT_MERGE_CLIENT_SESSION_SCHEMA === '1',
+  };
+}
+
+/** @param {string[] | null} only */
+function buildEffectiveOrder(only) {
+  if (only && only.length) return only;
+  const { mergeInvoke, mergeClientSessionSchema } = collectMergeFlags();
+  let order = [...DEFAULT_ORDER];
+  if (mergeInvoke) {
+    const drop = new Set(['invokeSyncEnvelope', 'invokeHello', 'invokeSyncShape']);
+    order = order.filter((id) => !drop.has(id));
+    const afterCtx = order.indexOf('invokeContextFollowup');
+    const ins = afterCtx >= 0 ? afterCtx + 1 : 0;
+    order.splice(ins, 0, 'mergedInvokeHelloEnvelopeShape');
+  }
+  if (mergeClientSessionSchema) {
+    const drop = new Set([
+      'asyncAfterCreate',
+      'waitingAsyncIdle',
+      'waitingGetSession',
+      'waitingLatest',
+      'waitingMessagesExecute',
+      'sessionMessages',
+      'getSessionIncludeContext',
+      'nextResultMessage',
+      'nextTaskShorthand',
+    ]);
+    order = order.filter((id) => !drop.has(id));
+    const anchor = order.indexOf('waitingNextAck');
+    const ins = anchor >= 0 ? anchor : 0;
+    order.splice(ins, 0, 'mergedClientSessionSchema');
+  }
+  return order;
 }
 
 const CASE_REGISTRY = {
@@ -964,13 +1097,18 @@ const CASE_REGISTRY = {
   },
   invokeContextFollowup: {
     name: 'invokeContextFollowup',
-    desc: 'POST /invoke context+execution only (sync)',
+    desc: 'POST /invoke context+execution only (async + poll /requests/:id/result)',
     run: caseInvokeContextFollowupShape,
   },
   invokeSyncEnvelope: {
     name: 'invokeSyncEnvelope',
     desc: 'sync invoke response: data.sync + payload fields',
     run: caseInvokeSyncResponseEnvelope,
+  },
+  mergedInvokeHelloEnvelopeShape: {
+    name: 'mergedInvokeHelloEnvelopeShape',
+    desc: 'single invoke: envelope + hello + execute single-key (merge flags)',
+    run: caseMergedInvokeHelloEnvelopeShape,
   },
   clientSessionsList: {
     name: 'clientSessionsList',
@@ -1098,6 +1236,11 @@ const CASE_REGISTRY = {
     desc: '/next with top-level task shorthand',
     run: caseNextTaskShorthand,
   },
+  mergedClientSessionSchema: {
+    name: 'mergedClientSessionSchema',
+    desc: 'one session: async+idle+GET+messages+includeContext+result.message+task shorthand',
+    run: caseMergedClientSessionSchema,
+  },
 };
 
 const DEFAULT_ORDER = [
@@ -1149,7 +1292,7 @@ async function main() {
     return;
   }
 
-  const order = only && only.length ? only : DEFAULT_ORDER;
+  const order = buildEffectiveOrder(only);
   const unknown = order.filter((id) => !CASE_REGISTRY[id]);
   if (unknown.length) {
     console.error('Unknown case(s):', unknown.join(', '));
@@ -1157,6 +1300,18 @@ async function main() {
     process.exit(1);
   }
 
+  const flags = collectMergeFlags();
+  if (flags.mergeInvoke || flags.mergeClientSessionSchema) {
+    console.log(
+      '[e2e-dialog-test] merge:',
+      [
+        flags.mergeInvoke && 'invoke(3→1)',
+        flags.mergeClientSessionSchema && 'client-session-schema(9→1)',
+      ]
+        .filter(Boolean)
+        .join(', ')
+    );
+  }
   console.log('='.repeat(60));
   console.log('Direct E2E cases:', order.join(', '));
   console.log('='.repeat(60));

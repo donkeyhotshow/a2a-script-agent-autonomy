@@ -147,7 +147,9 @@ export function saveNewSession(cwd, session) {
   if (session.context) {
     const stepDir = getNewStepDir(cwd, sessionId, stepNum);
     const metaFile = path.join(stepDir, 'server-response.json');
-    if (!fs.existsSync(metaFile)) {
+    // Do not write a stub while async is pending — dialog-flow already saved server-promise.json;
+    // a stub here hides the real invoke result until poll completes (and may never be overwritten).
+    if (!fs.existsSync(metaFile) && !session.promiseId) {
       const stepData = {
         step: stepNum,
         context: session.context,

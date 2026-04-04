@@ -10,6 +10,7 @@ import {
     extractA2aExecute,
     mergeResponseContext,
     sanitizeContextForServer,
+    sanitizeInvokeBodyForA2aUpstream,
 } from './a2a-invoke-builders.js';
 import { parseA2aInvokeResponse } from '../../client-api-envelope.js';
 import { getMaxRagChainDepth } from '../../../../../shared/agent-rag-chain-depth.mjs';
@@ -92,7 +93,10 @@ export async function applyAgentRagChainAfterSyncInvoke(options: {
         stepNum += 1;
 
         const contextForServer = sanitizeContextForServer(ctx);
-        const body = { context: contextForServer, result: { 'rag-search': ragResult } };
+        const body = sanitizeInvokeBodyForA2aUpstream({
+            context: contextForServer,
+            result: { 'rag-search': ragResult },
+        }) as Record<string, unknown>;
         await saveRequestToServer(sessionId, stepNum, { step: stepNum, ...body });
 
         const upstream = await serverFetch('POST', serverBase, '/api/v1/invoke', body);

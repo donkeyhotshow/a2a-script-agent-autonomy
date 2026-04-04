@@ -9,9 +9,10 @@ import {logger} from '../../../utils/logger.js';
 import {runPromptsTransform} from '../../../transform/index.js';
 import {fetchLlmResponse, pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
 import {requestService} from '../request/request.service.js';
+import {resolveMainDialogLlmModelFromEnv} from './llm-model-resolver.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
-const DEFAULT_MODEL = 'qwen3:8b';
+const DEFAULT_MODEL = resolveMainDialogLlmModelFromEnv();
 
 export interface LlmCallOptions {
     promptsTransformsPath: string;

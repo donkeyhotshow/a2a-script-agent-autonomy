@@ -67,14 +67,57 @@ export function mergeResponseContext(fallbackContext = {}, serverResponse = null
     return base;
 }
 
+/** Client storage session ids (`sess_*`) must not be sent as `session_id` — only `srv_sess_*` from server is valid for correlation. */
+function stripClientStorageSessionIdField(obj) {
+    const sid = obj.session_id;
+    if (typeof sid === 'string' && sid.startsWith('sess_')) {
+        delete obj.session_id;
+    }
+}
+
 export function sanitizeContextForServer(context) {
     if (!context || typeof context !== 'object' || Array.isArray(context)) {
         return {};
     }
     const safe = {...context};
     delete safe.clientSessionId;
+    // Client API storage id + project scope — required on session.context locally, never sent to stateless server.
+    delete safe.sessionId;
+    delete safe.projectId;
+    delete safe.projectRoot;
+    stripClientStorageSessionIdField(safe);
+
+    const nested = safe.context;
+    if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+        const nc = {...nested};
+        delete nc.clientSessionId;
+        delete nc.sessionId;
+        delete nc.projectId;
+        delete nc.projectRoot;
+        stripClientStorageSessionIdField(nc);
+        safe.context = nc;
+    }
+
     if (!Array.isArray(safe.history)) {
         safe.history = [];
     }
     return safe;
+}
+
+/**
+ * Full POST /api/v1/invoke body: sanitize `context` and drop client-only top-level keys.
+ * Use for every upstream invoke (Vite plugin + SDK).
+ */
+export function sanitizeInvokeBodyForA2aUpstream(body) {
+    if (!body || typeof body !== 'object' || Array.isArray(body)) {
+        return body;
+    }
+    const out = {...body};
+    delete out.sessionId;
+    delete out.projectId;
+    delete out.projectRoot;
+    if (out.context != null && typeof out.context === 'object' && !Array.isArray(out.context)) {
+        out.context = sanitizeContextForServer(out.context);
+    }
+    return out;
 }
