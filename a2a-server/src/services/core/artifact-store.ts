@@ -56,7 +56,8 @@ export type ArtifactType =
   | 'SKILL_ORACLE_TEST'
   | 'COGNITION_PRIORS'
   | 'RAG_LAYER_TRACE'
-  | 'VERIFICATION_RESULT';
+  | 'VERIFICATION_RESULT'
+  | 'DESIGN_MANIFEST';
 
 /** Unique identifier for the component writing an artifact */
 export type ComponentId = string;
@@ -102,6 +103,7 @@ export const TTL_MS: Partial<Record<ArtifactType, number>> = {
   COGNITION_PRIORS:        1  * 24 * 60 * 60 * 1_000,  // 1 day
   RAG_LAYER_TRACE:         1  * 24 * 60 * 60 * 1_000,  // 1 day
   VERIFICATION_RESULT:     7  * 24 * 60 * 60 * 1_000,  // 7 days
+  DESIGN_MANIFEST:         30 * 24 * 60 * 60 * 1_000,  // 30 days — reusable across sessions
 };
 
 // ── Stored artifact shape ─────────────────────────────────────────────────────
