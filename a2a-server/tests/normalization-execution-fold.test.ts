@@ -2,6 +2,7 @@ import {describe, expect, it} from 'vitest';
 import {
     normalizeContext,
     resolveExecution,
+    resolveTransformSchema,
 } from '../src/services/core/request-processor/normalization.js';
 
 describe('resolveExecution', () => {
@@ -47,5 +48,26 @@ describe('normalizeContext foldRootIntoNestedContext', () => {
             context: {execution: {action: 'dialog'}},
         });
         expect((out['context'] as Record<string, unknown>)['history']).toEqual(h);
+    });
+});
+
+describe('dialog execution.step init (invoke metadata task)', () => {
+    it('does not promote root task into result.message', () => {
+        const out = normalizeContext({
+            task: 'follow-up invoke schema',
+            execution: {action: 'dialog', step: 'init'},
+        });
+        const res = out['result'] as Record<string, unknown> | undefined;
+        expect(res?.message).toBeUndefined();
+    });
+
+    it('resolveTransformSchema returns dialog schema without user message', () => {
+        const out = normalizeContext({
+            task: 'follow-up invoke schema',
+            execution: {action: 'dialog', step: 'init'},
+        });
+        const schema = resolveTransformSchema(out);
+        expect(schema).toBeTruthy();
+        expect(String(schema).startsWith('dialog')).toBe(true);
     });
 });

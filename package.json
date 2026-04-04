@@ -49,7 +49,8 @@
         "verify:gray-room": "node tests/direct-tests/validators/verify-gray-room-state.mjs",
         "audit:sim-choice-descriptions": "node tests/direct-tests/validators/audit-sim-choice-descriptions.mjs",
         "mama:audit-execute-shape": "node tests/indirect-tests/validators/audit-execute-shape-simulations.mjs",
-        "audit:sticky-router": "node tests/indirect-tests/validators/audit-sticky-router.mjs"
+        "audit:sticky-router": "node tests/indirect-tests/validators/audit-sticky-router.mjs",
+        "docs:system-errors": "node scripts/generate-system-errors-docs.mjs"
     },
     "devDependencies": {
         "@types/node": "^20.11.0",

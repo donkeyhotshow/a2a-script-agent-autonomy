@@ -46,6 +46,10 @@ describe('assertWebUiExecuteProjection', () => {
       /extra: read-file/
     );
   });
+
+  it('allows wait (sync invoke chain / loading UX)', () => {
+    assertWebUiExecuteProjection({ wait: { message: 'Working…' } }, 'x');
+  });
 });
 
 describe('assertExecuteSingleKeyOrDialogMessageForm', () => {

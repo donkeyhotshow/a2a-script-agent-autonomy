@@ -20,6 +20,7 @@ Guidance for agents working in this repository.
 | **Schema debugging start point** | **[`tests/direct-tests/README.md`](tests/direct-tests/README.md)** — reproduce shape issues here first, then sims/e2e |
 | **Offline validators (LLM / execute shape, sessions, sims)** | **[`tests/direct-tests/validators/README.md`](tests/direct-tests/validators/README.md)** — scripts flag contract mistakes (e.g. top-level `message` + tool vs `execute.message`); run from repo root: `scan-promise-bodies`, `scan-session-responses`, `verify:gray-room`, `audit:sim-choice-descriptions`, `sim:check-md` |
 | **Papa–Mama gang / battle recon** | **`npm run test:gang`** — Mama then Papa (live stack). **`npm run test:recon`** — strict artifacts + `sim:validate:all:contract` + `REQUIRE_ASYNC_PIPELINE` on E2E; **`npm run test:recon:mama`** — offline only. CLI: `node tests/papa-mama-gang.mjs --help`. [`PAPA-MAMA.md`](PAPA-MAMA.md), [`GLOSSARY.md`](GLOSSARY.md) (*Battle recon*) |
+| **System errors index (one folder)** | **[`docs/system-errors/README.md`](docs/system-errors/README.md)** — classifier, transform codes, LLM shape codes, validators / gates |
 | Imports | **Server / NodeNext:** `.js` on relative imports. **`premium-ui`:** `@/` (Vite) — [`.cursor/rules/code-hierarchy.mdc`](.cursor/rules/code-hierarchy.mdc) |
 | Test ENCRYPTION_KEY | Exactly 32 characters |
 | Test DB | `a2a_test` (not `a2a_server`) |

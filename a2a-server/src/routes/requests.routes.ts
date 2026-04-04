@@ -54,6 +54,42 @@ export function filterResponse(result: Record<string, unknown>): Record<string, 
     return filtered;
 }
 
+/** Deep-merge workbench.slots so grayRoom from persisted request context is not dropped. */
+function mergeWorkbenchSlotsForPoll(a: unknown, b: unknown): Record<string, unknown> {
+    const fa = a && typeof a === 'object' && !Array.isArray(a) ? (a as Record<string, unknown>) : {};
+    const fb = b && typeof b === 'object' && !Array.isArray(b) ? (b as Record<string, unknown>) : {};
+    const sa = (fa.slots as Record<string, unknown>) || {};
+    const sb = (fb.slots as Record<string, unknown>) || {};
+    return {...fa, ...fb, slots: {...sa, ...sb}};
+}
+
+/**
+ * `updateStatus` merges `result.context` into `RequestResult.context`. Some paths may differ slightly
+ * from `result.context` on the stored `result` blob; pollers (Client API async) must see the union
+ * so `workbench.slots.grayRoom` reaches session merge (e2e redGrayRoom).
+ */
+export function mergePollContextWithPersisted(
+    responseData: Record<string, unknown>,
+    persisted: Record<string, unknown> | undefined
+): void {
+    if (!persisted || typeof persisted !== 'object' || Array.isArray(persisted)) return;
+    const cur = responseData.context;
+    const merged: Record<string, unknown> =
+        cur && typeof cur === 'object' && !Array.isArray(cur) ? {...(cur as Record<string, unknown>)} : {};
+
+    for (const key of POLL_CONTEXT_KEYS) {
+        if (persisted[key] === undefined) continue;
+        if (key === 'workbench') {
+            merged.workbench = mergeWorkbenchSlotsForPoll(merged.workbench, persisted.workbench);
+        } else if (merged[key] === undefined) {
+            merged[key] = persisted[key];
+        }
+    }
+    if (Object.keys(merged).length > 0) {
+        responseData.context = merged;
+    }
+}
+
 /**
  * GET /requests/status?ids=id1,id2,id3
  * Batch status for multiple promiseIds. Client can poll several sessions in one request.
@@ -154,6 +190,7 @@ router.get('/:promiseId/result', async (req: Request, res: Response, next: NextF
         if (fullResult.result) {
             Object.assign(responseData, filterResponse(fullResult.result as Record<string, unknown>));
         }
+        mergePollContextWithPersisted(responseData, fullResult.context as Record<string, unknown> | undefined);
 
         if (fullResult.error) {
             const fe = fullResult.error as Record<string, unknown>;
