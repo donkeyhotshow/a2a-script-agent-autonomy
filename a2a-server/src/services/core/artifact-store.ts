@@ -50,7 +50,8 @@ export type ArtifactType =
   | 'REPLAN_DECISION'
   | 'JUDGMENT_RESULT'
   | 'POLICY_VIOLATION'
-  | 'VISION_QA_RESULT';
+  | 'VISION_QA_RESULT'
+  | 'DESIGN_MANIFEST';
 
 /** Unique identifier for the component writing an artifact */
 export type ComponentId = string;
@@ -90,6 +91,7 @@ export const TTL_MS: Partial<Record<ArtifactType, number>> = {
   JUDGMENT_RESULT:         14 * 24 * 60 * 60 * 1_000,  // 14 days
   POLICY_VIOLATION:        14 * 24 * 60 * 60 * 1_000,  // 14 days
   VISION_QA_RESULT:        14 * 24 * 60 * 60 * 1_000,  // 14 days
+  DESIGN_MANIFEST:         30 * 24 * 60 * 60 * 1_000,  // 30 days — reusable across sessions
 };
 
 // ── Stored artifact shape ─────────────────────────────────────────────────────
