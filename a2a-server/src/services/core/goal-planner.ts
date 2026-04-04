@@ -16,6 +16,7 @@
 
 import { randomUUID } from 'crypto';
 import { ArtifactStore } from './artifact-store.js';
+import { TicketSync } from './ticket-sync.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -64,7 +65,10 @@ export interface PlanningContext {
 const COMPONENT_ID = 'goal-planner';
 
 export class GoalPlanner {
-  constructor(private readonly artifactStore: ArtifactStore) {
+  constructor(
+    private readonly artifactStore: ArtifactStore,
+    private readonly ticketSync?: TicketSync,
+  ) {
     artifactStore.registerWriter('EXECUTION_PLAN', COMPONENT_ID);
     artifactStore.registerWriter('REPLAN_DECISION', COMPONENT_ID);
   }
@@ -115,6 +119,7 @@ export class GoalPlanner {
       COMPONENT_ID,
     );
 
+    this.ticketSync?.writePlan(plan);
     return plan;
   }
 
@@ -195,7 +200,56 @@ export class GoalPlanner {
       COMPONENT_ID,
     );
 
+    this.ticketSync?.writePlan(newPlan);
     return newPlan;
+  }
+
+  // ── markGoalActive() ───────────────────────────────────────────────────────
+
+  /**
+   * Signal that a specific sub-goal has started executing.
+   * Updates `tasks/active/CURRENT_TICKET.md` via TicketSync (fire-and-forget).
+   * Returns a new plan with the goal status updated to 'active'.
+   */
+  markGoalActive(plan: ExecutionPlan, goalId: string): ExecutionPlan {
+    if (this.ticketSync) {
+      return this.ticketSync.activateGoal(plan, goalId);
+    }
+    return {
+      ...plan,
+      sub_goals: plan.sub_goals.map((g) =>
+        g.id === goalId ? { ...g, status: 'active' as GoalStatus } : g,
+      ),
+    };
+  }
+
+  // ── markGoalDone() ─────────────────────────────────────────────────────────
+
+  /**
+   * Signal that a specific sub-goal has completed successfully.
+   * Updates `tasks/active/CURRENT_TICKET.md` via TicketSync (fire-and-forget).
+   * Returns a new plan with the goal status updated to 'done'.
+   */
+  markGoalDone(plan: ExecutionPlan, goalId: string): ExecutionPlan {
+    if (this.ticketSync) {
+      return this.ticketSync.completeGoal(plan, goalId);
+    }
+    return {
+      ...plan,
+      sub_goals: plan.sub_goals.map((g) =>
+        g.id === goalId ? { ...g, status: 'done' as GoalStatus } : g,
+      ),
+    };
+  }
+
+  // ── finalizePlan() ─────────────────────────────────────────────────────────
+
+  /**
+   * Mark the entire plan as complete: moves the active ticket to `tasks/done/`
+   * and archives `CURRENT_TICKET.md`. Fire-and-forget.
+   */
+  finalizePlan(plan: ExecutionPlan): void {
+    this.ticketSync?.completePlan(plan);
   }
 
   // ── assessProgress() ───────────────────────────────────────────────────────
