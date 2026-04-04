@@ -1,0 +1,17 @@
+{
+  "context": {
+    "session_id": "srv_sess_63a4eea7-a8b4-4fb9-a886-8c25b4028d57",
+    "task": "fix vue imports",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    },
+    "result": {
+      "choice": "fix-vue-imports"
+    },
+    "choice_id": "fix-vue-imports"
+  },
+  "execute": {
+    "message": "Вибрано: fix-vue-imports"
+  }
+}

@@ -251,6 +251,22 @@ default: `.carrier/reports/` (e.g. `architecture-report.md`).
 | `edit-patch`      | ❌ Нет                             | ✅ Да                    |
 | `run-script`      | ❌ Нет                             | ✅ Да                    |
 
+### `execute.wait` — клиентская концепция
+
+**Сервер НЕ возвращает `execute.wait`.** Это концепция клиентского UI:
+
+- Сервер возвращает `promiseId` → клиент опрашивает статус
+- Пока статус `processing` → клиент сам рендерит индикатор ожидания
+- Никакого `execute.wait` в ответе сервера нет и не будет
+
+```json
+// Правильный async-ответ сервера (нет sync-флага):
+{ "promiseId": "prom_123", "status": "processing" }
+
+// Клиент сам решает показывать loader на основе polling:
+GET /api/v1/requests/{promiseId}/result → { "status": "processing" } → UI spinner
+```
+
 **Практика:**
 
 - Чтобы показать сообщение в диалоге на вебе - добавляй `message` в `execute`

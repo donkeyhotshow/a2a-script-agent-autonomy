@@ -4,8 +4,10 @@ Two buckets for **reliable** checks without mixing “is the port up?” with �
 
 | Role | Folder (normative home) | What goes here |
 |------|-------------------------|----------------|
-| **Папа (Papa) — direct** | [`tests/direct-tests/`](tests/direct-tests/) | Anything that needs a **running stack**: HTTP to Client API and/or server, session `create` / `next` / `async`, invoke payloads, E2E dialog runners, hub **reachability** scripts. Failures mean wiring, runtime, or live contract on the wire. |
-| **Мама (Mama) — indirect** | [`tests/indirect-tests/`](tests/indirect-tests/) | Anything **offline**: validators over saved JSON/MD, sim `sim:lint` / `sim:check-md`, schema-only Vitest, replay fixtures, static audits. No Ollama required. Failures mean stored artifacts or spec drift. |
+| **Папа (Papa) — API contour** | [`tests/direct-tests/`](tests/direct-tests/) | Тесты **через тот же контур, что и оператор/UI**: Client API (`/api/a2a/…`), сессии `create` / `next` / `async`, E2E-раннеры, hub reachability. Failures = проводка, рантайм, контракт «на проводе» у внешнего API. |
+| **Мама (Mama) — глубина и оффлайн** | [`tests/indirect-tests/`](tests/indirect-tests/) + [`tests/proba-servera/`](tests/proba-servera/) | **Оффлайн:** валидаторы по JSON/MD, `sim:lint` / `sim:check-md`, Vitest по схеме, red/gray room. **Глубина (invoke без HTTP):** [`tests/proba-servera/`](tests/proba-servera/) — вызов `invoke()` из `a2a-server` in-process (как `scripts/run-simulation.ts`), `sync: true`, сравнение **структуры ключей** `{ context, execute }` с `expected.json`. Поднятый `:3000` **не нужен**. Опционально: `PROBA_SERVERA_USE_HTTP=1` — старый путь через `fetch` к `/api/v1/invoke`. Запуск: `npm run validate:proba-servera`. При падении — `error-report.md` в папке кейса. |
+
+**Коротко:** Папа бьёт по **публичному API-контуру** (как клиент). Мама в **глубине** проверяет контракт invoke и статику; `proba-servera` обходит HTTP и гоняет тот же код, что маршрут `/invoke`.
 
 ## Mama: Red room vs Gray room (vertical vs horizontal)
 
@@ -54,8 +56,8 @@ npm run test:gang
 
 2. **Смена Папы (Papa Shift):**
    - Проверяет, запущен ли живой стек (`http://localhost:3000/health`).
-   - Если стек жив, запускает `e2e-dialog-test.js` (с флагом `E2E_DIRECT_LOW_LLM=1` для экономии токенов).
-   - Проверяет реальную интеграцию и вызовы LLM.
+   - Если стек жив — `e2e-dialog-test.js` (с флагом `E2E_DIRECT_LOW_LLM=1` для экономии токенов): Client API / сессии / LLM.
+   - **Proba-servera** уже в смене Мамы (in-process invoke, без HTTP).
 
 Если вам нужно запустить их по отдельности:
 
@@ -75,6 +77,12 @@ npm run test:gang
    # Or subset: node tests/direct-tests/e2e-dialog-test.js --only=routerAgentNoLoop
    ```
    See [`tests/direct-tests/README.md`](tests/direct-tests/README.md).
+
+## Invoke structure (Mama depth, in-process)
+
+| Script | Checks | Typical failure |
+|--------|--------|---------------|
+| `npm run validate:proba-servera` | Per-case `input.json` → `invoke()` (sync) → key tree vs `expected.json` | Wrong `execute` action key, missing `workbench`, router shape drift |
 
 ## Indirect test inventory (Mama)
 

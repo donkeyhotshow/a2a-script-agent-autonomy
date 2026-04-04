@@ -1,6 +1,6 @@
-import { OrchestratorState } from './orchestrator-kernel.js';
-import { llmService } from '../../llm/llm-service.js';
-import { logger } from '../../../utils/logger.js';
+import type { OrchestratorState } from './orchestrator-kernel.js';
+import { llmService } from '../llm/llm-service.js';
+import { logger } from '../../utils/logger.js';
 
 export enum AgentRole {
     ARCHITECT = 'ARCHITECT',
@@ -57,11 +57,11 @@ If they disagree, you make the final call or suggest a compromise path.
      */
     getRoleForState(state: OrchestratorState): AgentRole {
         switch (state) {
-            case OrchestratorState.SYNTHESIZING:
-            case OrchestratorState.ENRICHING:
+            case 'SYNTHESIZING':
+            case 'ENRICHING':
                 return AgentRole.ARCHITECT;
-            case OrchestratorState.EXECUTING:
-            case OrchestratorState.SELF_CORRECTING:
+            case 'EXECUTING':
+            case 'SELF_CORRECTING':
                 return AgentRole.IMPLEMENTER;
             case 'REVIEWING':
             case 'SIEGE_REVIEW':
@@ -99,7 +99,7 @@ Please review the context and execution results provided. You must output valid 
             const chatResult = await llmService.chat({
                 messages: [{ role: 'user', content: reviewReq }]
             });
-            const resultText = chatResult.message.content;
+            const resultText = chatResult.content;
             const jsonStr = resultText.substring(resultText.indexOf('{'), resultText.lastIndexOf('}') + 1);
             const parsed = JSON.parse(jsonStr);
             return {

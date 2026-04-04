@@ -4,8 +4,8 @@
  * Handles processing of action execution approvals
  */
 
-import {logger} from '../../../utils/logger.js';
-import {actionProcessor} from '../../../actions/action-processor.js';
+import {logger} from '../../../../utils/logger.js';
+import {actionProcessor} from '../../../../actions/action-processor.js';
 import type {
     RequestContext,
     ProcessResult,

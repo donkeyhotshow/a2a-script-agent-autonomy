@@ -1,5 +1,5 @@
-import { createLogger } from '../utils/logger.js';
-import { llmService } from '../../llm/llm-service.js';
+import { createLogger } from '../../utils/logger.js';
+import { llmService } from '../llm/llm-service.js';
 
 const logger = createLogger('IntentGate');
 

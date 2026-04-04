@@ -1,0 +1,19 @@
+{
+  "hookId": "cursor_agent_signal_1775271602959",
+  "type": "cursor_agent_signal",
+  "status": "heartbeat",
+  "message": "Scheduled IDE agent wake: reconcile DEV_STATE (root + modules), tasks/pending/, AGENTS empty-queue protocol; optional npm run gang:orient-session when stack is up.",
+  "intervalMinutes": 10,
+  "createdAt": "2026-04-04T03:00:02.957Z",
+  "suggestedActions": [
+    "Read this file + hooks/CURSOR_AGENT_SIGNAL.md",
+    "Prune/discover/write per AGENTS.md if queue looks empty",
+    "Run npm run test:gang before deep changes when unsure; npm run test:recon:mama (offline) or test:recon (stack up) for stricter recon"
+  ],
+  "references": {
+    "agents": "AGENTS.md",
+    "papaMama": "PAPA-MAMA.md",
+    "orientScript": "tests/gang-orient-session.mjs",
+    "fullSpectrum": "START-FULL-SPECTRUM.md"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "context": {
+    "task": "string",
+    "execution": {
+      "action": "agent",
+      "step": "string"
+    }
+  },
+  "execute": {}
+}

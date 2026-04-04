@@ -1,0 +1,15 @@
+{
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "result": {
+    "message": "Hello, this is a test message"
+  }
+}

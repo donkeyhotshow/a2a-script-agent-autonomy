@@ -117,10 +117,7 @@ async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> 
             const ex = pr?.execute as Record<string, unknown> | undefined;
             return {
                 sync: true,
-                execute:
-                    ex && typeof ex === 'object'
-                        ? ex
-                        : ({wait: {message: 'Request failed'}} as Record<string, unknown>),
+                execute: ex && typeof ex === 'object' ? ex : {},
                 context: pr?.context as Record<string, unknown> | undefined,
                 message: syncFailureUserMessage(terminal),
             };
@@ -136,12 +133,11 @@ async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> 
         }
 
         const ex = pr?.execute as Record<string, unknown> | undefined;
+        // Server NEVER returns execute.wait — client detects async (no sync flag)
+        // and renders waiting UI based on promise status polling.
         return {
             sync: true,
-            execute:
-                ex && typeof ex === 'object'
-                    ? ex
-                    : ({wait: {message: 'Working…'}} as Record<string, unknown>),
+            execute: ex && typeof ex === 'object' ? ex : {},
             context: pr?.context as Record<string, unknown> | undefined,
         };
     }

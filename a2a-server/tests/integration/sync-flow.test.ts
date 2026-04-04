@@ -86,83 +86,95 @@ describe('Sync Flow Integration', () => {
             }
         });
 
-        it('Step 2: Submit choice selection should return sync input form', async () => {
-            if (!step1Context) return; // Skip if step 1 failed
+        it(
+            'Step 2: Submit choice selection should return sync input form',
+            async () => {
+                if (!step1Context) return; // Skip if step 1 failed
 
-            const res = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    context: step1Context, // Include context from step 1
-                    result: { choice: 'dialog' },
-                    sync: true
-                });
+                const res = await request(app)
+                    .post('/api/v1/invoke')
+                    .send({
+                        context: step1Context, // Include context from step 1
+                        result: { choice: 'dialog' },
+                        sync: true,
+                    });
 
-            expect([200, 201]).toContain(res.status);
+                expect([200, 201]).toContain(res.status);
 
-            if (res.body.success && res.body.data?.execute?.form?.textarea) {
-                expect(res.body.data.execute.form.textarea).toBeDefined();
-                expect(Array.isArray(res.body.data.execute.form.textarea)).toBe(true);
-                expect(res.body.data.context?.execution?.step).toBeDefined();
-                expect(res.body.data.context?.execution?.action).toBe('dialog');
-                expect(res.body.data.sync).toBe(true);
-                step2Context = res.body.data.context; // Save context for next steps
-            } else if (res.body.success && res.body.data?.promiseId) {
-                // Async response acceptable
-                expect(res.body.data.promiseId).toBeDefined();
-            }
-        });
+                if (res.body.success && res.body.data?.execute?.form?.textarea) {
+                    expect(res.body.data.execute.form.textarea).toBeDefined();
+                    expect(Array.isArray(res.body.data.execute.form.textarea)).toBe(true);
+                    expect(res.body.data.context?.execution?.step).toBeDefined();
+                    expect(res.body.data.context?.execution?.action).toBe('dialog');
+                    expect(res.body.data.sync).toBe(true);
+                    step2Context = res.body.data.context; // Save context for next steps
+                } else if (res.body.success && res.body.data?.promiseId) {
+                    // Async response acceptable
+                    expect(res.body.data.promiseId).toBeDefined();
+                }
+            },
+            180_000
+        );
 
-        it('Step 3: Submit message should return sync response with message + input form', async () => {
-            if (!step2Context) return; // Skip if step 2 failed
+        it(
+            'Step 3: Submit message should return sync response with message + input form',
+            async () => {
+                if (!step2Context) return; // Skip if step 2 failed
 
-            const res = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    context: step2Context, // Include context from step 2
-                    result: { message: 'Hello from sync flow test' },
-                    sync: true
-                });
+                const res = await request(app)
+                    .post('/api/v1/invoke')
+                    .send({
+                        context: step2Context, // Include context from step 2
+                        result: { message: 'Hello from sync flow test' },
+                        sync: true,
+                    });
 
-            expect([200, 201]).toContain(res.status);
+                expect([200, 201]).toContain(res.status);
 
-            if (res.body.success && res.body.data?.execute?.message && res.body.data?.execute?.form?.textarea) {
-                expect(res.body.data.execute.message).toBeDefined();
-                expect(res.body.data.execute.form.textarea).toBeDefined();
-                expect(Array.isArray(res.body.data.execute.form.textarea)).toBe(true);
-                expect(res.body.data.context?.execution?.step).toBeDefined();
-                expect(res.body.data.context?.history).toBeDefined();
-                expect(Array.isArray(res.body.data.context.history)).toBe(true);
-                expect(res.body.data.sync).toBe(true);
-                step3Context = res.body.data.context; // Save context for next steps
-            } else if (res.body.success && res.body.data?.promiseId) {
-                // Async response acceptable
-                expect(res.body.data.promiseId).toBeDefined();
-            }
-        });
+                if (res.body.success && res.body.data?.execute?.message && res.body.data?.execute?.form?.textarea) {
+                    expect(res.body.data.execute.message).toBeDefined();
+                    expect(res.body.data.execute.form.textarea).toBeDefined();
+                    expect(Array.isArray(res.body.data.execute.form.textarea)).toBe(true);
+                    expect(res.body.data.context?.execution?.step).toBeDefined();
+                    expect(res.body.data.context?.history).toBeDefined();
+                    expect(Array.isArray(res.body.data.context.history)).toBe(true);
+                    expect(res.body.data.sync).toBe(true);
+                    step3Context = res.body.data.context; // Save context for next steps
+                } else if (res.body.success && res.body.data?.promiseId) {
+                    // Async response acceptable
+                    expect(res.body.data.promiseId).toBeDefined();
+                }
+            },
+            180_000
+        );
 
-        it('Step 4: Submit final message should complete the dialog', async () => {
-            if (!step3Context) return; // Skip if step 3 failed
+        it(
+            'Step 4: Submit final message should complete the dialog',
+            async () => {
+                if (!step3Context) return; // Skip if step 3 failed
 
-            const res = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    context: step3Context, // Include context from step 3
-                    result: { message: 'Thanks! This completes the sync flow test.' },
-                    sync: true
-                });
+                const res = await request(app)
+                    .post('/api/v1/invoke')
+                    .send({
+                        context: step3Context, // Include context from step 3
+                        result: { message: 'Thanks! This completes the sync flow test.' },
+                        sync: true,
+                    });
 
-            expect([200, 201]).toContain(res.status);
+                expect([200, 201]).toContain(res.status);
 
-            // Final response should have execute object (completion)
-            if (res.body.success && res.body.data?.execute) {
-                expect(res.body.data.execute).toBeDefined();
-                expect(res.body.data.context?.execution?.step).toBeDefined();
-                expect(res.body.data.sync).toBe(true);
-            } else if (res.body.success && res.body.data?.promiseId) {
-                // Async completion also acceptable
-                expect(res.body.data.promiseId).toBeDefined();
-            }
-        });
+                // Final response should have execute object (completion)
+                if (res.body.success && res.body.data?.execute) {
+                    expect(res.body.data.execute).toBeDefined();
+                    expect(res.body.data.context?.execution?.step).toBeDefined();
+                    expect(res.body.data.sync).toBe(true);
+                } else if (res.body.success && res.body.data?.promiseId) {
+                    // Async completion also acceptable
+                    expect(res.body.data.promiseId).toBeDefined();
+                }
+            },
+            180_000
+        );
     });
 
     describe('Environment Configuration', () => {

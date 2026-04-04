@@ -134,10 +134,10 @@
 - Workspace tools (`list-directory`, `grep-search`, `read-file`, etc.)
 - Gray room (`N-sub-M/` folders)
 
-### Out of scope
+### Out of scope (клиентская ответственность)
 
-- `promiseId`, async polling, retries
-- `execute.wait` / loader timing
+- `promiseId`, async polling, retries — клиент опрашивает
+- `execute.wait` / loader timing — **сервер не возвращает wait; клиент сам рендерит ожидание по promiseId**
 
 ### Команды
 

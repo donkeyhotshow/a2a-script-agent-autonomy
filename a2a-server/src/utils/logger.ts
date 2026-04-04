@@ -185,6 +185,11 @@ setInterval(performanceMonitor, 5 * 60 * 1000);
 // Run cleanup every 24 hours
 setInterval(cleanupOldLogs, 24 * 60 * 60 * 1000);
 
+/** Scoped logger (winston child) for modules that expect `createLogger(name)`. */
+export function createLogger(label: string) {
+    return logger.child({ label });
+}
+
 // Export convenience methods
 export const log = {
     info: (message: string, meta?: Record<string, unknown>) => logger.info(message, meta),

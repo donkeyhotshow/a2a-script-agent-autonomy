@@ -27,8 +27,8 @@ import {
 } from './gray-room-trigger.js';
 import {resolveTransformSchema, normalizeContext, extractSchemaName, resolveResultObject} from './normalization.js';
 import {resolveLlmModelFromContext} from './llm-model-resolver.js';
-import {CognitionBase} from './cognition-base.js';
-import {EpisodicMemory} from '../memory/episodic-memory.js';
+import {CognitionBase} from '../cognition-base.js';
+import {EpisodicMemory} from '../../memory/episodic-memory.js';
 import {globalDesignReasoner} from '../hierarchical-design-reasoner.js';
 
 export {isDialogToolExecutePayload};

@@ -1,0 +1,17 @@
+{
+  "context": {
+    "session_id": "srv_sess_241f3cf9-75b2-4e77-aff6-e6a420a8bdd2",
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "start"
+    },
+    "result": {
+      "choice": "dialog",
+      "message": "диалог"
+    },
+    "choice_id": "dialog",
+    "transformSchema": "dialog"
+  },
+  "execute": {}
+}

@@ -1,0 +1,12 @@
+{
+  "context": {
+    "task": "analyze codebase structure",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    }
+  },
+  "result": {
+    "choice": "agent"
+  }
+}

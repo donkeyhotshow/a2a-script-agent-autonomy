@@ -4,14 +4,14 @@
  * Handles processing of step results from executed steps
  */
 
-import {logger} from '../../../utils/logger.js';
-import {actionProcessor} from '../../../actions/action-processor.js';
+import {logger} from '../../../../utils/logger.js';
+import {actionProcessor} from '../../../../actions/action-processor.js';
 import type {
     RequestContext,
     ProcessResult,
     ProcessOutcome,
 } from '../request-processor.interfaces.js';
-import {resolveExecution} from './normalization.js';
+import {resolveExecution} from '../normalization.js';
 
 /**
  * Handle step_result - client sends step result after executing code

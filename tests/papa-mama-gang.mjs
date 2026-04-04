@@ -42,6 +42,9 @@ async function mamaShift() {
         
         // 4. Simulations validation
         await runCmd('Mama Sims Validate', 'npm', ['run', 'sim:validate']);
+
+        // 5. Proba-servera (in-process invoke — no HTTP)
+        await runCmd('Mama depth (proba-servera)', 'npm', ['run', 'validate:proba-servera']);
         
         console.log('👩 MAMA: "Моя смена окончена. База чиста, схемы валидны. Папа, твой выход!"\n');
     } catch (e) {
@@ -67,8 +70,7 @@ async function papaShift() {
     }
 
     try {
-        // 1. Direct E2E Tests (Papa core)
-        // Имитируем "Tier 2" для CI - снижаем нагрузку на LLM
+        // Direct E2E Tests (Papa: Client API contour)
         const env = { ...process.env, E2E_DIRECT_LOW_LLM: '1' };
         await runCmd('Papa E2E', 'node', ['tests/direct-tests/e2e-dialog-test.js'], REPO_ROOT, env);
         

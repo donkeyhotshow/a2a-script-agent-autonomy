@@ -1,0 +1,15 @@
+{
+  "context": {
+    "session_id": "srv_sess_75e21ae2-88c7-48e1-b4aa-7007d9c6c9cf",
+    "task": "Hello, this is a test message",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "result": {
+      "message": "Hello, this is a test message"
+    },
+    "message": "Hello, this is a test message"
+  },
+  "execute": {}
+}

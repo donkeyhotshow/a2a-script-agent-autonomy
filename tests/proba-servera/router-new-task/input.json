@@ -1,0 +1,12 @@
+{
+  "context": {
+    "task": "analyze the codebase",
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  },
+  "result": {
+    "message": "analyze the codebase"
+  }
+}

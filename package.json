@@ -33,7 +33,8 @@
         "scan-promise-bodies": "node tests/direct-tests/validators/scan-promise-bodies.mjs",
         "scan-session-responses": "node tests/direct-tests/validators/scan-session-responses.mjs",
         "verify:gray-room": "node tests/direct-tests/validators/verify-gray-room-state.mjs",
-        "audit:sim-choice-descriptions": "node tests/direct-tests/validators/audit-sim-choice-descriptions.mjs"
+        "audit:sim-choice-descriptions": "node tests/direct-tests/validators/audit-sim-choice-descriptions.mjs",
+        "validate:proba-servera": "tsx tests/proba-servera/validate.mts"
     },
     "devDependencies": {
         "@types/node": "^20.11.0",

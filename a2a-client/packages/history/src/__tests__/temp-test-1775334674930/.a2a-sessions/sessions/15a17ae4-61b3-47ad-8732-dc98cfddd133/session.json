@@ -1,0 +1,17 @@
+{
+  "metadata": {
+    "id": "15a17ae4-61b3-47ad-8732-dc98cfddd133",
+    "name": "Session 2",
+    "createdAt": "2026-04-04T20:31:14.941Z",
+    "updatedAt": "2026-04-04T20:31:14.941Z",
+    "status": "active",
+    "tags": [],
+    "projectPath": "C:\\workspace\\org-carrier\\a2a-script-agent\\a2a-client\\packages\\history\\src\\__tests__\\temp-test-1775334674930\\.a2a-sessions"
+  },
+  "plans": [],
+  "tasks": [],
+  "context": {
+    "exchangeLog": [],
+    "messages": []
+  }
+}

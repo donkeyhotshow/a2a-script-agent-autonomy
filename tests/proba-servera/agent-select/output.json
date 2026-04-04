@@ -1,0 +1,17 @@
+{
+  "context": {
+    "session_id": "srv_sess_93dac29f-f979-41c9-96fa-507fcef31dbd",
+    "task": "analyze codebase structure",
+    "execution": {
+      "action": "agent",
+      "step": "start"
+    },
+    "result": {
+      "choice": "agent",
+      "message": "analyze codebase structure"
+    },
+    "choice_id": "agent",
+    "transformSchema": "agent"
+  },
+  "execute": {}
+}

@@ -1,35 +1,36 @@
 /**
  * RAG Searcher - Core Implementation
  * Integrates: TFIDF, QueryUnderstanding, CodeSimilarity, BM25
+ *
+ * Decomposed into:
+ * - query-planner.ts - query planning and analysis
+ * - chunk-pipeline.ts - chunk processing and scoring
+ * - ranking-pipeline.ts - result ranking and fusion
+ * - output-shaping.ts - output formatting
  */
 import { TFIDFService } from '../tfidf.js';
-import { QueryUnderstandingEngine } from '../query-understanding.js';
+import { QueryUnderstandingEngine, INTENT_TYPES } from '../query-understanding.js';
 import { CodeSimilarityEngine } from '../code-similarity.js';
-import { SearchSuggestionsEngine, SuggestionItem, QueryExpander } from '../suggestions.js';
+import { SearchSuggestionsEngine, QueryExpander } from '../suggestions.js';
 import { BM25Scorer } from '../bm25.js';
-import type { Chunk } from '../chunk-manager.js';
 import type { RAGIndexData, IndexFileInfo } from '../indexer.js';
+import type { Chunk } from '../chunk-manager.js';
+import type { SuggestionItem } from '../suggestions.js';
 import type { RAGSearcherConfig, SearchOptions, HybridSearchOptions, SearchResult, TFIDFResult, ExtractedKeywords } from './types.js';
 export { RAGSearcherConfig, SearchOptions, HybridSearchOptions, SearchResult, TFIDFResult };
+export { INTENT_TYPES };
 export declare class RAGSearcher {
     projectPath: string;
-    private indexPath;
-    private cachePath;
-    index: RAGIndexData | null;
-    useTFIDF: boolean;
-    tfidf: TFIDFService | null;
-    private tfidfIndexed;
+    private indexManager;
+    private searchOrchestrator;
+    private fileService;
+    private feedbackHandler;
     queryUnderstanding: QueryUnderstandingEngine;
-    codeSimilarity: CodeSimilarityEngine;
+    tfidf: TFIDFService | null;
     bm25: BM25Scorer | null;
-    private bm25Indexed;
-    private similarityIndexed;
+    codeSimilarity: CodeSimilarityEngine;
     suggestions: SearchSuggestionsEngine;
-    private suggestionsIndexed;
     queryExpander: QueryExpander;
-    private relevanceFeedbackEnabled;
-    private fileRelevanceModel?;
-    private fileRelevanceCache;
     private queryCache;
     private defaultCacheTTL;
     constructor(config?: RAGSearcherConfig);
@@ -61,11 +62,15 @@ export declare class RAGSearcher {
     searchHybrid(query: string, options?: HybridSearchOptions): Promise<Array<SearchResult & {
         details: Record<string, number | null>;
     }>>;
-    getTFIDFStats(): ReturnType<TFIDFService['getStats']> | null;
+    getTFIDFStats(): {
+        documentCount: number;
+        vocabularySize: number;
+        avgDocLength: number;
+    } | null;
     /**
      * Analyze query intent using QueryUnderstandingEngine
      */
-    analyzeQuery(query: string): ReturnType<QueryUnderstandingEngine['analyze']>;
+    analyzeQuery(query: string): import("../query-understanding.js").IntentResult;
     /**
      * Get query understanding results
      */
@@ -89,30 +94,33 @@ export declare class RAGSearcher {
         maxTTL: number;
     };
     private createCacheKey;
-    /**
-     * Build all search indexes once, using cache if available
-     */
-    private ensureIndexesBuilt;
-    /**
-     * Comprehensive scoring using all integrated engines with file type filtering
-     * OPTIMIZED: uses pre-computed bm25Results Map instead of re-running search
-     */
-    private scoreChunkWithEngines;
-    /**
-     * Extract file extension from path
-     */
-    private getFileExtension;
     searchFiles(pattern: string): Promise<IndexFileInfo[]>;
     getFileContent(relativePath: string): Promise<string>;
     getFileChunks(relativePath: string): Promise<Chunk[]>;
+    /**
+     * @deprecated Use extractKeywords from query-planner module instead
+     */
     extractKeywords(query: string): ExtractedKeywords;
-    scoreChunk(chunk: Chunk, keywords: ExtractedKeywords, _originalQuery: string): number;
+    /**
+     * @deprecated Use scoreChunk from chunk-pipeline module instead
+     */
+    scoreChunk(chunk: Chunk, keywords: ExtractedKeywords, originalQuery: string): number;
+    /**
+     * @deprecated Use findHighlights from chunk-pipeline module instead
+     */
     findHighlights(content: string, keywords: ExtractedKeywords): string[];
     /**
-     * Check if a chunk matches the faceted search filters
+     * @deprecated Use matchesFilters from chunk-pipeline module instead
      */
     private matchesFilters;
+    /**
+     * @deprecated Use matchPattern from chunk-pipeline module instead
+     */
     matchPattern(filePath: string, pattern: string): boolean;
+    /**
+     * @deprecated Use getFileExtension from chunk-pipeline module instead
+     */
+    private getFileExtension;
     /**
      * Get search suggestions for autocomplete
      */
@@ -141,7 +149,7 @@ export declare class RAGSearcher {
     dispose(): void;
     /**
      * Search with protocol result transformation
-     * Integrates policy limits and transforms results to protocol format
+     * Uses output-shaping module for format transformation
      */
     searchWithProtocol(query: string, options?: SearchOptions & {
         maxFiles?: number;

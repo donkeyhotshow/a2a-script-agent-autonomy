@@ -24,8 +24,33 @@ import {
 import type {RequestType} from './base-processor.js';
 import { LLM_PIPELINE_ACTIONS, type LlmPipelineAction } from '../../../config/router-static.js';
 import { resolveExecution, resolveResultObject } from './normalization.js';
+import { detectFrameworksFromCodeBlocks } from './framework-from-codeblocks.js';
 
 export { LLM_PIPELINE_ACTIONS, type LlmPipelineAction };
+
+function mergeFrameworksIntoStatusPayload(
+    result: ProcessResult,
+    baseContext: Record<string, unknown>,
+    codeBlocks: RequestResult['codeBlocks']
+): Record<string, unknown> {
+    const resultObj =
+        typeof result === 'object' && result !== null ? (result as unknown as Record<string, unknown>) : {};
+    const frameworks = detectFrameworksFromCodeBlocks(codeBlocks);
+    const hadContext = typeof resultObj.context === 'object' && resultObj.context !== null;
+
+    if (frameworks === undefined && !hadContext) {
+        return resultObj;
+    }
+
+    const mergedContext: Record<string, unknown> = {
+        ...baseContext,
+        ...(hadContext ? (resultObj.context as Record<string, unknown>) : {}),
+    };
+    if (frameworks !== undefined) {
+        mergedContext.frameworks = frameworks;
+    }
+    return {...resultObj, context: mergedContext};
+}
 
 const DEFAULT_INTERVAL_MS = parseInt(process.env.REQUEST_PROCESSOR_INTERVAL_MS || '5000', 10);
 let timerId: ReturnType<typeof setInterval> | null = null;
@@ -246,7 +271,7 @@ async function executePendingRow(request: RequestResult): Promise<ProcessResult>
         await requestService.updateStatus(
             promiseId,
             result.outcome === 'failed' ? 'failed' : 'completed',
-            typeof result === 'object' && result !== null ? (result as unknown as Record<string, unknown>) : {}
+            mergeFrameworksIntoStatusPayload(result, context as Record<string, unknown>, codeBlocks)
         );
         return result;
 

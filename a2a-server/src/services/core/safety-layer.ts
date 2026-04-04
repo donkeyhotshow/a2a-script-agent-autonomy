@@ -1,5 +1,5 @@
 import crypto from 'crypto';
-import { createLogger } from '../utils/logger.js';
+import { createLogger } from '../../utils/logger.js';
 
 const logger = createLogger('SafetyLayer');
 
