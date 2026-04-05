@@ -1,25 +1,14 @@
 {
   "context": {
-    "session_id": "srv_sess_4687f7b8-cb35-4f5a-9621-1bdf294bdb77",
     "task": "диалог",
     "execution": {
       "action": "dialog",
       "step": "request"
     },
-    "result": {
-      "choice": "dialog",
-      "message": "диалог"
-    },
-    "choice_id": "dialog",
-    "transformSchema": "dialog",
     "history": [
       {
         "role": "user",
         "message": "диалог"
-      },
-      {
-        "role": "system",
-        "message": "choice: dialog"
       }
     ],
     "workbench": {

@@ -88,6 +88,55 @@ async function waitTerminalRequest(promiseId: string, maxMs: number): Promise<Re
     return null;
 }
 
+/**
+ * Sanitize context for client response - remove internal/server-only fields
+ */
+function sanitizeClientContext(ctx: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+    if (!ctx || typeof ctx !== 'object' || Array.isArray(ctx)) {
+        return ctx;
+    }
+
+    // Fields to remove from client response (internal/server-only)
+    const internalFields = new Set([
+        'session_id',      // Server-side session ID
+        'result',          // Intermediate processing state
+        'choice_id',       // Duplicate of execution.action
+        'transformSchema', // Internal routing field
+        'message',         // Duplicate of task
+        'llmPromiseId',    // Internal LLM tracking
+        'llmModel',        // Internal LLM config
+        'ai_action',       // Internal flag
+        'previousChoice',  // Internal routing
+        'operationHistory', // Internal debug
+        'form_submission', // Internal form state
+        'form_data',       // Internal form state
+        'form_id',         // Internal form state
+        'selected_choice', // Internal form state
+    ]);
+
+    const sanitized: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(ctx)) {
+        if (internalFields.has(key)) {
+            continue;
+        }
+
+        // Clean up history - remove system messages that are internal
+        if (key === 'history' && Array.isArray(value)) {
+            sanitized[key] = value.filter((entry: unknown) => {
+                if (typeof entry !== 'object' || entry === null) return true;
+                const role = (entry as Record<string, unknown>)?.role;
+                // Keep only user and assistant messages, filter system/debug
+                return role === 'user' || role === 'assistant';
+            });
+            continue;
+        }
+
+        sanitized[key] = value;
+    }
+
+    return sanitized;
+}
+
 function syncFailureUserMessage(terminal: RequestResult): string | undefined {
     const pr = terminal.result as Record<string, unknown> | undefined;
     if (typeof pr?.error === 'string') {
@@ -118,7 +167,7 @@ async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> 
             return {
                 sync: true,
                 execute: ex && typeof ex === 'object' ? ex : {},
-                context: pr?.context as Record<string, unknown> | undefined,
+                context: sanitizeClientContext(pr?.context as Record<string, unknown>),
                 message: syncFailureUserMessage(terminal),
             };
         }
@@ -138,7 +187,7 @@ async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> 
         return {
             sync: true,
             execute: ex && typeof ex === 'object' ? ex : {},
-            context: pr?.context as Record<string, unknown> | undefined,
+            context: sanitizeClientContext(pr?.context as Record<string, unknown>),
         };
     }
 

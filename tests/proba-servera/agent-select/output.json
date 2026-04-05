@@ -1,25 +1,14 @@
 {
   "context": {
-    "session_id": "srv_sess_cd242492-ca73-46d4-9e28-1234008d549d",
     "task": "analyze codebase structure",
     "execution": {
       "action": "agent",
       "step": "request"
     },
-    "result": {
-      "choice": "agent",
-      "message": "analyze codebase structure"
-    },
-    "choice_id": "agent",
-    "transformSchema": "agent",
     "history": [
       {
         "role": "user",
         "message": "analyze codebase structure"
-      },
-      {
-        "role": "system",
-        "message": "choice: agent"
       }
     ],
     "workbench": {

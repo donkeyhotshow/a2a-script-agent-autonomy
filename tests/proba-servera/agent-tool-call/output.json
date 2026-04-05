@@ -1,15 +1,10 @@
 {
   "context": {
-    "session_id": "srv_sess_78798256-fa44-4ab2-8f6c-6e98f7f03260",
     "task": "Use grep-search to find all TODO comments",
     "execution": {
       "action": "agent",
       "step": "request"
     },
-    "result": {
-      "message": "Use grep-search to find all TODO comments"
-    },
-    "message": "Use grep-search to find all TODO comments",
     "history": [
       {
         "role": "user",

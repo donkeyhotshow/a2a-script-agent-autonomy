@@ -1,15 +1,10 @@
 {
   "context": {
-    "session_id": "srv_sess_9b404bc4-2a03-41c4-9c75-1283bf872838",
     "task": "analyze the codebase",
     "execution": {
       "action": "task",
       "step": "router"
-    },
-    "result": {
-      "message": "analyze the codebase"
-    },
-    "message": "analyze the codebase"
+    }
   },
   "execute": {
     "form": {

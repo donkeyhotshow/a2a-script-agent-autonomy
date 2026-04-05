@@ -1,15 +1,10 @@
 {
   "context": {
-    "session_id": "srv_sess_e2058f39-cdec-46ce-a357-6e8cf88c1bf8",
     "task": "Hello, this is a test message",
     "execution": {
       "action": "dialog",
       "step": "request"
     },
-    "result": {
-      "message": "Hello, this is a test message"
-    },
-    "message": "Hello, this is a test message",
     "history": [
       {
         "role": "user",
