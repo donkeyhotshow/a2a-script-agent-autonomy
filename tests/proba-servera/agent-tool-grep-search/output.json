@@ -1,0 +1,36 @@
+{
+  "context": {
+    "task": "find TODO comments",
+    "execution": {
+      "action": "agent",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "find TODO comments"
+      },
+      {
+        "role": "assistant",
+        "message": "Grep search for 'TODO' found 5 matches"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Agent Mode",
+      "description": "Enter your task for the agent",
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Task",
+          "required": true
+        }
+      ]
+    }
+  }
+}

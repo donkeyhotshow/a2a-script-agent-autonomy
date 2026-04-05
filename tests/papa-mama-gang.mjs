@@ -41,7 +41,7 @@ async function mamaShift() {
         await runCmd('Mama Client Units', 'npm', ['test'], path.join(REPO_ROOT, 'a2a-client'));
         
         // 4. Simulations validation
-        await runCmd('Mama Sims Validate', 'npm', ['run', 'sim:validate']);
+        await runCmd('Mama Sims Validate', 'npm', ['run', 'sim:validate', '--', '--all']);
 
         // 5. Proba-servera (in-process invoke — no HTTP)
         await runCmd('Mama depth (proba-servera)', 'npm', ['run', 'validate:proba-servera']);

@@ -1,0 +1,36 @@
+{
+  "context": {
+    "task": "analyze utils/helpers.js",
+    "execution": {
+      "action": "agent",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "analyze utils/helpers.js"
+      },
+      {
+        "role": "assistant",
+        "message": "Read utils/helpers.js (3 lines)"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Agent Mode",
+      "description": "Enter your task for the agent",
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Task",
+          "required": true
+        }
+      ]
+    }
+  }
+}

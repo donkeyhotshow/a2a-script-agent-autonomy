@@ -1,0 +1,40 @@
+{
+  "context": {
+    "task": "next user message",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "previous message"
+      },
+      {
+        "role": "assistant",
+        "message": "assistant response"
+      },
+      {
+        "role": "user",
+        "message": "next user message"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "AI Assistant",
+      "description": "Enter your message",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Message",
+          "required": true
+        }
+      ]
+    }
+  }
+}

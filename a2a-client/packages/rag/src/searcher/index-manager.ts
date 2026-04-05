@@ -208,6 +208,10 @@ export class IndexManager {
         return this._index;
     }
 
+    set index(value: RAGIndexData | null) {
+        this._index = value;
+    }
+
     get bm25Indexed(): boolean {
         return this._bm25Indexed;
     }

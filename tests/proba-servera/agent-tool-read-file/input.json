@@ -1,0 +1,28 @@
+{
+  "context": {
+    "task": "analyze utils/helpers.js",
+    "execution": {
+      "action": "agent",
+      "step": "tool_read_file"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "analyze utils/helpers.js"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_read_file",
+        "message": "Read utils/helpers.js (3 lines)"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "result": {
+    "read-file": {
+      "path": "utils/helpers.js"
+    }
+  }
+}

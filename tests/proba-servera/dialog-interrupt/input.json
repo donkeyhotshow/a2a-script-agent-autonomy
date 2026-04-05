@@ -1,0 +1,18 @@
+{
+  "context": {
+    "task": "Short question",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Short question"
+      }
+    ]
+  },
+  "result": {
+    "message": "What do you need?"
+  }
+}

@@ -144,7 +144,10 @@ export function killPidBatch(port) {
     try {
       process.kill(entry.pid);
       killed.push(entry.pid);
-    } catch {}
+     } catch (err) {
+         // Ignore errors when killing PIDs - process may have already exited
+         console.warn(`Failed to kill PID ${entry.pid}:`, err.message || err);
+     }
   }
 
   deleteLockAndMetadata(port);
@@ -244,15 +247,20 @@ export function reservePort(port, serviceName) {
     addPidToMetadata(port, serviceName, process.pid);
     
     return true;
-  } catch (err) {
-    if (existsSync(lockFile)) {
-      try { unlinkSync(lockFile); } catch {}
-    }
-    if (existsSync(metadataFile)) {
-      try { unlinkSync(metadataFile); } catch {}
-    }
-    return false;
-  }
+   } catch (err) {
+     // Log cleanup errors but don't fail the reservation
+     if (existsSync(lockFile)) {
+       try { unlinkSync(lockFile); } catch (cleanupErr) {
+         console.warn(`Failed to cleanup lock file for port ${port}:`, cleanupErr.message || cleanupErr);
+       }
+     }
+     if (existsSync(metadataFile)) {
+       try { unlinkSync(metadataFile); } catch (cleanupErr) {
+         console.warn(`Failed to cleanup metadata file for port ${port}:`, cleanupErr.message || cleanupErr);
+       }
+     }
+     return false;
+   }
 }
 
 /**

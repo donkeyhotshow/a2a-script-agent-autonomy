@@ -22,6 +22,29 @@ Current system state: **Stack готов** - все сервисы работа�
 
 **Fixed:** Router no longer overwrites `execution.action` when session created with `mode: "agent"`. `isTaskRequest()` in `base-processor.ts` now checks if `execution.action` is already an LLM pipeline action and returns `false` to prevent forced routing. Added direct LLM pipeline handling in `action-request-processor.ts` for seeded agent mode.
 
+**Fixed (2026-04-05):** Dialog history accumulation in client. `mergeDialogHistoryForInvoke` in `builders.js` was replacing the last user message instead of appending when text differed. Changed to `h.push()` to properly accumulate history.
+
+**Fixed (2026-04-05):** Step data persistence in client. `saveStepData` in `step-routes-dialog-flow.js` was using stale `mergedContext` instead of updated `savedContext` after server response. This caused all steps to have the same initial form data instead of actual server responses. Changed to use `savedContext` (the context returned by `updateSessionAfterResponse`). **Verified:** Live session test shows step 4 correctly has `execution.action: "dialog"` and accumulated history.
+
+**Added (2026-04-05):** Proba-servera test coverage expanded. Added 11 new tests aligned with `simulations/sync/*` goldens:
+- Agent tools (9): `agent-tool-read-file`, `agent-tool-write-file`, `agent-tool-rag-search`, `agent-tool-list-directory`, `agent-tool-grep-search`, `agent-tool-execute-command`, `agent-tool-file-exists`, `agent-tool-edit-patch`, `agent-tool-run-script`
+- Dialog variants (2): `dialog-interrupt`, `dialog-message-only`
+- Workbench (1): `agent-workspace-chain`
+Total: 18/18 tests passing.
+
+**Fixed (2026-04-05):** Execute message format fixes per schema:
+- `router-choice-handler.ts`: Changed fallback `execute.message` to `execute.form` (compliance with schema - no message-only execute)
+- `step-result-handler.ts`: Same fix - message-only → form
+- `simulations/sync/sequence-workbench-min/1/`: Added missing `server-transforms-request.json`, updated `execute.message` → `execute.form` in response.json and received.json
+- MD/JSON drift: Fixed 13 mismatches via `sim:check-md:fix`
+
+**Fixed (2026-04-05):** Unit tests aligned with new behavior:
+- `merge-dialog-history.test.js`: Updated to expect history accumulation instead of replacement (matches dialog fix)
+- `client-api-promise-helpers.test.mjs`: Same updates for history accumulation
+- `rag.test.js`: Added `useTFIDF` field to `RAGSearcher` class and `index` getter/setter for proper test mocking
+- `index-manager.ts`: Added `index` setter for test support
+- `papa-mama-gang.mjs`: Fixed sim:validate call to include `--all` flag
+
 **Fixed (router beat B, 2026-04-03):** `determineRequestType` routes `execution.step === 'router'` + pipeline `result.choice` to **action** first so `handleRouterChoice` patches `execution` before dialog. Dialog processor failed outcomes now include normalized `context`; `request.service` `updateStatus` merges `result.context` on **failed** as well as **completed** (sticky `task`/`router` after LLM errors).
 
 **Papa–Mama test matrix (2026-04-04):** Added realistic Mama fixture `sim-agent-vertical.spec.json` using `simulations/sync/agent/*` goldens; updated `run-all.mjs` (7/7 green). Documented Papa hardening (`--only`, `E2E_DIRECT_LOW_LLM`, merge flags) in `tests/direct-tests/README.md`. Failure class matrix documented in `tests/indirect-tests/README.md`. Proposals doc: [`tasks/pending/test-architecture-proposals.md`](tasks/pending/test-architecture-proposals.md) — глубокий анализ выполнен:

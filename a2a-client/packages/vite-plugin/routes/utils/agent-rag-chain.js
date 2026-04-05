@@ -205,7 +205,7 @@ export async function chainSyncInvokesForAgentTools({
             console.error('[VitePlugin] Chained invoke failed', statusCode);
             break;
         }
-        if (parsed.data?.promiseId) {
+        if (parsed?.data?.promiseId) {
             console.log('[VitePlugin] Chained invoke returned promiseId — stopping tool chain');
             lastResp = parsed;
             break;

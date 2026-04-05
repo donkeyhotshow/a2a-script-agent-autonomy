@@ -1,0 +1,36 @@
+{
+  "context": {
+    "task": "check if config exists",
+    "execution": {
+      "action": "agent",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "check if config exists"
+      },
+      {
+        "role": "assistant",
+        "message": "File exists: config.json"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Agent Mode",
+      "description": "Enter your task for the agent",
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Task",
+          "required": true
+        }
+      ]
+    }
+  }
+}

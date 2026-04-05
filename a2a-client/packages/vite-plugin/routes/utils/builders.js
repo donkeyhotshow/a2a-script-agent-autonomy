@@ -51,7 +51,8 @@ export function mergeDialogHistoryForInvoke(mergedContext, effectiveTask) {
         return;
     }
     if (last.role === 'user' && historyEntryUserText(last) !== effectiveTask) {
-        h[h.length - 1] = { role: 'user', message: effectiveTask };
+        // Different user message - append new entry (don't replace, this is new dialog turn)
+        h.push({ role: 'user', message: effectiveTask });
         mergedContext.history = h;
     }
 }

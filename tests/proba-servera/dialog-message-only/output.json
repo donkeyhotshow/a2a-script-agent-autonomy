@@ -1,0 +1,36 @@
+{
+  "context": {
+    "task": "Hi there!",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Hello"
+      },
+      {
+        "role": "user",
+        "message": "Hi there!"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "AI Assistant",
+      "description": "Enter your message",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Message",
+          "required": true
+        }
+      ]
+    }
+  }
+}

@@ -83,7 +83,7 @@ Mirror of `response.json` for prompt pipeline / `sim:check-md`.
       ],
       "input": [
         {
-          "name": "task",
+          "name": "message",
           "type": "text",
           "label": "Запит для пошуку (якщо продовжуєте)",
           "required": false

@@ -5,15 +5,15 @@
       "action": "agent",
       "step": "request"
     },
+    "workbench": {
+      "sections": {}
+    },
     "history": [
       {
         "role": "user",
         "message": "Use grep-search to find all TODO comments"
       }
-    ],
-    "workbench": {
-      "sections": {}
-    }
+    ]
   },
   "execute": {
     "form": {

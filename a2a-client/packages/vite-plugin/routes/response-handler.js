@@ -11,9 +11,10 @@ export function processResponseData({ a2aData, xhrRes }) {
     let serverResponse = null;
     let promiseData = null;
 
-    if (a2aData.data?.promiseId) {
+    const promiseId = a2aData?.data?.promiseId;
+    if (promiseId) {
         promiseData = {
-            promiseId: a2aData.data.promiseId,
+            promiseId,
             status: 'pending',
             submittedAt: new Date().toISOString(),
         };

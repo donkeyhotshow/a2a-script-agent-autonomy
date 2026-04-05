@@ -1,0 +1,36 @@
+{
+  "context": {
+    "task": "update utils/helpers.js",
+    "execution": {
+      "action": "agent",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "update utils/helpers.js"
+      },
+      {
+        "role": "assistant",
+        "message": "Wrote utils/helpers.js (50 bytes)"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Agent Mode",
+      "description": "Enter your task for the agent",
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Task",
+          "required": true
+        }
+      ]
+    }
+  }
+}

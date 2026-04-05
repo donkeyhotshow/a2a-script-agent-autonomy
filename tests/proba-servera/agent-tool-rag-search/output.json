@@ -1,0 +1,36 @@
+{
+  "context": {
+    "task": "search for calculateTotal",
+    "execution": {
+      "action": "agent",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "search for calculateTotal"
+      },
+      {
+        "role": "assistant",
+        "message": "rag-search: simulations sync agent SCHEMA received.json - 2 top hits"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Agent Mode",
+      "description": "Enter your task for the agent",
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Task",
+          "required": true
+        }
+      ]
+    }
+  }
+}

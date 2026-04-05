@@ -57,7 +57,11 @@ export async function handleStepResult(
         context: resultContext,
         activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
         execute: result.message.execute ?? {
-            message: result.message.message || 'Action completed',
+            form: {
+                title: 'Action Completed',
+                description: result.message.message || 'Action completed',
+                input: [{ name: 'message', type: 'text', label: 'Message', required: true }],
+            },
         },
     };
 }

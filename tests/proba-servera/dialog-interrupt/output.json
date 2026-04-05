@@ -1,0 +1,36 @@
+{
+  "context": {
+    "task": "What do you need?",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Short question"
+      },
+      {
+        "role": "user",
+        "message": "What do you need?"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "AI Assistant",
+      "description": "Enter your message",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Message",
+          "required": true
+        }
+      ]
+    }
+  }
+}

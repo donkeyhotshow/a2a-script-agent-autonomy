@@ -109,8 +109,10 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
         const existingLlmId = ctx['llmPromiseId'] as string | undefined;
 
         try {
-            // Check for dialog schema without user input to return initial form directly
-            if (schemaName === 'dialog' && !resolveResultObject(ctx)?.message) {
+            // Check for dialog INITIAL request (no history yet) to return form directly without LLM
+            // For follow-up requests (history exists), we MUST call LLM to get assistant response
+            const hasHistory = Array.isArray(ctx['history']) && ctx['history'].length > 0;
+            if (schemaName === 'dialog' && !hasHistory && !resolveResultObject(ctx)?.message) {
                 return {
                     outcome: 'success',
                     execute: {

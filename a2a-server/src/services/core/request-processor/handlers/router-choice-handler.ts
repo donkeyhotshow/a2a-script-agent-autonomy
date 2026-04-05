@@ -96,7 +96,11 @@ export async function handleRouterChoice(
                 outcome: 'completed',
                 context: resultContext,
                 execute: actionResult.message.execute ?? {
-                    message: actionResult.message.message || 'Action started',
+                    form: {
+                        title: 'Action Started',
+                        description: actionResult.message.message || 'Action started',
+                        input: [{ name: 'message', type: 'text', label: 'Message', required: true }],
+                    },
                 },
                 activated_neuron_ids: actionResult.actionId ? [actionResult.actionId] : undefined,
             };
@@ -113,7 +117,11 @@ export async function handleRouterChoice(
                 outcome: 'completed',
                 context: resultContext,
                 execute: actionResult.message.execute ?? {
-                    message: actionResult.message.message || 'Action completed',
+                    form: {
+                        title: 'Action Completed',
+                        description: actionResult.message.message || 'Action completed',
+                        input: [{ name: 'message', type: 'text', label: 'Message', required: true }],
+                    },
                 },
                 activated_neuron_ids: actionResult.actionId ? [actionResult.actionId] : undefined,
             };

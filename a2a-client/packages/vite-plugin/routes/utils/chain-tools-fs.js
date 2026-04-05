@@ -104,22 +104,23 @@ export async function runClientGrepSearch(projectPath, payload) {
     if (!pattern.trim()) {
         return { pattern: '', matches: [], success: false, error: 'missing pattern' };
     }
-    const opts = payload.options && typeof payload.options === 'object' ? payload.options : {};
-    const useRegex = opts.regex === true;
-    const maxResults = Math.min(typeof opts.maxResults === 'number' ? opts.maxResults : 500, 1000);
-    let body;
-    try {
-        if (useRegex) {
-            body = pattern;
-        } else {
-            body = escapeRegexLiteral(pattern);
-            if (opts.wholeWord === true) {
-                body = `\\b(?:${body})\\b`;
-            }
-        }
-    } catch (e) {
-        return { pattern, matches: [], success: false, error: String(e) };
-    }
+     const opts = payload.options && typeof payload.options === 'object' ? payload.options : {};
+     const useRegex = opts.regex === true;
+     const maxResults = Math.min(typeof opts.maxResults === 'number' ? opts.maxResults : 500, 1000);
+     let body;
+     try {
+         if (useRegex) {
+             body = pattern;
+         } else {
+             body = escapeRegexLiteral(pattern);
+             if (opts.wholeWord === true) {
+                 body = `\\b(?:${body})\\b`;
+             }
+         }
+     } catch (e) {
+         // Handle regex compilation error
+         return { pattern, matches: [], success: false, error: String(e) };
+     }
 
     const relScope = typeof payload.path === 'string' && payload.path ? payload.path : '.';
     const scopeAbs = resolveUnderProjectRoot(projectPath, relScope);
@@ -130,9 +131,15 @@ export async function runClientGrepSearch(projectPath, payload) {
     const rootResolved = path.resolve(projectPath);
     const matches = [];
 
-    function lineMatches(line, lineReSource, flags) {
-        try { return new RegExp(lineReSource, flags).test(line); } catch { return false; }
-    }
+     function lineMatches(line, lineReSource, flags) {
+         try { return new RegExp(lineReSource, flags).test(line); } catch (e) { 
+             // Log regex error for debugging but return false to continue processing
+             if (process.env.NODE_ENV === 'development') {
+                 console.warn('Regex error in lineMatches:', e.message);
+             }
+             return false; 
+         }
+     }
 
     const flags = opts.caseSensitive === true ? '' : 'i';
 

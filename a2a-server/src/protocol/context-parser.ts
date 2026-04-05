@@ -128,6 +128,7 @@ export function validateContextBlock(context: unknown): { valid: boolean; errors
 const CONTEXT_PASSTHROUGH_KEYS = [
     'version', 'action', 'new_task', 'architectural_features', 'continue',
     'tasks', 'request_files', 'confirm', 'errors', 'task', 'execution', 'llmModel',
+    'history', 'workbench', 'result', 'message',
 ] as const;
 
 export function parseContextBlock(data: unknown): ContextBlock {

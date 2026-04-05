@@ -53,7 +53,7 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                 return;
             }
 
-            const currentStep = session.currentStep || 1;
+            const currentStep = Number(session.currentStep) || 1;
             let prevStepData = stepHandlers.loadServerResponse(cwd, sessionId, currentStep);
             if (!prevStepData && projectPath && currentStep === 1) {
                 prevStepData = { context: session.context, execute: session.execute };
@@ -159,7 +159,7 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                                 stepNum: nextStepNum,
                                 serverResponse,
                                 messages: session.messages,
-                                mergedContext,
+                                mergedContext: savedContext,
                                 submitResult,
                             });
                         }
@@ -201,8 +201,14 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                             promiseId: null,
                         })));
                     } catch (e) {
-                        console.error('[vite-plugin-a2a] Error in A2A response handler:', e.message);
-                        res.writeHead(500).end(JSON.stringify({ error: 'Internal server error' }));
+                        console.error('[vite-plugin-a2a] Error in A2A response handler:', e?.stack || e?.message || e);
+                        const detail =
+                            process.env.NODE_ENV !== 'production' ? String(e?.message || e) : undefined;
+                        res.writeHead(500).end(
+                            JSON.stringify(
+                                detail ? { error: 'Internal server error', detail } : { error: 'Internal server error' }
+                            )
+                        );
                     }
                 },
                 onError: (e) => {

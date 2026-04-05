@@ -16,7 +16,7 @@
     "form": {
       "input": [
         {
-          "name": "task",
+          "name": "message",
           "type": "text",
           "label": "Контент документу (.carrier/tasks/task-1.md)",
           "required": true

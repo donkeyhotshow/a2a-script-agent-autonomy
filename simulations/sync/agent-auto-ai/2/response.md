@@ -16,7 +16,7 @@ Mirror of `response.json` for prompt pipeline / `sim:check-md`.
     "form": {
       "input": [
         {
-          "name": "task",
+          "name": "message",
           "type": "text",
           "label": "Task or message",
           "placeholder": "Describe what to do",

@@ -166,7 +166,7 @@ On turns where you only need tools toward the client, omit `interrupt` and send 
   "context": {
   "execution": {
     "action": "agent",
-    "step": "3"
+    "step": "request"
   },
   "history": [
     {
@@ -182,7 +182,10 @@ On turns where you only need tools toward the client, omit `interrupt` and send 
       "role": "user"
     }
   ],
-  "task": "допоможи розібратись з кодом"
+  "task": "допоможи розібратись з кодом",
+  "workbench": {
+    "sections": {}
+  }
 },
   "workbench": null,
   "ragResults": null

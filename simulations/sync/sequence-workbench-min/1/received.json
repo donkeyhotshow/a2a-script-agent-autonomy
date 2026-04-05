@@ -2,6 +2,10 @@
   "projectId": "default",
   "sessionId": "sess_sequence_min",
   "execute": {
-    "message": "Sequence scaffold OK"
+    "form": {
+      "title": "Sequence Queue",
+      "description": "Sequence scaffold OK",
+      "input": [{ "name": "message", "type": "text", "label": "Message", "required": true }]
+    }
   }
 }

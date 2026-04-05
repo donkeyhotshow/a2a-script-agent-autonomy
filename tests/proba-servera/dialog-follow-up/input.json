@@ -1,0 +1,22 @@
+{
+  "context": {
+    "task": "follow up message",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "previous message"
+      },
+      {
+        "role": "assistant",
+        "message": "assistant response"
+      }
+    ]
+  },
+  "result": {
+    "message": "next user message"
+  }
+}

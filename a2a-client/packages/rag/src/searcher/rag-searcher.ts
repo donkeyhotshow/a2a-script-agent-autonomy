@@ -43,6 +43,7 @@ export { INTENT_TYPES };
 
 export class RAGSearcher {
     projectPath: string;
+    useTFIDF: boolean;
     private indexManager: IndexManager;
     private searchOrchestrator: SearchOrchestrator;
     private fileService: FileService;
@@ -59,8 +60,9 @@ export class RAGSearcher {
 
     constructor(config: RAGSearcherConfig = {}) {
         this.projectPath = config.projectPath ?? process.cwd();
+        this.useTFIDF = config.useTFIDF ?? true;
         // Initialize engines
-        this.tfidf = config.useTFIDF !== false ? new TFIDFService() : null;
+        this.tfidf = this.useTFIDF ? new TFIDFService() : null;
         this.queryUnderstanding = new QueryUnderstandingEngine();
         this.codeSimilarity = new CodeSimilarityEngine();
         this.bm25 = new BM25Scorer();
@@ -118,6 +120,14 @@ export class RAGSearcher {
 
     async loadIndex(): Promise<RAGIndexData> {
         return this.indexManager.loadIndex();
+    }
+
+    get index(): RAGIndexData | null {
+        return this.indexManager.index;
+    }
+
+    set index(value: RAGIndexData | null) {
+        this.indexManager.index = value;
     }
 
     indexDocument(id: string, content: string): void {

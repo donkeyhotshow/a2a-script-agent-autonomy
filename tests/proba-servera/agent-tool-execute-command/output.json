@@ -1,0 +1,36 @@
+{
+  "context": {
+    "task": "run npm test",
+    "execution": {
+      "action": "agent",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "run npm test"
+      },
+      {
+        "role": "assistant",
+        "message": "Command completed: exitCode 0, stdout '3 tests passed'"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Agent Mode",
+      "description": "Enter your task for the agent",
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Task",
+          "required": true
+        }
+      ]
+    }
+  }
+}

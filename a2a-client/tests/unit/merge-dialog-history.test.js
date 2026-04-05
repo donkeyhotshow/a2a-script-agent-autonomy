@@ -17,12 +17,15 @@ describe('mergeDialogHistoryForInvoke', () => {
         ]);
     });
 
-    it('replaces trailing user when text differs', () => {
+    it('appends new user entry when text differs (accumulate history)', () => {
         const ctx = {
             history: [{ role: 'user', message: 'old' }],
         };
         mergeDialogHistoryForInvoke(ctx, 'new');
-        expect(ctx.history).toEqual([{ role: 'user', message: 'new' }]);
+        expect(ctx.history).toEqual([
+            { role: 'user', message: 'old' },
+            { role: 'user', message: 'new' },
+        ]);
     });
 
     it('no-op when last user matches (idempotent)', () => {
@@ -33,11 +36,14 @@ describe('mergeDialogHistoryForInvoke', () => {
         expect(ctx.history).toEqual([{ role: 'user', message: 'same' }]);
     });
 
-    it('uses content when message absent', () => {
+    it('appends new entry when content differs (accumulate history)', () => {
         const ctx = {
             history: [{ role: 'user', content: 'x' }],
         };
         mergeDialogHistoryForInvoke(ctx, 'y');
-        expect(ctx.history).toEqual([{ role: 'user', message: 'y' }]);
+        expect(ctx.history).toEqual([
+            { role: 'user', content: 'x' },
+            { role: 'user', message: 'y' },
+        ]);
     });
 });
