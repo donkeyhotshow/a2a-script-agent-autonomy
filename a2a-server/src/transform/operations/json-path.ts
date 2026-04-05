@@ -4,6 +4,7 @@
  * Provides JSONPath query and set operations using jsonpath-plus
  */
 
+// @ts-expect-error - jsonpath-plus typing issues in NodeNext ESM
 import { JSONPath } from 'jsonpath-plus';
 
 /**

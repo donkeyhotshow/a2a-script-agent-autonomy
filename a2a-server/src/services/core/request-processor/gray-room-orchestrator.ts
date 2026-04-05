@@ -3,14 +3,10 @@ import {logger} from '../../../utils/logger.js';
 import {runPromptsTransform} from '../../../transform/index.js';
 import type {GrayRoomControlEnvelope, InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
 import {mergeGrayRoomSlotIntoContext, mergeInterruptTraceIntoContext} from '../../../transform/interrupt-trace-contract.js';
-import {executeReadFile} from '../../../actions/handlers/file-operations.js';
-import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
 import {pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
-import {BlackRoomOrchestrator} from '../black-room/black-room-orchestrator.js';
-import type {AlgorithmContext, AlgorithmData} from '../black-room/types.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
 import {validateDialogExecuteShape, validateLlmOutputShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
-import {resolveExecution, resolveHistoryLength} from './normalization.js';
+import {resolveHistoryLength} from './normalization.js';
 import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver.js';
 import {globalArtifactStore} from '../artifact-store.js';
 import {DedicatedAnalyzer} from '../analyzer.js';
@@ -19,18 +15,11 @@ import {globalMcpRegistry} from '../../mcp/registry.js';
 
 // Import trigger detection logic
 import {
-    detectGrayRoomTrigger,
-    shouldUseGrayRoom,
-    isGrayRoomEnabled,
-    getConfiguredMaxTurns,
     readGrayRoomInterruptBudget,
-    GrayRoomTriggerResult
 } from './gray-room-trigger.js';
 
 // Import utilities
 import {
-    DIALOG_TOOL_EXECUTE_KEYS,
-    isDialogToolExecutePayload,
     mergeGrayRoomFinalizeInnerContext,
     GrayRoomOptions
 } from './gray-room-utils.js';
@@ -43,14 +32,15 @@ import {handleAutoRagPage} from './gray-room-interrupt-handlers/auto-rag-page.js
 import {handleClarify} from './gray-room-interrupt-handlers/clarify.js';
 import {handleAlgorithmInvoke} from './gray-room-interrupt-handlers/algorithm-invoke.js';
 import {globalVisionTester} from '../vision-tester.js';
-import {globalRoleRegistry, AgentRole} from '../agent-role-registry.js';
+import {globalRoleRegistry} from '../agent-role-registry.js';
 import {globalSafetyLayer} from '../safety-layer.js';
 import {globalIntentGate} from '../intent-gate.js';
 import {decisionCell} from './decision-cell.js';
 import {bugFixer} from '../../llm/bug-fixer.js';
 import {repoMapService} from '../../context/repo-map.service.js';
 import {llmService} from '../../llm/llm-service.js';
-import {contextDiscoveryService} from '../../context/context-discovery.service.js';
+import {OrchestratorKernel} from '../orchestrator-kernel.js';
+import type {OrchestratorState, OrchestratorEvent} from '../orchestrator-kernel.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 
@@ -100,6 +90,10 @@ export class GrayRoomOrchestrator {
             traceRef: {length: 0},
         };
 
+        // BUG-1 FIX: Declare FSM kernel and currentState (was missing, causing ReferenceError)
+        const kernel = new OrchestratorKernel('EXECUTING', promiseId);
+        let currentState: OrchestratorState = 'EXECUTING';
+
         const controller = new AbortController();
         GrayRoomOrchestrator.activeControllers.set(promiseId, controller);
 
@@ -134,7 +128,7 @@ export class GrayRoomOrchestrator {
         // ---------------------------------------------------------
 
         // Event-driven Actor Model Step
-        return new Promise<ProcessResult>((resolve) => {
+        return new Promise<ProcessResult>(async (resolve) => {
             const processTick = async () => {
                 if (controller.signal.aborted) {
                     logger.warn('[GrayRoom] Externally halted!', { promiseId });
@@ -193,21 +187,25 @@ export class GrayRoomOrchestrator {
             // -- MCP TOOL BRIDGE (ADR-0078) --
             const executeCall = (result.execute as Record<string, any>);
             if (executeCall) {
-                const actionName = Object.keys(executeCall)[0];
-                const mcpTool = globalMcpRegistry.getTool(actionName);
-                if (mcpTool) {
-                    logger.info('[GrayRoom] Executing MCP Tool', { actionName });
-                    try {
-                        const mcpResult = await mcpTool.execute(executeCall[actionName]);
-                        result.result = { [actionName]: mcpResult };
-                    } catch (e) {
-                        logger.error('[GrayRoom] MCP Tool failed, triggering BugFixer', { actionName, error: e.message });
-                        const fix = await bugFixer.fix(JSON.stringify(executeCall[actionName]), e.message);
-                        if (fix.fixed) {
-                            logger.info('[GrayRoom] BugFixer produced a patch', { actionName });
-                            result.result = { error: e.message, bugfix_analysis: fix.analysis, recommended_patch: fix.patches };
-                        } else {
-                            result.result = { error: e.message };
+                const actionKeys = Object.keys(executeCall);
+                const actionName = actionKeys.length > 0 ? actionKeys[0] : undefined;
+                if (actionName) {
+                    const mcpTool = globalMcpRegistry.getTool(actionName);
+                    if (mcpTool) {
+                        logger.info('[GrayRoom] Executing MCP Tool', { actionName });
+                        try {
+                            const mcpResult = await mcpTool.execute(executeCall[actionName]);
+                            result.context = { ...result.context, mcp_result: { [actionName]: mcpResult } } as Record<string, unknown>;
+                        } catch (e) {
+                            const err = e as Error;
+                            logger.error('[GrayRoom] MCP Tool failed, triggering BugFixer', { actionName, error: err.message });
+                            const fix = await bugFixer.fix(JSON.stringify(executeCall[actionName]), err.message);
+                            if (fix.fixed) {
+                                logger.info('[GrayRoom] BugFixer produced a patch', { actionName });
+                                result.context = { ...result.context, mcp_error: err.message, bugfix_analysis: fix.analysis, recommended_patch: fix.patches } as Record<string, unknown>;
+                            } else {
+                                result.context = { ...result.context, mcp_error: err.message } as Record<string, unknown>;
+                            }
                         }
                     }
                 }
@@ -261,7 +259,7 @@ export class GrayRoomOrchestrator {
                         });
                         touchGrayRoom({
                             phase: 'completed',
-                            status: 'halted',
+                            status: 'truncated',
                             turn,
                             remainingBudget: interruptBudget,
                             lastReason: `intent_drift: ${driftCheck.reason}`,
@@ -300,20 +298,41 @@ export class GrayRoomOrchestrator {
                 }
             }
 
-            if (!this.interruptWhenSatisfied(interrupt, workingCtx)) {
-                trace.push({
-                    kind: 'interrupt_skipped',
-                    reason: interrupt.reason,
-                    detail: 'when_clause_not_met',
-                });
+            if (!interrupt || !this.interruptWhenSatisfied(interrupt, workingCtx)) {
+                if (interrupt) {
+                    trace.push({
+                        kind: 'interrupt_skipped',
+                        reason: interrupt.reason,
+                        detail: 'when_clause_not_met',
+                    });
+                }
                 touchGrayRoom({
                     phase: 'completed',
                     status: 'completed',
-                    turn,
-                    remainingBudget: interruptBudget,
-                    lastReason: interrupt.reason,
                 });
                 return this.mergeTraceIntoResult(result, trace, grayRoom);
+            }
+
+            const currentInterrupt = interrupt;
+            if (typeof currentInterrupt.maxTurns === 'number' && Number.isFinite(currentInterrupt.maxTurns) && currentInterrupt.maxTurns >= 0) {
+                interruptBudget = Math.min(interruptBudget, currentInterrupt.maxTurns);
+            }
+
+            if (interruptBudget <= 0) {
+                const c = result.context as Record<string, unknown>;
+                touchGrayRoom({
+                    phase: 'completed',
+                    status: 'truncated',
+                    turn,
+                    remainingBudget: 0,
+                    lastReason: currentInterrupt.reason,
+                });
+                resolve(this.mergeTraceIntoResult(
+                    {...result, context: {...c, interrupt_truncated: true}} as ProcessResult,
+                    trace,
+                    grayRoom
+                ));
+                return;
             }
 
             if (typeof interrupt.maxTurns === 'number' && Number.isFinite(interrupt.maxTurns) && interrupt.maxTurns >= 0) {
@@ -395,17 +414,37 @@ export class GrayRoomOrchestrator {
             let lastOutcome = (workingCtx['result'] as Record<string, any>)?.['outcome'] || 'noop';
 
             // -- OVERRIDE OUTCOME FOR REVIEW/DEBATE (ADR-0038) --
-            if (currentState === OrchestratorState.REVIEWING && workingCtx['REVIEW_RESULT']) {
+            if (currentState === 'REVIEWING' && workingCtx['REVIEW_RESULT']) {
                 const res = workingCtx['REVIEW_RESULT'] as any;
                 lastOutcome = res.passed ? 'review_passed' : 'review_failed';
                 // Clear result for next turns if necessary, or let kernel handle it
             }
-            if (currentState === OrchestratorState.DEBATING && workingCtx['DEBATE_OUTCOME']) {
+            if (currentState === 'DEBATING' && workingCtx['DEBATE_OUTCOME']) {
                 lastOutcome = 'debate_resolved';
             }
             // --------------------------------------------------
 
-            const {nextState, artifact} = this.kernel.transition(currentState, lastOutcome, workingCtx);
+            // BUG-1+BUG-5 FIX: Use kernel instance (not this.kernel) and correct signature; handle artifact
+            let fsmTransition: ReturnType<OrchestratorKernel['transition']> | null = null;
+            const fsmEvent = (lastOutcome === 'noop' || !lastOutcome)
+                ? 'execution_complete'
+                : (lastOutcome as OrchestratorEvent);
+            try {
+                fsmTransition = kernel.transition(fsmEvent, {});
+                currentState = fsmTransition.newState;
+                if (fsmTransition.artifactType) {
+                    // BUG-5 FIX: Log artifact instead of silently discarding
+                    logger.info('[GrayRoom] FSM artifact emitted', {
+                        from: fsmTransition.previousState,
+                        to: fsmTransition.newState,
+                        artifact: fsmTransition.artifactType,
+                    });
+                }
+            } catch (fsmErr) {
+                // Invalid transition — log and keep current state rather than crashing
+                logger.warn('[GrayRoom] FSM transition skipped', { event: fsmEvent, state: currentState, error: String(fsmErr) });
+            }
+
             const lastAction = (workingCtx['execute'] as Record<string, any>)?.['write-file'] || 
                                (workingCtx['execute'] as Record<string, any>)?.['edit-file'];
             const isUIChange = lastAction && (
@@ -418,8 +457,7 @@ export class GrayRoomOrchestrator {
 
             if (isUIChange) {
                 try {
-                    // Logic to determine internal URL - usually a dev server
-                    const devUrl = 'http://localhost:5173'; // Default Vite port
+                    const devUrl = 'http://localhost:5173';
                     const screenshotPath = `storage/screenshots/turn-${turn}.png`;
                     await globalVisionTester.captureScreenshot(devUrl, screenshotPath);
                     const visionResult = await globalVisionTester.performVisualQA(screenshotPath, (workingCtx['task'] as string) || 'UI matching manifesto');
@@ -438,19 +476,15 @@ export class GrayRoomOrchestrator {
                         logger.info('[GrayRoom] Vision QA passed');
                     }
                 } catch (err) {
-                    logger.info('[GrayRoom] Transitioning state', { from: currentState, to: nextState });
-                    currentState = nextState;
+                    // BUG-3 FIX: Log the actual error, not a misleading state-transition message
+                    logger.warn('[GrayRoom] Vision QA error (non-fatal, continuing)', { error: String(err) });
                 }
             }
             // --------------------------------------
 
             // -- SPECIAL HANDLING FOR REVIEWING STATE --
-            if (currentState === OrchestratorState.REVIEWING) {
+            if (currentState === 'REVIEWING') {
                 logger.info('[GrayRoom] Entering Review Phase');
-                // The REVIEWER will analyze the work done in EXECUTING
-                // We'll give it the context and ask for a critique.
-                // For now, we trigger an LLM-based critique turn.
-                // In a real implementation, this might be a specialized transform.
                 workingCtx['task'] = `Review the recent execution. Find bugs or design flaws. Return 'passed: true' or 'passed: false' with critique.`;
             }
             // -----------------------------------------
@@ -602,8 +636,11 @@ export class GrayRoomOrchestrator {
                     remainingBudget: 0,
                     lastReason: 'hard_timeout',
                 });
+                // BUG-2 FIX: 'result' and 'c' were not in scope here.
+                // Build a safe timeout result from workingCtx instead.
+                const timeoutCtx = { ...(workingCtx as Record<string, unknown>), hard_timeout: true };
                 resolve(this.mergeTraceIntoResult(
-                    {...result, context: {...c, hard_timeout: true}} as ProcessResult,
+                    { outcome: 'failed', error: 'Hard timeout reached', context: timeoutCtx } as ProcessResult,
                     trace,
                     grayRoom
                 ));
@@ -612,32 +649,36 @@ export class GrayRoomOrchestrator {
             // -----------------------------------
 
             // -- HANDLE REVIEW OUTCOME (ADR-0038) --
-            if (currentState === OrchestratorState.REVIEWING) {
+            if (currentState === 'REVIEWING') {
                 const isPassed = md.toLowerCase().includes('passed: true');
-                const result = {
+                // BUG-6 FIX: Renamed from 'result' to 'reviewResult' to avoid shadowing ProcessResult
+                const reviewResult = {
                     passed: isPassed,
                     critique: md,
                     turn: turn
                 };
-                workingCtx['REVIEW_RESULT'] = result;
-                
-                if (isPassed) {
-                    logger.info('[GrayRoom] Review passed');
-                    // We need a way to trigger review_passed event
-                    // The simplest way is to inject an interrupt that the kernel understands
-                    // Or let the next iteration handle the transition
-                } else {
-                    logger.warn('[GrayRoom] Review failed');
+                workingCtx['REVIEW_RESULT'] = reviewResult;
+                logger.info('[GrayRoom] Review outcome recorded', { passed: isPassed });
+                // Trigger FSM event for review outcome
+                try {
+                    const reviewEvent: OrchestratorEvent = isPassed ? 'review_passed' : 'review_failed';
+                    const reviewTransition = kernel.transition(reviewEvent, {});
+                    currentState = reviewTransition.newState;
+                    logger.info('[GrayRoom] FSM review transition', { to: currentState });
+                } catch (fsmErr) {
+                    logger.warn('[GrayRoom] FSM review transition skipped', { error: String(fsmErr) });
                 }
             }
             // -------------------------------------
-            
-            // Queue next tick instead of blocking for-loop
-            setImmediate(processTick);
+
+            // BUG-7 FIX: Use direct await recursion instead of setImmediate to avoid
+            // unpredictable I/O-queue delays under load.
+            await processTick();
+            return;
         };
-        
-        // Start the actor loop
-        setImmediate(processTick);
+
+        // Start the actor loop (BUG-7 FIX: direct await, not setImmediate)
+        await processTick();
     });
     }
 
@@ -721,7 +762,7 @@ export class GrayRoomOrchestrator {
         promiseId: string,
         trace: ServerInterruptTraceEvent[]
     ): Promise<{ nextCtx: Record<string, unknown>; continueLoop: boolean }> {
-        const { reason, context: extraCtx, data } = interrupt;
+        const { reason, context: extraCtx } = interrupt;
         let nextCtx = extraCtx ? { ...ctx, ...extraCtx } : { ...ctx };
 
         switch (reason) {
@@ -792,3 +833,18 @@ export class GrayRoomOrchestrator {
         logger.warn('[GrayRoom] Transform execute validation warnings', { source, issues: issues.map(i => i.code) });
     }
 }
+
+export {
+    detectGrayRoomTrigger,
+    shouldUseGrayRoom,
+    isGrayRoomEnabled,
+    getConfiguredMaxTurns,
+    readGrayRoomInterruptBudget,
+    type GrayRoomTriggerResult
+} from './gray-room-trigger.js';
+
+export {
+    DIALOG_TOOL_EXECUTE_KEYS,
+    isDialogToolExecutePayload,
+    type GrayRoomOptions
+} from './gray-room-utils.js';

@@ -50,6 +50,13 @@ export function resolveTransformSchema(ctx: Record<string, unknown>): string | n
     const exec = resolveExecution(ctx);
     const action = (exec?.action ?? ctx['action']) as string | undefined;
     const res = resolveResultObject(ctx);
+    const step = exec?.step as string | undefined;
+    /** Raw invoke / tests: `execution.step === 'init'` + root `task` is session metadata, not a user line — still need dialog schema for the initial form (no LLM). */
+    const dialogInitColdStart =
+        action === 'dialog' && step === 'init' && !res?.message && ACTION_TO_SCHEMA['dialog'];
+    if (dialogInitColdStart) {
+        return ACTION_TO_SCHEMA['dialog'];
+    }
     const hasMessage = res?.message ?? ctx['task'] ?? ctx['message'];
     if (action && hasMessage && ACTION_TO_SCHEMA[action]) {
         return ACTION_TO_SCHEMA[action];
@@ -82,7 +89,14 @@ export function normalizeContext(
     }
 
     // Использовать task/message как result.message для LLM когда result.message все еще отсутствует
-    if (!result.message && (normalizedCtx['task'] || normalizedCtx['message'])) {
+    const execForPromote = resolveExecution(normalizedCtx);
+    const skipPromoteTaskToMessage =
+        execForPromote?.action === 'dialog' && execForPromote?.step === 'init';
+    if (
+        !result.message &&
+        (normalizedCtx['task'] || normalizedCtx['message']) &&
+        !skipPromoteTaskToMessage
+    ) {
         result = {...result, message: normalizedCtx['task'] ?? normalizedCtx['message']};
         normalizedCtx['result'] = result;
     } else if (Object.keys(result).length > 0) {

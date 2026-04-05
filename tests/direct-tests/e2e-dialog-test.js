@@ -884,6 +884,23 @@ async function navigateThroughRouterToAgent(sessionId, label) {
   throw new Error(`${label}: navigateThroughRouterToAgent exceeded max iterations`);
 }
 
+/** Gray room slot can lag session persistence after async settle (storage/index); poll briefly. */
+async function pollGrayRoomSlotVisible(sessionId, label, maxWaitMs = 20000, stepMs = 400) {
+  const deadline = Date.now() + maxWaitMs;
+  let lastErr;
+  while (Date.now() < deadline) {
+    const full = await getSession(sessionId, { includeContext: true });
+    try {
+      assertGrayRoomSlot(full, label);
+      return full;
+    } catch (e) {
+      lastErr = e;
+      await sleep(stepMs);
+    }
+  }
+  throw lastErr ?? new Error(`${label}: grayRoom slot not visible within ${maxWaitMs}ms`);
+}
+
 /** Raw tool keys must not appear on GET /sessions/:id Web DTO (WEB_UI_PROTOCOL execute projection). */
 function assertNoRawToolKeysOnWebExecute(execute, label) {
   if (!execute || typeof execute !== 'object') return;
@@ -926,9 +943,7 @@ async function caseRedAndGrayRoomCycle() {
     const settled = await pollAsyncSettled(sessionId, 120_000);
     assert(settled, 'red-gray room: first settle');
 
-    const full = await getSession(sessionId, { includeContext: true });
-    assert(full, 'red-gray room: full session (includeContext)');
-    assertGrayRoomSlot(full, 'after first settle');
+    const full = await pollGrayRoomSlotVisible(sessionId, 'after first settle');
 
     const executeObj = full.execute;
     if (hasCanonicalToolExecute(executeObj)) {
@@ -941,9 +956,7 @@ async function caseRedAndGrayRoomCycle() {
 
   await performRedRoomClientExecute(sessionId, redExecute);
 
-  const fullAfterRed = await getSession(sessionId, { includeContext: true });
-  assert(fullAfterRed, 'red-gray room: full session after red');
-  assertGrayRoomSlot(fullAfterRed, 'after red room');
+  const fullAfterRed = await pollGrayRoomSlotVisible(sessionId, 'after red room', 15000);
 
   const pub = unwrapPublicSession(await getSession(sessionId));
   assertNoRawToolKeysOnWebExecute(pub.execute, 'after red room hydrate');

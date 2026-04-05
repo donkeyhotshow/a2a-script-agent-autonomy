@@ -1,0 +1,20 @@
+{
+  "context": {
+    "workbench": {
+      "sections": {
+        "sequence": {
+          "steps": [
+            { "id": "step-a", "title": "First", "status": "complete" },
+            { "id": "step-b", "title": "Second", "status": "pending" }
+          ],
+          "headIndex": 1
+        },
+        "predictions": [
+          { "kind": "final_prediction", "at": "fixture", "goal": "mama-verify-gray-room-sequence" }
+        ]
+      }
+    },
+    "history": [{ "type": "step_complete" }],
+    "operationHistory": [{ "op": "sequence_step_complete" }]
+  }
+}

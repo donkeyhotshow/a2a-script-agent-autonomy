@@ -52,6 +52,59 @@ const tests = [
             join(__dirname, 'gray-room', 'fixtures', 'example-horizontal.spec.json'),
         ],
     },
+    {
+        name: 'Mama Gray (compress_history)',
+        cmd: [
+            'node',
+            join(__dirname, 'gray-room', 'validate-gray-room-horizontal.mjs'),
+            '--snapshot',
+            join(__dirname, 'gray-room', 'fixtures', 'compress-history-snapshot.json'),
+            '--spec',
+            join(__dirname, 'gray-room', 'fixtures', 'compress-history.spec.json'),
+        ],
+    },
+    {
+        name: 'Mama Gray (clarify)',
+        cmd: [
+            'node',
+            join(__dirname, 'gray-room', 'validate-gray-room-horizontal.mjs'),
+            '--snapshot',
+            join(__dirname, 'gray-room', 'fixtures', 'clarify-snapshot.json'),
+            '--spec',
+            join(__dirname, 'gray-room', 'fixtures', 'clarify.spec.json'),
+        ],
+    },
+    {
+        name: 'Mama Gray (algorithm_invoke)',
+        cmd: [
+            'node',
+            join(__dirname, 'gray-room', 'validate-gray-room-horizontal.mjs'),
+            '--snapshot',
+            join(__dirname, 'gray-room', 'fixtures', 'algorithm-invoke-snapshot.json'),
+            '--spec',
+            join(__dirname, 'gray-room', 'fixtures', 'algorithm-invoke.spec.json'),
+        ],
+    },
+    {
+        name: 'Mama Sticky Router Audit',
+        cmd: ['node', join(__dirname, 'validators', 'audit-sticky-router.mjs')],
+    },
+    {
+        name: 'Mama Execute Shape (simulations/sync)',
+        cmd: ['node', join(__dirname, 'validators', 'audit-execute-shape-simulations.mjs')],
+    },
+    {
+        name: 'Mama Sim Choice Descriptions',
+        cmd: ['node', join(__dirname, '..', 'direct-tests', 'validators', 'audit-sim-choice-descriptions.mjs')],
+    },
+    {
+        name: 'Mama Gray Room Sequence (verify-gray-room-state)',
+        cmd: [
+            'node',
+            join(__dirname, '..', 'direct-tests', 'validators', 'verify-gray-room-state.mjs'),
+            join(__dirname, 'gray-room', 'fixtures', 'sequence-workbench-snapshot.json'),
+        ],
+    },
 ];
 
 const results = [];

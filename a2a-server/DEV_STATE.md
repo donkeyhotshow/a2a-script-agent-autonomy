@@ -21,6 +21,8 @@
 
 ## Recent (2026-04-03)
 
+- **GET `/requests/:id/result` poll context**: `mergePollContextWithPersisted` merges whitelisted fields from `RequestResult.context` into the JSON `data.context` after `filterResponse(result)`, with `workbench.slots` deep-merged so `grayRoom` survives when the stored `result` blob differs (Client API async → session `redGrayRoom` e2e).
+- **`execution.step === 'init'` + root `task`**: `normalizeContext` no longer promotes that `task` into `result.message` (avoids spurious LLM hop on async invoke schema probe). `resolveTransformSchema` maps dialog+init without user message to the dialog schema so the dialog processor returns the initial task form. E2E: `invokeContextFollowup`.
 - **Dialog initial form check**: Added check in `dialog-request-processor.ts` to return initial form directly from request transform for dialog schema without user input, before attempting LLM call.
 - **Upstream errors (Client API messages)**: `humanizeUpstreamErrorMessage()` in `request.service.ts` replaces bare Node `fetch failed` / connection errors with actionable text for sync `/invoke` failures and `executeLlmCall` paths (stored assistant line in session `messages.json` is no longer the opaque two-word error).
 - **Gray Room `mergeTraceIntoResult`**: Always merge `interruptTrace` + `workbench.slots.grayRoom` even when `ProcessResult.context` is missing (finalize path could leave context undefined; early return dropped the slot and broke `e2e-dialog-test.js` `redGrayRoom`).

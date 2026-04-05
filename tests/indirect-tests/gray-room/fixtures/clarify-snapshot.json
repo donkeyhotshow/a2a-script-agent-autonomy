@@ -1,0 +1,20 @@
+{
+  "context": {
+    "workbench": {
+      "slots": {
+        "interruptTrace": [
+          { "kind": "llm_output", "phase": "primary", "chars": 120 },
+          { "kind": "response_transform", "interruptReason": "clarify" },
+          { "kind": "sidecar_llm", "purpose": "clarify", "ok": true, "meta": "slots.clarify" },
+          { "kind": "interrupt_handler", "reason": "clarify", "continueLoop": false }
+        ],
+        "grayRoom": {
+          "enabled": true,
+          "phase": "completed",
+          "status": "completed",
+          "turn": 1
+        }
+      }
+    }
+  }
+}

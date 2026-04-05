@@ -83,16 +83,18 @@ export function generateApiKey(prefix: string = 'sk_a2a'): string {
  * Hash password with bcrypt
  */
 export async function hashPassword(password: string): Promise<string> {
-    const {hash} = await import('bcrypt');
-    return hash(password, 10);
+    // @ts-expect-error - Dynamic import typing
+    const {hash} = await (import('bcrypt') as any);
+    return hash(password, 10) as Promise<string>;
 }
 
 /**
  * Verify password against hash
  */
 export async function verifyPassword(password: string, hash: string): Promise<boolean> {
-    const {compare} = await import('bcrypt');
-    return compare(password, hash);
+    // @ts-expect-error - Dynamic import typing
+    const {compare} = await (import('bcrypt') as any);
+    return compare(password, hash) as Promise<boolean>;
 }
 
 /**

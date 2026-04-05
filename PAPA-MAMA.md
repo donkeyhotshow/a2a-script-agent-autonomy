@@ -7,6 +7,19 @@ Two buckets for **reliable** checks without mixing “is the port up?” with �
 | **Папа (Papa) — direct** | [`tests/direct-tests/`](tests/direct-tests/) | Anything that needs a **running stack**: HTTP to Client API and/or server, session `create` / `next` / `async`, invoke payloads, E2E dialog runners, hub **reachability** scripts. Failures mean wiring, runtime, or live contract on the wire. |
 | **Мама (Mama) — indirect** | [`tests/indirect-tests/`](tests/indirect-tests/) | Anything **offline**: validators over saved JSON/MD, sim `sim:lint` / `sim:check-md`, schema-only Vitest, replay fixtures, static audits. No Ollama required. Failures mean stored artifacts or spec drift. |
 
+## Metaphor: «Папа и мама поехали на дачу» (*Parents went to the dacha*)
+
+Folk image: parents say they went to the **dacha** (away, casual); in reality they are **at work**; kids stay home on **remote** and keep things running; an outsider may **not know** which story is true.
+
+**In this repo** the same shape is a warning about **narrative vs evidence**:
+
+- **Папа и Мама are sequential, not interchangeable.** The Gang runs **Mama first**, then **Papa only if the stack is up** ([`tests/papa-mama-gang.mjs`](tests/papa-mama-gang.mjs), `npm run test:gang`). Green Mama output does **not** prove Papa ran or that HTTP + LLM paths were exercised.
+- **«Дети дома»** maps to offline automation: indirect validators, agents editing from files, CI that skips live ports. Useful — but **different visibility** than Papa on the wire.
+- **Authoritative plan lives in state docs**, not in chat tone: root and module [`DEV_STATE.md`](DEV_STATE.md), [`tasks/pending/`](tasks/pending/). Intended arc: **plan / scope** → **expand coverage** → **all relevant checks** → stop when the **whole** pipeline is actually satisfactory — not when one layer “sounds done.”
+- **Anti-pattern (*на дачу*):** treating “Mama green” or a vague “all good” as closure **without** reconciling which Gang shift ran and whether `DEV_STATE` / tasks match reality.
+
+Normative idle/queue behavior (prune → discover → write; do not stop on empty queue) stays in [`AGENTS.md`](AGENTS.md) (*Empty queue*, *DEV_STATE Protocol*).
+
 ## Mama: Red room vs Gray room (vertical vs horizontal)
 
 Both are **validation-only** (Mama). Papa **executes** the live stack; Mama **checks** captured or synthetic JSON against a contract.
@@ -42,6 +55,10 @@ Implementations: [`validate-red-room-dialog-vertical.mjs`](tests/indirect-tests/
 ```bash
 npm run test:gang
 ```
+
+**Ориентационный хук (сессия после зелёной банды):** при живом Client API (`:5173`) и сервере (`:3000`) создаётся сессия `mode: agent` с задачей «прочитать DEV_STATE везде, tasks, AGENTS — продолжить работу». Отдельно: `npm run gang:orient-session`. Вместе с бандой: `GANG_ORIENT_SESSION=1 npm run test:gang` (Windows PowerShell: `$env:GANG_ORIENT_SESSION='1'; npm run test:gang`). Если стек выключен — печатается тот же текст задачи для вставки в IDE.
+
+Скрипт [`tests/papa-mama-gang.mjs`](../tests/papa-mama-gang.mjs) в начале печатает блок **«знакомство смен»**: что именно входит в `test:indirect` (полный `run-all.mjs`, включая gray fixtures, sticky-router audit, audit execute shape по симуляциям), что делает Папа при живом `:3000`, и отсылает сюда — чтобы не крутить «дела без крыши».
 
 **Как это работает (`tests/papa-mama-gang.mjs`):**
 

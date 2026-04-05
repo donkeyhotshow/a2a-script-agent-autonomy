@@ -52,8 +52,8 @@ export function getRouterFormChoiceArray(form) {
   return Array.isArray(raw) ? raw : [];
 }
 
-/** Web DTO execute after `buildExecuteProjection` / `toPublicSession` (WEB_UI_PROTOCOL.md — message, form, attachments). */
-const WEB_UI_EXECUTE_KEYS = new Set(['message', 'llmMessage', 'form', 'attachments']);
+/** Web DTO execute after `buildExecuteProjection` / `toPublicSession` (WEB_UI_PROTOCOL.md — message, form, attachments, wait). */
+const WEB_UI_EXECUTE_KEYS = new Set(['message', 'llmMessage', 'form', 'attachments', 'wait']);
 
 export function assertWebUiExecuteProjection(execute, label) {
   if (execute == null || typeof execute !== 'object') return;
@@ -61,7 +61,7 @@ export function assertWebUiExecuteProjection(execute, label) {
   const bad = keys.filter((k) => !WEB_UI_EXECUTE_KEYS.has(k));
   assert(
     bad.length === 0,
-    `${label}: Web DTO execute must use only message|llmMessage|form|attachments (+ _*), got extra: ${bad.join(', ')}`
+    `${label}: Web DTO execute must use only message|llmMessage|form|attachments|wait (+ _*), got extra: ${bad.join(', ')}`
   );
 }
 

@@ -1,17 +1,19 @@
 #!/usr/bin/env pwsh
 <#
 .SYNOPSIS
-    Run a2a-server unit tests (Vitest) — no live stack required.
+    Run a2a-server Vitest — default: offline-safe (no tests/integration, no tests/e2e).
 .DESCRIPTION
-    Server unit tests mock LLM/external calls. They catch processor logic,
-    transform bugs, routing, and shape violations before you start the stack.
+    By default excludes tests/integration/** and tests/e2e/** (real HTTP, LLM, long timeouts).
+    Use -IncludeIntegration to run the full a2a-server suite (needs stack/services as those tests expect).
 .EXAMPLE
     .\tests\indirect-tests\run-server-unit-tests.ps1
     .\tests\indirect-tests\run-server-unit-tests.ps1 -Filter "router|action"
+    .\tests\indirect-tests\run-server-unit-tests.ps1 -IncludeIntegration
 #>
 param(
     [string]$Filter = "",
-    [switch]$Watch
+    [switch]$Watch,
+    [switch]$IncludeIntegration
 )
 
 $ErrorActionPreference = 'Stop'
@@ -22,11 +24,19 @@ $env:NODE_ENV = 'test'
 $env:ENCRYPTION_KEY = '12345678901234567890123456789012'  # 32 chars for test
 $env:JWT_SECRET = 'test-jwt-secret-32-chars-long!!!!!'
 
-$vitestCmd = "npx vitest run"
-if ($Watch) { $vitestCmd = "npx vitest" }
+if ($IncludeIntegration) {
+    $vitestCmd = if ($Watch) { "npx vitest" } else { "npx vitest run" }
+} else {
+    $vitestCmd = if ($Watch) {
+        "npx vitest --exclude tests/integration/** --exclude tests/e2e/**"
+    } else {
+        "npx vitest run --exclude tests/integration/** --exclude tests/e2e/**"
+    }
+}
 if ($Filter) { $vitestCmd += " --reporter=verbose --testNamePattern=`"$Filter`"" }
 
-Write-Host "=== Running a2a-server unit tests ===" -ForegroundColor Cyan
+$vitestMode = if ($IncludeIntegration) { 'full (integration+e2e)' } else { 'offline (no integration/e2e)' }
+Write-Host "=== Running a2a-server Vitest - $vitestMode ===" -ForegroundColor Cyan
 Invoke-Expression $vitestCmd
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[FAIL] Server unit tests failed" -ForegroundColor Red

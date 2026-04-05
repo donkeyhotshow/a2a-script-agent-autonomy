@@ -1,4 +1,5 @@
 import winston from 'winston';
+// @ts-expect-error - winston-daily-rotate-file typing issues in NodeNext ESM
 import DailyRotateFile from 'winston-daily-rotate-file';
 import * as fs from 'fs/promises';
 import * as path from 'path';

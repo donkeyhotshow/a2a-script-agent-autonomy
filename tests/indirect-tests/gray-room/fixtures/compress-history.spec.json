@@ -1,0 +1,4 @@
+{
+  "expectedHandlerReasons": ["compress_history"],
+  "match": "exact"
+}

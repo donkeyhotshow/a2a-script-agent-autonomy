@@ -46,6 +46,8 @@ node tests/indirect-tests/validate-prompts.mjs
 | `run-server-unit-tests.ps1` | a2a-server Vitest suite (mocked LLM) | Logic bugs in processors, transforms |
 | [`red-room/validate-red-room-dialog-vertical.mjs`](red-room/validate-red-room-dialog-vertical.mjs) | **Mama red:** vertical dialog flow vs spec | Wrong step shape / order in captures |
 | [`gray-room/validate-gray-room-horizontal.mjs`](gray-room/validate-gray-room-horizontal.mjs) | **Mama gray:** `interruptTrace` handler order | Gray-room pipeline drift |
+| [`validators/audit-sticky-router.mjs`](validators/audit-sticky-router.mjs) | Saved sessions: sticky router / action jump | Session replay contract drift |
+| [`validators/audit-execute-shape-simulations.mjs`](validators/audit-execute-shape-simulations.mjs) | All `simulations/sync/**/response.json` (incl. `N-sub-M` steps) | Multi-key execute, legacy result blobs |
 
 See [PAPA-MAMA.md](../../PAPA-MAMA.md) (Red vs Gray) and per-folder READMEs in `red-room/`, `gray-room/`.
 
