@@ -275,11 +275,16 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
         if ((result as Record<string, unknown>).choice) {
             ctx['choice_id'] = (result as Record<string, unknown>).choice;
         }
-        // Parse task from result.message for action processor (Client API sends result.message)
+        // Parse result.message: current user line. For dialog, keep context.task as the session task (first line).
         const msg = (result as Record<string, unknown>).message;
         if (msg && typeof msg === 'string') {
             ctx['message'] = msg;
-            ctx['task'] = msg;
+            const exec = ctx['execution'] as {action?: string} | undefined;
+            const existingTask = ctx['task'];
+            const isDialog = exec?.action === 'dialog';
+            if (!(isDialog && typeof existingTask === 'string' && existingTask.trim().length > 0)) {
+                ctx['task'] = msg;
+            }
         }
     }
 
@@ -296,7 +301,11 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
         ctx['llmModel'] = topLlm;
     }
 
-    const message = input.message ?? input.task ?? (result && typeof result === 'object' ? (result as Record<string, unknown>).message as string : undefined);
+    const resultMessage =
+        result && typeof result === 'object' && typeof (result as Record<string, unknown>).message === 'string'
+            ? ((result as Record<string, unknown>).message as string)
+            : undefined;
+    const message = input.message ?? resultMessage ?? input.task;
 
     const {promiseId} = await requestService.create({
         clientId,

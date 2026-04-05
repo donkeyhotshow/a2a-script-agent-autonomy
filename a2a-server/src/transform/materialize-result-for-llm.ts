@@ -4,6 +4,8 @@
  * Callers pass a clone if the original invoke payload must stay unchanged.
  */
 
+import { deepCloneJson } from '../utils/deep-clone-json.js';
+
 const MAX_TOOL_SUMMARY = 4000;
 
 export type HistoryEntry = { role: string; message: string };
@@ -168,6 +170,6 @@ export function materializeResultIntoHistoryForLlm(root: Record<string, unknown>
 
 /** Clone invoke-shaped payload, then materialize (for prompt pipeline; keeps caller's object intact). */
 export function prepareInvokePayloadForLlmPrompt(input: Record<string, unknown>): Record<string, unknown> {
-  const clone = JSON.parse(JSON.stringify(input)) as Record<string, unknown>;
+  const clone = deepCloneJson(input);
   return materializeResultIntoHistoryForLlm(clone);
 }

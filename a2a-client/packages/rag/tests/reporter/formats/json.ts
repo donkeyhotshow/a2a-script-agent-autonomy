@@ -2,5 +2,5 @@
  * @fileoverview JSON report entry point
  */
  
-export type { JSONReportOptions } from '../reporter/report-formatter.js';
-export { generateJSONReport } from '../reporter/report-formatter.js';
+export type { JSONReportOptions } from '../formatters/json.js';
+export { generateJSONReport } from '../formatters/json.js';

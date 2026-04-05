@@ -2,10 +2,12 @@
  * Prompts/transforms path resolution, schema maps, and runPromptsTransform.
  */
 
-import * as fs from 'fs/promises';
+import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import { logger } from '../../utils/logger.js';
+import { deepCloneJson } from '../../utils/deep-clone-json.js';
+import { pathIsAccessible } from '../../utils/fs-access.js';
 import { prepareInvokePayloadForLlmPrompt } from '../materialize-result-for-llm.js';
 import { attachFlowControlHintToInvokePayload } from '../../prompts/flow-control-hints.js';
 import { attachWorkbenchForLlmPrompt } from '../workbench-normalize.js';
@@ -132,19 +134,16 @@ async function resolveTransformFile(
   }
 
   for (const filePath of candidates) {
-    try {
-      await fs.access(filePath);
-      return filePath;
-    } catch (err: unknown) {
-      const code = (err as NodeJS.ErrnoException)?.code;
-      if (code && code !== 'ENOENT') {
+    if (
+      await pathIsAccessible(filePath, (m) =>
         logger.debug('[prompts] transform candidate access failed', {
-          filePath,
-          code,
-          error: err instanceof Error ? err.message : String(err),
-        });
-      }
-      continue;
+          filePath: m.filePath,
+          code: m.code,
+          error: m.error,
+        })
+      )
+    ) {
+      return filePath;
     }
   }
   throw new Error(`No transform file found for ${schemaName}/${step ?? '?'} ${type}`);
@@ -219,9 +218,7 @@ export async function runPromptsTransform(
   const baseDir = transformOptions.baseDir ?? path.resolve(promptsTransformsDir, '../../..');
   let pipelineInput: Record<string, unknown> = input;
   if (type === 'request') {
-    const clone = prepareInvokePayloadForLlmPrompt(
-      JSON.parse(JSON.stringify(input)) as Record<string, unknown>
-    );
+    const clone = prepareInvokePayloadForLlmPrompt(deepCloneJson(input));
     attachFlowControlHintToInvokePayload(clone);
     attachWorkbenchForLlmPrompt(clone);
     pipelineInput = clone;

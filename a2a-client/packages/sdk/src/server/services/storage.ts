@@ -7,12 +7,10 @@
 
 import * as fs from 'fs/promises';
 import path from 'path';
-import os from 'os';
-import { fileURLToPath } from 'url';
+import { isNodeEnoent } from '@a2a-client/shared/node-errors.mjs';
 
-// ESM compatible __dirname
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+export { unwrapKvStoredValue } from '@a2a-client/shared/kv-unwrap.mjs';
+export { isNodeEnoent };
 
 // ============================================================================
 // Storage Configuration
@@ -26,6 +24,16 @@ export function getStorageDir(): string {
     if (process.env.A2A_CLIENT_STORAGE_DIR) return process.env.A2A_CLIENT_STORAGE_DIR;
     // Default to local storage in project for web client compatibility
     return path.join(process.cwd(), '..', 'storage');
+}
+
+/** Root directory for `kv/*` namespaces (SDK storage layout). */
+export function getKvRoot(): string {
+    return path.join(getStorageDir(), 'kv');
+}
+
+/** Global `storage/sessions` root (step folders and non–project-path session JSON), not `.a2a/sessions`. */
+export function getStorageSessionsRoot(): string {
+    return path.join(getStorageDir(), 'sessions');
 }
 
 /**
@@ -58,11 +66,11 @@ export async function readJsonFile<T>(filePath: string, fallback: T): Promise<T>
         const raw = await fs.readFile(filePath, 'utf-8');
         return JSON.parse(raw) as T;
     } catch (e) {
-        const code = (e as NodeJS.ErrnoException)?.code;
-        if (code !== 'ENOENT') {
-            console.warn('[storage] readJsonFile:', filePath, e instanceof Error ? e.message : e);
+        if (isNodeEnoent(e)) {
+            return fallback;
         }
-        return fallback;
+        console.error('[storage] readJsonFile:', filePath, e instanceof Error ? e.message : e);
+        throw e instanceof Error ? e : new Error(String(e));
     }
 }
 
@@ -76,9 +84,8 @@ export async function writeJsonFile(filePath: string, data: unknown): Promise<vo
     try {
         await fs.rm(filePath, { force: true });
     } catch (e) {
-        const code = (e as NodeJS.ErrnoException)?.code;
-        if (code !== 'ENOENT') {
-            console.warn('[storage] writeJsonFile: could not remove previous file:', filePath, e instanceof Error ? e.message : e);
+        if (!isNodeEnoent(e)) {
+            console.error('[storage] writeJsonFile: could not remove previous file:', filePath, e instanceof Error ? e.message : e);
         }
     }
     await fs.rename(tmp, filePath);

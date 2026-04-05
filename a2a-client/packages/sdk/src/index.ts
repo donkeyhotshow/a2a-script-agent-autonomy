@@ -9,9 +9,10 @@ import {
     buildConfirmContext,
     buildFileResponseContext,
     type FileBlockLike,
-} from './protocol';
-import {AsyncApiClient, PromisePoller} from './async-client';
-import {handleActionResponse, handleExecuteAction, createExecuteScript, extractExecuteAction} from './action-handler';
+} from './protocol.js';
+import {AsyncApiClient} from './async-api-client.js';
+import {PromisePoller} from './polling.js';
+import {handleActionResponse, handleExecuteAction, createExecuteScript, extractExecuteAction} from './action-handler.js';
 import {unwrapEnvelope} from './client-api-envelope.js';
 
 export interface ApiClientConfig {
@@ -184,8 +185,10 @@ export class ApiClient {
     }
 }
 
-export {AsyncApiClient, PromisePoller, handleActionResponse, handleExecuteAction, createExecuteScript, extractExecuteAction};
-export type {ExecuteScriptFn, HandleActionOptions, HandleActionResult} from './action-handler';
+export {AsyncApiClient} from './async-api-client.js';
+export {PromisePoller} from './polling.js';
+export {handleActionResponse, handleExecuteAction, createExecuteScript, extractExecuteAction} from './action-handler.js';
+export type {ExecuteScriptFn, HandleActionOptions, HandleActionResult} from './action-handler.js';
 export {
     buildNewTaskContext,
     buildContinueContext,
@@ -204,7 +207,7 @@ export {
     parseFileBlock,
     parseMessage,
     type FileBlockLike,
-} from './protocol';
+} from './protocol.js';
 
 // Session management types (implemented in AsyncApiClient)
 export type {

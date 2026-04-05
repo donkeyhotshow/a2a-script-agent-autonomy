@@ -11,6 +11,7 @@
  */
 
 import {logger} from '../../../utils/logger.js';
+import {resolveAiHubBaseUrl} from '../../../utils/ai-hub-url.js';
 import {getPromptsTransformsPath} from '../../../transform/index.js';
 import type {RequestContextBlock} from '../../../types/index.js';
 import type {RequestContext, ProcessResult} from './request-processor.interfaces.js';
@@ -22,6 +23,7 @@ import {
     isDialogToolExecutePayload
 } from './gray-room-utils.js';
 import {
+    readDialogHubLlmResubmitMax,
     readGrayRoomInterruptBudget,
     shouldUseGrayRoom
 } from './gray-room-trigger.js';
@@ -55,13 +57,6 @@ export {
     type ResponsePathResult,
     type RecoverDialogOutcome,
 } from './response-path.js';
-
-const DEFAULT_AI_HUB = 'http://localhost:11434';
-
-function readMaxHubLlmResubmit(): number {
-    const n = parseInt(process.env.DIALOG_HUB_LLM_RESUBMIT_MAX || '2', 10);
-    return Number.isFinite(n) && n >= 0 ? n : 2;
-}
 
 function dialogFailedWithContext(ctx: Record<string, unknown>, error: string): ProcessResult {
     return {
@@ -108,7 +103,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
         }
 
         const schemaName = extractSchemaName(schema);
-        const aiHubUrl = process.env.AI_HUB_URL || DEFAULT_AI_HUB;
+        const aiHubUrl = resolveAiHubBaseUrl();
         const model = resolveLlmModelFromContext(ctx);
 
         logger.info('[DialogRequestProcessor] Processing', {promiseId});
@@ -151,7 +146,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 }
                 if (recoveryOutcome.tag === 'resubmit') {
                     const cnt = await requestService.incrementHubLlmResubmitCount(promiseId);
-                    const maxR = readMaxHubLlmResubmit();
+                    const maxR = readDialogHubLlmResubmitMax();
                     if (cnt > maxR) {
                         return dialogFailedWithContext(
                             ctx,

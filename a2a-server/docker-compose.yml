@@ -85,7 +85,6 @@ services:
       PROXY_BASE_URL: http://ai-proxy:11434
     ports:
       - "3000:3000"
-      - "3001:3001"  # WebSocket
     depends_on:
       postgres:
         condition: service_healthy

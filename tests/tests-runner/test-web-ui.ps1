@@ -290,83 +290,7 @@ function Open-Browser {
     }
 }
 
-# SSE connectivity test
-function Test-SSEConnectivity {
-    param([string]$BaseUrl)
 
-    Write-Info "Testing SSE connectivity..."
-
-    try {
-        # Create a simple test page that checks SSE
-        $testHtml = @"
-<!DOCTYPE html>
-<html>
-<head>
-    <title>SSE Test</title>
-    <script>
-        let eventSource;
-        let connected = false;
-        let messageCount = 0;
-
-        function startSSE() {
-            console.log('Connecting to SSE...');
-            eventSource = new EventSource('/api/sse');
-
-            eventSource.onopen = function(event) {
-                console.log('SSE Connected!');
-                connected = true;
-                document.getElementById('status').textContent = 'Connected';
-                document.getElementById('status').style.color = 'green';
-            };
-
-            eventSource.onmessage = function(event) {
-                console.log('SSE Message:', event.data);
-                messageCount++;
-                document.getElementById('messages').textContent = messageCount;
-            };
-
-            eventSource.onerror = function(event) {
-                console.error('SSE Error:', event);
-                document.getElementById('status').textContent = 'Error';
-                document.getElementById('status').style.color = 'red';
-            };
-
-            setTimeout(() => {
-                if (connected) {
-                    console.log('SSE test passed');
-                    window.testResult = 'PASS';
-                } else {
-                    console.log('SSE test failed - not connected');
-                    window.testResult = 'FAIL';
-                }
-            }, 5000);
-        }
-
-        window.onload = startSSE;
-    </script>
-</head>
-<body>
-    <h1>SSE Connectivity Test</h1>
-    <p>Status: <span id="status" style="color: orange;">Connecting...</span></p>
-    <p>Messages received: <span id="messages">0</span></p>
-</body>
-</html>
-"@
-
-        $testFile = "$env:TEMP\sse-test.html"
-        $testHtml | Out-File -FilePath $testFile -Encoding UTF8
-
-        # Open test page (would need a web server, skip for now)
-        # Start-Process $testFile
-
-        Write-Success "SSE connectivity test initiated"
-        return $true
-
-    } catch {
-        Write-Error "SSE connectivity test failed: $_"
-        return $false
-    }
-}
 
 # Main execution
 function Main {
@@ -426,15 +350,11 @@ function Main {
             Write-Info "Browser opened. Please manually verify:"
             Write-Info "1. Page loads without errors"
             Write-Info "2. Session panel appears"
-            Write-Info "3. SSE connection establishes (check browser dev tools)"
             Write-Info ""
             Write-Info "Press Enter when ready to continue with automated checks..."
 
             $null = Read-Host
         }
-
-        # Run SSE connectivity test
-        Test-SSEConnectivity -BaseUrl "http://localhost:$Port"
 
         Write-Success "Web UI smoke test completed successfully"
         Collect-Logs -RunId $runId -ExitCode 0

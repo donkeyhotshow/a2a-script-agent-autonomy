@@ -4,13 +4,10 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-import os from 'os';
+import { getKvRoot, isNodeEnoent, unwrapKvStoredValue } from './storage.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const storageDir = process.env.A2A_CLIENT_STORAGE_DIR || path.join(os.homedir(), '.a2a-client');
-const SESSIONS_DATA_DIR = path.join(storageDir, 'kv', 'sessions', 'data');
+const SESSIONS_DATA_DIR = path.join(getKvRoot(), 'sessions', 'data');
 
 export interface PersistedSession {
     id: string;
@@ -35,6 +32,19 @@ async function ensureDir(dir: string): Promise<void> {
     await fs.mkdir(dir, { recursive: true });
 }
 
+/** Read JSON from disk and unwrap `{ value: T }` KV shape; ENOENT → null, other errors logged. */
+async function readUnwrappedKvJsonFile(filePath: string, logLabel: string): Promise<unknown | null> {
+    try {
+        const raw = await fs.readFile(filePath, 'utf-8');
+        return unwrapKvStoredValue(JSON.parse(raw) as unknown);
+    } catch (e) {
+        if (!isNodeEnoent(e)) {
+            console.error(`[SESSION] ${logLabel}:`, e instanceof Error ? e.message : e);
+        }
+        return null;
+    }
+}
+
 export async function loadSessionsFromStorage(): Promise<PersistedSession[]> {
     try {
         await ensureDir(SESSIONS_DATA_DIR);
@@ -44,14 +54,13 @@ export async function loadSessionsFromStorage(): Promise<PersistedSession[]> {
             if (!file.endsWith('.json')) continue;
             try {
                 const raw = await fs.readFile(path.join(SESSIONS_DATA_DIR, file), 'utf-8');
-                const parsed = JSON.parse(raw);
-                if (parsed?.value && parsed.value.id) {
-                    sessions.push(parsed.value as PersistedSession);
-                } else if (parsed?.id) {
-                    sessions.push(parsed as PersistedSession);
+                const parsed = JSON.parse(raw) as unknown;
+                const body = unwrapKvStoredValue(parsed);
+                if (body && typeof body === 'object' && !Array.isArray(body) && typeof (body as PersistedSession).id === 'string') {
+                    sessions.push(body as PersistedSession);
                 }
             } catch (e) {
-                console.warn('[SESSION] Skipping corrupt session file:', file, e instanceof Error ? e.message : e);
+                console.error('[SESSION] Skipping corrupt session file:', file, e instanceof Error ? e.message : e);
             }
         }
         return sessions;
@@ -67,7 +76,7 @@ export async function saveSessionToStorage(session: PersistedSession): Promise<v
         const filePath = path.join(SESSIONS_DATA_DIR, `${session.id}.json`);
         await fs.writeFile(filePath, JSON.stringify(session, null, 2), 'utf-8');
     } catch (err) {
-        console.warn('[SESSION] Failed to persist session:', err);
+        console.error('[SESSION] Failed to persist session:', err);
     }
 }
 
@@ -76,9 +85,8 @@ export async function deleteSessionFromStorage(sessionId: string): Promise<void>
         const filePath = path.join(SESSIONS_DATA_DIR, `${sessionId}.json`);
         await fs.unlink(filePath);
     } catch (e) {
-        const code = (e as NodeJS.ErrnoException)?.code;
-        if (code !== 'ENOENT') {
-            console.warn('[SESSION] deleteSessionFromStorage failed:', sessionId, e instanceof Error ? e.message : e);
+        if (!isNodeEnoent(e)) {
+            console.error('[SESSION] deleteSessionFromStorage failed:', sessionId, e instanceof Error ? e.message : e);
         }
     }
 }
@@ -86,38 +94,28 @@ export async function deleteSessionFromStorage(sessionId: string): Promise<void>
 /** Session IDs from panel state (for stub merge when no persisted session) */
 export async function loadSessionIdsFromPanelState(): Promise<{ sessionIds: string[]; projectId: string | null }> {
     try {
-        const kvDir = path.join(storageDir, 'kv');
+        const kvDir = getKvRoot();
         let sessionIds: string[] = [];
         let projectId: string | null = null;
 
         const windowsPath = path.join(kvDir, 'ui', 'a2a_session_windows.json');
-        try {
-            const raw = await fs.readFile(windowsPath, 'utf-8');
-            const parsed = JSON.parse(raw);
-            const val = parsed?.value ?? parsed;
-            const obj = typeof val === 'string' ? JSON.parse(val) : val;
-            if (obj?.windows && Array.isArray(obj.windows)) {
-                sessionIds = obj.windows.filter((id: unknown) => typeof id === 'string');
+        const windowsVal = await readUnwrappedKvJsonFile(windowsPath, 'a2a_session_windows.json');
+        let windowsObj: unknown = windowsVal;
+        if (typeof windowsVal === 'string') {
+            try {
+                windowsObj = JSON.parse(windowsVal);
+            } catch (e) {
+                console.error('[SESSION] a2a_session_windows.json (inner):', e instanceof Error ? e.message : e);
+                windowsObj = null;
             }
-        } catch (e) {
-            const code = (e as NodeJS.ErrnoException)?.code;
-            if (code !== 'ENOENT') {
-                console.warn('[SESSION] a2a_session_windows.json:', e instanceof Error ? e.message : e);
-            }
+        }
+        if (windowsObj && typeof windowsObj === 'object' && Array.isArray((windowsObj as { windows?: unknown }).windows)) {
+            sessionIds = (windowsObj as { windows: unknown[] }).windows.filter((id: unknown) => typeof id === 'string');
         }
 
-        const projectPath = path.join(kvDir, 'config', 'a2a_selected_project.json');
-        try {
-            const raw = await fs.readFile(projectPath, 'utf-8');
-            const parsed = JSON.parse(raw);
-            const val = parsed?.value ?? parsed;
-            projectId = typeof val === 'string' ? val : null;
-        } catch (e) {
-            const code = (e as NodeJS.ErrnoException)?.code;
-            if (code !== 'ENOENT') {
-                console.warn('[SESSION] a2a_selected_project.json:', e instanceof Error ? e.message : e);
-            }
-        }
+        const selectedProjectPath = path.join(kvDir, 'config', 'a2a_selected_project.json');
+        const projectVal = await readUnwrappedKvJsonFile(selectedProjectPath, 'a2a_selected_project.json');
+        projectId = typeof projectVal === 'string' ? projectVal : null;
 
         return { sessionIds, projectId };
     } catch (e) {

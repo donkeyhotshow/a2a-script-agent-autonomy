@@ -12,8 +12,8 @@
  * - Context preservation across session states
  */
 
-export { default as SessionStorage } from './session-storage';
-export { default as HistoryManager } from './history-manager';
+export { default as SessionStorage } from './session-storage.js';
+export { default as HistoryManager } from './history-manager.js';
 export type {
   SessionMetadata,
   SessionData,
@@ -23,7 +23,7 @@ export type {
   ExchangeLogEntry,
   MessageEntry,
   SessionContext
-} from './session-storage';
+} from './session-storage.js';
 
 // Re-export commonly used types
 export type {
@@ -38,4 +38,4 @@ export type {
 };
 
 // Export session model classes for direct use
-export { Session, SESSION_STATUS, SESSION_ACTIONS, MESSAGE_ROLES, EXCHANGE_LOG_TYPES, createSession, validateSessionData, sanitizeSessionForHistory } from './types';
+export { Session, SESSION_STATUS, SESSION_ACTIONS, MESSAGE_ROLES, EXCHANGE_LOG_TYPES, createSession, validateSessionData, sanitizeSessionForHistory } from './types.js';

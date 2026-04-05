@@ -12,6 +12,7 @@
  *      `consumed_by[]` array (the only allowed post-write mutation).
  */
 
+import { randomUUID } from 'node:crypto';
 import { validateArtifact } from '../../artifact-validator.js';
 import { globalEventBus } from './event-bus.js';
 
@@ -57,7 +58,8 @@ export type ArtifactType =
   | 'COGNITION_PRIORS'
   | 'RAG_LAYER_TRACE'
   | 'VERIFICATION_RESULT'
-  | 'DESIGN_MANIFEST';
+  | 'DESIGN_MANIFEST'
+  | 'DESIGN_MANIFESTO';
 
 /** Unique identifier for the component writing an artifact */
 export type ComponentId = string;
@@ -104,6 +106,7 @@ export const TTL_MS: Partial<Record<ArtifactType, number>> = {
   RAG_LAYER_TRACE:         1  * 24 * 60 * 60 * 1_000,  // 1 day
   VERIFICATION_RESULT:     7  * 24 * 60 * 60 * 1_000,  // 7 days
   DESIGN_MANIFEST:         30 * 24 * 60 * 60 * 1_000,  // 30 days — reusable across sessions
+  DESIGN_MANIFESTO:        30 * 24 * 60 * 60 * 1_000,  // mock / legacy hierarchical reasoner
 };
 
 // ── Stored artifact shape ─────────────────────────────────────────────────────
@@ -126,6 +129,46 @@ export interface StoredArtifact {
   consumed_by: string[];
   /** If non-null, this artifact has been superseded */
   superseded_by: string | null;
+}
+
+/** Payload accepted by {@link ArtifactStore.write} before store adds TTL / writer fields. */
+export type ArtifactStoreWritePayload = Omit<
+  StoredArtifact,
+  'written_by' | 'consumed_by' | 'superseded_by' | 'retained_until'
+>;
+
+/**
+ * Build a {@link ArtifactStore.write} row with `created_at` and default `schema_version` / `artifact_id`.
+ */
+export function createArtifactWriteInput(opts: {
+  artifact_type: ArtifactType;
+  session_id: string;
+  turn_id: string;
+  summary: string;
+  data: Record<string, unknown>;
+  artifact_id?: string;
+  created_at?: string;
+  schema_version?: string;
+  severity?: StoredArtifact['severity'];
+  task_run_id?: string;
+}): ArtifactStoreWritePayload {
+  const row: ArtifactStoreWritePayload = {
+    artifact_id: opts.artifact_id ?? randomUUID(),
+    artifact_type: opts.artifact_type,
+    session_id: opts.session_id,
+    turn_id: opts.turn_id,
+    created_at: opts.created_at ?? new Date().toISOString(),
+    schema_version: opts.schema_version ?? '1',
+    summary: opts.summary,
+    data: opts.data,
+  };
+  if (opts.severity !== undefined) {
+    row.severity = opts.severity;
+  }
+  if (opts.task_run_id !== undefined) {
+    row.task_run_id = opts.task_run_id;
+  }
+  return row;
 }
 
 // ── Query parameters ──────────────────────────────────────────────────────────

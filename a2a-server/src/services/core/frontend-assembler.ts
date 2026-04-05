@@ -1,4 +1,4 @@
-import { Graph, getRelationsForEntity } from './graph-store.service.ts';
+import { Graph, getRelationsForEntity } from './graph-store.service.js';
 import { logger } from '../../utils/logger.js';
 
 export interface AssemblyPlan {

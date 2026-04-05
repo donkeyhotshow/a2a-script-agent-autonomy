@@ -3,7 +3,7 @@
  * Single source for action-request-processor, dialog schema map.
  */
 
-import { readFileSync } from 'fs';
+import { readFileSync } from 'node:fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 

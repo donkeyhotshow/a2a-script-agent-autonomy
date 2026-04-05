@@ -1,6 +1,6 @@
 import { chromium, Browser, Page } from 'playwright';
 import { logger } from '../../utils/logger.js';
-import { globalArtifactStore } from './artifact-store.js';
+import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
 
 export interface VisionQAStatus {
     passed: boolean;
@@ -50,17 +50,20 @@ export class VisionTester {
             timestamp: new Date().toISOString()
         };
 
-        await globalArtifactStore.write({
-            artifact_id: `vision-qa-${Date.now()}`,
-            artifact_type: 'VISION_QA_RESULT',
-            session_id: 'unknown',
-            turn_id: 'unknown',
-            created_at: status.timestamp,
-            schema_version: '1.0',
-            data: status as unknown as Record<string, unknown>,
-            summary: `Vision QA: ${status.passed ? 'PASS' : 'FAIL'}. ${status.critique ?? ''}`,
-            severity: status.passed ? 'info' : 'warning'
-        }, this.COMPONENT_ID);
+        await globalArtifactStore.write(
+            createArtifactWriteInput({
+                artifact_id: `vision-qa-${Date.now()}`,
+                artifact_type: 'VISION_QA_RESULT',
+                session_id: 'unknown',
+                turn_id: 'unknown',
+                created_at: status.timestamp,
+                schema_version: '1.0',
+                data: status as unknown as Record<string, unknown>,
+                summary: `Vision QA: ${status.passed ? 'PASS' : 'FAIL'}. ${status.critique ?? ''}`,
+                severity: status.passed ? 'info' : 'warning',
+            }),
+            this.COMPONENT_ID,
+        );
 
         return status;
     }

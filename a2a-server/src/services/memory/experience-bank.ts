@@ -1,5 +1,5 @@
-import { randomUUID } from 'crypto';
-import { promises as fs } from 'fs';
+import { randomUUID } from 'node:crypto';
+import { promises as fs } from 'node:fs';
 import { join } from 'path';
 import { logger } from '../../utils/logger.js';
 

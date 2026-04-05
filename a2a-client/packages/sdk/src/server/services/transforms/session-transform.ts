@@ -61,7 +61,7 @@ export async function updateSessionWithServerResponse(
         const hadExistingContext = !!updatedSession.context;
         updatedSession.context = updatedSession.context || {};
         if (hadExistingContext) {
-            console.warn('[SESSION TRANSFORM] Context existed before execute update, keys:', Object.keys(updatedSession.context));
+            console.error('[SESSION TRANSFORM] Context existed before execute update, keys:', Object.keys(updatedSession.context));
         }
         updatedSession.context.execute =
             buildWebExecute(serverResponse.execute, { context: updatedSession.context }) ?? undefined;

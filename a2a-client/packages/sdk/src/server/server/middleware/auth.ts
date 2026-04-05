@@ -9,14 +9,6 @@ import {Request, Response, NextFunction} from 'express';
 import crypto from 'crypto';
 import {config} from '../../config/index.js';
 
-// Inline validation - matches a2a-client/shared/session-id.js
-const SAFE_SEGMENT = /^[a-zA-Z0-9_-]+$/;
-const MAX_LEN = 64;
-
-function isValidSessionId(id: string): boolean {
-    return typeof id === 'string' && SAFE_SEGMENT.test(id) && id.length <= MAX_LEN;
-}
-
 export interface AuthenticatedRequest extends Request {
     user?: {
         id: string;
@@ -80,7 +72,7 @@ function decodeAndVerifyJwt(token: string, secret: string): {sessionId: string; 
             userId: payload.userId,
         };
     } catch (e) {
-        console.warn('[auth] JWT decode/verify failed:', e instanceof Error ? e.message : e);
+        console.error('[auth] JWT decode/verify failed:', e instanceof Error ? e.message : e);
         return null;
     }
 }

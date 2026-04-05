@@ -1,4 +1,4 @@
-import { globalArtifactStore } from './artifact-store.js';
+import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
 import { SWEVerifier } from './swe-verifier.js';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
@@ -64,17 +64,19 @@ export class SkillEvolver {
 
     const turnId = context.stepId ?? context.actionId;
 
-    await globalArtifactStore.write({
-      artifact_id: `evo-${Date.now()}-${skillName.replace(/[^a-zA-Z0-9]/g, '')}`,
-      artifact_type: 'SKILL_EVOLUTION',
-      session_id: context.sessionId,
-      turn_id: turnId,
-      created_at: new Date().toISOString(),
-      schema_version: '1.0',
-      data: proposal as unknown as Record<string, unknown>,
-      summary: `Proposing evolution for ${skillName} due to ${failurePattern}`,
-      severity: 'info',
-    }, this.COMPONENT_ID);
+    await globalArtifactStore.write(
+      createArtifactWriteInput({
+        artifact_id: `evo-${Date.now()}-${skillName.replace(/[^a-zA-Z0-9]/g, '')}`,
+        artifact_type: 'SKILL_EVOLUTION',
+        session_id: context.sessionId,
+        turn_id: turnId,
+        schema_version: '1.0',
+        data: proposal as unknown as Record<string, unknown>,
+        summary: `Proposing evolution for ${skillName} due to ${failurePattern}`,
+        severity: 'info',
+      }),
+      this.COMPONENT_ID,
+    );
 
     return proposal;
   }

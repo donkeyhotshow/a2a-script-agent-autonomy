@@ -5,8 +5,10 @@
  */
 
 import {logger} from '../../utils/logger.js';
+import {pathIsAccessible, timestampedBackupPath} from '../../utils/fs-access.js';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import {validatePath} from './file-operations/security.js';
 
 export interface PatchOperation {
     type: 'replace' | 'insert' | 'delete' | 'replaceContent';
@@ -57,18 +59,13 @@ export async function executeEditPatch(
 
         const fullPath = path.resolve(input.path);
 
-        // Check if file exists
-        let fileExists = false;
-        try {
-            await fs.access(fullPath);
-            fileExists = true;
-        } catch (err: unknown) {
-            const code = (err as NodeJS.ErrnoException)?.code;
-            if (code && code !== 'ENOENT') {
-                logger.warn('[edit-patch] access check failed', { fullPath, code, error: String(err) });
-            }
-            fileExists = false;
-        }
+        const fileExists = await pathIsAccessible(fullPath, (m) =>
+            logger.warn('[edit-patch] access check failed', {
+                fullPath: m.filePath,
+                code: m.code,
+                error: m.error,
+            })
+        );
 
         if (!fileExists) {
             return {
@@ -83,7 +80,7 @@ export async function executeEditPatch(
         // Create backup if requested
         let backupPath: string | undefined;
         if (input.backup) {
-            backupPath = `${fullPath}.backup-${Date.now()}`;
+            backupPath = timestampedBackupPath(fullPath);
             await fs.copyFile(fullPath, backupPath);
             logger.info('[edit-patch] Backup created', {backupPath});
         }
@@ -276,34 +273,3 @@ function applyReplaceContent(
     return {applied, linesChanged};
 }
 
-/**
- * Validate path for security
- */
-function validatePath(filePath: string): {valid: boolean; error?: string} {
-    const resolved = path.resolve(filePath);
-    const cwd = process.cwd();
-
-    // Prevent access outside workspace
-    const allowedPrefixes = [cwd, '/tmp', '/var/tmp', process.env.HOME || ''];
-    
-    const isAllowed = allowedPrefixes.some(prefix => 
-        prefix && resolved.startsWith(path.resolve(prefix))
-    );
-
-    if (!isAllowed) {
-        return {
-            valid: false,
-            error: 'Path is outside allowed directories',
-        };
-    }
-
-    // Check for suspicious patterns
-    if (filePath.includes('\0')) {
-        return {
-            valid: false,
-            error: 'Path contains null bytes',
-        };
-    }
-
-    return {valid: true};
-}

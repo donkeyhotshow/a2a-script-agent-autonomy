@@ -19,6 +19,11 @@
 
 ---
 
+## Recent (2026-04-06)
+
+- **Tests**: `determineRequestType` table in `request-processor.service.test.ts`; invoke parity + sync assert `context.session_id`; action-parser invalid JSON DSL fallback; materialize `result.choice` → history.
+- **Poll context**: `GET /api/v1/requests/:id/result` now includes `context.session_id` (added to `POLL_CONTEXT_KEYS` in `requests.routes.ts`) so async pollers match sync invoke.
+
 ## Recent (2026-04-03)
 
 - **Dialog initial form check**: Added check in `dialog-request-processor.ts` to return initial form directly from request transform for dialog schema without user input, before attempting LLM call.

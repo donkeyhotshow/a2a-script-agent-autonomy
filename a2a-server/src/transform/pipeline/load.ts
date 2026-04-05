@@ -2,7 +2,7 @@
  * Load pipeline JSON from disk (file or simulation dir).
  */
 
-import * as fs from 'fs/promises';
+import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import type { TransformPipeline } from '../types.js';
 

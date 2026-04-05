@@ -1,6 +1,6 @@
-import { globalArtifactStore } from './artifact-store.js';
+import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
 import type { EpisodicMemory } from '../memory/episodic-memory.js';
-import { promises as fs } from 'fs';
+import { promises as fs } from 'node:fs';
 import { join } from 'path';
 import { logger } from '../../utils/logger.js';
 
@@ -149,17 +149,19 @@ export class CognitionBase {
       totalTokens += estimatedTokens;
     }
 
-    await globalArtifactStore.write({
-      artifact_id: `cognition-${Date.now()}`,
-      artifact_type: 'COGNITION_PRIORS',
-      session_id: sessionId,
-      turn_id: 'startup',
-      created_at: new Date().toISOString(),
-      schema_version: '1.0',
-      data: { priors: selected, topic, truncated } as Record<string, unknown>,
-      summary: `Injected ${selected.length} priors for topic: ${topic} (${totalTokens} tokens est.)`,
-      severity: 'info',
-    }, this.COMPONENT_ID);
+    await globalArtifactStore.write(
+      createArtifactWriteInput({
+        artifact_id: `cognition-${Date.now()}`,
+        artifact_type: 'COGNITION_PRIORS',
+        session_id: sessionId,
+        turn_id: 'startup',
+        schema_version: '1.0',
+        data: { priors: selected, topic, truncated } as Record<string, unknown>,
+        summary: `Injected ${selected.length} priors for topic: ${topic} (${totalTokens} tokens est.)`,
+        severity: 'info',
+      }),
+      this.COMPONENT_ID,
+    );
 
     return {
       priors: selected,

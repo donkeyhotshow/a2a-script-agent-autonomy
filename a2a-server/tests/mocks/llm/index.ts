@@ -16,4 +16,4 @@ export {
     loadPresetResponses,
     preloadResponses
 } from './mock-llm-adapter.js';
-export type { LLMMockConfig, ReplayProviderOptions } from './mock-llm-adapter.js';
+export type { LLMInput, LLMMockConfig, ReplayProviderOptions } from './mock-llm-adapter.js';

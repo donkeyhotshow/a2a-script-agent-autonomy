@@ -18,10 +18,12 @@
  *                           Absent → screenshot capture is skipped; rule-based fallback runs.
  */
 
-import { randomUUID } from 'node:crypto';
-import { ArtifactStore } from '../core/artifact-store.js';
+import { ArtifactStore, createArtifactWriteInput } from '../core/artifact-store.js';
 import { executeMcpCall } from '../../actions/handlers/mcp-call.js';
 import { logger } from '../../utils/logger.js';
+import { resolveAiHubBaseUrlWithModuleEnv } from '../../utils/ai-hub-url.js';
+import { fetchAiHubGenerateText } from '../../utils/ai-hub-generate.js';
+import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -67,11 +69,6 @@ export interface VisionTesterInput {
 const COMPONENT_ID = 'vision-tester';
 const APPROVE_THRESHOLD = 0.70;
 
-const DEFAULT_AI_HUB =
-  process.env['VISION_AI_HUB_URL'] ??
-  process.env['AI_HUB_URL'] ??
-  'http://localhost:11434';
-
 const DEFAULT_MODEL = process.env['VISION_MODEL'] ?? 'llava';
 
 const WEIGHTS = {
@@ -89,10 +86,10 @@ export class VisionTester {
 
   constructor(
     private readonly artifactStore: ArtifactStore,
-    aiHubBase = DEFAULT_AI_HUB,
+    aiHubBase?: string,
     model = DEFAULT_MODEL,
   ) {
-    this.aiHubBase = aiHubBase.replace(/\/$/, '');
+    this.aiHubBase = resolveAiHubBaseUrlWithModuleEnv(aiHubBase, 'VISION_AI_HUB_URL');
     this.model = model;
     artifactStore.registerWriter('VISION_QA_RESULT', COMPONENT_ID);
   }
@@ -190,24 +187,16 @@ export class VisionTester {
 
     let rawResponse: string;
     try {
-      const res = await fetch(`${this.aiHubBase}/api/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      rawResponse = await fetchAiHubGenerateText(
+        this.aiHubBase,
+        {
           model: this.model,
           prompt,
           images: [screenshotBase64],
           stream: false,
-        }),
-        signal: AbortSignal.timeout(60_000),
-      });
-
-      if (!res.ok) {
-        throw new Error(`AI Hub responded ${res.status} ${res.statusText}`);
-      }
-
-      const json = await res.json() as { response?: string };
-      rawResponse = json.response ?? '';
+        },
+        60_000,
+      );
     } catch (err) {
       logger.warn(`[vision-tester] Vision LLM call failed: ${String(err)} — using rule-based fallback`);
       return this._ruleBasedEvaluate(url, uiRequirement, sessionId, turn);
@@ -246,12 +235,10 @@ Be strict: flag any overflow, clipping, colour contrast failure, or missing elem
     turn: number,
   ): VisualQaResult {
     try {
-      // Strip markdown fences if the LLM included them despite instructions
-      const cleaned = raw
-        .replace(/^```(?:json)?/m, '')
-        .replace(/```$/m, '')
-        .trim();
-      const parsed = JSON.parse(cleaned) as Partial<Record<string, unknown>>;
+      const parsed = tryParseJsonFromLlmText<Partial<Record<string, unknown>>>(raw);
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('LLM response is not a JSON object');
+      }
 
       const criteria: VisualQaCriteria = {
         layout_correct:        Boolean(parsed['layout_correct'] ?? true),
@@ -354,12 +341,10 @@ Be strict: flag any overflow, clipping, colour contrast failure, or missing elem
   private async _storeArtifact(result: VisualQaResult): Promise<void> {
     try {
       await this.artifactStore.write(
-        {
-          artifact_id: randomUUID(),
+        createArtifactWriteInput({
           artifact_type: 'VISION_QA_RESULT',
           session_id: result.session_id,
           turn_id: String(result.turn),
-          created_at: new Date().toISOString(),
           schema_version: '1',
           summary: result.critique.slice(0, 200),
           data: {
@@ -372,7 +357,7 @@ Be strict: flag any overflow, clipping, colour contrast failure, or missing elem
             approved: result.approved,
             judge_mode: result.judge_mode,
           },
-        },
+        }),
         COMPONENT_ID,
       );
     } catch (err) {

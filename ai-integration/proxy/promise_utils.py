@@ -5,9 +5,17 @@ Basic utility functions for promise processing
 import os
 import json
 import logging
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
+
+# Subset forwarded to OpenAI-compatible upstreams (matches router + daemon).
+_UPSTREAM_PASSTHROUGH_HEADERS = frozenset({
+    "content-type",
+    "accept",
+    "accept-language",
+    "user-agent",
+})
 
 from .config import PROMISES_DIR
 
@@ -20,6 +28,26 @@ def _resolve_storage_path(relative_path: str) -> str:
     return os.path.abspath(relative_path)
 
 
+def _read_request_json_dict(request_path: str) -> Optional[dict]:
+    try:
+        with open(request_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+        return data if isinstance(data, dict) else None
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
+        logger.warning("request.json unreadable %s: %s", request_path, e, exc_info=True)
+        return None
+
+
+def pass_through_llm_upstream_headers(headers: Optional[Dict[str, Any]]) -> Dict[str, str]:
+    """Headers safe to forward toward LLM HTTP upstream (OpenAI-style routing)."""
+    out: Dict[str, str] = {}
+    for hk, hv in (headers or {}).items():
+        lk = str(hk).lower()
+        if lk in _UPSTREAM_PASSTHROUGH_HEADERS:
+            out[hk] = str(hv)
+    return out
+
+
 def _load_request_snapshot(log_folder: str) -> Optional[dict]:
     folder = _resolve_storage_path(log_folder)
     if not folder:
@@ -29,13 +57,7 @@ def _load_request_snapshot(log_folder: str) -> Optional[dict]:
     if os.path.isdir(folder):
         request_path = os.path.join(folder, 'request.json')
         if os.path.isfile(request_path):
-            try:
-                with open(request_path, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                return data if isinstance(data, dict) else None
-            except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
-                logger.warning("request.json unreadable %s: %s", request_path, e, exc_info=True)
-                return None
+            return _read_request_json_dict(request_path)
 
     # Fallback: check if it's old path, try new location
     if 'proxy_logs' in folder and 'request_' in folder:
@@ -46,13 +68,7 @@ def _load_request_snapshot(log_folder: str) -> Optional[dict]:
             if os.path.isdir(new_folder):
                 request_path = os.path.join(new_folder, 'request.json')
                 if os.path.isfile(request_path):
-                    try:
-                        with open(request_path, 'r', encoding='utf-8') as f:
-                            data = json.load(f)
-                        return data if isinstance(data, dict) else None
-                    except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
-                        logger.warning("request.json unreadable %s: %s", request_path, e, exc_info=True)
-                        return None
+                    return _read_request_json_dict(request_path)
 
     return None
 

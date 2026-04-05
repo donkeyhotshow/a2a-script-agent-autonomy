@@ -107,6 +107,7 @@ const isPromiseResolved = (result) => {
 
 const isPromiseFailed = (result) => {
     if (!result) return false;
+    if (result.asyncPending === true) return false;
     const status = typeof result.status === 'string' ? result.status.toLowerCase() : null;
     if (status) {
         if (status === 'failed' || status === 'error') {

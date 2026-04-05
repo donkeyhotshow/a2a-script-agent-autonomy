@@ -1,5 +1,7 @@
 # DEV_STATE - a2a-client (2026-04-03)
 
+**2026-04-06:** `@a2a/rag` Vitest: protocol-integration, protocol-rag-search edges, hybrid RRF golden, `src/searcher/output-shaping.test.ts`, `src/suggestions.test.ts`. `vitest.config.ts` block comment must not contain `*/` inside globs. `npm run test:jest` for functional/metrics suites.
+
 Stack готов, задач нет.
 
 **2026-04-03 (a2a-client-web-scoped-package):** Implemented phases 2, 4, 5, 6 of @a2a-client web package scoping:

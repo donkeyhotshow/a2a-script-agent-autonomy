@@ -3,7 +3,11 @@
  */
 
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
-import {processOneRequest, stopRequestProcessor} from '../../src/services/core/request-processor/request-processor.service.js';
+import {
+    determineRequestType,
+    processOneRequest,
+    stopRequestProcessor,
+} from '../../src/services/core/request-processor/request-processor.service.js';
 
 const mockGetNextPending = vi.fn();
 const mockUpdateStatus = vi.fn().mockResolvedValue(true);
@@ -48,6 +52,50 @@ describe('Request processor service', () => {
         const outcome = await processOneRequest();
         expect(outcome).toBeNull();
         expect(mockUpdateStatus).not.toHaveBeenCalled();
+    });
+
+    it('determineRequestType routes by context shape (table)', () => {
+        const cases: Array<{ctx: Record<string, unknown>; want: string}> = [
+            {ctx: {simulation: true}, want: 'simulation'},
+            {
+                ctx: {execution: {step: 'new', action: 'task'}, task: 'do something'},
+                want: 'action',
+            },
+            {
+                ctx: {
+                    execution: {step: 'router'},
+                    result: {choice: 'dialog'},
+                },
+                want: 'action',
+            },
+            {
+                ctx: {transformSchema: 'dialog-request'},
+                want: 'dialog',
+            },
+            {
+                ctx: {
+                    execution: {action: 'dialog', step: 'x'},
+                    result: {message: 'hello'},
+                },
+                want: 'dialog',
+            },
+            {
+                ctx: {
+                    execution: {step: 'new', action: 'agent'},
+                    task: 'hi',
+                    result: {choice: 'agent'},
+                },
+                want: 'dialog',
+            },
+            {
+                ctx: {form_submission: true, execution: {step: 'other'}},
+                want: 'form',
+            },
+            {ctx: {task: 'only-task'}, want: 'action'},
+        ];
+        for (const {ctx, want} of cases) {
+            expect(determineRequestType(ctx), JSON.stringify(ctx)).toBe(want);
+        }
     });
 
     it('marks request failed when action queue has no task text', async () => {

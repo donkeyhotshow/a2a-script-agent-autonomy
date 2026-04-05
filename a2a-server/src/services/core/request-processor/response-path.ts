@@ -5,14 +5,13 @@
  */
 
 import {logger} from '../../../utils/logger.js';
+import {resolveAiHubBaseUrl} from '../../../utils/ai-hub-url.js';
 import {getPromptsTransformsPath} from '../../../transform/index.js';
 import {resolveLlmPromiseRecovery} from '../../../daemon/llm-hub-poll.js';
 import {GrayRoomOrchestrator} from './gray-room-orchestrator.js';
 import {readGrayRoomInterruptBudget, shouldUseGrayRoom} from './gray-room-trigger.js';
 import {resolveTransformSchema, extractSchemaName} from './normalization.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
-
-const DEFAULT_AI_HUB = 'http://localhost:11434';
 
 /**
  * Тип результата для response path операций (legacy — см. RecoverDialogOutcome)
@@ -39,7 +38,7 @@ export async function recoverDialogFromLlmPromise(
     ctx: Record<string, unknown>,
     llmPromiseId: string
 ): Promise<RecoverDialogOutcome> {
-    const base = (process.env.AI_HUB_URL || DEFAULT_AI_HUB).replace(/\/$/, '');
+    const base = resolveAiHubBaseUrl();
 
     try {
         const hub = await resolveLlmPromiseRecovery(base, llmPromiseId);

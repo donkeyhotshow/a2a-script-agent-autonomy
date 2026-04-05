@@ -1,5 +1,5 @@
 import express from 'express';
-import fs from 'fs';
+import fs from 'node:fs';
 import path from 'path';
 import { logger } from '../utils/logger.js';
 import { SkillRegistry } from '../skills/SkillRegistry.js';

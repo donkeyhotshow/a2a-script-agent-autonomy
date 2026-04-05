@@ -1,4 +1,5 @@
-import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
+import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../../transform/types.js';
+import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils.js';
 
 /**
  * Handle clarify interrupt
@@ -12,14 +13,7 @@ export async function handleClarify(
     model: string,
     trace: ServerInterruptTraceEvent[]
 ): Promise<{ nextCtx: Record<string, unknown>; continueLoop: boolean }> {
-    const nextCtx = { ...ctx };
-    const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-    const wb = (innerCtx['workbench'] as Record<string, unknown>) ?? {};
-    const slots = (wb['slots'] as Record<string, unknown>) ?? {};
-    nextCtx = {
-        ...nextCtx,
-        context: { ...innerCtx, workbench: { ...wb, slots: { ...slots, clarify: interrupt.data ?? {} } } }
-    };
+    const nextCtx = mergeSlotIntoWorkbenchContext({...ctx}, 'clarify', interrupt.data ?? {});
     trace.push({ kind: 'sidecar_llm', purpose: 'clarify', ok: true, meta: 'slots.clarify' });
     return { nextCtx, continueLoop: false };
 }

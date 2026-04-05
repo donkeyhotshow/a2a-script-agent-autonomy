@@ -8,9 +8,10 @@ from typing import Optional, Any, Dict, Tuple
 
 logger = logging.getLogger(__name__)
 
-from .config import OLLAMA_HOST
+from .config import ollama_upstream_base
 from .ollama_manager import get_ollama_manager
 from .api_key_routing import write_routing_hint
+from .promise_utils import pass_through_llm_upstream_headers
 
 
 def _translate_ollama_to_openai_path(path: str) -> str:
@@ -27,6 +28,10 @@ def _translate_ollama_to_openai_path(path: str) -> str:
     if path_norm in translations:
         return translations[path_norm]
     return path_norm
+
+
+def _join_provider_base_path(base_url: str, path: str) -> str:
+    return base_url.rstrip("/") + "/" + path
 
 
 def get_router():
@@ -68,6 +73,7 @@ def resolve_routing(
 
     routed_provider_name = None
     routed_provider_type = None
+    fallback_base = ollama_upstream_base()
 
     def _nonempty_model(m: Optional[str]) -> bool:
         if m is None:
@@ -90,26 +96,19 @@ def resolve_routing(
             provider_type = getattr(provider.config, 'type', '')
             if provider_type in ('openai', 'z_ai'):
                 translated_path = _translate_ollama_to_openai_path(path)
-                target_url = provider.config.url.rstrip('/') + '/' + translated_path
+                target_url = _join_provider_base_path(provider.config.url, translated_path)
                 logger.info(f"Routed request for model '{model}' to provider '{provider_name}' -> {target_url} (translated from {path})")
             else:
-                target_url = provider.config.url.rstrip('/') + '/' + path
+                target_url = _join_provider_base_path(provider.config.url, path)
                 logger.info(f"Routed request for model '{model}' to provider '{provider_name}' -> {target_url}")
-            upstream_headers = {}
-            for hk, hv in headers.items():
-                lk = str(hk).lower()
-                if lk in ('content-type', 'accept', 'accept-language', 'user-agent'):
-                    upstream_headers[hk] = hv
-            headers = upstream_headers
+            headers = pass_through_llm_upstream_headers(headers)
             routed_provider_name = provider_name
             routed_provider_type = provider_type
         else:
-            fallback_host = OLLAMA_HOST.rstrip('/') or OLLAMA_HOST
-            target_url = f"{fallback_host}/{path}"
+            target_url = f"{fallback_base}/{path}"
             logger.warning(f"No provider available for model '{model}', falling back to Ollama")
     else:
-        fallback_host = OLLAMA_HOST.rstrip('/') or OLLAMA_HOST
-        target_url = f"{fallback_host}/{path}"
+        target_url = f"{fallback_base}/{path}"
 
     if should_log and folder_path and routed_provider_name and routed_provider_type:
         write_routing_hint(

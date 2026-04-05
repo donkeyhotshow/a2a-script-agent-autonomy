@@ -18,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 from .config import (
     OLLAMA_HOST,
+    ollama_upstream_base,
     STORAGE_DIR,
     FORWARD_TIMEOUT,
     OLLAMA_AUTO_START,
@@ -104,7 +105,7 @@ def _handle_api_tags_unified(
             models.append(entry)
 
     ollama_models_injected = 0
-    ollama_base = (OLLAMA_HOST.rstrip('/') or OLLAMA_HOST)
+    ollama_base = ollama_upstream_base()
     if ollama_base:
         ollama_url = f"{ollama_base}/api/tags"
         _, ollama_tags = _fetch_tags_response(ollama_url, headers, forward_args or {})

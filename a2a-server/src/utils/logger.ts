@@ -1,6 +1,6 @@
 import winston from 'winston';
 import DailyRotateFile from 'winston-daily-rotate-file';
-import * as fs from 'fs/promises';
+import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import {config} from '../config/index.js';
 
@@ -21,6 +21,11 @@ const logFormat = winston.format.combine(
         })
         : winston.format.json()
 );
+
+const consoleFormat =
+    config.logFormat === 'pretty'
+        ? winston.format.combine(winston.format.colorize(), logFormat)
+        : logFormat;
 
 // Ensure logs directory exists
 async function ensureLogsDir(): Promise<void> {
@@ -82,7 +87,7 @@ export const logger = winston.createLogger({
     transports: [
         // Console transport
         new winston.transports.Console({
-            format: winston.format.combine(winston.format.colorize(), logFormat),
+            format: consoleFormat,
         }),
     ],
 });

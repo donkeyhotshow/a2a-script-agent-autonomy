@@ -203,7 +203,12 @@ class ProviderRouter:
                 return result
             except Exception as e:
                 last_error = e
-                logger.warning("Provider %r generate failed: %s", provider_name, e)
+                logger.warning(
+                    "Provider %r generate failed: %s",
+                    provider_name,
+                    e,
+                    exc_info=True,
+                )
                 continue
         
         raise ProviderNotAvailableError(
@@ -248,7 +253,12 @@ class ProviderRouter:
                 return result
             except Exception as e:
                 last_error = e
-                logger.warning("Provider %r chat failed: %s", provider_name, e)
+                logger.warning(
+                    "Provider %r chat failed: %s",
+                    provider_name,
+                    e,
+                    exc_info=True,
+                )
                 continue
         
         raise ProviderNotAvailableError(
@@ -289,7 +299,12 @@ class ProviderRouter:
                 return result
             except Exception as e:
                 last_error = e
-                logger.warning("Provider %r embeddings failed: %s", provider_name, e)
+                logger.warning(
+                    "Provider %r embeddings failed: %s",
+                    provider_name,
+                    e,
+                    exc_info=True,
+                )
                 continue
         
         raise ProviderNotAvailableError(

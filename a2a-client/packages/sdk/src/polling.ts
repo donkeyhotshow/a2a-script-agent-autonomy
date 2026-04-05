@@ -3,6 +3,8 @@
  */
 
 import type { ProgressInfo, ProgressCallbacks } from './types/session.js';
+import type { AsyncApiClient } from './async-api-client.js';
+import { isRecoverableAsyncSnapshot } from './client-api-envelope.js';
 
 export interface PollingOptions {
     interval?: number;
@@ -88,11 +90,21 @@ export class PromisePoller {
                 pollState.callbacks.onComplete?.(result);
                 this.stop(promiseId);
             } else if (st.status === 'failed') {
-                const result = (await this.api.getRequestResult(promiseId)) as { error?: { message?: string } };
+                const merged = status as Record<string, unknown>;
+                if (isRecoverableAsyncSnapshot(merged)) {
+                    pollState.timerId = setTimeout(() => this._poll(promiseId), this.interval);
+                    return;
+                }
+                const result = (await this.api.getRequestResult(promiseId)) as Record<string, unknown>;
+                if (isRecoverableAsyncSnapshot(result)) {
+                    pollState.timerId = setTimeout(() => this._poll(promiseId), this.interval);
+                    return;
+                }
+                const errPayload = result as { error?: { message?: string } };
                 progressInfo.status = 'failed';
-                progressInfo.error = result?.error?.message ?? 'Request failed';
+                progressInfo.error = errPayload?.error?.message ?? 'Request failed';
                 pollState.callbacks.onProgress?.(progressInfo);
-                pollState.callbacks.onError?.(result?.error ?? {message: 'Request failed'});
+                pollState.callbacks.onError?.(errPayload?.error ?? {message: 'Request failed'});
                 this.stop(promiseId);
             } else if (st.status === 'cancelled') {
                 progressInfo.status = 'cancelled';

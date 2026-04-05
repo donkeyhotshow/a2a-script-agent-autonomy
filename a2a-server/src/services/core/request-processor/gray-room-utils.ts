@@ -102,3 +102,22 @@ export interface GrayRoomOptions {
     model?: string;
     promptsTransformsPath: string;
 }
+
+/** Immutably set `context.workbench.slots[slotKey]` on a shallow-copied root context. */
+export function mergeSlotIntoWorkbenchContext(
+    ctx: Record<string, unknown>,
+    slotKey: string,
+    slotValue: unknown
+): Record<string, unknown> {
+    const root = {...ctx};
+    const innerCtx = (root['context'] as Record<string, unknown>) ?? {};
+    const wb = (innerCtx['workbench'] as Record<string, unknown>) ?? {};
+    const slots = (wb['slots'] as Record<string, unknown>) ?? {};
+    return {
+        ...root,
+        context: {
+            ...innerCtx,
+            workbench: {...wb, slots: {...slots, [slotKey]: slotValue}},
+        },
+    };
+}

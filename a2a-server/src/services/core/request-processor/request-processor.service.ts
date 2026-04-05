@@ -16,6 +16,7 @@ import {
     type RequestResult,
 } from '../request/request.service.js';
 import {logger} from '../../../utils/logger.js';
+import {resolveAiHubBaseUrl} from '../../../utils/ai-hub-url.js';
 import {requestProcessorLatencyHistogram} from '../../../utils/metrics.js';
 import type {RequestContext, ProcessResult, ProcessOutcome, Task, TaskAnalysis} from './request-processor.interfaces.js';
 import {
@@ -30,6 +31,7 @@ import type {RequestType} from './base-processor.js';
 import { LLM_PIPELINE_ACTIONS, type LlmPipelineAction } from '../../../config/router-static.js';
 import { resolveExecution, resolveResultObject } from './normalization.js';
 import { detectFrameworksFromCodeBlocks } from './framework-from-codeblocks.js';
+import { readDialogHubLlmResubmitMax } from './gray-room-trigger.js';
 
 export { LLM_PIPELINE_ACTIONS, type LlmPipelineAction };
 
@@ -368,7 +370,7 @@ async function tick(): Promise<void> {
  * Recover processing requests that have llmPromiseId (e.g. after server restart during polling)
  */
 async function recoverProcessingRequests(): Promise<void> {
-    const base = (process.env.AI_HUB_URL || 'http://localhost:11434').replace(/\/$/, '');
+    const base = resolveAiHubBaseUrl();
     const ids = await requestService.listProcessing();
     for (const promiseId of ids) {
         // Validate promiseId format (should be a non-empty string)
@@ -406,8 +408,7 @@ async function recoverProcessingRequests(): Promise<void> {
             continue;
         }
         if (outcome.tag === 'resubmit') {
-            const maxR = parseInt(process.env.DIALOG_HUB_LLM_RESUBMIT_MAX || '2', 10);
-            const cap = Number.isFinite(maxR) && maxR >= 0 ? maxR : 2;
+            const cap = readDialogHubLlmResubmitMax();
             const cnt = await requestService.incrementHubLlmResubmitCount(promiseId);
             if (cnt > cap) {
                 await requestService.updateStatus(promiseId, 'failed', undefined, {

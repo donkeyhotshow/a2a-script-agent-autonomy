@@ -1,5 +1,37 @@
 import { describe, expect, it } from 'vitest';
-import { mergeDialogHistoryForInvoke } from '../../packages/vite-plugin/routes/utils/builders.js';
+import {
+    mergeDialogHistoryForInvoke,
+    stripSpuriousTaskEchoFromDialogHistory,
+} from '../../packages/vite-plugin/routes/utils/builders.js';
+
+describe('stripSpuriousTaskEchoFromDialogHistory', () => {
+    it('removes user line matching context.task before first assistant (dialog only)', () => {
+        const ctx = {
+            task: 'goal',
+            execution: { action: 'dialog', step: 'request' },
+            history: [{ role: 'user', message: 'goal' }],
+        };
+        stripSpuriousTaskEchoFromDialogHistory(ctx);
+        expect(ctx.history).toEqual([]);
+    });
+
+    it('keeps user line matching task after an assistant turn', () => {
+        const ctx = {
+            task: 'goal',
+            execution: { action: 'dialog', step: 'request' },
+            history: [
+                { role: 'user', message: 'goal' },
+                { role: 'assistant', message: 'ok' },
+                { role: 'user', message: 'goal' },
+            ],
+        };
+        stripSpuriousTaskEchoFromDialogHistory(ctx);
+        expect(ctx.history).toEqual([
+            { role: 'assistant', message: 'ok' },
+            { role: 'user', message: 'goal' },
+        ]);
+    });
+});
 
 describe('mergeDialogHistoryForInvoke', () => {
     it('appends user after assistant', () => {

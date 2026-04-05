@@ -359,7 +359,20 @@ class TaskMonitorProcessing {
 
         taskMeta.lastPolled = new Date().toISOString();
 
-        const isCompleted = this.checkTaskCompletion(asyncResult);
+        let isCompleted = this.checkTaskCompletion(asyncResult);
+        // Client GET /sessions/:id/async uses an idle envelope { completed: true, status: 'idle' }
+        // whenever there is no in-flight promise — including router/forms waiting for /next.
+        // Without this guard the daemon drops the task and processNewTasks() spams new sessions.
+        if (isCompleted && asyncResult.status === 'idle') {
+          const sd = await this.getSession(sessionId, { includeContext: true });
+          const form = sd?.context?.execution?.form || sd?.execute?.form;
+          const choices = Array.isArray(form?.choices) ? form.choices : [];
+          const step = sd?.context?.execution?.step;
+          if (choices.length > 0 || step === 'routing') {
+            isCompleted = false;
+          }
+        }
+
         const isTimeout = this.isTaskTimeout(taskMeta);
 
         if (isCompleted) {

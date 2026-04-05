@@ -1,5 +1,5 @@
 import { logger } from '../../utils/logger.js';
-import { globalArtifactStore } from './artifact-store.js';
+import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
 
 export interface DesignManifesto {
     colors: Record<string, string>;
@@ -42,17 +42,19 @@ export class HierarchicalDesignReasoner {
             raw_manifesto: `# Design Manifesto: ${task}\n\n## Vision\nCreate a premium, state-of-the-art interface that WOWs the user.\n\n## Tokens\n- **Primary**: #0055FF\n- **Surface**: Glassmorphic dark blur (ref: hsl(240, 10%, 10%, 0.8))\n- **Typography**: Inter (Modern/Clean)\n\n## Guidelines\n1. Use Backdrop Filter blur(16px) for all overlays.\n2. Apply subtle linear gradients to primary buttons (primary -> accent).`
         };
 
-        await globalArtifactStore.write({
-            artifact_id: `design-manifesto-${Date.now()}`,
-            artifact_type: 'DESIGN_MANIFESTO',
-            session_id: (sessionContext['session_id'] as string) || 'unknown',
-            turn_id: (sessionContext['turn_id'] as string) || 'unknown',
-            created_at: new Date().toISOString(),
-            schema_version: '1.0',
-            data: manifesto as unknown as Record<string, unknown>,
-            summary: manifesto.summary,
-            severity: 'info'
-        }, this.COMPONENT_ID);
+        await globalArtifactStore.write(
+            createArtifactWriteInput({
+                artifact_id: `design-manifesto-${Date.now()}`,
+                artifact_type: 'DESIGN_MANIFESTO',
+                session_id: (sessionContext['session_id'] as string) || 'unknown',
+                turn_id: (sessionContext['turn_id'] as string) || 'unknown',
+                schema_version: '1.0',
+                data: manifesto as unknown as Record<string, unknown>,
+                summary: manifesto.summary,
+                severity: 'info',
+            }),
+            this.COMPONENT_ID,
+        );
 
         return manifesto;
     }

@@ -10,9 +10,9 @@
  */
 
 import path from 'path';
-import { getStorageDir, writeJsonFile } from './storage.js';
+import { getStorageSessionsRoot, writeJsonFile } from './storage.js';
 
-const SESSIONS_DIR = path.join(getStorageDir(), 'sessions');
+const SESSIONS_DIR = getStorageSessionsRoot();
 
 export function getStepDir(sessionId: string, stepNum: number): string {
     return path.join(SESSIONS_DIR, sessionId, String(stepNum));

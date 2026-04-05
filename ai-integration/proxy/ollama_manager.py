@@ -4,6 +4,7 @@ Handles Ollama server start/stop/management
 """
 import logging
 import os
+import subprocess
 import threading
 import time
 import requests
@@ -45,7 +46,6 @@ class OllamaManager:
             
             try:
                 # Запускаем ollama serve на нужном порту
-                import subprocess
                 env = {**os.environ, 'OLLAMA_HOST': f'http://localhost:{self.port}'}
                 if OLLAMA_MODELS:
                     env['OLLAMA_MODELS'] = OLLAMA_MODELS
@@ -77,6 +77,10 @@ class OllamaManager:
                 try:
                     self.process.wait(timeout=5)
                 except subprocess.TimeoutExpired:
+                    logger.warning(
+                        "Ollama subprocess PID %s did not exit within 5s; sending kill",
+                        getattr(self.process, "pid", None),
+                    )
                     self.process.kill()
                 self.process = None
             self._running = False

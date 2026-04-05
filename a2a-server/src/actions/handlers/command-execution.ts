@@ -7,6 +7,7 @@
 import {logger} from '../../utils/logger.js';
 import {spawn} from 'node:child_process';
 import * as path from 'node:path';
+import {validatePath} from './file-operations/security.js';
 
 export interface ExecuteCommandInput {
     command: string;
@@ -294,23 +295,3 @@ function runCommand(options: RunCommandOptions): Promise<RunCommandResult> {
     });
 }
 
-function validatePath(dirPath: string): {valid: boolean; error?: string} {
-    const resolved = path.resolve(dirPath);
-    const cwd = process.cwd();
-
-    // Prevent access outside workspace
-    const allowedPrefixes = [cwd, '/tmp', '/var/tmp', process.env.HOME || ''];
-    
-    const isAllowed = allowedPrefixes.some(prefix => 
-        prefix && resolved.startsWith(path.resolve(prefix))
-    );
-
-    if (!isAllowed) {
-        return {
-            valid: false,
-            error: 'Path is outside allowed directories',
-        };
-    }
-
-    return {valid: true};
-}

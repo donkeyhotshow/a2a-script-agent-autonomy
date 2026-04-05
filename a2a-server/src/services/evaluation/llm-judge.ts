@@ -10,9 +10,16 @@
  * Wire: VALIDATING state → block DELIVERING unless judgment.approved === true.
  */
 
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import { logger } from '../../utils/logger.js';
-import { ArtifactStore, type StoredArtifact } from '../core/artifact-store.js';
+import { resolveAiHubBaseUrl } from '../../utils/ai-hub-url.js';
+import { fetchAiHubChatJson } from '../../utils/ai-hub-chat-sync.js';
+import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
+import {
+  ArtifactStore,
+  createArtifactWriteInput,
+  type StoredArtifact,
+} from '../core/artifact-store.js';
 import type { ReasoningChain } from '../core/cognitive-engine.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -49,7 +56,6 @@ export interface ReasoningQualityReport {
 // ── LLMJudge ─────────────────────────────────────────────────────────────────
 
 const COMPONENT_ID = 'llm-judge';
-const DEFAULT_AI_HUB = process.env['AI_HUB_URL'] ?? 'http://localhost:11434';
 const APPROVE_THRESHOLD = 0.75;
 
 // Weights for overall_score
@@ -67,9 +73,9 @@ export class LLMJudge {
 
   constructor(
     private readonly artifactStore: ArtifactStore,
-    aiHubBase = DEFAULT_AI_HUB,
+    aiHubBase?: string,
   ) {
-    this.aiHubBase = aiHubBase.replace(/\/$/, '');
+    this.aiHubBase = resolveAiHubBaseUrl(aiHubBase);
     artifactStore.registerWriter('JUDGMENT_RESULT', COMPONENT_ID);
   }
 
@@ -106,17 +112,16 @@ export class LLMJudge {
     // Persist as artifact
     const artifactId = `judgment-${randomUUID()}`;
     await this.artifactStore.write(
-      {
+      createArtifactWriteInput({
         artifact_id: artifactId,
         artifact_type: 'JUDGMENT_RESULT',
         session_id: sessionId,
         turn_id: turnId,
-        created_at: new Date().toISOString(),
         schema_version: '1.0',
         severity: result.approved ? 'info' : 'warning',
         summary: `Judgment: ${result.approved ? 'APPROVED' : 'BLOCKED'} (score=${result.overall_score.toFixed(2)})`,
         data: result as unknown as Record<string, unknown>,
-      },
+      }),
       COMPONENT_ID,
     );
 
@@ -217,36 +222,26 @@ Evaluate the output on the following criteria and respond with valid JSON only:
     sessionId: string,
     turn: number,
   ): Promise<JudgmentResult> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 30_000);
-
-    let rawJson = '';
-    try {
-      const res = await fetch(`${this.aiHubBase}/api/chat`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: process.env['JUDGE_MODEL'] ?? 'llama3',
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You are a strict quality judge. Respond only with valid JSON. No markdown.',
-            },
-            { role: 'user', content: prompt },
-          ],
-          stream: false,
-        }),
-        signal: controller.signal,
-      });
-
-      if (!res.ok) throw new Error(`LLM proxy responded ${res.status}`);
-
-      const data = (await res.json()) as { message?: { content?: string } };
-      rawJson = data?.message?.content ?? '';
-    } finally {
-      clearTimeout(timeout);
+    const r = await fetchAiHubChatJson(
+      this.aiHubBase,
+      {
+        model: process.env['JUDGE_MODEL'] ?? 'llama3',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a strict quality judge. Respond only with valid JSON. No markdown.',
+          },
+          { role: 'user', content: prompt },
+        ],
+        stream: false,
+      },
+      AbortSignal.timeout(30_000),
+    );
+    if (!r.ok) {
+      throw new Error(`LLM proxy responded ${r.status}`);
     }
+    const rawJson = r.data.message?.content ?? '';
 
     const parsed = this._parseJudgeResponse(rawJson);
     return this._buildResult(parsed, sessionId, turn);
@@ -257,17 +252,19 @@ Evaluate the output on the following criteria and respond with valid JSON only:
     suggestions: string[];
     judge_reasoning: string;
   }> {
-    try {
-      // Extract JSON from markdown code fences if present
-      const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/) ?? [null, raw];
-      const jsonStr = jsonMatch[1] ?? raw;
-      return JSON.parse(jsonStr) as ReturnType<typeof this._parseJudgeResponse>;
-    } catch (err: unknown) {
-      logger.debug('[LLMJudge] Judge response JSON parse failed', {
-        error: err instanceof Error ? err.message : String(err),
-      });
-      return {};
+    type JudgeParsed = Partial<
+      JudgmentCriteria & {
+        blocking_issues: string[];
+        suggestions: string[];
+        judge_reasoning: string;
+      }
+    >;
+    const parsed = tryParseJsonFromLlmText<JudgeParsed>(raw);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return parsed;
     }
+    logger.debug('[LLMJudge] Judge response JSON parse failed', { error: 'unparseable' });
+    return {};
   }
 
   private _buildResult(

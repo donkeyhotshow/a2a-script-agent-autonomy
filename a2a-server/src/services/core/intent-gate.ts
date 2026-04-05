@@ -1,4 +1,5 @@
 import { createLogger } from '../../utils/logger.js';
+import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
 import { llmService } from '../llm/llm-service.js';
 
 const logger = createLogger('IntentGate');
@@ -110,27 +111,12 @@ Drift means the current plan no longer meaningfully pursues the original intent.
             });
 
             const content = response.content?.trim() || '';
-            
-            // Try JSON extraction
-            let result: DriftCheckResult | null = null;
-            try {
-                const parsed = JSON.parse(content);
-                result = validateDriftResult(parsed);
-            } catch (err: unknown) {
-                logger.debug('[IntentGate] Direct drift JSON parse failed', {
-                    error: err instanceof Error ? err.message : String(err),
+            const parsed = tryParseJsonFromLlmText(content);
+            const result = parsed !== null ? validateDriftResult(parsed) : null;
+            if (result === null && content.length > 0) {
+                logger.debug('[IntentGate] Drift JSON parse/validate failed', {
+                    preview: content.slice(0, 120),
                 });
-                const jsonMatch = content.match(/\{[\s\S]*\}/);
-                if (jsonMatch) {
-                    try {
-                        const parsed = JSON.parse(jsonMatch[0]);
-                        result = validateDriftResult(parsed);
-                    } catch (err2: unknown) {
-                        logger.debug('[IntentGate] Extracted drift JSON parse failed', {
-                            error: err2 instanceof Error ? err2.message : String(err2),
-                        });
-                    }
-                }
             }
 
             if (result) {

@@ -188,7 +188,7 @@ export async function attachPromiseMeta(cwd, sessionId, session, verifyFromServe
         delete session.execute;
         return session;
     }
-    if (open?.mode === 'failed') {
+    if (open?.mode === 'failed' && !isRecoverableAsyncSnapshot(open.promise)) {
         session.asyncPending = false;
         session.promiseId = open.promise?.promiseId ?? session.promiseId;
         session.promiseStatus = open.promise?.status ?? 'failed';

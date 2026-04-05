@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { getStorageRoot, ensureDir } from './root.js';
+import { compareSessionCreatedAtDesc } from '@a2a-client/shared/session-sort.mjs';
+import { getStorageSessionsRoot, ensureDir } from './root.js';
 import {
   isActivePromiseStatus,
   isRemovablePromiseBesideResponse,
@@ -88,14 +89,7 @@ export function saveSessionIndex(cwd, sessionId, stepData) {
   // Update current step
   index.currentStep = stepData.step || index.currentStep || 1;
   
-  // Derive mode from context
-  const ctx = stepData.context || {};
-  const action = ctx.execution?.action;
-  if (action === 'agent' || action === 'task-decomposition' || action === 'dialog') {
-    index.mode = action;
-  } else if (ctx.workbench && Object.keys(ctx.workbench).length > 0) {
-    index.mode = 'agent';
-  }
+  index.mode = deriveSessionMode({ context: stepData.context || {} });
   
   // Update step metadata
   const stepMeta = index.steps.find(s => s.step === stepData.step) || { step: stepData.step };
@@ -181,7 +175,7 @@ export function saveNewSession(cwd, session) {
 }
 
 export function getNewSessionsDir(cwd) {
-  return path.join(getStorageRoot(), 'sessions');
+  return getStorageSessionsRoot();
 }
 
 export function getNewSessionDir(cwd, sessionId) {
@@ -251,7 +245,7 @@ export function findOpenAsyncStepWithoutResponse(cwd, sessionId) {
     try {
       prom = JSON.parse(fs.readFileSync(promPath, 'utf8'));
     } catch (e) {
-      console.warn('[newSessions] Invalid server-promise.json (skipping step):', promPath, e?.message || e);
+      console.error('[newSessions] Invalid server-promise.json (skipping step):', promPath, e?.message || e);
       continue;
     }
     if (!prom || typeof prom !== 'object') continue;
@@ -401,7 +395,7 @@ export function loadNewStep(cwd, sessionId, stepNum) {
         try {
           prom = JSON.parse(fs.readFileSync(promiseFile, 'utf8'));
         } catch (e) {
-          console.warn('[newSessions] Could not parse server-promise.json:', promiseFile, e?.message || e);
+          console.error('[newSessions] Could not parse server-promise.json:', promiseFile, e?.message || e);
           prom = null;
         }
         const hasTerminalExecute = data.execute != null && typeof data.execute === 'object';
@@ -460,7 +454,7 @@ export function listNewSessions(cwd) {
       return {id: session.id, title: session.title || session.id, createdAt: session.createdAt};
     })
     .filter(Boolean)
-    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    .sort(compareSessionCreatedAtDesc);
 }
 
 export function deleteNewSession(cwd, sessionId) {

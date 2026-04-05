@@ -1,4 +1,4 @@
-import { logger } from '../../utils/logger.js';
+import { logger } from '../utils/logger.js';
 // @ts-ignore
 import { createLibp2p } from 'libp2p';
 // @ts-ignore

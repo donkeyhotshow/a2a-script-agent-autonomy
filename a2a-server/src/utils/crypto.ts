@@ -1,4 +1,4 @@
-import crypto from 'crypto';
+import crypto from 'node:crypto';
 
 const ALG = 'aes-256-gcm';
 const IV_LEN = 16;

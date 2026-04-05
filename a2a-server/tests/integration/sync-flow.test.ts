@@ -89,7 +89,10 @@ describe('Sync Flow Integration', () => {
         it(
             'Step 2: Submit choice selection should return sync input form',
             async () => {
-                if (!step1Context) return; // Skip if step 1 failed
+                expect(
+                    step1Context,
+                    'Step 1 must return sync context with router choices (check invoke + DEFAULT_SYNC_MODE)'
+                ).toBeDefined();
 
                 const res = await request(app)
                     .post('/api/v1/invoke')
@@ -119,7 +122,7 @@ describe('Sync Flow Integration', () => {
         it(
             'Step 3: Submit message should return sync response with message + input form',
             async () => {
-                if (!step2Context) return; // Skip if step 2 failed
+                expect(step2Context, 'Step 2 must return sync dialog form context').toBeDefined();
 
                 const res = await request(app)
                     .post('/api/v1/invoke')
@@ -151,7 +154,7 @@ describe('Sync Flow Integration', () => {
         it(
             'Step 4: Submit final message should complete the dialog',
             async () => {
-                if (!step3Context) return; // Skip if step 3 failed
+                expect(step3Context, 'Step 3 must return sync context for follow-up').toBeDefined();
 
                 const res = await request(app)
                     .post('/api/v1/invoke')
@@ -217,6 +220,23 @@ describe('Sync Flow Integration', () => {
     });
 
     describe('Protocol Compliance', () => {
+        it('sync dialog assigns context.session_id (srv_sess_*) when body returns data', async () => {
+            const res = await request(app)
+                .post('/api/v1/invoke')
+                .send({
+                    task: 'dialog',
+                    sync: true,
+                });
+
+            expect([200, 201]).toContain(res.status);
+            if (!res.body.success || !res.body.data?.context) {
+                return;
+            }
+            const sid = res.body.data.context.session_id;
+            expect(typeof sid).toBe('string');
+            expect(sid).toMatch(/^srv_sess_/);
+        });
+
         it('should validate request schema correctly', async () => {
             // Valid first request
             const res1 = await request(app)

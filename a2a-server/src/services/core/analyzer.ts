@@ -1,5 +1,8 @@
-import type { ArtifactBase } from './artifact-store.js';
-import type { ArtifactStore } from './artifact-store.js';
+import {
+  createArtifactWriteInput,
+  type ArtifactBase,
+  type ArtifactStore,
+} from './artifact-store.js';
 
 const COMPONENT_ID = 'DedicatedAnalyzer';
 
@@ -65,17 +68,21 @@ export class DedicatedAnalyzer {
 
         // Emit ANALYZER_INSIGHTS artifact
         const artifactId = `insights-${Date.now()}`;
-        await this.artifactStore.write({
-            artifact_id: artifactId,
-            artifact_type: 'ANALYZER_INSIGHTS',
-            session_id: insights.session_id,
-            turn_id: insights.turn_id,
-            created_at: new Date().toISOString(),
-            schema_version: '1.0',
-            data: insights as unknown as Record<string, unknown>,
-            summary: `Strategy: ${insights.recommended_strategy}, anomalies: ${insights.anomalies.length}`,
-            severity: insights.anomalies.some(a => a.severity === 'high') ? 'warning' : 'info',
-        }, COMPONENT_ID);
+        await this.artifactStore.write(
+            createArtifactWriteInput({
+                artifact_id: artifactId,
+                artifact_type: 'ANALYZER_INSIGHTS',
+                session_id: insights.session_id,
+                turn_id: insights.turn_id,
+                schema_version: '1.0',
+                data: insights as unknown as Record<string, unknown>,
+                summary: `Strategy: ${insights.recommended_strategy}, anomalies: ${insights.anomalies.length}`,
+                severity: insights.anomalies.some((a) => a.severity === 'high')
+                    ? 'warning'
+                    : 'info',
+            }),
+            COMPONENT_ID,
+        );
 
         return insights;
     }

@@ -1,6 +1,6 @@
-import fs from 'fs';
 import { promises as fsp } from 'fs';
 import path from 'path';
+import { isNodeEnoent } from '@a2a-client/shared/node-errors.mjs';
 import { resolveUnderProjectRoot } from '@a2a/execution/path-sandbox';
 
 function escapeRegexLiteral(s) {
@@ -76,8 +76,7 @@ export async function runClientFileExists(projectPath, payload) {
         const ok = want === 'any' || (want === 'file' && st.isFile()) || (want === 'directory' && st.isDirectory());
         return { path: p, exists: ok, success: true };
     } catch (e) {
-        const code = e && typeof e === 'object' && 'code' in e ? e.code : undefined;
-        if (code === 'ENOENT') {
+        if (isNodeEnoent(e)) {
             return { path: p, exists: false, success: true };
         }
         return {
@@ -144,7 +143,7 @@ export async function runClientGrepSearch(projectPath, payload) {
          try {
              return new RegExp(lineReSource, flags).test(line);
          } catch (e) {
-             console.warn('[chain-tools-fs] Invalid line regex:', e instanceof Error ? e.message : e);
+             console.error('[chain-tools-fs] Invalid line regex:', e instanceof Error ? e.message : e);
              return false;
          }
      }
@@ -157,7 +156,7 @@ export async function runClientGrepSearch(projectPath, payload) {
         try {
             text = await fsp.readFile(fullPath, 'utf8');
         } catch (e) {
-            console.warn('[chain-tools-fs] grep skip file (unreadable):', fullPath, e instanceof Error ? e.message : e);
+            console.error('[chain-tools-fs] grep skip file (unreadable):', fullPath, e instanceof Error ? e.message : e);
             return;
         }
         if (text.length > 500_000) return;
@@ -175,7 +174,7 @@ export async function runClientGrepSearch(projectPath, payload) {
         try {
             entries = await fsp.readdir(absDir, { withFileTypes: true });
         } catch (e) {
-            console.warn('[chain-tools-fs] grep skip dir (unreadable):', absDir, e instanceof Error ? e.message : e);
+            console.error('[chain-tools-fs] grep skip dir (unreadable):', absDir, e instanceof Error ? e.message : e);
             return;
         }
         for (const ent of entries) {

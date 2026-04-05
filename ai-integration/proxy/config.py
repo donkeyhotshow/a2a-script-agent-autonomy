@@ -548,6 +548,12 @@ if 'PROMISE_DELAY_BEFORE_EXECUTE' not in dir():
     PROMISE_DELAY_BEFORE_EXECUTE = 2.0
 
 
+def ollama_upstream_base() -> str:
+    """Return OLLAMA_HOST with no trailing slash (for appending /path)."""
+    h = OLLAMA_HOST
+    return (h.rstrip("/") or h) if h else h
+
+
 # ===========================================
 # Validation Function
 # ===========================================

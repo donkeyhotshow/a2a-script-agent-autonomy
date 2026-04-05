@@ -11,7 +11,7 @@ export async function runClientRagSearchForExecute(cwd, projectPath, ragPayload)
 
     const distPath = path.join(cwd, 'packages', 'rag', 'dist', 'searcher', 'rag-searcher.js');
     if (!fs.existsSync(distPath)) {
-        console.warn('[VitePlugin] RAG dist missing at', distPath, '— run: npm run build --prefix packages/rag');
+        console.error('[VitePlugin] RAG dist missing at', distPath, '— run: npm run build --prefix packages/rag');
         return { query, results: [], files: [], error: 'rag module not built' };
     }
 

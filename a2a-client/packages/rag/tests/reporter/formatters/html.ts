@@ -469,9 +469,11 @@ export function generateHTMLReport(
         </tbody>
       </table>
     </div>
-    
+    `;
+
+  if (failedTests.length > 0) {
+    html += `
     <!-- Failed Tests Section -->
-    ${failedTests.length > 0 ? `
     <div class="collapsible">
       <div class="collapsible-header" onclick="toggleCollapsible(this)">
         <span><strong>❌ Failed Tests (${failedTests.length})</strong></span>
@@ -488,9 +490,9 @@ export function generateHTMLReport(
             </tr>
           </thead>
           <tbody>`;
-  
-  for (const test of failedTests.slice(0, 50)) {
-    html += `
+
+    for (const test of failedTests.slice(0, 50)) {
+      html += `
             <tr>
               <td>${test.name}</td>
               <td><span class="status-badge fail">${test.category}</span></td>
@@ -499,23 +501,25 @@ export function generateHTMLReport(
                 ${test.error || 'Assertion failed'}
               </td>
             </tr>`;
-  }
-  
-  if (failedTests.length > 50) {
-    html += `
+    }
+
+    if (failedTests.length > 50) {
+      html += `
             <tr>
               <td colspan="4" style="text-align: center; opacity: 0.7;">
                 ... and ${failedTests.length - 50} more failed tests
               </td>
             </tr>`;
-  }
-  
-  html += `
+    }
+
+    html += `
           </tbody>
         </table>
       </div>
-    </div>
-    ` : ''}
+    </div>`;
+  }
+
+  html += `
     
     <!-- Recommendations Section -->
     <div class="collapsible">

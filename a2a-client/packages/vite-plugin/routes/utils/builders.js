@@ -36,10 +36,31 @@ function historyEntryUserText(entry) {
 }
 
 /**
- * Dialog invoke: align context.history with this user line (previous server history often ends with assistant).
- * @param {Record<string, unknown>} mergedContext - mutable context (expects execution.action === 'dialog' from caller)
- * @param {string} effectiveTask - user utterance from result.message
+ * Server may echo the session task into context.history when entering dialog; that line belongs in
+ * `context.task` only, not in dialog history. Strip user rows matching `context.task` before the first
+ * assistant entry (prefix only — repeats after assistant are kept).
  */
+export function stripSpuriousTaskEchoFromDialogHistory(mergedContext) {
+    if (!mergedContext || typeof mergedContext !== 'object') return;
+    const task = mergedContext.task;
+    if (!task || typeof task !== 'string') return;
+    const exec = mergedContext.execution;
+    if (!exec || exec.action !== 'dialog') return;
+    const h = mergedContext.history;
+    if (!Array.isArray(h) || h.length === 0) return;
+    const firstAssistantIdx = h.findIndex((e) => e && e.role === 'assistant');
+    const end = firstAssistantIdx === -1 ? h.length : firstAssistantIdx;
+    const head = h.slice(0, end);
+    const tail = h.slice(end);
+    const filteredHead = head.filter(
+        (e) => !(e && e.role === 'user' && historyEntryUserText(e) === task)
+    );
+    if (filteredHead.length !== head.length) {
+        mergedContext.history = [...filteredHead, ...tail];
+    }
+}
+
+/** Dialog invoke: align context.history with this user line (server history often ends with assistant). */
 export function mergeDialogHistoryForInvoke(mergedContext, effectiveTask) {
     if (!mergedContext || typeof mergedContext !== 'object') return;
     if (!effectiveTask || typeof effectiveTask !== 'string') return;

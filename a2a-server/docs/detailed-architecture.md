@@ -99,12 +99,7 @@ POST /api/v1/invoke
 |----------|--------|------|----------|
 | `/api/v1/invoke` | POST | Bearer/Basic | Создать запрос (sync-like) |
 
-#### SSE (Server-Sent Events)
 
-| Endpoint | Auth | Описание |
-|----------|------|----------|
-| `/api/v1/sse/:sessionId` | Bearer | Events для конкретной сессии |
-| `/api/v1/sse` | Bearer | Global events |
 
 ### Health Endpoints (No Auth)
 

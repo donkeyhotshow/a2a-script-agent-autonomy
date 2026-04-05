@@ -9,8 +9,8 @@
  */
 
 import {logger} from '../../../utils/logger.js';
-import {readFile} from 'fs/promises';
-import {existsSync} from 'fs';
+import {readFile} from 'node:fs/promises';
+import {existsSync} from 'node:fs';
 import path from 'path';
 import {
     runPromptsTransform,
@@ -21,7 +21,7 @@ import {
 import type {
     RequestContext,
     ProcessResult
-} from '../request-processor.interfaces.js';
+} from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {
     validateAgentExecuteShape,

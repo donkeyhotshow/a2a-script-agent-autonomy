@@ -1,4 +1,6 @@
 import { logger } from '../../utils/logger.js';
+import { resolveAiHubBaseUrl } from '../../utils/ai-hub-url.js';
+import { fetchAiHubChatJson } from '../../utils/ai-hub-chat-sync.js';
 
 export type LlmProvider = 'anthropic' | 'openai' | 'gemini' | 'ollama';
 
@@ -55,35 +57,27 @@ export class LlmService {
   }
 
   private async chatOllama(model: string, request: LlmRequest): Promise<LlmResponse> {
-    const url = process.env.OLLAMA_URL || 'http://localhost:11435';
-    
-    // Using simple fetch to mirror existing pattern
-    const res = await fetch(`${url}/api/chat`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model,
-        messages: request.messages,
-        stream: false,
-        options: {
-          temperature: request.temperature || 0.7,
-          num_predict: request.maxTokens || 4096
-        }
-      })
+    const base = resolveAiHubBaseUrl();
+    const r = await fetchAiHubChatJson(base, {
+      model,
+      messages: request.messages,
+      stream: false,
+      options: {
+        temperature: request.temperature || 0.7,
+        num_predict: request.maxTokens || 4096,
+      },
     });
-
-    if (!res.ok) {
-      throw new Error(`Ollama error: ${res.status} ${await res.text()}`);
+    if (!r.ok) {
+      throw new Error(`AI hub error: ${r.status} ${r.bodyText}`);
     }
-
-    const data = await res.json() as any;
+    const data = r.data;
     return {
       content: data.message?.content || '',
       usage: {
         promptTokens: data.prompt_eval_count || 0,
         completionTokens: data.eval_count || 0,
-        totalTokens: (data.prompt_eval_count || 0) + (data.eval_count || 0)
-      }
+        totalTokens: (data.prompt_eval_count || 0) + (data.eval_count || 0),
+      },
     };
   }
 

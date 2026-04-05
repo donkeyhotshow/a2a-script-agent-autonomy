@@ -56,6 +56,7 @@ from .promise_utils import (
     _read_json_file,
     _prepare_execute_body,
     _sanitize_execute_headers,
+    pass_through_llm_upstream_headers,
     save_request,
     save_response,
     create_request_log,

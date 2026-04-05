@@ -27,6 +27,40 @@ def is_ollama_placeholder(secret: Optional[str]) -> bool:
     return s == OLLAMA_API_KEY_PLACEHOLDER or s == ""
 
 
+def _parse_json_object_body(
+    body: bytes,
+    content_type: Optional[str],
+    log_label: str,
+) -> Optional[dict[str, Any]]:
+    ct = (content_type or "").lower()
+    if not body or "json" not in ct:
+        return None
+    try:
+        parsed = json.loads(body.decode("utf-8", errors="replace"))
+    except json.JSONDecodeError as e:
+        logger.debug("%s: JSON parse failed (ct=%s): %s", log_label, content_type, e)
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _error_payload_rate_limited(
+    parsed: dict[str, Any],
+    *,
+    include_too_many_requests: bool,
+) -> bool:
+    err = parsed.get("error")
+    if isinstance(err, dict):
+        code = str(err.get("code") or "")
+        msg = str(err.get("message") or err.get("msg") or "").lower()
+        if code == "1302" or "rate limit" in msg:
+            return True
+        if include_too_many_requests and "too many requests" in msg:
+            return True
+    elif isinstance(err, str) and "rate limit" in err.lower():
+        return True
+    return False
+
+
 def is_upstream_rate_limited(
     status_code: int,
     body: bytes,
@@ -35,45 +69,11 @@ def is_upstream_rate_limited(
     if status_code == 429:
         return True
     if status_code == 503:
-        ct = (content_type or "").lower()
-        if body and "json" in ct:
-            try:
-                parsed = json.loads(body.decode("utf-8", errors="replace"))
-            except json.JSONDecodeError as e:
-                logger.debug(
-                    "is_upstream_rate_limited: JSON parse failed for 503 body (ct=%s): %s",
-                    content_type,
-                    e,
-                )
-                return False
-            if isinstance(parsed, dict):
-                err = parsed.get("error")
-                if isinstance(err, dict):
-                    code = str(err.get("code") or "")
-                    msg = str(err.get("message") or err.get("msg") or "").lower()
-                    if code == "1302" or "rate limit" in msg:
-                        return True
-                elif isinstance(err, str) and "rate limit" in err.lower():
-                    return True
+        parsed = _parse_json_object_body(body, content_type, "is_upstream_rate_limited:503")
+        return bool(parsed and _error_payload_rate_limited(parsed, include_too_many_requests=False))
     if status_code >= 400 and body:
-        ct = (content_type or "").lower()
-        if "json" in ct:
-            try:
-                parsed = json.loads(body.decode("utf-8", errors="replace"))
-            except json.JSONDecodeError as e:
-                logger.debug(
-                    "is_upstream_rate_limited: JSON parse failed for error body (ct=%s): %s",
-                    content_type,
-                    e,
-                )
-                return False
-            if isinstance(parsed, dict):
-                err = parsed.get("error")
-                if isinstance(err, dict):
-                    code = str(err.get("code") or "")
-                    msg = str(err.get("message") or err.get("msg") or "").lower()
-                    if code == "1302" or "rate limit" in msg or "too many requests" in msg:
-                        return True
+        parsed = _parse_json_object_body(body, content_type, "is_upstream_rate_limited:error")
+        return bool(parsed and _error_payload_rate_limited(parsed, include_too_many_requests=True))
     return False
 
 

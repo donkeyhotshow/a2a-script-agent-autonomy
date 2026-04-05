@@ -1,6 +1,6 @@
 # A2A Client Level 3 Testing Script
 # Comprehensive E2E testing of A2A Client components
-# Tests: Client API HTTP → WebSocket/SSE → Web UI → Server → AI Integration
+# Tests: Client API HTTP → Web UI → Server → AI Integration
 
 param(
     [switch]$SkipCleanup,

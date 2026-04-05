@@ -1,6 +1,7 @@
 import { llmService } from './llm-service.js';
 import { logger } from '../../utils/logger.js';
-import { readFile } from 'fs/promises';
+import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
+import { readFile } from 'node:fs/promises';
 import { execSync } from 'child_process';
 
 export interface BugFixPatch {
@@ -29,22 +30,14 @@ export interface BugFixResult {
  * Parse JSON from LLM response with fallback
  */
 function parseBugFixResult(content: string): BugFixResult {
-  try {
-    return JSON.parse(content) as BugFixResult;
-  } catch (err: unknown) {
-    logger.debug('[BugFixer] Direct fix-result JSON parse failed', {
-      error: err instanceof Error ? err.message : String(err),
+  const parsed = tryParseJsonFromLlmText(content);
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    return parsed as BugFixResult;
+  }
+  if (content.trim().length > 0) {
+    logger.debug('[BugFixer] Fix-result JSON parse failed', {
+      preview: content.slice(0, 120),
     });
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      try {
-        return JSON.parse(jsonMatch[0]) as BugFixResult;
-      } catch (err2: unknown) {
-        logger.debug('[BugFixer] Extracted fix-result JSON parse failed', {
-          error: err2 instanceof Error ? err2.message : String(err2),
-        });
-      }
-    }
   }
   return { fixed: false, patches: [], analysis: 'Failed to parse fix result' };
 }

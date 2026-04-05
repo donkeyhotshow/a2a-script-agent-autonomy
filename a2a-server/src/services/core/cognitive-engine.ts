@@ -10,9 +10,10 @@
  * Writer: 'cognitive-engine' for REASONING_CHAIN artifacts.
  */
 
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import {
   ArtifactStore,
+  createArtifactWriteInput,
   type StoredArtifact,
 } from './artifact-store.js';
 import { logger } from '../../utils/logger.js';
@@ -132,16 +133,15 @@ export class ReasoningEngine {
     // Persist as artifact
     const artifactId = `reasoning-${randomUUID()}`;
     await this.artifactStore.write(
-      {
+      createArtifactWriteInput({
         artifact_id: artifactId,
         artifact_type: 'REASONING_CHAIN',
         session_id: sessionId,
         turn_id: turnId,
-        created_at: new Date().toISOString(),
         schema_version: '1.0',
         summary: `Reasoning chain for: ${goal.slice(0, 80)}`,
         data: chain as unknown as Record<string, unknown>,
-      },
+      }),
       COMPONENT_ID,
     );
 

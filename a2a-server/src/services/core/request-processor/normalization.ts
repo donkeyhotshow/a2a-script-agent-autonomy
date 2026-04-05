@@ -7,6 +7,22 @@
 import {ACTION_TO_SCHEMA} from '../../../config/router-static.js';
 
 /**
+ * Flat server context → invoke-shaped payload for `runPromptsTransform(..., 'request', ...)`.
+ * When `context` is already nested, returns `ctx` unchanged.
+ */
+export function toInvokeShapeForPromptsTransform(ctx: Record<string, unknown>): Record<string, unknown> {
+    if (ctx && typeof ctx === 'object' && !Array.isArray(ctx) && 'context' in ctx) {
+        return ctx;
+    }
+    return {
+        context: ctx,
+        task: (ctx['task'] as string | undefined) ?? (ctx['message'] as string | undefined),
+        message: ctx['message'],
+        result: (ctx['result'] as Record<string, unknown> | undefined) ?? {},
+    };
+}
+
+/**
  * Resolve transformSchema из контекста запроса
  * Приоритет: transformSchema → execution.action + result.message
  */

@@ -1,6 +1,7 @@
 import type { OrchestratorState } from './orchestrator-kernel.js';
 import { llmService } from '../llm/llm-service.js';
 import { logger } from '../../utils/logger.js';
+import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
 
 export enum AgentRole {
     ARCHITECT = 'ARCHITECT',
@@ -99,12 +100,15 @@ Please review the context and execution results provided. You must output valid 
             const chatResult = await llmService.chat({
                 messages: [{ role: 'user', content: reviewReq }]
             });
-            const resultText = chatResult.content;
-            const jsonStr = resultText.substring(resultText.indexOf('{'), resultText.lastIndexOf('}') + 1);
-            const parsed = JSON.parse(jsonStr);
+            const resultText = chatResult.content ?? '';
+            const parsed = tryParseJsonFromLlmText(resultText);
+            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+                throw new Error('Reviewer response is not a JSON object');
+            }
+            const obj = parsed as Record<string, unknown>;
             return {
-                passed: !!parsed.passed,
-                reason: parsed.reason || 'No reason provided'
+                passed: Boolean(obj['passed']),
+                reason: typeof obj['reason'] === 'string' ? obj['reason'] : 'No reason provided',
             };
         } catch (e) {
             logger.error('[AgentRoleRegistry] Syndicate review failed to parse', { error: String(e) });

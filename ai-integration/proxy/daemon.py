@@ -37,6 +37,7 @@ from .promises import (
     _load_request_snapshot,
     _prepare_execute_body,
     _sanitize_execute_headers,
+    pass_through_llm_upstream_headers,
     _promise_set_done,
     _promise_reset_pending,
 )
@@ -281,11 +282,7 @@ class PromiseDaemon:
         headers = _sanitize_execute_headers(raw_headers)
         body_payload = _prepare_execute_body(request_snapshot.get('body'))
         routing = load_routing_hint(rec.log_folder or "")
-        safe_upstream = {}
-        for hk, hv in (raw_headers or {}).items():
-            lk = str(hk).lower()
-            if lk in ('content-type', 'accept', 'accept-language', 'user-agent'):
-                safe_upstream[hk] = str(hv)
+        safe_upstream = pass_through_llm_upstream_headers(raw_headers)
         
         cache = get_cache()
         cache_payload = build_llm_cache_payload(

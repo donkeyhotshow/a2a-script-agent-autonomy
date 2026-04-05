@@ -171,6 +171,11 @@ def load_providers_config(config_path: Optional[str] = None) -> ProvidersConfig:
                 continue
     
     # Return default config if no file found
+    searched = [p for p in config_paths if p]
+    logger.warning(
+        "Using built-in default providers; no valid providers JSON loaded from: %s",
+        ", ".join(searched) if searched else "(no paths configured)",
+    )
     return _default_config()
 
 
@@ -210,10 +215,19 @@ def _parse_config(data: Dict[str, Any]) -> ProvidersConfig:
     if isinstance(raw_keys, list):
         for item in raw_keys:
             if not isinstance(item, dict):
+                logger.warning(
+                    "api_keys: skipping non-object entry %r",
+                    repr(item)[:200],
+                )
                 continue
             kid = str(item.get("id") or "").strip()
             prov = str(item.get("provider") or "").strip()
             if not kid or not prov:
+                logger.warning(
+                    "api_keys: skipping entry missing id or provider (id=%r provider=%r)",
+                    item.get("id"),
+                    item.get("provider"),
+                )
                 continue
             sec_raw = item.get("secret")
             if sec_raw is None:
@@ -224,6 +238,11 @@ def _parse_config(data: Dict[str, Any]) -> ProvidersConfig:
             if not secret and prov == "ollama":
                 secret = OLLAMA_API_KEY_PLACEHOLDER
             if not secret:
+                logger.warning(
+                    "api_keys: skipping id=%r provider=%r (empty secret after env resolve)",
+                    kid,
+                    prov,
+                )
                 continue
             enabled = bool(item.get("enabled", True))
             try:

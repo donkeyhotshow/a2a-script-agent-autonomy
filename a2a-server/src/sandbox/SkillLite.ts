@@ -1,4 +1,4 @@
-import { logger } from '../../utils/logger.js';
+import { logger } from '../utils/logger.js';
 import { execSync } from 'child_process';
 
 export class SkillLiteSandbox {

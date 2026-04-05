@@ -7,7 +7,9 @@
 import path from 'path';
 import * as fs from 'fs/promises';
 import type { Session, Project } from '../models/session.model.js';
-import { writeJsonFile, getStorageDir } from './storage.js';
+import { compareSessionCreatedAtDesc } from '@a2a-client/shared/session-sort.mjs';
+import { getProjectDotA2aSessionsDir } from '@a2a-client/shared/project-sessions-dir.mjs';
+import { writeJsonFile, getStorageSessionsRoot, isNodeEnoent } from './storage.js';
 import { loadProjects, saveProjects } from './projects.service.js';
 
 /**
@@ -15,8 +17,8 @@ import { loadProjects, saveProjects } from './projects.service.js';
  * Uses project.path if available, otherwise falls back to storage directory
  */
 export function getSessionDir(project: Project): string {
-    if (project.path) return path.join(project.path, '.a2a', 'sessions');
-    return path.join(getStorageDir(), 'sessions', project.id);
+    if (project.path) return getProjectDotA2aSessionsDir(project.path);
+    return path.join(getStorageSessionsRoot(), project.id);
 }
 
 /**
@@ -39,15 +41,14 @@ export async function listSessions(project: Project): Promise<Array<{ id: string
                     createdAt: session.createdAt,
                 });
             } catch (e) {
-                console.warn('[session.service] Skipping invalid session file:', file, e instanceof Error ? e.message : e);
+                console.error('[session.service] Skipping invalid session file:', file, e instanceof Error ? e.message : e);
             }
         }
-        sessions.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
+        sessions.sort(compareSessionCreatedAtDesc);
         return sessions;
     } catch (e) {
-        const code = (e as NodeJS.ErrnoException)?.code;
-        if (code !== 'ENOENT') {
-            console.warn('[session.service] listSessions failed:', dir, e instanceof Error ? e.message : e);
+        if (!isNodeEnoent(e)) {
+            console.error('[session.service] listSessions failed:', dir, e instanceof Error ? e.message : e);
         }
         return [];
     }
@@ -62,9 +63,8 @@ export async function loadSession(project: Project, sessionId: string): Promise<
         const raw = await fs.readFile(file, 'utf-8');
         return JSON.parse(raw) as Session;
     } catch (e) {
-        const code = (e as NodeJS.ErrnoException)?.code;
-        if (code !== 'ENOENT') {
-            console.warn('[session.service] loadSession failed:', sessionId, e instanceof Error ? e.message : e);
+        if (!isNodeEnoent(e)) {
+            console.error('[session.service] loadSession failed:', sessionId, e instanceof Error ? e.message : e);
         }
         return null;
     }
@@ -103,9 +103,8 @@ export async function deleteSession(project: Project, sessionId: string): Promis
     try {
         await fs.unlink(file);
     } catch (e) {
-        const code = (e as NodeJS.ErrnoException)?.code;
-        if (code !== 'ENOENT') {
-            console.warn('[session.service] deleteSession failed:', sessionId, e instanceof Error ? e.message : e);
+        if (!isNodeEnoent(e)) {
+            console.error('[session.service] deleteSession failed:', sessionId, e instanceof Error ? e.message : e);
         }
     }
 }

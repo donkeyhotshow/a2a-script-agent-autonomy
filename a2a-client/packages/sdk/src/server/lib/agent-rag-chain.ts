@@ -113,7 +113,7 @@ export async function applyAgentRagChainAfterSyncInvoke(options: {
         }
 
         if (!upstream.ok) {
-            console.warn('[SDK] Chained invoke failed', upstream.status, json);
+            console.error('[SDK] Chained invoke failed', upstream.status, json);
             break;
         }
 

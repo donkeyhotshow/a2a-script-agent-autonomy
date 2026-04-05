@@ -2,7 +2,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 import { NodeVM } from 'vm2';
-import { globalArtifactStore } from './artifact-store.js';
+import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
 
 const execAsync = promisify(exec);
 
@@ -125,16 +125,19 @@ export class SWEVerifier {
   }
 
   private async emitArtifact(res: VerificationResult) {
-    await globalArtifactStore.write({
-      artifact_id: `verify-${Date.now()}`,
-      artifact_type: 'VERIFICATION_RESULT',
-      session_id: 'unknown',
-      turn_id: 'unknown',
-      created_at: res.timestamp,
-      schema_version: '1.0',
-      data: res as unknown as Record<string, unknown>,
-      summary: `SWEVerifier: ${res.file_path} [${res.stage}] -> ${res.passed ? 'PASS' : 'FAIL'}`,
-      severity: res.passed ? 'info' : 'error',
-    }, this.COMPONENT_ID);
+    await globalArtifactStore.write(
+      createArtifactWriteInput({
+        artifact_id: `verify-${Date.now()}`,
+        artifact_type: 'VERIFICATION_RESULT',
+        session_id: 'unknown',
+        turn_id: 'unknown',
+        created_at: res.timestamp,
+        schema_version: '1.0',
+        data: res as unknown as Record<string, unknown>,
+        summary: `SWEVerifier: ${res.file_path} [${res.stage}] -> ${res.passed ? 'PASS' : 'FAIL'}`,
+        severity: res.passed ? 'info' : 'critical',
+      }),
+      this.COMPONENT_ID,
+    );
   }
 }

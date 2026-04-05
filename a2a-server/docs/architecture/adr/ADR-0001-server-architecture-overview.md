@@ -47,7 +47,6 @@ Adopt a layered architecture with clear separation of concerns and modular desig
 
 ### 4. Communication Patterns
 - **RESTful API** for synchronous operations
-- **Server-Sent Events (SSE)** for real-time updates
 - **Promise-based integration** with ai-integration service
 - **Action protocol** for client-side operations
 

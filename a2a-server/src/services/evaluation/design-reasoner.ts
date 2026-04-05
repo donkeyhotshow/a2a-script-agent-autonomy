@@ -19,8 +19,11 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { ArtifactStore } from '../core/artifact-store.js';
+import { ArtifactStore, createArtifactWriteInput } from '../core/artifact-store.js';
 import { logger } from '../../utils/logger.js';
+import { resolveAiHubBaseUrlWithModuleEnv } from '../../utils/ai-hub-url.js';
+import { fetchAiHubGenerateText } from '../../utils/ai-hub-generate.js';
+import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -136,11 +139,6 @@ export interface DesignReasonerInput {
 
 const COMPONENT_ID = 'design-reasoner';
 
-const DEFAULT_AI_HUB =
-  process.env['DESIGN_AI_HUB_URL'] ??
-  process.env['AI_HUB_URL'] ??
-  'http://localhost:11434';
-
 const DEFAULT_MODEL = process.env['DESIGN_MODEL'] ?? 'llama3';
 
 /**
@@ -206,10 +204,10 @@ export class DesignReasoner {
 
   constructor(
     private readonly artifactStore: ArtifactStore,
-    aiHubBase = DEFAULT_AI_HUB,
+    aiHubBase?: string,
     model = DEFAULT_MODEL,
   ) {
-    this.aiHubBase = aiHubBase.replace(/\/$/, '');
+    this.aiHubBase = resolveAiHubBaseUrlWithModuleEnv(aiHubBase, 'DESIGN_AI_HUB_URL');
     this.model = model;
     artifactStore.registerWriter('DESIGN_MANIFEST', COMPONENT_ID);
   }
@@ -310,23 +308,15 @@ Design rules:
     uiRequirement: string,
   ): Promise<(Omit<DesignManifest, 'artifactId'>) | null> {
     try {
-      const res = await fetch(`${this.aiHubBase}/api/generate`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
+      const raw = await fetchAiHubGenerateText(
+        this.aiHubBase,
+        {
           model: this.model,
           prompt: this._buildPrompt(uiRequirement),
           stream: false,
-        }),
-        signal: AbortSignal.timeout(90_000),
-      });
-
-      if (!res.ok) {
-        throw new Error(`AI Hub responded ${res.status} ${res.statusText}`);
-      }
-
-      const json = await res.json() as { response?: string };
-      const raw = json.response ?? '';
+        },
+        90_000,
+      );
       return this._parse(raw);
     } catch (err) {
       logger.warn(`[design-reasoner] Design LLM call failed: ${String(err)}`);
@@ -336,12 +326,10 @@ Design rules:
 
   private _parse(raw: string): (Omit<DesignManifest, 'artifactId'>) | null {
     try {
-      const cleaned = raw
-        .replace(/^```(?:json)?/m, '')
-        .replace(/```$/m, '')
-        .trim();
-
-      const p = JSON.parse(cleaned) as Partial<Record<string, unknown>>;
+      const p = tryParseJsonFromLlmText<Partial<Record<string, unknown>>>(raw);
+      if (!p || typeof p !== 'object' || Array.isArray(p)) {
+        return null;
+      }
 
       const colorPalette = this._coerceColorPalette(p['colorPalette']);
       const typography   = this._coerceTypography(p['typography']);
@@ -472,26 +460,25 @@ Design rules:
     const artifactId = randomUUID();
     try {
       await this.artifactStore.write(
-        {
-          artifact_id:    artifactId,
-          artifact_type:  'DESIGN_MANIFEST',
-          session_id:     sessionId,
-          turn_id:        String(turn),
-          created_at:     new Date().toISOString(),
+        createArtifactWriteInput({
+          artifact_id: artifactId,
+          artifact_type: 'DESIGN_MANIFEST',
+          session_id: sessionId,
+          turn_id: String(turn),
           schema_version: '1',
-          summary:        manifest.rationale.slice(0, 200),
+          summary: manifest.rationale.slice(0, 200),
           data: {
-            colorPalette:    manifest.colorPalette,
-            typography:      manifest.typography,
-            spacing:         manifest.spacing,
-            shadows:         manifest.shadows,
-            radii:           manifest.radii,
-            animations:      manifest.animations,
-            glassmorphism:   manifest.glassmorphism,
-            rationale:       manifest.rationale,
-            source:          manifest.source,
+            colorPalette: manifest.colorPalette,
+            typography: manifest.typography,
+            spacing: manifest.spacing,
+            shadows: manifest.shadows,
+            radii: manifest.radii,
+            animations: manifest.animations,
+            glassmorphism: manifest.glassmorphism,
+            rationale: manifest.rationale,
+            source: manifest.source,
           },
-        },
+        }),
         COMPONENT_ID,
       );
     } catch (err) {

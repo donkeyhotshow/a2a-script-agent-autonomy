@@ -2,6 +2,7 @@ import {
     mergeDialogHistoryForInvoke,
     pickInvokeContextPatch,
     sanitizeContextForServer,
+    stripSpuriousTaskEchoFromDialogHistory,
 } from './utils/builders.js';
 
 export function mergeContext({ prevStepData, sessionContext, submitResult, hasChoices }) {
@@ -56,9 +57,12 @@ export function processTaskAndContext({ mergedContext, submitResult, prevStepDat
     const execAction = mergedContext.execution?.action;
 
     if (effectiveTask) {
-        mergedContext.task = effectiveTask;
         if (execAction === 'dialog') {
+            // Session task stays the first user line from the web client; current utterance is only result.message + history.
+            stripSpuriousTaskEchoFromDialogHistory(mergedContext);
             mergeDialogHistoryForInvoke(mergedContext, effectiveTask);
+        } else {
+            mergedContext.task = effectiveTask;
         }
     }
 
@@ -82,10 +86,19 @@ export function determineInvokeMode({ execStep, effectiveTask, hasChoices, submi
 
 export function prepareServerRequest({ mergedContext, submitResult, effectiveTask, shouldSyncInvoke, syncRouterChoice }) {
     const contextForServer = sanitizeContextForServer(mergedContext);
+    const execAction = mergedContext.execution?.action;
+    let topLevelTask = effectiveTask;
+    if (
+        execAction === 'dialog' &&
+        typeof mergedContext.task === 'string' &&
+        mergedContext.task.trim().length > 0
+    ) {
+        topLevelTask = mergedContext.task;
+    }
     const requestToServer = {
         context: contextForServer,
         result: submitResult,
-        ...(effectiveTask ? { task: effectiveTask } : {}),
+        ...(topLevelTask ? { task: topLevelTask } : {}),
         ...(shouldSyncInvoke || syncRouterChoice ? { sync: true } : {}),
     };
 
