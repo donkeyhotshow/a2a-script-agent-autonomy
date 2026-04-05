@@ -74,6 +74,11 @@ target-version = ['py38']
 profile = "black"
 line_length = 100
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Exploratory human-review suite: `python scripts/run-human-review.py`
+addopts = "--ignore=tests/human-review"
+
 [tool.mypy]
 python_version = "3.8"
 warn_return_any = true

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
     mergeDialogHistoryForInvoke,
     stripSpuriousTaskEchoFromDialogHistory,
-} from '../../packages/vite-plugin/routes/utils/builders.js';
+} from '../../shared/dialog-invoke-history.mjs';
 
 describe('stripSpuriousTaskEchoFromDialogHistory', () => {
     it('removes user line matching context.task before first assistant (dialog only)', () => {

@@ -105,6 +105,16 @@ export class ApiError extends Error {
     }
 }
 
+export type SessionGetQueryOptions = { unwrap?: boolean; includeContext?: boolean };
+
+/** Query suffix for SDK `GET /sessions/:id` (`unwrap` / `includeContext` parity with Vite). */
+export function buildSessionGetQuery(options: SessionGetQueryOptions = {}): string {
+    const params = new URLSearchParams();
+    if (options.unwrap) params.append('unwrap', '1');
+    if (options.includeContext) params.append('includeContext', '1');
+    return params.toString() ? `?${params}` : '';
+}
+
 /**
  * Session management client with enhanced features
  */
@@ -246,10 +256,14 @@ export class SessionManager extends EventEmitter {
     }
 
     /**
-     * Get session with full details
+     * Get session with full details (same query flags as `getSession`)
      */
-    async getSessionDetails(sessionId: string): Promise<Session> {
-        const res = await this.request('GET', `/sessions/${sessionId}`);
+    async getSessionDetails(
+        sessionId: string,
+        options: SessionGetQueryOptions = {}
+    ): Promise<Session> {
+        const q = buildSessionGetQuery(options);
+        const res = await this.request('GET', `/sessions/${sessionId}${q}`);
         const payload = unwrapEnvelope<Session>(res) as Session;
         const normalized = normalizeSessionResponse(payload);
         return (normalized ?? payload) as Session;
@@ -308,10 +322,11 @@ export class SessionManager extends EventEmitter {
     }
 
     /**
-     * Get session details
+     * Get session details (`unwrap: true` → `?unwrap=1`, top-level session body like Vite)
      */
-    async getSession(sessionId: string): Promise<unknown> {
-        const res = await this.request('GET', `/sessions/${sessionId}`);
+    async getSession(sessionId: string, options: SessionGetQueryOptions = {}): Promise<unknown> {
+        const q = buildSessionGetQuery(options);
+        const res = await this.request('GET', `/sessions/${sessionId}${q}`);
         return unwrapEnvelope(res);
     }
 
@@ -382,11 +397,19 @@ export class SessionManager extends EventEmitter {
      */
     async getMessages(
         sessionId: string,
-        options: { limit?: number; offset?: number } = {}
+        options: {
+            limit?: number;
+            offset?: number;
+            /** Vite delta mode: adds `afterSeq` → unwrapped `{ sessionId, messages, lastSeq, … }` */
+            afterSeq?: number;
+            withExecute?: boolean;
+        } = {}
     ): Promise<unknown> {
         const params = new URLSearchParams();
         if (options.limit != null) params.append('limit', String(options.limit));
         if (options.offset != null) params.append('offset', String(options.offset));
+        if (options.afterSeq != null) params.append('afterSeq', String(options.afterSeq));
+        if (options.withExecute) params.append('withExecute', '1');
         const query = params.toString() ? `?${params}` : '';
         const res = await this.request('GET', `/sessions/${sessionId}/messages${query}`);
         return unwrapEnvelope(res);

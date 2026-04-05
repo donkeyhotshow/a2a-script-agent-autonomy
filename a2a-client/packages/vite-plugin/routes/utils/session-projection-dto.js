@@ -270,11 +270,31 @@ async function verifyPromiseStatusAsync(promiseId) {
 }
 
 /**
- * includeContext=true is debug-only.
+ * includeContext=true is debug-only (full context for drivers/tests).
+ * Still attach `stage` / promise meta like the public path so POST /sessions matches GET projection UX.
  */
 export function toPublicSession(session, includeContext = false) {
     if (!session) return session;
-    if (includeContext) return { ...session };
+    if (includeContext) {
+        const out = { ...session };
+        out.asyncPending =
+            session.asyncPending ??
+            !!(session.promiseId && isActivePromiseStatus(session.promiseStatus));
+        out.promiseStatus = session.promiseStatus ?? null;
+        out.stage = deriveSessionStage({
+            execute: out.execute ?? null,
+            context: out.context ?? null,
+            asyncPending: out.asyncPending,
+            status: out.status ?? null,
+        });
+        debugProjectionLog('toPublicSession', {
+            includeContext: true,
+            asyncPending: out.asyncPending,
+            stage: out.stage,
+            executeKeys: out.execute && typeof out.execute === 'object' ? Object.keys(out.execute) : [],
+        });
+        return out;
+    }
     const { context: fullContext, promiseId: _omitTransportId, ...rest } = session;
     const base = {
         ...rest,
@@ -319,7 +339,8 @@ export function toPublicSession(session, includeContext = false) {
 }
 
 /**
- * POST /next ack only.
+ * POST /next ack only (Vite Client API).
+ * `promiseId` is used only to set `asyncPending`; it is **not** included in the JSON (transport id stays off the wire).
  */
 export function toMinimalNextAck({ success, step, promiseId, error }) {
     if (!success) {

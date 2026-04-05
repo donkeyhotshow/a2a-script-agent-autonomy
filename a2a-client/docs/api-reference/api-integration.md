@@ -16,15 +16,15 @@ Creates session via `POST /api/a2a/sessions`.
 
 Loads sessions via `GET /api/a2a/sessions`.
 
-### `api.getSession(sessionId)`
+### `api.getSession(sessionId, options?)`
 
-Loads full session state via `GET /api/a2a/sessions/{id}`.
+Loads full session state via `GET /api/a2a/sessions/{id}`. Optional **`options.includeContext`** adds `?includeContext=1` (debug; **403** when the Vite app runs in **production**). The web Client API returns the session DTO at the JSON root (no `{ success, session }`); standalone SDK defaults to the envelope unless you use `?unwrap=1` — see [ADR-0028](../../../docs/adr/ADR-0028-client-api-deployment-modes.md).
 
 ### `api.sendMessage(sessionId, message)`
 
 Submits a user turn to `POST /api/a2a/sessions/{id}/next`.
 
-Return is ack-first (`accepted`, `step`, `asyncPending`, optional `promiseId`).
+Return is ack-first (`accepted`, `step`, `asyncPending`; no transport `promiseId` in the ack JSON).
 
 ### `api.sendChoice(sessionId, choiceId, choiceData?)`
 

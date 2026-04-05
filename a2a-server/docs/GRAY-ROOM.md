@@ -111,6 +111,10 @@ Adding **`prompts/transforms/<your-name>/`** (with `server-transforms-*.json` an
 | **Budget** | `A2A_MAX_INTERRUPT_TURNS` (default 10) on the orchestrator; per-interrupt `maxTurns` clamps via `min`. At 0 with interrupt still present → `context.interrupt_truncated: true` and return. |
 | **Merge to client** | Final `ProcessResult` gets `mergeInterruptTraceIntoContext` → [`interrupt-trace-contract.ts`](../src/transform/interrupt-trace-contract.ts) only; `workbench` / `history` come from transform output and handlers. |
 
+### Hub promise recovery (`recovered: true`)
+
+When `runLoop` is entered from **recovery** (hub `llmPromiseId` already finished; `responseMd` is the stored hub body), **ADR-0093 Internal Debate** (`llmService.debate`, three synchronous hub/Ollama calls) is **skipped** (`!isRecovered`). Otherwise debate **replaces** `md` before the first response transform and can fail with long Ollama timeouts while the main hub promise was already done — see [`BREAK_STATE.md`](../../BREAK_STATE.md) *inc-2026-04-06-b*.
+
 ### Error paths (sidecar / sub-LLM)
 
 | Failure | Outcome |

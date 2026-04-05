@@ -11,6 +11,17 @@ import { extractA2aExecute, sanitizeInvokeBodyForA2aUpstream } from './a2a-invok
 import { pickInvokeContextPatch } from './context-invoke-patch.js';
 import { sanitizeApiRecordExecuteFields } from './web-execute-dto.js';
 import { parseA2aInvokeResponse } from '../../client-api-envelope.js';
+import { deriveSessionStage } from '@a2a-client/shared/session-stage-derive.mjs';
+
+/** Vite `toMinimalNextAck` parity: success ack omits transport `promiseId`; use `asyncPending` + GET `/async`. */
+export function buildMinimalNextAck(step: number, promiseId: string | null) {
+    return {
+        success: true as const,
+        accepted: true as const,
+        step,
+        asyncPending: !!promiseId,
+    };
+}
 
 export function getStepNum(session: { metadata?: Record<string, unknown> }): number {
     const n = session.metadata?.stepNum;
@@ -33,6 +44,32 @@ export function stripContextForWeb<T extends Record<string, unknown>>(
     if (!obj || typeof obj !== 'object') return null;
     const { context: _c, ...rest } = obj;
     return rest as Omit<T, 'context'>;
+}
+
+function isActivePromiseStatusForProjection(st: unknown): boolean {
+    return st === 'pending' || st === 'processing' || st === 'waiting';
+}
+
+/**
+ * Vite `toPublicSession(session, true)` parity: on full session dumps (`includeContext=1`), attach
+ * `asyncPending`, `promiseStatus`, and `stage` so drivers match WEB_UI_PROTOCOL / projection DTO.
+ */
+export function applyIncludeContextSessionProjection(session: Record<string, unknown>): Record<string, unknown> {
+    const out = { ...session };
+    const promiseId = session.promiseId;
+    const promiseStatus = session.promiseStatus;
+    const asyncPending =
+        session.asyncPending ??
+        !!(typeof promiseId === 'string' && isActivePromiseStatusForProjection(promiseStatus));
+    out.asyncPending = asyncPending;
+    out.promiseStatus = promiseStatus ?? null;
+    out.stage = deriveSessionStage({
+        execute: (out.execute ?? null) as Record<string, unknown> | null,
+        context: (out.context ?? null) as Record<string, unknown> | null,
+        asyncPending,
+        status: (out.status ?? null) as string | null,
+    });
+    return out;
 }
 
 export function toWebClientSessionPayload<T extends Record<string, unknown>>(obj: T | null | undefined) {

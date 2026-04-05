@@ -16,6 +16,10 @@ Current system state: **Stack готов** - все сервисы работа�
 
 **Recent (operator / parity batch):** Task Monitor with promise queue support; Client API multi-provider LLM routing; session storage improvements.
 
+**2026-04-06:** `AGENTS.md` — Client API table: **`GET …/messages`** row + **`GET …/sessions/{id}`** includeContext note; standalone SDK bullet links **OPERATOR-CURL** § *GET session JSON shape* for `unwrap` / `includeContext` / `afterSeq`.
+
+**2026-04-06:** Added [`docs/AGENT-DIALOG-API-STATE.md`](docs/AGENT-DIALOG-API-STATE.md) — living state for agent-mode dialog over Client API; linked from `OPERATOR-CURL.md` and `HUMAN-REVIEW-FINDINGS.md`.
+
 **Fixed:** Added check in dialog request processor to return initial form directly from request transform for dialog schema without user input, before attempting LLM call.
 
 **Fixed (artifact paths):** Windows `scripts\start-*.bat` and `start-all.bat` / `kill-all.bat` now `cd` to repo root via `%~dp0` so logs land in `a2a-client/logs`, `a2a-server/logs` (not nested `a2a-client/a2a-client/...`). `start-all.sh` / `start-all.ps1` anchor to script directory. Proxy request dumps from `proxy_handler.py` use `proxy_logs/requests/request_*` (aligned with `request_processor.py`); `cleanup.py` prunes both `requests/` and legacy top-level `request_*`.

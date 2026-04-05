@@ -4,7 +4,7 @@
  */
 import { describe, it, expect } from 'vitest';
 import { projectHistoryTimeline } from '../../packages/vite-plugin/routes/utils/history-projection.js';
-import { mergeDialogHistoryForInvoke } from '../../packages/vite-plugin/routes/utils/builders.js';
+import { mergeDialogHistoryForInvoke } from '../../shared/dialog-invoke-history.mjs';
 
 /** Interleaved chain typical of tool + Red Room (system) lines. */
 const MIXED_HISTORY = [

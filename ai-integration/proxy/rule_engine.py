@@ -47,4 +47,11 @@ def process_model_and_rules(
         cfg,
     )
 
+    if isinstance(final_model, str) and final_model.strip():
+        fm = final_model.strip()
+        if request_method in ("POST", "PUT", "PATCH") and isinstance(body_json, dict):
+            body_json["model"] = fm
+        elif request_method == "GET":
+            fa["model"] = fm
+
     return requested_model, final_model, prompt, simulate_action

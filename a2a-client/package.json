@@ -9,6 +9,7 @@
   ],
   "scripts": {
     "test": "vitest run",
+    "test:human-review": "node scripts/run-human-review.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:client-api": "vitest run tests/integration/api-server-sessions.test.js",

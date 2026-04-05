@@ -53,7 +53,13 @@ from .model_resolver import resolve_model_name
 from .rule_engine import process_model_and_rules
 from .promise_manager import handle_promise_mode
 from .upstream_client import forward_request, check_cache, save_to_cache
-from .router_manager import get_router, resolve_routing, auto_start_ollama, _translate_ollama_to_openai_path
+from .router_manager import (
+    get_router,
+    initialize_router_if_needed,
+    resolve_routing,
+    auto_start_ollama,
+    _translate_ollama_to_openai_path,
+)
 from .simulation_handler import handle_simulated_response, handle_virtual_show_response
 
 
@@ -183,16 +189,10 @@ def handle_proxy_request(path: str, request) -> Response:
         
         cfg = get_ai_hub_config()
         path_norm = _normalize_path(path)
-        
-        model = None
-        if isinstance(body_json, dict):
-            model = body_json.get('model')
-        
+
         router = get_router()
-        target_url, headers, routed_provider_name, routed_provider_type = resolve_routing(
-            path, model, cfg, router, base_headers, should_log, folder_path
-        )
-        
+        initialize_router_if_needed(router)
+
         # Handle virtual models - api/show
         if request.method == 'GET' and path_norm == 'api/show':
             model_q = request.args.get('model')
@@ -212,6 +212,25 @@ def handle_proxy_request(path: str, request) -> Response:
         # Process model and rules
         requested_model, resolved_model, prompt, simulate_action = process_model_and_rules(
             cfg, body_json, forward_args, request.method, path
+        )
+
+        # Canonical model for provider routing + forwarded body (e.g. qwen3:8b -> glm-4.7-flash via z_ai fallback_models)
+        routing_model = None
+        if isinstance(body_json, dict):
+            mv = body_json.get('model')
+            if isinstance(mv, str) and mv.strip():
+                routing_model = router._resolve_model(mv.strip())
+                body_json['model'] = routing_model
+        if routing_model is None and request.method == 'GET':
+            ma = forward_args.get('model')
+            if isinstance(ma, str) and ma.strip():
+                routing_model = router._resolve_model(ma.strip())
+                forward_args['model'] = routing_model
+        if routing_model is not None:
+            resolved_model = routing_model
+
+        target_url, headers, routed_provider_name, routed_provider_type = resolve_routing(
+            path, routing_model, cfg, router, base_headers, should_log, folder_path
         )
 
         # Handle unknown model error

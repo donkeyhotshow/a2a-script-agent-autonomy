@@ -49,6 +49,7 @@ describe('session-projection-dto', () => {
         };
         const projected = toPublicSession(session, true);
         expect(projected.context).toEqual(session.context);
+        expect(typeof projected.stage).toBe('string');
     });
 
     /** UA-C-02: normal UI path must not expose raw workbench / slots — only ?includeContext=1 */

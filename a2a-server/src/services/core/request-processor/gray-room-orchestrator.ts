@@ -125,8 +125,10 @@ export class GrayRoomOrchestrator {
         }
         // -------------------------------------------------------------
 
-        // ADR-0093: Internal Debate for the first turn to refine the plan
-        if (turn === 0 && processInterrupts) {
+        // ADR-0093: Internal Debate for the first turn to refine the plan.
+        // Skip when recovering from a hub promise: `md` is the completed hub body; debate would
+        // replace it and runs 3 sync Ollama calls (proxy 500 on read timeout).
+        if (turn === 0 && processInterrupts && !isRecovered) {
             logger.info('[GrayRoom] Running ADR-0093 Internal Debate');
             const debateResult = await llmService.debate((workingCtx['task'] as string) || '', workingCtx);
             md = debateResult.plan;

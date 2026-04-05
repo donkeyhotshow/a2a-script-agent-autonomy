@@ -186,6 +186,8 @@ export class ApiClient {
 }
 
 export {AsyncApiClient} from './async-api-client.js';
+export {SessionManager, buildSessionGetQuery} from './session-manager.js';
+export type {SessionGetQueryOptions} from './session-manager.js';
 export {PromisePoller} from './polling.js';
 export {handleActionResponse, handleExecuteAction, createExecuteScript, extractExecuteAction} from './action-handler.js';
 export type {ExecuteScriptFn, HandleActionOptions, HandleActionResult} from './action-handler.js';

@@ -101,11 +101,19 @@ class ProviderRouter:
                 return (model or "").strip()
             return self._get_default_model()
         model = str(model).strip()
+        # Map legacy names from static config so routing works even if no provider instance
+        # registered (e.g. z_ai health_check failed during initialize).
+        dp_cfg = self.config.get_provider(self.config.default_provider)
+        if dp_cfg and isinstance(dp_cfg.fallback_models, dict):
+            alt = dp_cfg.fallback_models.get(model)
+            if isinstance(alt, str) and alt.strip():
+                model = alt.strip()
         if not self._initialized:
             return model
         for _name, provider in self._providers.items():
             if provider.supports_model(model):
-                return model
+                mapped = provider.resolve_model(model)
+                return mapped if mapped else model
         dp_name = self.config.default_provider
         if dp_name in self._providers:
             p = self._providers[dp_name]

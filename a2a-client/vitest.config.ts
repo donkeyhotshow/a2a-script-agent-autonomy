@@ -17,6 +17,8 @@ export default defineConfig({
       '**/node_modules/**',
       '**/.git/**',
       '**/dist/**',
+      /** Exploratory suite: `npm run test:human-review` in a2a-client */
+      '**/tests/human-review/**',
       /** Playwright specs; use `npm run test:e2e`. */
       '**/tests/e2e/**',
       /** Playwright script; run with `node tests/single-scene.test.js`. */

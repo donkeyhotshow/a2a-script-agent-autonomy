@@ -1,5 +1,7 @@
 # Operating the agent with curl (human or Cursor)
 
+**Agent-mode API dialog — living log:** [`docs/AGENT-DIALOG-API-STATE.md`](AGENT-DIALOG-API-STATE.md) (chained `sessions` → `next` → `/async`, SDK notes, known driver risks).
+
 ## Instrument: launch tasks through session dialog
 
 **Normative automation for indexed backlog tasks:** use the **Task Monitor** — same **Client API session dialog** as the web UI (`POST /sessions` → `/next` → poll `/async`, router beats). Operator doc: **[`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** (`npm run monitor`, `npm run monitor:once`, `TASK_MONITOR_*`, `ErrorClassifier` + direct-tests on failure). Full IDE + daemon loop narrative: **[`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md)**.
@@ -49,28 +51,59 @@ For **web** (browser), HTTP goes to the **same origin as the Vite app** — **`/
 
 Under that surface, work is still executed by **a2a-server**: the Client API forwards to **`POST {A2A_SERVER_URL}/api/v1/invoke`** and polls **`GET …/api/v1/requests/{promiseId}/result`** (or equivalent) while persisting sessions and projecting responses for the UI. So the **protocol and LLM pipeline** are **a2a-server**; the **session and operator-facing HTTP** for web and curl are **Client API**.
 
+**Standalone SDK (`:3001`, `POST /api/sessions/:id/next`):** **request** body matches Vite (**`result`** or top-level **`task`**; shared router + merge pipeline). Prior-step **`execute.form.choices`** is read from step **`server-response.json`** when present. **Ack:** **`{ success, accepted, step, asyncPending }`**. Project-mode-only sessions (Vite) may still differ from SDK global `storage/sessions` layout — see [ADR-0028](adr/ADR-0028-client-api-deployment-modes.md).
+
+**GET session JSON shape:** Vite **`GET /api/a2a/sessions/:id`** returns **only** the projected session object at the root. SDK **`GET /api/sessions/:id`** defaults to **`{ success: true, session: … }`**; add **`?unwrap=1`** for the same top-level session object as Vite. **`?includeContext=1`:** **403 in production** on both Vite and SDK (`NODE_ENV=production`). **`GET …/messages`:** Vite always uses delta query params (`afterSeq`, `limit`, `withExecute`); SDK returns **`{ success, data, count }`** unless **`afterSeq`** is present — then the **same delta JSON** as Vite (in-memory messages; Vite **project** storage mode can still 404 the delta). See [ADR-0028](adr/ADR-0028-client-api-deployment-modes.md) *Consequences*.
+
 See also: [`a2a-client/docs/WEB_UI_PROTOCOL.md`](../a2a-client/docs/WEB_UI_PROTOCOL.md) (async polling matrix).
 
 ## Minimal mental model
 
 | Step | Meaning |
 |------|--------|
-| Create session | `POST /api/a2a/sessions` (optional `task`, `mode`, `projectId`, `llmModel` for AI Hub model id, …) |
+| Create session | `POST /api/a2a/sessions` — body fields below |
 | First user turn | Usually **free text** — direction of work: `POST …/next` with `result.message` **or** shorthand `{ "task": "<natural language>" }` when the session is **not** showing router **choices** |
-| Router turn | When `GET …/sessions/{id}` shows `execute.form.choices`, next `POST …/next` must send **`result.choice`** = a choice **`id`** (shorthand: `{ "task": "<choice id>" }` — same field name, different meaning) |
-| Wait / fetch result | `GET .../async` (repeat until done); hydrate session between turns if unsure |
+| Router turn | When the latest step shows router choices (`execute.form.choices` **or** `execute.form.meta.routerChoices`), next `POST …/next` must send **`result.choice`** = a choice **`id`** (shorthand: `{ "task": "<choice id>" }`). On `execution.step === 'router'`, the Client API may map localized free text to **`dialog`** / **`agent`** / **`task-decomposition`** — [`a2a-client/docs/WEB_UI_PROTOCOL.md`](../a2a-client/docs/WEB_UI_PROTOCOL.md) § *Router dialog*. |
+| Wait / fetch result | `GET .../async` (repeat until done); body uses **`asyncPending`** + **`status`** (and optional projected `execute`, `result`, deferral fields) — not session `promiseStatus`; see [`a2a-client/docs/WEB_UI_PROTOCOL.md`](../a2a-client/docs/WEB_UI_PROTOCOL.md) § *GET `/async` response shape*. Hydrate with **`GET …/sessions/{id}`** between turns if unsure. |
 
 Exact shapes: root **`AGENTS.md`** → *Unified manual path* → *Router dialog (two beats)*; fallback router **`id`** values: **`dialog`**, **`agent`**, **`task-decomposition`** — [`shared/router-static-choices.json`](../shared/router-static-choices.json). Or copy a capture under `a2a-client/storage/sessions/`.
+
+### `POST /api/a2a/sessions` body (create)
+
+| Field | Role |
+|-------|------|
+| `task` | Seeds `context.task`. |
+| `mode` | Shorthand for `context.execution`: only **`agent`**, **`dialog`**, and **`task-decomposition`** are recognized (case-insensitive). Any other string is **ignored** for this seed → `context.execution` defaults to **`{ "action": "task", "step": "new" }`** ([`session-create-initial.js`](../a2a-client/packages/vite-plugin/routes/utils/session-create-initial.js)). |
+| `execution` | Object `{ "action": string, "step"?: string }`. If present with a non-empty `action`, it **wins** over `mode` (explicit pipeline seed). |
+| `projectId` / `projectRoot` | Project storage binding (see root **`AGENTS.md`** *Invoke payload privacy* / session storage). |
+| `llmModel` | Optional model id for Client API → hub routing (e.g. match **`GET http://localhost:11434/api/tags`**). |
+| `title` | Optional session title (default `New Session`). |
+| `id` | Optional storage session id; default `sess_<timestamp>`. |
+
+**Legacy aliases** (same create logic, response uses slim session projection): `POST /api/a2a/sessions/task-add`, `POST /api/a2a/sessions/task-execute`.
+
+**Create response** includes `stage`, `asyncPending`, and `promiseStatus` aligned with `GET …/sessions/{id}` ([`session-projection-dto.js`](../a2a-client/packages/vite-plugin/routes/utils/session-projection-dto.js)). Initial `execute` may contain both **`message`** and **`form`** — **Client API / UI bootstrap only** before the first server invoke; do not treat it as the server **action-key** `execute` from [`simulations/SCHEMA.md`](../simulations/SCHEMA.md).
+
+### Invoke sanitization (`POST …/next` → a2a-server `/api/v1/invoke`)
+
+The Client API keeps **`sessionId`**, **`projectId`**, and **`projectRoot`** on the **session record** and merged `context` for storage and tooling. Before every upstream invoke it **removes** them from the JSON sent to the stateless server (and drops **`clientSessionId`**). It also removes a mistaken **`context.session_id`** if it looks like a storage id (`sess_*`). Normative summary: root **`AGENTS.md`** → *Invoke payload privacy*.
+
+| Removed from upstream `context` (and nested `context.context` if present) | Also removed from top-level invoke body |
+|---------------------------------------------------------------------------|----------------------------------------|
+| `sessionId`, `projectId`, `projectRoot`, `clientSessionId` | `sessionId`, `projectId`, `projectRoot` |
+| `session_id` when value is `sess_*` | — |
+
+Implementation (shared Vite + SDK): [`a2a-client/shared/a2a-invoke-builders.mjs`](../a2a-client/shared/a2a-invoke-builders.mjs) — `sanitizeContextForServer`, `sanitizeInvokeBodyForA2aUpstream`. Dialog `/next` path applies the full-body sanitizer in [`context-processor.js`](../a2a-client/packages/vite-plugin/routes/context-processor.js) `prepareServerRequest` so behavior matches the standalone SDK session routes.
 
 ## Driver checklist (anti-stop)
 
 Use this as a **literal** loop for curl or scripts so a low-context prompt does not become a single-shot HTTP trace.
 
-1. **`POST /api/a2a/sessions`** — optional: `mode: "agent"`, `task`, `projectId`, `llmModel` (e.g. `qwen3:8b` vs `glm-4.7-flash`; see **`GET http://localhost:11434/api/tags`** on the proxy for names + `provider`) (see root **`AGENTS.md`**).
+1. **`POST /api/a2a/sessions`** — optional: `task`, `mode` (`"agent"` / `"dialog"` / `"task-decomposition"`), or **`execution`**: `{ "action": "…", "step": "…" }`, plus `projectId` / `projectRoot`, `llmModel` (see **`GET http://localhost:11434/api/tags`**), `title`, `id` (full table above; root **`AGENTS.md`**).
 2. **`GET /api/a2a/sessions/{id}`** — if `execute.form.choices` → next body uses **`result.choice`** (or `{ "task": "<id>" }`); else **`result.message`** / `{ "task": "<free text>" }`.
 3. **`POST /api/a2a/sessions/{id}/next`** with the body from step 2.
 4. **`GET /api/a2a/sessions/{id}/async`** — repeat until not pending / you have a settled `execute` (re-**GET session** if ambiguous).
-5. If still stuck, re-run step 2; if Client API returns empty execute but you have `promiseId`, see *Direct A2A Server invoke (workaround)* below.
+5. If still stuck, re-run step 2; if **`GET …/sessions/{id}`** shows **`asyncPending`** but thin **`execute`**, keep polling **`/async`** then re-GET session. For **direct** A2A polling you need a server **`prom_*` id** (from step `server-promise.json` or server logs), not from the Client API `/next` ack — see *Direct A2A Server invoke* below.
 6. Do **not** treat “I sent one `/next`” as done; parity with the web UI is **next + poll until settled**.
 
 ### Ollama is generating — pause other work
@@ -97,7 +130,7 @@ Prefer:
 When you must debug a stuck `promiseId`, poll the A2A Server directly:
 
 ```bash
-# 1. After /next returns promiseId
+# 1. Set PROMISE_ID from server-promise.json or server logs — Client API /next ack does not include it
 PROMISE_ID="prom_XXX"
 
 # 2. Poll server directly

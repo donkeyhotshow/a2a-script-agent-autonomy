@@ -38,3 +38,7 @@ Normative behavior for **server-issued `promiseId`** rows stored under `a2a-serv
 ## Relation to AI Integration promises
 
 The AI hub exposes its own LLM `promiseId` for `/api/chat?promise=1`. That is **orthogonal** to the A2A Server file-queue row: the server still tracks **one** primary `promiseId` per invoke; deferral applies to that row when the dialog pipeline cannot finish yet.
+
+### Hub response body shape (recovery / poll)
+
+If `GET /promise/:id/response` returns **non-Ollama** JSON (e.g. A2A-shaped `execute` / `step`, or another provider envelope), the server must still treat the promise as **ready** with a non-empty body. Previously, extracting only `message.content` / `response` and returning empty led to **resubmit**, clearing `context.llmPromiseId` and issuing **new** `POST /api/chat?promise=1` while the hub had already completed — see `hubLlmResubmitCount` on the request row. Implementation: `extractLlmTextFromHubResponseBody` in [`a2a-server/src/daemon/llm-hub-poll.ts`](../a2a-server/src/daemon/llm-hub-poll.ts). Field guide for operators: [`BREAK_STATE.md`](../BREAK_STATE.md) *inc-2026-04-06-a*.

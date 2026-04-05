@@ -1,5 +1,6 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
 import {
+    extractLlmTextFromHubResponseBody,
     initAiHubChatPromise,
     parseOllamaChatResponseBody,
     resolveLlmPromiseRecovery,
@@ -24,6 +25,21 @@ describe('parseOllamaChatResponseBody', () => {
     it('parses Ollama /api/generate shape (top-level response)', () => {
         const o = parseOllamaChatResponseBody('{"model":"qwen","response":"hello","done":true}');
         expect(o?.response).toBe('hello');
+    });
+});
+
+describe('extractLlmTextFromHubResponseBody', () => {
+    it('returns Ollama chat content when present', () => {
+        expect(extractLlmTextFromHubResponseBody('{"message":{"content":"x"}}')).toBe('x');
+    });
+
+    it('returns full raw body when JSON is not Ollama-shaped (e.g. A2A response object)', () => {
+        const a2a = JSON.stringify({
+            step: 'response',
+            execute: {message: 'hi', form: {textarea: {name: 'task'}}},
+            completed: false,
+        });
+        expect(extractLlmTextFromHubResponseBody(a2a)).toBe(a2a);
     });
 });
 
@@ -121,5 +137,18 @@ describe('resolveLlmPromiseRecovery', () => {
         vi.stubGlobal('fetch', f);
         const r = await resolveLlmPromiseRecovery('http://hub', 'pid2');
         expect(r).toEqual({kind: 'ready', responseMd: 'from-generate'});
+    });
+
+    it('ready when hub body is A2A-shaped JSON (no Ollama message wrapper)', async () => {
+        const body = JSON.stringify({step: 'response', execute: {message: 'ok'}, completed: false});
+        const f = vi.fn(async (url: string) => {
+            if (url.includes('/promise/pid-a2a/response')) {
+                return new Response(body, {status: 200});
+            }
+            return new Response(JSON.stringify({status: 'done'}), {status: 200});
+        });
+        vi.stubGlobal('fetch', f);
+        const r = await resolveLlmPromiseRecovery('http://hub', 'pid-a2a');
+        expect(r).toEqual({kind: 'ready', responseMd: body});
     });
 });

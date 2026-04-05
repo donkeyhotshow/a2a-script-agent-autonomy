@@ -36,13 +36,28 @@ function extractOllamaText(chat: OllamaChatShape | null): string | null {
     return null;
 }
 
+/**
+ * Extract assistant text from hub `/promise/:id/response` body.
+ * Hub may store Ollama /chat, /generate, or provider-native / A2A-shaped JSON — only the first two
+ * match {@link parseOllamaChatResponseBody}. Returning null for a non-empty done body caused
+ * {@link resolveLlmPromiseRecovery} to signal resubmit and the dialog processor to POST a new
+ * `/api/chat`, spamming the proxy while the original promise had already completed.
+ */
+export function extractLlmTextFromHubResponseBody(raw: string): string | null {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    const chatData = parseOllamaChatResponseBody(raw);
+    const fromOllama = extractOllamaText(chatData);
+    if (fromOllama !== null && fromOllama !== '') return fromOllama;
+    return trimmed;
+}
+
 export async function fetchLlmResponse(base: string, llmPromiseId: string): Promise<string | null> {
     const normalizedBase = resolveAiHubBaseUrl(base);
     const bodyRes = await fetch(`${normalizedBase}/promise/${llmPromiseId}/response`);
     if (!bodyRes.ok) return null;
     const raw = await bodyRes.text();
-    const chatData = parseOllamaChatResponseBody(raw);
-    return extractOllamaText(chatData);
+    return extractLlmTextFromHubResponseBody(raw);
 }
 
 /** Result of GET `/promise/:id` for dialog recovery / resubmit decisions. */

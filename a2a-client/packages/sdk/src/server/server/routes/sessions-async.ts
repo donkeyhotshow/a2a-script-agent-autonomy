@@ -8,9 +8,24 @@
 
 import {Router, Request, Response} from 'express';
 import {sessionService} from '../../services/session-service.js';
-import {saveClientResult} from '../../services/step-storage.js';
-import {getStepNum, invokeAndPersistContinuation} from '../../lib/session-routes-shared.js';
-import {validateClientResultPayload} from '../../../client-api-envelope.js';
+import {readServerResponse, saveClientResult} from '../../services/step-storage.js';
+import {
+    buildMinimalNextAck,
+    getStepNum,
+    invokeAndPersistContinuation,
+} from '../../lib/session-routes-shared.js';
+import {
+    buildSubmitResult,
+    normalizeRouterStepSubmit,
+    routerFormHasChoices,
+    validateSubmitResult,
+} from '@a2a-client/shared/router-submit.mjs';
+import {
+    determineInvokeMode,
+    mergeContext,
+    prepareServerRequest,
+    processTaskAndContext,
+} from '@a2a-client/shared/next-invoke-pipeline.mjs';
 
 const router = Router();
 
@@ -19,7 +34,7 @@ const router = Router();
  * Submit user action choice
  *
  * Accepts: { choice: string, input?: any }
- * Returns: { success, accepted, step, promiseId? } (ack-only; hydrate via GET session)
+ * Returns: { success, accepted, step, asyncPending } (ack-only; hydrate via GET session / async)
  */
 router.post('/:sessionId/action', async (req: Request, res: Response) => {
     try {
@@ -90,12 +105,7 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
         });
         if (!invokeResult) return;
 
-        res.json({
-            success: true,
-            accepted: true,
-            step: invokeResult.ackStep,
-            promiseId: invokeResult.promiseId ?? null,
-        });
+        res.json(buildMinimalNextAck(invokeResult.ackStep, invokeResult.promiseId));
     } catch (error) {
         console.error('[SESSIONS API] Error processing action:', error);
         res.status(500).json({
@@ -112,30 +122,17 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
  * POST /api/sessions/:sessionId/next
  * Continue execution after user response
  *
- * Accepts: { result: { message?, choice?, ... } }
- * Returns: { success, accepted, step, promiseId? } — same ack contract as Vite `POST /api/a2a/sessions/:id/next` (hydrate via GET session + poll GET .../promise).
+ * Accepts: same as Vite — `{ result }` or top-level **`task`** shorthand; router normalization + invoke merge via `@a2a-client/shared/next-invoke-pipeline.mjs`.
+ * Returns: { success, accepted, step, asyncPending } — same as Vite `toMinimalNextAck` (no `promiseId` on the wire).
  */
 router.post('/:sessionId/next', async (req: Request, res: Response) => {
     try {
         const { sessionId } = req.params;
         const body = req.body as {
-            result?: { message?: string; choice?: string; [k: string]: unknown };
+            result?: Record<string, unknown>;
+            task?: string;
         };
 
-        const result = body.result;
-        const resultValidationError = validateClientResultPayload(result);
-        if (resultValidationError) {
-            res.status(400).json({
-                success: false,
-                error: {
-                    code: 'INVALID_CLIENT_RESULT',
-                    message: resultValidationError
-                }
-            });
-            return;
-        }
-
-        // Get session
         const session = sessionService.getSession(sessionId);
         if (!session) {
             res.status(404).json({
@@ -149,33 +146,102 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
         }
 
         const stepNum = getStepNum(session);
-        await saveClientResult(sessionId, stepNum, {
-            result,
-            // timestamp is a technical field, not part of protocol
-            // timestamp: new Date().toISOString(),
+        let prevStepData = await readServerResponse(sessionId, stepNum);
+        if (!prevStepData) {
+            const ctx =
+                session.context && typeof session.context === 'object' && !Array.isArray(session.context)
+                    ? { ...(session.context as Record<string, unknown>) }
+                    : {};
+            const ex = (session.execute ?? session.currentExecute) ?? undefined;
+            prevStepData = {
+                context: ctx,
+                ...(ex != null && typeof ex === 'object' ? { execute: ex as Record<string, unknown> } : {}),
+            };
+        }
+
+        const hasChoices = routerFormHasChoices(prevStepData);
+        let submitResult = buildSubmitResult({ body, hasChoices }) as Record<string, unknown> | undefined;
+        submitResult = normalizeRouterStepSubmit(submitResult, prevStepData) as
+            | Record<string, unknown>
+            | undefined;
+        if (!submitResult) {
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_CLIENT_RESULT',
+                    message: 'result or task is required',
+                },
+            });
+            return;
+        }
+        const submitErr = validateSubmitResult(submitResult);
+        if (submitErr) {
+            res.status(400).json({
+                success: false,
+                error: {
+                    code: 'INVALID_CLIENT_RESULT',
+                    message: submitErr,
+                },
+            });
+            return;
+        }
+
+        const meta =
+            session.metadata && typeof session.metadata === 'object' && !Array.isArray(session.metadata)
+                ? (session.metadata as Record<string, unknown>)
+                : {};
+        const sessionContext: Record<string, unknown> = {
+            ...(session.context && typeof session.context === 'object' && !Array.isArray(session.context)
+                ? { ...(session.context as Record<string, unknown>) }
+                : {}),
+            sessionId: session.id,
+        };
+        if (session.projectId) {
+            sessionContext.projectId = session.projectId;
+        }
+        if (typeof meta.projectRoot === 'string') {
+            sessionContext.projectRoot = meta.projectRoot;
+        }
+
+        let mergedContext = mergeContext({
+            prevStepData,
+            sessionContext,
+            submitResult,
+            hasChoices,
+        });
+        const { effectiveTask, mergedContext: mergedAfterTask } = processTaskAndContext({
+            mergedContext,
+            submitResult,
+            prevStepData,
+        });
+        mergedContext = mergedAfterTask;
+
+        const ex = mergedContext.execution;
+        const execStep =
+            ex && typeof ex === 'object' && !Array.isArray(ex) && typeof (ex as Record<string, unknown>).step === 'string'
+                ? String((ex as Record<string, unknown>).step)
+                : undefined;
+        const { shouldSyncInvoke, syncRouterChoice } = determineInvokeMode({
+            execStep,
+            effectiveTask,
+            hasChoices,
+            submitResult,
+        });
+        const requestBody = prepareServerRequest({
+            mergedContext,
+            submitResult,
+            effectiveTask,
+            shouldSyncInvoke,
+            syncRouterChoice,
         });
 
-        sessionService.addMessage(
-            sessionId,
-            result,
-            'user',
-            { source: 'user-result' }
-        );
+        await saveClientResult(sessionId, stepNum, {
+            result: submitResult,
+        });
 
-        // Extract message from result for the request body
-        const messageText = result?.message || result?.choice || '';
+        sessionService.addMessage(sessionId, submitResult, 'user', { source: 'user-result' });
 
         const nextStep = stepNum + 1;
-        // Для последующих запросов нужен task в context или на верхнем уровне
-        const requestBody = {
-            task: messageText, // Используем messageText из result
-            context: {
-                version: '2.0',
-                execution: { action: 'continue', step: 'next' },
-                ...session.context,
-            },
-            result,
-        };
         const invokeResult = await invokeAndPersistContinuation({
             sessionId,
             nextStep,
@@ -185,12 +251,7 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
         });
         if (!invokeResult) return;
 
-        res.json({
-            success: true,
-            accepted: true,
-            step: invokeResult.ackStep,
-            promiseId: invokeResult.promiseId ?? null,
-        });
+        res.json(buildMinimalNextAck(invokeResult.ackStep, invokeResult.promiseId));
     } catch (error) {
         console.error('[SESSIONS API] Error processing next:', error);
         res.status(500).json({

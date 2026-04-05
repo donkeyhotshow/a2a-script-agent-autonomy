@@ -2,6 +2,8 @@
 
 **2026-04-06:** `@a2a/rag` Vitest: protocol-integration, protocol-rag-search edges, hybrid RRF golden, `src/searcher/output-shaping.test.ts`, `src/suggestions.test.ts`. `vitest.config.ts` block comment must not contain `*/` inside globs. `npm run test:jest` for functional/metrics suites.
 
+**2026-04-06 (SDK Client API parity):** Standalone SDK `GET /sessions/:id` — `?unwrap=1`, prod **`includeContext` 403**, `GET …/messages` Vite delta when `afterSeq` set; `SessionManager` / `buildSessionGetQuery`; Vitest `session-manager-get-query.test.ts`; package **`index.ts`** re-exports `SessionManager` / `buildSessionGetQuery`. Docs: **`docs/OPERATOR-CURL.md`**, **`packages/sdk/README.md`** (GET table), **`BREAK_STATE.md`** worked example *GET sessions + messages*, **`docs/api-reference/api-integration.md`** (`getSession` options).
+
 Stack готов, задач нет.
 
 **2026-04-03 (a2a-client-web-scoped-package):** Implemented phases 2, 4, 5, 6 of @a2a-client web package scoping:

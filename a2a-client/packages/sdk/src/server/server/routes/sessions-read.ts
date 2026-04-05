@@ -17,7 +17,11 @@ import {serverFetch, getServerBaseUrl} from '../../services/index.js';
 import {extractA2aExecute} from '../../lib/a2a-invoke-builders.js';
 import {pickInvokeContextPatch} from '../../lib/context-invoke-patch.js';
 import {buildWebExecute} from '../../lib/web-execute-dto.js';
-import {setStepNum, toWebClientSessionPayload} from '../../lib/session-routes-shared.js';
+import {
+    applyIncludeContextSessionProjection,
+    setStepNum,
+    toWebClientSessionPayload,
+} from '../../lib/session-routes-shared.js';
 import {buildInitialInvokeRequestBody} from '../../../lib/first-invoke-payload.js';
 import {
     normalizePromisePollStatus,
@@ -219,8 +223,9 @@ router.get('/:sessionId/async', async (req: Request, res: Response) => {
  *
  * | Query | `execute` / context |
  * |-------|------------------------|
- * | (none) | Web DTO: `buildWebExecute` strips client-only tool keys; `context` omitted (see `toWebClientSessionPayload`). |
- * | `?includeContext=1` | Raw session snapshot: full `execute` keys + `context` (debug / tooling only; parity with Vite `toPublicSession(..., true)`). |
+ * | (none) | Web DTO: `buildWebExecute` strips client-only tool keys; `context` omitted (see `toWebClientSessionPayload`). Response **`{ success, session }`** — Vite `/api/a2a/sessions/:id` returns **unwrapped** session JSON at root (ADR-0028). |
+ * | `?includeContext=1` | Full in-memory session + **`stage`**, **`asyncPending`**, **`promiseStatus`** ([`applyIncludeContextSessionProjection`](../../lib/session-routes-shared.ts)) — Vite `toPublicSession(..., true)` parity for those fields. **403 when `NODE_ENV=production`** (same as Vite). |
+ * | `?unwrap=1` | **Top-level session JSON** (same object as `session` in the default envelope) — curl parity with Vite’s unwrapped `GET …/sessions/:id` body. |
  */
 router.get('/:id', (req: Request, res: Response) => {
     try {
@@ -240,17 +245,42 @@ router.get('/:id', (req: Request, res: Response) => {
 
         const includeContext =
             req.query.includeContext === '1' || req.query.includeContext === 'true';
+        if (includeContext && process.env.NODE_ENV === 'production') {
+            res.status(403).json({
+                success: false,
+                error: {
+                    code: 'INCLUDE_CONTEXT_FORBIDDEN',
+                    message: 'includeContext is debug-only and not available in production',
+                },
+            });
+            return;
+        }
+
+        const unwrap =
+            req.query.unwrap === '1' || req.query.unwrap === 'true';
+
         if (includeContext) {
+            const body = applyIncludeContextSessionProjection(session as Record<string, unknown>);
+            if (unwrap) {
+                res.json(body);
+                return;
+            }
             res.json({
                 success: true,
-                session: session as Record<string, unknown>,
+                session: body,
             });
+            return;
+        }
+
+        const slim = toWebClientSessionPayload(session as Record<string, unknown>);
+        if (unwrap) {
+            res.json(slim);
             return;
         }
 
         res.json({
             success: true,
-            session: toWebClientSessionPayload(session as Record<string, unknown>),
+            session: slim,
         });
     } catch (error) {
         console.error('[SESSIONS API] Error getting session:', error);
@@ -266,7 +296,8 @@ router.get('/:id', (req: Request, res: Response) => {
 
 /**
  * GET /api/sessions/:id/messages
- * Get all messages from a session
+ * Default: `{ success, data, count }`. If **`afterSeq`** query is present, **Vite delta shape**:
+ * `{ sessionId, afterSeq, lastSeq, hasMore, messages, asyncPending, promiseStatus, currentStep }` and optional `execute` when `withExecute=1`.
  */
 router.get('/:id/messages', (req: Request, res: Response) => {
     try {
@@ -281,6 +312,56 @@ router.get('/:id/messages', (req: Request, res: Response) => {
                     message: `Session ${id} not found`
                 }
             });
+            return;
+        }
+
+        const rawAfter = req.query.afterSeq;
+        const deltaMode = rawAfter !== undefined;
+
+        if (deltaMode) {
+            const afterSeq = Math.max(0, parseInt(String(rawAfter ?? '0'), 10) || 0);
+            const limit = Math.min(
+                200,
+                Math.max(1, parseInt(String(req.query.limit ?? '50'), 10) || 50)
+            );
+            const withExecute = req.query.withExecute === '1';
+            const rawList = sessionService.getMessages(id);
+            const messages = rawList.map((m, idx) => {
+                const base =
+                    m && typeof m === 'object' && !Array.isArray(m)
+                        ? { ...(m as Record<string, unknown>) }
+                        : { content: m as unknown };
+                return { ...base, seq: idx + 1 };
+            });
+            const lastSeq = messages.length;
+            const batch = messages.filter((m) => m.seq > afterSeq).slice(0, limit);
+            const s = session as unknown as Record<string, unknown>;
+            const promiseId = s.promiseId;
+            const promiseStatus = s.promiseStatus;
+            const asyncPending =
+                s.asyncPending ??
+                !!(
+                    typeof promiseId === 'string' &&
+                    isActivePromiseStatus(promiseStatus)
+                );
+            const publicLite = toWebClientSessionPayload(session as Record<string, unknown>);
+            const execute = withExecute
+                ? ((publicLite as Record<string, unknown> | null)?.execute ?? null)
+                : undefined;
+            const payload: Record<string, unknown> = {
+                sessionId: id,
+                afterSeq,
+                lastSeq,
+                hasMore: afterSeq + batch.length < lastSeq,
+                messages: batch,
+                asyncPending,
+                promiseStatus: promiseStatus ?? null,
+                currentStep: session.currentStep ?? null,
+            };
+            if (withExecute) {
+                payload.execute = execute;
+            }
+            res.json(payload);
             return;
         }
 
