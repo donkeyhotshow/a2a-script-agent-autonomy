@@ -7,6 +7,8 @@
  * object derived from expected[0].
  *
  * Optional: PROBA_SERVERA_USE_HTTP=1 → fetch http://localhost:3000/api/v1/invoke (legacy).
+ * Stack gate (default): probes ai-integration + Ollama (+ a2a-server if HTTP mode).
+ *   Skip: PROBA_SERVERA_SKIP_STACK_CHECK=1. Timeout: PROBA_STACK_PROBE_MS (ms).
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -15,6 +17,79 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '../..');
+
+const STACK_PROBE_MS = Number(process.env.PROBA_STACK_PROBE_MS || '4000') || 4000;
+
+async function probeUrl(url: string, ms = STACK_PROBE_MS): Promise<boolean> {
+  try {
+    const ac = new AbortController();
+    const t = setTimeout(() => ac.abort(), ms);
+    const res = await fetch(url, { signal: ac.signal });
+    clearTimeout(t);
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Proba-servera hits the real LLM chain (ai-integration → Ollama). If those are down,
+ * results are meaningless noise — exit before running cases.
+ * Opt out: PROBA_SERVERA_SKIP_STACK_CHECK=1
+ */
+async function assertProbaStackOrExit(): Promise<void> {
+  if (
+    process.env.PROBA_SERVERA_SKIP_STACK_CHECK === '1' ||
+    process.env.PROBA_SERVERA_SKIP_STACK_CHECK === 'true'
+  ) {
+    return;
+  }
+
+  const aiHub = (process.env.AI_HUB_URL || 'http://localhost:11434').replace(/\/$/, '');
+  const integrationHealth = `${aiHub}/health`;
+  const ollamaTags = 'http://localhost:11435/api/tags';
+  const a2aHealth = 'http://localhost:3000/health';
+  const httpMode =
+    process.env.PROBA_SERVERA_USE_HTTP === '1' || process.env.PROBA_SERVERA_USE_HTTP === 'true';
+
+  const intOk = await probeUrl(integrationHealth);
+  const ollamaOk = await probeUrl(ollamaTags);
+  const serverOk = httpMode ? await probeUrl(a2aHealth) : true;
+
+  if (intOk && ollamaOk && serverOk) {
+    return;
+  }
+
+  const logServer = path.join(REPO_ROOT, 'a2a-server', 'logs', 'server.log');
+  const logWeb = path.join(REPO_ROOT, 'a2a-client', 'logs', 'web-ui.log');
+  const logClientApi = path.join(REPO_ROOT, 'a2a-client', 'logs', 'client-api.log');
+
+  const lines = [
+    '',
+    'Proba-servera aborted: required services are not reachable.',
+    `  ai-integration  ${integrationHealth}  →  ${intOk ? 'OK' : 'FAIL'}`,
+    `  Ollama          ${ollamaTags}  →  ${ollamaOk ? 'OK' : 'FAIL'}`,
+  ];
+  if (httpMode) {
+    lines.push(`  a2a-server      ${a2aHealth}  →  ${serverOk ? 'OK' : 'FAIL'}`);
+  }
+  lines.push(
+    '',
+    'Start the stack from repo root (cmd.exe):',
+    '    start-all.bat',
+    '',
+    'If start-all.bat reported problems, inspect logs:',
+    `    ${logServer}`,
+    `    ${logWeb}`,
+    `    ${logClientApi}`,
+    '    ai-integration: separate console window titled "ai-integration" (uvicorn stdout)',
+    '',
+    'Skip this gate (CI / offline):  set PROBA_SERVERA_SKIP_STACK_CHECK=1',
+    ''
+  );
+  console.error(lines.join('\n'));
+  process.exit(2);
+}
 
 function getKeyStructure(obj: unknown): Record<string, unknown> {
   if (typeof obj !== 'object' || obj === null) {
@@ -147,14 +222,27 @@ function inputToInvokePayload(body: Record<string, unknown>): Record<string, unk
 function normalizeInvokeResult(invokeResult: {
   context?: Record<string, unknown>;
   execute?: Record<string, unknown>;
+  outcome?: string;
+  error?: string;
   message?: string;
   sync?: boolean;
   promiseId?: string;
 }): Record<string, unknown> {
-  return {
+  const result: Record<string, unknown> = {
     context: invokeResult.context ?? {},
-    execute: invokeResult.execute ?? {},
   };
+  // Include execute only if present (don't add empty execute for failed outcomes)
+  if (invokeResult.execute && Object.keys(invokeResult.execute).length > 0) {
+    result.execute = invokeResult.execute;
+  }
+  // Include outcome and error for failed/completed results
+  if (invokeResult.outcome) {
+    result.outcome = invokeResult.outcome;
+  }
+  if (invokeResult.error) {
+    result.error = invokeResult.error;
+  }
+  return result;
 }
 
 async function callViaHttp(input: Record<string, unknown>): Promise<Record<string, unknown>> {
@@ -328,6 +416,8 @@ function getCaseDescription(caseName: string): string {
 }
 
 async function main() {
+  await assertProbaStackOrExit();
+
   /** Request storage + action-registry defaults resolve from a2a-server cwd */
   process.chdir(path.join(REPO_ROOT, 'a2a-server'));
   if (!(process.env.PROBA_SERVERA_USE_HTTP === '1' || process.env.PROBA_SERVERA_USE_HTTP === 'true')) {

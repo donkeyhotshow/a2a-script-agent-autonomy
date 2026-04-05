@@ -50,12 +50,13 @@ export async function loadSessionsFromStorage(): Promise<PersistedSession[]> {
                 } else if (parsed?.id) {
                     sessions.push(parsed as PersistedSession);
                 }
-            } catch {
-                // skip corrupt files
+            } catch (e) {
+                console.warn('[SESSION] Skipping corrupt session file:', file, e instanceof Error ? e.message : e);
             }
         }
         return sessions;
-    } catch {
+    } catch (e) {
+        console.error('[SESSION] loadSessionsFromStorage failed:', e instanceof Error ? e.message : e);
         return [];
     }
 }
@@ -74,8 +75,11 @@ export async function deleteSessionFromStorage(sessionId: string): Promise<void>
     try {
         const filePath = path.join(SESSIONS_DATA_DIR, `${sessionId}.json`);
         await fs.unlink(filePath);
-    } catch {
-        // file may not exist
+    } catch (e) {
+        const code = (e as NodeJS.ErrnoException)?.code;
+        if (code !== 'ENOENT') {
+            console.warn('[SESSION] deleteSessionFromStorage failed:', sessionId, e instanceof Error ? e.message : e);
+        }
     }
 }
 
@@ -95,8 +99,11 @@ export async function loadSessionIdsFromPanelState(): Promise<{ sessionIds: stri
             if (obj?.windows && Array.isArray(obj.windows)) {
                 sessionIds = obj.windows.filter((id: unknown) => typeof id === 'string');
             }
-        } catch {
-            // ignore
+        } catch (e) {
+            const code = (e as NodeJS.ErrnoException)?.code;
+            if (code !== 'ENOENT') {
+                console.warn('[SESSION] a2a_session_windows.json:', e instanceof Error ? e.message : e);
+            }
         }
 
         const projectPath = path.join(kvDir, 'config', 'a2a_selected_project.json');
@@ -105,12 +112,16 @@ export async function loadSessionIdsFromPanelState(): Promise<{ sessionIds: stri
             const parsed = JSON.parse(raw);
             const val = parsed?.value ?? parsed;
             projectId = typeof val === 'string' ? val : null;
-        } catch {
-            // ignore
+        } catch (e) {
+            const code = (e as NodeJS.ErrnoException)?.code;
+            if (code !== 'ENOENT') {
+                console.warn('[SESSION] a2a_selected_project.json:', e instanceof Error ? e.message : e);
+            }
         }
 
         return { sessionIds, projectId };
-    } catch {
+    } catch (e) {
+        console.error('[SESSION] loadSessionIdsFromPanelState failed:', e instanceof Error ? e.message : e);
         return { sessionIds: [], projectId: null };
     }
 }

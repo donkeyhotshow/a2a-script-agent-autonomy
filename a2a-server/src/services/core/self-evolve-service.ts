@@ -28,8 +28,10 @@ export class SelfEvolveService {
     logger.info('[SelfEvolve] Autonomous loop started');
     
     // Background execution without await
-    this.run().catch(err => {
-      logger.error('[SelfEvolve] Loop crashed', { error: err.message });
+    this.run().catch((err: unknown) => {
+      logger.error('[SelfEvolve] Loop crashed', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       this.isRunning = false;
     });
   }

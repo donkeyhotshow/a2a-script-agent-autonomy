@@ -97,7 +97,7 @@ async function invokeAndPersistContinuation(params: {
             ...upstreamBody,
         });
         const upstream = await serverFetch('POST', serverBase, '/api/v1/invoke', upstreamBody);
-        serverResponse = await upstream.json().catch(() => null);
+        serverResponse = (await upstream.json()) as Record<string, unknown>;
         if (!upstream.ok || !serverResponse) {
             res.status(upstream.status >= 400 ? upstream.status : 502).json({
                 success: false,
@@ -353,9 +353,9 @@ router.get('/:sessionId/promise/:promiseId', async (req: Request, res: Response)
         const serverBase = await getServerBaseUrl();
         const path = `/requests/${encodeURIComponent(promiseId)}/result`;
         const upstream = await serverFetch('GET', serverBase, path, null);
-        const rawResponse = (await upstream.json().catch(() => null)) as Record<string, unknown> | null;
+        const rawResponse = (await upstream.json()) as Record<string, unknown>;
 
-        if (!upstream.ok || !rawResponse) {
+        if (!upstream.ok || rawResponse == null) {
             res.status(upstream.status || 500).json({
                 error: (rawResponse?.error as string) || 'Failed to get promise result',
             });
@@ -473,8 +473,11 @@ router.get('/:sessionId/latest', async (req: Request, res: Response) => {
                 const content = await fs.readFile(filePath, 'utf-8');
                 const key = file.replace('.json', '');
                 result[key] = JSON.parse(content);
-            } catch {
-                // File doesn't exist, skip
+            } catch (e) {
+                const code = (e as NodeJS.ErrnoException)?.code;
+                if (code !== 'ENOENT') {
+                    console.warn('[SESSIONS API] Step file read/parse failed:', file, e instanceof Error ? e.message : e);
+                }
             }
         }
         

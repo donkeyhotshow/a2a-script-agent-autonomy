@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
+import { DEFAULT_RAG_SEARCH_MAX_RESULTS } from '@a2a-client/shared/agent-rag-chain-depth.mjs';
 
 export async function runClientRagSearchForExecute(cwd, projectPath, ragPayload) {
     const query = ragPayload && typeof ragPayload.query === 'string' ? ragPayload.query : '';
@@ -22,7 +23,8 @@ export async function runClientRagSearchForExecute(cwd, projectPath, ragPayload)
         }
         const searcher = new RAGSearcher({ projectPath });
         const protocol = await searcher.searchWithProtocol(query, {
-            maxResults: ragPayload.limit ?? 20,
+            maxResults:
+                typeof ragPayload.limit === 'number' ? ragPayload.limit : DEFAULT_RAG_SEARCH_MAX_RESULTS,
             page: ragPayload.page,
             pageSize: ragPayload.pageSize,
         });

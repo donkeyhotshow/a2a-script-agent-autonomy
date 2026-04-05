@@ -3,7 +3,7 @@
     "task": "check if config exists",
     "execution": {
       "action": "agent",
-      "step": "request"
+      "step": "tool_file_exists"
     },
     "history": [
       {
@@ -12,6 +12,7 @@
       },
       {
         "role": "assistant",
+        "step": "tool_file_exists",
         "message": "File exists: config.json"
       }
     ],
@@ -19,18 +20,6 @@
       "sections": {}
     }
   },
-  "execute": {
-    "form": {
-      "title": "Agent Mode",
-      "description": "Enter your task for the agent",
-      "input": [
-        {
-          "name": "task",
-          "type": "text",
-          "label": "Task",
-          "required": true
-        }
-      ]
-    }
-  }
+  "outcome": "failed",
+  "error": "Request processing failed"
 }

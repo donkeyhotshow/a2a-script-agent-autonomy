@@ -360,6 +360,7 @@ class OllamaProvider(LLMProvider):
             self._last_health_check = time.time()
             return ProviderStatus.HEALTHY
         except Exception as e:
+            logger.warning("Ollama health_check failed: %s", e, exc_info=True)
             self._health_status = ProviderStatus.UNHEALTHY
             return ProviderStatus.UNHEALTHY
     
@@ -369,7 +370,8 @@ class OllamaProvider(LLMProvider):
             response = await self._make_request("GET", "/api/tags")
             data = await response.json()
             return data.get("models", [])
-        except Exception:
+        except Exception as e:
+            logger.warning("list_models failed for Ollama: %s", e, exc_info=True)
             return []
     
     async def close(self):

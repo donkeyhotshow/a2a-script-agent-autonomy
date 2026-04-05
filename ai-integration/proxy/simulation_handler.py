@@ -25,11 +25,14 @@ def handle_simulated_response(
     """
     Handle simulated response for non-promise mode.
     """
-    delay_ms = simulate_action.get('delay_ms')
-    try:
-        delay_ms = int(delay_ms) if delay_ms is not None else 0
-    except Exception:
-        delay_ms = 0
+    delay_raw = simulate_action.get('delay_ms')
+    delay_ms = 0
+    if delay_raw is not None:
+        try:
+            delay_ms = int(delay_raw)
+        except (ValueError, TypeError) as e:
+            logger.warning("simulate delay_ms invalid %r: %s", delay_raw, e)
+            delay_ms = 0
     if delay_ms > 0:
         time.sleep(delay_ms / 1000.0)
 

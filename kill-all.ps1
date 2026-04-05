@@ -68,13 +68,15 @@ function Write-Log {
 
 function Get-ProcessOnPort {
     param([int]$Port)
-    try {
-        $conn = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
-        if ($conn) {
-            $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue
-            return @{ PID = $conn.OwningProcess; Name = $proc.Name; Path = $proc.Path }
-        }
-    } catch { }
+     try {
+         $conn = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
+         if ($conn) {
+             $proc = Get-Process -Id $conn.OwningProcess -ErrorAction SilentlyContinue
+             return @{ PID = $conn.OwningProcess; Name = $proc.Name; Path = $proc.Path }
+         }
+     } catch {
+         # Silently ignore errors when getting process on port - may be permission issues or no process
+     }
     return $null
 }
 
@@ -133,9 +135,10 @@ function Stop-ProcessByName {
             Write-Log "Killing $($proc.Name) PID $($proc.Id)" 'WARN'
             Stop-Process -Id $proc.Id -Force
             $count++
-        } catch {
-            Write-Log "Failed to kill $($proc.Name) PID $($proc.Id) : $_" 'ERROR'
-        }
+         } catch {
+             # Log error but continue with other processes
+             Write-Log "Failed to kill $($proc.Name) PID $($proc.Id) : $_" 'ERROR'
+         }
     }
     return $count
 }
@@ -162,7 +165,9 @@ function Test-ProcessesGone {
                     $found += [PSCustomObject]@{ Id = $p.ProcessId; Name = $p.Name }
                 }
             }
-        } catch { }
+         } catch {
+             # Silently ignore CIM errors - may not have permissions or WMI issues
+         }
     }
     return $found
 }

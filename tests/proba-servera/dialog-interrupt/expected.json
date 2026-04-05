@@ -2,21 +2,15 @@
   "context": {
     "execution": {
       "action": "dialog",
-      "step": "string"
-    }
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "string"
+      }
+    ]
   },
-  "execute": {
-    "form": {
-      "title": "string",
-      "description": "string",
-      "input": [
-        {
-          "name": "string",
-          "type": "string",
-          "label": "string",
-          "required": true
-        }
-      ]
-    }
-  }
+  "outcome": "failed",
+  "error": "string"
 }

@@ -38,9 +38,9 @@ describe('EmbeddingClient', () => {
             expect(client.getDimension()).toBe(1536);
         });
 
-        test('should return 768 for unknown model', () => {
+        test('should throw for unknown model', () => {
             const client = new EmbeddingClient({model: 'unknown-model'});
-            expect(client.getDimension()).toBe(768);
+            expect(() => client.getDimension()).toThrow(/Unknown model/);
         });
     });
 
@@ -149,6 +149,7 @@ describe('EmbeddingClient', () => {
         test('should have default models defined', () => {
             expect(DEFAULT_MODELS.ollama).toBe('nomic-embed-text');
             expect(DEFAULT_MODELS.openai).toBe('text-embedding-3-small');
+            expect(DEFAULT_MODELS.mock).toBe('nomic-embed-text');
         });
     });
 });

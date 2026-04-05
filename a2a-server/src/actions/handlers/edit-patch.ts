@@ -62,7 +62,11 @@ export async function executeEditPatch(
         try {
             await fs.access(fullPath);
             fileExists = true;
-        } catch {
+        } catch (err: unknown) {
+            const code = (err as NodeJS.ErrnoException)?.code;
+            if (code && code !== 'ENOENT') {
+                logger.warn('[edit-patch] access check failed', { fullPath, code, error: String(err) });
+            }
             fileExists = false;
         }
 

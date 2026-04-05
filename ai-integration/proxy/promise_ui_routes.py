@@ -9,6 +9,7 @@ import datetime
 import threading
 
 from flask import Flask, request, Response
+from werkzeug.exceptions import BadRequest
 
 # Import app from parent module
 from . import app
@@ -98,9 +99,27 @@ def ui_promises_respond(promise_id: str):
         return Response(_json_bytes({"error": "promise_not_pending", "promiseId": promise_id}), status=409,
                         mimetype='application/json')
 
-    payload = request.get_json(silent=True)
-    if not isinstance(payload, dict):
+    try:
+        payload = request.get_json(force=True, silent=False)
+    except BadRequest as e:
+        return Response(
+            _json_bytes(
+                {
+                    "error": "invalid_json",
+                    "message": getattr(e, "description", None) or str(e),
+                }
+            ),
+            status=400,
+            mimetype="application/json",
+        )
+    if payload is None:
         payload = {}
+    if not isinstance(payload, dict):
+        return Response(
+            _json_bytes({"error": "expected_json_object", "got": type(payload).__name__}),
+            status=400,
+            mimetype="application/json",
+        )
 
     body_value = payload.get('body', '')
     status_code = int(payload.get('status_code') or 200)
@@ -124,7 +143,7 @@ def ui_promises_respond(promise_id: str):
                 "manual_response": True,
             })
         except Exception as e:
-            logger.debug(f"Failed to save manual response: {e}")
+            logger.warning("Failed to save manual response: %s", e, exc_info=True)
 
     return {
         "promiseId": promise_id,

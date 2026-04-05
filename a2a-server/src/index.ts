@@ -65,7 +65,11 @@ async function bootstrap(): Promise<void> {
 
     // ADR-0080+: Initialize distributed services
     logger.info('[A2A] Initializing Distributed Core 2.5...');
-    llmService.chat({ messages: [] }).catch(() => {}); // Warm up
+    void llmService.chat({ messages: [] }).catch((err: unknown) => {
+        logger.warn('[Bootstrap] LLM warm-up failed', {
+            error: err instanceof Error ? err.message : String(err),
+        });
+    });
     peerRelay.joinRoom('main', 'server-01');
 
     server.listen(config.port, () => {

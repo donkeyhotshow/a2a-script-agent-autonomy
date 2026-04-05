@@ -39,7 +39,12 @@ def is_upstream_rate_limited(
         if body and "json" in ct:
             try:
                 parsed = json.loads(body.decode("utf-8", errors="replace"))
-            except Exception:
+            except json.JSONDecodeError as e:
+                logger.debug(
+                    "is_upstream_rate_limited: JSON parse failed for 503 body (ct=%s): %s",
+                    content_type,
+                    e,
+                )
                 return False
             if isinstance(parsed, dict):
                 err = parsed.get("error")
@@ -55,7 +60,12 @@ def is_upstream_rate_limited(
         if "json" in ct:
             try:
                 parsed = json.loads(body.decode("utf-8", errors="replace"))
-            except Exception:
+            except json.JSONDecodeError as e:
+                logger.debug(
+                    "is_upstream_rate_limited: JSON parse failed for error body (ct=%s): %s",
+                    content_type,
+                    e,
+                )
                 return False
             if isinstance(parsed, dict):
                 err = parsed.get("error")
@@ -183,7 +193,7 @@ def write_routing_hint(
             },
         )
     except Exception as e:
-        logger.debug("write_routing_hint failed: %s", e)
+        logger.warning("write_routing_hint failed: %s", e, exc_info=True)
 
 
 def load_routing_hint(folder_path: str) -> Optional[dict[str, Any]]:
@@ -198,5 +208,6 @@ def load_routing_hint(folder_path: str) -> Optional[dict[str, Any]]:
         with open(path, "r", encoding="utf-8") as f:
             data = _json.load(f)
         return data if isinstance(data, dict) else None
-    except Exception:
+    except Exception as exc:
+        logger.warning("load_routing_hint failed %s: %s", folder_path, exc, exc_info=True)
         return None

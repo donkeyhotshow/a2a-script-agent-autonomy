@@ -4,7 +4,10 @@ Basic utility functions for promise processing
 """
 import os
 import json
+import logging
 from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 from .config import PROMISES_DIR
 
@@ -30,7 +33,8 @@ def _load_request_snapshot(log_folder: str) -> Optional[dict]:
                 with open(request_path, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                 return data if isinstance(data, dict) else None
-            except Exception:
+            except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
+                logger.warning("request.json unreadable %s: %s", request_path, e, exc_info=True)
                 return None
 
     # Fallback: check if it's old path, try new location
@@ -46,7 +50,8 @@ def _load_request_snapshot(log_folder: str) -> Optional[dict]:
                         with open(request_path, 'r', encoding='utf-8') as f:
                             data = json.load(f)
                         return data if isinstance(data, dict) else None
-                    except Exception:
+                    except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
+                        logger.warning("request.json unreadable %s: %s", request_path, e, exc_info=True)
                         return None
 
     return None
@@ -57,7 +62,16 @@ def _safe_json_loads(data: bytes) -> Optional[dict]:
         return None
     try:
         parsed = json.loads(data)
-    except (json.JSONDecodeError, UnicodeDecodeError, TypeError):
+    except json.JSONDecodeError as e:
+        sample = data[:200].decode("utf-8", errors="replace").lstrip()
+        if sample.startswith(("{", "[")):
+            logger.warning("_safe_json_loads: malformed JSON object/array: %s", e)
+        return None
+    except UnicodeDecodeError as e:
+        logger.warning("_safe_json_loads: utf-8 decode failed: %s", e)
+        return None
+    except TypeError as e:
+        logger.warning("_safe_json_loads: unexpected type: %s", e)
         return None
     return parsed if isinstance(parsed, dict) else None
 
@@ -79,7 +93,8 @@ def _read_json_file(path: str) -> Optional[dict]:
         return data if isinstance(data, dict) else None
     except FileNotFoundError:
         return None
-    except Exception:
+    except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
+        logger.warning("JSON read failed %s: %s", path, e, exc_info=True)
         return None
 
 
@@ -92,7 +107,10 @@ def _prepare_execute_body(body_value: Any) -> Optional[bytes]:
     text = str(body_value)
     try:
         parsed = json.loads(text)
-    except Exception:
+    except json.JSONDecodeError as e:
+        s = text.lstrip()
+        if s.startswith(("{", "[")):
+            logger.warning("_prepare_execute_body: invalid JSON in string body: %s", e)
         return text.encode('utf-8')
 
     if isinstance(parsed, dict):

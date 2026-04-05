@@ -57,7 +57,11 @@ export async function readJsonFile<T>(filePath: string, fallback: T): Promise<T>
     try {
         const raw = await fs.readFile(filePath, 'utf-8');
         return JSON.parse(raw) as T;
-    } catch {
+    } catch (e) {
+        const code = (e as NodeJS.ErrnoException)?.code;
+        if (code !== 'ENOENT') {
+            console.warn('[storage] readJsonFile:', filePath, e instanceof Error ? e.message : e);
+        }
         return fallback;
     }
 }
@@ -71,8 +75,11 @@ export async function writeJsonFile(filePath: string, data: unknown): Promise<vo
     await fs.writeFile(tmp, JSON.stringify(data, null, 2), 'utf-8');
     try {
         await fs.rm(filePath, { force: true });
-    } catch {
-        // ignore
+    } catch (e) {
+        const code = (e as NodeJS.ErrnoException)?.code;
+        if (code !== 'ENOENT') {
+            console.warn('[storage] writeJsonFile: could not remove previous file:', filePath, e instanceof Error ? e.message : e);
+        }
     }
     await fs.rename(tmp, filePath);
 }

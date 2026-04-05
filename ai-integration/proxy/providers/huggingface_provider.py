@@ -6,8 +6,11 @@ Provider for HuggingFace Inference API.
 
 import aiohttp
 import json
+import logging
 import time
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from .http_utils import aiohttp_llm_timeout
 from .base import (
@@ -237,6 +240,7 @@ class HuggingFaceProvider(LLMProvider):
                     self._health_status = ProviderStatus.UNHEALTHY
                     return ProviderStatus.UNHEALTHY
         except Exception as e:
+            logger.warning("HuggingFace health_check failed: %s", e, exc_info=True)
             self._health_status = ProviderStatus.UNHEALTHY
             return ProviderStatus.UNHEALTHY
     

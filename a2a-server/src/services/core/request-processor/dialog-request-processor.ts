@@ -27,6 +27,7 @@ import {
 } from './gray-room-trigger.js';
 import {resolveTransformSchema, normalizeContext, extractSchemaName, resolveResultObject} from './normalization.js';
 import {resolveLlmModelFromContext} from './llm-model-resolver.js';
+import {requestService} from '../request/request.service.js';
 import {CognitionBase} from '../cognition-base.js';
 import {EpisodicMemory} from '../../memory/episodic-memory.js';
 import {globalDesignReasoner} from '../hierarchical-design-reasoner.js';
@@ -51,10 +52,16 @@ export {
     recoverDialogFromLlmPromise,
     canRecoverFromLlmPromise,
     getLlmPromiseId,
-    type ResponsePathResult
+    type ResponsePathResult,
+    type RecoverDialogOutcome,
 } from './response-path.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
+
+function readMaxHubLlmResubmit(): number {
+    const n = parseInt(process.env.DIALOG_HUB_LLM_RESUBMIT_MAX || '2', 10);
+    return Number.isFinite(n) && n >= 0 ? n : 2;
+}
 
 function dialogFailedWithContext(ctx: Record<string, unknown>, error: string): ProcessResult {
     return {
@@ -106,7 +113,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
 
         logger.info('[DialogRequestProcessor] Processing', {promiseId});
 
-        const existingLlmId = ctx['llmPromiseId'] as string | undefined;
+        let allowContextAugment = true;
 
         try {
             // Check for dialog INITIAL request (no history yet) to return form directly without LLM
@@ -131,39 +138,43 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 };
             }
 
+            const existingLlmId = ctx['llmPromiseId'] as string | undefined;
             if (existingLlmId) {
-                // Восстановление из существующего promise
                 const {recoverDialogFromLlmPromise} = await import('./response-path.js');
-                const recoveryResult = await recoverDialogFromLlmPromise(
-                    promiseId,
-                    ctx,
-                    existingLlmId
-                );
+                const recoveryOutcome = await recoverDialogFromLlmPromise(promiseId, ctx, existingLlmId);
 
-                if (!recoveryResult) {
-                    return dialogFailedWithContext(ctx, 'LLM recovery failed');
+                if (recoveryOutcome.tag === 'pending') {
+                    return dialogFailedWithContext(ctx, 'LLM promise still pending');
                 }
-
-                if (!recoveryResult.success) {
-                    return dialogFailedWithContext(ctx, recoveryResult.error || 'LLM recovery failed');
+                if (recoveryOutcome.tag === 'failed') {
+                    return dialogFailedWithContext(ctx, recoveryOutcome.error || 'LLM recovery failed');
                 }
-
-                // Получаем responseMd из контекста (gray room уже обработал ответ)
-                const responseMd = ctx['lastLlmResponse'] as string || '';
-
-                const grayRoomResult = this.grayRoom.runLoop(
-                    ctx,
-                    schemaName,
-                    responseMd,
-                    promiseId,
-                    false,
-                    grayRoomChain
-                );
-
-                return grayRoomResult;
+                if (recoveryOutcome.tag === 'resubmit') {
+                    const cnt = await requestService.incrementHubLlmResubmitCount(promiseId);
+                    const maxR = readMaxHubLlmResubmit();
+                    if (cnt > maxR) {
+                        return dialogFailedWithContext(
+                            ctx,
+                            `LLM hub promise lost after ${maxR} resubmit(s); start a new turn or check AI hub`
+                        );
+                    }
+                    await requestService.clearLlmPromiseId(promiseId);
+                    delete ctx['llmPromiseId'];
+                    allowContextAugment = false;
+                } else if (recoveryOutcome.tag === 'done') {
+                    const r = recoveryOutcome.result;
+                    if (r.context && typeof r.context === 'object' && !Array.isArray(r.context)) {
+                        const sessionIdValue = ctx['session_id'];
+                        if (sessionIdValue && typeof sessionIdValue === 'string') {
+                            r.context = {...r.context, session_id: sessionIdValue};
+                        }
+                    }
+                    return r;
+                }
             }
 
-            if (!existingLlmId) {
+            if (!ctx['llmPromiseId']) {
+                if (allowContextAugment) {
                 // Внедрение априорных знаний через CognitionBase (ADR-0062)
                 try {
                     const cognition = new CognitionBase();
@@ -199,53 +210,65 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                         logger.warn('[DialogRequestProcessor] DesignReasoner failed', { error: String(err) });
                     }
                 }
-            }
-
-            const llmResult = await executeLlmCall({
-                promptsTransformsPath: this.promptsTransformsPath,
-                schemaName,
-                ctx,
-                promiseId,
-                base: aiHubUrl,
-                model
-            });
-
-            if (!llmResult.success || !llmResult.responseMd) {
-                // Use request transform execute as fallback (e.g., initial form from dialog-request.json)
-                if (llmResult.requestTransformExecute && Object.keys(llmResult.requestTransformExecute).length > 0) {
-                    return {
-                        outcome: 'success',
-                        execute: llmResult.requestTransformExecute,
-                        context: {
-                            ...ctx,
-                            ...((llmResult.requestTransformContext as Record<string, unknown>) ?? {}),
-                        } as unknown as RequestContextBlock,
-                    };
                 }
-                return dialogFailedWithContext(ctx, llmResult.error || 'LLM call failed');
-            }
 
-            // Запускаем gray room loop с ответом от LLM
-            const grayRoomResult = this.grayRoom.runLoop(
-                ctx,
-                schemaName,
-                llmResult.responseMd,
-                promiseId,
-                false,
-                grayRoomChain
-            );
-            
-            if (grayRoomResult.context && typeof grayRoomResult.context === 'object' && !Array.isArray(grayRoomResult.context)) {
-                const sessionIdValue = ctx['session_id'];
-                if (sessionIdValue && typeof sessionIdValue === 'string') {
-                    grayRoomResult.context = {
-                        ...grayRoomResult.context,
-                        session_id: sessionIdValue
-                    };
+                const llmResult = await executeLlmCall({
+                    promptsTransformsPath: this.promptsTransformsPath,
+                    schemaName,
+                    ctx,
+                    promiseId,
+                    base: aiHubUrl,
+                    model,
+                });
+
+                if (!llmResult.success || !llmResult.responseMd) {
+                    // For initial dialog (no history), use request transform execute as fallback (initial form)
+                    // For follow-up (has history), do NOT return form - return error or async pending
+                    const hasHistoryForFallback = Array.isArray(ctx['history']) && ctx['history'].length > 0;
+                    if (
+                        !hasHistoryForFallback &&
+                        llmResult.requestTransformExecute &&
+                        Object.keys(llmResult.requestTransformExecute).length > 0
+                    ) {
+                        return {
+                            outcome: 'success',
+                            execute: llmResult.requestTransformExecute,
+                            context: {
+                                ...ctx,
+                                ...((llmResult.requestTransformContext as Record<string, unknown>) ?? {}),
+                            } as unknown as RequestContextBlock,
+                        };
+                    }
+                    return dialogFailedWithContext(ctx, llmResult.error || 'LLM call failed');
                 }
+
+                const grayRoomResult = await this.grayRoom.runLoop(
+                    ctx,
+                    schemaName,
+                    llmResult.responseMd,
+                    promiseId,
+                    false,
+                    grayRoomChain
+                );
+
+                if (
+                    grayRoomResult.context &&
+                    typeof grayRoomResult.context === 'object' &&
+                    !Array.isArray(grayRoomResult.context)
+                ) {
+                    const sessionIdValue = ctx['session_id'];
+                    if (sessionIdValue && typeof sessionIdValue === 'string') {
+                        grayRoomResult.context = {
+                            ...grayRoomResult.context,
+                            session_id: sessionIdValue,
+                        };
+                    }
+                }
+
+                return grayRoomResult;
             }
 
-            return grayRoomResult;
+            return dialogFailedWithContext(ctx, 'Unexpected dialog state (llmPromiseId still set)');
         } catch (err) {
             logger.error('[DialogRequestProcessor] Failed', {error: String(err)});
             return dialogFailedWithContext(

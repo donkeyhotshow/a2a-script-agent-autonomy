@@ -7,6 +7,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import {ActionDefinition, SubAction, ActionContext, DSLDefinition} from './types.js';
+import {logger} from '../utils/logger.js';
 
 /**
  * Parse a primitive type from a string value
@@ -44,8 +45,10 @@ function parseDSL(dslSection: string): DSLDefinition {
                 script: parsed.script ?? '',
                 input: parsed.input ?? {}
             };
-        } catch {
-            // Fall through to inline parsing
+        } catch (err: unknown) {
+            logger.debug('[action-parser] DSL JSON block parse failed, using inline fallback', {
+                error: err instanceof Error ? err.message : String(err),
+            });
         }
     }
 

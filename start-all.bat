@@ -170,6 +170,7 @@ REM ==========================================
 echo.
 echo [Step 4/8] Starting Ollama on port %OLLAMA_PORT%...
 call scripts\start-ollama.bat
+if errorlevel 1 set EXIT_CODE=1
 :ollama_done
 
 REM ==========================================
@@ -178,6 +179,7 @@ REM ==========================================
 echo.
 echo [Step 5/8] Starting ai-integration on port %PROXY_PORT%...
 call scripts\start-ai-integration.bat
+if errorlevel 1 set EXIT_CODE=1
 :ai_done
 
 REM ==========================================
@@ -186,6 +188,7 @@ REM ==========================================
 echo.
 echo [Step 6/8] Starting a2a-server on port %SERVER_PORT%...
 call scripts\start-a2a-server.bat
+if errorlevel 1 set EXIT_CODE=1
 :server_done
 
 REM ==========================================
@@ -194,6 +197,7 @@ REM ==========================================
 echo.
 echo [Step 7/8] Starting client-api on port %CLIENT_API_PORT%...
 call scripts\start-client-api.bat
+if errorlevel 1 set EXIT_CODE=1
 :client_api_done
 
 REM ==========================================
@@ -202,6 +206,7 @@ REM ==========================================
 echo.
 echo [Step 8/8] Starting web-ui on port %WEB_PORT%...
 call scripts\start-web-ui.bat
+if errorlevel 1 set EXIT_CODE=1
 :web_ui_done
 
 REM ==========================================
@@ -209,16 +214,42 @@ REM Final verification - Check all PIDs are captured
 REM ==========================================
 echo.
 echo [Final Check] Verifying all PIDs captured...
+set VERIFY_FAIL=0
 call :verify_and_capture_pid %OLLAMA_PORT% OLLAMA_PID "Ollama"
+if errorlevel 1 set VERIFY_FAIL=1
 call :verify_and_capture_pid %PROXY_PORT% AI_INTEGRATION_PID "ai-integration"
+if errorlevel 1 set VERIFY_FAIL=1
 call :verify_and_capture_pid %SERVER_PORT% A2A_SERVER_PID "a2a-server"
+if errorlevel 1 set VERIFY_FAIL=1
 call :verify_and_capture_pid %CLIENT_API_PORT% CLIENT_API_PID "client-api"
+if errorlevel 1 set VERIFY_FAIL=1
 call :verify_and_capture_pid %WEB_PORT% WEB_UI_PID "web-ui"
+if errorlevel 1 set VERIFY_FAIL=1
+if %VERIFY_FAIL% neq 0 set EXIT_CODE=1
 
 REM ==========================================
 REM Summary
 REM ==========================================
 echo.
+echo --- Log files (for services that redirect stdout^) ---
+echo   a2a-server:     %CD%\a2a-server\logs\server.log
+echo   web-ui:         %CD%\a2a-client\logs\web-ui.log
+echo   client-api:     %CD%\a2a-client\logs\client-api.log
+echo   ai-integration: console window titled "ai-integration" (no default file log^)
+echo   Ollama:         console from ollama serve (or check port %OLLAMA_PORT%^)
+echo.
+
+if %EXIT_CODE% neq 0 (
+    echo === start-all.bat finished WITH ERRORS ===
+    echo Fix the failing step, then check the log paths above or the service windows.
+    echo.
+    echo Saved PIDs in %PID_FILE% (may be incomplete^):
+    if exist %PID_FILE% type %PID_FILE%
+    echo.
+    echo To stop all services: kill-all.bat
+    exit /b 1
+)
+
 echo === All services started successfully ===
 echo.
 echo Services:
@@ -235,4 +266,6 @@ echo To stop all services, run: kill-all.bat
 echo.
 echo Stack verification is manual: see PAPA-MAMA.md (Papa = direct, Mama = indirect^).
 echo   Example: powershell -ExecutionPolicy Bypass -File ".\tests\direct-tests\run-post-start-all.ps1"
-goto :EOF
+echo.
+echo This script exits now; services keep running in their own windows.
+exit /b 0

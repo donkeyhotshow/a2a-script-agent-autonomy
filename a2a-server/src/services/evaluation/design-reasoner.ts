@@ -364,8 +364,10 @@ Design rules:
           : DEFAULT_MANIFEST.rationale,
         source: 'llm',
       };
-    } catch {
-      logger.warn('[design-reasoner] Failed to parse design manifest JSON');
+    } catch (err: unknown) {
+      logger.warn('[design-reasoner] Failed to parse design manifest JSON', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       return null;
     }
   }

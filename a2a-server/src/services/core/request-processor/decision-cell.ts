@@ -62,15 +62,21 @@ export class DecisionCell {
     try {
       const parsed = JSON.parse(content);
       decision = validateDecision(parsed);
-    } catch {
-      // Try JSON extraction if direct parse fails
+    } catch (err: unknown) {
+      logger.debug('[DecisionCell] Direct JSON parse failed', {
+        sessionId,
+        error: err instanceof Error ? err.message : String(err),
+      });
       const jsonMatch = content.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         try {
           const parsed = JSON.parse(jsonMatch[0]);
           decision = validateDecision(parsed);
-        } catch {
-          // Fall through to fallback
+        } catch (err2: unknown) {
+          logger.debug('[DecisionCell] Extracted JSON parse failed', {
+            sessionId,
+            error: err2 instanceof Error ? err2.message : String(err2),
+          });
         }
       }
     }

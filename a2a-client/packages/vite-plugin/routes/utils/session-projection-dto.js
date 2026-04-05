@@ -5,12 +5,17 @@
 import fs from 'fs';
 import path from 'path';
 import * as stepHandlers from '../handlers/step-handlers.js';
-import { isActivePromiseStatus } from '../../storage/promise-status.js';
+import { isActivePromiseStatus, isRecoverableAsyncSnapshot } from '../../storage/promise-status.js';
 import { buildExecuteProjection } from './execute-projection-dto.js';
 import { collectSessionMessagesFlat } from './message-timeline.js';
 import { deriveSessionStage } from './session-stage-machine.js';
 import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.js';
-import { loadSessionIndex, getNewSessionDir, registerStepSessionsParent } from '../../storage/newSessions.js';
+import {
+    loadSessionIndex,
+    getNewSessionDir,
+    registerStepSessionsParent,
+    findOpenAsyncStepWithoutResponse,
+} from '../../storage/newSessions.js';
 import http from 'http';
 
 function debugProjectionLog(event, payload) {
@@ -18,8 +23,8 @@ function debugProjectionLog(event, payload) {
     try {
         // Keep logs shape-only to avoid leaking full context payloads.
         console.debug(`[session-projection-dto] ${event}`, payload);
-    } catch {
-        // Never fail projection on debug logging.
+    } catch (err) {
+        console.error('[session-projection-dto] debugProjectionLog failed', err);
     }
 }
 
@@ -38,8 +43,12 @@ export function getActiveAsyncWork(cwd, sessionId) {
     const steps = stepHandlers.listNewSteps(cwd, sessionId);
     for (const stepNum of steps) {
         const serverPromise = stepHandlers.loadServerPromise(cwd, sessionId, stepNum);
-        if (serverPromise?.promiseId && isActivePromiseStatus(serverPromise.status)) {
-            return { stepNum, promiseId: serverPromise.promiseId, serverPromise };
+        const promiseId = serverPromise?.promiseId;
+        const st = serverPromise?.status;
+        const recoverableFailed =
+            (st === 'failed' || st === 'error') && isRecoverableAsyncSnapshot(serverPromise);
+        if (promiseId && (isActivePromiseStatus(st) || recoverableFailed)) {
+            return { stepNum, promiseId, serverPromise };
         }
     }
     
@@ -62,7 +71,7 @@ export function getActiveAsyncWork(cwd, sessionId) {
                     index.updatedAt = new Date().toISOString();
                     fs.writeFileSync(indexPath, JSON.stringify(index, null, 2));
                 } catch (e) {
-                    // Ignore index write errors
+                    console.error('[session-projection-dto] failed to clear stale promise in session-index', e);
                 }
                 return null;
             }
@@ -161,13 +170,36 @@ export async function attachPromiseMeta(cwd, sessionId, session, verifyFromServe
                     asyncPending = isActivePromiseStatus(verifiedStatus);
                 }
             } catch (e) {
-                console.error('[attachPromiseMeta] Verification failed, using local status:', e.message);
+                const msg = e instanceof Error ? e.message : String(e);
+                console.error('[attachPromiseMeta] Verification failed, using local status:', msg);
             }
         }
         
         session.promiseId = active.promiseId;
         session.promiseStatus = promiseStatus;
         session.asyncPending = asyncPending;
+        return session;
+    }
+    const open = findOpenAsyncStepWithoutResponse(cwd, sessionId);
+    if (open?.mode === 'pending') {
+        session.asyncPending = true;
+        session.promiseId = open.promise?.promiseId ?? session.promiseId;
+        session.promiseStatus = open.promise?.status ?? session.promiseStatus;
+        delete session.execute;
+        return session;
+    }
+    if (open?.mode === 'failed') {
+        session.asyncPending = false;
+        session.promiseId = open.promise?.promiseId ?? session.promiseId;
+        session.promiseStatus = open.promise?.status ?? 'failed';
+        const err = open.promise?.error;
+        const msg =
+            (err && typeof err.message === 'string' && err.message.trim()) ||
+            "We couldn't complete this step. Please try again.";
+        session.execute = { message: msg };
+        if (open.promise?.context && typeof open.promise.context === 'object') {
+            session.context = { ...(session.context && typeof session.context === 'object' ? session.context : {}), ...open.promise.context };
+        }
         return session;
     }
     session.asyncPending = false;
@@ -186,9 +218,10 @@ async function verifyPromiseStatusAsync(promiseId) {
     
     try {
         const urlObj = new URL(url);
+        const portNum = urlObj.port ? parseInt(urlObj.port, 10) : urlObj.protocol === 'https:' ? 443 : 80;
         const options = {
             hostname: urlObj.hostname,
-            port: parseInt(urlObj.port, 10),
+            port: Number.isFinite(portNum) ? portNum : urlObj.protocol === 'https:' ? 443 : 80,
             path: urlObj.pathname,
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },

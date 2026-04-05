@@ -13,6 +13,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { logger } from '../../utils/logger.js';
 import {query, set as jsonPathSet} from './json-path.js';
 import type {
   TransformContext,
@@ -500,7 +501,15 @@ export function createDefaultFileSystem(): TransformFileSystem {
       try {
         await fs.access(filePath);
         return true;
-      } catch {
+      } catch (err: unknown) {
+        const code = (err as NodeJS.ErrnoException)?.code;
+        if (code && code !== 'ENOENT') {
+          logger.debug('[transform-fs] exists access failed', {
+            filePath,
+            code,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
         return false;
       }
     }

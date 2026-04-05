@@ -6,59 +6,72 @@
 
 import {logger} from '../../../utils/logger.js';
 import {getPromptsTransformsPath} from '../../../transform/index.js';
-import {
-    GrayRoomOrchestrator
-} from './gray-room-orchestrator.js';
-import {
-    readGrayRoomInterruptBudget,
-    shouldUseGrayRoom
-} from './gray-room-trigger.js';
+import {resolveLlmPromiseRecovery} from '../../../daemon/llm-hub-poll.js';
+import {GrayRoomOrchestrator} from './gray-room-orchestrator.js';
+import {readGrayRoomInterruptBudget, shouldUseGrayRoom} from './gray-room-trigger.js';
 import {resolveTransformSchema, extractSchemaName} from './normalization.js';
-import {recoverLlmPromise} from './llm-orchestration.js';
+import type {ProcessResult} from './request-processor.interfaces.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 
 /**
- * Тип результата для response path операций
+ * Тип результата для response path операций (legacy — см. RecoverDialogOutcome)
  */
 export interface ResponsePathResult {
     success: boolean;
     error?: string;
 }
 
+/** Outcome of trying to finish dialog work for a stored hub `llmPromiseId`. */
+export type RecoverDialogOutcome =
+    | {tag: 'done'; result: ProcessResult}
+    | {tag: 'pending'}
+    | {tag: 'resubmit'; reason: string}
+    | {tag: 'failed'; error: string};
+
 /**
  * Восстанавливает stuck dialog request, который имеет llmPromiseId
- * (например, после перезагрузки сервера во время polling)
+ * (например, после перезагрузки сервера во время polling).
+ * `resubmit` — запись на хабе потеряна / ошибка; вызывающий очищает `llmPromiseId` и делает новый LLM вызов.
  */
 export async function recoverDialogFromLlmPromise(
     promiseId: string,
     ctx: Record<string, unknown>,
     llmPromiseId: string
-): Promise<ResponsePathResult | null> {
+): Promise<RecoverDialogOutcome> {
     const base = (process.env.AI_HUB_URL || DEFAULT_AI_HUB).replace(/\/$/, '');
 
     try {
-        // 1. Проверяем статус promise
-        const responseMd = await recoverLlmPromise(base, llmPromiseId);
-        if (!responseMd) {
-            logger.warn('[ResponsePath] LLM promise not ready or failed', {llmPromiseId});
-            return null;
+        const hub = await resolveLlmPromiseRecovery(base, llmPromiseId);
+        if (hub.kind === 'pending') {
+            return {tag: 'pending'};
+        }
+        if (hub.kind === 'resubmit') {
+            logger.info('[ResponsePath] Hub LLM promise unusable — recommend resubmit', {
+                llmPromiseId,
+                reason: hub.reason,
+            });
+            return {tag: 'resubmit', reason: hub.reason};
+        }
+        if (hub.kind === 'unavailable') {
+            logger.warn('[ResponsePath] Hub LLM promise check failed', {llmPromiseId, reason: hub.reason});
+            return {tag: 'failed', error: hub.reason};
         }
 
-        // 2. Извлекаем схему из контекста
+        const responseMd = hub.responseMd;
+
         const schema = resolveTransformSchema(ctx);
         if (!schema) {
             logger.warn('[ResponsePath] No transformSchema in context');
-            return null;
+            return {tag: 'failed', error: 'No transformSchema in context'};
         }
 
         const schemaName = extractSchemaName(schema);
 
-        // 3. Запускаем gray room loop
         const promptsPath = getPromptsTransformsPath();
         const orchestrator = new GrayRoomOrchestrator({
             promptsTransformsPath: promptsPath,
-            maxInterruptTurns: readGrayRoomInterruptBudget()
+            maxInterruptTurns: readGrayRoomInterruptBudget(),
         });
 
         const result = await orchestrator.runLoop(
@@ -70,10 +83,10 @@ export async function recoverDialogFromLlmPromise(
             shouldUseGrayRoom(ctx).shouldTrigger
         );
 
-        return {success: true, ...result};
+        return {tag: 'done', result};
     } catch (err) {
         logger.error('[ResponsePath] Recovery function failed', err);
-        return null;
+        return {tag: 'failed', error: err instanceof Error ? err.message : String(err)};
     }
 }
 

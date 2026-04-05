@@ -5,6 +5,7 @@
  */
 
 import { JSONPath } from 'jsonpath-plus';
+import { logger } from '../../utils/logger.js';
 
 /**
  * Query values from an object using JSONPath
@@ -264,8 +265,10 @@ export function extractJsonFromMarkdown(md: string): unknown {
   if (jsonBlockMatch && jsonBlockMatch[1]) {
     try {
       return JSON.parse(jsonBlockMatch[1]);
-    } catch {
-      // Fall through to try raw JSON
+    } catch (err: unknown) {
+      logger.debug('[extractJsonFromMarkdown] ```json``` block parse failed', {
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
   
@@ -274,16 +277,20 @@ export function extractJsonFromMarkdown(md: string): unknown {
   if (codeBlockMatch && codeBlockMatch[1]) {
     try {
       return JSON.parse(codeBlockMatch[1]);
-    } catch {
-      // Fall through to try raw
+    } catch (err: unknown) {
+      logger.debug('[extractJsonFromMarkdown] generic fenced block parse failed', {
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
   
   // Try parsing the entire content as JSON
   try {
     return JSON.parse(md);
-  } catch {
-    // Return the raw content if no valid JSON found
+  } catch (err: unknown) {
+    logger.debug('[extractJsonFromMarkdown] Whole-body JSON parse failed — returning raw markdown', {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return md;
   }
 }

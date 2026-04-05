@@ -61,7 +61,7 @@ export class ApiClient {
         if (body) options.body = JSON.stringify(body);
         try {
             const response = await fetch(url, options as RequestInit);
-            const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+            const data = (await response.json()) as Record<string, unknown>;
             if (!response.ok) {
                 const err = data?.error as { message?: string } | undefined;
                 throw new ApiError(err?.message ?? 'Request failed', response.status, data);

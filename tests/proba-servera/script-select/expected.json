@@ -3,6 +3,17 @@
     "task": "string"
   },
   "execute": {
-    "message": "string"
+    "form": {
+      "title": "string",
+      "description": "string",
+      "input": [
+        {
+          "name": "string",
+          "type": "string",
+          "label": "string",
+          "required": true
+        }
+      ]
+    }
   }
 }

@@ -38,13 +38,17 @@ export async function listSessions(project: Project): Promise<Array<{ id: string
                     title: session.title || 'Untitled',
                     createdAt: session.createdAt,
                 });
-            } catch {
-                // Skip invalid session files
+            } catch (e) {
+                console.warn('[session.service] Skipping invalid session file:', file, e instanceof Error ? e.message : e);
             }
         }
         sessions.sort((a, b) => String(b.createdAt || '').localeCompare(String(a.createdAt || '')));
         return sessions;
-    } catch {
+    } catch (e) {
+        const code = (e as NodeJS.ErrnoException)?.code;
+        if (code !== 'ENOENT') {
+            console.warn('[session.service] listSessions failed:', dir, e instanceof Error ? e.message : e);
+        }
         return [];
     }
 }
@@ -57,7 +61,11 @@ export async function loadSession(project: Project, sessionId: string): Promise<
     try {
         const raw = await fs.readFile(file, 'utf-8');
         return JSON.parse(raw) as Session;
-    } catch {
+    } catch (e) {
+        const code = (e as NodeJS.ErrnoException)?.code;
+        if (code !== 'ENOENT') {
+            console.warn('[session.service] loadSession failed:', sessionId, e instanceof Error ? e.message : e);
+        }
         return null;
     }
 }
@@ -94,7 +102,10 @@ export async function deleteSession(project: Project, sessionId: string): Promis
     const file = path.join(getSessionDir(project), `${sessionId}.json`);
     try {
         await fs.unlink(file);
-    } catch {
-        // ignore
+    } catch (e) {
+        const code = (e as NodeJS.ErrnoException)?.code;
+        if (code !== 'ENOENT') {
+            console.warn('[session.service] deleteSession failed:', sessionId, e instanceof Error ? e.message : e);
+        }
     }
 }

@@ -435,7 +435,10 @@ export function getReservedPorts() {
         });
       });
     }
-  } catch {}
+   } catch (err) {
+     // Ignore errors when getting reserved ports - may be permission issues
+     console.warn('Failed to get reserved ports:', err.message || err);
+   }
   
   return reserved;
 }

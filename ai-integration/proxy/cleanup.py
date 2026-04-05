@@ -204,8 +204,8 @@ class CleanupManager:
                     total_size += item.stat().st_size
             stats['total_size_mb'] = round(total_size / (1024 * 1024), 2)
 
-        except Exception as e:
-            logger.warning(f"Error calculating storage stats: {e}")
+        except OSError as e:
+            logger.warning("Error calculating storage stats: %s", e, exc_info=True)
 
         return stats
 
@@ -260,7 +260,7 @@ def schedule_periodic_cleanup(interval_hours: int = 24) -> None:
                 manager = get_cleanup_manager()
                 manager.run_full_cleanup()
             except Exception as e:
-                logger.error(f"Periodic cleanup failed: {e}")
+                logger.error("Periodic cleanup failed: %s", e, exc_info=True)
 
             # Sleep for interval
             time.sleep(interval_hours * 3600)

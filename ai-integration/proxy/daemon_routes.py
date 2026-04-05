@@ -2,10 +2,13 @@
 Daemon Routes Module
 Contains Flask route handlers for daemon management
 """
+import logging
 
 # Import app from parent module
 from . import app
 from .config import DAEMON_ENABLED
+
+logger = logging.getLogger(__name__)
 
 
 @app.route('/daemon/status', methods=['GET'])
@@ -23,6 +26,7 @@ def daemon_status():
         if router._initialized:
             provider_status = router.get_provider_status()
     except Exception as e:
+        logger.warning("daemon_status: get_provider_status failed: %s", e, exc_info=True)
         provider_status = {"error": str(e)}
     
     return {

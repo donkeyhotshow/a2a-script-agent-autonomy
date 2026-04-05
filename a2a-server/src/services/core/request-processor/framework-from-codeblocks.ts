@@ -2,6 +2,8 @@
  * Derive frameworks bucket from synthetic codeBlocks (e.g. package.json) for request context.
  */
 
+import { logger } from '../../../utils/logger.js';
+
 const FRONTEND = new Set([
     'vue',
     'react',
@@ -70,7 +72,10 @@ export function detectFrameworksFromCodeBlocks(
     let parsed: { dependencies?: Record<string, string>; devDependencies?: Record<string, string> };
     try {
         parsed = JSON.parse(pkgBlock.content) as typeof parsed;
-    } catch {
+    } catch (err: unknown) {
+        logger.debug('[framework-from-codeblocks] package.json block is not valid JSON', {
+            error: err instanceof Error ? err.message : String(err),
+        });
         return undefined;
     }
 

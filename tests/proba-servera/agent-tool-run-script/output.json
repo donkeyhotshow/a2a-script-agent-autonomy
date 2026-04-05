@@ -3,7 +3,7 @@
     "task": "run validation script",
     "execution": {
       "action": "agent",
-      "step": "request"
+      "step": "tool_run_script"
     },
     "history": [
       {
@@ -12,6 +12,7 @@
       },
       {
         "role": "assistant",
+        "step": "tool_run_script",
         "message": "Script validate-helper completed: Helper validation passed"
       }
     ],
@@ -19,18 +20,6 @@
       "sections": {}
     }
   },
-  "execute": {
-    "form": {
-      "title": "Agent Mode",
-      "description": "Enter your task for the agent",
-      "input": [
-        {
-          "name": "task",
-          "type": "text",
-          "label": "Task",
-          "required": true
-        }
-      ]
-    }
-  }
+  "outcome": "failed",
+  "error": "Request processing failed"
 }

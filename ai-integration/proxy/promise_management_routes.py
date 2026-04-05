@@ -46,7 +46,13 @@ def promises_ready():
     for rec in ready:
         try:
             updated_iso = datetime.datetime.fromtimestamp(rec.updated_at, datetime.timezone.utc).isoformat()
-        except Exception:
+        except Exception as e:
+            logger.warning(
+                "Failed to convert updated_at %r for promise %s: %s",
+                rec.updated_at,
+                rec.promise_id,
+                e,
+            )
             updated_iso = None
         result.append({
             "promiseId": rec.promise_id,
@@ -66,7 +72,13 @@ def promises_pending():
     for rec in pending:
         try:
             created_iso = datetime.datetime.fromtimestamp(rec.created_at, datetime.timezone.utc).isoformat()
-        except Exception:
+        except Exception as e:
+            logger.warning(
+                "Failed to convert created_at %r for promise %s: %s",
+                rec.created_at,
+                rec.promise_id,
+                e,
+            )
             created_iso = None
         result.append({
             "promiseId": rec.promise_id,

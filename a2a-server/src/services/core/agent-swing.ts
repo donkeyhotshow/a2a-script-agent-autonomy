@@ -1,4 +1,4 @@
-import { resolveGrayRoomLlmModelFromContext } from './request-processor/llm-model-resolver.js';
+import { logger } from '../../utils/logger.js';
 
 export interface AgentSwingResult {
   best_history: any[];
@@ -62,8 +62,11 @@ ${historyJson}`;
             }
           }
         }
-      } catch (e) {
-        // Fallback or ignore
+      } catch (e: unknown) {
+        logger.debug('[AgentSwing] Branch failed', {
+          strategyIndex: index,
+          error: e instanceof Error ? e.message : String(e),
+        });
       }
       return { history: null, score: -1 };
     });

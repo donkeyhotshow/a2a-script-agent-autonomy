@@ -47,7 +47,11 @@ export async function executeFileExists(
                 size: stats.size,
                 modifiedAt: stats.mtime,
             };
-        } catch {
+        } catch (err: unknown) {
+            const code = (err as NodeJS.ErrnoException)?.code;
+            if (code && code !== 'ENOENT') {
+                logger.warn('[file-exists] stat failed', { fullPath, code, error: String(err) });
+            }
             return {
                 success: true,
                 exists: false,

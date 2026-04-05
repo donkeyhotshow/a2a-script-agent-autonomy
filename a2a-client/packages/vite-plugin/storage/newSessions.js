@@ -1,7 +1,11 @@
 import fs from 'fs';
 import path from 'path';
 import { getStorageRoot, ensureDir } from './root.js';
-import { isActivePromiseStatus, isRemovablePromiseBesideResponse } from './promise-status.js';
+import {
+  isActivePromiseStatus,
+  isRemovablePromiseBesideResponse,
+  isRecoverableAsyncSnapshot,
+} from './promise-status.js';
 
 /** When set, step files for this session live under `${parent}/${sessionId}/…` (project storage mode). */
 const stepSessionsParentBySessionId = new Map();
@@ -51,7 +55,8 @@ export function loadSessionIndex(cwd, sessionId) {
   if (!fs.existsSync(indexPath)) return null;
   try {
     return JSON.parse(fs.readFileSync(indexPath, 'utf8'));
-  } catch {
+  } catch (e) {
+    console.error('[newSessions] Corrupt or unreadable session-index.json:', indexPath, e?.message || e);
     return null;
   }
 }
@@ -230,6 +235,39 @@ export function rebuildSessionIndex(cwd, sessionId) {
   return loadSessionIndex(cwd, sessionId);
 }
 
+/**
+ * Step with server-promise.json but no server-response.json (LLM still running, or failed before snapshot).
+ * Latest such step wins. Prevents projecting the previous step's form while step N has no terminal response.
+ */
+export function findOpenAsyncStepWithoutResponse(cwd, sessionId) {
+  const steps = listNewSteps(cwd, sessionId).sort((a, b) => b - a);
+  for (const stepNum of steps) {
+    const stepDir = getNewStepDir(cwd, sessionId, stepNum);
+    const respPath = path.join(stepDir, 'server-response.json');
+    const promPath = path.join(stepDir, 'server-promise.json');
+    if (!fs.existsSync(promPath)) continue;
+    if (fs.existsSync(respPath)) continue;
+    let prom = null;
+    try {
+      prom = JSON.parse(fs.readFileSync(promPath, 'utf8'));
+    } catch (e) {
+      console.warn('[newSessions] Invalid server-promise.json (skipping step):', promPath, e?.message || e);
+      continue;
+    }
+    if (!prom || typeof prom !== 'object') continue;
+    if (isActivePromiseStatus(prom.status)) {
+      return { stepNum, mode: 'pending', promise: prom };
+    }
+    if (prom.status === 'failed' || prom.status === 'error') {
+      if (isRecoverableAsyncSnapshot(prom)) {
+        return { stepNum, mode: 'pending', promise: prom };
+      }
+      return { stepNum, mode: 'failed', promise: prom };
+    }
+  }
+  return null;
+}
+
 export function loadNewSession(cwd, sessionId) {
   // Try fast path (index)
   let index = loadSessionIndex(cwd, sessionId);
@@ -254,10 +292,42 @@ export function loadNewSession(cwd, sessionId) {
     status: index.status || 'active',
     mode: index.mode || deriveSessionMode({ context: step.context })
   };
-  
-  if (step.execute) session.execute = step.execute;
-  if (step.context) session.context = step.context;
-  
+
+  const openAsync = findOpenAsyncStepWithoutResponse(cwd, sessionId);
+
+  if (openAsync?.mode === 'pending') {
+    session.asyncPending = true;
+    session.promiseId = openAsync.promise?.promiseId ?? index.promiseId;
+    session.promiseStatus = openAsync.promise?.status ?? index.promiseStatus;
+    if (openAsync.promise?.context && typeof openAsync.promise.context === 'object') {
+      session.context = openAsync.promise.context;
+    } else if (step.context) {
+      session.context = step.context;
+    }
+  } else if (openAsync?.mode === 'failed') {
+    session.asyncPending = false;
+    session.promiseId = openAsync.promise?.promiseId ?? null;
+    session.promiseStatus = openAsync.promise?.status ?? 'failed';
+    const err = openAsync.promise?.error;
+    const msg =
+      (err && typeof err.message === 'string' && err.message.trim()) ||
+      'We couldn\'t complete this step. Please try again.';
+    session.execute = { message: msg };
+    if (openAsync.promise?.context && typeof openAsync.promise.context === 'object') {
+      session.context = openAsync.promise.context;
+    } else if (step.context) {
+      session.context = step.context;
+    }
+  } else {
+    if (step.execute) session.execute = step.execute;
+    if (step.context) session.context = step.context;
+    if (index.promiseId && index.promiseStatus && index.promiseStatus !== 'completed') {
+      session.promiseId = index.promiseId;
+      session.promiseStatus = index.promiseStatus;
+      session.asyncPending = true;
+    }
+  }
+
   // Title resolution
   const step1 = index.currentStep === 1 ? step : loadNewStep(cwd, sessionId, 1);
   if (step1?.title) {
@@ -269,14 +339,7 @@ export function loadNewSession(cwd, sessionId) {
   } else {
     session.title = sessionId;
   }
-  
-  // Async status
-  if (index.promiseId && index.promiseStatus && index.promiseStatus !== 'completed') {
-    session.promiseId = index.promiseId;
-    session.promiseStatus = index.promiseStatus;
-    session.asyncPending = true;
-  }
-  
+
   return session;
 }
 
@@ -337,7 +400,8 @@ export function loadNewStep(cwd, sessionId, stepNum) {
         let prom = null;
         try {
           prom = JSON.parse(fs.readFileSync(promiseFile, 'utf8'));
-        } catch {
+        } catch (e) {
+          console.warn('[newSessions] Could not parse server-promise.json:', promiseFile, e?.message || e);
           prom = null;
         }
         const hasTerminalExecute = data.execute != null && typeof data.execute === 'object';

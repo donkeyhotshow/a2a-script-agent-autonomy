@@ -79,7 +79,8 @@ function decodeAndVerifyJwt(token: string, secret: string): {sessionId: string; 
             sessionId: payload.sessionId,
             userId: payload.userId,
         };
-    } catch {
+    } catch (e) {
+        console.warn('[auth] JWT decode/verify failed:', e instanceof Error ? e.message : e);
         return null;
     }
 }

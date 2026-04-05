@@ -104,6 +104,7 @@ function sanitizeClientContext(ctx: Record<string, unknown> | undefined): Record
         'transformSchema', // Internal routing field
         'message',         // Duplicate of task
         'llmPromiseId',    // Internal LLM tracking
+        'hubLlmResubmitCount', // Internal hub resubmit guard
         'llmModel',        // Internal LLM config
         'ai_action',       // Internal flag
         'previousChoice',  // Internal routing
@@ -163,12 +164,12 @@ async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> 
         const pr = terminal.result as Record<string, unknown> | undefined;
 
         if (terminal.status === 'failed') {
-            const ex = pr?.execute as Record<string, unknown> | undefined;
+            // Failed outcomes should NOT include execute - only outcome, error, context
             return {
                 sync: true,
-                execute: ex && typeof ex === 'object' ? ex : {},
+                outcome: 'failed',
+                error: terminal.error || 'Request processing failed',
                 context: sanitizeClientContext(pr?.context as Record<string, unknown>),
-                message: syncFailureUserMessage(terminal),
             };
         }
 

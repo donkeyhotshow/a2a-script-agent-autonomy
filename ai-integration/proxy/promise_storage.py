@@ -73,17 +73,18 @@ def _promise_prune_expired() -> None:
             updated_at = meta.get('updated_at')
             try:
                 updated_at = float(updated_at) if updated_at is not None else 0.0
-            except Exception:
+            except (TypeError, ValueError) as e:
+                logger.warning("promise meta updated_at invalid in %s: %s", folder, e)
                 continue
             if updated_at < cutoff:
                 try:
                     for fn in os.listdir(folder):
                         os.remove(os.path.join(folder, fn))
                     os.rmdir(folder)
-                except Exception as e:
-                    logger.debug(f"Failed to cleanup folder {folder}: {e}")
-    except Exception as e:
-        logger.debug(f"Failed to cleanup promises directory: {e}")
+                except OSError as e:
+                    logger.warning("Failed to cleanup folder %s: %s", folder, e, exc_info=True)
+    except OSError as e:
+        logger.warning("Failed to cleanup promises directory: %s", e, exc_info=True)
 
 
 def _load_promise_from_disk(promise_id: str) -> Optional[PromiseRecord]:
@@ -109,7 +110,8 @@ def _load_promise_from_disk(promise_id: str) -> Optional[PromiseRecord]:
             next_attempt_at=meta.get('next_attempt_at'),
         )
         return rec
-    except Exception:
+    except (TypeError, ValueError, KeyError) as e:
+        logger.warning("corrupt promise meta for %s: %s", promise_id, e, exc_info=True)
         return None
 
 

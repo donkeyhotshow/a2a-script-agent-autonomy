@@ -75,6 +75,8 @@ Client API → A2A Server → AI Integration
 - `failed` - Error occurred
 - `cancelled` - Manually cancelled
 
+**A2A Server request file queue (port 3000):** Dialog/LLM pipeline errors that can recover when the hub or transforms come back **re-queue the same `promiseId`** as `pending` with `retryAfter` instead of going straight to `failed`. Clients should keep polling until `completed` or final `failed`. See **[`docs/PROMISE-RETRY-DIALOG.md`](PROMISE-RETRY-DIALOG.md)**.
+
 ---
 
 ## 2. Red Room (Client Auto-Response)

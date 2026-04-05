@@ -5,6 +5,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { logger } from '../../utils/logger.js';
 import { prepareInvokePayloadForLlmPrompt } from '../materialize-result-for-llm.js';
 import { attachFlowControlHintToInvokePayload } from '../../prompts/flow-control-hints.js';
 import { attachWorkbenchForLlmPrompt } from '../workbench-normalize.js';
@@ -134,7 +135,15 @@ async function resolveTransformFile(
     try {
       await fs.access(filePath);
       return filePath;
-    } catch {
+    } catch (err: unknown) {
+      const code = (err as NodeJS.ErrnoException)?.code;
+      if (code && code !== 'ENOENT') {
+        logger.debug('[prompts] transform candidate access failed', {
+          filePath,
+          code,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
       continue;
     }
   }
@@ -154,7 +163,13 @@ export async function loadPromptsTransform(
   try {
     const filePath = await resolveTransformFile(promptsTransformsDir, schemaName, step, type);
     return await loadTransformPipeline(filePath);
-  } catch {
+  } catch (err: unknown) {
+    logger.warn('[prompts] loadPromptsTransform failed', {
+      schemaName,
+      step,
+      type,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 }

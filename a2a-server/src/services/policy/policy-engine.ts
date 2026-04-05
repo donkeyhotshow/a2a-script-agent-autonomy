@@ -23,6 +23,7 @@
  */
 
 import { readFileSync } from 'node:fs';
+import { logger } from '../../utils/logger.js';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import { globalArtifactStore } from '../core/artifact-store.js';
@@ -96,8 +97,13 @@ function loadConfigurablePolicies(): ConfigurablePolicy[] {
         'policy_id' in (p as object) &&
         'message' in (p as object),
     );
-  } catch {
-    // File missing or unreadable — silently use empty list
+  } catch (err: unknown) {
+    const code = (err as NodeJS.ErrnoException)?.code;
+    if (code !== 'ENOENT') {
+      logger.warn('[PolicyEngine] Failed to load config/policies.json', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
     return [];
   }
 }

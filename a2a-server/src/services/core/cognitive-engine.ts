@@ -15,6 +15,7 @@ import {
   ArtifactStore,
   type StoredArtifact,
 } from './artifact-store.js';
+import { logger } from '../../utils/logger.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -346,8 +347,11 @@ export class ReasoningEngine {
     for (const id of ids) {
       try {
         results.push(await this.artifactStore.get(id));
-      } catch {
-        // Missing artifact — silently skip
+      } catch (err: unknown) {
+        logger.debug('[CognitiveEngine] Artifact not available for resolution', {
+          artifactId: id,
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }
     return results;

@@ -18,6 +18,7 @@
 import { randomUUID } from 'crypto';
 import { promises as fs } from 'fs';
 import { join } from 'path';
+import { logger } from '../../utils/logger.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -79,7 +80,13 @@ class JsonFileBackend implements StorageBackend {
       const raw = await fs.readFile(this.filePath, 'utf8');
       const parsed: unknown = JSON.parse(raw);
       return Array.isArray(parsed) ? (parsed as Episode[]) : [];
-    } catch {
+    } catch (err: unknown) {
+      const code = (err as NodeJS.ErrnoException)?.code;
+      if (code === 'ENOENT') return [];
+      logger.error('[EpisodicMemory] JSON backend loadAll failed', {
+        path: this.filePath,
+        error: err instanceof Error ? err.message : String(err),
+      });
       return [];
     }
   }
@@ -214,8 +221,10 @@ export class EpisodicMemory {
       try {
         this.backend = new PostgresBackend(dbUrl);
         return;
-      } catch {
-        // pg not installed or connection string invalid — fall through to JSON
+      } catch (err: unknown) {
+        logger.warn('[EpisodicMemory] Postgres backend unavailable, using JSON file', {
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }
     this.backend = new JsonFileBackend(jsonFilePath);

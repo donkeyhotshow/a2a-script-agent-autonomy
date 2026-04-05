@@ -8,12 +8,14 @@ from typing import Optional, Any, Dict
 
 logger = logging.getLogger(__name__)
 
-from .config import PROMISE_DELAY_BEFORE_EXECUTE, FORWARD_TIMEOUT
+from .config import PROMISE_DELAY_BEFORE_EXECUTE
 from .promises import (
-    create_promise, _promise_set_done, _promise_reset_pending,
-    _write_json_file, _json_bytes
+    create_promise,
+    _promise_set_done,
+    _promise_reset_pending,
+    _write_json_file,
+    _json_bytes,
 )
-from .api_key_routing import forward_with_api_key_failover
 from .ai_hub_config import _build_simulated_body
 
 
@@ -51,16 +53,19 @@ def create_promise_job(
         debug_path = f"{storage_dir}/debug-request-latest.json"
         _write_json_file(debug_path, debug_payload)
     except Exception as e:
-        logger.debug(f"Failed to write debug request payload: {e}")
+        logger.warning("Failed to write debug request payload: %s", e, exc_info=True)
 
     try:
         if simulate_snapshot is not None:
             # Handle simulated response
-            delay_ms = simulate_snapshot.get('delay_ms')
-            try:
-                delay_ms = int(delay_ms) if delay_ms is not None else 0
-            except Exception:
-                delay_ms = 0
+            delay_raw = simulate_snapshot.get('delay_ms')
+            delay_ms = 0
+            if delay_raw is not None:
+                try:
+                    delay_ms = int(delay_raw)
+                except (ValueError, TypeError) as e:
+                    logger.warning("simulate delay_ms invalid %r: %s", delay_raw, e)
+                    delay_ms = 0
             if delay_ms > 0:
                 time.sleep(delay_ms / 1000.0)
 
@@ -89,43 +94,27 @@ def create_promise_job(
                 })
             return
 
-        # Forward to upstream
-        if routed_provider_snapshot is not None and routed_type_snapshot is not None:
-            resp0, _ = forward_with_api_key_failover(
-                method=method,
-                target_url=target_url,
-                body=body,
-                forward_args=args,
-                base_header_subset=headers,
-                provider_name=routed_provider_snapshot,
-                provider_type=routed_type_snapshot,
-                timeout=FORWARD_TIMEOUT,
-                cfg=router_config_snapshot,
-            )
-        else:
-            import requests
-            if method == 'GET':
-                resp0 = requests.get(target_url, params=args, headers=headers, timeout=FORWARD_TIMEOUT)
-            elif method == 'POST':
-                resp0 = requests.post(target_url, data=body, headers=headers, timeout=FORWARD_TIMEOUT, stream=False)
-            elif method == 'PUT':
-                resp0 = requests.put(target_url, data=body, headers=headers, timeout=FORWARD_TIMEOUT)
-            elif method == 'DELETE':
-                resp0 = requests.delete(target_url, headers=headers, timeout=FORWARD_TIMEOUT)
-            else:
-                resp0 = requests.request(method, target_url, data=body, headers=headers, timeout=FORWARD_TIMEOUT)
+        # Local import avoids circular init: proxy_handler → promise_manager while
+        # promise_execution may still be loading during first package import chain.
+        from .promise_execution import forward_promise_with_llm_disk_cache
 
-        _promise_set_done(promise.promise_id, status_code=resp0.status_code, headers=dict(resp0.headers), body=resp0.content)
-
-        if should_log and folder_path:
-            from .promises import save_response
-            save_response(folder_path, {
-                "status_code": resp0.status_code,
-                "headers": dict(resp0.headers),
-                "content": resp0.text[:10000] if len(resp0.text) > 10000 else resp0.text,
-                "promised": True,
-            })
+        forward_promise_with_llm_disk_cache(
+            promise_id=promise.promise_id,
+            path=path,
+            method=method,
+            target_url=target_url,
+            body_for_prepare=body,
+            args=args,
+            headers=headers,
+            body_json=body_json_snapshot,
+            routed_provider_name=routed_provider_snapshot,
+            routed_provider_type=routed_type_snapshot,
+            router_config=router_config_snapshot,
+            should_log=should_log,
+            folder_path=folder_path if should_log else "",
+        )
     except Exception as e:
+        logger.exception("create_promise_job failed promise_id=%s", promise.promise_id)
         _promise_reset_pending(promise.promise_id, delay_seconds=10.0)
         if should_log and folder_path:
             from .promises import save_response
@@ -174,7 +163,7 @@ def handle_promise_mode(
                 {"promiseId": promise.promise_id, "status": "pending"}
             )
         except Exception as e:
-            logger.debug(f"Failed to save promise.json: {e}")
+            logger.warning("Failed to save promise.json: %s", e, exc_info=True)
 
     # Prepare snapshots
     body_snapshot = body

@@ -6,8 +6,11 @@ Provider for OpenAI-compatible APIs (OpenRouter, Groq, Cohere, etc.).
 
 import aiohttp
 import json
+import logging
 import time
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from .base import (
     LLMProvider,
@@ -228,6 +231,13 @@ class OpenAICompatibleProvider(LLMProvider):
                     self._health_status = ProviderStatus.UNHEALTHY
                     return ProviderStatus.UNHEALTHY
         except Exception as e:
+            logger.warning(
+                "health_check failed for %s (%s): %s",
+                self.name,
+                self.base_url,
+                e,
+                exc_info=True,
+            )
             self._health_status = ProviderStatus.UNHEALTHY
             return ProviderStatus.UNHEALTHY
     
@@ -239,7 +249,8 @@ class OpenAICompatibleProvider(LLMProvider):
                 response.raise_for_status()
                 data = await response.json()
                 return data.get("data", [])
-        except Exception:
+        except Exception as e:
+            logger.warning("list_models failed for %s: %s", self.base_url, e, exc_info=True)
             return []
     
     async def close(self):

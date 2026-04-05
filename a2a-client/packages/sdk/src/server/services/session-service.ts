@@ -400,7 +400,9 @@ export class SessionService {
             // Clean up sessions that are older than maxAge and not active
             if (sessionAge > maxAge && session.status !== 'active') {
                 this.sessions.delete(sessionId);
-                deleteSessionFromStorage(sessionId).catch(() => {});
+                deleteSessionFromStorage(sessionId).catch((err) => {
+                    console.error('[SESSION] deleteSessionFromStorage failed during cleanup', sessionId, err);
+                });
                 cleanedCount++;
                 console.log(`[SESSION] Cleaned up old session: ${sessionId}`);
             }
@@ -464,7 +466,9 @@ export class SessionService {
         const existed = this.sessions.has(sessionId);
         if (existed) {
             this.sessions.delete(sessionId);
-            deleteSessionFromStorage(sessionId).catch(() => {});
+            deleteSessionFromStorage(sessionId).catch((err) => {
+                console.error('[SESSION] deleteSessionFromStorage failed', sessionId, err);
+            });
             console.log(`[SESSION] Deleted session: ${sessionId}`);
         }
         return existed;

@@ -8,6 +8,7 @@ import logging
 import threading
 
 from flask import Flask, request, Response
+from werkzeug.exceptions import BadRequest
 
 # Import app from parent module
 from . import app
@@ -142,7 +143,7 @@ def promise_request(promise_id: str):
             with open(body_path, 'rb') as f:
                 body_content = f.read()
         except Exception as e:
-            logger.debug(f"Failed to read body file: {e}")
+            logger.warning("Failed to read body file %s: %s", body_path, e, exc_info=True)
 
     body_str = body_content.decode('utf-8', errors='replace') if body_content else None
     if body_str is None:
@@ -179,9 +180,27 @@ def promise_answer(promise_id: str):
             mimetype='application/json',
         )
 
-    payload = request.get_json(silent=True)
-    if not isinstance(payload, dict):
+    try:
+        payload = request.get_json(force=True, silent=False)
+    except BadRequest as e:
+        return Response(
+            _json_bytes(
+                {
+                    "error": "invalid_json",
+                    "message": getattr(e, "description", None) or str(e),
+                }
+            ),
+            status=400,
+            mimetype="application/json",
+        )
+    if payload is None:
         payload = {}
+    if not isinstance(payload, dict):
+        return Response(
+            _json_bytes({"error": "expected_json_object", "got": type(payload).__name__}),
+            status=400,
+            mimetype="application/json",
+        )
 
     body_value = payload.get('body', '')
     status_code = int(payload.get('status_code', 200))

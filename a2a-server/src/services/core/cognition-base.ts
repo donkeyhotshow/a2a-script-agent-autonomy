@@ -2,6 +2,7 @@ import { globalArtifactStore } from './artifact-store.js';
 import type { EpisodicMemory } from '../memory/episodic-memory.js';
 import { promises as fs } from 'fs';
 import { join } from 'path';
+import { logger } from '../../utils/logger.js';
 
 export interface RepoKnowledgePrior {
   topic: string;
@@ -40,7 +41,7 @@ export class CognitionBase {
   constructor(filePath: string = process.env['COGNITION_PRIORS_PATH'] ?? DEFAULT_COGNITION_PATH) {
     this.filePath = filePath;
     globalArtifactStore.registerWriter('COGNITION_PRIORS', this.COMPONENT_ID);
-    this.load().catch(() => {});
+    void this.load();
   }
 
   private async load(): Promise<void> {
@@ -49,9 +50,18 @@ export class CognitionBase {
       const parsed = JSON.parse(data);
       if (Array.isArray(parsed)) {
         this.dynamicPriors = parsed;
+      } else {
+        logger.warn('[CognitionBase] priors file is not an array; keeping in-memory priors only', {
+          path: this.filePath,
+        });
       }
-    } catch {
-      // Ignore load failures
+    } catch (err: unknown) {
+      const code = (err as NodeJS.ErrnoException)?.code;
+      if (code === 'ENOENT') return;
+      logger.error('[CognitionBase] load failed', {
+        path: this.filePath,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 
@@ -79,7 +89,7 @@ export class CognitionBase {
     const allPriors: RepoKnowledgePrior[] = [...this.dynamicPriors.filter(p => p.topic === topic)];
 
     // 1. Lessons from LessonStore (post-rollback learnings)
-    const lessons = await lessonStore.query(topic).catch(() => []);
+    const lessons = await lessonStore.query(topic);
     for (const lesson of lessons.slice(0, 3)) {
       allPriors.push({
         topic,
@@ -94,7 +104,7 @@ export class CognitionBase {
     }
 
     // 2. Patterns from PatternStore (recurring code patterns)
-    const patterns = await patternStore.query(topic).catch(() => []);
+    const patterns = await patternStore.query(topic);
     for (const pattern of patterns.slice(0, 3)) {
       allPriors.push({
         topic,
@@ -109,7 +119,7 @@ export class CognitionBase {
     }
 
     // 3. Top-1 episodic recall for warm start
-    const episodes = await episodicMemory.recall(topic).catch(() => []);
+    const episodes = await episodicMemory.recall(topic);
     if (episodes.length > 0) {
       const ep = episodes[0]!;
       allPriors.push({

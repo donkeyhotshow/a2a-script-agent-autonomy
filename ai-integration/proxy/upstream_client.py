@@ -4,13 +4,13 @@ Handles forwarding requests to upstream servers (Ollama or external providers)
 """
 import logging
 import requests
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, Mapping
 
 logger = logging.getLogger(__name__)
 
-from .config import FORWARD_TIMEOUT, STORAGE_DIR
+from .config import FORWARD_TIMEOUT
 from .api_key_routing import forward_with_api_key_failover
-from .caching import get_cache
+from .caching import get_cache, build_llm_cache_payload, build_llm_cache_key
 from .promises import is_llm_upstream_response_ok, _json_bytes
 
 
@@ -54,7 +54,12 @@ def forward_request(
     if resp.status_code == 401 and resp.headers.get('Content-Type', '').startswith('application/json'):
         try:
             err_obj = resp.json()
-        except Exception:
+        except Exception as exc:
+            logger.warning(
+                "401 response body not JSON, skip auth code patch: %s",
+                exc,
+                exc_info=True,
+            )
             err_obj = None
         if isinstance(err_obj, dict):
             err = err_obj.get('error') or {}
@@ -70,18 +75,49 @@ def forward_request(
     return resp
 
 
-def check_cache(cache_key: str, body_json: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+def _llm_cache_key(
+    path: str,
+    method: str,
+    target_url: str,
+    forward_args: Optional[Mapping[str, Any]],
+    body_json: Optional[Dict[str, Any]],
+) -> str:
+    cache = get_cache()
+    payload = build_llm_cache_payload(
+        path=path,
+        method=method,
+        target_url=target_url,
+        forward_args=forward_args,
+        body_json=body_json,
+    )
+    return build_llm_cache_key(cache, payload)
+
+
+def check_cache(
+    path: str,
+    method: str,
+    target_url: str,
+    forward_args: Optional[Mapping[str, Any]],
+    body_json: Optional[Dict[str, Any]],
+) -> Optional[Dict[str, Any]]:
     """
-    Check cache for existing response.
+    Check cache for existing response (sync forward path).
     """
     cache = get_cache()
-    cache_key_full = cache.build_key("ollama", {"path": "", "body": body_json})
+    cache_key_full = _llm_cache_key(path, method, target_url, forward_args, body_json)
 
     cached = cache.get(cache_key_full)
     if cached:
-        body_text = cached.get('body', '')
+        if not isinstance(cached, dict) or "status" not in cached or "body" not in cached:
+            logger.warning(
+                "Rejecting malformed sync LLM cache entry (missing keys); key=%s...",
+                cache_key_full[:16],
+            )
+            cache.delete(cache_key_full)
+            return None
+        body_text = cached["body"]
         body_b = body_text.encode('utf-8') if isinstance(body_text, str) else (body_text or b'')
-        st = int(cached.get('status', 200))
+        st = int(cached["status"])
         if is_llm_upstream_response_ok(st, body_b, 'application/json'):
             logger.debug(f"Cache hit for key: {cache_key_full[:16]}...")
             return cached
@@ -93,12 +129,19 @@ def check_cache(cache_key: str, body_json: Optional[Dict[str, Any]]) -> Optional
     return None
 
 
-def save_to_cache(cache_key: str, resp: requests.Response) -> None:
+def save_to_cache(
+    path: str,
+    method: str,
+    target_url: str,
+    forward_args: Optional[Mapping[str, Any]],
+    body_json: Optional[Dict[str, Any]],
+    resp: requests.Response,
+) -> None:
     """
-    Save response to cache if it's a valid LLM success.
+    Save response to cache if it's a valid LLM success (same key material as check_cache).
     """
     cache = get_cache()
-    cache_key_full = cache.build_key("ollama", {"path": "", "body": None})
+    cache_key_full = _llm_cache_key(path, method, target_url, forward_args, body_json)
 
     if resp.status_code == 200:
         ct = (resp.headers.get('Content-Type') or '') if resp.headers else ''

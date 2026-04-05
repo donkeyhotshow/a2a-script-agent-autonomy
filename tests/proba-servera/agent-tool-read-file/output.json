@@ -3,7 +3,7 @@
     "task": "analyze utils/helpers.js",
     "execution": {
       "action": "agent",
-      "step": "request"
+      "step": "tool_read_file"
     },
     "history": [
       {
@@ -12,6 +12,7 @@
       },
       {
         "role": "assistant",
+        "step": "tool_read_file",
         "message": "Read utils/helpers.js (3 lines)"
       }
     ],
@@ -19,18 +20,6 @@
       "sections": {}
     }
   },
-  "execute": {
-    "form": {
-      "title": "Agent Mode",
-      "description": "Enter your task for the agent",
-      "input": [
-        {
-          "name": "task",
-          "type": "text",
-          "label": "Task",
-          "required": true
-        }
-      ]
-    }
-  }
+  "outcome": "failed",
+  "error": "Request processing failed"
 }

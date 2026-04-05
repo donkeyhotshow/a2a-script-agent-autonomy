@@ -92,35 +92,39 @@ jobs:
           $retryCount = 0
           
           # Wait for server
-          while ($retryCount -lt $maxRetries) {
-            try {
-              $response = Invoke-WebRequest -Uri "http://localhost:3000/health" -TimeoutSec 2 -ErrorAction SilentlyContinue
-              if ($response.StatusCode -eq 200) {
-                Write-Host "Server is ready"
-                break
-              }
-            } catch {}
-            Start-Sleep -Seconds 2
-            $retryCount++
-          }
+           while ($retryCount -lt $maxRetries) {
+             try {
+               $response = Invoke-WebRequest -Uri "http://localhost:3000/health" -TimeoutSec 2 -ErrorAction SilentlyContinue
+               if ($response.StatusCode -eq 200) {
+                 Write-Host "Server is ready"
+                 break
+               }
+             } catch {
+                 # Silently ignore health check errors - will retry or fail later
+             }
+             Start-Sleep -Seconds 2
+             $retryCount++
+           }
           
           if ($retryCount -ge $maxRetries) {
             Write-Host "Warning: Server health check timed out"
           }
           
-          # Wait for client-api
-          $retryCount = 0
-          while ($retryCount -lt $maxRetries) {
-            try {
-              $response = Invoke-WebRequest -Uri "http://localhost:3001/health" -TimeoutSec 2 -ErrorAction SilentlyContinue
-              if ($response.StatusCode -eq 200) {
-                Write-Host "Client API is ready"
-                break
-              }
-            } catch {}
-            Start-Sleep -Seconds 2
-            $retryCount++
-          }
+           # Wait for client-api
+           $retryCount = 0
+           while ($retryCount -lt $maxRetries) {
+             try {
+               $response = Invoke-WebRequest -Uri "http://localhost:3001/health" -TimeoutSec 2 -ErrorAction SilentlyContinue
+               if ($response.StatusCode -eq 200) {
+                 Write-Host "Client API is ready"
+                 break
+               }
+             } catch {
+                 # Silently ignore health check errors - will retry or fail later
+             }
+             Start-Sleep -Seconds 2
+             $retryCount++
+           }
           
           if ($retryCount -ge $maxRetries) {
             Write-Host "Warning: Client API health check timed out"

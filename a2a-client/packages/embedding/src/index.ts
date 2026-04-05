@@ -38,6 +38,7 @@ export const DEFAULT_MODELS: Record<string, string> = {
     openai: 'text-embedding-3-small',
     cohere: 'embed-multilingual-v3.0',
     voyage: 'voyage-code-2',
+    mock: 'nomic-embed-text',
 };
 
 export interface EmbeddingConfig {
@@ -76,7 +77,13 @@ export class EmbeddingClient {
         this.provider = config.provider ?? PROVIDERS.OLLAMA;
         this.apiKey = config.apiKey ?? process.env.EMBEDDING_API_KEY;
         this.baseUrl = config.baseUrl ?? (this.provider === PROVIDERS.OLLAMA ? (process.env.OLLAMA_BASE_URL ?? 'http://localhost:11435') : undefined);
-        this.model = config.model ?? DEFAULT_MODELS[this.provider] ?? 'nomic-embed-text';
+        const resolvedModel = config.model ?? DEFAULT_MODELS[this.provider];
+        if (!resolvedModel || !String(resolvedModel).trim()) {
+            throw new Error(
+                `[EmbeddingClient] model is required for provider "${this.provider}" (set config.model or add DEFAULT_MODELS entry)`
+            );
+        }
+        this.model = resolvedModel;
         this.cacheFile = config.cacheFile ?? null;
         this.batchSize = config.batchSize ?? 100;
         this.timeout = config.timeout ?? 60000;
@@ -84,7 +91,13 @@ export class EmbeddingClient {
     }
 
     getDimension(): number {
-        return DIMENSIONS[this.model] ?? 768;
+        const d = DIMENSIONS[this.model];
+        if (d === undefined) {
+            throw new Error(
+                `[EmbeddingClient] Unknown model "${this.model}" — add DIMENSIONS entry or pass a known model`
+            );
+        }
+        return d;
     }
 
     private _hashText(text: string): string {
@@ -97,8 +110,13 @@ export class EmbeddingClient {
             const content = await fs.readFile(this.cacheFile, 'utf-8');
             const data = JSON.parse(content) as [string, number[]][];
             this.cache = new Map(data);
-        } catch {
-            // ignore
+        } catch (e) {
+            const code =
+                e && typeof e === 'object' && 'code' in e
+                    ? String((e as {code?: unknown}).code)
+                    : undefined;
+            if (code === 'ENOENT') return;
+            throw e instanceof Error ? e : new Error(String(e));
         }
     }
 
@@ -109,7 +127,7 @@ export class EmbeddingClient {
             await fs.mkdir(dir, {recursive: true});
             await fs.writeFile(this.cacheFile, JSON.stringify([...this.cache]));
         } catch (e) {
-            console.warn('[EmbeddingClient] Failed to save cache:', (e as Error).message);
+            throw e instanceof Error ? e : new Error(String(e));
         }
     }
 
@@ -221,17 +239,19 @@ export class EmbeddingClient {
         for (let i = 0; i < texts.length; i += this.batchSize) {
             const batch = texts.slice(i, i + this.batchSize);
             const batchEmbeddings = await Promise.all(
-                batch.map((text) =>
-                    fetch(`${baseUrl}/api/embeddings`, {
+                batch.map(async (text) => {
+                    const response = await fetch(`${baseUrl}/api/embeddings`, {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
                         body: JSON.stringify({model: this.model, prompt: text}),
                         signal: AbortSignal.timeout(this.timeout),
-                    })
-                        .then((r) => r.json())
-                        .then((d: { embedding: number[] }) => d.embedding)
-                        .catch(() => this._zeroVector())
-                )
+                    });
+                    if (!response.ok) {
+                        throw new Error(`Ollama API error: ${response.status} ${await response.text()}`);
+                    }
+                    const data = (await response.json()) as { embedding: number[] };
+                    return data.embedding;
+                })
             );
             all.push(...batchEmbeddings);
         }
@@ -378,24 +398,24 @@ export class EmbeddingClient {
                 default:
                     return true;
             }
-        } catch {
+        } catch (e) {
+            const msg = e instanceof Error ? e.message : String(e);
+            console.error('[EmbeddingClient] isAvailable check failed:', msg);
             return false;
         }
     }
 
     async listModels(): Promise<string[]> {
-        try {
-            if (this.provider === PROVIDERS.OLLAMA) {
-                const url = this.getOllamaBaseUrl();
-                const response = await fetch(`${url}/api/tags`);
-                const data = (await response.json()) as { models?: Array<{ name: string }> };
-                return data.models?.map((m) => m.name) ?? [];
+        if (this.provider === PROVIDERS.OLLAMA) {
+            const url = this.getOllamaBaseUrl();
+            const response = await fetch(`${url}/api/tags`);
+            if (!response.ok) {
+                throw new Error(`[EmbeddingClient] listModels failed: ${response.status} ${await response.text()}`);
             }
-            return [this.model];
-        } catch (e) {
-            console.warn('[EmbeddingClient] Failed to list models:', (e as Error).message);
-            return [];
+            const data = (await response.json()) as { models?: Array<{ name: string }> };
+            return data.models?.map((m) => m.name) ?? [];
         }
+        return [this.model];
     }
 
     dispose(): void {

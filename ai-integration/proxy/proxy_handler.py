@@ -47,7 +47,6 @@ from .request_processor import (
 )
 from .response_handler import create_error_response, create_simulated_response, forward_response
 from .model_resolver import resolve_model_name
-from .caching import get_cache
 
 # Import refactored modules
 from .rule_engine import process_model_and_rules
@@ -67,13 +66,15 @@ def _fetch_tags_response(url: str, headers: dict[str, Any], params: Optional[dic
         return None, None
     try:
         resp = requests.get(url, params=params or {}, headers=headers, timeout=FORWARD_TIMEOUT)
-    except requests.exceptions.RequestException:
+    except requests.exceptions.RequestException as exc:
+        logger.warning("tags fetch failed %s: %s", url, exc, exc_info=True)
         return None, None
     if resp.status_code != 200:
         return resp, None
     try:
         tags = resp.json()
-    except Exception:
+    except Exception as exc:
+        logger.warning("tags response not JSON %s: %s", url, exc, exc_info=True)
         return resp, None
     return resp, tags if isinstance(tags, dict) else None
 
@@ -240,7 +241,7 @@ def handle_proxy_request(path: str, request) -> Response:
                             hdr_safe[k] = '***'
                     _write_json_file(os.path.join(folder_path, 'forwarded_headers.json'), hdr_safe)
                 except Exception as e:
-                    logger.debug(f"Failed to save forwarded request: {e}")
+                    logger.warning("Failed to save forwarded request: %s", e, exc_info=True)
         
         # Handle simulated response (non-promise)
         if simulate_action is not None and not promise_requested:
@@ -262,7 +263,9 @@ def handle_proxy_request(path: str, request) -> Response:
             )
         
         # Check cache first
-        cached = check_cache("", body_json)
+        cached = check_cache(
+            path, request.method, target_url, forward_args, body_json
+        )
         if cached:
             return Response(cached['body'], status=cached['status'], content_type='application/json')
 
@@ -273,7 +276,9 @@ def handle_proxy_request(path: str, request) -> Response:
         )
 
         # Save to cache for successful responses
-        save_to_cache("", resp)
+        save_to_cache(
+            path, request.method, target_url, forward_args, body_json, resp
+        )
 
         # Forward response
         return forward_response(resp, should_log, folder_path)
@@ -288,6 +293,7 @@ def handle_proxy_request(path: str, request) -> Response:
             save_response(folder_path, error_data)
         return Response(json.dumps(error_data), status=502, mimetype='application/json')
     except Exception as e:
+        logger.exception("Proxy handler error path=%s", path)
         error_data = {
             "error": "Proxy error",
             "message": str(e)

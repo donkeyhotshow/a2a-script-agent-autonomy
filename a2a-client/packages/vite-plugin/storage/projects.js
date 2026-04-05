@@ -33,7 +33,8 @@ export function loadProjects(cwd) {
     const d = JSON.parse(raw);
     const list = Array.isArray(d.projects) ? d.projects : [];
     return list.length ? list : [{id: 'default', name: 'Workspace', path: cwd}];
-  } catch {
+  } catch (e) {
+    console.warn('[projects] Failed to read storage projects.json, using default project:', e?.message || e);
     return [{id: 'default', name: 'Workspace', path: cwd}];
   }
 }

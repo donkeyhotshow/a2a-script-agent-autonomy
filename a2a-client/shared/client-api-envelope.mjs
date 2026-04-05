@@ -59,6 +59,17 @@ export function validateClientResultPayload(result) {
 }
 
 /**
+ * LLM/backoff: `status: failed` with a future `retryAfter` is not terminal — keep polling /async.
+ */
+export function isRecoverableAsyncSnapshot(prom) {
+    if (!prom || typeof prom !== 'object') return false;
+    const ra = prom.retryAfter;
+    if (ra == null || ra === '') return false;
+    const t = Date.parse(String(ra));
+    return Number.isFinite(t) && t > Date.now();
+}
+
+/**
  * Normalize promise payload to common client DTO fields.
  */
 export function normalizePromisePollStatus(promiseStatus) {
@@ -69,7 +80,8 @@ export function normalizePromisePollStatus(promiseStatus) {
         status === 'done' ||
         promiseStatus?.result?.completed === true
     );
-    const failed = status === 'failed' || status === 'error';
+    const failed =
+        (status === 'failed' || status === 'error') && !isRecoverableAsyncSnapshot(promiseStatus);
     return {
         status: status || (completed ? 'completed' : 'pending'),
         completed,

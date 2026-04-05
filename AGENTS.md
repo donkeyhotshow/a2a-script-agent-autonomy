@@ -178,6 +178,8 @@ LLM controls `context.execution.step` → server persists via transforms.
 
 Enable sync with `DEFAULT_SYNC_MODE=1` or request `sync: true`.
 
+**Dialog/LLM deferral:** For the dialog transform pipeline, many hub/transform/LLM failures **do not** finalize `promiseId` as `failed` immediately; the server re-queues the same id (`pending` + `retryAfter`) until success or max retries. Normative detail: **[`docs/PROMISE-RETRY-DIALOG.md`](docs/PROMISE-RETRY-DIALOG.md)**.
+
 ### Context Fields (System-Managed)
 - `context.history` — execution records
 - `context.execution` — current state (action, step, progress)
@@ -208,6 +210,8 @@ Note: Server always applies transforms; `response.md` optional (no LLM).
 | A2A_BLACK_ROOM_DEFAULT_MODEL | Default Ollama model for algorithms (default: llama3.1:8b) | No |
 | A2A_BLACK_ROOM_TIMEOUT_MS | Timeout for algorithm execution (default: 30000ms) | No |
 | A2A_ALGORITHM_REGISTRY_PATH | Path to algorithm templates (default: ./prompts/algorithms/) | No |
+| REQUEST_RETRY_DELAY_MS | Dialog deferral: ms before a re-queued request is eligible (default 15000) | No |
+| REQUEST_MAX_RETRIES | Dialog deferral: max re-queues per `promiseId` (default 15) | No |
 
 ---
 

@@ -24,7 +24,12 @@ from .config import (
     FORWARD_TIMEOUT,
 )
 from .cleanup import get_cleanup_manager
-from .caching import get_cache
+from .caching import (
+    get_cache,
+    build_llm_cache_payload,
+    build_llm_cache_key,
+    is_valid_llm_disk_cache_value,
+)
 from .promises import (
     get_promise,
     is_llm_upstream_response_ok,
@@ -193,7 +198,13 @@ class PromiseDaemon:
             try:
                 import datetime
                 created_iso = datetime.datetime.fromtimestamp(rec.created_at, datetime.timezone.utc).isoformat()
-            except Exception:
+            except Exception as e:
+                logger.warning(
+                    "invalid created_at %r for promise %s: %s",
+                    rec.created_at,
+                    rec.promise_id,
+                    e,
+                )
                 created_iso = None
             result.append({
                 "promiseId": rec.promise_id,
@@ -276,27 +287,31 @@ class PromiseDaemon:
             if lk in ('content-type', 'accept', 'accept-language', 'user-agent'):
                 safe_upstream[hk] = str(hv)
         
-        # Build cache key
         cache = get_cache()
-        cache_payload = {
-            "url": rec.target_url,
-            "method": rec.method,
-            "args": args,
-            "body": request_snapshot.get('body'),
-        }
-        cache_key = cache.build_key("ollama", cache_payload)
+        cache_payload = build_llm_cache_payload(
+            path=str(request_snapshot.get('path') or ''),
+            method=rec.method,
+            target_url=rec.target_url,
+            forward_args=args,
+            raw_body=request_snapshot.get('body'),
+        )
+        cache_key = build_llm_cache_key(cache, cache_payload)
         
         # Check cache first (reject poisoned 200 + provider error JSON)
         cached_response = cache.get(cache_key)
-        if cached_response is not None:
-            body_b = (
-                base64.b64decode(cached_response.get('body_base64', ''))
-                if cached_response.get('body_base64')
-                else b''
+        if cached_response is not None and not is_valid_llm_disk_cache_value(cached_response):
+            logger.warning(
+                "Daemon %s: disk cache entry malformed; invalidating",
+                promise_id,
             )
-            hdrs = cached_response.get('headers', {}) or {}
-            ct = hdrs.get('Content-Type') or hdrs.get('content-type') or ''
-            sc = int(cached_response.get('status_code', 200))
+            cache.delete(cache_key)
+            cached_response = None
+        if cached_response is not None:
+            b64 = cached_response["body_base64"]
+            body_b = base64.b64decode(b64) if b64 else b""
+            hdrs = cached_response["headers"] or {}
+            ct = hdrs.get("Content-Type") or hdrs.get("content-type") or ""
+            sc = int(cached_response["status_code"])
             if not is_llm_upstream_response_ok(sc, body_b, ct):
                 logger.warning(
                     'Daemon %s: invalid cached LLM payload; invalidating cache',
@@ -306,11 +321,12 @@ class PromiseDaemon:
                 cached_response = None
         if cached_response is not None:
             logger.info(f"Daemon {promise_id} served from cache")
+            b64 = cached_response["body_base64"]
             _promise_set_done(
                 promise_id,
-                status_code=cached_response.get('status_code', 200),
-                headers=cached_response.get('headers', {}),
-                body=base64.b64decode(cached_response.get('body_base64', '')) if cached_response.get('body_base64') else b''
+                status_code=int(cached_response["status_code"]),
+                headers=cached_response["headers"],
+                body=base64.b64decode(b64) if b64 else b"",
             )
             return
         

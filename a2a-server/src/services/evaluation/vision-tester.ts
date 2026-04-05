@@ -146,8 +146,10 @@ export class VisionTester {
     let serverCommand: string[];
     try {
       serverCommand = JSON.parse(raw) as string[];
-    } catch {
-      logger.warn('[vision-tester] PLAYWRIGHT_MCP_SERVER is not valid JSON — skipping screenshot');
+    } catch (err: unknown) {
+      logger.warn('[vision-tester] PLAYWRIGHT_MCP_SERVER is not valid JSON — skipping screenshot', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       return null;
     }
 
@@ -277,8 +279,10 @@ Be strict: flag any overflow, clipping, colour contrast failure, or missing elem
         approved: overallScore >= APPROVE_THRESHOLD && blockingIssues.length === 0,
         judge_mode: 'llm',
       };
-    } catch {
-      logger.warn('[vision-tester] Failed to parse LLM JSON response — using rule-based fallback');
+    } catch (err: unknown) {
+      logger.warn('[vision-tester] Failed to parse LLM JSON response — using rule-based fallback', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       return this._ruleBasedEvaluate(url, uiRequirement, sessionId, turn);
     }
   }

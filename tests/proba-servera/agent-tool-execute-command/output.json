@@ -3,7 +3,7 @@
     "task": "run npm test",
     "execution": {
       "action": "agent",
-      "step": "request"
+      "step": "tool_execute_command"
     },
     "history": [
       {
@@ -12,6 +12,7 @@
       },
       {
         "role": "assistant",
+        "step": "tool_execute_command",
         "message": "Command completed: exitCode 0, stdout '3 tests passed'"
       }
     ],
@@ -19,18 +20,6 @@
       "sections": {}
     }
   },
-  "execute": {
-    "form": {
-      "title": "Agent Mode",
-      "description": "Enter your task for the agent",
-      "input": [
-        {
-          "name": "task",
-          "type": "text",
-          "label": "Task",
-          "required": true
-        }
-      ]
-    }
-  }
+  "outcome": "failed",
+  "error": "Request processing failed"
 }

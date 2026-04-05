@@ -9,7 +9,12 @@
  * ContextManager is reset per request (resetContextManager) — no cache of context/code between iterations.
  */
 
-import {requestService, isRetryableError, type RequestResult} from '../request/request.service.js';
+import {
+    requestService,
+    isRetryableError,
+    shouldDeferDialogProcessorFailure,
+    type RequestResult,
+} from '../request/request.service.js';
 import {logger} from '../../../utils/logger.js';
 import {requestProcessorLatencyHistogram} from '../../../utils/metrics.js';
 import type {RequestContext, ProcessResult, ProcessOutcome, Task, TaskAnalysis} from './request-processor.interfaces.js';
@@ -177,6 +182,7 @@ async function executePendingRow(request: RequestResult): Promise<ProcessResult>
             message: message ?? undefined
         };
 
+        const requestType = determineRequestType(context);
         const result = await routeRequest(requestContext);
 
         // Handle AI-Actions continuation (form choice -> LLM processing)
@@ -259,10 +265,15 @@ async function executePendingRow(request: RequestResult): Promise<ProcessResult>
         // Update request status based on result
         if (result.outcome === 'failed') {
             const err = String(result.error ?? '');
-            if (isRetryableError(err)) {
+            const deferForDialog =
+                requestType === 'dialog' && shouldDeferDialogProcessorFailure(err);
+            if (isRetryableError(err) || deferForDialog) {
                 const ok = await requestService.scheduleRetry(promiseId);
                 if (ok) {
-                    logger.info('[RequestProcessor] Scheduled retry for transient error', {promiseId});
+                    logger.info('[RequestProcessor] Scheduled retry (transient or dialog pipeline)', {
+                        promiseId,
+                        deferForDialog,
+                    });
                     return result;
                 }
             }
@@ -278,7 +289,9 @@ async function executePendingRow(request: RequestResult): Promise<ProcessResult>
     } catch (err) {
         const errStr = String(err);
         logger.error('[RequestProcessor] Error', {promiseId, error: errStr});
-        if (isRetryableError(errStr)) {
+        const reqType = determineRequestType(context);
+        const deferDialog = reqType === 'dialog' && shouldDeferDialogProcessorFailure(errStr);
+        if (isRetryableError(errStr) || deferDialog) {
             const ok = await requestService.scheduleRetry(promiseId);
             if (ok) {
                 logger.info('[RequestProcessor] Scheduled retry for caught error', {promiseId});
@@ -388,19 +401,47 @@ async function recoverProcessingRequests(): Promise<void> {
         }
         
         if (!llmPromiseId) continue;
-        const result = await recoverDialogFromLlmPromise(promiseId, req.context, llmPromiseId);
-        if (result) {
-            if (!result.success) {
-                const errMsg = result.error ?? 'Recovery failed';
-                await requestService.updateStatus(promiseId, 'failed', undefined, { message: errMsg });
-            } else {
-                 await requestService.updateStatus(promiseId, 'completed', 
-                 // Validate result structure before updating status
-                 typeof result === 'object' && result !== null ? result : {}
-             );
-            }
-            logger.info('[RequestProcessor] Recovered stuck request', {promiseId, success: result.success});
+        const outcome = await recoverDialogFromLlmPromise(promiseId, req.context, llmPromiseId);
+        if (outcome.tag === 'pending') {
+            continue;
         }
+        if (outcome.tag === 'resubmit') {
+            const maxR = parseInt(process.env.DIALOG_HUB_LLM_RESUBMIT_MAX || '2', 10);
+            const cap = Number.isFinite(maxR) && maxR >= 0 ? maxR : 2;
+            const cnt = await requestService.incrementHubLlmResubmitCount(promiseId);
+            if (cnt > cap) {
+                await requestService.updateStatus(promiseId, 'failed', undefined, {
+                    message: `Hub LLM promise lost after ${cap} resubmit(s)`,
+                });
+                logger.warn('[RequestProcessor] Recovery resubmit cap exceeded', {promiseId});
+                continue;
+            }
+            await requestService.clearLlmPromiseId(promiseId);
+            logger.info('[RequestProcessor] Hub promise gone — cleared llmPromiseId for next dialog tick', {
+                promiseId,
+                reason: outcome.reason,
+            });
+            continue;
+        }
+        if (outcome.tag === 'failed') {
+            const errMsg = outcome.error ?? 'Recovery failed';
+            const ctx = req.context as Record<string, unknown>;
+            const isDialog = determineRequestType(ctx) === 'dialog';
+            if (isDialog && shouldDeferDialogProcessorFailure(errMsg)) {
+                const ok = await requestService.scheduleRetry(promiseId);
+                if (ok) {
+                    logger.info('[RequestProcessor] Recovery failed — scheduled dialog retry', {promiseId});
+                    continue;
+                }
+            }
+            await requestService.updateStatus(promiseId, 'failed', undefined, {message: errMsg});
+            logger.info('[RequestProcessor] Recovered stuck request', {promiseId, success: false});
+            continue;
+        }
+        const proc = outcome.result;
+        const resultPayload = {...proc} as Record<string, unknown>;
+        await requestService.updateStatus(promiseId, 'completed', resultPayload);
+        logger.info('[RequestProcessor] Recovered stuck request', {promiseId, success: true});
     }
 }
 

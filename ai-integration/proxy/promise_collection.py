@@ -2,9 +2,12 @@
 Promise Collection Module
 Handles collection of promises by status and criteria
 """
+import logging
 import os
 import time
 from typing import List
+
+logger = logging.getLogger(__name__)
 
 from .promise_storage import PromiseRecord
 from .promise_retrieval import get_promise
@@ -22,7 +25,8 @@ def _collect_pending_promises() -> list[PromiseRecord]:
             continue
         try:
             rec = get_promise(entry)
-        except Exception:
+        except Exception as e:
+            logger.warning("get_promise failed for folder %r: %s", entry, e, exc_info=True)
             continue
         if rec is None:
             continue
@@ -48,7 +52,8 @@ def _collect_error_promises() -> list[PromiseRecord]:
             continue
         try:
             rec = get_promise(entry)
-        except Exception:
+        except Exception as e:
+            logger.warning("get_promise failed for folder %r: %s", entry, e, exc_info=True)
             continue
         if rec and rec.status == 'error':
             errors.append(rec)
@@ -66,7 +71,8 @@ def _collect_ready_promises() -> list[PromiseRecord]:
             continue
         try:
             rec = get_promise(entry)
-        except Exception:
+        except Exception as e:
+            logger.warning("get_promise failed for folder %r: %s", entry, e, exc_info=True)
             continue
         if rec and rec.status == 'done':
             ready.append(rec)

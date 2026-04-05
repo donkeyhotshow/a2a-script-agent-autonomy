@@ -69,8 +69,21 @@ def resolve_routing(
     routed_provider_name = None
     routed_provider_type = None
 
-    if model and router._initialized:
-        model = router._resolve_model(model)
+    def _nonempty_model(m: Optional[str]) -> bool:
+        if m is None:
+            return False
+        return bool(str(m).strip()) if isinstance(m, str) else True
+
+    effective = model if _nonempty_model(model) else None
+    if router._initialized and not effective:
+        try:
+            effective = router._get_default_model()
+        except Exception as exc:
+            logger.warning("Could not resolve default provider model: %s", exc, exc_info=True)
+            effective = None
+
+    if effective and router._initialized:
+        model = router._resolve_model(effective)
         provider_chain = router._get_provider_chain(model)
         if provider_chain:
             provider_name, provider = provider_chain[0]

@@ -131,14 +131,16 @@ export function resolveProjectPathForApi(cwd, sessionId, sources = {}) {
   if (projectRoot) {
     try {
       return resolveSessionProjectPath(cwd, { projectRoot });
-    } catch {
+    } catch (e) {
+      console.warn('[projectSessions] resolve projectRoot failed:', projectRoot, e?.message || e);
       return null;
     }
   }
   if (projectId) {
     try {
       return resolveSessionProjectPath(cwd, { projectId });
-    } catch {
+    } catch (e) {
+      console.warn('[projectSessions] resolve projectId failed:', projectId, e?.message || e);
       return null;
     }
   }

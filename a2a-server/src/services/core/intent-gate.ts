@@ -116,14 +116,19 @@ Drift means the current plan no longer meaningfully pursues the original intent.
             try {
                 const parsed = JSON.parse(content);
                 result = validateDriftResult(parsed);
-            } catch {
+            } catch (err: unknown) {
+                logger.debug('[IntentGate] Direct drift JSON parse failed', {
+                    error: err instanceof Error ? err.message : String(err),
+                });
                 const jsonMatch = content.match(/\{[\s\S]*\}/);
                 if (jsonMatch) {
                     try {
                         const parsed = JSON.parse(jsonMatch[0]);
                         result = validateDriftResult(parsed);
-                    } catch {
-                        // Fall through
+                    } catch (err2: unknown) {
+                        logger.debug('[IntentGate] Extracted drift JSON parse failed', {
+                            error: err2 instanceof Error ? err2.message : String(err2),
+                        });
                     }
                 }
             }

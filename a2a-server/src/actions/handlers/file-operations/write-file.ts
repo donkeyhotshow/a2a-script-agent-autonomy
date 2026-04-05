@@ -27,7 +27,11 @@ export async function executeWriteFile(
         try {
             await fs.access(fullPath);
             fileExists = true;
-        } catch {
+        } catch (err: unknown) {
+            const code = (err as NodeJS.ErrnoException)?.code;
+            if (code && code !== 'ENOENT') {
+                logger.warn('[write-file] access check failed', { fullPath, code, error: String(err) });
+            }
             fileExists = false;
         }
 

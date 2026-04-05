@@ -12,10 +12,13 @@ Usage:
     ollama_host = settings.ollama_host
 """
 
+import logging
 import os
 import sys
 from pathlib import Path
 from typing import Literal, Optional
+
+_config_log = logging.getLogger(__name__)
 
 try:
     from pydantic import field_validator, ValidationError
@@ -23,7 +26,7 @@ try:
     HAS_PYDANTIC = True
 except ImportError:
     HAS_PYDANTIC = False
-    print("Warning: pydantic not installed. Using legacy configuration.")
+    _config_log.warning("pydantic not installed — using legacy configuration")
 
 # Always resolve ai-integration/.env (this file lives at ai-integration/proxy/config.py).
 _AI_INTEGRATION_ENV = Path(__file__).resolve().parent.parent / '.env'
@@ -95,7 +98,7 @@ class LegacyConfig:
     
     # Provider Configuration
     PROVIDERS_CONFIG = os.environ.get('PROVIDERS_CONFIG', 'config/providers.json')
-    DEFAULT_PROVIDER = os.environ.get('DEFAULT_PROVIDER', 'ollama')
+    DEFAULT_PROVIDER = os.environ.get('DEFAULT_PROVIDER', 'z_ai')
     ENABLE_FALLBACK = os.environ.get('ENABLE_FALLBACK', 'true').lower() in {'1', 'true', 'yes', 'y', 'on', 't'}
     PROVIDER_TIMEOUT = int(os.environ.get('PROVIDER_TIMEOUT', '0'))  # 0 = no aiohttp total limit on LLM calls
     
@@ -557,13 +560,16 @@ def validate_config() -> bool:
         True if valid, False otherwise.
     """
     if not HAS_PYDANTIC:
-        print("Warning: pydantic not installed, cannot validate.")
+        _config_log.warning("pydantic not installed — cannot validate configuration")
         return True
     
     try:
         Settings()
         return True
-    except ValidationError:
+    except ValidationError as e:
+        for err in e.errors():
+            loc = ".".join(str(x) for x in err.get("loc", ()))
+            _config_log.error("validate_config: %s — %s", loc, err.get("msg"))
         return False
 
 

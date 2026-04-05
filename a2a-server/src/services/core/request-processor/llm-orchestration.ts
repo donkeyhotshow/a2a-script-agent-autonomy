@@ -7,7 +7,7 @@
 import * as path from 'path';
 import {logger} from '../../../utils/logger.js';
 import {runPromptsTransform} from '../../../transform/index.js';
-import {fetchLlmResponse, pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
+import {pollReadyThenFetch, resolveLlmPromiseRecovery} from '../../../daemon/llm-hub-poll.js';
 import {requestService} from '../request/request.service.js';
 import {resolveMainDialogLlmModelFromEnv} from './llm-model-resolver.js';
 
@@ -246,16 +246,8 @@ export async function recoverLlmPromise(
     llmPromiseId: string
 ): Promise<string | null> {
     try {
-        const normalizedBase = base.replace(/\/$/, '');
-        const res = await fetch(`${normalizedBase}/promises/status`);
-
-        if (!res.ok) return null;
-
-        const data = (await res.json()) as {ready?: Array<{promiseId?: string}>};
-        if (!(data.ready ?? []).some((p) => p.promiseId === llmPromiseId)) return null;
-
-        const responseMd = await fetchLlmResponse(normalizedBase, llmPromiseId);
-        return responseMd;
+        const r = await resolveLlmPromiseRecovery(base, llmPromiseId);
+        return r.kind === 'ready' ? r.responseMd : null;
     } catch (err) {
         logger.error('LLM promise recovery failed', err);
         return null;

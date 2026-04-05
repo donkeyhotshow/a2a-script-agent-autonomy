@@ -18,10 +18,7 @@ def _provider_error_from_json_body(body: bytes) -> Optional[str]:
     raw = body
     if raw.startswith(b'\xef\xbb\xbf'):
         raw = raw[3:]
-    try:
-        st = raw.lstrip()
-    except Exception:
-        return None
+    st = raw.lstrip()
     if not st.startswith(b'{'):
         return None
     parsed = _safe_json_loads(raw)

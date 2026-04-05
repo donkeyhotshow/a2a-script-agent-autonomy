@@ -86,6 +86,12 @@ const normalizeSessionsList = (raw, filterProjectId = null) => {
 const DEFAULT_POLL_INTERVAL = 1000;
 const DEFAULT_POLL_TIMEOUT = 300000;
 
+const isRetryAfterInFuture = (retryAfter) => {
+    if (retryAfter == null || retryAfter === '') return false;
+    const t = Date.parse(String(retryAfter));
+    return Number.isFinite(t) && t > Date.now();
+};
+
 const isPromiseResolved = (result) => {
     if (!result) return false;
     const status = typeof result.status === 'string' ? result.status.toLowerCase() : null;
@@ -103,7 +109,10 @@ const isPromiseFailed = (result) => {
     if (!result) return false;
     const status = typeof result.status === 'string' ? result.status.toLowerCase() : null;
     if (status) {
-        return status === 'failed' || status === 'error';
+        if (status === 'failed' || status === 'error') {
+            if (isRetryAfterInFuture(result.retryAfter)) return false;
+            return true;
+        }
     }
     return false;
 };

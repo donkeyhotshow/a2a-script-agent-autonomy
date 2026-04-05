@@ -2,8 +2,12 @@
 Health Routes Module
 Contains Flask route handlers for health checks and system status
 """
+import logging
 import os
+
 from flask import Flask, request, Response, send_from_directory
+
+logger = logging.getLogger(__name__)
 
 # Import app from parent module
 from . import app
@@ -98,8 +102,20 @@ def health_ready():
     ollama_available = check_port_occupied(ollama_host, ollama_port)
     cache = get_cache()
 
-    router = get_router()
-    default_provider = getattr(router.config, 'default_provider', None)
+    try:
+        router = get_router()
+        default_provider = getattr(router.config, "default_provider", None)
+    except Exception as e:
+        logger.warning("health/ready: get_router failed: %s", e, exc_info=True)
+        return {
+            "status": "not_ready",
+            "reason": "router_unavailable",
+            "error": str(e),
+            "ollama_available": ollama_available,
+            "ollama_host": ollama_host,
+            "ollama_port": ollama_port,
+        }, 503
+
     requires_ollama = default_provider == 'ollama'
     
     if requires_ollama and not ollama_available:

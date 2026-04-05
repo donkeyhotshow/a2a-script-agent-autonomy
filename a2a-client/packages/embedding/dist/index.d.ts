@@ -12,7 +12,6 @@ export declare const PROVIDERS: {
 export type Provider = (typeof PROVIDERS)[keyof typeof PROVIDERS];
 export declare const DIMENSIONS: Record<string, number>;
 export declare const DEFAULT_MODELS: Record<string, string>;
-
 export interface EmbeddingConfig {
     provider?: Provider | string;
     baseUrl?: string;
@@ -22,7 +21,6 @@ export interface EmbeddingConfig {
     batchSize?: number;
     timeout?: number;
 }
-
 export interface CacheStats {
     size: number;
     provider: string;
@@ -30,9 +28,7 @@ export interface CacheStats {
     dimension: number;
     baseUrl?: string;
 }
-
 export declare function createEmbeddingClient(config?: EmbeddingConfig): EmbeddingClient;
-
 export declare class EmbeddingClient {
     provider: string;
     apiKey: string | undefined;
@@ -42,19 +38,13 @@ export declare class EmbeddingClient {
     cacheFile: string | null;
     batchSize: number;
     timeout: number;
-
     constructor(config?: EmbeddingConfig);
-
     getDimension(): number;
-
     private _hashText;
     private _loadCache;
     private _saveCache;
-
     embed(text: string): Promise<number[]>;
-
     embedBatch(texts: string[]): Promise<number[][]>;
-
     private getOllamaBaseUrl;
     private _embedOllama;
     private _embedBatchOllama;
@@ -66,14 +56,9 @@ export declare class EmbeddingClient {
     private _embedBatchVoyage;
     private _embedDeterministic;
     private _zeroVector;
-
     clearCache(): void;
-
     getCacheStats(): CacheStats;
-
     isAvailable(): Promise<boolean>;
-
     listModels(): Promise<string[]>;
-
     dispose(): void;
 }

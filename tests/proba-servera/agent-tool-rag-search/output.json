@@ -3,7 +3,7 @@
     "task": "search for calculateTotal",
     "execution": {
       "action": "agent",
-      "step": "request"
+      "step": "tool_rag"
     },
     "history": [
       {
@@ -12,6 +12,7 @@
       },
       {
         "role": "assistant",
+        "step": "tool_rag",
         "message": "rag-search: simulations sync agent SCHEMA received.json - 2 top hits"
       }
     ],
@@ -19,18 +20,6 @@
       "sections": {}
     }
   },
-  "execute": {
-    "form": {
-      "title": "Agent Mode",
-      "description": "Enter your task for the agent",
-      "input": [
-        {
-          "name": "task",
-          "type": "text",
-          "label": "Task",
-          "required": true
-        }
-      ]
-    }
-  }
+  "outcome": "failed",
+  "error": "Request processing failed"
 }

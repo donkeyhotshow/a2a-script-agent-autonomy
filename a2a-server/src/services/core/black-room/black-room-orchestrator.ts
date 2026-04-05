@@ -263,7 +263,11 @@ Return findings as JSON.`;
         try {
             const healthRes = await fetch(`${this.ollamaUrl}/api/tags`);
             return healthRes.ok;
-        } catch {
+        } catch (err: unknown) {
+            logger.debug('[BlackRoomOrchestrator] Ollama health check failed', {
+                url: this.ollamaUrl,
+                error: err instanceof Error ? err.message : String(err),
+            });
             return false;
         }
     }

@@ -6,14 +6,19 @@ This allows using the router with any OpenAI-compatible client.
 """
 
 import json
+import logging
 import time
 import asyncio
 import threading
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
+
 from flask import Blueprint, request, Response, stream_with_context
+from werkzeug.exceptions import BadRequest
 
 from .providers import get_router, ChatMessage
 from .providers.router import ProviderNotAvailableError
+
+logger = logging.getLogger(__name__)
 
 # Create blueprint
 openai_bp = Blueprint('openai', __name__, url_prefix='/v1')
@@ -35,6 +40,7 @@ def _run_async(coro):
         try:
             holder["result"] = asyncio.run(coro)
         except Exception as exc:
+            logger.exception("OpenAI wrapper async runner failed")
             holder["error"] = exc
 
     t = threading.Thread(target=_runner, daemon=True)
@@ -141,6 +147,22 @@ def _create_models_response(router) -> Dict[str, Any]:
 # API Endpoints
 # =============================================================================
 
+def _parse_openai_json_body() -> Tuple[Optional[Dict[str, Any]], Optional[Response]]:
+    """Strict JSON for POST bodies; returns (data, None) or (None, error Response)."""
+    try:
+        data = request.get_json(force=True, silent=False)
+    except BadRequest as e:
+        return None, _error_response(
+            getattr(e, "description", None) or str(e) or "Invalid JSON body",
+            400,
+        )
+    if data is None:
+        return None, _error_response("Request body required", 400)
+    if not isinstance(data, dict):
+        return None, _error_response(f"Expected JSON object, got {type(data).__name__}", 400)
+    return data, None
+
+
 @openai_bp.route('/chat/completions', methods=['POST'])
 def chat_completions():
     """
@@ -159,10 +181,10 @@ def chat_completions():
         }
     """
     try:
-        data = request.get_json()
-        if not data:
-            return _error_response("Request body required", 400)
-        
+        data, err = _parse_openai_json_body()
+        if err is not None:
+            return err
+
         model = data.get('model')
         messages = data.get('messages', [])
         temperature = data.get('temperature', 0.7)
@@ -220,6 +242,7 @@ def chat_completions():
     except ProviderNotAvailableError as e:
         return _error_response(str(e), 503)
     except Exception as e:
+        logger.exception("chat_completions failed")
         return _error_response(f"Internal error: {str(e)}", 500)
 
 
@@ -231,10 +254,10 @@ def completions():
     Converts to chat format internally.
     """
     try:
-        data = request.get_json()
-        if not data:
-            return _error_response("Request body required", 400)
-        
+        data, err = _parse_openai_json_body()
+        if err is not None:
+            return err
+
         model = data.get('model')
         prompt = data.get('prompt', '')
         temperature = data.get('temperature', 0.7)
@@ -277,6 +300,7 @@ def completions():
     except ProviderNotAvailableError as e:
         return _error_response(str(e), 503)
     except Exception as e:
+        logger.exception("completions failed")
         return _error_response(f"Internal error: {str(e)}", 500)
 
 
@@ -292,10 +316,10 @@ def embeddings():
         }
     """
     try:
-        data = request.get_json()
-        if not data:
-            return _error_response("Request body required", 400)
-        
+        data, err = _parse_openai_json_body()
+        if err is not None:
+            return err
+
         model = data.get('model')
         input_text = data.get('input', '')
         
@@ -319,6 +343,7 @@ def embeddings():
     except ProviderNotAvailableError as e:
         return _error_response(str(e), 503)
     except Exception as e:
+        logger.exception("embeddings failed")
         return _error_response(f"Internal error: {str(e)}", 500)
 
 
@@ -336,6 +361,7 @@ def list_models():
             mimetype='application/json'
         )
     except Exception as e:
+        logger.exception("list_models failed")
         return _error_response(f"Internal error: {str(e)}", 500)
 
 
@@ -387,6 +413,7 @@ def list_providers():
             mimetype='application/json'
         )
     except Exception as e:
+        logger.exception("list_providers failed")
         return _error_response(str(e), 500)
 
 
@@ -407,6 +434,7 @@ def enable_provider(name: str):
             return _error_response(f"Failed to enable provider: {name}", 400)
             
     except Exception as e:
+        logger.exception("enable_provider failed name=%s", name)
         return _error_response(str(e), 500)
 
 
@@ -427,4 +455,5 @@ def disable_provider(name: str):
             return _error_response(f"Failed to disable provider: {name}", 400)
             
     except Exception as e:
+        logger.exception("disable_provider failed name=%s", name)
         return _error_response(str(e), 500)

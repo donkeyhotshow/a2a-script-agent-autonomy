@@ -75,8 +75,17 @@ export async function runClientFileExists(projectPath, payload) {
         const st = await fsp.stat(abs);
         const ok = want === 'any' || (want === 'file' && st.isFile()) || (want === 'directory' && st.isDirectory());
         return { path: p, exists: ok, success: true };
-    } catch {
-        return { path: p, exists: false, success: true };
+    } catch (e) {
+        const code = e && typeof e === 'object' && 'code' in e ? e.code : undefined;
+        if (code === 'ENOENT') {
+            return { path: p, exists: false, success: true };
+        }
+        return {
+            path: p,
+            exists: false,
+            success: false,
+            error: e instanceof Error ? e.message : String(e),
+        };
     }
 }
 
@@ -132,12 +141,11 @@ export async function runClientGrepSearch(projectPath, payload) {
     const matches = [];
 
      function lineMatches(line, lineReSource, flags) {
-         try { return new RegExp(lineReSource, flags).test(line); } catch (e) { 
-             // Log regex error for debugging but return false to continue processing
-             if (process.env.NODE_ENV === 'development') {
-                 console.warn('Regex error in lineMatches:', e.message);
-             }
-             return false; 
+         try {
+             return new RegExp(lineReSource, flags).test(line);
+         } catch (e) {
+             console.warn('[chain-tools-fs] Invalid line regex:', e instanceof Error ? e.message : e);
+             return false;
          }
      }
 
@@ -146,7 +154,12 @@ export async function runClientGrepSearch(projectPath, payload) {
     async function scanFile(fullPath) {
         const relFile = path.relative(rootResolved, fullPath).replace(/\\/g, '/');
         let text;
-        try { text = await fsp.readFile(fullPath, 'utf8'); } catch { return; }
+        try {
+            text = await fsp.readFile(fullPath, 'utf8');
+        } catch (e) {
+            console.warn('[chain-tools-fs] grep skip file (unreadable):', fullPath, e instanceof Error ? e.message : e);
+            return;
+        }
         if (text.length > 500_000) return;
         const lines = text.split('\n');
         for (let i = 0; i < lines.length && matches.length < maxResults; i++) {
@@ -159,7 +172,12 @@ export async function runClientGrepSearch(projectPath, payload) {
     async function walkDir(absDir, depth) {
         if (depth > 12 || matches.length >= maxResults) return;
         let entries;
-        try { entries = await fsp.readdir(absDir, { withFileTypes: true }); } catch { return; }
+        try {
+            entries = await fsp.readdir(absDir, { withFileTypes: true });
+        } catch (e) {
+            console.warn('[chain-tools-fs] grep skip dir (unreadable):', absDir, e instanceof Error ? e.message : e);
+            return;
+        }
         for (const ent of entries) {
             if (matches.length >= maxResults) break;
             const name = ent.name;

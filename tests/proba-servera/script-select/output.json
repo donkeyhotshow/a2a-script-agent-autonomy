@@ -7,6 +7,17 @@
     }
   },
   "execute": {
-    "message": "Вибрано: fix-vue-imports"
+    "form": {
+      "title": "Вибір зроблено",
+      "description": "Вибрано: fix-vue-imports",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Message",
+          "required": true
+        }
+      ]
+    }
   }
 }

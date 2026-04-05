@@ -100,7 +100,7 @@ async function invokeAndPersistContinuation(params: {
             ...upstreamBody,
         });
         const upstream = await serverFetch('POST', serverBase, '/api/v1/invoke', upstreamBody);
-        serverResponse = await upstream.json().catch(() => null);
+        serverResponse = (await upstream.json()) as Record<string, unknown>;
         if (!upstream.ok || !serverResponse) {
             res.status(upstream.status >= 400 ? upstream.status : 502).json({
                 success: false,
@@ -242,7 +242,7 @@ router.post('/', async (req: Request, res: Response) => {
                 });
 
                 const upstream = await serverFetch('POST', serverBase, '/api/v1/invoke', upstreamBody);
-                serverResponse = await upstream.json().catch(() => null);
+                serverResponse = (await upstream.json()) as Record<string, unknown>;
 
                 if (upstream.ok && serverResponse) {
                     const unwrapped = parseA2aInvokeResponse(serverResponse as Record<string, unknown>);

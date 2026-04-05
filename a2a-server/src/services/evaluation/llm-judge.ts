@@ -11,6 +11,7 @@
  */
 
 import { randomUUID } from 'crypto';
+import { logger } from '../../utils/logger.js';
 import { ArtifactStore, type StoredArtifact } from '../core/artifact-store.js';
 import type { ReasoningChain } from '../core/cognitive-engine.js';
 
@@ -95,7 +96,10 @@ export class LLMJudge {
     let result: JudgmentResult;
     try {
       result = await this._callLLMJudge(prompt, sessionId, turn);
-    } catch {
+    } catch (err: unknown) {
+      logger.warn('[LLMJudge] LLM judge failed — using rule-based fallback', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       result = this._ruleBasedJudge(output, goal, evidenceArtifacts, sessionId, turn);
     }
 
@@ -258,7 +262,10 @@ Evaluate the output on the following criteria and respond with valid JSON only:
       const jsonMatch = raw.match(/```(?:json)?\s*([\s\S]*?)```/) ?? [null, raw];
       const jsonStr = jsonMatch[1] ?? raw;
       return JSON.parse(jsonStr) as ReturnType<typeof this._parseJudgeResponse>;
-    } catch {
+    } catch (err: unknown) {
+      logger.debug('[LLMJudge] Judge response JSON parse failed', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       return {};
     }
   }
@@ -367,8 +374,11 @@ Evaluate the output on the following criteria and respond with valid JSON only:
       if (results.length >= limit) break;
       try {
         results.push(await this.artifactStore.get(id));
-      } catch {
-        // skip missing
+      } catch (err: unknown) {
+        logger.debug('[LLMJudge] Evidence artifact not available', {
+          artifactId: id,
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }
     return results;

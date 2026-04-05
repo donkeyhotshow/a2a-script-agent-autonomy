@@ -31,13 +31,18 @@ export interface BugFixResult {
 function parseBugFixResult(content: string): BugFixResult {
   try {
     return JSON.parse(content) as BugFixResult;
-  } catch {
+  } catch (err: unknown) {
+    logger.debug('[BugFixer] Direct fix-result JSON parse failed', {
+      error: err instanceof Error ? err.message : String(err),
+    });
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       try {
         return JSON.parse(jsonMatch[0]) as BugFixResult;
-      } catch {
-        // Fall through
+      } catch (err2: unknown) {
+        logger.debug('[BugFixer] Extracted fix-result JSON parse failed', {
+          error: err2 instanceof Error ? err2.message : String(err2),
+        });
       }
     }
   }
@@ -65,7 +70,11 @@ async function getGitDiff(filePath: string): Promise<string> {
       timeout: 5000 
     });
     return diff || '';
-  } catch {
+  } catch (err: unknown) {
+    logger.debug('[BugFixer] git diff unavailable', {
+      filePath,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return '';
   }
 }
@@ -88,7 +97,11 @@ async function getSurroundingContext(filePath: string): Promise<{imports: string
     const context = lines.slice(0, 50).join('\n');
     
     return { imports, context };
-  } catch {
+  } catch (err: unknown) {
+    logger.debug('[BugFixer] Could not read surrounding context', {
+      filePath,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { imports: [], context: '' };
   }
 }
@@ -121,8 +134,11 @@ export class BugFixer {
 
       try {
         gitDiff = await getGitDiff(filePath);
-      } catch {
-        // Git diff not available
+      } catch (err: unknown) {
+        logger.debug('[BugFixer] getGitDiff threw', {
+          filePath,
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }
 
@@ -199,8 +215,11 @@ Output JSON ONLY:
             conflicts.push(impPath);
           }
         }
-      } catch {
-        // File read error
+      } catch (err: unknown) {
+        logger.debug('[BugFixer] Cascade check file read failed', {
+          filePath,
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }
 
