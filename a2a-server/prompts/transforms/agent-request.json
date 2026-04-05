@@ -7,69 +7,38 @@
       "to": "$out"
     },
     {
-      "op": "switch",
-      "discriminator": "$.context.execution.step",
-      "cases": {
-        "plan": {
-          "op": "pick-context",
-          "include": ["execution", "task", "history", "workbench"]
-        },
-        "analyze": {
-          "op": "pick-context",
-          "include": ["execution", "task", "history", "workbench", "scratchpad"]
-        },
-        "execute": {
-          "op": "pick-context",
-          "include": ["execution", "task", "history", "scratchpad", "files", "workbench"]
-        },
-        "review": {
-          "op": "pick-context",
-          "include": ["execution", "task", "history", "scratchpad", "files", "workbench"]
-        },
-        "dialog": {
-          "op": "pick-context",
-          "include": ["execution", "task", "history", "workbench"]
-        },
-        "completed": {
-          "op": "pick-context",
-          "include": ["execution", "task", "history", "workbench"]
-        }
-      },
-      "default": {
-        "op": "pick-context",
-        "include": ["execution", "task", "history", "workbench", "scratchpad"]
+      "op": "set",
+      "path": "$out.context.execution.step",
+      "value": "request"
+    },
+    {
+      "op": "set",
+      "path": "$out.context.workbench",
+      "value": {
+        "sections": {}
       }
     },
     {
-      "op": "switch",
-      "discriminator": "$.context.execution.step",
-      "cases": {
-        "execute": {
-          "op": "summarize-files",
-          "maxLines": 60
-        },
-        "review": {
-          "op": "summarize-files",
-          "maxLines": 120
-        },
-        "analyze": {
-          "op": "summarize-files",
-          "maxLines": 120
+      "op": "set",
+      "path": "$out.execute",
+      "value": {
+        "form": {
+          "title": "Agent Mode",
+          "description": "Enter your task for the agent",
+          "input": [
+            {
+              "name": "task",
+              "type": "text",
+              "label": "Task",
+              "required": true
+            }
+          ]
         }
-      },
-      "default": {
-        "op": "drop",
-        "path": "$.context.files"
       }
-    },
-    {
-      "op": "truncate-section",
-      "path": "context.workbench.sections",
-      "maxChars": 12000
     },
     {
       "op": "render-markdown",
-      "templateRef": "a2a-server/prompts/{{TEMPLATE_NAME}}",
+      "templateRef": "a2a-server/prompts/agent-request.md",
       "data": "$out",
       "outputFile": "request.md"
     }

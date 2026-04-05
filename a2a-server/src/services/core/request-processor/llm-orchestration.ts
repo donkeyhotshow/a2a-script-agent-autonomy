@@ -28,6 +28,10 @@ export interface LlmCallResult {
     responseMd?: string;
     llmPromiseId?: string;
     error?: string;
+    /** Execute from request transform (e.g., initial form from dialog-request.json) */
+    requestTransformExecute?: Record<string, unknown>;
+    /** Context updates from request transform */
+    requestTransformContext?: Record<string, unknown>;
 }
 
 /**
@@ -47,7 +51,7 @@ export async function runRequestTransforms(
     schemaName: string,
     ctx: Record<string, unknown>,
     outputDir: string
-): Promise<{success: boolean; files?: Record<string, string>; error?: string}> {
+): Promise<{success: boolean; files?: Record<string, string>; execute?: Record<string, unknown>; context?: Record<string, unknown>; error?: string}> {
     // Most server processors persist a "flat" context object (execution/task/history at root).
     // Prompts/transforms expect an invoke-shaped payload with `context` + top-level `result`
     // so that `result.message` can be folded into history before prompt render.
@@ -79,7 +83,11 @@ export async function runRequestTransforms(
         return {success: false, error: 'Request transform did not produce request.md'};
     }
 
-    return {success: true, files};
+    // Return execute and context from transform output (e.g., dialog-request.json sets initial form)
+    const execute = (transformResult.output?.execute as Record<string, unknown>) ?? {};
+    const context = (transformResult.output?.context as Record<string, unknown>) ?? {};
+
+    return {success: true, files, execute, context};
 }
 
 /**
@@ -164,12 +172,18 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
             promptsTransformsPath, schemaName, ctx, outputDir
         );
 
+        // Store request transform results for fallback (used when LLM unavailable or transform failed)
+        const requestTransformExecute = transformResult.execute;
+        const requestTransformContext = transformResult.context;
+
         if (!transformResult.success || !transformResult.files) {
             await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
             const te = transformResult.error;
             return {
                 success: false,
                 error: typeof te === 'string' ? te : te,
+                requestTransformExecute,
+                requestTransformContext,
             };
         }
 
@@ -185,6 +199,8 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
             return {
                 success: false,
                 error: typeof ie === 'string' ? ie : ie,
+                requestTransformExecute,
+                requestTransformContext,
             };
         }
 
@@ -200,14 +216,17 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
         });
         if (!responseMd) {
             await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
+            // Return request transform execute as fallback (allows form display even without LLM)
             return {
                 success: false,
                 error: 'LLM response fetch failed',
+                requestTransformExecute,
+                requestTransformContext,
             };
         }
 
         await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_response_ready'});
-        return {success: true, responseMd, llmPromiseId};
+        return {success: true, responseMd, llmPromiseId, requestTransformExecute, requestTransformContext};
     } catch (err) {
         logger.error('[DialogRequestProcessor] LLM call failed', {error: String(err)});
         await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});

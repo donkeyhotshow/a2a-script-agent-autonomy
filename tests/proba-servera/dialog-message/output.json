@@ -1,6 +1,6 @@
 {
   "context": {
-    "session_id": "srv_sess_75e21ae2-88c7-48e1-b4aa-7007d9c6c9cf",
+    "session_id": "srv_sess_e2058f39-cdec-46ce-a357-6e8cf88c1bf8",
     "task": "Hello, this is a test message",
     "execution": {
       "action": "dialog",
@@ -9,7 +9,29 @@
     "result": {
       "message": "Hello, this is a test message"
     },
-    "message": "Hello, this is a test message"
+    "message": "Hello, this is a test message",
+    "history": [
+      {
+        "role": "user",
+        "message": "Hello, this is a test message"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
   },
-  "execute": {}
+  "execute": {
+    "form": {
+      "title": "AI Assistant",
+      "description": "Enter your message",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Message",
+          "required": true
+        }
+      ]
+    }
+  }
 }

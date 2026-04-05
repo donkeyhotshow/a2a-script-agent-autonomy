@@ -3,8 +3,24 @@
     "task": "string",
     "execution": {
       "action": "agent",
-      "step": "string"
+      "step": "request"
+    },
+    "workbench": {
+      "sections": {}
     }
   },
-  "execute": {}
+  "execute": {
+    "form": {
+      "title": "string",
+      "description": "string",
+      "input": [
+        {
+          "name": "string",
+          "type": "string",
+          "label": "string",
+          "required": true
+        }
+      ]
+    }
+  }
 }

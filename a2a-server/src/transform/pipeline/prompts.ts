@@ -107,8 +107,16 @@ async function resolveTransformFile(
     if (mappedSchema === 'coder' && type === 'request') {
       candidates.push(path.resolve(dir, 'coder-request.json'));
     }
+    // Dialog request transform sets initial form (textarea) before LLM call
+    if (mappedSchema === 'dialog' && type === 'request') {
+      candidates.push(path.resolve(dir, 'dialog-request.json'));
+    }
     if (mappedSchema === 'dialog' && type === 'response') {
       candidates.push(path.resolve(dir, 'dialog-llm-response.json'));
+    }
+    // Agent request transform sets initial form before LLM call
+    if (mappedSchema === 'agent' && type === 'request') {
+      candidates.push(path.resolve(dir, 'agent-request.json'));
     }
     candidates.push(path.resolve(dir, `server-transforms-${type}.json`));
   } else {

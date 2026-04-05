@@ -257,6 +257,76 @@ async function runCase(caseDir: string): Promise<boolean | null> {
   return false;
 }
 
+function generateRegressionDoc(
+  results: { case: string; passed: boolean }[],
+  testDir: string
+): string {
+  const timestamp = new Date().toISOString();
+  const failed = results.filter((r) => !r.passed);
+
+  let doc = `# Proba-Servera Regression Report\n\n`;
+  doc += `**Generated:** ${timestamp}\n\n`;
+  doc += `## Summary\n\n`;
+  doc += `- **Total Cases:** ${results.length}\n`;
+  doc += `- **Passed:** ${results.filter((r) => r.passed).length}\n`;
+  doc += `- **Failed:** ${failed.length}\n\n`;
+
+  if (failed.length === 0) {
+    doc += `✅ All cases passed. No regressions detected.\n\n`;
+  } else {
+    doc += `## Regressions Detected\n\n`;
+    for (const r of failed) {
+      const reportPath = path.join(testDir, r.case, 'error-report.md');
+      doc += `### ${r.case}\n\n`;
+      doc += `- **Status:** FAIL\n`;
+      doc += `- **Report:** [${r.case}/error-report.md](${r.case}/error-report.md)\n\n`;
+      if (fs.existsSync(reportPath)) {
+        const content = fs.readFileSync(reportPath, 'utf8');
+        const diffMatch = content.match(/## Differences[\s\S]*?(?=## Input|$)/);
+        if (diffMatch) {
+          doc += `**Differences:**\n\n${diffMatch[0].slice(0, 500)}${diffMatch[0].length > 500 ? '...' : ''}\n\n`;
+        }
+      }
+    }
+
+    doc += `## Schema Impact Analysis\n\n`;
+    doc += `### Common Patterns\n\n`;
+    doc += `When tests fail with 'missing-key' in \\\`execute\\\`:\n`;
+    doc += `1. Server stopped returning expected action key (form, message, etc.)\n`;
+    doc += `2. Server now returns empty \\\`execute: {}\\\` — usually means async processing failed\n`;
+    doc += `3. Client should detect this and handle via promise polling, not \\\`execute.wait\\\`\n\n`;
+
+    doc += `### Action Items\n\n`;
+    doc += `- Check server transforms for the failing action\n`;
+    doc += `- Verify LLM pipeline availability (Gray Room fallbacks)\n`;
+    doc += `- Update expected.json if server behavior changed intentionally\n`;
+    doc += `- If server now returns \\\`promiseId\\\` instead of sync response — test is async, needs different fixture\n\n`;
+  }
+
+  doc += `## Test Case Index\n\n`;
+  doc += `| Case | Status | Description |\n`;
+  doc += `|------|--------|-------------|\n`;
+  for (const r of results) {
+    const status = r.passed ? '✅ PASS' : '❌ FAIL';
+    const desc = getCaseDescription(r.case);
+    doc += `| ${r.case} | ${status} | ${desc} |\n`;
+  }
+
+  return doc;
+}
+
+function getCaseDescription(caseName: string): string {
+  const descriptions: Record<string, string> = {
+    'router-new-task': 'Initial task → router with choices',
+    'script-select': 'Router choice → scripted action pipeline',
+    'dialog-select': 'Router choice → dialog mode init',
+    'dialog-message': 'Dialog mode → user message',
+    'agent-select': 'Router choice → agent mode init',
+    'agent-tool-call': 'Agent mode → tool execution request',
+  };
+  return descriptions[caseName] || 'Server request/response validation';
+}
+
 async function main() {
   /** Request storage + action-registry defaults resolve from a2a-server cwd */
   process.chdir(path.join(REPO_ROOT, 'a2a-server'));
@@ -279,6 +349,11 @@ async function main() {
     if (!passed) allPass = false;
   }
 
+  // Generate regression document
+  const regressionDoc = generateRegressionDoc(results, testDir);
+  const regressionPath = path.join(testDir, 'REGRESSIONS.md');
+  fs.writeFileSync(regressionPath, regressionDoc);
+
   console.log('\n' + '='.repeat(50));
   if (results.length === 0) {
     console.log('No runnable cases (each needs input.json + expected.json).');
@@ -289,6 +364,7 @@ async function main() {
     const f = results.filter((r) => !r.passed).length;
     console.log(`❌ Some cases failed: ${p} passed, ${f} failed`);
     console.log('\nFailed cases have error-report.md files with full details.');
+    console.log(`\n📊 Regression report: ${regressionPath}`);
   }
   console.log('='.repeat(50));
   process.exit(allPass ? 0 : 1);

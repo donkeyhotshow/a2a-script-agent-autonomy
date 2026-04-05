@@ -4,9 +4,6 @@
     "execution": {
       "action": "dialog",
       "step": "request"
-    },
-    "workbench": {
-      "sections": {}
     }
   },
   "result": {

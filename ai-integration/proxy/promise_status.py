@@ -7,7 +7,8 @@ import time
 import logging
 from typing import Optional
 
-from .promise_storage import PromiseRecord, _promise_folder, _promise_body_path, _save_promise, get_promise
+from .promise_storage import PromiseRecord, _promise_folder, _promise_body_path, _save_promise
+from .promise_retrieval import get_promise
 from .promise_utils import _safe_json_loads, _write_json_file
 from .llm_response_processor import _llm_upstream_failure_message
 from .content_processor import _extract_llm_content_for_body_md

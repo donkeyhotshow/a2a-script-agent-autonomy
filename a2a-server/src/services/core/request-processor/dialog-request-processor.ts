@@ -209,6 +209,17 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
             });
 
             if (!llmResult.success || !llmResult.responseMd) {
+                // Use request transform execute as fallback (e.g., initial form from dialog-request.json)
+                if (llmResult.requestTransformExecute && Object.keys(llmResult.requestTransformExecute).length > 0) {
+                    return {
+                        outcome: 'success',
+                        execute: llmResult.requestTransformExecute,
+                        context: {
+                            ...ctx,
+                            ...((llmResult.requestTransformContext as Record<string, unknown>) ?? {}),
+                        } as unknown as RequestContextBlock,
+                    };
+                }
                 return dialogFailedWithContext(ctx, llmResult.error || 'LLM call failed');
             }
 

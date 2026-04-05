@@ -13,6 +13,7 @@ import { mergeContext, processTaskAndContext, determineInvokeMode, prepareServer
 import { sendHttpRequest } from './http-invoker.js';
 import { parseServerResponse, processResponseData, extractAssistantMessage, createResponseAck } from './response-handler.js';
 import { saveClientResult, saveRequestToServer, ensureStepDirectory, saveServerPromise, saveStepData, updateSessionAfterResponse, updateSessionForPromise, finalizeSession } from './persistence-manager.js';
+import { unwrapA2aResponse } from './utils/builders.js';
 
 export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' }) {
     const nextMatch = path.match(/^\/sessions\/([^/]+)\/next$/);
