@@ -254,26 +254,34 @@ export class GrayRoomOrchestrator {
             }
 
             if (!interrupt) {
+                // Dialog: response transform already produced user-facing execute — do not run DecisionCell /
+                // syndicate (extra hub calls) or fall through to interrupt machinery (interrupt is null).
+                if (activeSchemaName === 'dialog') {
+                    touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
+                    GrayRoomOrchestrator.activeControllers.delete(promiseId);
+                    resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
+                    return;
+                }
+
                 // -- DECISION CELL FINAL CHECK (ADR-0088) --
                 const decision = await decisionCell.decide(
                     (workingCtx['session_id'] as string) || promiseId,
                     (workingCtx['task'] as string) || '',
                     workingCtx
                 );
-                
+
                 // -- INTENT DRIFT CHECK (ADR-0050) --
-                // Check for drift every 5 turns after initial passes
                 if (globalIntentGate.getTurnCount() >= 5) {
-                    const executeKey = Object.keys(result.execute || {}).find(k => 
+                    const executeKey = Object.keys(result.execute || {}).find(k =>
                         k !== 'noop' && k !== 'message' && k !== 'form'
                     );
                     const currentPlan = executeKey || (workingCtx['task'] as string) || '';
-                    
+
                     const driftCheck = await globalIntentGate.checkDrift(currentPlan, workingCtx);
                     if (driftCheck.hasDrift && driftCheck.confidence > 0.7) {
-                        logger.error('[GrayRoom] Intent drift detected - halting', { 
+                        logger.error('[GrayRoom] Intent drift detected - halting', {
                             confidence: driftCheck.confidence,
-                            reason: driftCheck.reason 
+                            reason: driftCheck.reason
                         });
                         touchGrayRoom({
                             phase: 'completed',
@@ -282,6 +290,7 @@ export class GrayRoomOrchestrator {
                             remainingBudget: interruptBudget,
                             lastReason: `intent_drift: ${driftCheck.reason}`,
                         });
+                        GrayRoomOrchestrator.activeControllers.delete(promiseId);
                         resolve(this.mergeTraceIntoResult(
                             {...result, context: {...workingCtx, intent_drift_detected: true}} as ProcessResult,
                             trace,
@@ -290,30 +299,26 @@ export class GrayRoomOrchestrator {
                         return;
                     }
                 }
-                // ------------------------------------
-                
+
                 if (decision.done) {
-                    // ADR-0095: Instead of completing immediately, enter SIEGE_REVIEW
                     logger.info('[GrayRoom] DecisionCell marked done. Entering SIEGE_REVIEW');
                     const reviewResult = await globalRoleRegistry.executeSyndicateReview(workingCtx);
                     if (reviewResult.passed) {
                         logger.info('[GrayRoom] SIEGE_REVIEW passed. Completing session.');
-                        touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
-                        resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
-                        return;
                     } else {
-                        logger.warn('[GrayRoom] SIEGE_REVIEW failed. Forcing extra turn for corrections.', { reason: reviewResult.reason });
+                        logger.warn('[GrayRoom] SIEGE_REVIEW failed.', {reason: reviewResult.reason});
                         workingCtx['task'] = `[SIEGE REVIEW FAILED] ${reviewResult.reason}\n\nPlease correct these issues.`;
-                        // Continue loop
                     }
                 } else if (decision.retry) {
-                    logger.info('[GrayRoom] DecisionCell requested retry', { reason: decision.reason });
-                    // Continue loop instead of exit
-                } else {
-                    touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
-                    resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
-                    return;
+                    logger.info('[GrayRoom] DecisionCell requested retry', {reason: decision.reason});
                 }
+
+                // Without a gray-room interrupt there is no valid follow-up loop here; previously we fell
+                // through to interruptWhenSatisfied(null) → throw and left the A2A promise stuck processing.
+                touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
+                GrayRoomOrchestrator.activeControllers.delete(promiseId);
+                resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
+                return;
             }
 
             if (!this.interruptWhenSatisfied(interrupt, workingCtx)) {
