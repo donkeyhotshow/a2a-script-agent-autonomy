@@ -209,12 +209,14 @@ interface PendingResponse {
 
 ## 8. Web → Client API
 
-```
-typescript
-// POST /api/sessions
+Каноничный префикс: **`/api/a2a/...`** (Vite 5173). Standalone SDK дублирует сессии на **`/api/sessions/...`**.
+
+```typescript
+// POST /api/a2a/sessions
 interface CreateSessionRequest {
-  projectId: string;
-  task: string;
+  projectId?: string;
+  task?: string;
+  mode?: string;
   provider?: string;
 }
 
@@ -230,12 +232,12 @@ interface CreateSessionResponse {
   };
 }
 
-// POST /api/sessions/:id/action
+// POST /api/a2a/sessions/:id/action (SDK; на Vite часто только /next)
 interface SelectActionRequest {
   selectedAction: string;  // або selectedChoice: string
 }
 
-// POST /api/sessions/:id/next
+// POST /api/a2a/sessions/:id/next
 interface NextStepRequest {
   mode: 'manual' | 'auto';
 }

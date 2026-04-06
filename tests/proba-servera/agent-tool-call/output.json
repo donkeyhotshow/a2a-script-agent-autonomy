@@ -1,32 +1,37 @@
 {
   "context": {
-    "session_id": "srv_sess_9e95facd-d7fa-41c4-9b60-76f623a20126",
-    "task": "Use grep-search to find all TODO comments",
+    "session_id": "srv_sess_8a9833f1-874b-41ad-ba7d-dff86ac3f318",
+    "task": "Запусти повний прохід інструментів на симуляції sync/agent: RAG, list-directory, read-file, grep, file-exists, edit-patch, write-file, shell, run-script, script — шляхи лише в межах цього репо.",
     "execution": {
       "action": "agent",
-      "step": "start"
+      "step": "request"
     },
+    "workbench": {
+      "sections": {}
+    },
+    "result": {
+      "message": "Запусти повний прохід інструментів на симуляції sync/agent: RAG, list-directory, read-file, grep, file-exists, edit-patch, write-file, shell, run-script, script — шляхи лише в межах цього репо."
+    },
+    "message": "Запусти повний прохід інструментів на симуляції sync/agent: RAG, list-directory, read-file, grep, file-exists, edit-patch, write-file, shell, run-script, script — шляхи лише в межах цього репо.",
     "history": [
       {
         "role": "user",
-        "message": "analyze codebase structure"
+        "message": "Запусти повний прохід інструментів на симуляції sync/agent: RAG, list-directory, read-file, grep, file-exists, edit-patch, write-file, shell, run-script, script — шляхи лише в межах цього репо."
       }
-    ],
-    "workbench": {
-      "sections": {
-        "scratchpad": {
-          "initialized": true
-        }
-      }
-    },
-    "result": {
-      "message": "Use grep-search to find all TODO comments"
-    },
-    "message": "Use grep-search to find all TODO comments",
-    "requestPhase": "llm_error",
-    "hubLlmResubmitCount": 14,
-    "llmPromiseId": "4b3e1f8bc0d4421b80d2e9473e12cf8e"
+    ]
   },
-  "outcome": "failed",
-  "error": "LLM hub promise lost after 2 resubmit(s); start a new turn or check AI hub"
+  "execute": {
+    "form": {
+      "title": "Agent Mode",
+      "description": "Enter your task for the agent",
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Task",
+          "required": true
+        }
+      ]
+    }
+  }
 }

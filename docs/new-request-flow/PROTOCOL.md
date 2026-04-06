@@ -146,22 +146,28 @@ request.json → request.md (LLM prompt) → response.md (LLM output)
 
 #### Запрос (Web → Client API)
 
+Каноничный dev-путь: **`POST /api/a2a/sessions`** (Vite **5173**, префикс `/api/a2a/*`). Standalone Client API (SDK) монтирует те же обработчики на **`/api/sessions`** как alias — см. [ADR-0028](../adr/ADR-0028-client-api-deployment-modes.md).
+
 ```typescript
-// В URL: POST /api/sessions
+// POST /api/a2a/sessions
 interface TaskRequest {
-  task: string;                    // Описание задачи пользователя
+  task?: string;                    // Сид задачи (опционально на create)
+  projectId?: string;               // Проект
+  projectRoot?: string;             // Корень проекта (опционально)
+  mode?: string;                   // Например "agent" — сид context.execution
+  execution?: Record<string, unknown>; // Альтернатива mode
   provider?: string;               // Провайдер (опционально)
-  projectId: string;               // ID проекта
 }
 ```
 
 **Пример:**
 
 ```json
-// POST /api/sessions
+// POST /api/a2a/sessions
 {
   "task": "виправити імпорти у vue компонентах",
-  "projectId": "proj_12345"
+  "projectId": "proj_12345",
+  "mode": "agent"
 }
 ```
 
@@ -418,7 +424,9 @@ interface StepResultRequest {
 
 ## Web → Client API эндпоинты
 
-### POST /api/sessions
+Ниже **префикс `/api/a2a`** — норматив для Web + Vite. Тот же роутер доступен как **`/api/sessions`** на standalone SDK (порт по умолчанию **3001**) — см. [ADR-0028](../adr/ADR-0028-client-api-deployment-modes.md).
+
+### POST /api/a2a/sessions
 
 Создать новую сессию.
 
@@ -440,7 +448,7 @@ interface StepResultRequest {
 }
 ```
 
-### GET /api/sessions
+### GET /api/a2a/sessions
 
 Получить список всех сессий.
 
@@ -460,7 +468,7 @@ interface SessionSummary {
 }
 ```
 
-### GET /api/sessions/:sessionId
+### GET /api/a2a/sessions/:sessionId
 
 Получить состояние сессии.
 
@@ -479,9 +487,11 @@ interface SessionSummary {
 }
 ```
 
-### POST /api/sessions/:sessionId/action
+### POST /api/a2a/sessions/:sessionId/action
 
-Выбрать действие.
+Выбрать действие (в т.ч. на standalone SDK).
+
+> **Vite Client API:** основной контур — **`POST …/next`** (ack) + **`GET …/async`**; см. `a2a-client/packages/vite-plugin/routes/sessionRoutes.js`.
 
 ```typescript
 // Request
@@ -496,7 +506,7 @@ interface SessionSummary {
 }
 ```
 
-### POST /api/sessions/:sessionId/next
+### POST /api/a2a/sessions/:sessionId/next
 
 Выполнить следующий шаг.
 
@@ -517,7 +527,7 @@ interface SessionSummary {
 }
 ```
 
-### POST /api/sessions/:sessionId/cancel
+### POST /api/a2a/sessions/:sessionId/cancel
 
 Отменить сессию.
 
@@ -529,14 +539,22 @@ interface SessionSummary {
 }
 ```
 
+### GET /api/a2a/sessions/:sessionId/async
+
+Опрос долгого шага (предпочтительно после `POST …/next`). См. `AGENTS.md` (*promiseId polling*).
+
+### GET /api/a2a/sessions/:sessionId/messages
+
+Дельта сообщений / шагов (параметры `afterSeq`, `withExecute` — см. `a2a-client/docs/WEB_UI_PROTOCOL.md`).
+
 ---
 
 ## Client API → Server эндпоинты
 
 **ВАЖНО:** Сервер полностью stateless - не хранит сессии.
 
-- SessionId/ProjectId передаются в URL пути, а не в теле запроса
-- Client API сама хранит всю информацию о сессиях
+- **`projectId` / storage `sessionId` не уходят на A2A Server** — Client API вырезает их из тела перед `POST /api/v1/invoke`; сервер выдаёт свой `context.session_id` (`srv_sess_*`). См. корневой `AGENTS.md` (*Invoke payload privacy*).
+- Client API хранит сессии локально (диск под `a2a-client/storage/sessions/`).
 
 ### Ответ invoke (async-only)
 
@@ -631,33 +649,7 @@ interface Step {
 
 ### POST /api/v1/invoke
 
-```typescript
-// Request
-{
-  context?: {
-    task?: string;
-    execution?: {
-      action: string;
-      step: string;
-    };
-  };
-  result?: Record<string, any>;    // Результат выполнения (для шагов после первого)
-}
-
-// Ответ сервера (синхронный - без LLM)
-{
-  context: { ... };
-  actions?: Action[];              // Только в первом ответе
-  execute?: { script: { input, output, code } };
-  result?: { completed?: boolean; [key: string]: unknown };
-}
-
-// Ответ сервера (асинхронный - с LLM)
-{
-  promiseId: string;
-  status: 'pending';
-}
-```
+Тело запроса и валидация — [`server-invoke-request.schema.json`](json-schemas/server-invoke-request.schema.json). **HTTP-ответ на invoke** — **async-only**: envelope с **`promiseId`** и `status: pending`; полный **`execute` / `context`** — из **`GET /api/v1/requests/{promiseId}/result`** после завершения (см. [`#async-flow-promiseid`](#async-flow-promiseid)).
 
 ---
 

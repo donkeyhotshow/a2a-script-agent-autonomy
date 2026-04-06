@@ -18,7 +18,7 @@ doc:
 > **Транспорт:** Web ↔ Client API ↔ Server — **async flow с `promiseId`**. Server возвращает `promiseId`,
 > Client API опрашивает статус до `completed`, затем возвращает `execute.*` в Web.
 > 
-> **См.:** [PROTOCOL.md](PROTOCOL.md)
+> **См.:** [PROTOCOL.md](PROTOCOL.md). Полная диаграмма слоёв и портов — [DATA-FLOW.md](DATA-FLOW.md) (здесь — только блок-схема ролей).
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐

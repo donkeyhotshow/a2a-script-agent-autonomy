@@ -1,5 +1,7 @@
 # Proba-servera (`tests/proba-servera`)
 
+**Stack triage — session + sims + proba (Ollama = integration backend only):** [`docs/TRIANGLE-WORKFLOW.md`](../../docs/TRIANGLE-WORKFLOW.md)
+
 **Authoring (add/edit cases):** [`AUTHORING.md`](AUTHORING.md)
 
 **Purpose:** One folder per case (`input.json` + `expected.json`). Each run exercises the same **invoke body** shape as **`POST /api/v1/invoke`**, then compares a **key-structure subset** of the terminal payload to `expected.json`.

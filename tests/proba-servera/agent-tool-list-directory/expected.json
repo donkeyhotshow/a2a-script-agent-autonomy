@@ -1,4 +1,21 @@
 {
+  "$proba": {
+    "ignorePaths": [
+      "context.task",
+      "context.session_id",
+      "context.repo_map",
+      "context.requestPhase",
+      "context.llmPromiseId",
+      "context.result",
+      "context.transformSchema",
+      "context.message",
+      "context.choice_id",
+      "context.workbench.slots"
+    ],
+    "skipHistoryLengthCheck": true,
+    "acceptExecuteFormFallback": true,
+    "ignoreExecuteWhenOutcomeFailed": true
+  },
   "context": {
     "execution": {
       "action": "agent",

@@ -367,8 +367,8 @@ interface Execute {
 │                                                                              │
 │  1. Пользователь вводит задачу: "виправити імпорти у vue компонентах"      │
 │                                                                              │
-│  2. Web отправляет POST /api/sessions { task, projectId }                │
-│     на Client API (localhost:3001)                                         │
+│  2. Web → POST /api/a2a/sessions { task, projectId } (Vite :5173)            │
+│     или тот же контракт на standalone SDK (:3001)                           │
 └─────────────────────────────────────────────────────────────────────────────┘
                                     │
                                     ▼

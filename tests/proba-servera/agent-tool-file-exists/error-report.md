@@ -1,3 +1,409 @@
+# Test Failure Report: agent-tool-file-exists
+
+**Timestamp:** 2026-04-06T19:31:49.287Z
+
+## Summary
+
+- **Status:** FAIL
+- **Differences Found:** 1
+
+## Differences
+
+| Path | Issue | Expected | Actual |
+|------|-------|----------|--------|
+| `execute.edit-patch` | missing-key | {"type":"object","keys":{"path":{"type": | — |
+
+## Input (Request)
+
+```json
+{
+  "context": {
+    "task": "зчитати файл і знайти функцію",
+    "execution": {
+      "action": "agent",
+      "step": "tool_file_exists"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Знайди функцію calculateTotal в utils/helpers.js"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_rag",
+        "message": "rag-search: simulations sync agent SCHEMA received.json — 2 top hits"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_list_directory",
+        "message": "Listed directory: simulations, a2a-client, a2a-server"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_read_file",
+        "message": "Read utils/helpers.js (3 lines)"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_grep_search",
+        "message": "Grep search for 'calculateTotal' found 1 match"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "result": {
+    "file-exists": {
+      "path": "utils/helpers.js"
+    }
+  }
+}
+```
+
+## Expected Structure (after $proba.ignorePaths)
+
+```json
+{
+  "type": "object",
+  "keys": {
+    "context": {
+      "type": "object",
+      "keys": {
+        "execution": {
+          "type": "object",
+          "keys": {
+            "action": {
+              "type": "string",
+              "keys": null
+            },
+            "step": {
+              "type": "string",
+              "keys": null
+            }
+          }
+        },
+        "workbench": {
+          "type": "object",
+          "keys": {
+            "sections": {
+              "type": "object",
+              "keys": {}
+            }
+          }
+        },
+        "history": {
+          "type": "array",
+          "itemTypes": [
+            {
+              "type": "object",
+              "keys": {
+                "role": {
+                  "type": "string",
+                  "keys": null
+                },
+                "message": {
+                  "type": "string",
+                  "keys": null
+                }
+              }
+            }
+          ],
+          "keys": null
+        }
+      }
+    },
+    "execute": {
+      "type": "object",
+      "keys": {
+        "edit-patch": {
+          "type": "object",
+          "keys": {
+            "path": {
+              "type": "string",
+              "keys": null
+            },
+            "content": {
+              "type": "string",
+              "keys": null
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## Actual Structure (after $proba.ignorePaths)
+
+```json
+{
+  "type": "object",
+  "keys": {
+    "context": {
+      "type": "object",
+      "keys": {
+        "session_id": {
+          "type": "string",
+          "keys": null
+        },
+        "task": {
+          "type": "string",
+          "keys": null
+        },
+        "execution": {
+          "type": "object",
+          "keys": {
+            "action": {
+              "type": "string",
+              "keys": null
+            },
+            "step": {
+              "type": "string",
+              "keys": null
+            }
+          }
+        },
+        "history": {
+          "type": "array",
+          "itemTypes": [
+            {
+              "type": "object",
+              "keys": {
+                "role": {
+                  "type": "string",
+                  "keys": null
+                },
+                "message": {
+                  "type": "string",
+                  "keys": null
+                }
+              }
+            }
+          ],
+          "keys": null
+        },
+        "workbench": {
+          "type": "object",
+          "keys": {
+            "sections": {
+              "type": "object",
+              "keys": {}
+            },
+            "slots": {
+              "type": "object",
+              "keys": {
+                "interruptTrace": {
+                  "type": "array",
+                  "itemTypes": [
+                    {
+                      "type": "object",
+                      "keys": {
+                        "kind": {
+                          "type": "string",
+                          "keys": null
+                        },
+                        "phase": {
+                          "type": "string",
+                          "keys": null
+                        },
+                        "chars": {
+                          "type": "number",
+                          "keys": null
+                        }
+                      }
+                    }
+                  ],
+                  "keys": null
+                },
+                "grayRoom": {
+                  "type": "object",
+                  "keys": {
+                    "enabled": {
+                      "type": "boolean",
+                      "keys": null
+                    },
+                    "planId": {
+                      "type": "string",
+                      "keys": null
+                    },
+                    "phase": {
+                      "type": "string",
+                      "keys": null
+                    },
+                    "maxTurns": {
+                      "type": "number",
+                      "keys": null
+                    },
+                    "turn": {
+                      "type": "number",
+                      "keys": null
+                    },
+                    "status": {
+                      "type": "string",
+                      "keys": null
+                    },
+                    "timestamps": {
+                      "type": "object",
+                      "keys": {
+                        "startedAt": {
+                          "type": "string",
+                          "keys": null
+                        },
+                        "lastUpdateAt": {
+                          "type": "string",
+                          "keys": null
+                        }
+                      }
+                    },
+                    "remainingBudget": {
+                      "type": "number",
+                      "keys": null
+                    },
+                    "traceRef": {
+                      "type": "object",
+                      "keys": {
+                        "length": {
+                          "type": "number",
+                          "keys": null
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "result": {
+          "type": "object",
+          "keys": {
+            "file-exists": {
+              "type": "object",
+              "keys": {
+                "path": {
+                  "type": "string",
+                  "keys": null
+                }
+              }
+            },
+            "message": {
+              "type": "string",
+              "keys": null
+            }
+          }
+        },
+        "repo_map": {
+          "type": "string",
+          "keys": null
+        },
+        "debate_consensus": {
+          "type": "string",
+          "keys": null
+        }
+      }
+    },
+    "execute": {
+      "type": "object",
+      "keys": {
+        "form": {
+          "type": "object",
+          "keys": {
+            "title": {
+              "type": "string",
+              "keys": null
+            },
+            "input": {
+              "type": "array",
+              "itemTypes": [
+                {
+                  "type": "object",
+                  "keys": {
+                    "name": {
+                      "type": "string",
+                      "keys": null
+                    },
+                    "type": {
+                      "type": "string",
+                      "keys": null
+                    },
+                    "label": {
+                      "type": "string",
+                      "keys": null
+                    },
+                    "required": {
+                      "type": "boolean",
+                      "keys": null
+                    }
+                  }
+                }
+              ],
+              "keys": null
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## Full Expected
+
+```json
+{
+  "context": {
+    "execution": {
+      "action": "agent",
+      "step": "tool_edit_patch"
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "history": [
+      {
+        "role": "string",
+        "message": "string"
+      },
+      {
+        "role": "string",
+        "message": "string"
+      },
+      {
+        "role": "string",
+        "message": "string"
+      },
+      {
+        "role": "string",
+        "message": "string"
+      },
+      {
+        "role": "string",
+        "message": "string"
+      },
+      {
+        "role": "string",
+        "message": "string"
+      },
+      {
+        "role": "string",
+        "message": "string"
+      }
+    ]
+  },
+  "execute": {
+    "edit-patch": {
+      "path": "utils/helpers.js",
+      "content": "function calculateTotal(items) {\n  return items.reduce((sum, item) => sum + item.price, 0);\n}\n\nmodule.exports = { calculateTotal };"
+    }
+  }
+}
+```
+
+## Full Actual
+
+```json
 {
   "context": {
     "session_id": "srv_sess_088d410c-7266-4171-b740-d689369cdad1",
@@ -90,3 +496,8 @@
     }
   }
 }
+```
+
+## Directive checks
+
+- execute.edit-patch: expected object, got undefined

@@ -38,8 +38,9 @@ app.get('/health', (_req: Request, res: Response) => {
     });
 });
 
-// Prometheus metrics endpoint
-app.get('/metrics', async (_req: Request, res: Response) => {
+// Prometheus metrics endpoint - Protected by registry authentication
+// Accessible when SKIP_AUTH is enabled (development) OR valid X-Registry-Token header is provided
+app.get('/metrics', registryAuth, async (_req: Request, res: Response) => {
     try {
         res.set('Content-Type', register.contentType);
         res.end(await register.metrics());

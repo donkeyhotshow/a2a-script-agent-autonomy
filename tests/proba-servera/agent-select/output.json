@@ -1,10 +1,10 @@
 {
   "context": {
-    "session_id": "srv_sess_108e6a10-2c64-4a94-954e-46ec678f3c3c",
+    "session_id": "srv_sess_48e267e0-0e5f-4280-9002-627e76f373b9",
     "task": "analyze codebase structure",
     "execution": {
       "action": "agent",
-      "step": "start"
+      "step": "request"
     },
     "result": {
       "choice": "agent",
@@ -12,10 +12,32 @@
     },
     "choice_id": "agent",
     "transformSchema": "agent",
-    "requestPhase": "llm_error",
-    "hubLlmResubmitCount": 15,
-    "llmPromiseId": "dba1c7b13dc040c69fa8f327e7b7d30b"
+    "history": [
+      {
+        "role": "user",
+        "message": "analyze codebase structure"
+      },
+      {
+        "role": "system",
+        "message": "choice: agent"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
   },
-  "outcome": "failed",
-  "error": "LLM hub promise lost after 2 resubmit(s); start a new turn or check AI hub"
+  "execute": {
+    "form": {
+      "title": "Agent Mode",
+      "description": "Enter your task for the agent",
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Task",
+          "required": true
+        }
+      ]
+    }
+  }
 }

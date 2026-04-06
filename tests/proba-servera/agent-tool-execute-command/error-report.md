@@ -1,6 +1,308 @@
+# Test Failure Report: agent-tool-execute-command
+
+**Timestamp:** 2026-04-06T19:29:47.063Z
+
+## Summary
+
+- **Status:** FAIL
+- **Differences Found:** 1
+
+## Differences
+
+| Path | Issue | Expected | Actual |
+|------|-------|----------|--------|
+| `execute.execute-command` | missing-key | {"type":"object","keys":{"command":{"typ | — |
+
+## Input (Request)
+
+```json
 {
   "context": {
-    "session_id": "srv_sess_088d410c-7266-4171-b740-d689369cdad1",
+    "task": "зчитати файл і знайти функцію",
+    "execution": {
+      "action": "agent",
+      "step": "tool_execute_command"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Знайди функцію calculateTotal в utils/helpers.js"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_rag",
+        "message": "rag-search: simulations sync agent SCHEMA received.json — 2 top hits"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_list_directory",
+        "message": "Listed directory: simulations, a2a-client, a2a-server"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_read_file",
+        "message": "Read utils/helpers.js (3 lines)"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_grep_search",
+        "message": "Grep search for 'calculateTotal' found 1 match"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_file_exists",
+        "message": "File exists: utils/helpers.js"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_edit_patch",
+        "message": "Applied patch to utils/helpers.js"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_write_file",
+        "message": "Wrote utils/helpers.js (50 bytes)"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "result": {
+    "execute-command": {
+      "command": "node -e \"const h = require('./utils/helpers'); console.log(h.calculateTotal([{price: 10}, {price: 20}]));\"",
+      "exitCode": 0,
+      "stdout": "30\n",
+      "stderr": ""
+    }
+  }
+}
+```
+
+## Expected Structure (after $proba.ignorePaths)
+
+```json
+{
+  "type": "object",
+  "keys": {
+    "context": {
+      "type": "object",
+      "keys": {
+        "execution": {
+          "type": "object",
+          "keys": {
+            "action": {
+              "type": "string",
+              "keys": null
+            },
+            "step": {
+              "type": "string",
+              "keys": null
+            }
+          }
+        },
+        "workbench": {
+          "type": "object",
+          "keys": {
+            "sections": {
+              "type": "object",
+              "keys": {}
+            }
+          }
+        },
+        "history": {
+          "type": "array",
+          "itemTypes": [
+            {
+              "type": "object",
+              "keys": {
+                "role": {
+                  "type": "string",
+                  "keys": null
+                },
+                "message": {
+                  "type": "string",
+                  "keys": null
+                }
+              }
+            }
+          ],
+          "keys": null
+        }
+      }
+    },
+    "execute": {
+      "type": "object",
+      "keys": {
+        "execute-command": {
+          "type": "object",
+          "keys": {
+            "command": {
+              "type": "string",
+              "keys": null
+            },
+            "timeout": {
+              "type": "number",
+              "keys": null
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## Actual Structure (after $proba.ignorePaths)
+
+```json
+{
+  "type": "object",
+  "keys": {
+    "context": {
+      "type": "object",
+      "keys": {
+        "execution": {
+          "type": "object",
+          "keys": {
+            "action": {
+              "type": "string",
+              "keys": null
+            },
+            "step": {
+              "type": "string",
+              "keys": null
+            }
+          }
+        },
+        "history": {
+          "type": "array",
+          "itemTypes": [
+            {
+              "type": "object",
+              "keys": {
+                "role": {
+                  "type": "string",
+                  "keys": null
+                },
+                "message": {
+                  "type": "string",
+                  "keys": null
+                }
+              }
+            }
+          ],
+          "keys": null
+        },
+        "workbench": {
+          "type": "object",
+          "keys": {
+            "sections": {
+              "type": "object",
+              "keys": {}
+            }
+          }
+        },
+        "debate_consensus": {
+          "type": "string",
+          "keys": null
+        }
+      }
+    },
+    "execute": {
+      "type": "object",
+      "keys": {
+        "form": {
+          "type": "object",
+          "keys": {
+            "title": {
+              "type": "string",
+              "keys": null
+            },
+            "input": {
+              "type": "array",
+              "itemTypes": [
+                {
+                  "type": "object",
+                  "keys": {
+                    "name": {
+                      "type": "string",
+                      "keys": null
+                    },
+                    "type": {
+                      "type": "string",
+                      "keys": null
+                    },
+                    "label": {
+                      "type": "string",
+                      "keys": null
+                    },
+                    "required": {
+                      "type": "boolean",
+                      "keys": null
+                    }
+                  }
+                }
+              ],
+              "keys": null
+            }
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+## Full Expected
+
+```json
+{
+  "$proba": {
+    "ignorePaths": [
+      "context.task",
+      "context.session_id",
+      "context.repo_map",
+      "context.requestPhase",
+      "context.llmPromiseId",
+      "context.result",
+      "context.transformSchema",
+      "context.message",
+      "context.choice_id",
+      "context.workbench.slots"
+    ],
+    "skipHistoryLengthCheck": true
+  },
+  "context": {
+    "execution": {
+      "action": "agent",
+      "step": "tool_execute_command"
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "history": [
+      {
+        "role": "string",
+        "message": "string"
+      }
+    ]
+  },
+  "execute": {
+    "execute-command": {
+      "command": "node -e \"const h = require('./utils/helpers'); console.log(h.calculateTotal([{price: 10}, {price: 20}]));\"",
+      "timeout": 10000
+    }
+  }
+}
+```
+
+## Full Actual
+
+```json
+{
+  "context": {
+    "session_id": "srv_sess_e1f42018-55e2-4ade-9e56-03d571c34413",
     "task": "зчитати файл і знайти функцію",
     "execution": {
       "action": "agent",
@@ -28,12 +330,24 @@
         "message": "Grep search for 'calculateTotal' found 1 match"
       },
       {
+        "role": "assistant",
+        "message": "File exists: utils/helpers.js"
+      },
+      {
+        "role": "assistant",
+        "message": "Applied patch to utils/helpers.js"
+      },
+      {
+        "role": "assistant",
+        "message": "Wrote utils/helpers.js (50 bytes)"
+      },
+      {
         "role": "user",
         "message": "зчитати файл і знайти функцію"
       },
       {
         "role": "system",
-        "message": "file-exists: {\"path\":\"utils/helpers.js\"}"
+        "message": "Command finished: node -e \"const h = require('./utils/helpers'); console.log(h.calculateTotal([{price: 10}, {price: 20}]));\" (exit 0)"
       }
     ],
     "workbench": {
@@ -51,14 +365,14 @@
         ],
         "grayRoom": {
           "enabled": true,
-          "planId": "prom_1775503787067_6k9dtt7t8",
+          "planId": "prom_1775503653029_185mb4kk7",
           "phase": "completed",
           "maxTurns": 10,
           "turn": 0,
           "status": "completed",
           "timestamps": {
-            "startedAt": "2026-04-06T19:30:10.518Z",
-            "lastUpdateAt": "2026-04-06T19:31:49.275Z"
+            "startedAt": "2026-04-06T19:28:28.955Z",
+            "lastUpdateAt": "2026-04-06T19:29:47.051Z"
           },
           "remainingBudget": 10,
           "traceRef": {
@@ -68,8 +382,11 @@
       }
     },
     "result": {
-      "file-exists": {
-        "path": "utils/helpers.js"
+      "execute-command": {
+        "command": "node -e \"const h = require('./utils/helpers'); console.log(h.calculateTotal([{price: 10}, {price: 20}]));\"",
+        "exitCode": 0,
+        "stdout": "30\n",
+        "stderr": ""
       },
       "message": "зчитати файл і знайти функцію"
     },
@@ -90,3 +407,8 @@
     }
   }
 }
+```
+
+## Directive checks
+
+- execute.execute-command: expected object, got undefined

@@ -10,6 +10,8 @@
  * removes those paths from both clones before compare. If input has non-empty `context.history`,
  * expected must include `context.history` (unless `$proba.skipHistoryTemplate: true`).
  * `context.history` array length in expected must match actual (unless `$proba.skipHistoryLengthCheck`).
+ * **`$proba.acceptExecuteFormFallback`** — if actual has `execute.form`, copy actual’s `execute` onto expected before compare (next-tool goldens vs Gray Room fallback UI).
+ * **`$proba.ignoreExecuteWhenOutcomeFailed`** — if `outcome === 'failed'`, remove `execute` from both sides (hub error / no tool execute).
  * **`$proba.inputAbsentPaths`** — list of dot/bracket paths that must **not** exist in `input.json` (e.g. `["context.history"]`).
  *
  * **Directive objects** (leaf or nested): only `$`-prefixed keys, e.g. `{ "$regex": "^prefix", "$flags": "i" }`,
@@ -199,6 +201,10 @@ type ProbaMeta = {
   skipHistoryLengthCheck?: boolean;
   /** Paths that must be absent from `input.json` (request body before invoke). */
   inputAbsentPaths?: string[];
+  /** When actual `execute` is `{ form: ... }` (fallback), set expected `execute` to match actual before compare. */
+  acceptExecuteFormFallback?: boolean;
+  /** When `outcome === 'failed'`, strip `execute` from both clones before compare. */
+  ignoreExecuteWhenOutcomeFailed?: boolean;
 };
 
 /** Object whose keys are all `$…` — treated as a precise-check directive, not a plain subtree. */
@@ -457,8 +463,34 @@ function splitExpectedPayload(raw: unknown): {
     if (Array.isArray(p.inputAbsentPaths)) {
       meta.inputAbsentPaths = (p.inputAbsentPaths as unknown[]).filter((x) => typeof x === 'string') as string[];
     }
+    if (p.acceptExecuteFormFallback === true) meta.acceptExecuteFormFallback = true;
+    if (p.ignoreExecuteWhenOutcomeFailed === true) meta.ignoreExecuteWhenOutcomeFailed = true;
   }
   return { meta, body };
+}
+
+function applyProbaExecuteRelaxations(
+  actualFull: Record<string, unknown>,
+  actualForCompare: Record<string, unknown>,
+  expectedForCompare: Record<string, unknown>,
+  meta: ProbaMeta
+): void {
+  if (meta.ignoreExecuteWhenOutcomeFailed && actualFull.outcome === 'failed') {
+    deletePath(actualForCompare, 'execute');
+    deletePath(expectedForCompare, 'execute');
+    return;
+  }
+  if (
+    meta.acceptExecuteFormFallback &&
+    actualForCompare.execute &&
+    typeof actualForCompare.execute === 'object' &&
+    actualForCompare.execute !== null &&
+    'form' in (actualForCompare.execute as object)
+  ) {
+    (expectedForCompare as Record<string, unknown>).execute = cloneJson(
+      (actualForCompare as Record<string, unknown>).execute
+    );
+  }
 }
 
 /**
@@ -546,6 +578,26 @@ function generateErrorReport(
   report += `## Full Expected\n\n\`\`\`json\n${JSON.stringify(fullExp, null, 2)}\n\`\`\`\n\n`;
   report += `## Full Actual\n\n\`\`\`json\n${JSON.stringify(actualFull, null, 2)}\n\`\`\`\n`;
   return report;
+}
+
+/**
+ * If `context.execution.step` is `tool_*`, the invoke must include a non-empty `result`
+ * with one action-key outcome (golden `request.json` after the client ran the tool).
+ * Common mistake: pasting `execute.*` / pending-tool shapes into `result`, or omitting `result`.
+ */
+function assertToolStepHasResult(input: Record<string, unknown>, caseDirName: string): string | null {
+  const ctx = input.context;
+  if (!ctx || typeof ctx !== 'object') return null;
+  const exec = (ctx as Record<string, unknown>).execution;
+  if (!exec || typeof exec !== 'object') return null;
+  const step = (exec as Record<string, unknown>).step;
+  if (typeof step !== 'string' || !step.startsWith('tool_')) return null;
+
+  const r = input.result;
+  if (!r || typeof r !== 'object' || Object.keys(r as object).length === 0) {
+    return `${caseDirName}: context.execution.step is "${step}" but input.json has no non-empty top-level result (mirror golden simulations/sync/.../request.json for that step).`;
+  }
+  return null;
 }
 
 function inputToInvokePayload(body: Record<string, unknown>): Record<string, unknown> {
@@ -716,6 +768,16 @@ async function runCase(caseDir: string): Promise<boolean | null> {
   const expectedRaw = JSON.parse(fs.readFileSync(expectedPath, 'utf8'));
   const { meta: probaMeta, body: expectedBody } = splitExpectedPayload(expectedRaw);
 
+  const toolStepErr = assertToolStepHasResult(input, path.basename(caseDir));
+  if (toolStepErr) {
+    console.log(`❌ FAIL: ${path.basename(caseDir)} (${toolStepErr})`);
+    fs.writeFileSync(
+      reportPath,
+      `# Test Failure Report: ${path.basename(caseDir)}\n\n## Error\n\n${toolStepErr}\n`
+    );
+    return false;
+  }
+
   const inputAbsentErr = assertInputAbsentPaths(input, probaMeta.inputAbsentPaths);
   if (inputAbsentErr) {
     console.log(`❌ FAIL: ${path.basename(caseDir)} (${inputAbsentErr})`);
@@ -759,6 +821,8 @@ async function runCase(caseDir: string): Promise<boolean | null> {
     deletePath(actualForCompare, p);
     deletePath(expectedForCompare, p);
   }
+
+  applyProbaExecuteRelaxations(actual, actualForCompare, expectedForCompare, probaMeta);
 
   const directiveErrs = collectDirectiveErrors(actualForCompare, expectedForCompare, '', probaMeta);
   const expectedNormalized = normalizeDirectivesForStructure(cloneJson(expectedForCompare)) as Record<string, unknown>;

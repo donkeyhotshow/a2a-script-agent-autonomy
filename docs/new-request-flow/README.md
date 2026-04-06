@@ -3,7 +3,19 @@
 Цель: стандартизировать ответы сервера и обработку ответов клиентом; описать полный поток Web → Client API → Server. 
 Термины: **web** — веб-интерфейс клиента (`a2a-client/packages/web`), **клиент** — `a2a-client`, **Client API** — @a2a-client/vite-plugin (порт 5173), **сервер** — `a2a-server` (порт 3000).
 
-> **См.:** [PROTOCOL.md](PROTOCOL.md), [SCHEMA.md](SCHEMA.md), [simulations/SCHEMA.md](../../simulations/SCHEMA.md)
+> **См.:** [PROTOCOL.md](PROTOCOL.md), [SCHEMAS.md](SCHEMAS.md), [simulations/SCHEMA.md](../../simulations/SCHEMA.md)
+
+## Карта документов (без дублирования)
+
+| Документ | Назначение |
+|----------|------------|
+| [PROTOCOL.md](PROTOCOL.md) | Норматив: контракты, эндпоинты, action-key |
+| [DATA-FLOW.md](DATA-FLOW.md) | Одна головная диаграмма стека + таблица портов |
+| [SESSION-FLOW.md](SESSION-FLOW.md) | Router (два удара), жизненный цикл сессии в Client API |
+| [INTEGRATION.md](INTEGRATION.md) | Доп. ASCII (состояния сессии, симуляции), быстрый старт |
+| [CONTRADICTIONS.md](CONTRADICTIONS.md) | Архив: старые правки расхождений между черновиками |
+
+Глубокий разбор **fix-vue-imports**: [SIMULATION-FIX-VUE-IMPORTS.md](SIMULATION-FIX-VUE-IMPORTS.md) (не дублировать в [SIMULATION-ANALYSIS.md](SIMULATION-ANALYSIS.md)).
 
 ## Каноничные источники
 
@@ -17,7 +29,7 @@
 
 - **Web не знает адрес сервера.** Все запросы к серверу идут через Client API (@a2a-client/vite-plugin на порту 5173).
 - **Конфигурация на Web:** страница настроек (Settings) для URL Client API; редактор проектов (Projects).
-- **Сервер обрабатывает запросы и сохраняет их состояние**, но не хранит долгосрочные пользовательские сессии в традиционном смысле. Каждый запрос ассоциируется с promiseId для отслеживания состояния.
+- **Сервер stateless:** не хранит пользовательские сессии; каждый `POST /api/v1/invoke` даёт **`promiseId`**, финальный `execute`/`context` — после опроса результата. Долгоживущие сессии — на стороне Client API (диск).
 
 ## Поток задачи (Task Flow): Web → Client API → Server
 

@@ -93,13 +93,31 @@ export function useA2AStream(options: {
     setIsLoading(false);
   }, []);
 
-   return {
-     messages,
-     isLoading,
-     error,
-     submit,
-     stop,
-     firstTokenReceived,
-     interrupt: null, // Placeholder for A2A HITL
-   };
+  const interrupt = useCallback(async () => {
+    if (!options.threadId) return;
+    
+    try {
+      // Send interrupt signal via Client API
+      await fetch(`${options.apiUrl}/api/a2a/sessions/${options.threadId}/interrupt`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      // Clear polling interval as we're interrupting
+      if (pollInterval.current) clearInterval(pollInterval.current);
+      setIsLoading(false);
+    } catch (e) {
+      setError(e as Error);
+    }
+  }, [options.apiUrl, options.threadId, pollInterval, setError, setIsLoading]);
+
+    return {
+      messages,
+      isLoading,
+      error,
+      submit,
+      stop,
+      firstTokenReceived,
+      interrupt,
+    };
 }

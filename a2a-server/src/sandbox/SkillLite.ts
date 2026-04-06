@@ -16,9 +16,13 @@ export class SkillLiteSandbox {
       // Mocked restricted execution
       const output = execSync(command, { cwd: dir, timeout: 5000 }).toString();
       return output;
-    } catch (err: any) {
-      logger.error('[SkillLite] Sandbox execution failed', err.message);
-      throw new Error(`Sandbox violation or error: ${err.message}`);
+    } catch (err: unknown) {
+      let errorMessage = 'Unknown error';
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      logger.error('[SkillLite] Sandbox execution failed', errorMessage);
+      throw new Error(`Sandbox violation or error: ${errorMessage}`);
     }
   }
 }

@@ -1,15 +1,14 @@
 import { logger } from '../utils/logger.js';
-// @ts-ignore
 import { Loro } from 'loro-crdt';
 
 export class StateConvergence {
-  private doc: any;
+  private doc: any; // Using any for Loro since proper typings are complex
 
   constructor() {
     this.doc = new Loro();
   }
 
-  updateState(key: string, value: any) {
+  updateState(key: string, value: unknown) {
     const map = this.doc.getMap('session_state');
     map.set(key, value);
     logger.info('[CRDT] State updated', { key });

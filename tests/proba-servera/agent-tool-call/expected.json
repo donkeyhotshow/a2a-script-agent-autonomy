@@ -12,27 +12,36 @@
       "context.choice_id",
       "context.workbench.slots"
     ],
-    "skipHistoryLengthCheck": true
+    "skipHistoryLengthCheck": true,
+    "acceptExecuteFormFallback": true,
+    "ignoreExecuteWhenOutcomeFailed": true
   },
   "context": {
     "execution": {
       "action": "agent",
-      "step": "tool_grep_search"
-    },
-    "workbench": {
-      "sections": {}
+      "step": "request"
     },
     "history": [
       {
-        "role": "string",
+        "role": "user",
         "message": "string"
       }
-    ]
+    ],
+    "workbench": {
+      "sections": {}
+    }
   },
   "execute": {
-    "grep-search": {
-      "pattern": "string",
-      "path": "string"
+    "form": {
+      "title": "string",
+      "input": [
+        {
+          "name": "string",
+          "type": "string",
+          "label": "string",
+          "required": true
+        }
+      ]
     }
   }
 }
