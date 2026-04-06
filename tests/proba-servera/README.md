@@ -46,8 +46,24 @@ Align **`context` / `result`** with the matching golden step where you copied a 
 ## Runner
 
 - From repo root: **`npm run validate:proba-servera`** (`package.json` → `tsx tests/proba-servera/validate.mts`).
+- **Direct hub L3 cache smoke:** **`npm run verify:proba-cache-api`** — two identical `POST /api/chat?promise=1` bodies; second (and third with extra volatile keys) must return **`cached: true`** (`tests/proba-servera/cache-api-smoke.mjs`).
 - **`PROBA_STACK_PROBE_MS`** — per-probe timeout (default 4000 ms).
 - **`PROBA_SERVERA_ONLY`** — run one folder only (e.g. `PROBA_SERVERA_ONLY=script-select`).
+- **`PROBA_WARM_CACHE=1`** — before the measured run, executes every selected case once (invoke only, no `expected.json` compare) to populate ai-integration L3 disk cache; respects **`PROBA_SERVERA_ONLY`**.
+
+### LLM L3 disk cache (ai-integration) and proba
+
+Proba drives **a2a-server** → **POST** `AI_HUB_URL/api/chat?promise=1` (Gray Room, dialog, agent **`result.completed`** → optional syndicate / SIEGE review on non-dialog exits, etc. all use this promise path). Authoring: [`AUTHORING.md`](AUTHORING.md). The proxy resolves some calls **inline** from disk (`stage=promise_inline` in logs); background workers use **`promise_bg`**; the built-in promise daemon uses **`daemon`**. Non-promise forwards use **`sync`** (`upstream_client.check_cache`).
+
+**Measure hits/misses:** set **`LLM_DISK_CACHE_LOG=1`** on the ai-integration process, run proba, then grep proxy logs:
+
+`grep llm_disk_cache` (or `grep "llm_disk_cache outcome="`).
+
+Counts: `grep -c 'outcome=hit'`, `outcome=miss`, `outcome=store` (line format: `outcome=%s stage=%s path=%s key_prefix=%s` — no bodies).
+
+**Stable keys:** cache normalization lives in `ai-integration/proxy/caching.py` (`normalize_body_for_cache`, `build_llm_cache_payload`). Stateless invokes use stable `context.session_id` **`srv_sess_stateless`** so repeat proba runs match; client/storage ids are still replaced with fresh `srv_sess_*` (see `a2a-server/src/services/utils/invoke.service.ts`).
+- **`PROBA_WARM_CACHE=1`** — before assertions, runs each selected case once **invoke-only** (no `output.json` / compare) to warm **ai-integration** L3 disk cache, then runs the normal pass. Use with the same `PROBA_SERVERA_ONLY` filter as the measured run.
+- **LLM L3 cache metrics** — on the ai-integration process, set **`LLM_DISK_CACHE_LOG=1`**, run proba, then grep hub logs for **`llm_disk_cache`** (`outcome=hit|miss`, `stage=promise_inline|promise_worker|daemon|sync`). Path inventory: [`LLM-CACHE-PATHS.md`](LLM-CACHE-PATHS.md).
 
 ## Artifacts
 

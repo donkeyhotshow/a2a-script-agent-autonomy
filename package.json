@@ -35,6 +35,7 @@
         "verify:gray-room": "node tests/direct-tests/validators/verify-gray-room-state.mjs",
         "audit:sim-choice-descriptions": "node tests/direct-tests/validators/audit-sim-choice-descriptions.mjs",
         "validate:proba-servera": "tsx tests/proba-servera/validate.mts",
+        "verify:proba-cache-api": "node tests/proba-servera/cache-api-smoke.mjs",
         "test:human-review:all": "node scripts/run-human-review-all.mjs"
     },
     "devDependencies": {

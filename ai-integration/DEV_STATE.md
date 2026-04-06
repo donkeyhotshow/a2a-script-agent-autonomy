@@ -32,6 +32,8 @@ Current operational state for the `ai-integration` module.
 
 **2026-04-06 (human-review):** `proxy/ai_hub_config.py` — `_extract_prompt`: multimodal list `content`, numeric `content`, assistant `tool_calls`; `_normalize_path` strips leading/trailing slashes for rule `path` match. Tests: `tests/human-review/`.
 
+**2026-04-07:** L3 cache: `normalize_body_for_cache` also strips adapter noise on `messages[]` (`id`, `message_id`, …) and sorts `options` for stable keys. Optional metrics: `LLM_DISK_CACHE_LOG=1` → grep `llm_disk_cache` (hit/miss, stage). Proba: `PROBA_WARM_CACHE=1` + [`tests/proba-servera/LLM-CACHE-PATHS.md`](../tests/proba-servera/LLM-CACHE-PATHS.md).
+
 **2026-04-05:** `resolve_routing` (`proxy/router_manager.py`): if the JSON body omits `model` and the provider router is initialized, the request is routed to the configured default provider’s model (Z.AI / GLM), not straight to Ollama. LLM cache keys (`proxy/caching.py`): additional volatile fields (`*_at`, keys containing `timestamp`, `*_time` except a small blocklist, `user`, etc.) are excluded from the hash so repeated identical prompts hit disk cache even when clients add timestamps.
 
 **2026-04-03:** Promise completion (`proxy/promises.py`): `_promise_set_done` does not mark a promise `done` on non-2xx HTTP **or** on 2xx with a JSON `error` envelope (OpenAI-style), including when `Content-Type` omits `json`. `is_llm_upstream_response_ok()` gates **all** LLM response caches: `proxy_handler.py` (sync path: no store + reject bad hits), `daemon.py` / `promise_routes.py` (invalidate poisoned cache entries on read). Tests: `tests/test_promises_llm_failure.py`.

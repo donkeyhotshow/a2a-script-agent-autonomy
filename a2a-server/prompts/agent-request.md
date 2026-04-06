@@ -128,6 +128,7 @@ Rules:
 - **Allowed tool keys:** `rag-search`, `list-directory`, `read-file`, `write-file`, `grep-search`, `file-exists`, `edit-patch`, `run-script`, `script`, `execute-command` — same surface the server validates for tool rounds.
 - **Chat / forms:** use **`execute.message`** with **`execute.form`** (Pattern A style), or legacy **`form.input[]`** goldens without a duplicate top-level line. Do **not** emit **`execute.dialog`** as a tool.
 - `completed`: Set `true` only when the task is fully finished. When `true`, omit or empty `execute`.
+- **Server / Gray Room:** Response transforms copy your top-level **`completed`** into **`result.completed`** on the server payload. For **agent** turns that leave Gray Room **without** staying in the interrupt loop, **`result.completed === true`** triggers optional **syndicate / SIEGE_REVIEW** (peer review). There is no separate “decision cell” LLM call. Keep **`completed: false`** on every in-progress turn.
 
 ## Gray room (server-side, same invoke)
 

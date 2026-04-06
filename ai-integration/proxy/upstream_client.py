@@ -10,7 +10,12 @@ logger = logging.getLogger(__name__)
 
 from .config import FORWARD_TIMEOUT
 from .api_key_routing import forward_with_api_key_failover
-from .caching import get_cache, build_llm_cache_payload, build_llm_cache_key
+from .caching import (
+    get_cache,
+    build_llm_cache_payload,
+    build_llm_cache_key,
+    llm_disk_cache_log,
+)
 from .promises import is_llm_upstream_response_ok, _json_bytes
 
 
@@ -114,18 +119,21 @@ def check_cache(
                 cache_key_full[:16],
             )
             cache.delete(cache_key_full)
+            llm_disk_cache_log("miss", path=path, stage="sync", cache_key=cache_key_full)
             return None
         body_text = cached["body"]
         body_b = body_text.encode('utf-8') if isinstance(body_text, str) else (body_text or b'')
         st = int(cached["status"])
         if is_llm_upstream_response_ok(st, body_b, 'application/json'):
             logger.debug(f"Cache hit for key: {cache_key_full[:16]}...")
+            llm_disk_cache_log("hit", path=path, stage="sync", cache_key=cache_key_full)
             return cached
         logger.warning(
             'Rejecting cached response: not a valid LLM success (invalidating key %s...)',
             cache_key_full[:16],
         )
         cache.delete(cache_key_full)
+    llm_disk_cache_log("miss", path=path, stage="sync", cache_key=cache_key_full)
     return None
 
 
@@ -148,6 +156,7 @@ def save_to_cache(
         if is_llm_upstream_response_ok(resp.status_code, resp.content or b'', ct):
             cache.set(cache_key_full, {"status": resp.status_code, "body": resp.text})
             logger.debug(f"Cached response for key: {cache_key_full[:16]}...")
+            llm_disk_cache_log("store", path=path, stage="sync", cache_key=cache_key_full)
         else:
             logger.warning(
                 'Not caching upstream response: LLM failure payload (status=%s key=%s...)',

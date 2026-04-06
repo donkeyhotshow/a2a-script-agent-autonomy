@@ -29,5 +29,8 @@
     "read-file": {
       "path": "utils/helpers.js"
     }
+  },
+  "result": {
+    "completed": false
   }
 }

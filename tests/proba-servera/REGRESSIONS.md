@@ -1,19 +1,19 @@
 # Proba-Servera Regression Report
 
-**Generated:** 2026-04-06T19:35:17.579Z
+**Generated:** 2026-04-06T21:15:25.147Z
 
 ## Summary
 
-- **Total Cases:** 1
-- **Passed:** 0
-- **Failed:** 1
+- **Total Cases:** 19
+- **Passed:** 17
+- **Failed:** 2
 
 ## Regressions Detected
 
-### agent-tool-edit-patch
+### dialog-message
 
 - **Status:** FAIL
-- **Report:** [agent-tool-edit-patch/error-report.md](agent-tool-edit-patch/error-report.md)
+- **Report:** [dialog-message/error-report.md](dialog-message/error-report.md)
 
 **Differences:**
 
@@ -21,7 +21,26 @@
 
 | Path | Issue | Expected | Actual |
 |------|-------|----------|--------|
-| `execute.edit-patch` | missing-key | {"type":"object","keys":{"path":{"type": | — |
+| `execute.form.title` | missing-key | {"type":"string","keys":null} | — |
+| `execute.form.description` | missing-key | {"type":"string","keys":null} | — |
+| `execute.form.input` | missing-key | {"type":"array","itemTypes":[{"type":"ob | — |
+
+
+
+### dialog-select
+
+- **Status:** FAIL
+- **Report:** [dialog-select/error-report.md](dialog-select/error-report.md)
+
+**Differences:**
+
+## Differences
+
+| Path | Issue | Expected | Actual |
+|------|-------|----------|--------|
+| `execute.form.title` | missing-key | {"type":"string","keys":null} | — |
+| `execute.form.description` | missing-key | {"type":"string","keys":null} | — |
+| `execute.form.input` | missing-key | {"type":"array","itemTypes":[{"type":"ob | — |
 
 
 
@@ -45,4 +64,22 @@ When tests fail with 'missing-key' in \`execute\`:
 
 | Case | Status | Description |
 |------|--------|-------------|
-| agent-tool-edit-patch | ❌ FAIL | Server request/response validation |
+| agent-select | ✅ PASS | Router choice → agent mode init |
+| agent-tool-call | ✅ PASS | Agent mode → tool execution request |
+| agent-tool-edit-patch | ✅ PASS | Server request/response validation |
+| agent-tool-execute-command | ✅ PASS | Server request/response validation |
+| agent-tool-file-exists | ✅ PASS | Server request/response validation |
+| agent-tool-grep-search | ✅ PASS | Server request/response validation |
+| agent-tool-list-directory | ✅ PASS | Server request/response validation |
+| agent-tool-rag-search | ✅ PASS | Server request/response validation |
+| agent-tool-read-file | ✅ PASS | Server request/response validation |
+| agent-tool-run-script | ✅ PASS | Server request/response validation |
+| agent-tool-write-file | ✅ PASS | Server request/response validation |
+| agent-workspace-chain | ✅ PASS | Server request/response validation |
+| dialog-follow-up | ✅ PASS | Server request/response validation |
+| dialog-interrupt | ✅ PASS | Server request/response validation |
+| dialog-message | ❌ FAIL | Dialog mode → user message |
+| dialog-message-only | ✅ PASS | Server request/response validation |
+| dialog-select | ❌ FAIL | Router choice → dialog mode init |
+| router-new-task | ✅ PASS | Initial task → router with choices |
+| script-select | ✅ PASS | Router choice → scripted action pipeline |

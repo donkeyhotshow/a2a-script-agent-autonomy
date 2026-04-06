@@ -6,7 +6,10 @@ import { buildExecuteProjection } from './utils/execute-projection-dto.js';
 import { isPromisePollComplete } from '../storage/promise-status.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.js';
-import { normalizePromisePollStatus } from '@a2a-client/shared/client-api-envelope.mjs';
+import {
+    normalizePromisePollStatus,
+    isRecoverableAsyncSnapshot,
+} from '@a2a-client/shared/client-api-envelope.mjs';
 import { resolveProjectPathForApi, loadSession, saveSession } from '../storage/projectSessions.js';
 import { registerStepSessionsParent } from '../storage/newSessions.js';
 import { getActiveAsyncWork } from './utils/session-projection-dto.js';
@@ -30,6 +33,53 @@ function beginProjectStepContextAsync(cwd, sessionId, url, storageMode) {
     fs.mkdirSync(parent, { recursive: true });
     registerStepSessionsParent(sessionId, parent);
     return { projectPath, cleanup: () => registerStepSessionsParent(sessionId, null), notFound: false };
+}
+
+/**
+ * Persisted promise snapshot: on failed/error, avoid re-saving full server blobs each poll
+ * (large `result` / nested errors). Optional short `errorHint` for local grep.
+ * @param {Record<string, unknown>} merged
+ */
+function compactPromiseForStorageIfNeeded(merged) {
+    if (!merged || typeof merged !== 'object') return merged;
+    const st = merged.status;
+    if (st !== 'failed' && st !== 'error') return merged;
+    const small = {
+        promiseId: merged.promiseId,
+        status: st,
+        checkedAt: merged.checkedAt,
+        retryAfter: merged.retryAfter ?? null,
+        requestPhase: merged.requestPhase ?? null,
+    };
+    const hint =
+        typeof merged.message === 'string'
+            ? merged.message.slice(0, 400)
+            : typeof merged.error === 'string'
+              ? merged.error.slice(0, 400)
+              : merged.error &&
+                  typeof merged.error === 'object' &&
+                  merged.error !== null &&
+                  typeof merged.error.message === 'string'
+                ? merged.error.message.slice(0, 400)
+                : null;
+    if (hint) small.errorHint = hint;
+    return small;
+}
+
+/**
+ * Web `/async` body: for failed/error, expose only status (+ retryAfter when recoverable) so the UI
+ * shows "something failed" without re-downloading huge error payloads every poll.
+ * @param {Record<string, unknown> | null | undefined} safeResult
+ * @param {Record<string, unknown>} promiseStatus
+ */
+function buildWebAsyncResultField(safeResult, promiseStatus) {
+    const st = promiseStatus?.status;
+    if (st !== 'failed' && st !== 'error') return safeResult;
+    const out = { status: st };
+    if (isRecoverableAsyncSnapshot(promiseStatus)) {
+        out.retryAfter = promiseStatus.retryAfter ?? null;
+    }
+    return out;
 }
 
 function loadSessionForAsync(cwd, sessionId, projectPath) {
@@ -85,7 +135,12 @@ function runViteClientPromisePoll({
                     ...promiseStatus,
                     checkedAt: new Date().toISOString(),
                 };
-                stepHandlers.saveServerPromise(cwd, sessionId, currentStep, updatedPromise);
+                stepHandlers.saveServerPromise(
+                    cwd,
+                    sessionId,
+                    currentStep,
+                    compactPromiseForStorageIfNeeded(updatedPromise)
+                );
 
                 if (isPromisePollComplete(updatedPromise)) {
                     const assistantMessage =
@@ -154,16 +209,21 @@ function runViteClientPromisePoll({
                     safeResult = { ...safeResult };
                     delete safeResult.context;
                 }
-                res.setHeader('Content-Type', 'application/json');
                 const statusStr = normalizedStatus.status;
+                const errWire = statusStr === 'failed' || statusStr === 'error';
+                safeResult = buildWebAsyncResultField(safeResult, promiseStatus);
+                res.setHeader('Content-Type', 'application/json');
                 const asyncPending = normalizedStatus.asyncPending;
                 const pollCtx = promiseStatus.context;
-                const webExecute = promiseStatus.execute
-                    ? buildExecuteProjection(promiseStatus.execute, {
-                          context:
-                              pollCtx && typeof pollCtx === 'object' && pollCtx !== null ? pollCtx : undefined,
-                      })
-                    : null;
+                const webExecute =
+                    errWire || !promiseStatus.execute
+                        ? null
+                        : buildExecuteProjection(promiseStatus.execute, {
+                              context:
+                                  pollCtx && typeof pollCtx === 'object' && pollCtx !== null
+                                      ? pollCtx
+                                      : undefined,
+                          });
                 const payload = includePromiseIdInBody
                     ? {
                           promiseId,

@@ -41,7 +41,11 @@
 
 ### 2. result.completed
 
-Альтернативный формат - прямая отметка завершения:
+Альтернативный формат — отметка на ответе сервера после response-transform: в LLM JSON задаётся top-level **`"completed": true|false`**, пайплайн копирует в **`result.completed`** (см. `a2a-server/prompts/transforms/agent-response.json` и аналоги).
+
+Для **agent / coder / analyze / auto-ai** при выходе из Gray Room **без** продолжения interrupt-цикла **`result.completed: true`** может запускать **syndicate / SIEGE_REVIEW** (peer review). Для **dialog** на соответствующей ветке syndicate не выполняется. Подробнее: [`a2a-server/docs/GRAY-ROOM.md`](../../../../a2a-server/docs/GRAY-ROOM.md), [`simulations/SCHEMA.md`](../../../../simulations/SCHEMA.md).
+
+Пример:
 
 ```json
 {

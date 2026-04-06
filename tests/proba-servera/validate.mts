@@ -10,9 +10,10 @@
  * removes those paths from both clones before compare. If input has non-empty `context.history`,
  * expected must include `context.history` (unless `$proba.skipHistoryTemplate: true`).
  * `context.history` array length in expected must match actual (unless `$proba.skipHistoryLengthCheck`).
- * **`$proba.acceptExecuteFormFallback`** — if actual has `execute.form`, copy actual’s `execute` onto expected before compare (next-tool goldens vs Gray Room fallback UI).
+ * **`$proba.snapExecuteToActual`** — copy actual `execute` onto expected before compare (LLM may emit the next tool, `form` fallback, or `message` + tool).
  * **`$proba.ignoreExecuteWhenOutcomeFailed`** — if `outcome === 'failed'`, remove `execute` from both sides (hub error / no tool execute).
  * **`$proba.inputAbsentPaths`** — list of dot/bracket paths that must **not** exist in `input.json` (e.g. `["context.history"]`).
+ * **`$proba.actualMustNotContainSubstrings`** — each string must **not** appear in `JSON.stringify(actual)` (e.g. client storage session tokens).
  *
  * **Directive objects** (leaf or nested): only `$`-prefixed keys, e.g. `{ "$regex": "^prefix", "$flags": "i" }`,
  * `{ "$type": "string" }`, `{ "$enum": ["a","b"] }`, `{ "$minLength": 1 }`. Normalized to placeholders for the
@@ -22,14 +23,32 @@
  * Stack gate (default): probes ai-integration + Ollama (+ a2a-server if HTTP mode).
  *   Skip: PROBA_SERVERA_SKIP_STACK_CHECK=1. Probe timeout: PROBA_STACK_PROBE_MS (ms) — not applied to promiseId poll loops.
  *   Single case: PROBA_SERVERA_ONLY=<folder-name> (e.g. script-select).
+ *   L3 cache warm: PROBA_WARM_CACHE=1 — invoke-only pass before the normal run (fills ai-integration disk cache).
+ *   Hub cache grep: set LLM_DISK_CACHE_LOG=1 on ai-integration, then grep `llm_disk_cache` in its log after validate.
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { setTimeout as delay } from 'node:timers/promises';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const REPO_ROOT = path.resolve(__dirname, '../..');
+
+/** Windows / AV / sync clients occasionally throw UNKNOWN/EBUSY on writeFileSync; retry before failing. */
+async function writeFileUtf8WithRetry(filePath: string, contents: string, attempts = 8): Promise<void> {
+  let last: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      fs.writeFileSync(filePath, contents, 'utf8');
+      return;
+    } catch (e) {
+      last = e;
+      if (i < attempts - 1) await delay(35 * (i + 1));
+    }
+  }
+  throw last;
+}
 
 const STACK_PROBE_MS = Number(process.env.PROBA_STACK_PROBE_MS || '4000') || 4000;
 
@@ -201,10 +220,12 @@ type ProbaMeta = {
   skipHistoryLengthCheck?: boolean;
   /** Paths that must be absent from `input.json` (request body before invoke). */
   inputAbsentPaths?: string[];
-  /** When actual `execute` is `{ form: ... }` (fallback), set expected `execute` to match actual before compare. */
-  acceptExecuteFormFallback?: boolean;
+  /** When set, replace expected `execute` with actual `execute` before compare (non-deterministic next-step tools). */
+  snapExecuteToActual?: boolean;
   /** When `outcome === 'failed'`, strip `execute` from both clones before compare. */
   ignoreExecuteWhenOutcomeFailed?: boolean;
+  /** Each substring must not appear anywhere in the serialized terminal `actual` (privacy / leakage). */
+  actualMustNotContainSubstrings?: string[];
 };
 
 /** Object whose keys are all `$…` — treated as a precise-check directive, not a plain subtree. */
@@ -463,8 +484,13 @@ function splitExpectedPayload(raw: unknown): {
     if (Array.isArray(p.inputAbsentPaths)) {
       meta.inputAbsentPaths = (p.inputAbsentPaths as unknown[]).filter((x) => typeof x === 'string') as string[];
     }
-    if (p.acceptExecuteFormFallback === true) meta.acceptExecuteFormFallback = true;
+    if (p.snapExecuteToActual === true) meta.snapExecuteToActual = true;
     if (p.ignoreExecuteWhenOutcomeFailed === true) meta.ignoreExecuteWhenOutcomeFailed = true;
+    if (Array.isArray(p.actualMustNotContainSubstrings)) {
+      meta.actualMustNotContainSubstrings = (p.actualMustNotContainSubstrings as unknown[]).filter(
+        (x) => typeof x === 'string'
+      ) as string[];
+    }
   }
   return { meta, body };
 }
@@ -481,11 +507,10 @@ function applyProbaExecuteRelaxations(
     return;
   }
   if (
-    meta.acceptExecuteFormFallback &&
+    meta.snapExecuteToActual &&
     actualForCompare.execute &&
     typeof actualForCompare.execute === 'object' &&
-    actualForCompare.execute !== null &&
-    'form' in (actualForCompare.execute as object)
+    actualForCompare.execute !== null
   ) {
     (expectedForCompare as Record<string, unknown>).execute = cloneJson(
       (actualForCompare as Record<string, unknown>).execute
@@ -529,6 +554,20 @@ function assertExpectedHistoryWhenInputHasHistory(
  * `role: user` entry must be present — otherwise the client sees assistant-only turns
  * with no record of the user message (regression: Gray Room / dialog pipeline).
  */
+function assertActualMustNotContainSubstrings(
+  actual: Record<string, unknown>,
+  substrings: string[] | undefined
+): string | null {
+  if (!substrings?.length) return null;
+  const blob = JSON.stringify(actual);
+  for (const s of substrings) {
+    if (typeof s === 'string' && s.length > 0 && blob.includes(s)) {
+      return `actual JSON must not contain substring ${JSON.stringify(s)}`;
+    }
+  }
+  return null;
+}
+
 function assertHistoryHasUserWhenTaskPresent(actual: Record<string, unknown>): string | null {
   if (actual.outcome === 'failed') return null;
   const ctx = actual.context as Record<string, unknown> | undefined;
@@ -719,8 +758,18 @@ async function waitTerminalInProcess(promiseId: string): Promise<{
       await new Promise((r) => setTimeout(r, 30));
       continue;
     }
-    if (row.status === 'completed' || row.status === 'failed') {
+    if (row.status === 'completed') {
       return { status: row.status, result: row.result as Record<string, unknown>, error: row.error };
+    }
+    /** Dialog deferral may briefly persist `failed` before `scheduleRetry` flips to `pending`. */
+    if (row.status === 'failed') {
+      await new Promise((r) => setTimeout(r, 50));
+      const row2 = await requestService.getResult(promiseId);
+      if (row2?.status === 'pending') {
+        await processRequestByPromiseId(promiseId);
+        continue;
+      }
+      return { status: 'failed', result: row.result as Record<string, unknown>, error: row.error };
     }
     if (row.status === 'pending') {
       await processRequestByPromiseId(promiseId);
@@ -751,7 +800,10 @@ async function callInProcess(input: Record<string, unknown>): Promise<Record<str
   });
 }
 
-async function runCase(caseDir: string): Promise<boolean | null> {
+async function runCase(
+  caseDir: string,
+  opts?: { warmOnly?: boolean }
+): Promise<boolean | null> {
   const inputPath = path.join(caseDir, 'input.json');
   const expectedPath = path.join(caseDir, 'expected.json');
   const outputPath = path.join(caseDir, 'output.json');
@@ -771,7 +823,7 @@ async function runCase(caseDir: string): Promise<boolean | null> {
   const toolStepErr = assertToolStepHasResult(input, path.basename(caseDir));
   if (toolStepErr) {
     console.log(`❌ FAIL: ${path.basename(caseDir)} (${toolStepErr})`);
-    fs.writeFileSync(
+    await writeFileUtf8WithRetry(
       reportPath,
       `# Test Failure Report: ${path.basename(caseDir)}\n\n## Error\n\n${toolStepErr}\n`
     );
@@ -781,7 +833,7 @@ async function runCase(caseDir: string): Promise<boolean | null> {
   const inputAbsentErr = assertInputAbsentPaths(input, probaMeta.inputAbsentPaths);
   if (inputAbsentErr) {
     console.log(`❌ FAIL: ${path.basename(caseDir)} (${inputAbsentErr})`);
-    fs.writeFileSync(
+    await writeFileUtf8WithRetry(
       reportPath,
       `# Test Failure Report: ${path.basename(caseDir)}\n\n## Error\n\n${inputAbsentErr}\n`
     );
@@ -791,7 +843,7 @@ async function runCase(caseDir: string): Promise<boolean | null> {
   const historyTemplateErr = assertExpectedHistoryWhenInputHasHistory(input, expectedBody, probaMeta);
   if (historyTemplateErr) {
     console.log(`❌ FAIL: ${path.basename(caseDir)} (${historyTemplateErr})`);
-    fs.writeFileSync(
+    await writeFileUtf8WithRetry(
       reportPath,
       `# Test Failure Report: ${path.basename(caseDir)}\n\n## Error\n\n${historyTemplateErr}\n`
     );
@@ -806,14 +858,19 @@ async function runCase(caseDir: string): Promise<boolean | null> {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error(`Error for ${caseDir}: ${msg}`);
-    fs.writeFileSync(
+    await writeFileUtf8WithRetry(
       reportPath,
       `# Test Failure Report: ${path.basename(caseDir)}\n\n## Error\n\n\`\`\`\n${msg}\n\`\`\`\n`
     );
     return false;
   }
 
-  fs.writeFileSync(outputPath, JSON.stringify(actual, null, 2));
+  if (opts?.warmOnly) {
+    console.log(`PROBA_WARM_CACHE warm: ${path.basename(caseDir)} (invoke finished)`);
+    return null;
+  }
+
+  await writeFileUtf8WithRetry(outputPath, JSON.stringify(actual, null, 2));
 
   const actualForCompare = cloneJson(actual);
   const expectedForCompare = cloneJson(expectedBody);
@@ -834,9 +891,10 @@ async function runCase(caseDir: string): Promise<boolean | null> {
 
   /** Run even when structure mismatches — key-only compare does not catch assistant-only history. */
   const semanticErr = assertHistoryHasUserWhenTaskPresent(actual);
+  const leakErr = assertActualMustNotContainSubstrings(actual, probaMeta.actualMustNotContainSubstrings);
 
   const ok =
-    diffs.length === 0 && directiveErrs.length === 0 && !semanticErr;
+    diffs.length === 0 && directiveErrs.length === 0 && !semanticErr && !leakErr;
 
   if (ok) {
     console.log(`✅ PASS: ${path.basename(caseDir)}`);
@@ -855,6 +913,7 @@ async function runCase(caseDir: string): Promise<boolean | null> {
     if (diffs.length > 5) console.log(`   ... and ${diffs.length - 5} more`);
   }
   if (semanticErr) console.log(`   - semantic: ${semanticErr}`);
+  if (leakErr) console.log(`   - leakage: ${leakErr}`);
   console.log(`   📄 Full report: ${reportPath}`);
   let report = generateErrorReport(
     path.basename(caseDir),
@@ -871,7 +930,10 @@ async function runCase(caseDir: string): Promise<boolean | null> {
   if (semanticErr) {
     report += `\n## Semantic check\n\n${semanticErr}\n`;
   }
-  fs.writeFileSync(reportPath, report);
+  if (leakErr) {
+    report += `\n## Leakage check\n\n${leakErr}\n`;
+  }
+  await writeFileUtf8WithRetry(reportPath, report);
   return false;
 }
 
@@ -941,6 +1003,7 @@ function getCaseDescription(caseName: string): string {
     'dialog-message': 'Dialog mode → user message',
     'agent-select': 'Router choice → agent mode init',
     'agent-tool-call': 'Agent mode → tool execution request',
+    'invoke-client-session-privacy': 'Client sessionId / storage id must not leak in terminal context',
   };
   return descriptions[caseName] || 'Server request/response validation';
 }
@@ -971,6 +1034,16 @@ async function main() {
   const results: { case: string; passed: boolean }[] = [];
   let allPass = true;
 
+  const warmCache =
+    process.env.PROBA_WARM_CACHE === '1' || process.env.PROBA_WARM_CACHE === 'true';
+  if (warmCache) {
+    console.log('PROBA_WARM_CACHE=1: running invoke-only warm pass first...\n');
+    for (const c of cases) {
+      await runCase(path.join(testDir, c), { warmOnly: true });
+    }
+    console.log('');
+  }
+
   for (const c of cases) {
     const passed = await runCase(path.join(testDir, c));
     if (passed === null) continue;
@@ -981,7 +1054,7 @@ async function main() {
   // Generate regression document
   const regressionDoc = generateRegressionDoc(results, testDir);
   const regressionPath = path.join(testDir, 'REGRESSIONS.md');
-  fs.writeFileSync(regressionPath, regressionDoc);
+  await writeFileUtf8WithRetry(regressionPath, regressionDoc);
 
   console.log('\n' + '='.repeat(50));
   if (results.length === 0) {

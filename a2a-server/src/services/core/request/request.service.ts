@@ -4,6 +4,7 @@
  */
 
 import * as path from 'path';
+import { randomUUID } from 'crypto';
 import {logger} from '../../../utils/logger.js';
 import {RequestFileStorage} from './request-file-storage.js';
 
@@ -124,8 +125,8 @@ export class RequestService {
      * Create a new request and return promiseId
      */
     async create(data: CreateRequestData): Promise<{ promiseId: string; id: string }> {
-        const id = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const promiseId = `prom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const id = `req_${randomUUID()}`;
+        const promiseId = `prom_${randomUUID()}`;
 
         const req: RequestResult = {
             id,

@@ -24,3 +24,4 @@ simulations/**/invoke-capture.json
 
 # Vitest JSON scratch from human-review runners
 **/tests/human-review/.last-vitest.json
+tests/proba-servera/**/output.json

@@ -20,6 +20,7 @@ Guidance for agents working in this repository.
 | **Schema debugging start point** | **[`tests/direct-tests/README.md`](tests/direct-tests/README.md)** — reproduce shape issues here first, then sims/e2e |
 | **Offline validators (LLM / execute shape, sessions, sims)** | **[`tests/direct-tests/validators/README.md`](tests/direct-tests/validators/README.md)** — scripts flag contract mistakes (e.g. top-level `message` + tool vs `execute.message`); run from repo root: `scan-promise-bodies`, `scan-session-responses`, `verify:gray-room`, `audit:sim-choice-descriptions`, `sim:check-md` |
 | **Yellow alert (AI code scan)** | **[`docs/YELLOW-ALERT-SCAN.md`](docs/YELLOW-ALERT-SCAN.md)** — paste invocation; debt/hacks/TODO/contract smells; not the same as *Yellow alert (operator)* in [`GLOSSARY.md`](GLOSSARY.md) |
+| **Async-only (no sync switch)** | Never add **sync** invoke, **inline** LLM forwarding, or operator docs that tell people to **disable** the promise queue to “unstick” work — [Async-only transport](#5-async-only-transport-mandatory) |
 | Imports | **Server / NodeNext:** `.js` on relative imports. **`premium-ui`:** `@/` (Vite) — [`.cursor/rules/code-hierarchy.mdc`](.cursor/rules/code-hierarchy.mdc) |
 | Test ENCRYPTION_KEY | Exactly 32 characters |
 | Test DB | `a2a_test` (not `a2a_server`) |
@@ -27,6 +28,7 @@ Guidance for agents working in this repository.
 | DEV_STATE | Always update before/after tasks |
 | **No actionable work** | **Not** “done”: empty queue **triggers** maintenance — prune `DEV_STATE` (root + modules), discover work, write tasks — see DEV_STATE Protocol (why below) |
 | **Why iteration stops** | Misreads vs mitigations — [Why iteration stops](#why-iteration-stops-misreads-and-mitigations) |
+| **Rules Q&A log (yes/no)** | **[`docs/PROJECT-RULES-QA.md`](docs/PROJECT-RULES-QA.md)** — interview answers only; normative text remains here + **DEV_STATE** |
 
 ### Empty queue — mandatory (not optional)
 
@@ -152,6 +154,9 @@ NOT: `{ "execute": { "action": "...", ... } }` or `{ "result": { "content": "...
 - No deprecated execute types (`execute.error-recovery`)
 - Router choices need descriptive `description` + stable `id`
 - Form metadata: title/description (not input array)
+
+### 5. Async-only transport (MANDATORY)
+**Do not** introduce or document a “switch to sync” path. This stack is **async end-to-end**: `POST /api/v1/invoke` returns **`promiseId`** only; terminal `execute` / `context` come from **polling** (`GET …/requests/{id}/result`, Client API **`GET …/async`**). For **ai-integration**, **`?promise=1`** traffic is **queued** when **`PROMISE_DAEMON_ONLY`** is on (default): drain it with the **promise-queue daemon** or **`POST …/promise/<id>/execute`** — **not** by turning the queue off for inline/synchronous forwarding. PRs and operator runbooks must **never** treat disabling the queue or adding a sync invoke flag as an acceptable workaround.
 
 ---
 
@@ -354,7 +359,7 @@ See [docs/adr/README.md](docs/adr/README.md) for full index (includes **Tooling*
 | **Action-Key Shape** | Single action type per execute/result object |
 | **Workbench** | Structured state in `context.workbench.sections` |
 | **Promise** | Async request ID for polling long-running work |
-| **Gray Room** | Серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту |
+| **Gray Room** | Серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту; без `interrupt` у agent-class **`result.completed`** (из JSON модели) может открыть syndicate / SIEGE — [`a2a-server/docs/GRAY-ROOM.md`](a2a-server/docs/GRAY-ROOM.md) |
 | **Router** | Keyword-based routing (dialog/agent/task-decomposition) |
 | **Sync golden (`simulations/sync/`)** | Simulation folder style (invoke-shaped goldens). Server transport is always **`promiseId` + poll** — not inline execute on POST; see **Purple alert** in [`GLOSSARY.md`](GLOSSARY.md). |
 | **Web DTO** | Client-sanitized execute (only form, not tool calls) |

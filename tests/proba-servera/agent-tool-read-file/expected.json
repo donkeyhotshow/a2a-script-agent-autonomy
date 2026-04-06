@@ -13,7 +13,7 @@
       "context.workbench.slots"
     ],
     "skipHistoryLengthCheck": true,
-    "acceptExecuteFormFallback": true,
+    "snapExecuteToActual": true,
     "ignoreExecuteWhenOutcomeFailed": true
   },
   "context": {

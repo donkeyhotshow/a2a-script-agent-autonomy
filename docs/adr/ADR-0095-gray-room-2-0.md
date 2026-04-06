@@ -15,7 +15,7 @@ Approved
    - `START`: Инициализация и JIT-контекст.
    - `PLANNING` (Architect): Принятие решений, что делать.
    - `EXECUTING` (Editor): Взаимодействие с MCP инструментами и ОС.
-   - `REFLECTING`: Верификация через `DecisionCell` / `IntentGate`.
+   - `REFLECTING`: Верификация через флаг **`result.completed`** основного ответа / `IntentGate`.
    - `SIEGE_REVIEW`: (Новое) Внешнее ревью через реестр агентов.
    - `COMPLETED` / `FAILED`.
 
@@ -25,7 +25,7 @@ Approved
    - *Editor* сфокусирован только на генерации вызовов инструментов (например, `read-file`, `write-file`) на основе плана Архитектора.
 
 3. **Siege Architecture (Peer Review)**
-   В конце сложной задачи (перед переходом в `COMPLETED`), Gray Room вызывает состояние `SIEGE_REVIEW`. Данное состояние инстанцирует нового, независимого агента с ролью `Reviewer-Expert` из `AgentRoleRegistry`, чтобы проверить итоговый результат на наличие уязвимостей и багов.
+   В конце сложной задачи (перед переходом в `COMPLETED`), Gray Room вызывает состояние `SIEGE_REVIEW`, когда основной ответ после transforms имеет **`result.completed === true`** (поле **`completed`** в JSON модели). Данное состояние инстанцирует нового, независимого агента с ролью `Reviewer-Expert` из `AgentRoleRegistry`, чтобы проверить итоговый результат на наличие уязвимостей и багов. Отдельный вызов DecisionCell снят — см. [ADR-0088](ADR-0088-agentic-decision-cell.md) (superseded).
 
 ## Consequences
 + **Плюсы**: Высокая предсказуемость, изолированность ошибок (ошибка MCP не ломает фазу планирования), лучшее качество кода благодаря Siege-ревью.

@@ -1,0 +1,93 @@
+{
+  "lastChecked": "2026-04-06T23:19:48.028Z",
+  "processedTasks": [
+    {
+      "name": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
+      "updatedAt": "2026-04-06T22:14:24.962Z"
+    },
+    {
+      "name": "ai-integration-promise-queue-plan.md",
+      "status": "failed",
+      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
+      "updatedAt": "2026-04-06T22:19:27.322Z"
+    },
+    {
+      "name": "ai-integration-ui-improvements-plan.md",
+      "status": "failed",
+      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
+      "updatedAt": "2026-04-06T22:24:29.419Z"
+    },
+    {
+      "name": "client-api-01-sessions-create-load.md",
+      "status": "failed",
+      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
+      "updatedAt": "2026-04-06T22:29:31.490Z"
+    },
+    {
+      "name": "client-api-02-next-ack-first.md",
+      "status": "failed",
+      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
+      "updatedAt": "2026-04-06T22:34:33.111Z"
+    },
+    {
+      "name": "client-api-03-async-resolves-pending.md",
+      "status": "failed",
+      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
+      "updatedAt": "2026-04-06T22:39:34.971Z"
+    },
+    {
+      "name": "client-api-04-session-rebuild-highest-step.md",
+      "status": "failed",
+      "detail": "Timed out after 301s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
+      "updatedAt": "2026-04-06T22:44:36.456Z"
+    },
+    {
+      "name": "client-api-05-red-room-artifacts.md",
+      "status": "failed",
+      "detail": "Timed out after 301s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
+      "updatedAt": "2026-04-06T22:49:37.914Z"
+    },
+    {
+      "name": "dev-state-client-test-failures.md",
+      "status": "failed",
+      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
+      "updatedAt": "2026-04-06T22:54:40.166Z"
+    },
+    {
+      "name": "dev-state-orchestrator-metrics.md",
+      "status": "failed",
+      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
+      "updatedAt": "2026-04-06T22:59:41.768Z"
+    },
+    {
+      "name": "dev-state-router-drift-optional.md",
+      "status": "failed",
+      "detail": "Timed out after 301s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
+      "updatedAt": "2026-04-06T23:04:43.305Z"
+    },
+    {
+      "name": "doc-adr-0012-session-store-enhancements.md",
+      "status": "failed",
+      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
+      "updatedAt": "2026-04-06T23:09:45.029Z"
+    },
+    {
+      "name": "doc-adr-0021-cross-browser-matrix.md",
+      "status": "failed",
+      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
+      "updatedAt": "2026-04-06T23:14:46.814Z"
+    },
+    {
+      "name": "doc-adr-0025-promise-ui-decouple.md",
+      "status": "failed",
+      "detail": "Timed out after 301s (unknown)",
+      "updatedAt": "2026-04-06T23:19:48.013Z"
+    }
+  ],
+  "currentTask": "doc-adr-0027-planning-readme-missing.md",
+  "sessionId": "sess_1775517588020",
+  "status": "processing",
+  "activeTasks": {}
+}

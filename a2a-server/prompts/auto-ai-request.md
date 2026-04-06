@@ -79,6 +79,7 @@ Rules:
 - `completed`:
   - Set `completed: true` only when the task is fully finished and no further tool calls are required.
   - When `completed: true`, you may omit `execute` or set it to an empty object.
+  - **Server:** Transforms copy **`completed`** → **`result.completed`**. On non-dialog Gray Room exits, **`true`** can trigger **syndicate / SIEGE_REVIEW** (same contract as Agent).
 
 ## Current State
 

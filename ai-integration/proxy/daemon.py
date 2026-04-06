@@ -29,6 +29,7 @@ from .caching import (
     build_llm_cache_payload,
     build_llm_cache_key,
     is_valid_llm_disk_cache_value,
+    llm_disk_cache_log,
 )
 from .promises import (
     get_promise,
@@ -318,6 +319,12 @@ class PromiseDaemon:
                 cached_response = None
         if cached_response is not None:
             logger.info(f"Daemon {promise_id} served from cache")
+            llm_disk_cache_log(
+                "hit",
+                path=str(request_snapshot.get("path") or ""),
+                stage="daemon",
+                cache_key=cache_key,
+            )
             b64 = cached_response["body_base64"]
             _promise_set_done(
                 promise_id,
@@ -326,7 +333,14 @@ class PromiseDaemon:
                 body=base64.b64decode(b64) if b64 else b"",
             )
             return
-        
+
+        llm_disk_cache_log(
+            "miss",
+            path=str(request_snapshot.get("path") or ""),
+            stage="daemon",
+            cache_key=cache_key,
+        )
+
         # Execute request (use FORWARD_TIMEOUT for Ollama, not execute_timeout)
         req_timeout = FORWARD_TIMEOUT
         try:
@@ -386,6 +400,12 @@ class PromiseDaemon:
                     "body_base64": base64.b64encode(resp.content).decode('utf-8') if resp.content else '',
                 })
                 logger.info(f"Daemon {promise_id} response cached")
+                llm_disk_cache_log(
+                    "store",
+                    path=str(request_snapshot.get("path") or ""),
+                    stage="daemon",
+                    cache_key=cache_key,
+                )
             
             _promise_set_done(
                 promise_id,

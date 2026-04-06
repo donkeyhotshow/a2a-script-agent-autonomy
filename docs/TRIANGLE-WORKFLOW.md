@@ -6,6 +6,8 @@
 
 **Repeatable unit:** the **Triangle loop** below. Run **0** after any infra fix, port change, or `start-all` restart. For each turn you drive over HTTP, repeat **1 → 2 → (3 if sending) → 1**.
 
+**Operator API (curl / Client API, normative):** [`OPERATOR-CURL.md`](OPERATOR-CURL.md) — [Minimal mental model](OPERATOR-CURL.md#minimal-mental-model) (create, router, `/async`), [`POST /api/a2a/sessions` body](OPERATOR-CURL.md#post-apia2asessions-body-create), [Driver checklist](OPERATOR-CURL.md#driver-checklist-anti-stop), [Ollama generating vs stuck](OPERATOR-CURL.md#ollama-is-generating--pause-other-work), [GET session / unwrap / messages](OPERATOR-CURL.md#web-access-and-a2a-server), [Direct A2A invoke (debug only)](OPERATOR-CURL.md#direct-a2a-server-invoke-debug-only-fallback).
+
 ---
 
 ## Living queue — current tasks & problems
@@ -122,6 +124,6 @@ flowchart TD
 ## See also
 
 - [`work/STATE.md`](../work/STATE.md) — full task queue (not triangle-only)
-- [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) — curl tables, async behavior
-- [`AGENTS.md`](../AGENTS.md) — Client API, polling policy
+- [`OPERATOR-CURL.md`](OPERATOR-CURL.md) — operator HTTP surface: [create / next / async](OPERATOR-CURL.md#minimal-mental-model), [sanitization to invoke](OPERATOR-CURL.md#invoke-sanitization-post-next--a2a-server-apiv1invoke), [schema-debug order](OPERATOR-CURL.md#schema-debugging-first-step-mandatory)
+- [`AGENTS.md`](../AGENTS.md) — Client API table, polling policy, router two beats
 - [`tests/proba-servera/README.md`](../tests/proba-servera/README.md) — proba vs sims

@@ -7,6 +7,7 @@
 
 import {Router, Request, Response, NextFunction} from 'express';
 import {humanizeUpstreamErrorMessage, requestService} from '../services/core/request/request.service.js';
+import {registryAuth} from '../middleware/registry-auth.middleware.js';
 
 const router = Router();
 
@@ -183,7 +184,7 @@ router.get('/:promiseId/result', async (req: Request, res: Response, next: NextF
  * POST /requests/:promiseId/halt
  * Halt an active request
  */
-router.post('/:promiseId/halt', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.post('/:promiseId/halt', registryAuth, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const promiseId = String(req.params.promiseId || '');
         const { haltRequest } = await import('../services/core/request-processor/request-processor.service.js');

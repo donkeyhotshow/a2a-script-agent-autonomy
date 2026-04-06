@@ -7,6 +7,28 @@ import type {GrayRoomControlEnvelope, InterruptDirective, ServerInterruptTraceEv
 import {resolveExecution, resolveHistoryLength} from './normalization.js';
 import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver.js';
 
+/**
+ * Inner context structure within gray room pipeline
+ */
+export interface GrayRoomInnerContext {
+    session_id?: string;
+    workbench?: unknown;
+    files?: unknown;
+    history?: unknown[];
+    execution?: unknown;
+    operationHistory?: unknown[];
+    [key: string]: unknown;
+}
+
+/**
+ * Top-level context structure for gray room pipeline
+ */
+export interface GrayRoomContext {
+    context?: GrayRoomInnerContext;
+    history?: unknown[];
+    [key: string]: unknown;
+}
+
 /** Single-key `execute` payloads that must pass through to the client (tool rounds). */
 export const DIALOG_TOOL_EXECUTE_KEYS = [
     'rag-search',
@@ -39,9 +61,9 @@ export function isDialogToolExecutePayload(
  */
 export function mergeGrayRoomFinalizeInnerContext(
     rawInner: Record<string, unknown> | undefined,
-    nextCtx: Record<string, unknown>
+    nextCtx: GrayRoomContext
 ): Record<string, unknown> | undefined {
-    const nextInner = nextCtx['context'] as Record<string, unknown> | undefined;
+    const nextInner = nextCtx.context;
     if (!nextInner || typeof nextInner !== 'object' || Array.isArray(nextInner)) {
         return rawInner;
     }
@@ -49,16 +71,16 @@ export function mergeGrayRoomFinalizeInnerContext(
         return nextInner;
     }
     const { history: _nextHistorySpread, ...nextInnerNoHist } = nextInner;
-    const rwb = rawInner['workbench'];
-    const nwb = nextInner['workbench'];
+    const rwb = rawInner.workbench;
+    const nwb = nextInner.workbench;
     let workbenchMerged: Record<string, unknown> | undefined;
     if (rwb && typeof rwb === 'object' && !Array.isArray(rwb) && nwb && typeof nwb === 'object' && !Array.isArray(nwb)) {
         const ra = rwb as Record<string, unknown>;
         const nb = nwb as Record<string, unknown>;
-        const rs = ra['sections'];
-        const ns = nb['sections'];
-        const rsl = ra['slots'];
-        const nsl = nb['slots'];
+        const rs = ra.sections;
+        const ns = nb.sections;
+        const rsl = ra.slots;
+        const nsl = nb.slots;
         workbenchMerged = {
             ...ra,
             ...nb,
@@ -85,8 +107,8 @@ export function mergeGrayRoomFinalizeInnerContext(
         workbenchMerged = rwb as Record<string, unknown>;
     }
 
-    const nextHist = nextInner['history'];
-    const rawHist = rawInner['history'];
+    const nextHist = nextInner.history;
+    const rawHist = rawInner.history;
     const historyMerged = Array.isArray(nextHist)
         ? nextHist
         : Array.isArray(rawHist)
@@ -98,8 +120,8 @@ export function mergeGrayRoomFinalizeInnerContext(
         ...nextInnerNoHist,
         ...(workbenchMerged !== undefined ? {workbench: workbenchMerged} : {}),
         ...(historyMerged !== undefined ? {history: historyMerged} : {}),
-        ...(nextInner['files'] && typeof nextInner['files'] === 'object' && !Array.isArray(nextInner['files'])
-            ? {files: nextInner['files']}
+        ...(nextInner.files && typeof nextInner.files === 'object' && !Array.isArray(nextInner.files)
+            ? {files: nextInner.files}
             : {}),
     };
 }
@@ -111,16 +133,25 @@ export interface GrayRoomOptions {
     promptsTransformsPath: string;
 }
 
+/**
+ * Result of a review operation in gray room
+ */
+export interface ReviewResult {
+    passed: boolean;
+    critique: string;
+    turn: number;
+}
+
 /** Immutably set `context.workbench.slots[slotKey]` on a shallow-copied root context. */
 export function mergeSlotIntoWorkbenchContext(
-    ctx: Record<string, unknown>,
+    ctx: GrayRoomContext,
     slotKey: string,
     slotValue: unknown
-): Record<string, unknown> {
+): GrayRoomContext {
     const root = {...ctx};
-    const innerCtx = (root['context'] as Record<string, unknown>) ?? {};
-    const wb = (innerCtx['workbench'] as Record<string, unknown>) ?? {};
-    const slots = (wb['slots'] as Record<string, unknown>) ?? {};
+    const innerCtx = root.context ?? {};
+    const wb = (innerCtx.workbench as Record<string, unknown>) ?? {};
+    const slots = (wb.slots as Record<string, unknown>) ?? {};
     return {
         ...root,
         context: {

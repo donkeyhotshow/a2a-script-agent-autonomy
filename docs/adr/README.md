@@ -74,6 +74,9 @@ Recommended sections:
 - `ADR-0057-canonical-schema-registry.md` - JSON Schema registry plus validator guarantees for artifacts
 - `ADR-0058-gray-room-split-prompt-vs-algorithm.md` - Prompt Mode (cloud API) vs Algorithm Mode (local Ollama / Black Room) split (see `ai-integration/docs/BLACK-ROOM.md`)
 - `ADR-0059-invoke-llm-model-and-proxy-tags.md` - Per-invoke `context.llmModel` / `llmModel` on invoke body; combined `GET /api/tags` with `provider` on each model row
+- `ADR-0088-agentic-decision-cell.md` - **Superseded:** standalone DecisionCell LLM removed; SIEGE keys off primary **`result.completed`**
+- `ADR-0093-internal-agent-debate.md` - Internal debate (`llmService.debate`) before first response transform on non-dialog agent invokes
+- `ADR-0095-gray-room-2-0.md` - Gray Room 2.0 FSM / SIEGE architecture narrative
 
 ## Reference bundles (large / multi-topic)
 

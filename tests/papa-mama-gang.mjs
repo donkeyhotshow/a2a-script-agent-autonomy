@@ -73,7 +73,29 @@ async function papaShift() {
         // Direct E2E Tests (Papa: Client API contour)
         const env = { ...process.env, E2E_DIRECT_LOW_LLM: '1' };
         await runCmd('Papa E2E', 'node', ['tests/direct-tests/e2e-dialog-test.js'], REPO_ROOT, env);
-        
+
+        try {
+            const hub = await fetch('http://localhost:11434/health');
+            if (hub.ok) {
+                await runCmd(
+                    'Papa hub L3 cache',
+                    'npm',
+                    ['run', 'verify:proba-cache-api'],
+                    REPO_ROOT
+                );
+            } else {
+                console.log(
+                    '🧔 PAPA: skip verify:proba-cache-api (ai-integration :11434 /health not OK)\n'
+                );
+            }
+        } catch (e) {
+            console.log(
+                '🧔 PAPA: skip verify:proba-cache-api (hub probe failed:',
+                String(e),
+                ')\n'
+            );
+        }
+
         console.log('🧔 PAPA: "Моя смена окончена. Интеграция работает как часы. Банда рулит!"\n');
     } catch (e) {
         console.error('🧔 PAPA: "На моей смене провал. Кто-то сломал интеграцию!"');

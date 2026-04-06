@@ -26,6 +26,10 @@ Client → Server
               └── continueLoop → request transform → LLM #2 → response transform → …
 ```
 
+### No `interrupt`: completion flag and syndicate review
+
+When the response transform yields **no** `interrupt`, the loop still finishes through the same merge path — but **non-dialog** schemas (`agent`, `coder`, `analyze`, `auto-ai`, …) may run **IntentGate** (ADR-0050) and, if transform output has **`result.completed === true`** (copied from the primary LLM JSON field **`completed`** in `agent-response.json` / `coder-response.json` / …), **`executeSyndicateReview`** (SIEGE_REVIEW). **Dialog** returns to the client on this branch **before** those checks — no syndicate on that exit. There is **no** separate “decision cell” hub call (superseded ADR-0088). See [`agent-request.md`](../prompts/agent-request.md) and [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) (*Optional `result` on `response.json`*).
+
 ## Concept Boundary
 
 **Gray room** is an **overlay** on the existing **interrupt loop** mechanism, not a separate system. It reuses the same `interrupt` directive handling, transform pipeline, and budget enforcement (`A2A_MAX_INTERRUPT_TURNS` / `A2A_GRAY_ROOM_MAX_TURNS`).
@@ -107,7 +111,7 @@ Adding **`prompts/transforms/<your-name>/`** (with `server-transforms-*.json` an
 | Stage | Behavior |
 |-------|----------|
 | **Entry** | [`DialogRequestProcessor.doProcess()`](../src/services/core/request-processor/dialog-request-processor.ts) runs the LLM, then always calls [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts). Recovery uses [`recoverDialogFromLlmPromise()`](../src/services/core/request-processor/response-path.ts) → same `runLoop`. |
-| **Per iteration** | `runResponseTransform` → `extractInterrupt` → if none, `mergeTraceIntoResult` and return. If `interrupt` and `when` satisfied → budget → `applyInterrupt` → if `continueLoop`, rebuild `request.md` via `runPromptsTransform`, then main LLM again. |
+| **Per iteration** | `runResponseTransform` → `extractInterrupt` → if **none**: non-dialog → optional IntentGate + syndicate if **`result.completed`**; **dialog** → immediate return; then `mergeTraceIntoResult` and return. If `interrupt` and `when` satisfied → budget → `applyInterrupt` → if `continueLoop`, rebuild `request.md` via `runPromptsTransform`, then main LLM again. |
 | **Budget** | `A2A_MAX_INTERRUPT_TURNS` (default 10) on the orchestrator; per-interrupt `maxTurns` clamps via `min`. At 0 with interrupt still present → `context.interrupt_truncated: true` and return. |
 | **Merge to client** | Final `ProcessResult` gets `mergeInterruptTraceIntoContext` → [`interrupt-trace-contract.ts`](../src/transform/interrupt-trace-contract.ts) only; `workbench` / `history` come from transform output and handlers. |
 

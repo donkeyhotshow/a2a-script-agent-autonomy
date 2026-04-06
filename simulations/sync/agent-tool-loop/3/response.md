@@ -29,6 +29,9 @@ Mirror of `response.json` for prompt pipeline / `sim:check-md`.
     "list-directory": {
       "path": "."
     }
+  },
+  "result": {
+    "completed": false
   }
 }
 ```

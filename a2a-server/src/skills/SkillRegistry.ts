@@ -5,7 +5,7 @@ export type SkillMeta = {
   name: string;
   version: string;
   path: string;
-  schema: any; 
+  schema: Record<string, unknown>;
   qualityScore?: number;
   lastUsed?: number;
 };

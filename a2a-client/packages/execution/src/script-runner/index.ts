@@ -6,6 +6,26 @@
 // `client-api` startup should not fail just because `vm2` isn't installed.
 // We load it lazily inside `executeScript()` and fall back to Node's `vm`.
 
+interface AllowedModules {
+    fs: typeof import('fs');
+    path: typeof import('path');
+    util: typeof import('util');
+    crypto: typeof import('crypto');
+    buffer: typeof import('buffer');
+    stream: typeof import('stream');
+    events: typeof import('events');
+}
+
+const allowedModules: AllowedModules = {
+    fs: await import('fs'),
+    path: await import('path'),
+    util: await import('util'),
+    crypto: await import('crypto'),
+    buffer: await import('buffer'),
+    stream: await import('stream'),
+    events: await import('events'),
+};
+
 /**
  * Canonical form for execute.script
  * Used when receiving script execution requests from the server
@@ -91,16 +111,13 @@ export async function executeScript(
             },
         };
 
-        if (typeof require === 'function') {
-            sandbox.require = (moduleName: string) => {
-                const safeModules = ['fs', 'path', 'util', 'crypto', 'buffer', 'stream', 'events'];
-                const baseModule = moduleName.split('/')[0];
-                if (baseModule && safeModules.includes(baseModule)) {
-                    return require(moduleName);
-                }
-                throw new Error(`Module '${moduleName}' is not allowed in sandbox`);
-            };
-        }
+        sandbox.require = (moduleName: string) => {
+            const baseModule = moduleName.split('/')[0];
+            if (baseModule && allowedModules[baseModule as keyof AllowedModules]) {
+                return allowedModules[baseModule as keyof AllowedModules];
+            }
+            throw new Error(`Module '${moduleName}' is not allowed in sandbox`);
+        };
 
         // Try `vm2` first (preferred sandbox). If it's not installed, fall back to `vm`.
         let result: unknown;

@@ -1,5 +1,6 @@
 import {resolveGrayRoomLlmModelFromContext} from '../llm-model-resolver.js';
 import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../../transform/types.js';
+import {type GrayRoomContext} from '../gray-room-utils.js';
 
 /**
  * Handle compress_history interrupt
@@ -17,8 +18,8 @@ export async function handleCompressHistory(
     model: string,
     trace: ServerInterruptTraceEvent[]
 ): Promise<{ nextCtx: Record<string, unknown>; continueLoop: boolean }> {
-    let nextCtx = { ...ctx };
-    const history = (nextCtx['history'] as any[]) || (nextCtx['context'] as any)?.history || [];
+    let nextCtx: GrayRoomContext = { ...ctx };
+    const history = nextCtx.history || nextCtx.context?.history || [];
     
     if (!Array.isArray(history) || history.length === 0) {
         trace.push({ kind: 'sidecar_llm', purpose: 'compress_history', ok: true, meta: 'skipped_empty_history' });
@@ -36,13 +37,13 @@ export async function handleCompressHistory(
             pollReadyThenFetch
         );
         
-        const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
+        const innerCtx = nextCtx.context ?? {};
         nextCtx = { ...nextCtx, history: result.best_history, context: {...innerCtx, history: result.best_history} };
-        trace.push({ 
-            kind: 'sidecar_llm', 
-            purpose: 'compress_history_swing', 
-            ok: true, 
-            meta: `from=${history.length} to=${result.best_history.length} score=${result.score.toFixed(2)} options=${result.options_considered}` 
+        trace.push({
+            kind: 'sidecar_llm',
+            purpose: 'compress_history',
+            ok: true,
+            meta: `from=${history.length} to=${result.best_history.length} score=${result.score.toFixed(2)} options=${result.options_considered}`
         });
     } catch (err) {
         logger.warn('[GrayRoom:compress_history] AgentSwing Failed', { error: String(err) });

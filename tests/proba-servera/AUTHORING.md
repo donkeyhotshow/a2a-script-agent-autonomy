@@ -40,6 +40,8 @@ The runner maps the file with `inputToInvokePayload` — only known fields are f
 
 Copy **`result` tool payloads** and **`context`** from the matching golden step where possible; keep [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) action-key rules.
 
+**`result.completed` (LLM / Gray Room):** On live agent-class invokes, the server merges the model’s top-level **`completed`** into **`result.completed`** after response transforms. That flag gates **syndicate / SIEGE_REVIEW** when Gray Room exits without the interrupt loop — see [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) (*Optional `result` on `response.json`*). Proba **`expected.json`** does not need to assert `result` unless your case explicitly checks completion signaling.
+
 **Request vs response:** `result` must be a **completed tool outcome** for the current `context.execution.step` (or `choice` / `message` where the golden does that). Do **not** paste **`execute.*`** shapes into `result` (e.g. `rag-search` with only `query`/`limit` and empty `results`/`files` when the step is “submit RAG results” — that belongs in [`simulations/sync/agent/5/request.json`](../../simulations/sync/agent/5/request.json), not a gate-only step). If the case targets “server asks for next tool”, copy the **prior** golden **`request.json`** (e.g. gate + `result.choice`, or the step that completes the previous tool).
 
 ## 2. `expected.json` (what we assert)

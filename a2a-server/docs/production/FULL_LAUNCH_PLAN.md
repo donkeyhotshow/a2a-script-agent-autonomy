@@ -168,11 +168,11 @@ curl http://localhost:11435/api/tags
 ### 4.2 Проверка потока
 
 ```bash
-# Создание сессии (standalone SDK на 3001)
-curl -X POST http://localhost:3001/api/sessions \
+# Создание сессии (standalone SDK на 3001) — alias /api/sessions или канон /api/a2a/sessions
+curl -X POST http://localhost:3001/api/a2a/sessions \
   -H "Content-Type: application/json" \
   -d '{"task": "test", "projectId": "default"}'
-# Web dev: POST http://localhost:5173/api/a2a/sessions (см. AGENTS.md)
+# То же: POST http://localhost:3001/api/sessions … | Web dev: POST http://localhost:5173/api/a2a/sessions (AGENTS.md)
 ```
 
 ---

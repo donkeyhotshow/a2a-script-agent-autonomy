@@ -11,7 +11,9 @@
       "context.slots",
       "context.workbench"
     ],
-    "skipHistoryLengthCheck": true
+    "skipHistoryLengthCheck": true,
+    "ignoreExecuteWhenOutcomeFailed": true,
+    "snapExecuteToActual": true
   },
   "context": {
     "execution": {
@@ -26,13 +28,6 @@
     ]
   },
   "execute": {
-    "message": "string",
-    "form": {
-      "textarea": {
-        "name": "string",
-        "label": "string",
-        "required": true
-      }
-    }
+    "message": "string"
   }
 }

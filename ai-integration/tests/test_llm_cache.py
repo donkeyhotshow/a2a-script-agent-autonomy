@@ -66,6 +66,72 @@ def test_cache_key_ignores_at_suffix_and_user(monkeypatch, tmp_path):
     assert c.build_llm_cache_key(pc, p1) == c.build_llm_cache_key(pc, p2)
 
 
+def test_cache_key_same_when_message_id_noise_differs(monkeypatch, tmp_path):
+    import proxy.caching as c
+
+    monkeypatch.setattr(c, "CACHE_DIR", str(tmp_path / "cache"))
+    pc = c.ProxyCache()
+    base = dict(
+        path="api/chat",
+        method="POST",
+        target_url="http://example/v1/chat",
+        forward_args={},
+    )
+    p1 = c.build_llm_cache_payload(
+        **base,
+        body_json={
+            "model": "glm",
+            "messages": [
+                {"role": "user", "content": "hi", "id": "msg-a", "message_id": "x"},
+            ],
+            "options": {"temperature": 0.7, "num_predict": 10},
+        },
+    )
+    p2 = c.build_llm_cache_payload(
+        **base,
+        body_json={
+            "model": "glm",
+            "messages": [
+                {"role": "user", "content": "hi", "id": "msg-b", "message_id": "y"},
+            ],
+            "options": {"num_predict": 10, "temperature": 0.7},
+        },
+    )
+    assert c.build_llm_cache_key(pc, p1) == c.build_llm_cache_key(pc, p2)
+
+
+def test_cache_key_same_when_tools_list_order_differs(monkeypatch, tmp_path):
+    import proxy.caching as c
+
+    monkeypatch.setattr(c, "CACHE_DIR", str(tmp_path / "cache"))
+    pc = c.ProxyCache()
+    base = dict(
+        path="api/chat",
+        method="POST",
+        target_url="http://example/v1/chat",
+        forward_args={},
+    )
+    t_a = {"type": "function", "function": {"name": "alpha", "parameters": {}}}
+    t_b = {"type": "function", "function": {"name": "beta", "parameters": {}}}
+    p1 = c.build_llm_cache_payload(
+        **base,
+        body_json={
+            "model": "glm",
+            "messages": [{"role": "user", "content": "hi"}],
+            "tools": [t_b, t_a],
+        },
+    )
+    p2 = c.build_llm_cache_payload(
+        **base,
+        body_json={
+            "model": "glm",
+            "messages": [{"role": "user", "content": "hi"}],
+            "tools": [t_a, t_b],
+        },
+    )
+    assert c.build_llm_cache_key(pc, p1) == c.build_llm_cache_key(pc, p2)
+
+
 def test_cache_key_differs_when_prompt_differs(monkeypatch, tmp_path):
     import proxy.caching as c
 

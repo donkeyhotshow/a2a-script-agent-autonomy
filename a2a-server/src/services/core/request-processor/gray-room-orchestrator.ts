@@ -37,7 +37,9 @@ import {
     DIALOG_TOOL_EXECUTE_KEYS,
     isDialogToolExecutePayload,
     mergeGrayRoomFinalizeInnerContext,
-    GrayRoomOptions
+    GrayRoomOptions,
+    type ReviewResult,
+    type GrayRoomContext
 } from './gray-room-utils.js';
 
 // Import interrupt handlers
@@ -51,7 +53,6 @@ import {globalVisionTester} from '../vision-tester.js';
 import {globalRoleRegistry, AgentRole} from '../agent-role-registry.js';
 import {globalSafetyLayer} from '../safety-layer.js';
 import {globalIntentGate} from '../intent-gate.js';
-import {decisionCell} from './decision-cell.js';
 import {bugFixer} from '../../llm/bug-fixer.js';
 import {repoMapService} from '../../context/repo-map.service.js';
 import {llmService} from '../../llm/llm-service.js';
@@ -254,8 +255,8 @@ export class GrayRoomOrchestrator {
             }
 
             if (!interrupt) {
-                // Dialog: response transform already produced user-facing execute — do not run DecisionCell /
-                // syndicate (extra hub calls) or fall through to interrupt machinery (interrupt is null).
+                // Dialog: response transform already produced user-facing execute — skip syndicate path here
+                // (same as non-dialog: SIEGE_REVIEW only when primary JSON sets result.completed, see below).
                 if (activeSchemaName === 'dialog') {
                     touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
                     GrayRoomOrchestrator.activeControllers.delete(promiseId);
@@ -263,12 +264,7 @@ export class GrayRoomOrchestrator {
                     return;
                 }
 
-                // -- DECISION CELL FINAL CHECK (ADR-0088) --
-                const decision = await decisionCell.decide(
-                    (workingCtx['session_id'] as string) || promiseId,
-                    (workingCtx['task'] as string) || '',
-                    workingCtx
-                );
+                const primaryTurnComplete = this.isResponseTransformCompleted(rawOutput);
 
                 // -- INTENT DRIFT CHECK (ADR-0050) --
                 if (globalIntentGate.getTurnCount() >= 5) {
@@ -300,8 +296,8 @@ export class GrayRoomOrchestrator {
                     }
                 }
 
-                if (decision.done) {
-                    logger.info('[GrayRoom] DecisionCell marked done. Entering SIEGE_REVIEW');
+                if (primaryTurnComplete) {
+                    logger.info('[GrayRoom] Primary turn result.completed=true. Entering SIEGE_REVIEW');
                     const reviewResult = await globalRoleRegistry.executeSyndicateReview(workingCtx);
                     if (reviewResult.passed) {
                         logger.info('[GrayRoom] SIEGE_REVIEW passed. Completing session.');
@@ -309,8 +305,6 @@ export class GrayRoomOrchestrator {
                         logger.warn('[GrayRoom] SIEGE_REVIEW failed.', {reason: reviewResult.reason});
                         workingCtx['task'] = `[SIEGE REVIEW FAILED] ${reviewResult.reason}\n\nPlease correct these issues.`;
                     }
-                } else if (decision.retry) {
-                    logger.info('[GrayRoom] DecisionCell requested retry', {reason: decision.reason});
                 }
 
                 // Without a gray-room interrupt there is no valid follow-up loop here; previously we fell
@@ -418,7 +412,7 @@ export class GrayRoomOrchestrator {
 
             // -- OVERRIDE OUTCOME FOR REVIEW/DEBATE (ADR-0038) --
             if (currentState === OrchestratorState.REVIEWING && workingCtx['REVIEW_RESULT']) {
-                const res = workingCtx['REVIEW_RESULT'] as any;
+                const res = workingCtx['REVIEW_RESULT'] as ReviewResult;
                 lastOutcome = res.passed ? 'review_passed' : 'review_failed';
                 // Clear result for next turns if necessary, or let kernel handle it
             }
@@ -441,7 +435,7 @@ export class GrayRoomOrchestrator {
             if (isUIChange) {
                 try {
                     // Logic to determine internal URL - usually a dev server
-                    const devUrl = 'http://localhost:5173'; // Default Vite port
+                    const devUrl = process.env.A2A_PREVIEW_URL || 'http://localhost:5173'; // Default Vite port
                     const screenshotPath = `storage/screenshots/turn-${turn}.png`;
                     await globalVisionTester.captureScreenshot(devUrl, screenshotPath);
                     const visionResult = await globalVisionTester.performVisualQA(screenshotPath, (workingCtx['task'] as string) || 'UI matching manifesto');
@@ -503,7 +497,7 @@ export class GrayRoomOrchestrator {
                 const normalizedExecute = rawOutput.execute as ProcessResult['execute'] | undefined;
                 const mergedInner = mergeGrayRoomFinalizeInnerContext(
                     rawOutput.context as Record<string, unknown> | undefined,
-                    nextCtx
+                    nextCtx as GrayRoomContext
                 );
                 const res: ProcessResult = {
                     outcome: 'completed',
@@ -708,6 +702,16 @@ export class GrayRoomOrchestrator {
         const d = raw as Record<string, unknown>;
         if (typeof d.reason !== 'string') return null;
         return d as unknown as InterruptDirective;
+    }
+
+    /** `result.completed` from response transforms (agent/dialog/coder); optional top-level `completed` fallback. */
+    private isResponseTransformCompleted(raw: Record<string, unknown>): boolean {
+        const res = raw['result'];
+        if (res && typeof res === 'object' && !Array.isArray(res)) {
+            const c = (res as Record<string, unknown>)['completed'];
+            if (c === true) return true;
+        }
+        return raw['completed'] === true;
     }
 
     private interruptWhenSatisfied(interrupt: InterruptDirective, ctx: Record<string, unknown>): boolean {

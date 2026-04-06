@@ -17,6 +17,12 @@ Mirror of `response.json` for prompt pipeline / `sim:check-md`.
   },
   "execute": {
     "message": "Handoff у Coder: у контексті залишено unresolved_imports (2). Далі — режим Coder / read-write."
+  },
+  "result": {
+    "completed": true,
+    "action": "fix-vue-imports",
+    "handoff_mode": "coder",
+    "unresolved_count": 2
   }
 }
 ```

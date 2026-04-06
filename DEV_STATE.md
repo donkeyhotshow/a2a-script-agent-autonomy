@@ -16,6 +16,8 @@ Current system state: **Stack готов** - все сервисы работа�
 
 **Recent (operator / parity batch):** Task Monitor with promise queue support; Client API multi-provider LLM routing; session storage improvements.
 
+**2026-04-07:** Proba + hub L3 cache: [`tests/proba-servera/LLM-CACHE-PATHS.md`](tests/proba-servera/LLM-CACHE-PATHS.md), `PROBA_WARM_CACHE` + `LLM_DISK_CACHE_LOG` (see [`tests/proba-servera/README.md`](tests/proba-servera/README.md)); ai-integration `normalize_body_for_cache` message/options normalization — [`ai-integration/DEV_STATE.md`](ai-integration/DEV_STATE.md).
+
 **2026-04-06:** `AGENTS.md` — Client API table: **`GET …/messages`** row + **`GET …/sessions/{id}`** includeContext note; standalone SDK bullet links **OPERATOR-CURL** § *GET session JSON shape* for `unwrap` / `includeContext` / `afterSeq`.
 
 **2026-04-06 (human-review follow-up):** [`docs/HUMAN-REVIEW-FINDINGS.md`](docs/HUMAN-REVIEW-FINDINGS.md) snapshot **20/20 pass**; [`docs/AGENT-DIALOG-API-STATE.md`](docs/AGENT-DIALOG-API-STATE.md) **Open risks** table aligned with implemented behavior; `toPublicNextResponse` falls back through **`buildWebExecute`** when projected `session.execute` is missing or empty; SDK **`client-api-envelope.test.ts`** removed (Vitest 2 “no suite” in `packages/sdk`) — coverage in **`a2a-client/tests/unit/client-api-envelope-shared.test.js`**.
@@ -29,6 +31,7 @@ Current system state: **Stack готов** - все сервисы работа�
 **2026-04-06:** Fixed cognition injection in dialog request processor by adding feature flag `COGNITION_INJECTION_ENABLED` to control when priors are loaded from LessonStore and PatternStore. Previously, stubs were used that never loaded real data. Now the feature can be enabled/disabled via environment variable.
 
 **2026-04-06 (purple alert sweep 2):** Retired glossary **“Sync Mode”** → **sync golden** + async-only note in [`GLOSSARY.md`](GLOSSARY.md) / [`AGENTS.md`](AGENTS.md); [`tests/direct-tests/README.md`](tests/direct-tests/README.md) merge flag wording; [`docs/new-request-flow/PROTOCOLS/sessions/README.md`](docs/new-request-flow/PROTOCOLS/sessions/README.md) session example heading; sim mirror MD [`simulations/sync/task-decomposition/7/`](simulations/sync/task-decomposition/7/); comments in [`session-routes-shared.ts`](a2a-client/packages/sdk/src/server/lib/session-routes-shared.ts), [`step-storage.ts`](a2a-client/packages/sdk/src/server/services/step-storage.ts), [`agent-rag-chain.js`](a2a-client/packages/vite-plugin/routes/utils/agent-rag-chain.js), [`request-processor.service.ts`](a2a-server/src/services/core/request-processor/request-processor.service.ts).
+**2026-04-06 (Brown alert):** Removed the root `debug.log` artifact and confirmed the repo already ignores `*.log` entries so runtime traces stay off-tree while `logs/archive/` captures any human-needed evidence.
 
 **Fixed:** Added check in dialog request processor to return initial form directly from request transform for dialog schema without user input, before attempting LLM call.
 

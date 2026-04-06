@@ -1,3 +1,8 @@
+# DecisionCell (archived implementation)
+
+Source (removed from build): `a2a-server/src/services/core/request-processor/decision-cell.ts`.
+
+```typescript
 import { logger } from '../../../utils/logger.js';
 import { tryParseJsonFromLlmText } from '../../../utils/strip-markdown-json-fence.js';
 import { llmService } from '../../llm/llm-service.js';
@@ -9,9 +14,6 @@ export interface Decision {
   retry: boolean;
 }
 
-/**
- * Validate Decision output from LLM - ensures contract compliance
- */
 function validateDecision(raw: unknown): Decision | null {
   if (!raw || typeof raw !== 'object') return null;
   const obj = raw as Record<string, unknown>;
@@ -29,9 +31,6 @@ function validateDecision(raw: unknown): Decision | null {
   };
 }
 
-/**
- * Fallback decision when LLM fails or returns invalid JSON
- */
 function fallbackDecision(error: string): Decision {
   logger.warn('[DecisionCell] Using fallback decision', { error });
   return { 
@@ -83,7 +82,6 @@ export class DecisionCell {
       return decision;
     }
 
-    // Track consecutive errors for circuit breaking
     this.consecutiveErrors++;
     const isCircuitBroken = this.consecutiveErrors >= 3;
     
@@ -100,3 +98,4 @@ export class DecisionCell {
 }
 
 export const decisionCell = new DecisionCell();
+```

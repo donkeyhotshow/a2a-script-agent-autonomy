@@ -55,11 +55,20 @@ export interface InvokeResult {
     promiseId?: string;
 }
 
+/**
+ * Stateless server: only **server-issued** `srv_sess_*` ids are sticky across invokes.
+ * Client / storage ids (`sess_*`, bare UUIDs, etc.) must not be echoed — replace with a new `srv_sess_*`.
+ */
 function ensureContextSessionId(ctx: Record<string, unknown>): string {
     const current = typeof ctx['session_id'] === 'string' ? ctx['session_id'].trim() : '';
-    if (current && current.toLowerCase() !== 'stateless') {
+    if (current.startsWith('srv_sess_') && current.length > 'srv_sess_'.length) {
         ctx['session_id'] = current;
         return current;
+    }
+    // Anonymous / missing session: stable id so prompts (and ai-integration L3 keys) match across runs.
+    if (current === '' || current.toLowerCase() === 'stateless') {
+        ctx['session_id'] = 'srv_sess_stateless';
+        return 'srv_sess_stateless';
     }
     const generated = `srv_sess_${randomUUID()}`;
     ctx['session_id'] = generated;
@@ -150,8 +159,8 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
 
     applyRouterTransformSchemaHint(ctx);
 
-    ensureContextSessionId(ctx);
     stripClientStorageIdsFromContext(ctx);
+    ensureContextSessionId(ctx);
 
     const topLlm =
         typeof input.llmModel === 'string' && input.llmModel.trim()

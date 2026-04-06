@@ -23,6 +23,26 @@ class TaskMonitorProcessing {
 
     const choices = Array.isArray(form.choices) ? form.choices : [];
     if (choices.length > 0) {
+      const autoOff = /^(0|false|no)$/i.test(
+        String(process.env.TASK_MONITOR_ROUTER_AUTO_AGENT ?? '1').trim()
+      );
+      if (!autoOff) {
+        const agentRow = choices.find(
+          (c) =>
+            c &&
+            (c.id === 'agent' || String(c.type || '').toLowerCase() === 'agent')
+        );
+        const choiceId = agentRow?.id;
+        if (choiceId) {
+          const res = await this.sendNext(sessionId, { task: choiceId });
+          if (res) {
+            console.log(
+              `Router step for session ${sessionId}: auto-selected choice "${choiceId}"`
+            );
+            return true;
+          }
+        }
+      }
       console.log(
         `Router step for session ${sessionId}: manual choice required (monitor does not auto-select)`
       );
@@ -123,6 +143,7 @@ class TaskMonitorProcessing {
       await this.logAgentExecution(session.id, 'after-initial-next');
 
       let idleGateAttempts = 0;
+      let routerStuckExit = false;
       if (await this.tryAdvanceMonitorGate(session.id, taskDescription, null)) {
         idleGateAttempts += 1;
         await this.logAgentExecution(session.id, 'after-initial-monitor-gate');
@@ -169,6 +190,18 @@ class TaskMonitorProcessing {
             await new Promise((resolve) => setTimeout(resolve, pollInterval));
             continue;
           }
+          const gateForm =
+            sd?.context?.execution?.form || sd?.execute?.form;
+          const routerChoices = Array.isArray(gateForm?.choices) ? gateForm.choices : [];
+          if (routerChoices.length > 0) {
+            idleGateAttempts += 1;
+            if (idleGateAttempts >= 5) {
+              failureReason =
+                'Router requires manual choice (no auto-advance after 5 idle polls)';
+              routerStuckExit = true;
+              break;
+            }
+          }
         }
 
         // If still processing (asyncPending is true), wait more
@@ -209,6 +242,11 @@ class TaskMonitorProcessing {
         // Unknown state, wait a bit
         attempts++;
         await new Promise(resolve => setTimeout(resolve, pollInterval));
+      }
+
+      if (routerStuckExit) {
+        console.error(`Task ${taskFile.name} aborted: ${failureReason}`);
+        return false;
       }
 
       let timeoutStageInfo = null;

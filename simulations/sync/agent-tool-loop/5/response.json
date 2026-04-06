@@ -35,5 +35,8 @@
       "pattern": "calculateTotal",
       "path": "."
     }
+  },
+  "result": {
+    "completed": false
   }
 }

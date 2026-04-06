@@ -12,7 +12,9 @@
       "context.choice_id",
       "context.workbench.slots"
     ],
-    "skipHistoryLengthCheck": true
+    "skipHistoryLengthCheck": true,
+    "snapExecuteToActual": true,
+    "ignoreExecuteWhenOutcomeFailed": true
   },
   "context": {
     "execution": {

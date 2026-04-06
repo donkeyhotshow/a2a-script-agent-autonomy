@@ -6,7 +6,6 @@
 
 import {logger} from '../../utils/logger.js';
 import {spawn} from 'node:child_process';
-import * as path from 'node:path';
 import {validatePath} from './file-operations/security.js';
 
 export interface ExecuteCommandInput {
@@ -35,50 +34,64 @@ export interface CommandValidationResult {
     sanitizedCommand?: string;
 }
 
-// Whitelist of allowed commands
-const ALLOWED_COMMANDS = [
-    'git',
-    'npm',
-    'npx',
+// Command tiers for security levels
+const COMMAND_TIERS: Record<string, 'read-only' | 'build' | 'network'> = {
+    // Read-only commands (always allowed)
+    'cat': 'read-only',
+    'ls': 'read-only',
+    'dir': 'read-only',
+    'echo': 'read-only',
+    'pwd': 'read-only',
+    'find': 'read-only',
+    'grep': 'read-only',
+    'head': 'read-only',
+    'tail': 'read-only',
+    'wc': 'read-only',
+    'sort': 'read-only',
+    'uniq': 'read-only',
+    'diff': 'read-only',
+
+    // Build commands (require ALLOW_BUILD_COMMANDS=1)
+    'git': 'build',
+    'npm': 'build',
+    'npx': 'build',
+    'node': 'build',
+    'tsc': 'build',
+    'eslint': 'build',
+    'prettier': 'build',
+    'mkdir': 'build',
+    'cp': 'build',
+    'copy': 'build',
+    'mv': 'build',
+    'move': 'build',
+    'rm': 'build',
+    'del': 'build',
+    'touch': 'build',
+    'zip': 'build',
+    'unzip': 'build',
+    'tar': 'build',
+    'prisma': 'build',
+    'vitest': 'build',
+    'jest': 'build',
+    'playwright': 'build',
+    'cypress': 'build',
+
+    // Network commands (require ALLOW_NETWORK_COMMANDS=1)
+    'curl': 'network',
+    'wget': 'network',
+    'docker': 'network',
+    'docker-compose': 'network',
+};
+
+// High-risk binaries that require explicit enablement
+const HIGH_RISK_COMMANDS = new Set([
     'node',
-    'tsc',
-    'eslint',
-    'prettier',
-    'cat',
-    'ls',
-    'dir',
-    'echo',
-    'mkdir',
-    'cd',
-    'pwd',
-    'cp',
-    'copy',
-    'mv',
-    'move',
-    'rm',
-    'del',
-    'touch',
-    'find',
-    'grep',
-    'head',
-    'tail',
-    'wc',
-    'sort',
-    'uniq',
-    'diff',
-    'zip',
-    'unzip',
-    'tar',
+    'npx',
+    'docker',
     'curl',
     'wget',
-    'docker',
-    'docker-compose',
-    'prisma',
-    'vitest',
-    'jest',
-    'playwright',
-    'cypress',
-];
+    'npm',
+]);
 
 // Blacklist of dangerous patterns
 const DANGEROUS_PATTERNS = [
@@ -186,14 +199,53 @@ export function validateCommand(input: ExecuteCommandInput): CommandValidationRe
         }
     }
 
-    // Check if command is in whitelist
+    // Validate command against tiers and security flags
     const commandParts = input.command.split(' ');
     const baseCommand = commandParts[0]?.toLowerCase();
-    
-    if (!baseCommand || !ALLOWED_COMMANDS.includes(baseCommand)) {
+
+    if (!baseCommand) {
         return {
             valid: false,
-            error: `Command '${baseCommand}' is not in the allowed list`,
+            error: 'No command specified',
+        };
+    }
+
+    const tier = COMMAND_TIERS[baseCommand];
+    if (!tier) {
+        return {
+            valid: false,
+            error: `Command '${baseCommand}' is not allowed`,
+        };
+    }
+
+    // Check tier-specific permissions
+    if (tier === 'build' && process.env.ALLOW_BUILD_COMMANDS !== '1') {
+        return {
+            valid: false,
+            error: `Build commands not allowed. Set ALLOW_BUILD_COMMANDS=1`,
+        };
+    }
+
+    if (tier === 'network' && process.env.ALLOW_NETWORK_COMMANDS !== '1') {
+        return {
+            valid: false,
+            error: `Network commands not allowed. Set ALLOW_NETWORK_COMMANDS=1`,
+        };
+    }
+
+    // Check high-risk command permissions
+    if (HIGH_RISK_COMMANDS.has(baseCommand) && process.env.ALLOW_HIGH_RISK_COMMANDS !== '1') {
+        return {
+            valid: false,
+            error: `High-risk command '${baseCommand}' not allowed. Set ALLOW_HIGH_RISK_COMMANDS=1`,
+        };
+    }
+
+    // Shell execution requires high-risk permissions
+    if (input.shell && process.env.ALLOW_HIGH_RISK_COMMANDS !== '1') {
+        return {
+            valid: false,
+            error: 'Shell execution not allowed. Set ALLOW_HIGH_RISK_COMMANDS=1',
         };
     }
 

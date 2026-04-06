@@ -1,12 +1,43 @@
 /**
  * Session Transform Service
- * 
+ *
  * Transforms session data based on server responses.
  * Updates session state with context, execution, messages, and exchange logs.
  */
 
 import type { Session, Project } from '../../models/session.model.js';
 import { buildWebExecute } from '../../lib/web-execute-dto.js';
+
+/**
+ * Message type from server responses
+ */
+interface Message {
+  role: string;
+  content: string;
+  timestamp?: string;
+}
+
+/**
+ * Server response type for completed invoke results
+ */
+interface ServerResponse {
+  context?: Record<string, unknown>;
+  execute?: Record<string, unknown>;
+  messages?: Message[];
+  exchangeLog?: unknown[];
+  result?: { completed?: boolean };
+}
+
+/**
+ * Status response type for polling endpoints
+ */
+interface StatusResponse {
+  context?: Record<string, unknown>;
+  execute?: Record<string, unknown>;
+  messages?: Message[];
+  exchangeLog?: unknown[];
+  status?: string;
+}
 
 /**
  * Updates session with data from server response
@@ -20,7 +51,7 @@ import { buildWebExecute } from '../../lib/web-execute-dto.js';
 export async function updateSessionWithServerResponse(
     project: Project,
     session: Session,
-    serverResponse: any
+    serverResponse: ServerResponse
 ): Promise<Session> {
     const updatedSession: Session = { ...session };
     
@@ -118,10 +149,10 @@ export async function updateSessionWithServerResponse(
         
         // Also sync to messages if assistant entries exist in history but not in messages
         // This ensures consistency between the two sources
-        const historyAssistants = serverResponse.context.history.filter((h: any) => h.role === 'assistant');
+        const historyAssistants = serverResponse.context.history.filter((h: Message) => h.role === 'assistant');
         if (historyAssistants.length > 0 && updatedSession.messages) {
-            const messageContents = new Set(updatedSession.messages.map((m: any) => m.content));
-            historyAssistants.forEach((h: any) => {
+            const messageContents = new Set(updatedSession.messages.map((m: Message) => m.content));
+            historyAssistants.forEach((h: Message) => {
                 if (h.content && !messageContents.has(h.content)) {
                     updatedSession.messages = [...updatedSession.messages, { 
                         role: 'assistant', 
@@ -173,7 +204,7 @@ export async function updateSessionWithServerResponse(
 export async function updateSessionWithStatusResponse(
     project: Project,
     session: Session,
-    statusResponse: any
+    statusResponse: StatusResponse
 ): Promise<Session> {
     const updatedSession: Session = { ...session };
     

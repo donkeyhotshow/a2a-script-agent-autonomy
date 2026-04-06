@@ -21,6 +21,7 @@ from .caching import (
     build_llm_cache_payload,
     build_llm_cache_key,
     is_valid_llm_disk_cache_value,
+    llm_disk_cache_log,
 )
 from .api_key_routing import forward_with_api_key_failover
 
@@ -85,20 +86,26 @@ def try_resolve_promise_from_cache(
         if not is_llm_upstream_response_ok(sc, body_bytes, ct):
             logger.warning("Disk cache invalid LLM payload; invalidating")
             cache.delete(cache_key)
+            llm_disk_cache_log("miss", path=path, stage="promise_inline", cache_key=cache_key)
             return None
+        llm_disk_cache_log("hit", path=path, stage="promise_inline", cache_key=cache_key)
         return (sc, dict(hdrs), body_bytes)
 
     if isinstance(cached_response, dict) and "status" in cached_response and "body" in cached_response:
         if "body_base64" in cached_response:
+            llm_disk_cache_log("miss", path=path, stage="promise_inline", cache_key=cache_key)
             return None
         body_text = cached_response["body"]
         body_bytes = body_text.encode("utf-8") if isinstance(body_text, str) else (body_text or b"")
         sc = int(cached_response["status"])
         ct = "application/json"
         if not is_llm_upstream_response_ok(sc, body_bytes, ct):
+            llm_disk_cache_log("miss", path=path, stage="promise_inline", cache_key=cache_key)
             return None
+        llm_disk_cache_log("hit", path=path, stage="promise_inline", cache_key=cache_key)
         return (sc, {"Content-Type": ct}, body_bytes)
 
+    llm_disk_cache_log("miss", path=path, stage="promise_inline", cache_key=cache_key)
     return None
 
 
@@ -170,6 +177,7 @@ def forward_promise_with_llm_disk_cache(
                 cached_response = None
         if cached_response is not None:
             logger.info("Promise %s served from cache", promise_id)
+            llm_disk_cache_log("hit", path=path, stage="promise_bg", cache_key=cache_key)
             body_base64 = cached_response["body_base64"]
             body_bytes = base64.b64decode(body_base64) if body_base64 else b""
             _promise_set_done(
@@ -192,6 +200,8 @@ def forward_promise_with_llm_disk_cache(
                 except Exception as e:
                     logger.warning("Failed to save cached response: %s", e, exc_info=True)
             return
+
+        llm_disk_cache_log("miss", path=path, stage="promise_bg", cache_key=cache_key)
 
         if routed_provider_name is not None and routed_provider_type is not None:
             resp, _ = forward_with_api_key_failover(
@@ -256,6 +266,7 @@ def forward_promise_with_llm_disk_cache(
             }
             cache.set(cache_key, cached_value)
             logger.info("Promise %s response cached", promise_id)
+            llm_disk_cache_log("store", path=path, stage="promise_bg", cache_key=cache_key)
 
         _promise_set_done(
             promise_id,

@@ -64,6 +64,9 @@ Mirror of `response.json` for prompt pipeline / `sim:check-md`.
     "run-script": {
       "scriptId": "validate-helper"
     }
+  },
+  "result": {
+    "completed": false
   }
 }
 ```

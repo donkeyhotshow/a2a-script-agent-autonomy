@@ -6,6 +6,7 @@ import {fileURLToPath} from 'node:url';
 import {invoke} from '../services/utils/invoke.service.js';
 import requestsRouter from './requests.routes.js';
 import type { FileBlock } from '../types/index.js';
+import {logger} from '../utils/logger.js';
 
 const ajv = new Ajv({strict: false, allErrors: true, validateFormats: false});
 
@@ -26,8 +27,11 @@ try {
     const schema = JSON.parse(readFileSync(SERVER_INVOKE_REQUEST_SCHEMA_PATH, 'utf-8'));
     validateInvokeRequestBody = ajv.compile(schema);
 } catch (err) {
-    // If schemas are missing in a dev checkout, keep previous behavior rather than crash.
-    console.warn('[invoke route] Failed to compile server-invoke-request.schema.json', err);
+    // Fail fast in production when schema is missing; in dev (SKIP_AUTH=1), warn and skip validation.
+    if (process.env.SKIP_AUTH !== '1') {
+        throw new Error(`[invoke route] Fatal: Failed to compile server-invoke-request.schema.json: ${err}`);
+    }
+    console.warn('[invoke route] Failed to compile server-invoke-request.schema.json (dev mode)', err);
 }
 
 function validateInvokeRequest(body: unknown): { valid: boolean; errors?: string[] } {
@@ -74,7 +78,9 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
         
         const clientId = 'anonymous';
         const resultKeys = body.result && typeof body.result === 'object' ? Object.keys(body.result) : [];
-        console.log('[a2a-server] /invoke received', { resultKeys, task: body.task?.slice(0, 50) });
+        if (process.env.DEBUG_INVOKE === '1') {
+            logger.debug('[a2a-server] /invoke received', { resultKeys, task: body.task?.slice(0, 50) });
+        }
         
         const invokeResult = await invoke(clientId, {
             task: body.task,
@@ -89,7 +95,9 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
         });
 
         const pid = invokeResult.promiseId;
-        console.log('[a2a-server] /invoke returning promiseId', { promiseId: pid });
+        if (process.env.DEBUG_INVOKE === '1') {
+            logger.debug('[a2a-server] /invoke returning promiseId', { promiseId: pid });
+        }
         res.json({
             success: true,
             data: {

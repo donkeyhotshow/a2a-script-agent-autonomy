@@ -57,6 +57,7 @@ npm run test:gang
 2. **Смена Папы (Papa Shift):**
    - Проверяет, запущен ли живой стек (`http://localhost:3000/health`).
    - Если стек жив — `e2e-dialog-test.js` (с флагом `E2E_DIRECT_LOW_LLM=1` для экономии токенов): Client API / сессии / LLM.
+   - Если **ai-integration** отвечает на `:11434/health` — `npm run verify:proba-cache-api` (два одинаковых `POST /api/chat?promise=1` → второй с `cached: true`).
    - **Proba-servera** уже в смене Мамы (in-process invoke, без HTTP).
 
 Если вам нужно запустить их по отдельности:

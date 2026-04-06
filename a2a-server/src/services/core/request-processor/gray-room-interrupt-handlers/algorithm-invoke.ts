@@ -1,7 +1,7 @@
 import type {AlgorithmContext, AlgorithmData} from '../../black-room/types.js';
 import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../../transform/types.js';
 import {BlackRoomOrchestrator} from '../../black-room/black-room-orchestrator.js';
-import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils.js';
+import {mergeSlotIntoWorkbenchContext, type GrayRoomContext} from '../gray-room-utils.js';
 
 /**
  * Handle algorithm_invoke interrupt
@@ -15,7 +15,7 @@ export async function handleAlgorithmInvoke(
     model: string,
     trace: ServerInterruptTraceEvent[]
 ): Promise<{ nextCtx: Record<string, unknown>; continueLoop: boolean }> {
-    let nextCtx: Record<string, unknown> = { ...ctx };
+    let nextCtx: GrayRoomContext = { ...ctx };
     const algorithmId = interrupt.algorithmId;
     
     if (!algorithmId) {
@@ -40,10 +40,10 @@ export async function handleAlgorithmInvoke(
         });
 
         const algorithmContext: AlgorithmContext = {
-            sessionId: (nextCtx['context'] as any)?.session_id || 'unknown',
-            workbench: (nextCtx['context'] as any)?.workbench,
-            history: nextCtx['history'] as any[],
-            files: (nextCtx['context'] as any)?.files,
+            sessionId: (nextCtx.context?.session_id as string) || 'unknown',
+            workbench: nextCtx.context?.workbench,
+            history: nextCtx.history || [],
+            files: nextCtx.context?.files,
             ...nextCtx
         };
 
@@ -61,10 +61,10 @@ export async function handleAlgorithmInvoke(
         });
 
         if (result.status === 'completed' && result.output) {
-            const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
-            const wb = (innerCtx['workbench'] as Record<string, unknown>) ?? {};
-            const slots = (wb['slots'] as Record<string, unknown>) ?? {};
-            const blackRoomSlots = (slots['blackRoomContext'] as Record<string, unknown>) ?? {};
+            const innerCtx = nextCtx.context ?? {};
+            const wb = (innerCtx.workbench as Record<string, unknown>) ?? {};
+            const slots = (wb.slots as Record<string, unknown>) ?? {};
+            const blackRoomSlots = (slots.blackRoomContext as Record<string, unknown>) ?? {};
             nextCtx = mergeSlotIntoWorkbenchContext(nextCtx, 'blackRoomContext', {
                 ...blackRoomSlots,
                 [algorithmId]: result.output,

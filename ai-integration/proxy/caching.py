@@ -12,6 +12,8 @@ Cache entry points (keep keys consistent; use helpers below):
 - ``proxy/promise_execution.forward_promise_with_llm_disk_cache`` / ``try_resolve_promise_from_cache`` — promise pipeline + optional HTTP 200 inline body on cache hit
 - ``proxy/daemon.py`` — pending promise worker: same payload builder as above
 - ``proxy/routes.py`` — ``/api/v1/generate``, ``/api/v1/embed``: ``build_v1_api_cache_key``
+
+Optional grep-friendly metrics: set env ``LLM_DISK_CACHE_LOG=1``; logs ``llm_disk_cache outcome=hit|miss``.
 """
 
 from __future__ import annotations
@@ -65,6 +67,15 @@ _VOLATILE_CACHE_KEYS = frozenset(
         "idempotency_key",
         # OpenAI-style end-user id — changes per client session but not the prompt
         "user",
+        # Tracing / run correlation (not model input semantics)
+        "invocation_id",
+        "invocationid",
+        "client_trace_id",
+        "traceparent",
+        "tracestate",
+        "baggage",
+        "otel_trace_id",
+        "otel_span_id",
     }
 )
 
@@ -79,6 +90,45 @@ _VOLATILE_CACHE_KEY_SUFFIX_TIME_BLOCKLIST = frozenset(
 )
 
 LLM_CACHE_KIND = "llm"
+
+# Keys often echoed on chat message objects by adapters; do not affect Ollama semantics.
+_MESSAGE_NOISE_KEYS = frozenset(
+    {
+        "id",
+        "message_id",
+        "tool_call_id",
+        "parent_id",
+        "uid",
+    }
+)
+
+
+def _llm_disk_cache_log_enabled() -> bool:
+    v = (os.environ.get("LLM_DISK_CACHE_LOG") or "").strip().lower()
+    return v in ("1", "true", "yes", "on")
+
+
+def llm_disk_cache_log(
+    outcome: str,
+    *,
+    path: str = "",
+    stage: str = "",
+    cache_key: str = "",
+) -> None:
+    """
+    One-line grep-friendly events for proba / CI (no bodies, no secrets).
+    Set LLM_DISK_CACHE_LOG=1 on ai-integration to enable.
+    """
+    if not _llm_disk_cache_log_enabled():
+        return
+    prefix = (cache_key[:16] + "...") if len(cache_key) > 16 else (cache_key or "")
+    logger.info(
+        "llm_disk_cache outcome=%s stage=%s path=%s key_prefix=%s",
+        outcome,
+        stage or "-",
+        (path or "-")[:120],
+        prefix or "-",
+    )
 
 
 def _is_volatile_cache_key(key: object) -> bool:
@@ -107,6 +157,74 @@ def _strip_volatile_keys(obj: Any) -> Any:
     if isinstance(obj, list):
         return [_strip_volatile_keys(x) for x in obj]
     return obj
+
+
+def _strip_message_noise_keys(msg: Dict[str, Any]) -> Dict[str, Any]:
+    out: Dict[str, Any] = {}
+    for k, v in msg.items():
+        lk = str(k).lower()
+        if lk in _MESSAGE_NOISE_KEYS:
+            continue
+        out[k] = v
+    return out
+
+
+def _tool_def_sort_key(tool: Any) -> str:
+    if not isinstance(tool, dict):
+        try:
+            return json.dumps(tool, sort_keys=True, ensure_ascii=False)
+        except Exception:
+            return str(tool)
+    fn = tool.get("function")
+    if isinstance(fn, dict) and fn.get("name"):
+        return str(fn.get("name"))
+    try:
+        return json.dumps(tool, sort_keys=True, ensure_ascii=False)
+    except Exception:
+        return str(tool)
+
+
+def _normalize_tools_for_cache(raw: Any) -> Any:
+    """Stable order for tool definition lists (Ollama/OpenAI-style); order rarely affects semantics."""
+    if not isinstance(raw, list):
+        return raw
+    items: list[Any] = []
+    for t in raw:
+        if isinstance(t, dict):
+            items.append(_strip_volatile_keys(dict(t)))
+        else:
+            items.append(_strip_volatile_keys(t))
+    return sorted(items, key=_tool_def_sort_key)
+
+
+def _normalize_llm_chat_body_dict(data: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Canonicalize Ollama-style /api/chat JSON for cache keys: drop adapter noise on
+    messages, stable-sort options. Applied after volatile-key strip.
+    """
+    out = dict(data)
+    raw_msgs = out.get("messages")
+    if isinstance(raw_msgs, list):
+        normalized: list[Any] = []
+        for m in raw_msgs:
+            if isinstance(m, dict):
+                cleaned = _strip_volatile_keys(dict(m))
+                cleaned = _strip_message_noise_keys(cleaned)
+                normalized.append(cleaned)
+            else:
+                normalized.append(_strip_volatile_keys(m))
+        out["messages"] = normalized
+    opts = out.get("options")
+    if isinstance(opts, dict):
+        filtered = {
+            str(k): v
+            for k, v in opts.items()
+            if k is not None and not _is_volatile_cache_key(str(k))
+        }
+        out["options"] = dict(sorted(filtered.items(), key=lambda kv: kv[0]))
+    if "tools" in out:
+        out["tools"] = _normalize_tools_for_cache(out.get("tools"))
+    return out
 
 
 def normalize_body_for_cache(
@@ -155,7 +273,10 @@ def normalize_body_for_cache(
 
     if isinstance(data, dict):
         data.pop("promise", None)
-        return _strip_volatile_keys(data)
+        stripped = _strip_volatile_keys(data)
+        if isinstance(stripped, dict) and isinstance(stripped.get("messages"), list):
+            stripped = _normalize_llm_chat_body_dict(stripped)
+        return stripped
     if isinstance(data, list):
         return _strip_volatile_keys(data)
     return data

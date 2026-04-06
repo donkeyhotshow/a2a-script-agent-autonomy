@@ -56,6 +56,12 @@ Canonical files (Web ↔ Client API и Client API ↔ Server ↔ LLM):
 | `response.json`                   | Server → Client API | Payload sent to Client API (context + execute, etc.).                                                                     |
 | `received.json`                   | Client API → Web    | **Web execute DTO** after sanitization (see below).                                                                       |
 
+### Optional `result` on `response.json`
+
+- Response transforms may attach **`result`**, e.g. **`{ "completed": true \| false }`**, from the LLM JSON field **`completed`** (see `a2a-server/prompts/transforms/agent-response.json`, `dialog-response.json`, `coder-response.json`).
+- **Semantics:** For **agent-class** schemas, when Gray Room finishes a turn **without** continuing the interrupt loop, **`result.completed === true`** is the server signal for optional **syndicate / SIEGE_REVIEW** (no separate decision LLM).
+- Goldens **may omit** `result` when a step does not assert completion. When documenting full agent tool chains, include **`"result": { "completed": false }`** on in-progress steps (see **`simulations/sync/agent-tool-loop/`**).
+
 **Order (полный pipeline):**
 
 `client.json → request.json → server-transforms-request.json → request.md → response.md → server-transforms-response.json → response.json → received.json`.

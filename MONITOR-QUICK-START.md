@@ -9,6 +9,94 @@ This document is the **operator entry point** for the Task Monitor: the same **C
 | **Env / ports** | [`.env.example`](.env.example) (`TASK_MONITOR_*`, `WEB_PORT`, `OLLAMA_HOST`, `AI_HUB_URL`) |
 | **Schema / shape debugging** | [`tests/direct-tests/README.md`](tests/direct-tests/README.md) |
 | **Terminology** | [`GLOSSARY.md`](GLOSSARY.md) → Task Monitor, ErrorClassifier, Direct Tests |
+| **Red alert — human solo cycle** | [Solo developer workflow checklist](#red-alert-solo-developer-workflow-checklist) below |
+
+## Red alert (solo developer workflow checklist)
+
+Minimal bureaucracy for a **solo developer**, with guardrails against self-deception and lost detail. Use **before** or **alongside** running the Task Monitor ([`GLOSSARY.md`](GLOSSARY.md) → *Red alert*).
+
+### 1. Brain dump
+
+1. Write **every thought** without filtering (markdown / notes / issues).
+2. Have the AI ask **clarifying questions** until it feels exhaustive.
+3. State clearly: **what** you are doing, **why**, and **what you are not** doing.
+4. Record **assumptions**.
+
+### 2. Terms and meaning
+
+5. Ask the AI for **term options**.  
+6. Pick the **shortest, simplest** labels.  
+7. Put a **glossary** in `README` or `DEV_STATE.md` (this repo: root [`DEV_STATE.md`](DEV_STATE.md), [`GLOSSARY.md`](GLOSSARY.md)).
+
+### 3. Architecture (fast)
+
+8. Ask the AI for: **one main** design, **one simpler**, **one hybrid**.  
+9. No UML — **boxes + short text** only.  
+10. For each option: **where you will break** / **what will hurt in a month**.
+
+### 4. Lock the decision
+
+11. Pick a **good enough** option.  
+12. Write a **short ADR** (a couple of paragraphs) — see [`docs/adr/README.md`](docs/adr/README.md).
+
+### 5. DEV_STATE.md (required)
+
+13. One **authoritative** `DEV_STATE.md` per scope (here: root + modules per [`.cursor/rules/document-hierarchy.mdc`](.cursor/rules/document-hierarchy.mdc)).  
+14. Inside: **current state**, **hacks**, **debt**, **fears**.
+
+### 6. Code scan
+
+15. Quick pass: **grep**, **TODO/FIXME**, **weird spots**.  
+16. Mark where the **plan might be wrong**.
+
+### 7. Minimal plan
+
+17. Split into **1–4 hour** tasks.  
+18. List them in `TODO.md`, `tasks/pending/`, or issues.  
+19. **Order** them.
+
+### 8. Stubs
+
+20. **Mocks / stubs / TODO** where needed.  
+21. Confirm **build + run** still work.
+
+### 9. Implementation
+
+22. Replace stubs with **real code**.  
+23. Add **tests only** where it feels risky.  
+24. Remove **lazy defaults**.  
+25. Remove **silent failures** and swallowed exceptions.
+
+### 10. Cleanup
+
+26. Refactor **odd** areas.  
+27. **Simplify APIs**.  
+28. Delete **dead code**.
+
+### 11. Self-check
+
+29. Re-read the **original goal**.  
+30. Exercise **negative** scenarios.  
+31. Ask: **“Am I fooling myself right now?”**
+
+### 12. Ship
+
+32. **Deploy / integrate**.  
+33. **Minimal** monitoring and logs.
+
+### 13. After
+
+34. Update **`DEV_STATE.md`**.  
+35. Write down **what actually went wrong**.
+
+### 100. Solo mistake guard
+
+**Assume you missed something.**
+
+- Check **edges**.  
+- Check **negative** paths.  
+- Check you did **not** over-engineer.  
+- If in doubt — **simplify**.
 
 ## What the instrument does
 
@@ -66,7 +154,7 @@ Defined in [`.env.example`](.env.example). Common overrides:
 
 ## AI Integration promise queue (`PROMISE_DAEMON_ONLY`)
 
-When the proxy runs with **`PROMISE_DAEMON_ONLY=true`** (default in `ai-integration`), **`?promise=1`** LLM calls are **queued** under `ai-integration/proxy_logs/promises/` until the **promise daemon** runs them or you **`POST /promise/<id>/execute`**. The Task Monitor drives sessions that eventually hit that path, so async steps can **stall** if nothing drains the queue.
+When the proxy runs with **`PROMISE_DAEMON_ONLY=true`** (default in `ai-integration`), **`?promise=1`** LLM calls are **queued** under `ai-integration/proxy_logs/promises/` until the **promise daemon** runs them or you **`POST /promise/<id>/execute`**. The Task Monitor drives sessions that eventually hit that path, so async steps can **stall** if nothing drains the queue. **Do not** turn the queue off for “inline” forwarding — the supported contract stays **async** (daemon or manual `POST /promise/.../execute`).
 
 On startup (after the normal health check), the monitor calls **`GET {TASK_MONITOR_AI_HUB_URL}/health`**. If the JSON includes **`"promise_daemon_only": true`**, it prints operator instructions (pending list, execute URL, prompt locations) and, in an **interactive** terminal, requires typing **`OK`** before continuing. Non-TTY runs skip the prompt but print a warning; automation should set **`TASK_MONITOR_SKIP_PROMISE_GATE=1`** (or rely on **`CI=true`**) when the daemon is guaranteed to be running.
 

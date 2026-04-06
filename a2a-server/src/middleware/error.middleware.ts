@@ -11,7 +11,7 @@ export function exposeErrorDetailsToClient(): boolean {
     if (raw === '1' || raw?.toLowerCase() === 'true') {
         return true;
     }
-    return process.env.NODE_ENV !== 'production';
+    return process.env.NODE_ENV === 'development';
 }
 
 // Simple error response helpers

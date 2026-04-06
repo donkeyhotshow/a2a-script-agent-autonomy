@@ -14,7 +14,7 @@
 | **Workbench** | Structured state in `context.workbench.sections` |
 | **Action-Key Shape** | Single action type per execute/result: `{ "execute": { "script": {...} } }` |
 | **Black Room** | Черная комната: режим алгоритмического выполнения на локальном Ollama. Запускается через `interrupt.reason: "algorithm_invoke"` с `algorithmId`. Разделяет работу с Gray Room: Prompt Mode (платный API для стратегии) vs Algorithm Mode (бесплатный локальный LLM для выполнения). См. [ADR-0058](docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md) |
-| **Gray Room** | Серая комната: серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту |
+| **Gray Room** | Серая комната: серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту. Если **`interrupt`** нет: у **agent-class** схем опционально **syndicate / SIEGE_REVIEW**, когда **`result.completed === true`** (из JSON модели **`completed`**); у **dialog** эта ветка без syndicate. См. [`a2a-server/docs/GRAY-ROOM.md`](a2a-server/docs/GRAY-ROOM.md), [ADR-0088](docs/adr/ADR-0088-agentic-decision-cell.md) (superseded), [`simulations/SCHEMA.md`](simulations/SCHEMA.md) |
 | **Red Room** | Красная комната: фаза выполнения инструментов клиентом (read-file, list-directory, file-exists и т.д.) после принятия решения в Gray Room |
 | **Self-Upgrade** | Самоапгрейд: процесс самоулучшения системы через API-диалог (не прямое исполнение). Ключевое различие: агент не выполняет задачи самостоятельно, а направляет их через Client API (`/api/a2a/sessions`, `/next`, `/async`), управляя системой извне. Это создает контролируемый цикл: (1) агент анализирует кодовую базу, (2) формулирует задачи, (3) отправляет через API, (4) получает ответы, (5) корректирует. В dev-режиме проект целится сам на себя (a2a-client → a2a-script-agent), но архитектура позволяет работать с любым проектом. Граница: API-вызовы разделяют "анализирующий" и "исполняющий" контексты. **Порядок (политика):** сначала основные спеки/задачи в `tasks/` и при необходимости `tasks/ide-prompts/`; **перед большим объёмом сессионной работы** — **Session archival**; очередь сессионных промптов `prompts-to-agent-mode/` и Task Monitor — **после**, когда стек и контракты готовы к прогону (см. `tasks/README.md` → *Self-Upgrade order*; автоматической блокировки в коде нет) |
 | **Router** | Keyword-based routing (dialog/agent/task-decomposition) |
@@ -45,7 +45,7 @@ Operational **alert levels**: scope tags for triage (**which subsystem you touch
 
 ### Red alert — **Красная тревога**
 
-**Client only** — `a2a-client` (Vite app, Client API `/api/a2a/*`, `premium-ui`, storage, vite-plugin routes). Assume the defect is on the client until proven otherwise. **Not** the same as **Red Room** ([Core terms](#core-terms)).
+**Переход в режим выполнения полного цикла работ** — выполнение `monitor-and-process-tasks.js` (`C:\workspace\org-carrier\a2a-script-agent\monitor-and-process-tasks.js`), то есть автоматизированный монитор очереди задач, управляющий сессиями через Client API и доводящий каждую задачу до завершения. **Чеклист соло‑цикла (до/вместе с монитором):** [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md#red-alert-solo-developer-workflow-checklist).
 
 ### Gray alert — **Серая тревога**
 
@@ -61,7 +61,7 @@ Operational **alert levels**: scope tags for triage (**which subsystem you touch
 
 ### Purple alert — **Фиолетовая тревога**
 
-**Async-first** — remove or narrow **sync** paths; prefer async (`promiseId`, poll `/result` or Client API `/async`) end-to-end.
+**Async-first** — remove or narrow **sync** paths; prefer async (`promiseId`, poll `/result` or Client API `/async`) end-to-end. **Hard rule:** never **switch** the stack to synchronous invoke or **disable** the ai-integration promise queue (`PROMISE_DAEMON_ONLY`) as an operator shortcut — use the daemon or manual `POST /promise/<id>/execute` ([`AGENTS.md`](AGENTS.md) → *Async-only transport*).
 
 ### Orange alert — **Оранжевая тревога**
 
