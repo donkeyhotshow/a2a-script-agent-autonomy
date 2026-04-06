@@ -36,9 +36,9 @@ export class ContextDiscoveryService {
       const match = line.match(/^([^:]+):(\d+):(.*)$/);
       if (match) {
         results.push({
-          filePath: match[1],
-          lineNumber: parseInt(match[2]),
-          lineContent: match[3].trim()
+          filePath: match[1] ?? '',
+          lineNumber: parseInt(match[2] ?? '0'),
+          lineContent: (match[3] ?? '').trim()
         });
       }
       if (results.length >= 20) break; // Limit results for token efficiency

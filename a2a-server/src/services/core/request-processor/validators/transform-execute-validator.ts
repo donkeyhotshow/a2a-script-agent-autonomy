@@ -156,7 +156,7 @@ export function validateLlmOutputShape(result: ProcessResult | Record<string, un
         return issues;
     }
 
-    const topMsg = typeof result.message === 'string' ? result.message.trim() : '';
+    const topMsg = typeof (result as Record<string, unknown>)['message'] === 'string' ? ((result as Record<string, unknown>)['message'] as string).trim() : '';
     const ex = result.execute as Record<string, unknown> | undefined;
     
     if (!ex || typeof ex !== 'object' || Array.isArray(ex)) {

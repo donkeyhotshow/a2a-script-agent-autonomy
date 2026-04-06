@@ -30,6 +30,9 @@ export class UltraContextService {
     }
 
     const lastVersion = history[history.length - 1];
+    if (!lastVersion) {
+      throw new Error(`Session ${sessionId} has empty history`);
+    }
     const newData = { ...lastVersion.data, ...delta };
     const newVersionId = lastVersion.versionId + 1;
 
@@ -47,7 +50,7 @@ export class UltraContextService {
   getLatest(sessionId: string): Record<string, any> {
     const history = this.sessions.get(sessionId);
     if (!history) return {};
-    return history[history.length - 1].data;
+    return history[history.length - 1]?.data ?? {};
   }
 
   timeTravel(sessionId: string, versionId: number): void {

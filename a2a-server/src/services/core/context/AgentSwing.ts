@@ -20,7 +20,7 @@ export class AgentSwing {
       return scores[b.verdict] - scores[a.verdict];
     });
 
-    return sorted[0];
+    return sorted[0] ?? branches[0] ?? { branchId: 'fallback', verdict: 'stable', data: {} };
   }
 
   /**

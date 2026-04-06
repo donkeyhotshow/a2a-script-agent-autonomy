@@ -38,18 +38,14 @@ export async function handleApproveAction(
     // Delegate to action processor
     const result = await actionProcessor.approveAction(sessionId, actionId);
     
-    // Include sessionId in context if it exists in input
+    const context = { ...(result.message.context ?? {}) } as Record<string, unknown>;
     if (ctx['session_id'] && typeof ctx['session_id'] === 'string') {
-        const resultContext = { ...result.message.context };
-        (resultContext as Record<string, unknown>)['session_id'] = ctx['session_id'];
-        return {
-            ...result,
-            message: {
-                ...result.message,
-                context: resultContext
-            }
-        };
+        context['session_id'] = ctx['session_id'];
     }
-    
-    return result;
+    return {
+        outcome: result.continue ? 'completed' : 'failed',
+        context: context as ProcessResult['context'],
+        execute: result.message.execute,
+        error: result.continue ? undefined : (result.message.message || 'Action approval failed'),
+    } as ProcessResult;
 }

@@ -51,7 +51,7 @@ export async function handleRouterChoice(
         // The dialog processor's normalizeContext also calls applyRouterPipelineChoice, but we ensure
         // the request context is properly seeded with the choice and transformSchema hint here.
         // This prevents the transform from re-emitting the router form.
-        const patchedContext = {
+        const patchedContext: Record<string, unknown> = {
             ...ctx,
             transformSchema: ACTION_TO_SCHEMA[choiceId] ?? choiceId,
             execution: { action: choiceId, step: 'start' },
@@ -95,13 +95,12 @@ export async function handleRouterChoice(
             return {
                 outcome: 'completed',
                 context: resultContext,
-                execute: actionResult.message.execute ?? {
+                execute: (actionResult.message.execute ?? {
                     form: {
-                        title: 'Action Started',
-                        description: actionResult.message.message || 'Action started',
+                        title: actionResult.message.message || 'Action Started',
                         input: [{ name: 'message', type: 'text', label: 'Message', required: true }],
                     },
-                },
+                }) as ProcessResult['execute'],
                 activated_neuron_ids: actionResult.actionId ? [actionResult.actionId] : undefined,
             };
         } else {
@@ -116,13 +115,12 @@ export async function handleRouterChoice(
             return {
                 outcome: 'completed',
                 context: resultContext,
-                execute: actionResult.message.execute ?? {
+                execute: (actionResult.message.execute ?? {
                     form: {
-                        title: 'Action Completed',
-                        description: actionResult.message.message || 'Action completed',
+                        title: actionResult.message.message || 'Action Completed',
                         input: [{ name: 'message', type: 'text', label: 'Message', required: true }],
                     },
-                },
+                }) as ProcessResult['execute'],
                 activated_neuron_ids: actionResult.actionId ? [actionResult.actionId] : undefined,
             };
         }

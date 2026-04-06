@@ -221,7 +221,7 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
     /**
      * Parse task text from various context formats
      */
-    protected parseTaskText(ctx: Record<string, unknown>): string {
+    protected override parseTaskText(ctx: Record<string, unknown>): string {
         return parseTaskTextFn(ctx);
     }
 

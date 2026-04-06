@@ -45,7 +45,7 @@ function normalizeVersion(range: string): string {
 }
 
 function categorize(pkg: string): 'frontend' | 'backend' | 'testing' | null {
-    const base = pkg.startsWith('@') ? pkg.split('/').slice(0, 2).join('/') : pkg.split('/')[0];
+    const base = pkg.startsWith('@') ? pkg.split('/').slice(0, 2).join('/') : (pkg.split('/')[0] ?? pkg);
     if (FRONTEND.has(base) || FRONTEND.has(pkg)) return 'frontend';
     if (TESTING.has(base) || TESTING.has(pkg)) return 'testing';
     if (BACKEND.has(base) || BACKEND.has(pkg)) return 'backend';

@@ -1,6 +1,6 @@
 import {
   createArtifactWriteInput,
-  type ArtifactBase,
+  type StoredArtifact,
   type ArtifactStore,
 } from './artifact-store.js';
 
@@ -45,11 +45,11 @@ export class DedicatedAnalyzer {
     }
 
     async analyze(
-        responseArtifacts: ArtifactBase[],
+        responseArtifacts: StoredArtifact[],
         sessionHistory: unknown[],
         currentConfidence: number,
         loopCount: number,
-    ): AnalyzerInsights {
+    ): Promise<AnalyzerInsights> {
         const patterns = this.extractPatterns(sessionHistory);
         const anomalies = this.detectAnomalies(responseArtifacts, currentConfidence, loopCount);
         const hypotheses = this.generateHypotheses(patterns, anomalies);
@@ -112,7 +112,7 @@ export class DedicatedAnalyzer {
     }
 
     private detectAnomalies(
-        artifacts: ArtifactBase[],
+        artifacts: StoredArtifact[],
         confidence: number,
         loopCount: number,
     ): Anomaly[] {
@@ -137,7 +137,7 @@ export class DedicatedAnalyzer {
         }
 
         const toolFailures = artifacts.filter(
-            a => a.type === 'TOOL_AUDIT' &&
+            a => a.artifact_type === 'TOOL_AUDIT' &&
                 (a.data as Record<string, unknown>)?.['outcome_class'] === 'fail'
         );
         if (toolFailures.length >= 3) {

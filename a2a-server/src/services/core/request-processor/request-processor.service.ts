@@ -42,7 +42,7 @@ function mergeFrameworksIntoStatusPayload(
 ): Record<string, unknown> {
     const resultObj =
         typeof result === 'object' && result !== null ? (result as unknown as Record<string, unknown>) : {};
-    const frameworks = detectFrameworksFromCodeBlocks(codeBlocks);
+    const frameworks = detectFrameworksFromCodeBlocks(codeBlocks ?? undefined);
     const hadContext = typeof resultObj.context === 'object' && resultObj.context !== null;
 
     if (frameworks === undefined && !hadContext) {

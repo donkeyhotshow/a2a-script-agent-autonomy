@@ -40,7 +40,7 @@ export async function handleCompressHistory(
         nextCtx = { ...nextCtx, history: result.best_history, context: {...innerCtx, history: result.best_history} };
         trace.push({ 
             kind: 'sidecar_llm', 
-            purpose: 'compress_history_swing', 
+            purpose: 'compress_history', 
             ok: true, 
             meta: `from=${history.length} to=${result.best_history.length} score=${result.score.toFixed(2)} options=${result.options_considered}` 
         });

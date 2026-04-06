@@ -52,16 +52,14 @@ export function handleStepComplete(
     const resultContext = { ...(applied.context as ProcessResult['context']) };
     // Include sessionId in context if it exists in input
     if (ctx['session_id']) {
-        resultContext['session_id'] = ctx['session_id'];
+        (resultContext as Record<string, unknown>)['session_id'] = ctx['session_id'];
     }
     
     return {
         outcome: 'completed',
-        context: resultContext,
+        context: resultContext as ProcessResult['context'],
         execute: {
-            dialog: {
-                message: `Step ${stepId} completed successfully.`,
-            },
+            message: `Step ${stepId} completed successfully.`,
         },
     };
 }

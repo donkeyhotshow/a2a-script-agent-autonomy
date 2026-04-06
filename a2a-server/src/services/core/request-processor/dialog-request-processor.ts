@@ -166,8 +166,7 @@ function ensureDialogExecuteWhenMissing(
     result.context = baseCtx as RequestContextBlock;
     result.execute = {
         form: {
-            title: 'Dialog',
-            description: text,
+            title: text,
             input: [
                 {
                     name: 'message',
@@ -234,7 +233,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
             const hasHistory = Array.isArray(ctx['history']) && ctx['history'].length > 0;
             if (schemaName === 'dialog' && !hasHistory && !resolveResultObject(ctx)?.message) {
                 return {
-                    outcome: 'success',
+                    outcome: 'completed',
                     execute: {
                         form: {
                             input: [
@@ -279,7 +278,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                     if (r.context && typeof r.context === 'object' && !Array.isArray(r.context)) {
                         const sessionIdValue = ctx['session_id'];
                         if (sessionIdValue && typeof sessionIdValue === 'string') {
-                            r.context = {...r.context, session_id: sessionIdValue};
+                            r.context = {...r.context, session_id: sessionIdValue} as typeof r.context;
                         }
                     }
                     return r;
@@ -344,7 +343,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                         Object.keys(llmResult.requestTransformExecute).length > 0
                     ) {
                         return {
-                            outcome: 'success',
+                            outcome: 'completed',
                             execute: llmResult.requestTransformExecute,
                             context: {
                                 ...ctx,
@@ -374,7 +373,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                         grayRoomResult.context = {
                             ...grayRoomResult.context,
                             session_id: sessionIdValue,
-                        };
+                        } as typeof grayRoomResult.context;
                     }
                 }
 
