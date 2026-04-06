@@ -216,14 +216,47 @@ export function AssistantMessage({
   );
 }
 
-export function AssistantMessageLoading() {
+export function GrayRoomProgressBadge({ operationHistory }: { operationHistory?: Array<Record<string, unknown>> }) {
+  if (!operationHistory || operationHistory.length === 0) return null;
+
+  const grayRoomOps = operationHistory.filter(
+    (entry) => entry['op'] !== undefined || entry['kind'] === 'sidecar_llm' || entry['kind'] === 'interrupt_handler'
+  );
+  if (grayRoomOps.length === 0) return null;
+
+  const last = grayRoomOps[grayRoomOps.length - 1];
+  const step = (last?.['purpose'] as string) || (last?.['op'] as string) || (last?.['reason'] as string) || '';
+
+  const STEP_LABELS: Record<string, string> = {
+    compress_history: '⚙ Compressing history…',
+    thinking: '🧠 Thinking…',
+    auto_read_file: '📄 Reading file…',
+    auto_rag_page: '🔍 Searching codebase…',
+    clarify: '❓ Clarifying…',
+    algorithm_invoke: '⚡ Running algorithm…',
+    progressive_retrieval: '🔍 Progressive retrieval…',
+    sequence_step_complete: '✅ Step completed',
+  };
+
+  const label = STEP_LABELS[step] || `Gray Room: ${step}`;
+
   return (
-    <div className="mr-auto flex items-start gap-2">
+    <div className="mr-auto mt-1 flex items-center gap-1.5 rounded-full border border-muted-foreground/20 bg-muted px-3 py-1 text-xs text-muted-foreground">
+      <div className="h-1.5 w-1.5 animate-ping rounded-full bg-blue-400" />
+      <span>{label}</span>
+    </div>
+  );
+}
+
+export function AssistantMessageLoading({ operationHistory }: { operationHistory?: Array<Record<string, unknown>> }) {
+  return (
+    <div className="mr-auto flex flex-col items-start gap-1">
       <div className="bg-muted flex h-8 items-center gap-1 rounded-2xl px-4 py-2">
         <div className="bg-foreground/50 h-1.5 w-1.5 animate-[pulse_1.5s_ease-in-out_infinite] rounded-full"></div>
         <div className="bg-foreground/50 h-1.5 w-1.5 animate-[pulse_1.5s_ease-in-out_0.5s_infinite] rounded-full"></div>
         <div className="bg-foreground/50 h-1.5 w-1.5 animate-[pulse_1.5s_ease-in-out_1s_infinite] rounded-full"></div>
       </div>
+      <GrayRoomProgressBadge operationHistory={operationHistory} />
     </div>
   );
 }

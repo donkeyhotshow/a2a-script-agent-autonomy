@@ -1,0 +1,17 @@
+{
+  "projectId": "default",
+  "sessionId": "sess_gray_room_clarify",
+  "execute": {
+    "form": {
+      "title": "Clarification needed",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Which authentication method is failing? (JWT, OAuth, session-based?)",
+          "required": true
+        }
+      ]
+    }
+  }
+}

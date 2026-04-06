@@ -1,0 +1,22 @@
+{
+  "context": {
+    "task": "Analyze the error in the authentication module",
+    "execution": {
+      "action": "agent",
+      "step": "idle"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "There is an error in the authentication module"
+      },
+      {
+        "role": "assistant",
+        "message": "I need more information to help with the authentication error. Which specific authentication method is failing?"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  }
+}

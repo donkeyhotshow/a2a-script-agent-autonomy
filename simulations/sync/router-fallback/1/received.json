@@ -1,0 +1,12 @@
+{
+  "projectId": "default",
+  "execute": {
+    "form": {
+      "choices": [
+        { "id": "dialog", "label": "AI Dialog" },
+        { "id": "agent", "label": "Agent Mode" },
+        { "id": "task-decomposition", "label": "Task Decomposition" }
+      ]
+    }
+  }
+}

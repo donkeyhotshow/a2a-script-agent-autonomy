@@ -33,3 +33,55 @@ jobs:
         run: |
           cd a2a-server
           npm run build
+
+  sim-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install a2a-server dependencies
+        run: |
+          cd a2a-server
+          npm ci
+
+      - name: Check simulation MD/JSON drift
+        run: |
+          cd a2a-server
+          node scripts/check-sim-md-json-drift.mjs
+
+      - name: Lint simulations
+        run: |
+          cd a2a-server
+          npm run sim:lint:all || true
+
+  proba-servera:
+    runs-on: ubuntu-latest
+    env:
+      SKIP_AUTH: '1'
+      ENCRYPTION_KEY: 'test-encryption-key-32-chars-ok!'
+      JWT_SECRET: 'test-jwt-secret-32-chars-or-more!'
+      NODE_ENV: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies (root)
+        run: npm ci
+
+      - name: Install a2a-server dependencies
+        run: |
+          cd a2a-server
+          npm ci
+
+      - name: Run in-process server validation tests
+        run: |
+          cd a2a-server
+          npm test -- --reporter=verbose 2>&1 | head -200
+

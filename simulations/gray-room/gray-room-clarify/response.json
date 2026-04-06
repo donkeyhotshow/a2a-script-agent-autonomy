@@ -1,0 +1,51 @@
+{
+  "context": {
+    "projectId": "default",
+    "clientSessionId": "sess_gray_room_clarify",
+    "task": "Analyze the error in the authentication module",
+    "execution": {
+      "action": "agent",
+      "step": "idle"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "There is an error in the authentication module"
+      },
+      {
+        "role": "assistant",
+        "message": "I need more information to help with the authentication error. Which specific authentication method is failing?"
+      }
+    ],
+    "workbench": {
+      "sections": {},
+      "slots": {
+        "clarify": {
+          "question": "Which specific authentication method is failing? (JWT, OAuth, session-based?)",
+          "context": "Authentication module error analysis requires knowing the specific method"
+        },
+        "interruptTrace": [
+          {
+            "kind": "sidecar_llm",
+            "purpose": "clarify",
+            "ok": true,
+            "meta": "slots.clarify"
+          }
+        ]
+      }
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Clarification needed",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Which authentication method is failing? (JWT, OAuth, session-based?)",
+          "required": true
+        }
+      ]
+    }
+  }
+}
