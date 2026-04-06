@@ -1,5 +1,7 @@
 # A2A Script Agent Glossary
 
+## Core terms
+
 | Term | Definition |
 |------|-----------|
 | **A2A (Agent-to-Agent)** | Protocol linking specialized agents through unified request/response structure and shared context |
@@ -27,16 +29,71 @@
 | **Schema validation** | Проверка форм контрактов (execute/result, сессии, симуляции). **Первый слой:** скрипты в [`tests/direct-tests/validators/`](tests/direct-tests/validators/README.md) — из корня репозитория `npm run scan-promise-bodies`, `scan-session-responses`, `verify:gray-room`, `audit:sim-choice-descriptions` и др. **Дальше:** золотые симуляции `npm run sim:lint` / `sim:validate`, зеркала MD/JSON `sim:check-md`, общие гварды (`tests/direct-tests/lib/a2a-schema-guards.mjs` и связанные тесты). См. [`AGENTS.md`](AGENTS.md) → Offline validators |
 | **Task Monitor Modules** | Модульная архитектура: `task-monitor-core.js` (конфигурация, состояние, логирование), `task-monitor-api.js` (Client API вызовы), `task-monitor-processing.js` (обработка задач), `task-monitor-daemon.js` (daemon режим), `task-monitor-utils.js` (утилиты), `task-monitor-validation.js` (валидация), `errors.js` (классификация ошибок) |
 
-## Operational alert levels (тревоги)
+## Alerts (тревоги)
 
-Scope tags for triage: **which subsystem you touch** or **what kind of change** you are making. **Not** the same as **Red Room** / **Gray Room** (runtime pipeline phases in the glossary table above).
+Operational **alert levels**: scope tags for triage (**which subsystem you touch** or **what kind of change** you are making). **Not** the same as **Rooms** (runtime pipeline phases — see [Rooms vs alerts](#rooms-vs-alerts) below).
 
-| Alert (RU) | Alert (EN) | Scope / meaning |
-|------------|------------|------------------|
-| **Красная тревога** | **Red alert** | **Client only** — `a2a-client` (Vite app, Client API `/api/a2a/*`, `premium-ui`, storage, vite-plugin routes). Assume the defect is on the client until proven otherwise. |
-| **Серая тревога** | **Gray alert** | **Server only** — `a2a-server` (`/api/v1/invoke`, transforms, Gray Room chain, request processor). Assume the defect is on the server until proven otherwise. |
-| **Жёлтая тревога** | **Yellow alert** | **Proxy only** — `ai-integration` (hub/proxy to Ollama, proxy logs, model routing). *Original note used «красная» again for proxy; yellow is the distinct label for this layer.* |
-| **Голубая тревога** | **Blue alert** | **Dialog/session contract** — multi-turn dialog is wrong (router Beat A/B, `message` vs `choice`, `execute.form`, step storage). Triage across Client API session flow and server dialog transforms; start from `GET …/sessions/{id}` and [`tests/direct-tests/README.md`](tests/direct-tests/README.md) / [`AGENTS.md`](AGENTS.md) router section. |
-| **Фиолетовая тревога** | **Purple alert** | **Async-first** — remove or narrow **sync** paths; prefer async (`promiseId`, poll `/result` or Client API `/async`) end-to-end. |
-| **Оранжевая тревога** | **Orange alert** | **Deduplication** — consolidate duplicate code, docs, or routes; one canonical path. |
-| **Зелёная тревога** | **Green alert** | **Small, targeted improvements** — local fixes, no large refactors or cross-cutting rewrites. |
+### How alerts are used
+
+**Two ways to set an alert (documentation / process — not a built-in runtime flag unless you add one):**
+
+1. **Human-declared** — The operator states the alert (e.g. “**Gray alert**: we’re treating this as server-side until proven otherwise”). Use when you choose triage focus or change type.
+2. **Assistant-declared** — The IDE/agent **proposes** an alert when it sees **patterns** (same failure class in two places, wrong router beat, duplicate sync path, etc.). The human **confirms or edits** the label; the assistant should not silently “clear” an alert without evidence.
+
+**Duration:** Keep an alert **active** until the **situation is mitigated** — evidence that the **class** of issue is addressed (tests, second surface checked, or explicit rollback of the assumption). One fix in one file is often **not** enough: the same defect class often shows up elsewhere, so treat the alert as **sticky** until you verify or explicitly accept residual risk.
+
+### Red alert — **Красная тревога**
+
+**Client only** — `a2a-client` (Vite app, Client API `/api/a2a/*`, `premium-ui`, storage, vite-plugin routes). Assume the defect is on the client until proven otherwise. **Not** the same as **Red Room** ([Core terms](#core-terms)).
+
+### Gray alert — **Серая тревога**
+
+**Server only** — `a2a-server` (`/api/v1/invoke`, transforms, Gray Room chain, request processor). Assume the defect is on the server until proven otherwise. **Not** the same as **Gray Room** ([Core terms](#core-terms)).
+
+### Yellow alert (proxy) — **Жёлтая тревога (proxy)**
+
+**Proxy only** — `ai-integration` (hub/proxy to Ollama, proxy logs, model routing). *Older notes sometimes used «красная» for proxy; yellow is the label for this layer.* Distinct from **Yellow alert (operator)** below.
+
+### Blue alert — **Голубая тревога**
+
+**Dialog/session contract** — multi-turn dialog is wrong (router Beat A/B, `message` vs `choice`, `execute.form`, step storage). Triage across Client API session flow and server dialog transforms; start from `GET …/sessions/{id}` and [`tests/direct-tests/README.md`](tests/direct-tests/README.md) / [`AGENTS.md`](AGENTS.md) router section.
+
+### Purple alert — **Фиолетовая тревога**
+
+**Async-first** — remove or narrow **sync** paths; prefer async (`promiseId`, poll `/result` or Client API `/async`) end-to-end.
+
+### Orange alert — **Оранжевая тревога**
+
+**Deduplication** — consolidate duplicate code, docs, or routes; one canonical path.
+
+### Green alert — **Зелёная тревога**
+
+**Small, targeted improvements** — local fixes, no large refactors or cross-cutting rewrites.
+
+### Brown alert — **Коричневая тревога**
+
+**Artifact bloat / undistilled notes** — redundant files or logs still hold value that has **not** been **squeezed** into the **shared pool** (canonical docs, `DEV_STATE`, `tasks/`, glossary — wherever the signal belongs). **Action:** (1) extract the **essence** of the context; (2) **add** it to the correct canonical place; (3) **move** the original artifact to **archive** (e.g. under `logs/archive/` or a dated archive tree), not leave it as the live source of truth. Clear the alert only after distill → place → archive.
+
+### Teal alert — **Бирюзовая тревога**
+
+**Contracts and versions** — breaking or drifting **API surface** (Client API ↔ server ↔ proxy), **semver** / compatibility promises, **schema** (JSON shape, execute/result). Triage: who must change, migration path, and **one** canonical contract. **Not** the same as **Blue alert** (dialog/router beats) — **Teal** is **static** contract/version alignment across components.
+
+### Magenta alert — **Пурпурная тревога**
+
+**Dependencies** — npm/pip/OS packages: **outdated**, **duplicate**, **vulnerable**, **licensing**, **lockfile drift**. **Not** **Orange alert** (dedupe your *own* code/docs) — **Magenta** is **third-party** graph and supply chain. **Not** **Purple alert** (фиолетовая) — async transport; **Magenta** is dependency hygiene.
+
+### Amber alert — **Янтарная тревога**
+
+**Documentation debt** — **canonical** README, ADRs, `ENV-MATRIX`, operator docs **do not match** behavior or code in production paths. **Not** **Brown alert** — Brown is **distill** from noisy artifacts into **the right** place; **Amber** is **fix** the already-canonical doc or the **code** so they agree. Clear the alert when the **lie** or **gap** is removed (update doc, or change code + doc together).
+
+### Yellow alert (operator) — **Жёлтая тревога (оператор)**
+
+**Not** a subsystem scope tag (unlike **Yellow alert (proxy)** above).
+
+**Meaning:** You tell the agent (LLM or assistant) that something is **wrong** here, and it **insists** that the behavior is **correct as-is**.
+
+**Activation:** Treat the alert as **on** after your correction has been **ignored twice** — two rounds where you point out the mistake and there is no substantive fix or acknowledgment. **Next step:** restate with concrete evidence (file, line, failing test, expected vs actual), narrow the claim, or change verification path (direct test, smaller repro).
+
+### Rooms vs alerts
+
+**Rooms** (**Black Room**, **Gray Room**, **Red Room**) are **runtime pipeline phases** — defined under [Core terms](#core-terms). **Colored alerts** here are **triage labels** (where to look first or what kind of change). Same color names (e.g. gray/red) refer to **different** concepts: e.g. **Gray alert** = server-side triage; **Gray Room** = server LLM chain before the client sees a response.

@@ -48,7 +48,8 @@ ${historyJson}`;
           stream: false,
         });
         if (init.ok) {
-          const compressedStr = await pollReadyThenFetch(aiHubUrl, init.llmPromiseId);
+          const compressedStr =
+            init.inlineResponseBody ?? (await pollReadyThenFetch(aiHubUrl, init.llmPromiseId));
           if (compressedStr) {
             const parsed = tryParseJsonFromLlmText<unknown>(compressedStr);
             if (Array.isArray(parsed)) {

@@ -106,14 +106,13 @@ export async function executeScript(
         let result: unknown;
         let duration: number;
 
-        const vm2 = (() => {
-            try {
-                // eslint-disable-next-line @typescript-eslint/no-var-requires
-                return require('vm2') as {VM: new (opts: any) => {run: (code: string) => unknown}};
-            } catch {
-                return null;
-            }
-        })();
+        let vm2: {VM: new (opts: any) => {run: (code: string) => unknown}} | null = null;
+        try {
+            const vm2Module = await import('vm2');
+            vm2 = vm2Module as {VM: new (opts: any) => {run: (code: string) => unknown}};
+        } catch {
+            // vm2 not available, vm2 remains null
+        }
 
         if (vm2 && vm2.VM) {
             const vm = new vm2.VM({
@@ -124,8 +123,7 @@ export async function executeScript(
         } else {
             // Minimal fallback: Node's `vm` module. This is less safe than `vm2`,
             // but keeps the app booting and script runner usable.
-            // eslint-disable-next-line @typescript-eslint/no-var-requires
-            const nodeVm = require('vm') as typeof import('vm');
+            const nodeVm = await import('vm') as typeof import('vm');
             const script = new nodeVm.Script(wrappedCode);
             const ctx = nodeVm.createContext(sandbox);
             result = script.runInContext(ctx, {timeout: 30000});

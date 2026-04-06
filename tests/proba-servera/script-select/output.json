@@ -1,10 +1,15 @@
 {
   "context": {
+    "session_id": "srv_sess_8263840c-5e13-4038-b1c6-22c77f71c45d",
     "task": "fix vue imports",
     "execution": {
       "action": "task",
       "step": "router"
-    }
+    },
+    "result": {
+      "choice": "fix-vue-imports"
+    },
+    "choice_id": "fix-vue-imports"
   },
   "execute": {
     "form": {

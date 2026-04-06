@@ -2,11 +2,14 @@
 Promise Manager Module
 Handles promise creation, execution, and management for async requests
 """
+import os
 import time
 import logging
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, Union
 
 logger = logging.getLogger(__name__)
+
+from flask import Response
 
 from .config import PROMISE_DELAY_BEFORE_EXECUTE
 from .promises import (
@@ -15,7 +18,13 @@ from .promises import (
     _promise_reset_pending,
     _write_json_file,
     _json_bytes,
+    create_request_log,
+    save_request,
+    save_response,
 )
+from .promise_storage import _promise_folder, _save_promise
+from .promise_execution import try_resolve_promise_from_cache
+from .api_key_routing import write_routing_hint
 from .ai_hub_config import _build_simulated_body
 
 
@@ -34,8 +43,8 @@ def create_promise_job(
     routed_provider_snapshot: Optional[str],
     routed_type_snapshot: Optional[str],
     router_config_snapshot,
-    should_log: bool,
-    folder_path: str,
+    want_trace: bool,
+    trace_dir: str,
     storage_dir: str,
 ) -> None:
     """
@@ -84,9 +93,9 @@ def create_promise_job(
             headers_out.setdefault('Content-Type', content_type)
             _promise_set_done(promise.promise_id, status_code=status_code, headers=headers_out, body=sim_body)
 
-            if should_log and folder_path:
+            if want_trace and trace_dir:
                 from .promises import save_response
-                save_response(folder_path, {
+                save_response(trace_dir, {
                     "status_code": status_code,
                     "headers": headers_out,
                     "content": (sim_body[:10000].decode('utf-8', errors='replace') if isinstance(sim_body, (bytes, bytearray)) else str(sim_body))[:10000],
@@ -110,15 +119,15 @@ def create_promise_job(
             routed_provider_name=routed_provider_snapshot,
             routed_provider_type=routed_type_snapshot,
             router_config=router_config_snapshot,
-            should_log=should_log,
-            folder_path=folder_path if should_log else "",
+            want_trace=want_trace,
+            trace_dir=trace_dir if want_trace else "",
         )
     except Exception as e:
         logger.exception("create_promise_job failed promise_id=%s", promise.promise_id)
         _promise_reset_pending(promise.promise_id, delay_seconds=10.0)
-        if should_log and folder_path:
+        if want_trace and trace_dir:
             from .promises import save_response
-            save_response(folder_path, {"error": "promise_error", "message": str(e)})
+            save_response(trace_dir, {"error": "promise_error", "message": str(e)})
 
 
 def handle_promise_mode(
@@ -135,14 +144,17 @@ def handle_promise_mode(
     routed_provider_name: Optional[str],
     routed_provider_type: Optional[str],
     router_config,
-    should_log: bool,
-    folder_path: str,
+    want_trace: bool,
     storage_dir: str,
-):
+) -> Union[Response, Dict[str, Any]]:
     """
-    Handle promise mode execution.
+    Handle promise mode execution. Traces (request/forwarded/response) live under
+    ``proxy_logs/promises/<promiseId>/`` only — not ``proxy_logs/requests/``.
+
+    Disk-cache hit: returns HTTP 200 with ``promiseId``, ``status: completed``,
+    ``cached: true``, ``responseBody`` (full upstream JSON text) so the client can skip polling.
     """
-    from .promises import _PROMISE_EXECUTOR, _write_json_file
+    from .promises import _PROMISE_EXECUTOR
 
     simulate_snapshot = simulate_action if isinstance(simulate_action, dict) else None
 
@@ -151,19 +163,16 @@ def handle_promise_mode(
         method=request.method,
         path=path,
         target_url=target_url,
-        log_folder=folder_path if should_log else '',
+        log_folder='',
         simulate=simulate_snapshot,
         server_promise_id=server_promise_id,
     )
 
-    if should_log:
-        try:
-            _write_json_file(
-                f"{folder_path}/promise.json",
-                {"promiseId": promise.promise_id, "status": "pending"}
-            )
-        except Exception as e:
-            logger.warning("Failed to save promise.json: %s", e, exc_info=True)
+    trace_dir = ''
+    if want_trace:
+        trace_dir = _promise_folder(promise.promise_id)
+        promise.log_folder = trace_dir
+        _save_promise(promise)
 
     # Prepare snapshots
     body_snapshot = body
@@ -176,6 +185,81 @@ def handle_promise_mode(
     routed_provider_snapshot = routed_provider_name
     routed_type_snapshot = routed_provider_type
     router_config_snapshot = router_config
+
+    if want_trace and trace_dir:
+        try:
+            req_data = create_request_log(request, body_snapshot)
+            save_request(trace_dir, req_data)
+            if isinstance(body_json, dict):
+                _write_json_file(os.path.join(trace_dir, 'forwarded_request.json'), body_json)
+                hdr_safe = dict(headers_snapshot)
+                auth = hdr_safe.get('Authorization') or hdr_safe.get('authorization')
+                if auth:
+                    hdr_safe['Authorization'] = 'Bearer ***' if str(auth).startswith('Bearer ') else '***'
+                for k in list(hdr_safe.keys()):
+                    if str(k).lower() == 'api-key':
+                        hdr_safe[k] = '***'
+                _write_json_file(os.path.join(trace_dir, 'forwarded_headers.json'), hdr_safe)
+            if routed_provider_name and routed_provider_type:
+                write_routing_hint(
+                    trace_dir,
+                    provider_name=routed_provider_name,
+                    provider_type=routed_provider_type,
+                    key_failover=routed_provider_type != 'ollama',
+                )
+        except Exception as e:
+            logger.warning("Failed to save promise trace: %s", e, exc_info=True)
+
+    if simulate_snapshot is None:
+        cached = try_resolve_promise_from_cache(
+            path=path,
+            method=method_snapshot,
+            target_url=target_url,
+            body_for_prepare=body_snapshot,
+            args=args_snapshot,
+            headers=headers_snapshot,
+            body_json=body_json_snapshot,
+            routed_provider_name=routed_provider_snapshot,
+            routed_provider_type=routed_type_snapshot,
+            router_config=router_config_snapshot,
+        )
+        if cached is not None:
+            sc, hdrs, body_b = cached
+            _promise_set_done(
+                promise.promise_id,
+                status_code=sc,
+                headers=hdrs,
+                body=body_b,
+            )
+            if want_trace and trace_dir:
+                try:
+                    save_response(
+                        trace_dir,
+                        {
+                            "status_code": sc,
+                            "headers": hdrs,
+                            "content": body_b.decode('utf-8', errors='replace')[:10000],
+                            "cached": True,
+                            "promised": True,
+                        },
+                    )
+                    _write_json_file(
+                        os.path.join(trace_dir, 'promise.json'),
+                        {"promiseId": promise.promise_id, "status": "completed", "cached": True},
+                    )
+                except Exception as e:
+                    logger.warning("Failed to save cached promise response trace: %s", e, exc_info=True)
+            body_out = body_b.decode('utf-8', errors='replace')
+            return Response(
+                _json_bytes({
+                    "promiseId": promise.promise_id,
+                    "status": "completed",
+                    "cached": True,
+                    "responseBody": body_out,
+                }),
+                status=200,
+                mimetype='application/json',
+            )
 
     def _job():
         create_promise_job(
@@ -193,12 +277,20 @@ def handle_promise_mode(
             routed_provider_snapshot,
             routed_type_snapshot,
             router_config_snapshot,
-            should_log,
-            folder_path,
+            want_trace,
+            trace_dir,
             storage_dir,
         )
 
-    # TEMP: always run promise job inline so debug payload is written immediately.
+    if want_trace and trace_dir:
+        try:
+            _write_json_file(
+                os.path.join(trace_dir, 'promise.json'),
+                {"promiseId": promise.promise_id, "status": "pending"},
+            )
+        except Exception as e:
+            logger.warning("Failed to save promise.json: %s", e, exc_info=True)
+
     if PROMISE_DELAY_BEFORE_EXECUTE > 0:
         time.sleep(PROMISE_DELAY_BEFORE_EXECUTE)
     _PROMISE_EXECUTOR.submit(_job)

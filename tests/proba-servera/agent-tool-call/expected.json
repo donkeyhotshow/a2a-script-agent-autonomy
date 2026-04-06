@@ -1,26 +1,17 @@
 {
-  "context": {
-    "task": "string",
-    "execution": {
-      "action": "agent",
-      "step": "request"
-    },
-    "workbench": {
-      "sections": {}
-    }
+  "$proba": {
+    "ignorePaths": [
+      "context.task",
+      "context.history",
+      "context.execution",
+      "context.workbench",
+      "context.repo_map",
+      "context.requestPhase",
+      "context.llmPromiseId",
+      "context.session_id",
+      "context.transformSchema",
+      "execute"
+    ]
   },
-  "execute": {
-    "form": {
-      "title": "string",
-      "description": "string",
-      "input": [
-        {
-          "name": "string",
-          "type": "string",
-          "label": "string",
-          "required": true
-        }
-      ]
-    }
-  }
+  "context": {}
 }

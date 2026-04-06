@@ -54,9 +54,23 @@ export function extractLlmTextFromHubResponseBody(raw: string): string | null {
 
 export async function fetchLlmResponse(base: string, llmPromiseId: string): Promise<string | null> {
     const normalizedBase = resolveAiHubBaseUrl(base);
-    const bodyRes = await fetch(`${normalizedBase}/promise/${llmPromiseId}/response`);
+    let bodyRes: Response;
+    try {
+        bodyRes = await fetch(`${normalizedBase}/promise/${llmPromiseId}/response`, {
+            headers: {'Accept-Encoding': 'identity'},
+        });
+    } catch (e) {
+        logger.warn('[llm-hub-poll] fetchLlmResponse failed', {llmPromiseId, error: String(e)});
+        return null;
+    }
     if (!bodyRes.ok) return null;
-    const raw = await bodyRes.text();
+    let raw: string;
+    try {
+        raw = await bodyRes.text();
+    } catch (e) {
+        logger.warn('[llm-hub-poll] fetchLlmResponse body read failed', {llmPromiseId, error: String(e)});
+        return null;
+    }
     return extractLlmTextFromHubResponseBody(raw);
 }
 
@@ -113,39 +127,93 @@ function readEnvMs(name: string, fallback: number, maxCap: number): number {
 export type LlmPollOpts = {
     /** A2A request `promiseId` — context gets `requestPhase: llm_waiting` on each poll tick. */
     a2aPromiseId?: string;
+    /**
+     * Default `llm_text`: assistant-oriented text via {@link fetchLlmResponse}.
+     * `raw_json`: full provider JSON string from `GET /promise/:id/body_raw` (falls back to `llm_text` if missing).
+     */
+    responseMode?: 'llm_text' | 'raw_json';
 };
 
 /** @deprecated Use {@link AiHubChatRequestBody} from `ai-hub-chat-sync.js`. */
 export type AiHubChatPromiseBody = AiHubChatRequestBody;
 
 export type InitAiHubChatPromiseResult =
-    | {ok: true; llmPromiseId: string}
+    | {ok: true; llmPromiseId: string; inlineResponseBody?: string}
     | {ok: false; reason: 'bad_http_status'; status: number; bodyText: string}
     | {ok: false; reason: 'missing_llm_promise_id'};
 
 /**
  * Start async LLM work: `POST {base}/api/chat?promise=1` with `X-Server-Promise-Id`.
- * On 202, returns hub `promiseId` for {@link pollReadyThenFetch} / {@link fetchLlmResponse}.
+ * On **202**, returns hub `promiseId` — poll with {@link pollReadyThenFetch} / {@link fetchLlmResponse}.
+ * On **200** (disk cache hit), returns the same `promiseId` plus **inlineResponseBody** (full upstream JSON text); skip polling.
  */
 export async function initAiHubChatPromise(
     base: string,
     serverPromiseId: string,
-    body: AiHubChatRequestBody
+    body: AiHubChatRequestBody,
+    signal?: AbortSignal
 ): Promise<InitAiHubChatPromiseResult> {
     const normalizedBase = resolveAiHubBaseUrl(base);
-    const chatRes = await fetch(`${normalizedBase}/api/chat?promise=1`, {
-        method: 'POST',
-        headers: {
-            ...AI_HUB_JSON_HEADERS,
-            'X-Server-Promise-Id': serverPromiseId,
-        },
-        body: JSON.stringify(body),
-    });
-    if (chatRes.status !== 202) {
-        const bodyText = await chatRes.text();
-        return {ok: false, reason: 'bad_http_status', status: chatRes.status, bodyText};
+    let chatRes: Response;
+    try {
+        chatRes = await fetch(`${normalizedBase}/api/chat?promise=1`, {
+            method: 'POST',
+            headers: {
+                ...AI_HUB_JSON_HEADERS,
+                'X-Server-Promise-Id': serverPromiseId,
+            },
+            body: JSON.stringify(body),
+            signal,
+        });
+    } catch (e) {
+        const bodyText = e instanceof Error ? e.message : String(e);
+        return {ok: false, reason: 'bad_http_status', status: 0, bodyText};
     }
-    const initData = (await chatRes.json()) as {promiseId?: string};
+    let initText: string;
+    try {
+        initText = await chatRes.text();
+    } catch (e) {
+        const bodyText = e instanceof Error ? e.message : String(e);
+        return {ok: false, reason: 'bad_http_status', status: chatRes.status || 0, bodyText};
+    }
+    if (chatRes.status === 200) {
+        let initData: {
+            promiseId?: string;
+            status?: string;
+            responseBody?: string;
+        };
+        try {
+            initData = JSON.parse(initText) as {
+                promiseId?: string;
+                status?: string;
+                responseBody?: string;
+            };
+        } catch {
+            return {ok: false, reason: 'bad_http_status', status: chatRes.status, bodyText: initText.slice(0, 500)};
+        }
+        if (
+            initData.status === 'completed' &&
+            typeof initData.promiseId === 'string' &&
+            initData.promiseId.length > 0 &&
+            typeof initData.responseBody === 'string'
+        ) {
+            return {
+                ok: true,
+                llmPromiseId: initData.promiseId,
+                inlineResponseBody: initData.responseBody,
+            };
+        }
+        return {ok: false, reason: 'bad_http_status', status: chatRes.status, bodyText: initText.slice(0, 500)};
+    }
+    if (chatRes.status !== 202) {
+        return {ok: false, reason: 'bad_http_status', status: chatRes.status, bodyText: initText};
+    }
+    let initData: {promiseId?: string};
+    try {
+        initData = JSON.parse(initText) as {promiseId?: string};
+    } catch {
+        return {ok: false, reason: 'bad_http_status', status: chatRes.status, bodyText: initText.slice(0, 500)};
+    }
     const llmPromiseId = initData?.promiseId;
     if (!llmPromiseId) {
         return {ok: false, reason: 'missing_llm_promise_id'};
@@ -173,10 +241,40 @@ export async function pollReadyThenFetch(
         if (opts?.a2aPromiseId) {
             await requestService.patchRequestContext(opts.a2aPromiseId, {requestPhase: 'llm_waiting'});
         }
-        const res = await fetch(`${normalizedBase}/promises/status`);
+        let res: Response;
+        try {
+            res = await fetch(`${normalizedBase}/promises/status`, {headers: {'Accept-Encoding': 'identity'}});
+        } catch (e) {
+            logger.warn('[llm-hub-poll] promises/status fetch failed', {error: String(e)});
+            if (Date.now() - started > pollTimeoutMs) throw new Error('LLM promise timeout');
+            await new Promise((r) => setTimeout(r, pollIntervalMs));
+            continue;
+        }
         if (res.ok) {
-            const data = (await res.json()) as {ready?: Array<{promiseId?: string}>};
+            let data: {ready?: Array<{promiseId?: string}>};
+            try {
+                data = JSON.parse(await res.text()) as {ready?: Array<{promiseId?: string}>};
+            } catch {
+                if (Date.now() - started > pollTimeoutMs) throw new Error('LLM promise timeout');
+                await new Promise((r) => setTimeout(r, pollIntervalMs));
+                continue;
+            }
             if ((data.ready ?? []).some((p) => p.promiseId === llmPromiseId)) {
+                const mode = opts?.responseMode ?? 'llm_text';
+                if (mode === 'raw_json') {
+                    const rawUrl = `${normalizedBase}/promise/${encodeURIComponent(llmPromiseId)}/body_raw`;
+                    try {
+                        const rawRes = await fetch(rawUrl, {headers: {'Accept-Encoding': 'identity'}});
+                        if (rawRes.ok) {
+                            return await rawRes.text();
+                        }
+                    } catch (e) {
+                        logger.warn('[llm-hub-poll] body_raw fetch failed', {
+                            llmPromiseId,
+                            error: String(e),
+                        });
+                    }
+                }
                 return fetchLlmResponse(normalizedBase, llmPromiseId);
             }
         }

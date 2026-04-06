@@ -38,7 +38,7 @@ describe.skipIf(!serverLive)(`router sticky check (live server ${A2A_SERVER_URL}
     async () => {
       await scriptedRouterChoiceNoStickyRouter();
     },
-    120_000
+    0
   );
 });
 

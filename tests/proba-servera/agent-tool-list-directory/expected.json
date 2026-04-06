@@ -2,24 +2,20 @@
   "context": {
     "execution": {
       "action": "agent",
-      "step": "request"
+      "step": "tool_read_file"
     },
     "workbench": {
       "sections": {}
-    }
+    },
+    "history": [
+      { "role": "string", "message": "string" },
+      { "role": "string", "message": "string" },
+      { "role": "string", "message": "string" }
+    ]
   },
   "execute": {
-    "form": {
-      "title": "string",
-      "description": "string",
-      "input": [
-        {
-          "name": "string",
-          "type": "string",
-          "label": "string",
-          "required": true
-        }
-      ]
+    "read-file": {
+      "path": "utils/helpers.js"
     }
   }
 }

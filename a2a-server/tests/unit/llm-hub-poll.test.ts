@@ -65,6 +65,34 @@ describe('initAiHubChatPromise', () => {
         expect(r).toEqual({ok: true, llmPromiseId: 'hub-p1'});
     });
 
+    it('returns inlineResponseBody on 200 completed (disk cache hit)', async () => {
+        const body = JSON.stringify({message: {content: 'cached'}});
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async () =>
+                new Response(
+                    JSON.stringify({
+                        promiseId: 'hub-cache',
+                        status: 'completed',
+                        cached: true,
+                        responseBody: body,
+                    }),
+                    {status: 200}
+                )
+            )
+        );
+        const r = await initAiHubChatPromise('http://hub', 'srv-1', {
+            model: 'm',
+            messages: [{role: 'user', content: 'hi'}],
+            stream: false,
+        });
+        expect(r).toEqual({
+            ok: true,
+            llmPromiseId: 'hub-cache',
+            inlineResponseBody: body,
+        });
+    });
+
     it('bad_http_status when not 202', async () => {
         vi.stubGlobal(
             'fetch',

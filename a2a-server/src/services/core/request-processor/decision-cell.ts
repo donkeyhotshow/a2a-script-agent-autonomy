@@ -48,12 +48,19 @@ export class DecisionCell {
   async decide(sessionId: string, task: string, context: any): Promise<Decision> {
     logger.info('[DecisionCell] Evaluating state', { sessionId });
 
-    const response = await llmService.chat({
-      messages: [
-        { role: 'system', content: 'You are a decision cell. Analyze the current context and task. Decide if the task is "done", needs "retry" (and with what action), or should "halt". Output valid JSON ONLY: { "action": "done|retry|halt|continue", "reason": "...", "done": boolean, "retry": boolean }' },
-        { role: 'user', content: `Task: ${task}\nContext: ${JSON.stringify(context, null, 2)}` }
-      ]
-    });
+    let response: Awaited<ReturnType<typeof llmService.chat>>;
+    try {
+      response = await llmService.chat({
+        messages: [
+          { role: 'system', content: 'You are a decision cell. Analyze the current context and task. Decide if the task is "done", needs "retry" (and with what action), or should "halt". Output valid JSON ONLY: { "action": "done|retry|halt|continue", "reason": "...", "done": boolean, "retry": boolean }' },
+          { role: 'user', content: `Task: ${task}\nContext: ${JSON.stringify(context, null, 2)}` }
+        ]
+      });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e);
+      logger.warn('[DecisionCell] LLM call failed', { sessionId, error: msg });
+      return fallbackDecision(`LLM error: ${msg}`);
+    }
 
     const content = response.content?.trim() || '';
     const parsed = tryParseJsonFromLlmText(content);

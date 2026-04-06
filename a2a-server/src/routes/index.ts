@@ -1,5 +1,5 @@
 import {Router, Request, Response, NextFunction} from 'express';
-import Ajv from 'ajv';
+import Ajv, { ValidateFunction } from 'ajv';
 import {readFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -7,7 +7,7 @@ import {invoke} from '../services/utils/invoke.service.js';
 import requestsRouter from './requests.routes.js';
 import type { FileBlock } from '../types/index.js';
 
-const ajv = new (Ajv as any)({strict: false, allErrors: true, validateFormats: false});
+const ajv = new Ajv({strict: false, allErrors: true, validateFormats: false});
 
 const router = Router();
 
@@ -21,7 +21,7 @@ const SERVER_INVOKE_REQUEST_SCHEMA_PATH = join(
     '../../../docs/new-request-flow/json-schemas/server-invoke-request.schema.json'
 );
 
-let validateInvokeRequestBody: ((data: unknown) => boolean) | null = null;
+let validateInvokeRequestBody: ValidateFunction<unknown> | null = null;
 try {
     const schema = JSON.parse(readFileSync(SERVER_INVOKE_REQUEST_SCHEMA_PATH, 'utf-8'));
     validateInvokeRequestBody = ajv.compile(schema);
@@ -34,12 +34,12 @@ function validateInvokeRequest(body: unknown): { valid: boolean; errors?: string
     if (!validateInvokeRequestBody) return { valid: true };
     const ok = validateInvokeRequestBody(body);
     if (ok) return {valid: true};
-    const e = (validateInvokeRequestBody as any).errors as Array<{message?: string}> | null | undefined;
+    const e = validateInvokeRequestBody.errors ?? null;
     return {
         valid: false,
         errors: (e ?? [])
             .map((x) => x.message)
-            .filter(Boolean) as string[],
+            .filter(Boolean),
     };
 }
 

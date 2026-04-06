@@ -135,10 +135,10 @@ const globalStats = {
  * @example
  * const daemon = new PollingDaemon({
  *   interval: 1000,
- *   maxPolls: 30,
+ *   maxPolls: Infinity,
  *   serverUrl: 'http://localhost:3000',
  *   maxRetries: 3,
- *   timeout: 5000
+ *   timeout: 0
  * });
  * 
  * const result = await daemon.pollPromise(promiseId);
@@ -147,19 +147,22 @@ export class PollingDaemon {
     /**
      * @param {object} config - Configuration options
      * @param {number} [config.interval=1000] - Polling interval in milliseconds
-     * @param {number} [config.maxPolls=30] - Maximum number of polling attempts
+     * @param {number} [config.maxPolls=Infinity] - Max polling attempts (default: no cap — wait until terminal)
      * @param {string} [config.serverUrl='http://localhost:3000'] - A2A Server URL
      * @param {number} [config.maxRetries=3] - Maximum retry attempts for transient errors
-     * @param {number} [config.timeout=5000] - Request timeout in milliseconds
+     * @param {number} [config.timeout=0] - Per-fetch abort (ms); 0 = no abort on slow GET …/result
      * @param {Record<string, string>} [config.headers={}] - Additional headers for requests
      * @param {typeof fetch} [config.fetchImpl=globalThis.fetch] - Fetch implementation
      */
     constructor(config = {}) {
         this.interval = config.interval || 1000;
-        this.maxPolls = config.maxPolls || 30;
+        this.maxPolls =
+            config.maxPolls !== undefined && config.maxPolls !== null
+                ? config.maxPolls
+                : Number.POSITIVE_INFINITY;
         this.serverUrl = config.serverUrl || defaultBaseUrl();
         this.maxRetries = config.maxRetries || 3;
-        this.timeout = config.timeout || 5000;
+        this.timeout = config.timeout !== undefined && config.timeout !== null ? config.timeout : 0;
         this.headers = config.headers || {};
         this.fetchImpl = config.fetchImpl || globalThis.fetch;
         
@@ -228,16 +231,20 @@ export class PollingDaemon {
         // Retry loop for transient errors
         for (let retry = 0; retry <= this.maxRetries; retry++) {
             try {
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), this.timeout);
-                
+                const useAbort = Number.isFinite(this.timeout) && this.timeout > 0;
+                const controller = useAbort ? new AbortController() : null;
+                const timeoutId =
+                    useAbort && controller
+                        ? setTimeout(() => controller.abort(), this.timeout)
+                        : null;
+
                 const pollRes = await this.fetchImpl(url, {
                     method: 'GET',
                     headers: this.headers,
-                    signal: controller.signal
+                    ...(controller ? { signal: controller.signal } : {}),
                 });
-                
-                clearTimeout(timeoutId);
+
+                if (timeoutId) clearTimeout(timeoutId);
                 
                 if (!pollRes.ok) {
                     const status = pollRes.status;
@@ -296,7 +303,7 @@ export class PollingDaemon {
         const pollStartTime = Date.now();
         globalStats.startPoll();
         
-        for (let i = 0; i < this.maxPolls; i++) {
+        for (let i = 0; Number.isFinite(this.maxPolls) ? i < this.maxPolls : true; i++) {
             this._stats.totalPolls++;
             
             // Wait before first check
@@ -394,7 +401,7 @@ export class PollingDaemon {
  * @param {string} promiseId
  * @param {object} [options]
  * @param {string} [options.baseUrl]
- * @param {number} [options.maxPolls=30]
+ * @param {number} [options.maxPolls=Infinity]
  * @param {number} [options.intervalMs=1000]
  * @param {Record<string, string>} [options.headers]
  * @param {typeof fetch} [options.fetchImpl]
@@ -404,7 +411,7 @@ export class PollingDaemon {
 export async function pollA2ARequestResult(promiseId, options = {}) {
     const {
         baseUrl = defaultBaseUrl(),
-        maxPolls = 30,
+        maxPolls = Number.POSITIVE_INFINITY,
         intervalMs = 1000,
         headers = {},
         fetchImpl = globalThis.fetch,

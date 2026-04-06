@@ -34,7 +34,8 @@ export async function handleThinking(
             stream: false,
         });
         if (chatInit.ok) {
-            const thinkMd = await pollReadyThenFetch(aiHubUrl, chatInit.llmPromiseId);
+            const thinkMd =
+                chatInit.inlineResponseBody ?? (await pollReadyThenFetch(aiHubUrl, chatInit.llmPromiseId));
             if (thinkMd) {
                 const parsed = tryParseJsonFromLlmText(thinkMd);
                 if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {

@@ -200,7 +200,8 @@ Return findings as JSON.`;
             throw new Error('No promiseId in AI hub response');
         }
 
-        const response = await pollReadyThenFetch(this.aiHubUrl, chatInit.llmPromiseId);
+        const response =
+            chatInit.inlineResponseBody ?? (await pollReadyThenFetch(this.aiHubUrl, chatInit.llmPromiseId));
         if (!response) {
             throw new Error('AI hub response fetch failed');
         }

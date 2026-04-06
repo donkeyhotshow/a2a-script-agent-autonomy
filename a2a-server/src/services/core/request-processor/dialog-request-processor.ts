@@ -80,6 +80,51 @@ function isDialogExecuteMissingOrEmpty(execute: ProcessResult['execute']): boole
     return Object.keys(ex).filter((k) => ex[k] != null).length === 0;
 }
 
+function isAgentSchemaName(schemaName: string): boolean {
+    return schemaName === 'agent' || schemaName.startsWith('agent-');
+}
+
+/**
+ * If context.task is set but history has no user line, prepend one so Client API / proba semantic checks match materialize behavior.
+ */
+function ensureTaskUserInHistory(context: Record<string, unknown> | undefined): void {
+    if (!context || typeof context !== 'object') {
+        return;
+    }
+    const task = context['task'];
+    if (typeof task !== 'string' || !task.trim()) {
+        return;
+    }
+    const rawHist = context['history'];
+    const history: unknown[] = Array.isArray(rawHist) ? [...rawHist] : [];
+    context['history'] = history;
+    const hasUser = history.some(
+        (h: unknown) =>
+            h &&
+            typeof h === 'object' &&
+            !Array.isArray(h) &&
+            String((h as Record<string, unknown>)['role']).toLowerCase() === 'user'
+    );
+    if (!hasUser) {
+        history.unshift({role: 'user', message: task.trim()});
+    }
+}
+
+/** Proba / UI expect workbench.sections; gray-room may only populate slots. */
+function ensureWorkbenchSectionsShape(context: Record<string, unknown> | undefined): void {
+    if (!context || typeof context !== 'object') {
+        return;
+    }
+    const wb = context['workbench'];
+    if (!wb || typeof wb !== 'object' || Array.isArray(wb)) {
+        return;
+    }
+    const w = wb as Record<string, unknown>;
+    if (w['sections'] === undefined) {
+        w['sections'] = {};
+    }
+}
+
 function lastAssistantMessageFromContext(context: Record<string, unknown> | undefined): string | undefined {
     const h = context?.['history'];
     if (!Array.isArray(h)) {
@@ -182,6 +227,80 @@ function ensureDialogExecuteWhenMissing(
     logger.warn('[DialogRequestProcessor] Dialog gray-room result had no execute; applied fallback form', {
         preview: text.slice(0, 120),
     });
+}
+
+/**
+ * Agent gray-room path can return context-only (LLM/transform failure). Synthesize a continue form so invoke responses stay Client-API-shaped.
+ */
+function ensureAgentExecuteWhenMissing(
+    result: ProcessResult,
+    schemaName: string,
+    responseMd: string
+): void {
+    if (!isAgentSchemaName(schemaName)) {
+        return;
+    }
+    if (result.outcome === 'failed') {
+        return;
+    }
+    if (!isDialogExecuteMissingOrEmpty(result.execute)) {
+        return;
+    }
+
+    const ctx = result.context as Record<string, unknown> | undefined;
+    let text = lastAssistantMessageFromContext(ctx);
+    if (!text) {
+        text = extractDialogFallbackAssistantText(responseMd);
+    }
+    if (!text) {
+        text = 'Continue with your task or describe the next step.';
+    }
+
+    const baseCtx: Record<string, unknown> =
+        ctx && typeof ctx === 'object' && !Array.isArray(ctx) ? {...ctx} : {};
+    const hist: unknown[] = Array.isArray(baseCtx['history']) ? [...(baseCtx['history'] as unknown[])] : [];
+    const hasAssistant = hist.some(
+        (row) =>
+            row &&
+            typeof row === 'object' &&
+            !Array.isArray(row) &&
+            (row as Record<string, unknown>)['role'] === 'assistant'
+    );
+    if (!hasAssistant && text) {
+        hist.push({role: 'assistant', message: text});
+        baseCtx['history'] = hist;
+    }
+
+    result.context = baseCtx as RequestContextBlock;
+    result.execute = {
+        form: {
+            title: 'Agent',
+            input: [
+                {
+                    name: 'task',
+                    type: 'text',
+                    label: 'Enter your task',
+                    required: true,
+                },
+            ],
+        },
+    };
+
+    logger.warn('[DialogRequestProcessor] Agent gray-room result had no execute; applied fallback form', {
+        preview: text.slice(0, 120),
+    });
+}
+
+function finalizeDialogGrayRoomResult(
+    grayRoomResult: ProcessResult,
+    schemaName: string,
+    responseMd: string
+): void {
+    ensureDialogExecuteWhenMissing(grayRoomResult, schemaName, responseMd);
+    ensureAgentExecuteWhenMissing(grayRoomResult, schemaName, responseMd);
+    const ctx = grayRoomResult.context as Record<string, unknown> | undefined;
+    ensureWorkbenchSectionsShape(ctx);
+    ensureTaskUserInHistory(ctx);
 }
 
 export class DialogRequestProcessor extends BaseRequestProcessor {
@@ -288,27 +407,33 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
 
             if (!ctx['llmPromiseId']) {
                 if (allowContextAugment) {
-                // Внедрение априорных знаний через CognitionBase (ADR-0062)
-                try {
-                    const cognition = new CognitionBase();
-                    const episodic = new EpisodicMemory();
-                    const topic = (ctx['task'] as string) || (ctx['message'] as string) || 'general';
-                    const sessionId = (ctx['session_id'] as string) || 'startup';
+                    // Check if cognition injection is enabled via feature flag
+                    const cognitionInjectionEnabled = process.env.COGNITION_INJECTION_ENABLED === '1' || process.env.COGNITION_INJECTION_ENABLED === 'true';
                     
-                    const priors = await cognition.injectPriors(
-                        topic,
-                        sessionId,
-                        { query: async () => [] }, // LessonStore stub
-                        { query: async () => [] }, // PatternStore stub
-                        episodic
-                    );
-                    
-                    const priorStr = cognition.formatForContext(priors);
-                    if (priorStr && typeof ctx['message'] === 'string') {
-                        ctx['message'] = ctx['message'] + '\n\n' + priorStr;
+                    if (cognitionInjectionEnabled) {
+                        // Внедрение априорных знаний через CognitionBase (ADR-0062)
+                        try {
+                            const cognition = new CognitionBase();
+                            const episodic = new EpisodicMemory();
+                            const topic = (ctx['task'] as string) || (ctx['message'] as string) || 'general';
+                            const sessionId = (ctx['session_id'] as string) || 'startup';
+                            
+                            const priors = await cognition.injectPriors(
+                                topic,
+                                sessionId,
+                                { query: async () => [] }, // LessonStore stub
+                                { query: async () => [] }, // PatternStore stub
+                                episodic
+                            );
+                            
+                            const priorStr = cognition.formatForContext(priors);
+                            if (priorStr && typeof ctx['message'] === 'string') {
+                                ctx['message'] = ctx['message'] + '\n\n' + priorStr;
+                            }
+                        } catch (err) {
+                            logger.warn('[DialogRequestProcessor] CognitionBase injection failed', { error: String(err) });
+                        }
                     }
-                } catch (err) {
-                    logger.warn('[DialogRequestProcessor] CognitionBase injection failed', { error: String(err) });
                 }
 
                 // -- HIERARCHICAL DESIGN RESONER (ADR-0061) --
@@ -322,7 +447,6 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                     } catch (err) {
                         logger.warn('[DialogRequestProcessor] DesignReasoner failed', { error: String(err) });
                     }
-                }
                 }
 
                 const llmResult = await executeLlmCall({
@@ -378,7 +502,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                     }
                 }
 
-                ensureDialogExecuteWhenMissing(grayRoomResult, schemaName, llmResult.responseMd);
+                finalizeDialogGrayRoomResult(grayRoomResult, schemaName, llmResult.responseMd);
 
                 return grayRoomResult;
             }

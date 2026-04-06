@@ -6,18 +6,13 @@ import request from 'supertest';
 import app from '../../src/app.js';
 import {describe, it, expect, beforeAll, afterAll} from 'vitest';
 
-const POLL_MS = 60_000;
 const POLL_INTERVAL_MS = 40;
 
 async function pollResultUntilTerminal(promiseId: string): Promise<{
     terminal: 'completed' | 'failed' | 'cancelled';
     data: Record<string, unknown>;
 }> {
-    const deadline = Date.now() + POLL_MS;
     for (;;) {
-        if (Date.now() > deadline) {
-            throw new Error(`poll timeout (${POLL_MS}ms) for ${promiseId}`);
-        }
         const res = await request(app).get(`/api/v1/requests/${encodeURIComponent(promiseId)}/result`);
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
@@ -65,7 +60,7 @@ describe('Invoke async-only (no sync)', () => {
         const ctx = data.context as Record<string, unknown> | undefined;
         expect(typeof ctx?.session_id).toBe('string');
         expect(String(ctx?.session_id)).toMatch(/^srv_sess_/);
-    }, POLL_MS + 15_000);
+    }, 0);
 
     it('rejects unknown property sync (schema additionalProperties)', async () => {
         const res = await request(app).post('/api/v1/invoke').send({

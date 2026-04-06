@@ -249,7 +249,8 @@ curl http://localhost:11434/metrics
 
 | Component | Location |
 |-----------|----------|
-| Proxy logs | `ai-integration/proxy_logs/requests/request_*/` |
+| Proxy LLM traces | `ai-integration/proxy_logs/promises/<promiseId>/` (`request.json`, `response.json`, `body_raw.json`, …) |
+| Legacy request dumps (non-promise paths) | `ai-integration/proxy_logs/requests/request_*/` |
 | Promise upstream bodies (debug) | `ai-integration/proxy_logs/promises/<promiseId>/body.md` |
 | Promise storage | `ai-integration/storage/promises/` |
 | Cache | `ai-integration/storage/cache/` |

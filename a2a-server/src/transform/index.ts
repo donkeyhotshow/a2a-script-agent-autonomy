@@ -36,6 +36,7 @@ export * from './pipeline.js';
 export {
   prepareInvokePayloadForLlmPrompt,
   materializeResultIntoHistoryForLlm,
-  formatToolResultForHistory
+  formatToolResultForHistory,
+  syncLiveContextHistoryFromResultMessage,
 } from './materialize-result-for-llm.js';
 export * from './operation-history.js';

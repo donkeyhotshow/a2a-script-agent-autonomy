@@ -114,9 +114,9 @@ function unwrapPublicSession(body) {
   return body;
 }
 
-async function pollAsyncSettled(sessionId, maxWaitMs = 120_000, stepMs = 500) {
-  const deadline = Date.now() + maxWaitMs;
-  while (Date.now() < deadline) {
+/** Poll GET …/sessions/:id/async until `asyncPending` is false (same contract as promiseId: no wall-clock cap). */
+async function pollAsyncSettled(sessionId, stepMs = 500) {
+  for (;;) {
     const r = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
     if (!r.ok) break;
     const j = await r.json();
@@ -161,7 +161,7 @@ async function performRedRoomClientExecute(sessionId, executeBlock) {
   assert(ack?.success === true, 'red-room /next ack success expected');
 
   if (ack.asyncPending) {
-    await pollAsyncSettled(sessionId, 120_000);
+    await pollAsyncSettled(sessionId);
   }
 
   return getSession(sessionId);
@@ -201,7 +201,7 @@ async function invokeDirect(task, context = {}) {
   await recordServerPromise(pid);
   const terminal = await pollServerRequestResult(pid);
   if (!terminal?.data) {
-    throw new Error(`invokeDirect poll timeout for ${pid}`);
+    throw new Error(`invokeDirect: missing terminal data for ${pid}`);
   }
   const d = terminal.data;
   return {
@@ -232,11 +232,10 @@ async function postInvokeRaw(payload) {
   return { status: response.status, body };
 }
 
-/** Poll GET /api/v1/requests/:id/result until terminal status (async invoke). */
-async function pollServerRequestResult(promiseId, maxWaitMs = 120_000, stepMs = 500) {
-  const deadline = Date.now() + maxWaitMs;
+/** Poll GET /api/v1/requests/:id/result until terminal status (async invoke). No wall-clock cap. */
+async function pollServerRequestResult(promiseId, stepMs = 500) {
   const url = `${SERVER_URL}/api/v1/requests/${encodeURIComponent(promiseId)}/result`;
-  while (Date.now() < deadline) {
+  for (;;) {
     const r = await fetch(url);
     if (!r.ok) {
       await sleep(stepMs);
@@ -249,7 +248,6 @@ async function pollServerRequestResult(promiseId, maxWaitMs = 120_000, stepMs = 
     }
     await sleep(stepMs);
   }
-  return null;
 }
 
 // --- cases ---
@@ -296,7 +294,7 @@ async function caseInvokeContextFollowupShape() {
   assert(typeof pid === 'string' && pid.length > 0, 'follow-up async promiseId');
   await recordServerPromise(pid);
   const terminal = await pollServerRequestResult(pid);
-  assert(terminal, 'follow-up invoke poll timeout');
+  assert(terminal, 'follow-up invoke poll did not return terminal');
   const data = terminal.data;
   assert(data?.status === 'completed', `follow-up invoke terminal: ${data?.status} ${JSON.stringify(data?.error)}`);
   if (data?.execute && typeof data.execute === 'object') {
@@ -431,8 +429,7 @@ async function caseWaitingAsyncPipeline() {
   }
 
   let promiseId = null;
-  const pidDeadline = Date.now() + 15_000;
-  while (Date.now() < pidDeadline && !promiseId) {
+  for (;;) {
     const r = await fetch(
       `${CLIENT_API_URL}/api/a2a/sessions/${sessionId}?includeContext=1`
     );
@@ -449,7 +446,7 @@ async function caseWaitingAsyncPipeline() {
   assert(promiseId, 'pipeline: promiseId (GET session ?includeContext=1 while in flight)');
 
   let sawInFlight = false;
-  for (let i = 0; i < 40; i++) {
+  for (;;) {
     const r = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
     assert(r.ok, `pipeline: /async ${r.status}`);
     const j = await r.json();
@@ -467,7 +464,7 @@ async function caseWaitingAsyncPipeline() {
     throw new Error('REQUIRE_ASYNC_PIPELINE=1 but never observed in-flight GET /async');
   }
 
-  const settled = await pollAsyncSettled(sessionId, 120_000);
+  const settled = await pollAsyncSettled(sessionId);
   assert(settled != null, 'pipeline: poll settled');
   assert(settled.asyncPending === false, 'pipeline: settled asyncPending false');
 
@@ -572,7 +569,7 @@ async function caseAgentModeDialogWorkflow() {
   for (let i = 0; i < 18; i++) {
     let pub = unwrapPublicSession(await getSession(sessionId));
     if (pub.asyncPending) {
-      await pollAsyncSettled(sessionId, 120_000);
+      await pollAsyncSettled(sessionId);
       pub = unwrapPublicSession(await getSession(sessionId));
     }
     assertWaitingPublicSessionShape(pub, `agentDialogWorkflow step ${i}`);
@@ -591,7 +588,7 @@ async function caseAgentModeDialogWorkflow() {
       );
       const ack = await sendNext(sessionId, { result: { choice: 'dialog' } });
       assert(ack?.success !== false, 'submit router choice dialog');
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       pickedDialog = true;
       continue;
     }
@@ -602,23 +599,23 @@ async function caseAgentModeDialogWorkflow() {
           result: { message: 'direct-tests: agent dialog routing probe' },
         });
         assert(ack?.success !== false, 'task direction /next');
-        if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+        if (ack.asyncPending) await pollAsyncSettled(sessionId);
         continue;
       }
       if (postDialogTurns === 0) {
         const ack = await sendNext(sessionId, { result: { message: 'hello world' } });
         assert(ack?.success !== false, 'dialog hello world');
-        if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+        if (ack.asyncPending) await pollAsyncSettled(sessionId);
         postDialogTurns = 1;
         continue;
       }
       if (postDialogTurns === 1) {
         const ack = await sendNext(sessionId, { result: { message: 'Thanks!' } });
         assert(ack?.success !== false, 'dialog Thanks');
-        if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+        if (ack.asyncPending) await pollAsyncSettled(sessionId);
         postDialogTurns = 2;
         const fin = unwrapPublicSession(await getSession(sessionId));
-        if (fin.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+        if (fin.asyncPending) await pollAsyncSettled(sessionId);
         const final = unwrapPublicSession(await getSession(sessionId));
         assertWaitingPublicSessionShape(final, 'agentDialogWorkflow final');
         if (final.execute && typeof final.execute === 'object') {
@@ -655,7 +652,7 @@ async function runRouterChoiceNoLoopCore(opts) {
   for (let i = 0; i < 22; i++) {
     let pub = unwrapPublicSession(await getSession(sessionId));
     if (pub.asyncPending) {
-      await pollAsyncSettled(sessionId, 120_000);
+      await pollAsyncSettled(sessionId);
       pub = unwrapPublicSession(await getSession(sessionId));
     }
     assertWaitingPublicSessionShape(pub, `${label} step ${i}`);
@@ -677,7 +674,7 @@ async function runRouterChoiceNoLoopCore(opts) {
       assert(pick, `${label}: choice id "${choiceId}" missing from router form`);
       const ack = await submitRouterChoice(sessionId, pick);
       assert(ack?.success !== false, `${label}: submit choice`);
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       submittedRouterChoice = true;
       continue;
     }
@@ -690,7 +687,7 @@ async function runRouterChoiceNoLoopCore(opts) {
         result: { message: `direct-tests: task direction (${label})` },
       });
       assert(ack?.success !== false, `${label}: task direction /next`);
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       continue;
     }
 
@@ -800,7 +797,7 @@ async function caseRouterWrongBeatMessage() {
   for (let i = 0; i < 20; i++) {
     let pub = unwrapPublicSession(await getSession(sessionId));
     if (pub.asyncPending) {
-      await pollAsyncSettled(sessionId, 120_000);
+      await pollAsyncSettled(sessionId);
       pub = unwrapPublicSession(await getSession(sessionId));
     }
     assertWaitingPublicSessionShape(pub, `routerWrongBeat step ${i}`);
@@ -820,9 +817,9 @@ async function caseRouterWrongBeatMessage() {
         },
       });
       assert(ack?.success !== false, 'routerWrongBeat: wrong-beat /next');
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       const after = unwrapPublicSession(await getSession(sessionId));
-      if (after.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (after.asyncPending) await pollAsyncSettled(sessionId);
       const settled = unwrapPublicSession(await getSession(sessionId));
       assertWaitingPublicSessionShape(settled, 'routerWrongBeat after wrong beat');
       const c2 = getRouterFormChoiceArray(settled.execute?.form);
@@ -840,7 +837,7 @@ async function caseRouterWrongBeatMessage() {
         result: { message: 'direct-tests: task direction for wrong-beat probe' },
       });
       assert(ack?.success !== false, 'routerWrongBeat: task direction');
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       continue;
     }
 
@@ -857,7 +854,7 @@ async function caseDialogSessionRoundTrip() {
   assert(sessionId, 'session id');
   await sendNext(sessionId, { result: { message: 'Hi' } });
   await sleep(800);
-  await pollAsyncSettled(sessionId, 60_000);
+  await pollAsyncSettled(sessionId);
   const body = await getSession(sessionId);
   const pub = unwrapPublicSession(body);
   assert(pub && typeof pub === 'object', 'GET /sessions/:id public DTO');
@@ -890,7 +887,7 @@ async function navigateThroughRouterToAgent(sessionId, label) {
   for (let i = 0; i < 22; i++) {
     let pub = unwrapPublicSession(await getSession(sessionId));
     if (pub.asyncPending) {
-      await pollAsyncSettled(sessionId, 120_000);
+      await pollAsyncSettled(sessionId);
       pub = unwrapPublicSession(await getSession(sessionId));
     }
     const ex = pub.execute;
@@ -900,7 +897,7 @@ async function navigateThroughRouterToAgent(sessionId, label) {
       assert(pick, `${label}: router missing agent choice`);
       const ack = await sendNext(sessionId, { result: { choice: pick } });
       assert(ack?.success !== false, `${label}: router pick agent`);
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       return;
     }
     if (hasWebFormTextEntry(ex?.form) && !choices?.length) {
@@ -908,7 +905,7 @@ async function navigateThroughRouterToAgent(sessionId, label) {
         result: { message: `${label}: task direction for router` },
       });
       assert(ack?.success !== false, `${label}: task direction`);
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       continue;
     }
     return;
@@ -955,7 +952,7 @@ async function caseRedAndGrayRoomCycle() {
     const ack = await sendNext(sessionId, { result: { message: promptText } });
     assert(ack?.accepted === true, 'red-gray room: /next accepted');
 
-    const settled = await pollAsyncSettled(sessionId, 120_000);
+    const settled = await pollAsyncSettled(sessionId);
     assert(settled, 'red-gray room: first settle');
 
     const full = await getSession(sessionId, { includeContext: true });

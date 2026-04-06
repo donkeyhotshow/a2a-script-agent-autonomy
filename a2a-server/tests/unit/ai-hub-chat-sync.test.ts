@@ -6,39 +6,82 @@ describe('fetchAiHubChatJson', () => {
         vi.unstubAllGlobals();
     });
 
-    it('normalizes hub base (trailing slash) in request URL', async () => {
+    it('uses hub promise init URL (?promise=1)', async () => {
         vi.stubGlobal(
             'fetch',
             vi.fn(async (url: string) => {
-                expect(url).toBe('http://hub.test:11434/api/chat');
-                return new Response('{}', {status: 200});
-            })
-        );
-        await fetchAiHubChatJson(
-            'http://hub.test:11434/',
-            {model: 'm', messages: [{role: 'user', content: 'h'}], stream: false}
-        );
-    });
-
-    it('returns parsed data on 200', async () => {
-        vi.stubGlobal(
-            'fetch',
-            vi.fn(async (url: string) => {
-                expect(String(url)).toContain('/api/chat');
+                expect(String(url)).toContain('/api/chat?promise=1');
                 return new Response(
-                    JSON.stringify({message: {content: '{"x":1}'}, eval_count: 2}),
+                    JSON.stringify({
+                        promiseId: 'p-inline',
+                        status: 'completed',
+                        cached: true,
+                        responseBody: JSON.stringify({message: {content: 'x'}}),
+                    }),
                     {status: 200}
                 );
             })
         );
-        const r = await fetchAiHubChatJson(
-            'http://hub',
-            {model: 'm', messages: [{role: 'user', content: 'hi'}], stream: false}
-        );
-        expect(r.ok && r.data.message?.content).toBe('{"x":1}');
+        const r = await fetchAiHubChatJson('http://hub.test:11434/', {
+            model: 'm',
+            messages: [{role: 'user', content: 'h'}],
+            stream: false,
+        });
+        expect(r.ok && r.data.message?.content).toBe('x');
     });
 
-    it('bad_http on error status', async () => {
+    it('returns parsed data from inline cache 200 responseBody', async () => {
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async (url: string) => {
+                expect(String(url)).toContain('/api/chat?promise=1');
+                return new Response(
+                    JSON.stringify({
+                        promiseId: 'p1',
+                        status: 'completed',
+                        cached: true,
+                        responseBody: JSON.stringify({message: {content: '{"x":1}'}, eval_count: 2}),
+                    }),
+                    {status: 200}
+                );
+            })
+        );
+        const r = await fetchAiHubChatJson('http://hub', {
+            model: 'm',
+            messages: [{role: 'user', content: 'hi'}],
+            stream: false,
+        });
+        expect(r.ok && r.data.message?.content).toBe('{"x":1}');
+        expect(r.ok && r.data.eval_count).toBe(2);
+    });
+
+    it('202 then poll + body_raw returns full JSON', async () => {
+        const payload = {message: {content: 'from-raw'}, eval_count: 3};
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async (url: string) => {
+                if (String(url).includes('/api/chat?promise=1')) {
+                    return new Response(JSON.stringify({promiseId: 'p-async'}), {status: 202});
+                }
+                if (String(url).includes('/promises/status')) {
+                    return new Response(JSON.stringify({ready: [{promiseId: 'p-async'}]}), {status: 200});
+                }
+                if (String(url).includes('/promise/p-async/body_raw')) {
+                    return new Response(JSON.stringify(payload), {status: 200, headers: {'Content-Type': 'application/json'}});
+                }
+                return new Response('notfound', {status: 404});
+            })
+        );
+        const r = await fetchAiHubChatJson('http://hub', {
+            model: 'm',
+            messages: [{role: 'user', content: 'hi'}],
+            stream: false,
+        });
+        expect(r.ok && r.data.message?.content).toBe('from-raw');
+        expect(r.ok && r.data.eval_count).toBe(3);
+    });
+
+    it('bad_http on error status from init', async () => {
         vi.stubGlobal('fetch', vi.fn(async () => new Response('err', {status: 503})));
         const r = await fetchAiHubChatJson('http://hub', {
             model: 'm',
@@ -48,13 +91,21 @@ describe('fetchAiHubChatJson', () => {
         expect(r).toEqual({ok: false, status: 503, bodyText: 'err'});
     });
 
-    it('passes AbortSignal to fetch when provided', async () => {
+    it('passes AbortSignal to init fetch when provided', async () => {
         const ac = new AbortController();
         vi.stubGlobal(
             'fetch',
             vi.fn(async (_url: string, init?: RequestInit) => {
                 expect(init?.signal).toBe(ac.signal);
-                return new Response('{}', {status: 200, headers: {'Content-Type': 'application/json'}});
+                return new Response(
+                    JSON.stringify({
+                        promiseId: 'p',
+                        status: 'completed',
+                        cached: true,
+                        responseBody: '{}',
+                    }),
+                    {status: 200, headers: {'Content-Type': 'application/json'}}
+                );
             })
         );
         await fetchAiHubChatJson(
@@ -64,28 +115,38 @@ describe('fetchAiHubChatJson', () => {
         );
     });
 
-    it('propagates when 200 body is not JSON', async () => {
+    it('returns ok:false when responseBody is not JSON', async () => {
         vi.stubGlobal(
             'fetch',
-            vi.fn(async () => new Response('not-json', {status: 200}))
+            vi.fn(async () =>
+                new Response(
+                    JSON.stringify({
+                        promiseId: 'p',
+                        status: 'completed',
+                        cached: true,
+                        responseBody: 'not-json',
+                    }),
+                    {status: 200}
+                )
+            )
         );
-        await expect(
-            fetchAiHubChatJson('http://hub', {
-                model: 'm',
-                messages: [{role: 'user', content: 'h'}],
-                stream: false,
-            })
-        ).rejects.toThrow();
+        const r = await fetchAiHubChatJson('http://hub', {
+            model: 'm',
+            messages: [{role: 'user', content: 'h'}],
+            stream: false,
+        });
+        expect(r.ok).toBe(false);
+        if (!r.ok) expect(r.bodyText).toContain('invalid_json');
     });
 
-    it('propagates fetch rejection (network / abort)', async () => {
+    it('returns ok:false on fetch rejection (network)', async () => {
         vi.stubGlobal('fetch', vi.fn(async () => Promise.reject(new Error('net down'))));
-        await expect(
-            fetchAiHubChatJson('http://hub', {
-                model: 'm',
-                messages: [{role: 'user', content: 'h'}],
-                stream: false,
-            })
-        ).rejects.toThrow('net down');
+        const r = await fetchAiHubChatJson('http://hub', {
+            model: 'm',
+            messages: [{role: 'user', content: 'h'}],
+            stream: false,
+        });
+        expect(r.ok).toBe(false);
+        if (!r.ok) expect(r.bodyText).toContain('net down');
     });
 });

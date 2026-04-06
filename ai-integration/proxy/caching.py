@@ -9,7 +9,7 @@ Design:
 
 Cache entry points (keep keys consistent; use helpers below):
 - ``proxy/upstream_client.py`` — sync forward: ``build_llm_cache_payload`` + ``LLM`` kind
-- ``proxy/promise_execution.forward_promise_with_llm_disk_cache`` — handler promises + /promise execute threads
+- ``proxy/promise_execution.forward_promise_with_llm_disk_cache`` / ``try_resolve_promise_from_cache`` — promise pipeline + optional HTTP 200 inline body on cache hit
 - ``proxy/daemon.py`` — pending promise worker: same payload builder as above
 - ``proxy/routes.py`` — ``/api/v1/generate``, ``/api/v1/embed``: ``build_v1_api_cache_key``
 """

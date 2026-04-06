@@ -120,9 +120,11 @@ export async function initLlmPromise(
     model: string,
     messages: Array<{role: string; content: string}>,
     promiseId: string
-): Promise<{success: boolean; promiseId?: string; error?: string}> {
+): Promise<{success: boolean; promiseId?: string; inlineResponseBody?: string; error?: string}> {
     const r = await initAiHubChatPromise(base, promiseId, {model, messages, stream: false});
-    if (r.ok) return {success: true, promiseId: r.llmPromiseId};
+    if (r.ok) {
+        return {success: true, promiseId: r.llmPromiseId, inlineResponseBody: r.inlineResponseBody};
+    }
     if (r.reason === 'missing_llm_promise_id') {
         return {success: false, error: 'No promiseId in LLM response'};
     }
@@ -193,10 +195,12 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
         await requestService.updateLlmPromiseId(promiseId, llmPromiseId);
         logger.info('[DialogRequestProcessor] Polling promise', {llmPromiseId});
 
-        // 5. Poll for response
-        const responseMd = await pollReadyThenFetch(normalizedBase, llmPromiseId, {
-            a2aPromiseId: promiseId,
-        });
+        // 5. Poll for response (or use hub inline body on disk-cache hit)
+        const responseMd =
+            initResult.inlineResponseBody ??
+            (await pollReadyThenFetch(normalizedBase, llmPromiseId, {
+                a2aPromiseId: promiseId,
+            }));
         if (!responseMd) {
             await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
             // Return request transform execute as fallback (allows form display even without LLM)

@@ -45,11 +45,10 @@ export async function invokeRaw(payload) {
   return { status: res.status, envelope, data };
 }
 
-/** Poll GET …/requests/:id/result until terminal (async-only invoke). */
-export async function pollInvokeTerminal(promiseId, maxMs = 120_000, stepMs = 50) {
+/** Poll GET …/requests/:id/result until terminal (async-only invoke). No wall-clock cap (promiseId contract). */
+export async function pollInvokeTerminal(promiseId, stepMs = 50) {
   const url = `${A2A_SERVER_URL}/api/v1/requests/${encodeURIComponent(promiseId)}/result`;
-  const deadline = Date.now() + maxMs;
-  while (Date.now() < deadline) {
+  for (;;) {
     const r = await fetch(url);
     if (!r.ok) {
       await new Promise((res) => setTimeout(res, stepMs));
@@ -62,7 +61,6 @@ export async function pollInvokeTerminal(promiseId, maxMs = 120_000, stepMs = 50
     }
     await new Promise((res) => setTimeout(res, stepMs));
   }
-  return null;
 }
 
 export async function pingA2AServerHealth(timeoutMs = 800) {
@@ -99,7 +97,7 @@ export async function scriptedRouterChoiceNoStickyRouter() {
     throw new Error('Expected first invoke to return data.promiseId');
   }
   const t1 = await pollInvokeTerminal(pid1);
-  if (!t1?.data) throw new Error('First invoke poll timeout or empty');
+  if (!t1?.data) throw new Error('First invoke poll did not return terminal data');
   if (!isRouterForm(t1.data.execute)) {
     throw new Error('Expected first response to include a router form (execute.form.choices)');
   }
@@ -128,7 +126,7 @@ export async function scriptedRouterChoiceNoStickyRouter() {
     throw new Error('Expected follow-up invoke to return data.promiseId');
   }
   const t2 = await pollInvokeTerminal(pid2);
-  if (!t2?.data) throw new Error('Follow-up invoke poll timeout or empty');
+  if (!t2?.data) throw new Error('Follow-up invoke poll did not return terminal data');
 
   if (isRouterForm(t2.data.execute)) {
     throw new Error('Sticky router: second response still has router form.choices');

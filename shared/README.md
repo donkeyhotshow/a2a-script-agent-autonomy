@@ -30,7 +30,7 @@ Key functions include:
 - `buildFetchHeaders`: Builds headers for API requests
 - `normalizeSessionResponse`: Normalizes session data from API responses
 - `normalizeSessionsList`: Filters and normalizes session lists
-- Polling utilities: `DEFAULT_POLL_INTERVAL`, `DEFAULT_POLL_TIMEOUT`, `isPromiseResolved`, `isPromiseFailed`
+- Polling utilities: `DEFAULT_POLL_INTERVAL`, `DEFAULT_POLL_TIMEOUT` (unbounded for promiseId/session-async wait loops), `isPromiseResolved`, `isPromiseFailed`
 
 ### `router-static-choices.json`
 Defines static routing choices available in the system's router. Contains predefined options for task execution modes, including:

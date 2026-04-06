@@ -44,7 +44,7 @@ from .promises import (
 # Import new modules
 from .request_processor import (
     _is_real_data_path, _check_promise_requested, _prepare_headers,
-    _get_body, _get_forward_args
+    _get_body, _get_forward_args, force_promise_llm_path,
 )
 from .response_handler import create_error_response, create_simulated_response, forward_response
 from .model_resolver import resolve_model_name
@@ -164,7 +164,7 @@ def handle_proxy_request(path: str, request) -> Response:
     """Main proxy request handler - coordinates all processing modules"""
     
     should_log_base = _is_real_data_path(path)
-    should_log = False
+    legacy_requests_log = False
     folder_path = ''
     
     # Auto-start Ollama if enabled
@@ -176,9 +176,14 @@ def handle_proxy_request(path: str, request) -> Response:
         body, body_json = _get_body(request)
         promise_requested = _check_promise_requested(request, body_json)
         forward_args = _get_forward_args(request)
-        
-        should_log = should_log_base or promise_requested
-        if should_log:
+
+        path_norm = _normalize_path(path)
+        force_promise = force_promise_llm_path(path_norm, request.method)
+        promise_mode = promise_requested or force_promise
+        want_trace = should_log_base or promise_requested or force_promise
+        legacy_requests_log = want_trace and not promise_mode
+
+        if legacy_requests_log:
             request_id = str(uuid.uuid4())[:8]
             unix_timestamp = int(datetime.datetime.now().timestamp())
             folder_name = f"request_{unix_timestamp}_{request_id}"
@@ -186,9 +191,8 @@ def handle_proxy_request(path: str, request) -> Response:
             os.makedirs(folder_path, exist_ok=True)
             req_data = create_request_log(request, body)
             save_request(folder_path, req_data)
-        
+
         cfg = get_ai_hub_config()
-        path_norm = _normalize_path(path)
 
         router = get_router()
         initialize_router_if_needed(router)
@@ -197,13 +201,13 @@ def handle_proxy_request(path: str, request) -> Response:
         if request.method == 'GET' and path_norm == 'api/show':
             model_q = request.args.get('model')
             if isinstance(model_q, str) and model_q.strip():
-                response = handle_virtual_show_response(cfg, model_q, should_log, folder_path)
+                response = handle_virtual_show_response(cfg, model_q, legacy_requests_log, folder_path)
                 if response:
                     return response
         
         # Combined multi-provider /api/tags (Z.AI config + live Ollama + virtual_models)
         if request.method == 'GET' and path_norm == 'api/tags':
-            return _handle_api_tags_unified(cfg, router, headers, forward_args, should_log, folder_path)
+            return _handle_api_tags_unified(cfg, router, base_headers, forward_args, legacy_requests_log, folder_path)
 
         # Remove promise from body
         if isinstance(body_json, dict):
@@ -230,7 +234,7 @@ def handle_proxy_request(path: str, request) -> Response:
             resolved_model = routing_model
 
         target_url, headers, routed_provider_name, routed_provider_type = resolve_routing(
-            path, routing_model, cfg, router, base_headers, should_log, folder_path
+            path, routing_model, cfg, router, base_headers, legacy_requests_log and bool(folder_path), folder_path
         )
 
         # Handle unknown model error
@@ -239,7 +243,7 @@ def handle_proxy_request(path: str, request) -> Response:
                 "error": "unknown_model",
                 "message": f"Unknown model alias: {requested_model}",
             }
-            if should_log:
+            if legacy_requests_log:
                 save_response(folder_path, error_data)
             return Response(_json_bytes(error_data), status=400, mimetype='application/json')
 
@@ -249,7 +253,7 @@ def handle_proxy_request(path: str, request) -> Response:
             body_json['stream'] = False
             body = _json_bytes(body_json)
 
-            if should_log:
+            if legacy_requests_log:
                 try:
                     _write_json_file(os.path.join(folder_path, 'forwarded_request.json'), body_json)
                     hdr_safe = dict(headers)
@@ -262,20 +266,22 @@ def handle_proxy_request(path: str, request) -> Response:
                     _write_json_file(os.path.join(folder_path, 'forwarded_headers.json'), hdr_safe)
                 except Exception as e:
                     logger.warning("Failed to save forwarded request: %s", e, exc_info=True)
-        
+
         # Handle simulated response (non-promise)
-        if simulate_action is not None and not promise_requested:
+        if simulate_action is not None and not promise_mode:
             return handle_simulated_response(
-                simulate_action, resolved_model, prompt, path, body_json, should_log, folder_path
+                simulate_action, resolved_model, prompt, path, body_json, legacy_requests_log, folder_path
             )
-        
-        # Promise mode
-        if promise_requested:
+
+        # Promise mode (explicit ?promise=1 / header/body or forced for POST/PUT/PATCH LLM paths)
+        if promise_mode:
             promise_response = handle_promise_mode(
                 request, path, target_url, body, forward_args, headers, simulate_action,
                 resolved_model, prompt, body_json, routed_provider_name, routed_provider_type,
-                router.config, should_log, folder_path, STORAGE_DIR
+                router.config, want_trace, STORAGE_DIR
             )
+            if isinstance(promise_response, Response):
+                return promise_response
             return Response(
                 _json_bytes(promise_response),
                 status=202,
@@ -301,7 +307,7 @@ def handle_proxy_request(path: str, request) -> Response:
         )
 
         # Forward response
-        return forward_response(resp, should_log, folder_path)
+        return forward_response(resp, legacy_requests_log, folder_path)
                 
     except requests.exceptions.ConnectionError as e:
         error_data = {
@@ -309,7 +315,7 @@ def handle_proxy_request(path: str, request) -> Response:
             "message": f"Could not connect to Ollama at {OLLAMA_HOST}",
             "details": str(e)
         }
-        if should_log:
+        if legacy_requests_log:
             save_response(folder_path, error_data)
         return Response(json.dumps(error_data), status=502, mimetype='application/json')
     except Exception as e:
@@ -318,6 +324,6 @@ def handle_proxy_request(path: str, request) -> Response:
             "error": "Proxy error",
             "message": str(e)
         }
-        if should_log:
+        if legacy_requests_log:
             save_response(folder_path, error_data)
         return Response(json.dumps(error_data), status=500, mimetype='application/json')

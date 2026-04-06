@@ -1,6 +1,6 @@
 {
   "context": {
-    "task": "Hello",
+    "task": "Follow-up in dialog",
     "execution": {
       "action": "dialog",
       "step": "request"
@@ -9,10 +9,14 @@
       {
         "role": "user",
         "message": "Hello"
+      },
+      {
+        "role": "assistant",
+        "message": "Hi there! How can I help?"
       }
     ]
   },
   "result": {
-    "message": "Hi there!"
+    "message": "What does A2A mean in this project?"
   }
 }

@@ -2,24 +2,22 @@
   "context": {
     "execution": {
       "action": "agent",
-      "step": "string"
+      "step": "workspace_chain"
     },
     "workbench": {
       "sections": {}
-    }
+    },
+    "history": [
+      { "role": "string", "message": "string" },
+      { "role": "string", "message": "string" },
+      { "role": "string", "message": "string" },
+      { "role": "string", "message": "string" }
+    ]
   },
   "execute": {
-    "form": {
-      "title": "string",
-      "description": "string",
-      "input": [
-        {
-          "name": "string",
-          "type": "string",
-          "label": "string",
-          "required": true
-        }
-      ]
+    "file-exists": {
+      "path": "src/main.ts",
+      "type": "file"
     }
   }
 }

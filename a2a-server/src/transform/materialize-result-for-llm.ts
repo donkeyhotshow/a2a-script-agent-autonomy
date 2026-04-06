@@ -5,6 +5,7 @@
  */
 
 import { deepCloneJson } from '../utils/deep-clone-json.js';
+import { toInvokeShapeForPromptsTransform } from '../services/core/request-processor/normalization.js';
 
 const MAX_TOOL_SUMMARY = 4000;
 
@@ -172,4 +173,25 @@ export function materializeResultIntoHistoryForLlm(root: Record<string, unknown>
 export function prepareInvokePayloadForLlmPrompt(input: Record<string, unknown>): Record<string, unknown> {
   const clone = deepCloneJson(input);
   return materializeResultIntoHistoryForLlm(clone);
+}
+
+/**
+ * Request transforms materialize `result.message` into `context.history` on a **clone** only.
+ * Response transforms receive the live context and append assistant lines — without this sync,
+ * `history` can be assistant-only. Mutates `liveInvokePayload` so `context.history` matches
+ * what request transforms would have produced (user line from `result.message` / task).
+ */
+export function syncLiveContextHistoryFromResultMessage(liveInvokePayload: Record<string, unknown>): void {
+  const shaped = toInvokeShapeForPromptsTransform(liveInvokePayload);
+  const materialized = prepareInvokePayloadForLlmPrompt(deepCloneJson(shaped));
+  const src = materialized['context'] as Record<string, unknown> | undefined;
+  if (!src || !Array.isArray(src['history'])) {
+    return;
+  }
+  const dst = liveInvokePayload['context'] as Record<string, unknown> | undefined;
+  if (dst && typeof dst === 'object' && !Array.isArray(dst)) {
+    dst['history'] = src['history'];
+    return;
+  }
+  liveInvokePayload['history'] = src['history'];
 }

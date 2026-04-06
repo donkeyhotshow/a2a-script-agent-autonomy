@@ -1,6 +1,6 @@
 import * as path from 'path';
 import {logger} from '../../../utils/logger.js';
-import {runPromptsTransform} from '../../../transform/index.js';
+import {runPromptsTransform, syncLiveContextHistoryFromResultMessage} from '../../../transform/index.js';
 import type {GrayRoomControlEnvelope, InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
 import {mergeGrayRoomSlotIntoContext, mergeInterruptTraceIntoContext} from '../../../transform/interrupt-trace-contract.js';
 import {executeReadFile} from '../../../actions/handlers/file-operations.js';
@@ -578,7 +578,8 @@ export class GrayRoomOrchestrator {
             }
 
             const subLlmId = chatInit.llmPromiseId;
-            const nextMd = await pollReadyThenFetch(this.aiHubUrl, subLlmId);
+            const nextMd =
+                chatInit.inlineResponseBody ?? (await pollReadyThenFetch(this.aiHubUrl, subLlmId));
             if (!nextMd) {
                 resolve({outcome: 'failed', error: 'LLM response fetch failed (gray room)'} as ProcessResult);
                 return;
@@ -658,7 +659,11 @@ export class GrayRoomOrchestrator {
             const {writeFile} = await import('node:fs/promises');
             const tempDir = await this.createTempDir();
             await writeFile(path.join(tempDir, 'response.md'), responseMd, 'utf-8');
-            
+
+            // Request transforms fold `result.message` into history on a clone only; live `ctx` still
+            // needs the same user line before append-to-array adds assistant (see materialize-result-for-llm).
+            syncLiveContextHistoryFromResultMessage(ctx);
+
             const responseData = {context: ctx, llm: {response: responseMd}};
             const responseTransformResult = await runPromptsTransform(
                 this.promptsTransformsPath,
@@ -723,7 +728,7 @@ export class GrayRoomOrchestrator {
         trace: ServerInterruptTraceEvent[]
     ): Promise<{ nextCtx: Record<string, unknown>; continueLoop: boolean }> {
         const { reason, context: extraCtx, data } = interrupt;
-        let nextCtx = extraCtx ? { ...ctx, ...extraCtx } : { ...ctx };
+        const nextCtx = extraCtx ? { ...ctx, ...extraCtx } : { ...ctx };
 
         switch (reason) {
             case 'compress_history': {

@@ -84,7 +84,8 @@ const normalizeSessionsList = (raw, filterProjectId = null) => {
 };
 
 const DEFAULT_POLL_INTERVAL = 1000;
-const DEFAULT_POLL_TIMEOUT = 300000;
+/** Wall-clock cap for polling loops (async/session). **Not** used for `promiseId` → GET …/result — those wait until terminal with no deadline. */
+const DEFAULT_POLL_TIMEOUT = Number.POSITIVE_INFINITY;
 
 const isRetryAfterInFuture = (retryAfter) => {
     if (retryAfter == null || retryAfter === '') return false;

@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import base64
 import logging
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import requests
 
@@ -28,6 +28,80 @@ from .api_key_routing import forward_with_api_key_failover
 logger = logging.getLogger(__name__)
 
 
+def try_resolve_promise_from_cache(
+    *,
+    path: str,
+    method: str,
+    target_url: str,
+    body_for_prepare: Any,
+    args: Dict[str, Any],
+    headers: Dict[str, Any],
+    body_json: Optional[Dict[str, Any]],
+    routed_provider_name: Optional[str],
+    routed_provider_type: Optional[str],
+    router_config: Any,
+) -> Optional[Tuple[int, dict, bytes]]:
+    """
+    If the LLM disk cache (or legacy sync {status, body} entry) has a valid success payload,
+    return (status_code, headers, body_bytes). Otherwise None.
+    """
+    args = dict(args or {})
+    args.pop("promise", None)
+    headers = _sanitize_execute_headers(headers or {})
+
+    raw_body_cache = None
+    if body_json is None:
+        if isinstance(body_for_prepare, (bytes, bytearray)):
+            raw_body_cache = body_for_prepare.decode("utf-8", errors="replace")
+        elif body_for_prepare is not None:
+            raw_body_cache = body_for_prepare
+
+    cache = get_cache()
+    cache_payload = build_llm_cache_payload(
+        path=str(path or ""),
+        method=method,
+        target_url=target_url,
+        forward_args=args,
+        body_json=body_json,
+        raw_body=raw_body_cache,
+    )
+    cache_key = build_llm_cache_key(cache, cache_payload)
+
+    cached_response = cache.get(cache_key)
+    if cached_response is not None and not is_valid_llm_disk_cache_value(cached_response):
+        if isinstance(cached_response, dict) and "status" in cached_response and "body" in cached_response:
+            pass  # legacy sync shape — handled below
+        else:
+            logger.warning("Cache key malformed; invalidating")
+            cache.delete(cache_key)
+            cached_response = None
+
+    if cached_response is not None and is_valid_llm_disk_cache_value(cached_response):
+        body_base64 = cached_response["body_base64"]
+        body_bytes = base64.b64decode(body_base64) if body_base64 else b""
+        hdrs = cached_response["headers"] or {}
+        ct = hdrs.get("Content-Type") or hdrs.get("content-type") or ""
+        sc = int(cached_response["status_code"])
+        if not is_llm_upstream_response_ok(sc, body_bytes, ct):
+            logger.warning("Disk cache invalid LLM payload; invalidating")
+            cache.delete(cache_key)
+            return None
+        return (sc, dict(hdrs), body_bytes)
+
+    if isinstance(cached_response, dict) and "status" in cached_response and "body" in cached_response:
+        if "body_base64" in cached_response:
+            return None
+        body_text = cached_response["body"]
+        body_bytes = body_text.encode("utf-8") if isinstance(body_text, str) else (body_text or b"")
+        sc = int(cached_response["status"])
+        ct = "application/json"
+        if not is_llm_upstream_response_ok(sc, body_bytes, ct):
+            return None
+        return (sc, {"Content-Type": ct}, body_bytes)
+
+    return None
+
+
 def forward_promise_with_llm_disk_cache(
     *,
     promise_id: str,
@@ -41,8 +115,8 @@ def forward_promise_with_llm_disk_cache(
     routed_provider_name: Optional[str],
     routed_provider_type: Optional[str],
     router_config: Any,
-    should_log: bool,
-    folder_path: str,
+    want_trace: bool,
+    trace_dir: str,
 ) -> None:
     """
     Forward to upstream with the same disk cache as sync / daemon paths.
@@ -104,10 +178,10 @@ def forward_promise_with_llm_disk_cache(
                 headers=cached_response["headers"],
                 body=body_bytes,
             )
-            if should_log and folder_path:
+            if want_trace and trace_dir:
                 try:
                     save_response(
-                        folder_path,
+                        trace_dir,
                         {
                             "status_code": cached_response["status_code"],
                             "headers": cached_response["headers"],
@@ -189,10 +263,10 @@ def forward_promise_with_llm_disk_cache(
             headers=dict(resp.headers),
             body=resp.content,
         )
-        if should_log and folder_path:
+        if want_trace and trace_dir:
             try:
                 save_response(
-                    folder_path,
+                    trace_dir,
                     {
                         "status_code": resp.status_code,
                         "headers": dict(resp.headers),
@@ -207,10 +281,10 @@ def forward_promise_with_llm_disk_cache(
         logger.info("Promise %s executed in background → %s", promise_id, resp.status_code)
     except requests.RequestException as exc:
         _promise_reset_pending(promise_id, delay_seconds=10.0)
-        if should_log and folder_path:
+        if want_trace and trace_dir:
             try:
                 save_response(
-                    folder_path, {"error": "execute_failed", "message": str(exc)}
+                    trace_dir, {"error": "execute_failed", "message": str(exc)}
                 )
             except Exception as e:
                 logger.warning("Failed to save error: %s", e, exc_info=True)
@@ -231,6 +305,6 @@ def _run_execute_in_background(promise_id: str, rec, request_snapshot: dict) -> 
         routed_provider_name=None,
         routed_provider_type=None,
         router_config=None,
-        should_log=bool(rec.log_folder),
-        folder_path=rec.log_folder or "",
+        want_trace=bool(rec.log_folder),
+        trace_dir=rec.log_folder or "",
     )

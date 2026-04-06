@@ -229,7 +229,7 @@ async function verifyPromiseStatusAsync(promiseId) {
             path: urlObj.pathname,
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
-            timeout: 5000 // 5 second timeout
+            timeout: 0 // no socket timeout — promiseId /result verification must not abort on slow hub/LLM
         };
         
         return new Promise((resolve) => {
@@ -260,7 +260,7 @@ async function verifyPromiseStatusAsync(promiseId) {
             });
             
             req.on('timeout', () => {
-                console.error('[verifyPromiseStatusAsync] Request timeout');
+                console.error('[verifyPromiseStatusAsync] Request timeout (unexpected)');
                 req.destroy();
                 resolve(null);
             });

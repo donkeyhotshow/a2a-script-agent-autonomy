@@ -159,6 +159,9 @@ NOT: `{ "execute": { "action": "...", ... } }` or `{ "result": { "content": "...
 ### Overview
 `POST /api/v1/invoke` returns **`promiseId`**; terminal **`execute` / `context`** come from **`GET /api/v1/requests/{id}/result`** (poll until `completed` / `failed`). The Client API uses the same contour via **`/next` + `GET …/async`**.
 
+### PromiseId polling (normative)
+Do **not** apply wall-clock timeouts or max-attempt caps to **polling `GET /api/v1/requests/{promiseId}/result`**, **`GET /api/a2a/sessions/{id}/async`** until idle/settled, or Client API layers that mirror those. Wait until `status` is terminal (`completed` / `failed` / `cancelled`) or async is no longer pending; only **interval/backoff** between polls is allowed. Optional **per-request** HTTP timeouts on unrelated calls (health checks, stack probes) are fine. Implementation: [`a2a-client/packages/vite-plugin/daemon/a2a-result-poll.js`](a2a-client/packages/vite-plugin/daemon/a2a-result-poll.js), [`shared/api-helpers.js`](shared/api-helpers.js) (`DEFAULT_POLL_TIMEOUT` is unbounded for session-async helpers).
+
 ### Action-Key Shape (Mandatory)
 All `execute` and `result` objects use single action-type key:
 ```json

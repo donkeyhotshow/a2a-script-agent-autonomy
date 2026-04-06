@@ -6,9 +6,18 @@
  * (e.g. session_id, workbench) are ignored. Arrays: each element must match the template
  * object derived from expected[0].
  *
+ * Optional top-level **`$proba`** in expected.json: `{ "ignorePaths": ["context.task", ...] }`
+ * removes those paths from both clones before compare. If input has non-empty `context.history`,
+ * expected must include `context.history` (unless `$proba.skipHistoryTemplate: true`).
+ * `context.history` array length in expected must match actual (unless `$proba.skipHistoryLengthCheck`).
+ *
+ * **Directive objects** (leaf or nested): only `$`-prefixed keys, e.g. `{ "$regex": "^prefix", "$flags": "i" }`,
+ * `{ "$type": "string" }`, `{ "$enum": ["a","b"] }`, `{ "$minLength": 1 }`. Normalized to placeholders for the
+ * key-structure pass; checked precisely in `collectDirectiveErrors`.
+ *
  * Optional: PROBA_SERVERA_USE_HTTP=1 → fetch http://localhost:3000/api/v1/invoke (legacy).
  * Stack gate (default): probes ai-integration + Ollama (+ a2a-server if HTTP mode).
- *   Skip: PROBA_SERVERA_SKIP_STACK_CHECK=1. Timeout: PROBA_STACK_PROBE_MS (ms).
+ *   Skip: PROBA_SERVERA_SKIP_STACK_CHECK=1. Probe timeout: PROBA_STACK_PROBE_MS (ms) — not applied to promiseId poll loops.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -177,12 +186,304 @@ function compareWithDiff(
   return diffs;
 }
 
+const PROBA_META_KEY = '$proba';
+
+type ProbaMeta = {
+  /** Dot/bracket paths removed from both clones before structure compare (e.g. `context.task`, `context.history[0].message`). */
+  ignorePaths?: string[];
+  /** When input has history but you intentionally omit `context.history` from expected (rare). */
+  skipHistoryTemplate?: boolean;
+  /** When true, do not require `actual.context.history.length === expected.context.history.length`. */
+  skipHistoryLengthCheck?: boolean;
+};
+
+/** Object whose keys are all `$…` — treated as a precise-check directive, not a plain subtree. */
+function isDirectiveObject(o: unknown): o is Record<string, unknown> {
+  if (typeof o !== 'object' || o === null || Array.isArray(o)) return false;
+  const keys = Object.keys(o as Record<string, unknown>);
+  return keys.length > 0 && keys.every((k) => k.startsWith('$'));
+}
+
+/**
+ * Replace directive leaves with JSON placeholders so `getKeyStructure` matches actual shapes.
+ */
+function normalizeDirectivesForStructure(expected: unknown): unknown {
+  if (expected === null || expected === undefined) return expected;
+  if (isDirectiveObject(expected)) {
+    return directiveToStructurePlaceholder(expected);
+  }
+  if (Array.isArray(expected)) {
+    return expected.map((x) => normalizeDirectivesForStructure(x));
+  }
+  if (typeof expected === 'object') {
+    const o = expected as Record<string, unknown>;
+    const out: Record<string, unknown> = {};
+    for (const k of Object.keys(o)) {
+      out[k] = normalizeDirectivesForStructure(o[k]);
+    }
+    return out;
+  }
+  return expected;
+}
+
+function directiveToStructurePlaceholder(d: Record<string, unknown>): unknown {
+  const t = d['$type'];
+  if (typeof t === 'string') {
+    if (t === 'null') return null;
+    if (t === 'array') return [];
+    if (t === 'object') return {};
+    if (t === 'number') return 0;
+    if (t === 'boolean') return false;
+    return 'string';
+  }
+  if ('$enum' in d && Array.isArray(d['$enum']) && d['$enum'].length > 0) {
+    const first = d['$enum'][0];
+    return typeof first === 'string' ? 'string' : typeof first === 'number' ? 0 : typeof first === 'boolean' ? false : first;
+  }
+  if ('$regex' in d || '$minLength' in d || '$maxLength' in d) {
+    return 'string';
+  }
+  return 'string';
+}
+
+function typeofLabel(v: unknown): string {
+  if (v === null) return 'null';
+  if (Array.isArray(v)) return 'array';
+  return typeof v;
+}
+
+function applyDirectiveChecks(actual: unknown, d: Record<string, unknown>, path: string): string[] {
+  const errs: string[] = [];
+
+  if ('$type' in d) {
+    const t = d['$type'];
+    if (typeof t === 'string') {
+      if (t === 'null') {
+        if (actual !== null) errs.push(`${path}: $type null expected, got ${typeofLabel(actual)}`);
+      } else if (t === 'array') {
+        if (!Array.isArray(actual)) errs.push(`${path}: $type array expected, got ${typeofLabel(actual)}`);
+      } else if (t === 'object') {
+        if (actual === null || typeof actual !== 'object' || Array.isArray(actual)) {
+          errs.push(`${path}: $type object expected, got ${typeofLabel(actual)}`);
+        }
+      } else if (typeof actual !== t) {
+        errs.push(`${path}: $type ${t} expected, got ${typeofLabel(actual)}`);
+      }
+    }
+  }
+
+  if ('$enum' in d && Array.isArray(d['$enum'])) {
+    const list = d['$enum'] as unknown[];
+    if (!list.includes(actual)) {
+      errs.push(`${path}: value ${JSON.stringify(actual)} not in $enum`);
+    }
+  }
+
+  if ('$regex' in d && typeof d['$regex'] === 'string') {
+    if (typeof actual !== 'string') {
+      errs.push(`${path}: $regex requires string, got ${typeofLabel(actual)}`);
+    } else {
+      const flags = typeof d['$flags'] === 'string' ? d['$flags'] : '';
+      try {
+        if (!new RegExp(d['$regex'], flags).test(actual)) {
+          errs.push(`${path}: string does not match /${d['$regex']}/${flags}`);
+        }
+      } catch {
+        errs.push(`${path}: invalid $regex pattern`);
+      }
+    }
+  }
+
+  if (typeof actual === 'string') {
+    if (typeof d['$minLength'] === 'number' && actual.length < d['$minLength']) {
+      errs.push(`${path}: length ${actual.length} < $minLength ${d['$minLength']}`);
+    }
+    if (typeof d['$maxLength'] === 'number' && actual.length > d['$maxLength']) {
+      errs.push(`${path}: length ${actual.length} > $maxLength ${d['$maxLength']}`);
+    }
+  }
+
+  return errs;
+}
+
+/**
+ * Walk `actual` vs raw `expected` and apply `$regex`, `$type`, `$enum`, length bounds.
+ * Array length must match `expected` unless `$proba.skipHistoryLengthCheck` and path is `*.history`.
+ */
+function collectDirectiveErrors(
+  actual: unknown,
+  expected: unknown,
+  basePath = '',
+  meta?: ProbaMeta
+): string[] {
+  const errs: string[] = [];
+
+  if (expected === null || expected === undefined) return errs;
+
+  if (isDirectiveObject(expected)) {
+    return applyDirectiveChecks(actual, expected, basePath || '(root)');
+  }
+
+  if (Array.isArray(expected)) {
+    if (!Array.isArray(actual)) {
+      errs.push(`${basePath || '(root)'}: expected array, got ${typeofLabel(actual)}`);
+      return errs;
+    }
+    const skipLen =
+      meta?.skipHistoryLengthCheck &&
+      (basePath === 'context.history' || basePath.endsWith('.history'));
+    if (!skipLen && actual.length !== expected.length) {
+      errs.push(
+        `${basePath || '(root)'}: array length ${actual.length}, expected ${expected.length}`
+      );
+      return errs;
+    }
+    const len = skipLen ? Math.min(actual.length, expected.length) : expected.length;
+    for (let i = 0; i < len; i++) {
+      const p = basePath ? `${basePath}[${i}]` : `[${i}]`;
+      errs.push(...collectDirectiveErrors(actual[i], expected[i], p, meta));
+    }
+    return errs;
+  }
+
+  if (typeof expected === 'object' && expected !== null) {
+    if (typeof actual !== 'object' || actual === null || Array.isArray(actual)) {
+      errs.push(`${basePath || '(root)'}: expected object, got ${typeofLabel(actual)}`);
+      return errs;
+    }
+    const ex = expected as Record<string, unknown>;
+    const ac = actual as Record<string, unknown>;
+    for (const k of Object.keys(ex)) {
+      const p = basePath ? `${basePath}.${k}` : k;
+      errs.push(...collectDirectiveErrors(ac[k], ex[k], p, meta));
+    }
+    return errs;
+  }
+
+  return errs;
+}
+
+function cloneJson<T>(x: T): T {
+  return JSON.parse(JSON.stringify(x)) as T;
+}
+
+/** `context.history[0].message` → segments */
+function parsePathSegments(pathStr: string): Array<string | number> {
+  const normalized = pathStr.replace(/\[(\d+)\]/g, '.$1');
+  return normalized
+    .split('.')
+    .filter(Boolean)
+    .map((s) => (/^\d+$/.test(s) ? Number(s) : s));
+}
+
+function deletePath(root: unknown, pathStr: string): void {
+  const segs = parsePathSegments(pathStr);
+  if (segs.length === 0) return;
+  let cur: unknown = root;
+  for (let i = 0; i < segs.length - 1; i++) {
+    const s = segs[i];
+    if (cur === null || typeof cur !== 'object') return;
+    cur = Array.isArray(cur) ? cur[s as number] : (cur as Record<string, unknown>)[s as string];
+  }
+  const last = segs[segs.length - 1];
+  if (cur === null || typeof cur !== 'object') return;
+  if (Array.isArray(cur)) {
+    if (typeof last === 'number') cur.splice(last, 1);
+  } else {
+    delete (cur as Record<string, unknown>)[last as string];
+  }
+}
+
+function splitExpectedPayload(raw: unknown): {
+  meta: ProbaMeta;
+  body: Record<string, unknown>;
+} {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return { meta: {}, body: raw as Record<string, unknown> };
+  }
+  const o = raw as Record<string, unknown>;
+  const body = { ...o };
+  delete body[PROBA_META_KEY];
+  let meta: ProbaMeta = {};
+  const proba = o[PROBA_META_KEY];
+  if (proba && typeof proba === 'object' && !Array.isArray(proba)) {
+    const p = proba as Record<string, unknown>;
+    if (Array.isArray(p.ignorePaths)) {
+      meta.ignorePaths = (p.ignorePaths as unknown[]).filter((x) => typeof x === 'string') as string[];
+    }
+    if (p.skipHistoryTemplate === true) meta.skipHistoryTemplate = true;
+    if (p.skipHistoryLengthCheck === true) meta.skipHistoryLengthCheck = true;
+  }
+  return { meta, body };
+}
+
+/**
+ * If the invoke payload already carries conversation state, expected.json must assert
+ * `context.history` shape (unless `$proba.skipHistoryTemplate`).
+ */
+function assertExpectedHistoryWhenInputHasHistory(
+  input: Record<string, unknown>,
+  body: Record<string, unknown>,
+  meta: ProbaMeta
+): string | null {
+  if (meta.skipHistoryTemplate) return null;
+  const inCtx = input.context;
+  if (!inCtx || typeof inCtx !== 'object' || Array.isArray(inCtx)) return null;
+  const ih = (inCtx as Record<string, unknown>).history;
+  if (!Array.isArray(ih) || ih.length === 0) return null;
+  const exCtx = body.context;
+  if (!exCtx || typeof exCtx !== 'object' || Array.isArray(exCtx)) {
+    return (
+      'expected.json must include context.history when input.json has non-empty context.history ' +
+      '(or set $proba.skipHistoryTemplate: true).'
+    );
+  }
+  const eh = (exCtx as Record<string, unknown>).history;
+  if (!Array.isArray(eh) || eh.length === 0) {
+    return (
+      'expected.json must include non-empty context.history when input.json has non-empty context.history ' +
+      '(or set $proba.skipHistoryTemplate: true).'
+    );
+  }
+  return null;
+}
+
+/**
+ * When the server echoes `context.task` and builds `context.history`, at least one
+ * `role: user` entry must be present — otherwise the client sees assistant-only turns
+ * with no record of the user message (regression: Gray Room / dialog pipeline).
+ */
+function assertHistoryHasUserWhenTaskPresent(actual: Record<string, unknown>): string | null {
+  if (actual.outcome === 'failed') return null;
+  const ctx = actual.context as Record<string, unknown> | undefined;
+  if (!ctx) return null;
+  const task = ctx.task;
+  if (typeof task !== 'string' || !task.trim()) return null;
+  const history = ctx.history;
+  if (!Array.isArray(history) || history.length === 0) return null;
+  const hasUser = history.some(
+    (h) =>
+      h &&
+      typeof h === 'object' &&
+      String((h as { role?: unknown }).role).toLowerCase() === 'user'
+  );
+  if (!hasUser) {
+    return (
+      'context.history is non-empty but has no role:user while context.task is set; ' +
+      'user turns must appear in history.'
+    );
+  }
+  return null;
+}
+
 function generateErrorReport(
   caseName: string,
   input: unknown,
-  expected: unknown,
-  actual: unknown,
-  diffs: ReturnType<typeof compareWithDiff>
+  expectedCompared: unknown,
+  actualCompared: unknown,
+  actualFull: unknown,
+  diffs: ReturnType<typeof compareWithDiff>,
+  expectedRaw?: unknown
 ): string {
   const timestamp = new Date().toISOString();
   let report = `# Test Failure Report: ${caseName}\n\n`;
@@ -195,10 +496,11 @@ function generateErrorReport(
     report += `| \`${d.path}\` | ${d.issue} | ${es} | ${as} |\n`;
   }
   report += `\n## Input (Request)\n\n\`\`\`json\n${JSON.stringify(input, null, 2)}\n\`\`\`\n\n`;
-  report += `## Expected Structure\n\n\`\`\`json\n${JSON.stringify(getKeyStructure(expected), null, 2)}\n\`\`\`\n\n`;
-  report += `## Actual Structure\n\n\`\`\`json\n${JSON.stringify(getKeyStructure(actual), null, 2)}\n\`\`\`\n\n`;
-  report += `## Full Expected\n\n\`\`\`json\n${JSON.stringify(expected, null, 2)}\n\`\`\`\n\n`;
-  report += `## Full Actual\n\n\`\`\`json\n${JSON.stringify(actual, null, 2)}\n\`\`\`\n`;
+  report += `## Expected Structure (after $proba.ignorePaths)\n\n\`\`\`json\n${JSON.stringify(getKeyStructure(expectedCompared), null, 2)}\n\`\`\`\n\n`;
+  report += `## Actual Structure (after $proba.ignorePaths)\n\n\`\`\`json\n${JSON.stringify(getKeyStructure(actualCompared), null, 2)}\n\`\`\`\n\n`;
+  const fullExp = expectedRaw !== undefined ? expectedRaw : expectedCompared;
+  report += `## Full Expected\n\n\`\`\`json\n${JSON.stringify(fullExp, null, 2)}\n\`\`\`\n\n`;
+  report += `## Full Actual\n\n\`\`\`json\n${JSON.stringify(actualFull, null, 2)}\n\`\`\`\n`;
   return report;
 }
 
@@ -244,10 +546,8 @@ function normalizeInvokeResult(invokeResult: {
 }
 
 async function pollHttpResult(promiseId: string): Promise<Record<string, unknown>> {
-  const deadline = Date.now() + 120_000;
   const url = `http://localhost:3000/api/v1/requests/${encodeURIComponent(promiseId)}/result`;
   for (;;) {
-    if (Date.now() > deadline) throw new Error(`HTTP poll timeout for ${promiseId}`);
     const res = await fetch(url);
     if (!res.ok) {
       await new Promise((r) => setTimeout(r, 40));
@@ -317,9 +617,7 @@ async function waitTerminalInProcess(promiseId: string): Promise<{
   const { processRequestByPromiseId } = await import(
     '../../a2a-server/src/services/core/request-processor/request-processor.service.js'
   );
-  const deadline = Date.now() + 120_000;
   for (;;) {
-    if (Date.now() > deadline) throw new Error(`In-process poll timeout for ${promiseId}`);
     const row = await requestService.getResult(promiseId);
     if (!row) {
       await new Promise((r) => setTimeout(r, 30));
@@ -371,7 +669,18 @@ async function runCase(caseDir: string): Promise<boolean | null> {
   if (fs.existsSync(reportPath)) fs.unlinkSync(reportPath);
 
   const input = JSON.parse(fs.readFileSync(inputPath, 'utf8')) as Record<string, unknown>;
-  const expected = JSON.parse(fs.readFileSync(expectedPath, 'utf8'));
+  const expectedRaw = JSON.parse(fs.readFileSync(expectedPath, 'utf8'));
+  const { meta: probaMeta, body: expectedBody } = splitExpectedPayload(expectedRaw);
+
+  const historyTemplateErr = assertExpectedHistoryWhenInputHasHistory(input, expectedBody, probaMeta);
+  if (historyTemplateErr) {
+    console.log(`❌ FAIL: ${path.basename(caseDir)} (${historyTemplateErr})`);
+    fs.writeFileSync(
+      reportPath,
+      `# Test Failure Report: ${path.basename(caseDir)}\n\n## Error\n\n${historyTemplateErr}\n`
+    );
+    return false;
+  }
 
   let actual: Record<string, unknown>;
   try {
@@ -390,21 +699,61 @@ async function runCase(caseDir: string): Promise<boolean | null> {
 
   fs.writeFileSync(outputPath, JSON.stringify(actual, null, 2));
 
+  const actualForCompare = cloneJson(actual);
+  const expectedForCompare = cloneJson(expectedBody);
+  for (const p of probaMeta.ignorePaths ?? []) {
+    deletePath(actualForCompare, p);
+    deletePath(expectedForCompare, p);
+  }
+
+  const directiveErrs = collectDirectiveErrors(actualForCompare, expectedForCompare, '', probaMeta);
+  const expectedNormalized = normalizeDirectivesForStructure(cloneJson(expectedForCompare)) as Record<string, unknown>;
+
   const diffs = compareWithDiff(
-    getKeyStructure(actual) as Record<string, unknown>,
-    getKeyStructure(expected) as Record<string, unknown>
+    getKeyStructure(actualForCompare) as Record<string, unknown>,
+    getKeyStructure(expectedNormalized) as Record<string, unknown>
   );
 
-  if (diffs.length === 0) {
+  /** Run even when structure mismatches — key-only compare does not catch assistant-only history. */
+  const semanticErr = assertHistoryHasUserWhenTaskPresent(actual);
+
+  const ok =
+    diffs.length === 0 && directiveErrs.length === 0 && !semanticErr;
+
+  if (ok) {
     console.log(`✅ PASS: ${path.basename(caseDir)}`);
     return true;
   }
 
-  console.log(`❌ FAIL: ${path.basename(caseDir)} (${diffs.length} differences)`);
-  for (const d of diffs.slice(0, 5)) console.log(`   - ${d.path}: ${d.issue}`);
-  if (diffs.length > 5) console.log(`   ... and ${diffs.length - 5} more`);
+  console.log(`❌ FAIL: ${path.basename(caseDir)}`);
+  if (directiveErrs.length > 0) {
+    console.log(`   - ${directiveErrs.length} directive check(s)`);
+    for (const e of directiveErrs.slice(0, 8)) console.log(`   - ${e}`);
+    if (directiveErrs.length > 8) console.log(`   ... and ${directiveErrs.length - 8} more`);
+  }
+  if (diffs.length > 0) {
+    console.log(`   - ${diffs.length} structure difference(s)`);
+    for (const d of diffs.slice(0, 5)) console.log(`   - ${d.path}: ${d.issue}`);
+    if (diffs.length > 5) console.log(`   ... and ${diffs.length - 5} more`);
+  }
+  if (semanticErr) console.log(`   - semantic: ${semanticErr}`);
   console.log(`   📄 Full report: ${reportPath}`);
-  fs.writeFileSync(reportPath, generateErrorReport(path.basename(caseDir), input, expected, actual, diffs));
+  let report = generateErrorReport(
+    path.basename(caseDir),
+    input,
+    expectedNormalized,
+    actualForCompare,
+    actual,
+    diffs,
+    expectedRaw
+  );
+  if (directiveErrs.length > 0) {
+    report += `\n## Directive checks\n\n${directiveErrs.map((e) => `- ${e}`).join('\n')}\n`;
+  }
+  if (semanticErr) {
+    report += `\n## Semantic check\n\n${semanticErr}\n`;
+  }
+  fs.writeFileSync(reportPath, report);
   return false;
 }
 
@@ -487,10 +836,10 @@ async function main() {
     await initInProcessInvoke();
   }
 
-  const testDir = __dirname;
+  const testDir = path.join(__dirname);
   const cases = fs
     .readdirSync(testDir)
-    .filter((f) => fs.statSync(path.join(testDir, f)).isDirectory());
+    .filter((f) => fs.statSync(path.join(testDir, f)).isDirectory() && !f.startsWith('.'));
 
   const results: { case: string; passed: boolean }[] = [];
   let allPass = true;

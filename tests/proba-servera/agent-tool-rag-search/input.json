@@ -1,6 +1,6 @@
 {
   "context": {
-    "task": "search for calculateTotal",
+    "task": "зчитати файл і знайти функцію",
     "execution": {
       "action": "agent",
       "step": "tool_rag"
@@ -8,12 +8,7 @@
     "history": [
       {
         "role": "user",
-        "message": "search for calculateTotal"
-      },
-      {
-        "role": "assistant",
-        "step": "tool_rag",
-        "message": "rag-search: simulations sync agent SCHEMA received.json - 2 top hits"
+        "message": "Знайди функцію calculateTotal в utils/helpers.js"
       }
     ],
     "workbench": {
@@ -22,7 +17,12 @@
   },
   "result": {
     "rag-search": {
-      "query": "calculateTotal"
+      "query": "simulations sync agent SCHEMA received.json",
+      "limit": 8,
+      "page": 1,
+      "hasMore": false,
+      "files": [],
+      "results": []
     }
   }
 }

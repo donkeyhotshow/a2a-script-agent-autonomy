@@ -4,7 +4,7 @@
 
 | Export (see [`index.js`](./index.js)) | Role |
 |---------------------------------------|------|
-| `pollA2ARequestResult`, `PollingDaemon` | Blocking poll with retries/stats |
+| `pollA2ARequestResult`, `PollingDaemon` | Blocking poll until terminal (default: no `maxPolls` / wall-clock cap on the loop) |
 | `isA2AResultCompleted`, `isA2AResultFailed` | Terminal-state helpers |
 
 Parent index: [`../../daemon/README.md`](../../daemon/README.md).

@@ -35,7 +35,7 @@ export class PromisePoller {
     constructor(apiClient: AsyncApiClient, options: PollingOptions = {}) {
         this.api = apiClient;
         this.interval = options.interval ?? Number(process.env.REQUEST_PROCESSOR_INTERVAL_MS) ?? 5000;
-        this.maxAttempts = options.maxAttempts ?? 720;
+        this.maxAttempts = options.maxAttempts ?? Number.POSITIVE_INFINITY;
     }
 
     start(promiseId: string, callbacks: PollCallbacks): void {

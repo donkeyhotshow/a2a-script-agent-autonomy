@@ -81,9 +81,8 @@ async function listNumericStepDirs(sessionDir) {
   return nums;
 }
 
-async function pollAsyncSettled(sessionId, maxWaitMs = 120_000, stepMs = 500) {
-  const deadline = Date.now() + maxWaitMs;
-  while (Date.now() < deadline) {
+async function pollAsyncSettled(sessionId, stepMs = 500) {
+  for (;;) {
     const r = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
     if (!r.ok) break;
     const j = await r.json();
@@ -188,7 +187,7 @@ async function main() {
     const ack = await nRes.json();
     if (ack.asyncPending) {
       console.log('async pending, polling…');
-      await pollAsyncSettled(sessionId, 120_000);
+      await pollAsyncSettled(sessionId);
     }
     const g = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}`);
     const sess = await g.json();

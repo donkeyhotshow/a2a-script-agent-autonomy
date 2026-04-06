@@ -1,7 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   prepareInvokePayloadForLlmPrompt,
-  formatToolResultForHistory
+  formatToolResultForHistory,
+  syncLiveContextHistoryFromResultMessage,
 } from '../../src/transform/materialize-result-for-llm.js';
 
 describe('materialize-result-for-llm', () => {
@@ -73,5 +74,17 @@ describe('materialize-result-for-llm', () => {
     expect(out.result).toEqual({});
     const h = (out.context as Record<string, unknown>).history as Array<{ role: string; message: string }>;
     expect(h.some((e) => e.role === 'system' && e.message === 'choice: agent')).toBe(true);
+  });
+
+  it('syncLiveContextHistoryFromResultMessage copies user line from result to live context (response transform path)', () => {
+    const live = {
+      context: {
+        task: 'оцени окружение',
+        history: [] as { role: string; message: string }[],
+      },
+      result: { message: 'оцени окружение' },
+    };
+    syncLiveContextHistoryFromResultMessage(live as Record<string, unknown>);
+    expect(live.context.history).toEqual([{ role: 'user', message: 'оцени окружение' }]);
   });
 });

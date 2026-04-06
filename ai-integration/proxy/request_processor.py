@@ -27,6 +27,13 @@ def _is_real_data_path(path: str) -> bool:
     return normalized in REAL_DATA_PATHS
 
 
+def force_promise_llm_path(path: str, method: str) -> bool:
+    """POST/PUT/PATCH to chat/generate/embeddings always use the promise pipeline (no sync forward)."""
+    if not _is_real_data_path(path):
+        return False
+    return method.upper() in ('POST', 'PUT', 'PATCH')
+
+
 def _prepare_headers(request) -> Dict[str, str]:
     """Extract and clean headers from request"""
     headers = dict(request.headers)

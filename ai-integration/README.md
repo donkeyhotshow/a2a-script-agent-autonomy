@@ -9,7 +9,7 @@
 ## Возможности
 
 - **Маршрутизация между провайдерами**: Z.AI (по умолчанию) + fallback (Ollama, Groq, OpenRouter, HuggingFace, Cohere и т.д.) — правила задаются в `AI_HUB_CONFIG` / `providers.json`.
-- **Логирование**: Каждый запрос сохраняется в отдельную папку (`proxy_logs/requests/request_*`) с `request.json` и `response.json`.
+- **Логирование**: LLM `POST`/`PUT`/`PATCH` (chat/generate/embeddings) — трассы в `proxy_logs/promises/<promiseId>/`. Прочие пути по-прежнему могут писать в `proxy_logs/requests/request_*` (`request.json` / `response.json`).
 - **ML-симуляция**: Симуляции rnj-L / rnj-1 и правила `simulate`/`set_model`.
 - **Маппинг моделей + конфигурация**: `AI_HUB_CONFIG` + `providers.json` позволяют переадресовать `model`, вставлять `virtual_models` и наблюдать `api/tags`.
 - **Async Promises**: Поддержка `promiseId` → `POST /api/promises/create` → потом `result`. При **`PROMISE_DAEMON_ONLY=true`** (по умолчанию) реальный форвард на провайдера выполняет **очередь/daemon** или ручной **`POST /promise/<id>/execute`**; см. [`docs/workflows/WORKFLOWS.md`](docs/workflows/WORKFLOWS.md). Поле **`promise_daemon_only`** в **`GET /health`** использует Task Monitor (см. корневой **`MONITOR-QUICK-START.md`**).

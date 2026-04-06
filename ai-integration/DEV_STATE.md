@@ -28,6 +28,8 @@ Current operational state for the `ai-integration` module.
 | Ollama | 11435 | Expected healthy |
 | Promise daemon | n/a | Enabled via config |
 
+**2026-04-06:** LLM `POST`/`PUT`/`PATCH` to `api/chat|generate|embeddings` always use the promise pipeline (`proxy_handler.py` + `promise_manager.handle_promise_mode`); traces live under `proxy_logs/promises/<id>/` only (no `proxy_logs/requests/` for those). Disk-cache hit → HTTP **200** `{ promiseId, status: completed, cached, responseBody }`; miss → **202** + poll. Docs: [`docs/api-reference/PROXY_API.md`](docs/api-reference/PROXY_API.md).
+
 **2026-04-06 (human-review):** `proxy/ai_hub_config.py` — `_extract_prompt`: multimodal list `content`, numeric `content`, assistant `tool_calls`; `_normalize_path` strips leading/trailing slashes for rule `path` match. Tests: `tests/human-review/`.
 
 **2026-04-05:** `resolve_routing` (`proxy/router_manager.py`): if the JSON body omits `model` and the provider router is initialized, the request is routed to the configured default provider’s model (Z.AI / GLM), not straight to Ollama. LLM cache keys (`proxy/caching.py`): additional volatile fields (`*_at`, keys containing `timestamp`, `*_time` except a small blocklist, `user`, etc.) are excluded from the hash so repeated identical prompts hit disk cache even when clients add timestamps.

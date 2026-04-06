@@ -16,6 +16,7 @@ from .promises import (
     get_promise, get_promise_by_server_id, _promise_set_done, _promise_reset_pending,
     _load_request_snapshot, _json_bytes, _resolve_storage_path,
 )
+from .promise_storage import _promise_folder
 from .promise_execution import _run_execute_in_background
 
 # Setup logger
@@ -113,6 +114,48 @@ def promise_response(promise_id: str):
     resp.headers['X-Promise-Id'] = promise_id
     resp.headers['X-Promise-Status'] = 'done'
     return resp
+
+
+@app.route('/promise/<promise_id>/body_raw', methods=['GET'])
+def promise_body_raw(promise_id: str):
+    """Full provider JSON when `_promise_set_done` persisted `body_raw.json` (success path)."""
+    rec = get_promise(promise_id)
+    if rec is None:
+        return Response(
+            _json_bytes({"error": "promise_not_found", "promiseId": promise_id}),
+            status=404,
+            mimetype='application/json',
+        )
+    if rec.status == 'pending':
+        return Response(
+            _json_bytes({"promiseId": promise_id, "status": "pending"}),
+            status=202,
+            mimetype='application/json',
+        )
+    if rec.status == 'error':
+        return Response(
+            _json_bytes({"promiseId": promise_id, "status": "error", "error": rec.error}),
+            status=500,
+            mimetype='application/json',
+        )
+    raw_path = os.path.join(_promise_folder(promise_id), 'body_raw.json')
+    if not os.path.isfile(raw_path):
+        return Response(
+            _json_bytes({"error": "body_raw_not_found", "promiseId": promise_id}),
+            status=404,
+            mimetype='application/json',
+        )
+    try:
+        with open(raw_path, 'r', encoding='utf-8') as f:
+            raw_obj = json.load(f)
+    except (OSError, json.JSONDecodeError) as e:
+        logger.warning("body_raw read failed %s: %s", raw_path, e, exc_info=True)
+        return Response(
+            _json_bytes({"error": "body_raw_unreadable", "promiseId": promise_id}),
+            status=500,
+            mimetype='application/json',
+        )
+    return Response(_json_bytes(raw_obj), status=200, mimetype='application/json')
 
 
 @app.route('/promise/<promise_id>/request', methods=['GET'])

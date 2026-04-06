@@ -34,6 +34,7 @@ Canonical cross-module environment alignment for client, server, and ai-integrat
 | `A2A_COMPRESS_HISTORY_MIN_ENTRIES` | `0` | `0` | `0` or tuned | Skip compress sidecar under threshold. |
 | `FORWARD_TIMEOUT_SECONDS` | `30` | `30` | tuned | ai-integration proxy forward timeout in seconds. 0 = unlimited. |
 | `PROVIDER_TIMEOUT` | `30` | `30` | tuned | ai-integration provider session timeout in seconds. 0 = unlimited. |
+| `VISION_MOCK_MODE` | `deterministic` | `deterministic` | `deterministic` | Controls vision tester mock behavior: 'always_pass', 'always_fail', 'random', or 'deterministic' (default). Deterministic mode uses hash of inputs for consistent results. |
 
 ## Baseline Rules
 

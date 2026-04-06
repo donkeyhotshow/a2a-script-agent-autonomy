@@ -98,6 +98,15 @@ Restart Ollama instance.
 
 ---
 
+### LLM paths (`POST /api/chat`, `POST /api/generate`, `POST /api/embeddings`)
+
+- **Always promise pipeline:** For `POST`/`PUT`/`PATCH` on these paths, the proxy does **not** return a synchronous upstream body. It creates a hub `promiseId`, runs the upstream call in the promise executor, and stores traces only under **`proxy_logs/promises/<promiseId>/`** (not `proxy_logs/requests/`).
+- **Explicit `?promise=1` / `X-Promise` / `body.promise`:** Same behavior; required for clients that rely on the flag.
+- **Disk cache hit:** The hub may respond with **HTTP 200** and JSON:
+  `{ "promiseId", "status": "completed", "cached": true, "responseBody": "<full upstream JSON string>" }`.
+  The promise is marked done on disk; clients can use the inline `responseBody` and skip polling.
+- **Miss / async:** **HTTP 202** with `{ "promiseId", "status": "pending" }`, then poll `GET /promise/{id}` / `GET /promise/{id}/response` as before.
+
 ### Promise Management
 
 #### GET /promises/pending
@@ -146,7 +155,10 @@ Get promise status by ID.
 Get original request body (method, path, headers, body).
 
 #### GET /promise/{promise_id}/response
-Get final response (raw body).
+Get final response (stored assistant-oriented body — see `body.md` pipeline).
+
+#### GET /promise/{promise_id}/body_raw
+When the hub persisted `body_raw.json` on success, returns that **full provider JSON** (OpenAI/Ollama-style envelope). Used by `a2a-server` `fetchAiHubChatJson` / `pollReadyThenFetch` with `responseMode: raw_json`. **404** if no raw file (older promises or non-JSON upstream).
 
 #### POST /promise/{promise_id}/execute
 Execute promise against Ollama (non-blocking, returns 202).

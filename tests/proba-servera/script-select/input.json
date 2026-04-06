@@ -4,7 +4,16 @@
     "execution": {
       "action": "task",
       "step": "router"
-    }
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "fix vue imports"
+      }
+    ]
   },
   "result": {
     "choice": "fix-vue-imports"

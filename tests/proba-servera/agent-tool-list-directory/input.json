@@ -1,6 +1,6 @@
 {
   "context": {
-    "task": "list files in utils",
+    "task": "зчитати файл і знайти функцію",
     "execution": {
       "action": "agent",
       "step": "tool_list_directory"
@@ -8,12 +8,12 @@
     "history": [
       {
         "role": "user",
-        "message": "list files in utils"
+        "message": "Знайди функцію calculateTotal в utils/helpers.js"
       },
       {
         "role": "assistant",
-        "step": "tool_list_directory",
-        "message": "Listed directory: helpers.js, constants.js"
+        "step": "tool_rag",
+        "message": "rag-search: simulations sync agent SCHEMA received.json — 2 top hits"
       }
     ],
     "workbench": {
@@ -22,7 +22,12 @@
   },
   "result": {
     "list-directory": {
-      "path": "utils"
+      "path": ".",
+      "entries": [
+        { "name": "simulations" },
+        { "name": "a2a-client" },
+        { "name": "a2a-server" }
+      ]
     }
   }
 }

@@ -1,6 +1,31 @@
 {
+  "$proba": {
+    "ignorePaths": [
+      "context.session_id",
+      "context.result",
+      "context.choice_id",
+      "context.message"
+    ],
+    "skipHistoryLengthCheck": true
+  },
   "context": {
-    "task": "string"
+    "task": "string",
+    "execution": {
+      "action": "string",
+      "step": "string"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "string"
+      },
+      {
+        "role": "system",
+        "message": {
+          "$regex": "^choice:"
+        }
+      }
+    ]
   },
   "execute": {
     "form": {
