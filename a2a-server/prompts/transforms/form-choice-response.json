@@ -13,7 +13,11 @@
             "outcome": "completed",
             "message": "Auto mode selected",
             "execute": {
-              "message": "Автоматичний режим вибрано. Очікуйте виконання..."
+              "form": {
+                "title": "Автоматичний режим вибрано",
+                "description": "Очікуйте виконання...",
+                "input": [{ "name": "message", "type": "text", "label": "Message", "required": true }]
+              }
             }
           }
         },
@@ -93,7 +97,11 @@
               }
             },
             "execute": {
-              "message": "Agent режим активовано. LLM адаптується до вашої задачі..."
+              "form": {
+                "title": "Agent Mode",
+                "description": "Agent режим активовано. LLM адаптується до вашої задачі...",
+                "input": [{ "name": "task", "type": "text", "label": "Task", "required": true }]
+              }
             },
             "aiActions": {
               "action": "agent",
@@ -110,7 +118,11 @@
             "outcome": "completed",
             "message": "Task decomposition mode selected",
             "execute": {
-              "message": "Декомпозиція задачі. Розбиття на підзадачі..."
+              "form": {
+                "title": "Декомпозиція задачі",
+                "description": "Розбиття на підзадачі...",
+                "input": [{ "name": "message", "type": "text", "label": "Message", "required": true }]
+              }
             }
           }
         },
@@ -128,7 +140,11 @@
               }
             },
             "execute": {
-              "message": "Перенаправлення на Agent режим..."
+              "form": {
+                "title": "Agent Mode",
+                "description": "Перенаправлення на Agent режим...",
+                "input": [{ "name": "task", "type": "text", "label": "Task", "required": true }]
+              }
             },
             "aiActions": {
               "action": "agent",
@@ -152,7 +168,11 @@
               }
             },
             "execute": {
-              "message": "Перенаправлення на Agent режим..."
+              "form": {
+                "title": "Agent Mode",
+                "description": "Перенаправлення на Agent режим...",
+                "input": [{ "name": "task", "type": "text", "label": "Task", "required": true }]
+              }
             },
             "aiActions": {
               "action": "agent",
@@ -176,7 +196,11 @@
               }
             },
             "execute": {
-              "message": "Перенаправлення на Agent режим..."
+              "form": {
+                "title": "Agent Mode",
+                "description": "Перенаправлення на Agent режим...",
+                "input": [{ "name": "task", "type": "text", "label": "Task", "required": true }]
+              }
             },
             "aiActions": {
               "action": "agent",
@@ -200,7 +224,11 @@
               }
             },
             "execute": {
-              "message": "Перенаправлення на Agent режим..."
+              "form": {
+                "title": "Agent Mode",
+                "description": "Перенаправлення на Agent режим...",
+                "input": [{ "name": "task", "type": "text", "label": "Task", "required": true }]
+              }
             },
             "aiActions": {
               "action": "agent",
@@ -224,7 +252,11 @@
               }
             },
             "execute": {
-              "message": "Перенаправлення на Agent режим..."
+              "form": {
+                "title": "Agent Mode",
+                "description": "Перенаправлення на Agent режим...",
+                "input": [{ "name": "task", "type": "text", "label": "Task", "required": true }]
+              }
             },
             "aiActions": {
               "action": "agent",
@@ -248,7 +280,11 @@
               }
             },
             "execute": {
-              "message": "Перенаправлення на Agent режим..."
+              "form": {
+                "title": "Agent Mode",
+                "description": "Перенаправлення на Agent режим...",
+                "input": [{ "name": "task", "type": "text", "label": "Task", "required": true }]
+              }
             },
             "aiActions": {
               "action": "agent",
@@ -266,7 +302,11 @@
           "outcome": "completed",
           "message": "Choice selected",
           "execute": {
-            "message": "Вибрано: ${choice_id}"
+            "form": {
+              "title": "Вибір зроблено",
+              "description": "Вибрано: ${choice_id}",
+              "input": [{ "name": "message", "type": "text", "label": "Message", "required": true }]
+            }
           }
         }
       }

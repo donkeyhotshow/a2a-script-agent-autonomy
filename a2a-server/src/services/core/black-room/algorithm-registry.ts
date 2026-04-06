@@ -5,7 +5,8 @@
  */
 
 import * as path from 'path';
-import {access} from 'fs/promises';
+import {access} from 'node:fs/promises';
+import {BLACK_ROOM_DEFAULT_LLM_MODEL} from './black-room-defaults.js';
 import {AlgorithmDefinition} from './types.js';
 import {logger} from '../../../utils/logger.js';
 
@@ -64,7 +65,7 @@ export class AlgorithmRegistry {
     }
 
     private async loadAlgorithmsFromDirectory(directoryPath: string): Promise<void> {
-        const { readdir, readFile } = await import('fs/promises');
+        const { readdir, readFile } = await import('node:fs/promises');
         const { join } = await import('path');
 
         try {
@@ -95,7 +96,7 @@ export class AlgorithmRegistry {
         this.algorithms.set('ctx-gather-v2', {
             id: 'ctx-gather-v2',
             version: '2.0',
-            model: process.env.A2A_BLACK_ROOM_DEFAULT_MODEL || 'llama3.1:8b',
+            model: BLACK_ROOM_DEFAULT_LLM_MODEL,
             promptTemplate: 'ctx-gather-template',
             outputSchema: {
                 type: 'object',
@@ -115,7 +116,7 @@ export class AlgorithmRegistry {
         this.algorithms.set('edit-apply-ts-imports', {
             id: 'edit-apply-ts-imports',
             version: '1.0',
-            model: process.env.A2A_BLACK_ROOM_DEFAULT_MODEL || 'llama3.1:8b',
+            model: BLACK_ROOM_DEFAULT_LLM_MODEL,
             promptTemplate: 'edit-apply-imports-template',
             outputSchema: {
                 type: 'object',
@@ -142,7 +143,7 @@ export class AlgorithmRegistry {
         this.algorithms.set('pattern-match-dead-code', {
             id: 'pattern-match-dead-code',
             version: '1.0',
-            model: process.env.A2A_BLACK_ROOM_DEFAULT_MODEL || 'llama3.1:8b',
+            model: BLACK_ROOM_DEFAULT_LLM_MODEL,
             promptTemplate: 'pattern-match-template',
             outputSchema: {
                 type: 'object',

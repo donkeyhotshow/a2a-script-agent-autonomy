@@ -16,11 +16,46 @@ Current system state: **Stack готов** - все сервисы работа�
 
 **Recent (operator / parity batch):** Task Monitor with promise queue support; Client API multi-provider LLM routing; session storage improvements.
 
+**2026-04-06:** `AGENTS.md` — Client API table: **`GET …/messages`** row + **`GET …/sessions/{id}`** includeContext note; standalone SDK bullet links **OPERATOR-CURL** § *GET session JSON shape* for `unwrap` / `includeContext` / `afterSeq`.
+
+**2026-04-06 (human-review follow-up):** [`docs/HUMAN-REVIEW-FINDINGS.md`](docs/HUMAN-REVIEW-FINDINGS.md) snapshot **20/20 pass**; [`docs/AGENT-DIALOG-API-STATE.md`](docs/AGENT-DIALOG-API-STATE.md) **Open risks** table aligned with implemented behavior; `toPublicNextResponse` falls back through **`buildWebExecute`** when projected `session.execute` is missing or empty; SDK **`client-api-envelope.test.ts`** removed (Vitest 2 “no suite” in `packages/sdk`) — coverage in **`a2a-client/tests/unit/client-api-envelope-shared.test.js`**.
+
+**2026-02-09:** Async-only **follow-up docs:** [`SESSION-SYSTEMS-OVERVIEW.md`](docs/SESSION-SYSTEMS-OVERVIEW.md) (invoke handler wording, E2E smoke → `e2e-dialog-test.js` / `agent-dialog-runner.mjs`), [`AGENT-DIALOG-API-STATE.md`](docs/AGENT-DIALOG-API-STATE.md) changelog + Purple alert row (agent tool chain + **`promiseId`**); comments in `agent-rag-chain.js` / SDK `agent-rag-chain.ts`; e2e-dialog JSDoc.
+
+**2026-04-06:** [`docs/AGENT-DIALOG-API-STATE.md`](docs/AGENT-DIALOG-API-STATE.md) — **Purple alert** + **code:** `POST /api/v1/invoke` is **async-only** (dropped `sync` / `DEFAULT_SYNC_MODE` / `runSyncInvokeChain`); Client **`next-invoke-pipeline`** does not send `sync`; [`AGENTS.md`](AGENTS.md), [`server-invoke-request.schema.json`](docs/new-request-flow/json-schemas/server-invoke-request.schema.json), [`tests/proba-servera/validate.mts`](tests/proba-servera/validate.mts), [`e2e-dialog-test.js`](tests/direct-tests/e2e-dialog-test.js) updated.
+
+**2026-04-06 (purple alert doc sweep):** Stale **sync invoke** references removed from [`a2a-server/DEV_STATE.md`](a2a-server/DEV_STATE.md) (curl + bullets), [`a2a-server/README.md`](a2a-server/README.md), [`PAPA-MAMA.md`](PAPA-MAMA.md), [`docs/PROMISE-RETRY-DIALOG.md`](docs/PROMISE-RETRY-DIALOG.md), [`a2a-server/docs/detailed-architecture.md`](a2a-server/docs/detailed-architecture.md); `claimPendingByPromiseId` JSDoc; dropped no-op `DEFAULT_SYNC_MODE` cleanup in server integration tests.
+
+**2026-04-06 (purple alert sweep 2):** Retired glossary **“Sync Mode”** → **sync golden** + async-only note in [`GLOSSARY.md`](GLOSSARY.md) / [`AGENTS.md`](AGENTS.md); [`tests/direct-tests/README.md`](tests/direct-tests/README.md) merge flag wording; [`docs/new-request-flow/PROTOCOLS/sessions/README.md`](docs/new-request-flow/PROTOCOLS/sessions/README.md) session example heading; sim mirror MD [`simulations/sync/task-decomposition/7/`](simulations/sync/task-decomposition/7/); comments in [`session-routes-shared.ts`](a2a-client/packages/sdk/src/server/lib/session-routes-shared.ts), [`step-storage.ts`](a2a-client/packages/sdk/src/server/services/step-storage.ts), [`agent-rag-chain.js`](a2a-client/packages/vite-plugin/routes/utils/agent-rag-chain.js), [`request-processor.service.ts`](a2a-server/src/services/core/request-processor/request-processor.service.ts).
+
 **Fixed:** Added check in dialog request processor to return initial form directly from request transform for dialog schema without user input, before attempting LLM call.
 
 **Fixed (artifact paths):** Windows `scripts\start-*.bat` and `start-all.bat` / `kill-all.bat` now `cd` to repo root via `%~dp0` so logs land in `a2a-client/logs`, `a2a-server/logs` (not nested `a2a-client/a2a-client/...`). `start-all.sh` / `start-all.ps1` anchor to script directory. Proxy request dumps from `proxy_handler.py` use `proxy_logs/requests/request_*` (aligned with `request_processor.py`); `cleanup.py` prunes both `requests/` and legacy top-level `request_*`.
 
 **Fixed:** Router no longer overwrites `execution.action` when session created with `mode: "agent"`. `isTaskRequest()` in `base-processor.ts` now checks if `execution.action` is already an LLM pipeline action and returns `false` to prevent forced routing. Added direct LLM pipeline handling in `action-request-processor.ts` for seeded agent mode.
+
+**Fixed (2026-04-05):** Dialog history accumulation in client. `mergeDialogHistoryForInvoke` in `builders.js` was replacing the last user message instead of appending when text differed. Changed to `h.push()` to properly accumulate history.
+
+**Fixed (2026-04-05):** Step data persistence in client. `saveStepData` in `step-routes-dialog-flow.js` was using stale `mergedContext` instead of updated `savedContext` after server response. This caused all steps to have the same initial form data instead of actual server responses. Changed to use `savedContext` (the context returned by `updateSessionAfterResponse`). **Verified:** Live session test shows step 4 correctly has `execution.action: "dialog"` and accumulated history.
+
+**Added (2026-04-05):** Proba-servera test coverage expanded. Added 11 new tests aligned with `simulations/sync/*` goldens:
+- Agent tools (9): `agent-tool-read-file`, `agent-tool-write-file`, `agent-tool-rag-search`, `agent-tool-list-directory`, `agent-tool-grep-search`, `agent-tool-execute-command`, `agent-tool-file-exists`, `agent-tool-edit-patch`, `agent-tool-run-script`
+- Dialog variants (2): `dialog-interrupt`, `dialog-message-only`
+- Workbench (1): `agent-workspace-chain`
+Total: 18/18 tests passing.
+
+**Fixed (2026-04-05):** Execute message format fixes per schema:
+- `router-choice-handler.ts`: Changed fallback `execute.message` to `execute.form` (compliance with schema - no message-only execute)
+- `step-result-handler.ts`: Same fix - message-only → form
+- `simulations/sync/sequence-workbench-min/1/`: Added missing `server-transforms-request.json`, updated `execute.message` → `execute.form` in response.json and received.json
+- MD/JSON drift: Fixed 13 mismatches via `sim:check-md:fix`
+
+**Fixed (2026-04-05):** Unit tests aligned with new behavior:
+- `merge-dialog-history.test.js`: Updated to expect history accumulation instead of replacement (matches dialog fix)
+- `client-api-promise-helpers.test.mjs`: Same updates for history accumulation
+- `rag.test.js`: Added `useTFIDF` field to `RAGSearcher` class and `index` getter/setter for proper test mocking
+- `index-manager.ts`: Added `index` setter for test support
+- `papa-mama-gang.mjs`: Fixed sim:validate call to include `--all` flag
 
 **Fixed (router beat B, 2026-04-03):** `determineRequestType` routes `execution.step === 'router'` + pipeline `result.choice` to **action** first so `handleRouterChoice` patches `execution` before dialog. Dialog processor failed outcomes now include normalized `context`; `request.service` `updateStatus` merges `result.context` on **failed** as well as **completed** (sticky `task`/`router` after LLM errors).
 

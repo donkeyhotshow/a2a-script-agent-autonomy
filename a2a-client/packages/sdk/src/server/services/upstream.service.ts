@@ -7,17 +7,6 @@
 import type { ClientConfig } from '../models/session.model.js';
 import { loadConfig } from './config.service.js';
 
-// Use node-fetch for server-side requests
-// Note: In a real implementation, you would use the 'node-fetch' package or native fetch in Node 18+
-let fetch: typeof import('node-fetch').default;
-import('node-fetch').then(module => {
-    fetch = module.default;
-}).catch(() => {
-    // Fallback to global fetch if available (Node 18+)
-    // @ts-ignore
-    fetch = globalThis.fetch;
-});
-
 /** Strip trailing slash and accidental `/api/v1` so `.../api/v1` + `/api/v1/invoke` does not double the path. */
 export function normalizeA2aServerBaseUrl(serverBaseUrl: string): string {
     return String(serverBaseUrl || '')

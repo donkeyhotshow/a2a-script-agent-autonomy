@@ -1,0 +1,21 @@
+{
+  "context": {
+    "task": "string",
+    "execution": {
+      "action": "string",
+      "step": "string"
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "string",
+      "choices": [
+        {
+          "id": "string",
+          "label": "string",
+          "description": "string"
+        }
+      ]
+    }
+  }
+}

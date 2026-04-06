@@ -1,0 +1,19 @@
+{
+  "context": {
+    "task": "string"
+  },
+  "execute": {
+    "form": {
+      "title": "string",
+      "description": "string",
+      "input": [
+        {
+          "name": "string",
+          "type": "string",
+          "label": "string",
+          "required": true
+        }
+      ]
+    }
+  }
+}

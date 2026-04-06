@@ -1,0 +1,28 @@
+{
+  "context": {
+    "task": "run validation script",
+    "execution": {
+      "action": "agent",
+      "step": "tool_run_script"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "run validation script"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_run_script",
+        "message": "Script validate-helper completed: Helper validation passed"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "result": {
+    "run-script": {
+      "scriptId": "validate-helper"
+    }
+  }
+}

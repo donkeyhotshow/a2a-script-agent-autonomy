@@ -28,6 +28,10 @@ Current operational state for the `ai-integration` module.
 | Ollama | 11435 | Expected healthy |
 | Promise daemon | n/a | Enabled via config |
 
+**2026-04-06 (human-review):** `proxy/ai_hub_config.py` — `_extract_prompt`: multimodal list `content`, numeric `content`, assistant `tool_calls`; `_normalize_path` strips leading/trailing slashes for rule `path` match. Tests: `tests/human-review/`.
+
+**2026-04-05:** `resolve_routing` (`proxy/router_manager.py`): if the JSON body omits `model` and the provider router is initialized, the request is routed to the configured default provider’s model (Z.AI / GLM), not straight to Ollama. LLM cache keys (`proxy/caching.py`): additional volatile fields (`*_at`, keys containing `timestamp`, `*_time` except a small blocklist, `user`, etc.) are excluded from the hash so repeated identical prompts hit disk cache even when clients add timestamps.
+
 **2026-04-03:** Promise completion (`proxy/promises.py`): `_promise_set_done` does not mark a promise `done` on non-2xx HTTP **or** on 2xx with a JSON `error` envelope (OpenAI-style), including when `Content-Type` omits `json`. `is_llm_upstream_response_ok()` gates **all** LLM response caches: `proxy_handler.py` (sync path: no store + reject bad hits), `daemon.py` / `promise_routes.py` (invalidate poisoned cache entries on read). Tests: `tests/test_promises_llm_failure.py`.
 
 **2026-04-03 (API keys):** Upstream auth is driven by `config/providers.json` → `api_keys[]` (each entry: `id`, `provider`, `secret`, `priority`, `enabled`). Ollama uses placeholder secret `__OLLAMA_LOCAL__` (no `Authorization`). Z.AI and other cloud rows use real secrets; `${Z_AI_API_KEY}` still resolves from env. On HTTP 429 or JSON `error.code` **1302** (rate limit), the proxy tries the next key for the same provider. Implementation: `proxy/api_key_routing.py`, `proxy_handler.py`, `daemon.py` (reads `routing.json`), `proxy/providers/config_loader.py`.

@@ -69,7 +69,9 @@ function Test-PortFree {
                     Stop-Process -Id $conn.OwningProcess -Force -ErrorAction SilentlyContinue
                 }
             }
-        } catch { }
+        } catch {
+        # Silently ignore errors when checking port - process may not exist or access denied
+     }
         Start-Sleep -Milliseconds $DelayMs
     }
     return $false
@@ -113,7 +115,9 @@ function Get-PidOnPort {
     try {
         $conn = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1
         if ($conn) { return $conn.OwningProcess }
-    } catch { }
+     } catch {
+        # Silently ignore errors when checking port - process may not exist or access denied
+     }
     return $null
 }
 
@@ -166,7 +170,9 @@ function Start-Service {
             try {
                 $proc.Refresh()
                 if (-not $proc.HasExited) { $actualPid = $proc.Id }
-            } catch { }
+     } catch {
+        # Silently ignore errors when checking port - process may not exist or access denied
+     }
         }
         
         if ($actualPid) {
@@ -192,7 +198,9 @@ function Start-Service {
                         $ready = $true
                         break
                     }
-                } catch { }
+          } catch {
+             # Silently ignore health check errors - we'll retry or fail later
+          }
             } else {
                 # For services without health URL, check port is listening
                 $listening = Get-NetTCPConnection -LocalPort $Svc.Port -State Listen -ErrorAction SilentlyContinue

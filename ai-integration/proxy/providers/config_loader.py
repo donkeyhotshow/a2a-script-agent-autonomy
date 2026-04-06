@@ -5,10 +5,13 @@ Loads and manages provider configurations from JSON file.
 """
 
 import json
+import logging
 import os
 import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 from .base import ProviderConfig
 from .. import config as proxy_config
@@ -163,11 +166,16 @@ def load_providers_config(config_path: Optional[str] = None) -> ProvidersConfig:
                 with open(path, 'r') as f:
                     data = json.load(f)
                 return _parse_config(data)
-            except (json.JSONDecodeError, IOError) as e:
-                print(f"Warning: Failed to load config from {path}: {e}")
+            except (json.JSONDecodeError, OSError) as e:
+                logger.warning("Failed to load providers config from %s: %s", path, e, exc_info=True)
                 continue
     
     # Return default config if no file found
+    searched = [p for p in config_paths if p]
+    logger.warning(
+        "Using built-in default providers; no valid providers JSON loaded from: %s",
+        ", ".join(searched) if searched else "(no paths configured)",
+    )
     return _default_config()
 
 
@@ -198,7 +206,7 @@ def _parse_config(data: Dict[str, Any]) -> ProvidersConfig:
         )
     
     # Parse other settings
-    config.default_provider = data.get('default_provider', 'ollama')
+    config.default_provider = data.get('default_provider', 'z_ai')
     config.fallback_chain = data.get('fallback_chain', [])
     config.enable_fallback = data.get('enable_fallback', True)
     config.provider_timeout = data.get('provider_timeout', 0) or 0
@@ -207,10 +215,19 @@ def _parse_config(data: Dict[str, Any]) -> ProvidersConfig:
     if isinstance(raw_keys, list):
         for item in raw_keys:
             if not isinstance(item, dict):
+                logger.warning(
+                    "api_keys: skipping non-object entry %r",
+                    repr(item)[:200],
+                )
                 continue
             kid = str(item.get("id") or "").strip()
             prov = str(item.get("provider") or "").strip()
             if not kid or not prov:
+                logger.warning(
+                    "api_keys: skipping entry missing id or provider (id=%r provider=%r)",
+                    item.get("id"),
+                    item.get("provider"),
+                )
                 continue
             sec_raw = item.get("secret")
             if sec_raw is None:
@@ -221,11 +238,22 @@ def _parse_config(data: Dict[str, Any]) -> ProvidersConfig:
             if not secret and prov == "ollama":
                 secret = OLLAMA_API_KEY_PLACEHOLDER
             if not secret:
+                logger.warning(
+                    "api_keys: skipping id=%r provider=%r (empty secret after env resolve)",
+                    kid,
+                    prov,
+                )
                 continue
             enabled = bool(item.get("enabled", True))
             try:
                 priority = int(item.get("priority", 100))
             except (TypeError, ValueError):
+                logger.warning(
+                    "api_keys entry id=%r provider=%r: invalid priority %r; using 100",
+                    kid,
+                    prov,
+                    item.get("priority"),
+                )
                 priority = 100
             config.api_keys.append(
                 ApiKeyEntry(

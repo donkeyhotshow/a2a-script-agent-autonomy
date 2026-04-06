@@ -1,5 +1,5 @@
 import {ProgressiveRetriever} from '../../../rag/progressive-retriever.js';
-import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
+import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../../transform/types.js';
 
 /**
  * Handle auto_rag_page interrupt

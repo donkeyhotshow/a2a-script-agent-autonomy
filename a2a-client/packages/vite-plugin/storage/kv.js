@@ -1,9 +1,13 @@
 import fs from 'fs';
 import path from 'path';
-import { getStorageRoot, ensureDir } from './root.js';
+import { getStorageKvRoot, ensureDir } from './root.js';
+
+function kvNamespacePath(namespace) {
+  return path.join(getStorageKvRoot(), namespace);
+}
 
 export function getKvDir(cwd, namespace) {
-  const dir = path.join(getStorageRoot(), 'kv', namespace);
+  const dir = kvNamespacePath(namespace);
   ensureDir(dir);
   return dir;
 }
@@ -42,7 +46,7 @@ export function kvKeys(cwd, namespace) {
 }
 
 export function kvClear(cwd, namespace) {
-  const dir = path.join(getStorageRoot(), 'kv', namespace);
+  const dir = kvNamespacePath(namespace);
   if (fs.existsSync(dir)) {
     fs.rmSync(dir, {recursive: true, force: true});
   }

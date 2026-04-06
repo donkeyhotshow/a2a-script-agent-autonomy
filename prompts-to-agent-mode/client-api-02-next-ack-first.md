@@ -7,7 +7,7 @@
 
 ## Agent prompt (copy)
 
-Verify `POST /api/a2a/sessions/{id}/next` is ack-first (`accepted`, `step`, `asyncPending`, optional `promiseId`) and not treated as final state. Document run.
+Verify `POST /api/a2a/sessions/{id}/next` is ack-first (`accepted`, `step`, `asyncPending`; no `promiseId` in body) and not treated as final state. Document run.
 
 ## Completion
 

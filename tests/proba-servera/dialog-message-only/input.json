@@ -1,0 +1,18 @@
+{
+  "context": {
+    "task": "Hello",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Hello"
+      }
+    ]
+  },
+  "result": {
+    "message": "Hi there!"
+  }
+}

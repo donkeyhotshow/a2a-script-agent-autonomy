@@ -1,0 +1,33 @@
+{
+  "context": {
+    "task": "Find createApp usages",
+    "execution": {
+      "action": "agent",
+      "step": "workspace_chain"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Find createApp usages"
+      },
+      {
+        "role": "assistant",
+        "step": "workspace_chain",
+        "message": "Searching for createApp"
+      },
+      {
+        "role": "system",
+        "message": "grep-search: createApp - 1 match"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "result": {
+    "grep-search": {
+      "pattern": "createApp",
+      "path": "src"
+    }
+  }
+}

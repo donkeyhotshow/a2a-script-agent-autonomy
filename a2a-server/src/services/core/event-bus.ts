@@ -9,12 +9,10 @@
  *   ArtifactStore       → publish ARTIFACT_WRITTEN
  *   SafetyLayer         → publish SAFETY_INTERCEPT
  *   AutonomousDecision  → publish DECISION_MADE
- *
- * SSE stream: GET /api/a2a/events/:sessionId  (see sessions.routes.ts)
  */
 
 import { EventEmitter } from 'events';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 
 // ── Public event types ────────────────────────────────────────────────────────
 
@@ -84,7 +82,7 @@ export class EventBus {
   private readonly buffers = new Map<string, CircularBuffer>();
 
   constructor() {
-    // Allow many listeners per event type (one per service + SSE streams)
+    // Allow many listeners per event type (one per service)
     this.emitter.setMaxListeners(100);
   }
 
@@ -106,8 +104,6 @@ export class EventBus {
 
     // Emit synchronously; async handlers MUST be wrapped by the subscriber
     this.emitter.emit(full.type, full);
-    // Also emit on a wildcard-ish session channel for SSE
-    this.emitter.emit(`session:${full.session_id}`, full);
 
     return full;
   }
@@ -136,18 +132,7 @@ export class EventBus {
     return () => this.emitter.off(type, listener);
   }
 
-  /**
-   * Subscribe to ALL events for a specific session (used by SSE endpoint).
-   * Returns unsubscribe function.
-   */
-  subscribeSession(
-    sessionId: string,
-    handler: EventHandler,
-  ): Unsubscribe {
-    const channel = `session:${sessionId}`;
-    this.emitter.on(channel, handler);
-    return () => this.emitter.off(channel, handler);
-  }
+
 
   // ── replay() ──────────────────────────────────────────────────────────────
 

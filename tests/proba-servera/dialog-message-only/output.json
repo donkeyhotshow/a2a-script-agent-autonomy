@@ -1,0 +1,17 @@
+{
+  "context": {
+    "task": "Hi there!",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Hello"
+      }
+    ]
+  },
+  "outcome": "failed",
+  "error": "Request processing failed"
+}

@@ -19,16 +19,26 @@
 
 ---
 
+## Recent (2026-02-09)
+
+- **Gray Room (`gray-room-orchestrator.ts`):** Skip ADR-0093 internal `llmService.debate` when `schemaName === 'dialog'` (avoids 3 extra sync hub calls and spurious failures such as `error: "terminated"` on the dialog turn after router). Debate wrapped in try/catch for non-dialog — on failure, keep primary LLM markdown. Fixed hard-timeout branch: was referencing undefined `c`; now merges `result.context` or `workingCtx` for `hard_timeout` flag.
+
+## Recent (2026-04-06)
+
+- **Blue-alert / execute contract:** Gray room `warnOnInvalidExecute` uses `validateExecuteShapeForSchema(schemaName)` (agent vs dialog) instead of always dialog rules; passes transform `message` + `execute` into `validateLlmOutputShape`; **`router`** schema also runs `validateRouterResultShape` (non-empty `form.choices`). `isAgentTransformSchema` treats any `fix-vue-imports*` prefix as agent-shaped (decline/batched). Simulation `validateTransformExecute` fixed (was referencing undefined `rawOutput`); passes `responseData` for top-level `message`.
+- **Human-review (implemented):** `toInvokeShapeForPromptsTransform` (`context: null` envelope), `resolveExecution` (empty root `{}` ignored), `mergeGrayRoomFinalizeInnerContext` (non-array `history` cannot clobber array), `validateContextBlock` (`execution` not array), `humanizeUpstreamErrorMessage` (Ollama / loopback ports). See [`docs/HUMAN-REVIEW-FINDINGS.md`](../../docs/HUMAN-REVIEW-FINDINGS.md).
+- **Tests**: `determineRequestType` table in `request-processor.service.test.ts`; invoke HTTP parity + assert `context.session_id`; action-parser invalid JSON DSL fallback; materialize `result.choice` → history.
+- **Poll context**: `GET /api/v1/requests/:id/result` now includes `context.session_id` (added to `POLL_CONTEXT_KEYS` in `requests.routes.ts`) so pollers see server session id on terminal payloads.
+
 ## Recent (2026-04-03)
 
 - **GET `/requests/:id/result` poll context**: `mergePollContextWithPersisted` merges whitelisted fields from `RequestResult.context` into the JSON `data.context` after `filterResponse(result)`, with `workbench.slots` deep-merged so `grayRoom` survives when the stored `result` blob differs (Client API async → session `redGrayRoom` e2e).
 - **`execution.step === 'init'` + root `task`**: `normalizeContext` no longer promotes that `task` into `result.message` (avoids spurious LLM hop on async invoke schema probe). `resolveTransformSchema` maps dialog+init without user message to the dialog schema so the dialog processor returns the initial task form. E2E: `invokeContextFollowup`.
 - **Dialog initial form check**: Added check in `dialog-request-processor.ts` to return initial form directly from request transform for dialog schema without user input, before attempting LLM call.
-- **Upstream errors (Client API messages)**: `humanizeUpstreamErrorMessage()` in `request.service.ts` replaces bare Node `fetch failed` / connection errors with actionable text for sync `/invoke` failures and `executeLlmCall` paths (stored assistant line in session `messages.json` is no longer the opaque two-word error).
+- **Upstream errors (Client API messages)**: `humanizeUpstreamErrorMessage()` in `request.service.ts` replaces bare Node `fetch failed` / connection errors with actionable text for failed `/api/v1/invoke` calls and `executeLlmCall` paths (stored assistant line in session `messages.json` is no longer the opaque two-word error).
 - **Gray Room `mergeTraceIntoResult`**: Always merge `interruptTrace` + `workbench.slots.grayRoom` even when `ProcessResult.context` is missing (finalize path could leave context undefined; early return dropped the slot and broke `e2e-dialog-test.js` `redGrayRoom`).
 - **Agent + dialog prompts (`agent-request.md`, `dialog-request.md`)**: Tool turns: assistant line in **`execute.message`** next to the tool key (no top-level **`message`**). **`append-to-array`** prefers **`llm.execute.message`** then **`llm.message`**. Dialog: **`execute.message`** required for nested **`form.textarea`**; legacy **`form.input[]`** unchanged. **Not** `execute.dialog` as a tool. Agent aligned with **`simulations/`** for `step` names and shapes.
 - **Router step**: `context.execution.routerAnalysis` is omitted unless `shared/router-static-choices.json` → `routerConfig.autoSelectionEnabled` is true (default **false**). Router choices are always explicit user/monitor `POST …/next` with `result.choice`.
-- **`DEFAULT_SYNC_MODE`**: `invoke.service` now treats `DEFAULT_SYNC_MODE=1` / `true` as default synchronous `/invoke` (unless `sync: false`). Matches integration tests and AGENTS.md.
 - **Task routing**: `parseTaskText` prefers `message` / `result.message` over stale `task`; dialog router keywords include `dialog` / `диалог` / `діалог`.
 
 ## Текущая архитектура
@@ -136,10 +146,10 @@
 - Workspace tools (`list-directory`, `grep-search`, `read-file`, etc.)
 - Gray room (`N-sub-M/` folders)
 
-### Out of scope
+### Out of scope (клиентская ответственность)
 
-- `promiseId`, async polling, retries
-- `execute.wait` / loader timing
+- `promiseId`, async polling, retries — клиент опрашивает
+- `execute.wait` / loader timing — **сервер не возвращает wait; клиент сам рендерит ожидание по promiseId**
 
 ### Команды
 
@@ -162,10 +172,12 @@ cd a2a-server && npm run sim:quality
 # Liveness
 curl -s http://localhost:3000/health
 
-# Sync invoke
+# Async invoke (ack only — then poll GET …/result until terminal)
 curl -s -X POST http://localhost:3000/api/v1/invoke \
   -H "Content-Type: application/json" \
-  -d "{\"task\":\"hello\",\"sync\":true}"
+  -d "{\"task\":\"hello\"}"
+# Use `data.promiseId` from the JSON body, then:
+# curl -s "http://localhost:3000/api/v1/requests/<promiseId>/result"
 ```
 
 ---

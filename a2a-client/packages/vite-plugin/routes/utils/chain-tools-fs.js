@@ -1,6 +1,6 @@
-import fs from 'fs';
 import { promises as fsp } from 'fs';
 import path from 'path';
+import { isNodeEnoent } from '@a2a-client/shared/node-errors.mjs';
 import { resolveUnderProjectRoot } from '@a2a/execution/path-sandbox';
 
 function escapeRegexLiteral(s) {
@@ -75,8 +75,16 @@ export async function runClientFileExists(projectPath, payload) {
         const st = await fsp.stat(abs);
         const ok = want === 'any' || (want === 'file' && st.isFile()) || (want === 'directory' && st.isDirectory());
         return { path: p, exists: ok, success: true };
-    } catch {
-        return { path: p, exists: false, success: true };
+    } catch (e) {
+        if (isNodeEnoent(e)) {
+            return { path: p, exists: false, success: true };
+        }
+        return {
+            path: p,
+            exists: false,
+            success: false,
+            error: e instanceof Error ? e.message : String(e),
+        };
     }
 }
 
@@ -104,22 +112,23 @@ export async function runClientGrepSearch(projectPath, payload) {
     if (!pattern.trim()) {
         return { pattern: '', matches: [], success: false, error: 'missing pattern' };
     }
-    const opts = payload.options && typeof payload.options === 'object' ? payload.options : {};
-    const useRegex = opts.regex === true;
-    const maxResults = Math.min(typeof opts.maxResults === 'number' ? opts.maxResults : 500, 1000);
-    let body;
-    try {
-        if (useRegex) {
-            body = pattern;
-        } else {
-            body = escapeRegexLiteral(pattern);
-            if (opts.wholeWord === true) {
-                body = `\\b(?:${body})\\b`;
-            }
-        }
-    } catch (e) {
-        return { pattern, matches: [], success: false, error: String(e) };
-    }
+     const opts = payload.options && typeof payload.options === 'object' ? payload.options : {};
+     const useRegex = opts.regex === true;
+     const maxResults = Math.min(typeof opts.maxResults === 'number' ? opts.maxResults : 500, 1000);
+     let body;
+     try {
+         if (useRegex) {
+             body = pattern;
+         } else {
+             body = escapeRegexLiteral(pattern);
+             if (opts.wholeWord === true) {
+                 body = `\\b(?:${body})\\b`;
+             }
+         }
+     } catch (e) {
+         // Handle regex compilation error
+         return { pattern, matches: [], success: false, error: String(e) };
+     }
 
     const relScope = typeof payload.path === 'string' && payload.path ? payload.path : '.';
     const scopeAbs = resolveUnderProjectRoot(projectPath, relScope);
@@ -130,16 +139,26 @@ export async function runClientGrepSearch(projectPath, payload) {
     const rootResolved = path.resolve(projectPath);
     const matches = [];
 
-    function lineMatches(line, lineReSource, flags) {
-        try { return new RegExp(lineReSource, flags).test(line); } catch { return false; }
-    }
+     function lineMatches(line, lineReSource, flags) {
+         try {
+             return new RegExp(lineReSource, flags).test(line);
+         } catch (e) {
+             console.error('[chain-tools-fs] Invalid line regex:', e instanceof Error ? e.message : e);
+             return false;
+         }
+     }
 
     const flags = opts.caseSensitive === true ? '' : 'i';
 
     async function scanFile(fullPath) {
         const relFile = path.relative(rootResolved, fullPath).replace(/\\/g, '/');
         let text;
-        try { text = await fsp.readFile(fullPath, 'utf8'); } catch { return; }
+        try {
+            text = await fsp.readFile(fullPath, 'utf8');
+        } catch (e) {
+            console.error('[chain-tools-fs] grep skip file (unreadable):', fullPath, e instanceof Error ? e.message : e);
+            return;
+        }
         if (text.length > 500_000) return;
         const lines = text.split('\n');
         for (let i = 0; i < lines.length && matches.length < maxResults; i++) {
@@ -152,7 +171,12 @@ export async function runClientGrepSearch(projectPath, payload) {
     async function walkDir(absDir, depth) {
         if (depth > 12 || matches.length >= maxResults) return;
         let entries;
-        try { entries = await fsp.readdir(absDir, { withFileTypes: true }); } catch { return; }
+        try {
+            entries = await fsp.readdir(absDir, { withFileTypes: true });
+        } catch (e) {
+            console.error('[chain-tools-fs] grep skip dir (unreadable):', absDir, e instanceof Error ? e.message : e);
+            return;
+        }
         for (const ent of entries) {
             if (matches.length >= maxResults) break;
             const name = ent.name;

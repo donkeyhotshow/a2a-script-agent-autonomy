@@ -1,5 +1,5 @@
-import { logger } from '../../utils/logger.js';
-import { execSync } from 'child_process';
+import { logger } from '../utils/logger.js';
+import { execSync } from 'node:child_process';
 
 export class SkillLiteSandbox {
   /**

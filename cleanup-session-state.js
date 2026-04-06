@@ -40,6 +40,9 @@ async function main() {
     // AI integration promise and cache storage
     'ai-integration/storage/promises',
     // 'ai-integration/storage/cache',
+
+    // Server-side persisted request snapshots (invoke / async)
+    'a2a-server/storage/requests',
   ];
 
   for (const dir of targets) {

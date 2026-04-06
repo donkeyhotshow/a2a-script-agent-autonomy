@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { ServerUnavailableError } from './errors.js';
 
 class TaskMonitorDaemon {
   async run() {
@@ -172,33 +173,71 @@ class TaskMonitorDaemon {
     process.on('SIGTERM', shutdownHandler);
 
     let cycleCount = 0;
-    // Start monitoring loop
+    // One session at a time: full /next + GET /async poll loop inside processTask (async-only stack).
     while (true) {
       try {
         cycleCount++;
         if (cycleCount % 30 === 0) {
-          // Log status every 30 seconds (30 cycles of 1 second each)
-          const activeCount = this.activeTasks.size;
           const completedCount = this.state.processedTasks.filter(t => t.status === 'completed').length;
           const failedCount = this.state.processedTasks.filter(t => t.status === 'failed').length;
-          console.log(`\n[daemon status] Active: ${activeCount} | Completed: ${completedCount} | Failed: ${failedCount}`);
+          console.log(
+            `\n[daemon status] sequential-async (one session) | Completed: ${completedCount} | Failed: ${failedCount}`
+          );
           if (typeof this.scanApplicationLogs === 'function' && typeof this.reportLogScanHits === 'function') {
             const logScan = this.scanApplicationLogs();
             if (logScan.hitCount > 0) this.reportLogScanHits(logScan.hits);
           }
         }
 
-        await this.processNewTasks();
-        await this.monitorActiveTasks();
-        await this.cleanupCompletedTasks();
+        const taskFiles = await this.getTaskFiles();
+        let nextTask = null;
+        for (const tf of taskFiles) {
+          const done =
+            tf.content.includes('[X] Completed') ||
+            (tf.content.includes('## Completion') && tf.content.includes('Completed'));
+          if (!done) {
+            nextTask = tf;
+            break;
+          }
+        }
+
+        if (!nextTask) {
+          this.state.status = 'idle';
+          this.state.currentTask = null;
+          this.state.sessionId = null;
+          this.saveState();
+          await new Promise((r) => setTimeout(r, 5000));
+          continue;
+        }
+
+        try {
+          await this.processTask(nextTask);
+        } catch (error) {
+          if (error instanceof ServerUnavailableError) {
+            console.error('A2A server unavailable; backing off before retry...');
+            this.state.status = 'server-unavailable';
+            this.saveState();
+            await new Promise((r) => setTimeout(r, 15000));
+            continue;
+          }
+          const classification = this.logError('daemon-sequential-task', error, nextTask.name, {
+            phase: 'processTask',
+          });
+          await this.createHookDocument(
+            null,
+            nextTask.name,
+            'failed',
+            `${classification.type}:${classification.subtype} - ${error.message}`,
+            { stage: 'daemon-sequential-task', detail: classification.hint }
+          );
+          if (classification.severity === 'critical') {
+            this.printDiagnosticSummary();
+          }
+        }
       } catch (error) {
-        // Enhanced error logging for daemon cycle
         const classification = this.logError('daemon-cycle', error, 'daemon', {
           phase: 'monitoring-cycle',
-          activeTasks: this.activeTasks.size
         });
-
-        // Create hook document for daemon errors with classification info
         await this.createHookDocument(
           null,
           'daemon-cycle',
@@ -206,42 +245,19 @@ class TaskMonitorDaemon {
           `${classification.type}:${classification.subtype} - ${error.message}`,
           { stage: 'daemon-cycle', detail: classification.hint }
         );
-
-        // If critical error, print diagnostic summary
         if (classification.severity === 'critical') {
           this.printDiagnosticSummary();
         }
-
-        // Continue running despite errors
       }
 
-      // Brief pause before next cycle
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 
   async gracefulShutdown() {
-    console.log('Saving state and waiting for active tasks...');
-    const maxWaitTime = 30000; // 30 seconds
-    const startTime = Date.now();
-    let lastCheck = 0;
-
-    while (this.activeTasks.size > 0 && Date.now() - startTime < maxWaitTime) {
-      const elapsed = Date.now() - startTime;
-      if (elapsed - lastCheck > 5000) {
-        // Log every 5 seconds
-        console.log(`  Waiting... ${this.activeTasks.size} tasks still active (${Math.floor(elapsed / 1000)}s elapsed)`);
-        lastCheck = elapsed;
-      }
-
-      await this.monitorActiveTasks();
-      await this.cleanupCompletedTasks();
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    if (this.activeTasks.size > 0) {
-      console.warn(`\n  Force shutdown with ${this.activeTasks.size} tasks still active`);
-    }
+    console.log('Saving daemon state (sequential mode — no parallel session drain)...');
+    this.activeTasks.clear();
+    this.state.activeTasks = {};
 
     // Final state save
     this.state.status = 'daemon-shutdown';

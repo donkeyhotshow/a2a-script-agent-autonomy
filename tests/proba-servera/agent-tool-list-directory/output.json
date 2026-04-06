@@ -1,0 +1,25 @@
+{
+  "context": {
+    "task": "list files in utils",
+    "execution": {
+      "action": "agent",
+      "step": "tool_list_directory"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "list files in utils"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_list_directory",
+        "message": "Listed directory: helpers.js, constants.js"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "outcome": "failed",
+  "error": "Request processing failed"
+}

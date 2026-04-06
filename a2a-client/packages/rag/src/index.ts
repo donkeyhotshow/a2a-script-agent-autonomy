@@ -2,21 +2,21 @@
  * @a2a/rag - RAG Indexing and Search Module
  */
 
-import {RAGIndexer} from './indexer';
-import {RAGSearcher} from './searcher';
-import {ChunkManager} from './chunk-manager';
-import {TFIDFService} from './tfidf';
-import {RAGIntegrator} from './rag-integrator';
-import {SemanticSearcher} from './semantic-search';
-import {BM25Scorer, createBM25Scorer} from './bm25';
-import {RerankerClient, createReranker} from './reranker';
-import {HybridSearcher, createHybridSearcher} from './hybrid-search';
-import {MeilisearchClient, createMeilisearchClient} from './meilisearch-client';
-import {ASTChunker, createASTChunker} from './ast-chunker';
-import {QueryUnderstandingEngine, createQueryUnderstandingEngine, INTENT_TYPES} from './query-understanding';
-import {SearchSuggestionsEngine, createSuggestionsEngine, QueryExpander, createQueryExpander} from './suggestions';
-import {CodeSimilarityEngine, createSimilarityEngine} from './code-similarity';
-import type {FileRelevanceModel} from './file-relevance';
+import {RAGIndexer} from './indexer.js';
+import {RAGSearcher} from './searcher.js';
+import {ChunkManager} from './chunk-manager.js';
+import {TFIDFService} from './tfidf.js';
+import {RAGIntegrator} from './rag-integrator.js';
+import {SemanticSearcher} from './semantic-search.js';
+import {BM25Scorer, createBM25Scorer} from './bm25.js';
+import {RerankerClient, createReranker} from './reranker.js';
+import {HybridSearcher, createHybridSearcher} from './hybrid-search.js';
+import {MeilisearchClient, createMeilisearchClient} from './meilisearch-client.js';
+import {ASTChunker, createASTChunker} from './ast-chunker.js';
+import {QueryUnderstandingEngine, createQueryUnderstandingEngine, INTENT_TYPES} from './query-understanding.js';
+import {SearchSuggestionsEngine, createSuggestionsEngine, QueryExpander, createQueryExpander} from './suggestions.js';
+import {CodeSimilarityEngine, createSimilarityEngine} from './code-similarity.js';
+import type {FileRelevanceModel} from './file-relevance.js';
 
 export interface RAGConfig {
     projectPath?: string;
@@ -66,7 +66,7 @@ export interface RAGInstance {
 export function createRAG(config: RAGConfig = {}): RAGInstance {
     const projectPath = config.projectPath ?? process.cwd();
     const indexerConfig = {...config, projectPath};
-    const indexer = new RAGIndexer(indexerConfig as import('./indexer').RAGIndexerConfig);
+    const indexer = new RAGIndexer(indexerConfig as import('./indexer.js').RAGIndexerConfig);
     const searcher = new RAGSearcher({
         projectPath,
         fileRelevanceModel: config.fileRelevanceModel,
@@ -81,7 +81,7 @@ export function createRAG(config: RAGConfig = {}): RAGInstance {
     return {indexer, searcher, chunks, tfidf};
 }
 
-export type {RAGIndexerConfig} from './indexer';
+export type {RAGIndexerConfig} from './indexer.js';
 export type {SearchFilters} from './searcher/types.js';
 export type {SuggestionItem} from './suggestions.js';
 export {

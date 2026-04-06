@@ -411,6 +411,33 @@ More content here.`;
                     expect(results[i].rrfScore).toBeLessThanOrEqual(results[i-1].rrfScore);
                 }
             });
+
+            it('should order docs by fixed RRF fusion (golden ordering)', async () => {
+                const k = 60;
+                const sparse = {
+                    search: vi.fn().mockResolvedValue([
+                        { id: 'docA', content: 'a' },
+                        { id: 'docB', content: 'b' },
+                    ]),
+                };
+                const dense = {
+                    search: vi.fn().mockResolvedValue([
+                        { id: 'docC', content: 'c' },
+                        { id: 'docA', content: 'a' },
+                    ]),
+                };
+                const hybrid = new HybridSearcher({
+                    sparseSearch: sparse,
+                    denseSearch: dense,
+                    rrfK: k,
+                    sparseWeight: 0.5,
+                    denseWeight: 0.5,
+                });
+                const results = await hybrid.search('q', { limit: 10 });
+                const ids = results.map((r) => r.id);
+                // docA: 1/(k+1)+1/(k+2); docC: 1/(k+1); docB: 1/(k+2)
+                expect(ids).toEqual(['docA', 'docC', 'docB']);
+            });
         });
     });
 

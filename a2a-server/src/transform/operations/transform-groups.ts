@@ -12,7 +12,10 @@
  */
 
 import * as path from 'path';
-import * as fs from 'fs/promises';
+import * as fs from 'node:fs/promises';
+import { logger } from '../../utils/logger.js';
+import { pathIsAccessible } from '../../utils/fs-access.js';
+import { deepCloneJson } from '../../utils/deep-clone-json.js';
 import {query, set as jsonPathSet} from './json-path.js';
 import type {
   TransformContext,
@@ -182,7 +185,7 @@ export async function applyMergeWorkbenchSections(
   const existingRaw = query<unknown>(context.$out, to);
   const base: Record<string, unknown> =
     existingRaw && typeof existingRaw === 'object' && !Array.isArray(existingRaw)
-      ? JSON.parse(JSON.stringify(existingRaw))
+      ? deepCloneJson(existingRaw as Record<string, unknown>)
       : {};
   const merged: Record<string, unknown> = {
     ...base,
@@ -497,12 +500,13 @@ export function createDefaultFileSystem(): TransformFileSystem {
       await fs.writeFile(filePath, content, 'utf-8');
     },
     async exists(filePath: string): Promise<boolean> {
-      try {
-        await fs.access(filePath);
-        return true;
-      } catch {
-        return false;
-      }
+      return pathIsAccessible(filePath, (m) =>
+        logger.debug('[transform-fs] exists access failed', {
+          filePath: m.filePath,
+          code: m.code,
+          error: m.error,
+        })
+      );
     }
   };
 }

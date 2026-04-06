@@ -33,6 +33,13 @@ describe('adrComplianceState', () => {
         expect(loadAdrComplianceState(proj)).toBeNull();
     });
 
+    it('throws when file exists but JSON is invalid', () => {
+        const file = getAdrComplianceStatePath(proj);
+        fs.mkdirSync(path.dirname(file), { recursive: true });
+        fs.writeFileSync(file, '{ not json', 'utf8');
+        expect(() => loadAdrComplianceState(proj)).toThrow();
+    });
+
     it('save and load roundtrip', () => {
         const state = {
             projectRoot: proj,

@@ -3,10 +3,19 @@ import {logger} from '../../../utils/logger.js';
 import {runPromptsTransform} from '../../../transform/index.js';
 import type {GrayRoomControlEnvelope, InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
 import {mergeGrayRoomSlotIntoContext, mergeInterruptTraceIntoContext} from '../../../transform/interrupt-trace-contract.js';
-import {pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
+import {executeReadFile} from '../../../actions/handlers/file-operations.js';
+import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
+import {initAiHubChatPromise, pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
+import {BlackRoomOrchestrator} from '../black-room/black-room-orchestrator.js';
+import type {AlgorithmContext, AlgorithmData} from '../black-room/types.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
-import {validateDialogExecuteShape, validateLlmOutputShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
-import {resolveHistoryLength} from './normalization.js';
+import {
+    validateExecuteShapeForSchema,
+    validateLlmOutputShape,
+    validateRouterResultShape,
+    shouldEnforceTransformStrictMode,
+} from './validators/transform-execute-validator.js';
+import {resolveExecution, resolveHistoryLength, toInvokeShapeForPromptsTransform} from './normalization.js';
 import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver.js';
 import {globalArtifactStore} from '../artifact-store.js';
 import {DedicatedAnalyzer} from '../analyzer.js';
@@ -41,8 +50,10 @@ import {repoMapService} from '../../context/repo-map.service.js';
 import {llmService} from '../../llm/llm-service.js';
 import {OrchestratorKernel} from '../orchestrator-kernel.js';
 import type {OrchestratorState, OrchestratorEvent} from '../orchestrator-kernel.js';
-
-const DEFAULT_AI_HUB = 'http://localhost:11434';
+import {contextDiscoveryService} from '../../context/context-discovery.service.js';
+import {resolveAiHubBaseUrl} from '../../../utils/ai-hub-url.js';
+import {mkdtempOsTmp} from '../../../utils/mkdtemp-os-tmp.js';
+import {prepareLlmMessages} from './llm-orchestration.js';
 
 export class GrayRoomOrchestrator {
     private maxInterruptTurns: number;
@@ -53,7 +64,7 @@ export class GrayRoomOrchestrator {
 
     constructor(options: GrayRoomOptions) {
         this.maxInterruptTurns = options.maxInterruptTurns ?? readGrayRoomInterruptBudget();
-        this.aiHubUrl = (options.aiHubUrl ?? process.env.AI_HUB_URL ?? DEFAULT_AI_HUB).replace(/\/$/, '');
+        this.aiHubUrl = resolveAiHubBaseUrl(options.aiHubUrl);
         this.model = options.model ?? grayRoomLlmModelFallback();
         this.promptsTransformsPath = options.promptsTransformsPath;
     }
@@ -118,12 +129,22 @@ export class GrayRoomOrchestrator {
         }
         // -------------------------------------------------------------
 
-        // ADR-0093: Internal Debate for the first turn to refine the plan
-        if (turn === 0 && processInterrupts) {
+        // ADR-0093: Internal Debate for the first turn to refine the plan (agent-style tasks).
+        // Skip when recovering from a hub promise: `md` is the completed hub body; debate would
+        // replace it and runs 3 sync hub calls (proxy errors / timeouts).
+        // Skip for `dialog` schema: the main dialog LLM response is already the user-facing turn;
+        // debate was causing failed invokes (e.g. upstream/proxy "terminated") before response transform.
+        if (turn === 0 && processInterrupts && !isRecovered && schemaName !== 'dialog') {
             logger.info('[GrayRoom] Running ADR-0093 Internal Debate');
-            const debateResult = await llmService.debate((workingCtx['task'] as string) || '', workingCtx);
-            md = debateResult.plan;
-            workingCtx['debate_consensus'] = debateResult.consensus;
+            try {
+                const debateResult = await llmService.debate((workingCtx['task'] as string) || '', workingCtx);
+                md = debateResult.plan;
+                workingCtx['debate_consensus'] = debateResult.consensus;
+            } catch (e) {
+                logger.warn('[GrayRoom] Internal debate skipped — using primary LLM output', {
+                    error: String(e),
+                });
+            }
         }
         // ---------------------------------------------------------
 
@@ -310,7 +331,8 @@ export class GrayRoomOrchestrator {
                     phase: 'completed',
                     status: 'completed',
                 });
-                return this.mergeTraceIntoResult(result, trace, grayRoom);
+                resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
+                return;
             }
 
             const currentInterrupt = interrupt;
@@ -522,7 +544,7 @@ export class GrayRoomOrchestrator {
                     context: mergedInner,
                     execute: normalizedExecute,
                 };
-                this.warnOnInvalidExecute(res, 'grayRoom.finalize');
+                this.warnOnInvalidExecute(res, 'grayRoom.finalize', activeSchemaName, rawOutput);
                 touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
                 resolve(this.mergeTraceIntoResult(res, trace, grayRoom));
                 return;
@@ -532,17 +554,7 @@ export class GrayRoomOrchestrator {
 
             // Rebuild request for next LLM turn
             const outputDir = await this.createTempDir();
-            const invokeShape: Record<string, unknown> =
-                workingCtx && typeof workingCtx === 'object' && !Array.isArray(workingCtx) && 'context' in workingCtx
-                    ? workingCtx
-                    : {
-                          context: workingCtx,
-                          task:
-                              (workingCtx['task'] as string | undefined) ??
-                              (workingCtx['message'] as string | undefined),
-                          message: workingCtx['message'],
-                          result: (workingCtx['result'] as Record<string, unknown> | undefined) ?? {},
-                      };
+            const invokeShape = toInvokeShapeForPromptsTransform(workingCtx);
             const requestTransformResult = await runPromptsTransform(
                 this.promptsTransformsPath,
                 activeSchemaName,
@@ -571,48 +583,35 @@ export class GrayRoomOrchestrator {
                 return;
             }
 
-            const systemMdFromDisk = files['system.md'] || '';
-            const override = (workingCtx['system_instruction_override'] as string) || '';
-            const finalSystemContent = override ? `${override}\n---\n${systemMdFromDisk}` : systemMdFromDisk;
-
-            const messages: Array<{role: string; content: string}> = [];
-            if (finalSystemContent.trim().length > 0) {
-                messages.push({role: 'system', content: finalSystemContent});
-            }
-            messages.push({role: 'user', content: requestMd});
+            const messages = prepareLlmMessages(
+                files,
+                (workingCtx['system_instruction_override'] as string | undefined) || undefined
+            );
 
             const subHeader = `${promiseId}-intr-${interruptBudget}`;
             const llmModel = resolveGrayRoomLlmModelFromContext(workingCtx, this.model);
-            const chatRes = await fetch(`${this.aiHubUrl}/api/chat?promise=1`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Server-Promise-Id': subHeader,
-                },
-                body: JSON.stringify({
-                    model: llmModel,
-                    messages,
-                    stream: false,
-                }),
+            const chatInit = await initAiHubChatPromise(this.aiHubUrl, subHeader, {
+                model: llmModel,
+                messages,
+                stream: false,
             });
-
-            if (chatRes.status !== 202) {
-                const errText = await chatRes.text();
-                logger.error('[GrayRoom] LLM promise init failed', {status: chatRes.status, error: errText});
-                resolve({
-                    outcome: 'failed',
-                    error: `LLM error (gray room): ${chatRes.status} ${errText.slice(0, 200)}`,
-                } as ProcessResult);
+            if (!chatInit.ok) {
+                if (chatInit.reason === 'bad_http_status') {
+                    logger.error('[GrayRoom] LLM promise init failed', {
+                        status: chatInit.status,
+                        error: chatInit.bodyText,
+                    });
+                    resolve({
+                        outcome: 'failed',
+                        error: `LLM error (gray room): ${chatInit.status} ${chatInit.bodyText.slice(0, 200)}`,
+                    } as ProcessResult);
+                } else {
+                    resolve({outcome: 'failed', error: 'No promiseId in LLM response (gray room)'} as ProcessResult);
+                }
                 return;
             }
 
-            const initData = (await chatRes.json()) as {promiseId?: string};
-            const subLlmId = initData?.promiseId;
-            if (!subLlmId) {
-                resolve({outcome: 'failed', error: 'No promiseId in LLM response (gray room)'} as ProcessResult);
-                return;
-            }
-
+            const subLlmId = chatInit.llmPromiseId;
             const nextMd = await pollReadyThenFetch(this.aiHubUrl, subLlmId);
             if (!nextMd) {
                 resolve({outcome: 'failed', error: 'LLM response fetch failed (gray room)'} as ProcessResult);
@@ -636,11 +635,12 @@ export class GrayRoomOrchestrator {
                     remainingBudget: 0,
                     lastReason: 'hard_timeout',
                 });
-                // BUG-2 FIX: 'result' and 'c' were not in scope here.
-                // Build a safe timeout result from workingCtx instead.
-                const timeoutCtx = { ...(workingCtx as Record<string, unknown>), hard_timeout: true };
+                const timeoutCtxBase =
+                    result.context && typeof result.context === 'object' && !Array.isArray(result.context)
+                        ? {...(result.context as Record<string, unknown>)}
+                        : {...workingCtx};
                 resolve(this.mergeTraceIntoResult(
-                    { outcome: 'failed', error: 'Hard timeout reached', context: timeoutCtx } as ProcessResult,
+                    {...result, context: {...timeoutCtxBase, hard_timeout: true}} as ProcessResult,
                     trace,
                     grayRoom
                 ));
@@ -683,9 +683,7 @@ export class GrayRoomOrchestrator {
     }
 
     private async createTempDir(): Promise<string> {
-        const {mkdtemp} = await import('fs/promises');
-        const {tmpdir} = await import('os');
-        return mkdtemp(path.join(tmpdir(), 'a2a-gray-room-'));
+        return mkdtempOsTmp('a2a-gray-room-');
     }
 
     private async runResponseTransform(
@@ -695,7 +693,7 @@ export class GrayRoomOrchestrator {
         _recovered: boolean
     ): Promise<{result: ProcessResult; rawOutput: Record<string, unknown>} | null> {
         try {
-            const {writeFile} = await import('fs/promises');
+            const {writeFile} = await import('node:fs/promises');
             const tempDir = await this.createTempDir();
             await writeFile(path.join(tempDir, 'response.md'), responseMd, 'utf-8');
             
@@ -728,7 +726,7 @@ export class GrayRoomOrchestrator {
                 execute: rawOutput.execute as ProcessResult['execute'] | undefined,
                 ...(interruptPassthrough ? {interrupt: interruptPassthrough} : {}),
             };
-            this.warnOnInvalidExecute(result, 'runResponseTransform');
+            this.warnOnInvalidExecute(result, 'runResponseTransform', schemaName, rawOutput);
 
             return {rawOutput, result};
         } catch (err) {
@@ -821,10 +819,23 @@ export class GrayRoomOrchestrator {
         return {...result, context: ctx};
     }
 
-    private warnOnInvalidExecute(result: ProcessResult, source: string): void {
+    private warnOnInvalidExecute(
+        result: ProcessResult,
+        source: string,
+        schemaName: string,
+        rawTransformOutput?: Record<string, unknown>
+    ): void {
+        const topMsg =
+            rawTransformOutput && typeof rawTransformOutput['message'] === 'string'
+                ? (rawTransformOutput['message'] as string).trim()
+                : '';
         const issues = [
-            ...validateDialogExecuteShape(result.execute),
-            ...validateLlmOutputShape(result)
+            ...validateExecuteShapeForSchema(schemaName, result.execute),
+            ...(schemaName === 'router' ? validateRouterResultShape(result) : []),
+            ...validateLlmOutputShape({
+                ...(topMsg ? {message: topMsg} : {}),
+                execute: result.execute,
+            }),
         ];
         if (issues.length === 0) return;
         if (shouldEnforceTransformStrictMode()) {

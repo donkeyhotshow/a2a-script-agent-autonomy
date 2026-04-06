@@ -1,0 +1,12 @@
+{
+  "context": {
+    "task": "fix vue imports",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    }
+  },
+  "result": {
+    "choice": "fix-vue-imports"
+  }
+}

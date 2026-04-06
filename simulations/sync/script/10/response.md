@@ -53,7 +53,7 @@ Mirror of response.json.
       "description": "Optional follow-up; same closing pattern as sync/agent/15.",
       "input": [
         {
-          "name": "task",
+          "name": "message",
           "type": "text",
           "label": "Next instruction",
           "required": false

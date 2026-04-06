@@ -17,5 +17,2459 @@
     "Review task description for clarity",
     "Check session context and execution state"
   ],
-  "createdAt": "2026-04-02T21:16:43.537Z"
+  "createdAt": "2026-04-02T21:16:43.537Z",
+  "errors": [
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427059932",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:01.037Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:01.037Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427062049",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:03.149Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:03.149Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427064174",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:05.293Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:05.293Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427066315",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:07.412Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:07.412Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427068428",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:09.521Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:09.521Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427070542",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:11.632Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:11.632Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427072647",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:13.745Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:13.745Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427074770",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:15.865Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:15.865Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427076894",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:17.989Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:17.989Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427079011",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:20.107Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:20.107Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427081131",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:22.235Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:22.235Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427083262",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:24.358Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:24.358Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427085378",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:26.462Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:26.462Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427087482",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:28.574Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:28.574Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427089594",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:30.740Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:30.740Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427091767",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:32.870Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:32.870Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427093895",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:34.995Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:34.995Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427096018",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:37.107Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:37.107Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427098128",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:39.221Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:39.221Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427100246",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:41.335Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:41.335Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427102357",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:43.448Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:43.448Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427104472",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:45.572Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:45.572Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427106598",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:47.692Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:47.692Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427108716",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:49.811Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:49.811Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427110832",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:51.924Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:51.924Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427112940",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:54.034Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:54.034Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427115052",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:56.144Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:56.144Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427117159",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:11:58.260Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:11:58.260Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427121378",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:02.502Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:02.502Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427123516",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:04.598Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:04.598Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427125620",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:06.719Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:06.719Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427127735",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:08.827Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:08.827Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427129841",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:10.933Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:10.933Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427131952",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:13.052Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:13.052Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427134079",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:15.169Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:15.169Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427136189",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:17.280Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:17.280Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427138291",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:19.379Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:19.379Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427140394",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:21.497Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:21.497Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427142510",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:23.619Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:23.619Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427144643",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:25.740Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:25.740Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427146756",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:27.855Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:27.855Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427148873",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:29.967Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:29.967Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427150988",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:32.080Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:32.080Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427153099",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:34.245Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:34.245Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427155267",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:36.380Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:36.380Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427157406",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:38.507Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:38.507Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427159535",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:40.643Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:40.643Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427161657",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:42.758Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:42.758Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427163773",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:44.882Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:44.882Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427165907",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:47.010Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:47.010Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427168035",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:49.137Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:49.137Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427170159",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:51.265Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:51.265Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427172289",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:53.394Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:53.394Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427174412",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:55.520Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:55.520Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427176542",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:57.639Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:57.639Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427178695",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:12:59.794Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:12:59.794Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427180818",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:01.917Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:01.917Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427182939",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:04.023Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:04.023Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427185041",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:06.179Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:06.179Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427187202",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:08.281Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:08.281Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427189307",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:10.394Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:10.394Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427191406",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:12.505Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:12.505Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427193521",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:14.608Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:14.608Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427195629",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:16.705Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:16.705Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427197733",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:18.820Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:18.820Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427199831",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:20.913Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:20.913Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427201938",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:23.019Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:23.019Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427204034",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:25.114Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:25.114Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427206140",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:27.225Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:27.225Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427208240",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:29.329Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:29.329Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427210347",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:31.438Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:31.438Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427212455",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:33.541Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:33.541Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427214563",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:35.660Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:35.660Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427216684",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:37.818Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:37.818Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427218840",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:39.946Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:39.946Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427220968",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:42.064Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:42.064Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427223091",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:44.193Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:44.193Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427225207",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:46.293Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:46.293Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427227315",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:48.406Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:48.406Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427229434",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:50.517Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:50.517Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427231538",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:52.633Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:52.633Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427233656",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:54.742Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:54.742Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427235764",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:56.856Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:56.856Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427237881",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:13:58.977Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:13:58.977Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427239988",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:01.077Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:01.077Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427242089",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:03.196Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:03.196Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427244209",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:05.294Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:05.294Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427246312",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:07.407Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:07.407Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427248429",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:09.563Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:09.563Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427250583",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:11.672Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:11.672Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427252692",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:13.779Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:13.779Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427254799",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:15.878Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:15.878Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427256905",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:18.011Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:18.011Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427259036",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:20.126Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:20.126Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427261144",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:22.247Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:22.247Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427263277",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:24.384Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:24.384Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427265397",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:26.478Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:26.478Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427267500",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:28.593Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:28.593Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427269607",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:30.704Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:30.704Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427271724",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:32.817Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:32.817Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427273841",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:34.924Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:34.924Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427275940",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:37.023Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:37.023Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427278044",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:39.128Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:39.128Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427280150",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:41.263Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:41.263Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427282286",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:43.369Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:43.369Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427284396",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:45.482Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:45.482Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427286506",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:47.610Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:47.610Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427288632",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:49.729Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:49.729Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427290752",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:51.841Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:51.841Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427292854",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:53.957Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:53.957Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427294970",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:56.095Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:56.095Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427297110",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:14:58.360Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:14:58.360Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427299384",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:00.476Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:00.476Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427301490",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:02.579Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:02.579Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427303600",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:04.682Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:04.682Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427305708",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:06.804Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:06.804Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427307822",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:08.906Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:08.906Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427309919",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:11.004Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:11.004Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427312019",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:13.132Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:13.132Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427314156",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:15.257Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:15.257Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427316277",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:17.362Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:17.362Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427318379",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:19.459Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:19.459Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427320473",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:21.564Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:21.564Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427322578",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:23.661Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:23.661Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427324682",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:25.761Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:25.761Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427326786",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:27.879Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:27.879Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427328896",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:29.980Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:29.980Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427331000",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:32.093Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:32.093Z"
+    },
+    {
+      "taskName": "ai-integration-configuration-system-plan.md",
+      "status": "failed",
+      "error": "No result in completed session",
+      "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+      "stageDetail": "n/a",
+      "context": {
+        "sessionId": "sess_1775427333108",
+        "promiseId": null,
+        "stage": "action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання)",
+        "stageDetail": "n/a",
+        "lastActivity": "2026-04-05T22:15:34.193Z"
+      },
+      "suggestedActions": [
+        "Review task description for clarity",
+        "Check session context and execution state"
+      ],
+      "timestamp": "2026-04-05T22:15:34.194Z"
+    }
+  ],
+  "lastUpdated": "2026-04-05T22:15:34.194Z"
 }

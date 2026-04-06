@@ -1,0 +1,36 @@
+{
+  "context": {
+    "task": "string",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "string"
+      },
+      {
+        "role": "assistant",
+        "message": "string"
+      }
+    ]
+  },
+  "execute": {
+    "form": {
+      "title": "string",
+      "description": "string",
+      "input": [
+        {
+          "name": "message",
+          "type": "string",
+          "label": "string",
+          "required": true
+        }
+      ]
+    }
+  }
+}

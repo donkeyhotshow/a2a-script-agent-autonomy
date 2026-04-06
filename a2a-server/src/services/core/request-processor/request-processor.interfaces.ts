@@ -64,7 +64,8 @@ export interface ExecuteCommand {
     };
     script?: { input: Record<string, unknown>; output: string; code: string };
     message?: string;
-    wait?: { message?: string; showFormAfter?: boolean };
+    // Note: execute.wait is NOT a server concept. Client detects async state via
+    // promiseId + status polling and renders waiting UI independently.
 }
 
 export interface ValidationResult {

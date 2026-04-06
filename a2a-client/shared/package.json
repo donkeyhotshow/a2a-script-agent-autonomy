@@ -9,8 +9,18 @@
     "./client-api-envelope.mjs": "./client-api-envelope.mjs",
     "./context-invoke-patch.mjs": "./context-invoke-patch.mjs",
     "./a2a-invoke-builders.mjs": "./a2a-invoke-builders.mjs",
+    "./dialog-invoke-history.mjs": "./dialog-invoke-history.mjs",
+    "./router-submit.mjs": "./router-submit.mjs",
+    "./next-invoke-pipeline.mjs": "./next-invoke-pipeline.mjs",
+    "./session-stage-derive.mjs": "./session-stage-derive.mjs",
     "./a2a-server-base.js": "./a2a-server-base.js",
     "./web-execute-dto.mjs": "./web-execute-dto.mjs",
-    "./session-id.js": "./session-id.js"
+    "./session-id.js": "./session-id.js",
+    "./kv-unwrap.mjs": "./kv-unwrap.mjs",
+    "./node-errors.mjs": "./node-errors.mjs",
+    "./session-sort.mjs": "./session-sort.mjs",
+    "./projects-document.mjs": "./projects-document.mjs",
+    "./safe-path.mjs": "./safe-path.mjs",
+    "./project-sessions-dir.mjs": "./project-sessions-dir.mjs"
   }
 }

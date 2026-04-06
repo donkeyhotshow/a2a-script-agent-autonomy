@@ -1,0 +1,21 @@
+{
+  "context": {
+    "task": "next user message",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "previous message"
+      },
+      {
+        "role": "assistant",
+        "message": "assistant response"
+      }
+    ]
+  },
+  "outcome": "failed",
+  "error": "Request processing failed"
+}

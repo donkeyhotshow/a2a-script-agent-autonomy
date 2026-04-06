@@ -10,6 +10,27 @@ export interface TransformExecuteValidationIssue {
  * Single-tool execute keys (agent + dialog LLM transforms, workspace tools).
  * Keep aligned with prompts (e.g. agent-request/coder-request) and `VALID_EXECUTE_KEYS` in action-validator.
  */
+export function isAgentTransformSchema(schemaName: string): boolean {
+    return (
+        schemaName === 'agent' ||
+        schemaName.startsWith('agent-') ||
+        schemaName === 'coder' ||
+        schemaName === 'analyze' ||
+        schemaName === 'auto-ai' ||
+        schemaName.startsWith('fix-vue-imports') ||
+        schemaName === 'fix-laravel-namespaces-and-uses'
+    );
+}
+
+export function validateExecuteShapeForSchema(
+    schemaName: string,
+    execute: ProcessResult['execute'] | undefined
+): TransformExecuteValidationIssue[] {
+    return isAgentTransformSchema(schemaName)
+        ? validateAgentExecuteShape(execute)
+        : validateDialogExecuteShape(execute);
+}
+
 export const SINGLE_TOOL_EXECUTE_KEYS = [
     'rag-search',
     'read-file',

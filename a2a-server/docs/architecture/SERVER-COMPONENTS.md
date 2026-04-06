@@ -138,15 +138,7 @@
 
 ### 4. SSE Routes (sse.routes.ts)
 
-**Файл:** [`src/routes/sse.routes.ts`](a2a-server/src/routes/sse.routes.ts)
 
-**Назначение:**
-- Server-Sent Events для real-time коммуникации
-- Стриминг событий клиентам
-
-**Endpoints:**
-
-| Method | Path | Назначение |
 |--------|------|------------|
 | GET | `/api/v1/sse/:sessionId` | Подписка на события сессии |
 | GET | `/api/v1/sse` | Глобальная подписка |

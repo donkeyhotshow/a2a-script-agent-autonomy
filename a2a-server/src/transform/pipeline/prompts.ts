@@ -2,9 +2,12 @@
  * Prompts/transforms path resolution, schema maps, and runPromptsTransform.
  */
 
-import * as fs from 'fs/promises';
+import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
+import { logger } from '../../utils/logger.js';
+import { deepCloneJson } from '../../utils/deep-clone-json.js';
+import { pathIsAccessible } from '../../utils/fs-access.js';
 import { prepareInvokePayloadForLlmPrompt } from '../materialize-result-for-llm.js';
 import { attachFlowControlHintToInvokePayload } from '../../prompts/flow-control-hints.js';
 import { attachWorkbenchForLlmPrompt } from '../workbench-normalize.js';
@@ -107,8 +110,16 @@ async function resolveTransformFile(
     if (mappedSchema === 'coder' && type === 'request') {
       candidates.push(path.resolve(dir, 'coder-request.json'));
     }
+    // Dialog request transform sets initial form (textarea) before LLM call
+    if (mappedSchema === 'dialog' && type === 'request') {
+      candidates.push(path.resolve(dir, 'dialog-request.json'));
+    }
     if (mappedSchema === 'dialog' && type === 'response') {
       candidates.push(path.resolve(dir, 'dialog-llm-response.json'));
+    }
+    // Agent request transform sets initial form before LLM call
+    if (mappedSchema === 'agent' && type === 'request') {
+      candidates.push(path.resolve(dir, 'agent-request.json'));
     }
     candidates.push(path.resolve(dir, `server-transforms-${type}.json`));
   } else {
@@ -123,11 +134,16 @@ async function resolveTransformFile(
   }
 
   for (const filePath of candidates) {
-    try {
-      await fs.access(filePath);
+    if (
+      await pathIsAccessible(filePath, (m) =>
+        logger.debug('[prompts] transform candidate access failed', {
+          filePath: m.filePath,
+          code: m.code,
+          error: m.error,
+        })
+      )
+    ) {
       return filePath;
-    } catch {
-      continue;
     }
   }
   throw new Error(`No transform file found for ${schemaName}/${step ?? '?'} ${type}`);
@@ -146,7 +162,13 @@ export async function loadPromptsTransform(
   try {
     const filePath = await resolveTransformFile(promptsTransformsDir, schemaName, step, type);
     return await loadTransformPipeline(filePath);
-  } catch {
+  } catch (err: unknown) {
+    logger.warn('[prompts] loadPromptsTransform failed', {
+      schemaName,
+      step,
+      type,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 }
@@ -196,9 +218,7 @@ export async function runPromptsTransform(
   const baseDir = transformOptions.baseDir ?? path.resolve(promptsTransformsDir, '../../..');
   let pipelineInput: Record<string, unknown> = input;
   if (type === 'request') {
-    const clone = prepareInvokePayloadForLlmPrompt(
-      JSON.parse(JSON.stringify(input)) as Record<string, unknown>
-    );
+    const clone = prepareInvokePayloadForLlmPrompt(deepCloneJson(input));
     attachFlowControlHintToInvokePayload(clone);
     attachWorkbenchForLlmPrompt(clone);
     pipelineInput = clone;

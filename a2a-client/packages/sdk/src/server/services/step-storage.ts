@@ -10,12 +10,30 @@
  */
 
 import path from 'path';
-import { getStorageDir, writeJsonFile } from './storage.js';
+import * as fs from 'fs/promises';
+import { getStorageSessionsRoot, writeJsonFile, isNodeEnoent } from './storage.js';
 
-const SESSIONS_DIR = path.join(getStorageDir(), 'sessions');
+const SESSIONS_DIR = getStorageSessionsRoot();
 
 export function getStepDir(sessionId: string, stepNum: number): string {
     return path.join(SESSIONS_DIR, sessionId, String(stepNum));
+}
+
+/** Reads `server-response.json` for a step (same layout as Vite step handlers). */
+export async function readServerResponse(
+    sessionId: string,
+    stepNum: number
+): Promise<Record<string, unknown> | null> {
+    const file = path.join(getStepDir(sessionId, stepNum), 'server-response.json');
+    try {
+        const raw = await fs.readFile(file, 'utf-8');
+        return JSON.parse(raw) as Record<string, unknown>;
+    } catch (e) {
+        if (!isNodeEnoent(e)) {
+            console.warn('[step-storage] readServerResponse:', sessionId, stepNum, e);
+        }
+        return null;
+    }
 }
 
 export async function saveRequestToServer(

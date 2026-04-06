@@ -15,9 +15,13 @@
  *   recall(taskDescription, topK) → topK nearest by cosine similarity
  */
 
-import { randomUUID } from 'crypto';
-import { promises as fs } from 'fs';
+import { randomUUID } from 'node:crypto';
+import { promises as fs } from 'node:fs';
+import { createRequire } from 'node:module';
 import { join } from 'path';
+import { logger } from '../../utils/logger.js';
+
+const requirePg = createRequire(import.meta.url);
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -79,7 +83,13 @@ class JsonFileBackend implements StorageBackend {
       const raw = await fs.readFile(this.filePath, 'utf8');
       const parsed: unknown = JSON.parse(raw);
       return Array.isArray(parsed) ? (parsed as Episode[]) : [];
-    } catch {
+    } catch (err: unknown) {
+      const code = (err as NodeJS.ErrnoException)?.code;
+      if (code === 'ENOENT') return [];
+      logger.error('[EpisodicMemory] JSON backend loadAll failed', {
+        path: this.filePath,
+        error: err instanceof Error ? err.message : String(err),
+      });
       return [];
     }
   }
@@ -100,9 +110,9 @@ class PostgresBackend implements StorageBackend {
    * @throws if `pg` is not installed or DATABASE_URL is missing
    */
   constructor(connectionString: string) {
-    // Dynamic require — keeps pg optional
+    // Optional dep: load via createRequire so ESM (no global require) still works
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { Pool } = require('pg') as { Pool: new (opts: object) => object };
+    const { Pool } = requirePg('pg') as { Pool: new (opts: object) => object };
     this.pool = new Pool({ connectionString });
   }
 
@@ -214,8 +224,16 @@ export class EpisodicMemory {
       try {
         this.backend = new PostgresBackend(dbUrl);
         return;
-      } catch {
-        // pg not installed or connection string invalid — fall through to JSON
+      } catch (err: unknown) {
+        const detail = err instanceof Error ? err.message : String(err);
+        const missingPg = /Cannot find module ['"]pg['"]/.test(detail);
+        if (missingPg) {
+          logger.debug('[EpisodicMemory] Optional pg not installed, using JSON file');
+        } else {
+          logger.warn('[EpisodicMemory] Postgres backend unavailable, using JSON file', {
+            error: detail,
+          });
+        }
       }
     }
     this.backend = new JsonFileBackend(jsonFilePath);

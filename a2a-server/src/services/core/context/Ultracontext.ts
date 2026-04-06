@@ -1,5 +1,6 @@
 import { logger } from '../../../utils/logger.js';
-import crypto from 'crypto';
+import { deepCloneJson } from '../../../utils/deep-clone-json.js';
+import crypto from 'node:crypto';
 
 export interface ContextSnapshot {
   id: string;
@@ -18,7 +19,7 @@ export class Ultracontext {
     const snapshot: ContextSnapshot = {
       id,
       timestamp: Date.now(),
-      data: JSON.parse(JSON.stringify(data)), // deep copy
+      data: deepCloneJson(data),
       parent: this.currentId || undefined,
       metadata,
     };
@@ -36,7 +37,7 @@ export class Ultracontext {
       throw new Error(`Snapshot ${id} not found`);
     }
     this.currentId = id;
-    return JSON.parse(JSON.stringify(snapshot.data));
+    return deepCloneJson(snapshot.data);
   }
 
   diff(idA: string, idB: string): any {

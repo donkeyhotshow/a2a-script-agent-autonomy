@@ -63,4 +63,15 @@ describe('materialize-result-for-llm', () => {
     });
     expect(s).toBe('Grep src/: src/auth.js (1 matches)');
   });
+
+  it('folds result.choice as system line and clears result', () => {
+    const input = {
+      context: { history: [{ role: 'user', message: 'pick' }] },
+      result: { choice: 'agent' }
+    };
+    const out = prepareInvokePayloadForLlmPrompt(input as Record<string, unknown>);
+    expect(out.result).toEqual({});
+    const h = (out.context as Record<string, unknown>).history as Array<{ role: string; message: string }>;
+    expect(h.some((e) => e.role === 'system' && e.message === 'choice: agent')).toBe(true);
+  });
 });

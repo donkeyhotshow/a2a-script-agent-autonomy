@@ -88,7 +88,7 @@ Mirror of `response.json` (not LLM output). Single `execute` action key.
       "description": "Усі типи execute для agent у цій золотій пройдені; див. simulations/sync/agent/description.md",
       "input": [
         {
-          "name": "task",
+          "name": "message",
           "type": "text",
           "label": "Наступне питання",
           "required": false

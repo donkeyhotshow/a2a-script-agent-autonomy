@@ -1,5 +1,5 @@
 import {executeReadFile} from '../../../../actions/handlers/file-operations.js';
-import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
+import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../../transform/types.js';
 
 /**
  * Handle auto_read_file interrupt

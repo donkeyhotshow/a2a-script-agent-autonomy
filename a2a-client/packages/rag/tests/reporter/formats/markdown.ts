@@ -2,5 +2,5 @@
  * @fileoverview Markdown report entry point
  */
  
-export type { MarkdownReportOptions } from '../reporter/report-formatter.js';
-export { generateMarkdownReport } from '../reporter/report-formatter.js';
+export type { MarkdownReportOptions } from '../formatters/markdown.js';
+export { generateMarkdownReport } from '../formatters/markdown.js';

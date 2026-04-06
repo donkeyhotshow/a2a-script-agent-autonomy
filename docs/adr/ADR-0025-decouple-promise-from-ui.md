@@ -216,8 +216,7 @@ export function toPublicSession(session, includeContext = false) {
 
 ### Future Enhancements
 
-- Add SSE (Server-Sent Events) for real-time status updates
-- Implement WebSocket for bi-directional communication
+
 - Add status subscription endpoint for efficient updates
 - Consider moving daemon to separate microservice
 

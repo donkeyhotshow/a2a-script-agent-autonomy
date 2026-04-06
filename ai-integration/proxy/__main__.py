@@ -26,12 +26,14 @@ from proxy.ollama_manager import get_ollama_host_port, check_port_occupied, get_
 from proxy.utils import kill_ports
 from proxy.daemon import start_daemon, stop_daemon
 from proxy.config import CLEANUP_INTERVAL_HOURS, ENABLE_CLEANUP
+from proxy.logging_setup import ensure_file_log_handler
 
-# Configure logging
+# Configure logging (console + file under ai-integration/logs/)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+ensure_file_log_handler()
 logger = logging.getLogger('ai-proxy')
 
 
@@ -49,8 +51,8 @@ class GracefulShutdown:
         try:
             import threading
             self._lock = threading.Lock()
-        except ImportError:
-            pass
+        except ImportError as e:
+            logger.warning("threading unavailable — shutdown lock disabled: %s", e)
     
     @property
     def is_shutting_down(self) -> bool:
@@ -95,7 +97,7 @@ class GracefulShutdown:
                 result = mgr.stop()
                 logger.info(f"Ollama stopped: {result}")
             except Exception as e:
-                logger.error(f"Error stopping Ollama: {e}")
+                logger.error("Error stopping Ollama: %s", e, exc_info=True)
         
         # Ждем завершения активных запросов
         drain_start = time.time()
@@ -233,7 +235,7 @@ def main():
         
         app.run(host='0.0.0.0', port=PROXY_PORT, debug=False, request_handler=OllamaRequestHandler)
     except Exception as e:
-        logger.error(f"Failed to start server: {e}")
+        logger.error("Failed to start server with custom request handler: %s", e, exc_info=True)
         app.run(host='0.0.0.0', port=PROXY_PORT, debug=False)
 
 

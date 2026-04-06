@@ -16,7 +16,7 @@
 **Output:** success[]
 
 ```typescript
-import fs from 'fs';
+import fs from 'node:fs';
 import path from 'path';
 
 export default async function run(input: {}): Promise<{ success: boolean[] }> {

@@ -1,4 +1,5 @@
 import {logger} from '../../../utils/logger.js';
+import {pathIsAccessible, timestampedBackupPath} from '../../../utils/fs-access.js';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type {WriteFileActionInput, WriteFileActionOutput} from './types.js';
@@ -23,13 +24,13 @@ export async function executeWriteFile(
         const dir = path.dirname(fullPath);
         const encoding = input.encoding || 'utf8';
 
-        let fileExists = false;
-        try {
-            await fs.access(fullPath);
-            fileExists = true;
-        } catch {
-            fileExists = false;
-        }
+        const fileExists = await pathIsAccessible(fullPath, (m) =>
+            logger.warn('[write-file] access check failed', {
+                fullPath: m.filePath,
+                code: m.code,
+                error: m.error,
+            })
+        );
 
         if (fileExists && !input.overwrite) {
             return {
@@ -40,7 +41,7 @@ export async function executeWriteFile(
 
         let backupPath: string | undefined;
         if (fileExists && input.createBackup) {
-            backupPath = `${fullPath}.backup-${Date.now()}`;
+            backupPath = timestampedBackupPath(fullPath);
             await fs.copyFile(fullPath, backupPath);
             logger.info('[write-file] Backup created', {backupPath});
         }

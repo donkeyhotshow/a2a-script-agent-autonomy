@@ -4,7 +4,6 @@ import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
 import {mergeGrayRoomSlotIntoContext, mergeInterruptTraceIntoContext} from '../../../transform/interrupt-trace-contract.js';
 import {runPromptsTransform} from '../../../transform/index.js';
 import type {GrayRoomControlEnvelope, InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
-import {validateDialogExecuteShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
 import {resolveExecution, resolveHistoryLength} from './normalization.js';
 import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver.js';
 
@@ -49,6 +48,7 @@ export function mergeGrayRoomFinalizeInnerContext(
     if (!rawInner) {
         return nextInner;
     }
+    const { history: _nextHistorySpread, ...nextInnerNoHist } = nextInner;
     const rwb = rawInner['workbench'];
     const nwb = nextInner['workbench'];
     let workbenchMerged: Record<string, unknown> | undefined;
@@ -85,11 +85,19 @@ export function mergeGrayRoomFinalizeInnerContext(
         workbenchMerged = rwb as Record<string, unknown>;
     }
 
+    const nextHist = nextInner['history'];
+    const rawHist = rawInner['history'];
+    const historyMerged = Array.isArray(nextHist)
+        ? nextHist
+        : Array.isArray(rawHist)
+          ? rawHist
+          : undefined;
+
     return {
         ...rawInner,
-        ...nextInner,
+        ...nextInnerNoHist,
         ...(workbenchMerged !== undefined ? {workbench: workbenchMerged} : {}),
-        ...(Array.isArray(nextInner['history']) ? {history: nextInner['history']} : {}),
+        ...(historyMerged !== undefined ? {history: historyMerged} : {}),
         ...(nextInner['files'] && typeof nextInner['files'] === 'object' && !Array.isArray(nextInner['files'])
             ? {files: nextInner['files']}
             : {}),
@@ -101,4 +109,23 @@ export interface GrayRoomOptions {
     aiHubUrl?: string;
     model?: string;
     promptsTransformsPath: string;
+}
+
+/** Immutably set `context.workbench.slots[slotKey]` on a shallow-copied root context. */
+export function mergeSlotIntoWorkbenchContext(
+    ctx: Record<string, unknown>,
+    slotKey: string,
+    slotValue: unknown
+): Record<string, unknown> {
+    const root = {...ctx};
+    const innerCtx = (root['context'] as Record<string, unknown>) ?? {};
+    const wb = (innerCtx['workbench'] as Record<string, unknown>) ?? {};
+    const slots = (wb['slots'] as Record<string, unknown>) ?? {};
+    return {
+        ...root,
+        context: {
+            ...innerCtx,
+            workbench: {...wb, slots: {...slots, [slotKey]: slotValue}},
+        },
+    };
 }

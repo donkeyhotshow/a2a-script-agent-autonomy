@@ -1,0 +1,19 @@
+{
+  "context": {
+    "task": "analyze codebase structure",
+    "execution": {
+      "action": "agent",
+      "step": "start"
+    },
+    "workbench": {
+      "sections": {
+        "scratchpad": {
+          "initialized": true
+        }
+      }
+    }
+  },
+  "result": {
+    "message": "Use grep-search to find all TODO comments"
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "context": {
+    "task": "check if config exists",
+    "execution": {
+      "action": "agent",
+      "step": "tool_file_exists"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "check if config exists"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_file_exists",
+        "message": "File exists: config.json"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "result": {
+    "file-exists": {
+      "path": "config.json"
+    }
+  }
+}

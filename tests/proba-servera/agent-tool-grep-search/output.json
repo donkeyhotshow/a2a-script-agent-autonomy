@@ -1,0 +1,25 @@
+{
+  "context": {
+    "task": "find TODO comments",
+    "execution": {
+      "action": "agent",
+      "step": "tool_grep_search"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "find TODO comments"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_grep_search",
+        "message": "Grep search for 'TODO' found 5 matches"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "outcome": "failed",
+  "error": "Request processing failed"
+}

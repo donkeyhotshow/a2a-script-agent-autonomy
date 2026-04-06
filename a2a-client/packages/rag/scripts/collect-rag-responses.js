@@ -68,7 +68,7 @@ function findRAGSearchSteps(basePath) {
               }
             }
           } catch (e) {
-            console.warn(`[RAG] Failed to parse response.json at ${simName}/${stepNum}:`, e.message);
+            console.error(`[RAG] Failed to parse response.json at ${simName}/${stepNum}:`, e.message);
           }
           
           // Read request.json - extract results from result.rag-search
@@ -86,7 +86,7 @@ function findRAGSearchSteps(basePath) {
               }
             }
           } catch (e) {
-            console.warn(`[RAG] Failed to parse request.json at ${simName}/${stepNum}:`, e.message);
+            console.error(`[RAG] Failed to parse request.json at ${simName}/${stepNum}:`, e.message);
           }
         } else if (!['node_modules', '.git', 'dist'].includes(entry.name)) {
           findInDir(fullPath, simName);

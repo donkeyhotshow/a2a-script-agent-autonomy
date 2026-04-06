@@ -5,7 +5,7 @@
  */
 
 import * as path from 'path';
-import {access} from 'fs/promises';
+import {access} from 'node:fs/promises';
 import {ActionDefinition, ActionMatch} from './types.js';
 import {parseAllActionsFromDirectory} from './action-parser.js';
 import {logger} from '../utils/logger.js';

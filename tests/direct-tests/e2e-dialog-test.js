@@ -12,7 +12,7 @@
  *
  * Fewer LLM round-trips / sessions (same assertions, merged runners):
  *   E2E_DIRECT_LOW_LLM=1 — enables both merges below
- *   E2E_DIRECT_MERGE_INVOKE=1 — one sync invoke replaces invokeSyncEnvelope + invokeHello + invokeSyncShape (3→1 LLM)
+ *   E2E_DIRECT_MERGE_INVOKE=1 — one invoke+poll replaces invokeAsyncEnvelope + invokeHello + invokeSyncShape (3→1 LLM)
  *   E2E_DIRECT_MERGE_CLIENT_SESSION_SCHEMA=1 — one session replaces asyncAfterCreate, waitingAsyncIdle, waitingGetSession,
  *     waitingLatest, waitingMessagesExecute, sessionMessages, getSessionIncludeContext, nextResultMessage, nextTaskShorthand (9→1 session)
  *
@@ -177,7 +177,7 @@ async function fetchJson(url, init) {
 }
 
 async function invokeDirect(task, context = {}) {
-  const body = { task, sync: true };
+  const body = { task };
   if (context.execution) {
     body.context = {
       task,
@@ -193,7 +193,27 @@ async function invokeDirect(task, context = {}) {
     const error = await response.text();
     throw new Error(`Invoke failed: ${response.status} - ${error}`);
   }
-  return response.json();
+  const wrap = await response.json();
+  const pid = wrap?.data?.promiseId;
+  if (!pid || typeof pid !== 'string') {
+    throw new Error(`async-only invoke: expected data.promiseId, got ${JSON.stringify(wrap)}`);
+  }
+  await recordServerPromise(pid);
+  const terminal = await pollServerRequestResult(pid);
+  if (!terminal?.data) {
+    throw new Error(`invokeDirect poll timeout for ${pid}`);
+  }
+  const d = terminal.data;
+  return {
+    success: true,
+    data: {
+      status: d.status,
+      execute: d.execute,
+      context: d.context,
+      message: d.message,
+      result: d.result,
+    },
+  };
 }
 
 /** POST /api/v1/invoke — returns status + parsed body (for 4xx tests). */
@@ -265,7 +285,6 @@ async function caseInvokeUnknownRootProperty400() {
 
 async function caseInvokeContextFollowupShape() {
   const { status, body } = await postInvokeRaw({
-    sync: false,
     context: {
       task: 'follow-up invoke schema',
       execution: { action: 'dialog', step: 'init' },
@@ -306,11 +325,12 @@ async function caseRequestsSingleStatus404() {
   assert(r.status === 404, `single status 404: ${r.status}`);
 }
 
-async function caseInvokeSyncResponseEnvelope() {
+async function caseInvokeAsyncResponseEnvelope() {
   const invokeResult = await invokeDirect('Envelope probe');
-  assert(invokeResult.success === true, 'sync envelope success');
+  assert(invokeResult.success === true, 'invoke envelope success');
   const data = invokeResult.data;
-  assert(data && data.sync === true, 'data.sync true');
+  assert(data?.status === 'completed', `terminal status ${data?.status}`);
+  assert(data.sync === undefined, 'no legacy data.sync');
   assert(
     data.execute !== undefined || data.message !== undefined || data.context !== undefined,
     'data has execute, message, or context'
@@ -390,14 +410,11 @@ async function caseWaitingNextAckShape() {
   assert(ack.success === true, 'next success');
   assert(ack.accepted === true, 'next accepted');
   assert(typeof ack.asyncPending === 'boolean', 'next ack asyncPending boolean');
-  if (ack.asyncPending) {
-    assert(typeof ack.promiseId === 'string' && ack.promiseId.length > 0, 'next ack promiseId when async');
-  }
 }
 
 /**
  * Dialog /next → optional in-flight /async → settle → idle + GET session + legacy GET .../promise/:id.
- * When stack is sync-only, passes unless REQUIRE_ASYNC_PIPELINE=1.
+ * Stack is async-only: if REQUIRE_ASYNC_PIPELINE=1, /next must report asyncPending for this probe.
  */
 async function caseWaitingAsyncPipeline() {
   const { sessionId } = await createSession({
@@ -413,8 +430,23 @@ async function caseWaitingAsyncPipeline() {
     return;
   }
 
-  const promiseId = ack.promiseId;
-  assert(typeof promiseId === 'string' && promiseId.length > 0, 'pipeline: promiseId');
+  let promiseId = null;
+  const pidDeadline = Date.now() + 15_000;
+  while (Date.now() < pidDeadline && !promiseId) {
+    const r = await fetch(
+      `${CLIENT_API_URL}/api/a2a/sessions/${sessionId}?includeContext=1`
+    );
+    if (r.ok) {
+      const j = await r.json();
+      const s = j.session ?? j;
+      if (typeof s?.promiseId === 'string' && s.promiseId.length > 0) {
+        promiseId = s.promiseId;
+        break;
+      }
+    }
+    await sleep(50);
+  }
+  assert(promiseId, 'pipeline: promiseId (GET session ?includeContext=1 while in flight)');
 
   let sawInFlight = false;
   for (let i = 0; i < 40; i++) {
@@ -992,13 +1024,14 @@ async function caseInvokeSyncShape() {
   }
 }
 
-/** Single sync invoke: assertions from invokeSyncEnvelope + invokeHello + invokeSyncShape. */
+/** Single invoke + poll: envelope + hello + single-key execute (merge flags). */
 async function caseMergedInvokeHelloEnvelopeShape() {
   const invokeResult = await invokeDirect('Hello');
-  assert(invokeResult.success === true, 'sync envelope success');
+  assert(invokeResult.success === true, 'invoke envelope success');
   assert(invokeResult.success !== false, 'invoke should not report success=false');
   const data = invokeResult.data;
-  assert(data && data.sync === true, 'data.sync true');
+  assert(data?.status === 'completed', `terminal status ${data?.status}`);
+  assert(data.sync === undefined, 'no legacy data.sync');
   assert(
     data.execute !== undefined || data.message !== undefined || data.context !== undefined,
     'data has execute, message, or context'
@@ -1049,7 +1082,7 @@ function buildEffectiveOrder(only) {
   const { mergeInvoke, mergeClientSessionSchema } = collectMergeFlags();
   let order = [...DEFAULT_ORDER];
   if (mergeInvoke) {
-    const drop = new Set(['invokeSyncEnvelope', 'invokeHello', 'invokeSyncShape']);
+    const drop = new Set(['invokeAsyncEnvelope', 'invokeHello', 'invokeSyncShape']);
     order = order.filter((id) => !drop.has(id));
     const afterCtx = order.indexOf('invokeContextFollowup');
     const ins = afterCtx >= 0 ? afterCtx + 1 : 0;
@@ -1113,10 +1146,10 @@ const CASE_REGISTRY = {
     desc: 'POST /invoke context+execution only (async + poll /requests/:id/result)',
     run: caseInvokeContextFollowupShape,
   },
-  invokeSyncEnvelope: {
-    name: 'invokeSyncEnvelope',
-    desc: 'sync invoke response: data.sync + payload fields',
-    run: caseInvokeSyncResponseEnvelope,
+  invokeAsyncEnvelope: {
+    name: 'invokeAsyncEnvelope',
+    desc: 'POST /invoke → promiseId + poll: payload fields on terminal data',
+    run: caseInvokeAsyncResponseEnvelope,
   },
   mergedInvokeHelloEnvelopeShape: {
     name: 'mergedInvokeHelloEnvelopeShape',
@@ -1128,10 +1161,10 @@ const CASE_REGISTRY = {
     desc: 'GET /api/a2a/sessions',
     run: caseClientSessionsList,
   },
-  invokeHello: { name: 'invokeHello', desc: 'POST invoke sync + optional shape', run: caseInvokeHello },
+  invokeHello: { name: 'invokeHello', desc: 'POST invoke + poll: optional execute shape', run: caseInvokeHello },
   invokeSyncShape: {
     name: 'invokeSyncShape',
-    desc: 'invoke: execute has exactly one action key',
+    desc: 'POST /invoke + poll: execute has exactly one action key (registry id legacy)',
     run: caseInvokeSyncShape,
   },
   agentSeed: {
@@ -1266,7 +1299,7 @@ const DEFAULT_ORDER = [
   'requestsBatchFakeId',
   'requestsSingle404',
   'invokeContextFollowup',
-  'invokeSyncEnvelope',
+  'invokeAsyncEnvelope',
   'clientSessionsList',
   'invokeHello',
   'invokeSyncShape',

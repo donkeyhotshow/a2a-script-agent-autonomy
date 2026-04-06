@@ -1,0 +1,25 @@
+{
+  "context": {
+    "execution": {
+      "action": "agent",
+      "step": "string"
+    },
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "string",
+      "description": "string",
+      "input": [
+        {
+          "name": "string",
+          "type": "string",
+          "label": "string",
+          "required": true
+        }
+      ]
+    }
+  }
+}

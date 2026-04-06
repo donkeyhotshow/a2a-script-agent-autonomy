@@ -1,0 +1,25 @@
+{
+  "context": {
+    "task": "run npm test",
+    "execution": {
+      "action": "agent",
+      "step": "tool_execute_command"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "run npm test"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_execute_command",
+        "message": "Command completed: exitCode 0, stdout '3 tests passed'"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "outcome": "failed",
+  "error": "Request processing failed"
+}

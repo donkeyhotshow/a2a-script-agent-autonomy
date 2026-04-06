@@ -1,0 +1,25 @@
+{
+  "context": {
+    "task": "search for calculateTotal",
+    "execution": {
+      "action": "agent",
+      "step": "tool_rag"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "search for calculateTotal"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_rag",
+        "message": "rag-search: simulations sync agent SCHEMA received.json - 2 top hits"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "outcome": "failed",
+  "error": "Request processing failed"
+}

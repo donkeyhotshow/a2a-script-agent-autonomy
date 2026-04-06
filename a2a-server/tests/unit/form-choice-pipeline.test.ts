@@ -5,7 +5,8 @@ describe('form-choice pipeline', () => {
     it('routes agent to ai_action_ready', async () => {
         const res = await runFormChoicePipeline({ choice_id: 'agent', form_id: 'default' });
         expect(res?.outcome).toBe('ai_action_ready');
-        expect(res?.execute?.message).toMatch(/Agent/);
+        expect(res?.message).toMatch(/Agent/i);
+        expect((res?.execute as { form?: { title?: string } })?.form?.title).toMatch(/Agent/i);
         expect(res?.aiActions?.action).toBe('agent');
     });
 
@@ -19,13 +20,15 @@ describe('form-choice pipeline', () => {
     it('default branch uses exact-only routing (unknown id)', async () => {
         const res = await runFormChoicePipeline({ choice_id: 'unknown-mode-xyz', form_id: 'default' });
         expect(res?.outcome).toBe('completed');
-        expect(res?.execute?.message).toBe('Вибрано: unknown-mode-xyz');
+        const form = (res?.execute as { form?: { description?: string } })?.form;
+        expect(form?.description).toBe('Вибрано: unknown-mode-xyz');
     });
 
     it('does not substring-match dialog inside another id (exactOnly)', async () => {
         const res = await runFormChoicePipeline({ choice_id: 'my-dialog-extra', form_id: 'default' });
         expect(res?.outcome).toBe('completed');
-        expect(res?.execute?.message).toBe('Вибрано: my-dialog-extra');
+        const form = (res?.execute as { form?: { description?: string } })?.form;
+        expect(form?.description).toBe('Вибрано: my-dialog-extra');
         expect(res?.context).toBeUndefined();
     });
 });

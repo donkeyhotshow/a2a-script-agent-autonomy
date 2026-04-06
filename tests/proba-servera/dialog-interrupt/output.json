@@ -1,0 +1,17 @@
+{
+  "context": {
+    "task": "What do you need?",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Short question"
+      }
+    ]
+  },
+  "outcome": "failed",
+  "error": "Request processing failed"
+}

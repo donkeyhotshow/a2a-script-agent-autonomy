@@ -68,7 +68,7 @@ Recommended sections:
 - `ADR-0051-orchestrator-single-state-enum.md` - Single FSM enum for orchestrator states to avoid boolean flags
 - `ADR-0052-session-finite-state-machine.md` - Session FSM with exhaustive transitions and guard validation
 - `ADR-0053-artifact-lifecycle-authority.md` - Canonical authority model for artifact writing, retention, and consumption
-- `ADR-0054-real-time-update-contracts.md` - Superseded: HTTP polling only (no WebSocket in this repo)
+- `ADR-0054-real-time-update-contracts.md` - Superseded: HTTP polling only (no WebSocket or SSE in this repo)
 - `ADR-0055-evidence-first-ui-architecture.md` - Evidence-first UI components with stale detection rules
 - `ADR-0056-operator-decision-model.md` - Steering Controls Authority table defining operator actions per state
 - `ADR-0057-canonical-schema-registry.md` - JSON Schema registry plus validator guarantees for artifacts

@@ -1,4 +1,4 @@
-import { logger } from '../../utils/logger.js';
+import { logger } from '../utils/logger.js';
 // @ts-ignore
 import { Loro } from 'loro-crdt';
 

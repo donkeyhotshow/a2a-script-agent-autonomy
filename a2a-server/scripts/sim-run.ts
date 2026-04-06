@@ -17,9 +17,10 @@
  *   - Сохраняет сырой ответ invoke в invoke-capture.json (не golden; см. simulations/SCHEMA.md)
  */
 
-import {readFileSync, writeFileSync, existsSync, readdirSync, statSync} from 'node:fs';
-import {join, dirname, relative} from 'node:path';
+import {existsSync} from 'node:fs';
+import {join, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {findSimulationDirs, runSingleSimulation, simDisplayName} from './sim-run-core.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -35,203 +36,10 @@ if (!isAll && !simDirArg) {
     process.exit(1);
 }
 
-/** Resolve display name for a sim dir (e.g. "dialog/3"). */
-function simDisplayName(baseDir: string, fullPath: string): string {
-    return relative(baseDir, fullPath).split(/[/\\]/).join('/');
-}
-
-/**
- * Find all simulation dirs: legacy (simulations/<name>) and step-based (simulations/<name>/<step>).
- * Aligned with simulations/SCHEMA.md and sim-report.ts.
- */
-function findSimulationDirs(baseDir: string): string[] {
-    const dirs: string[] = [];
-
-    try {
-        const entries = readdirSync(baseDir);
-
-        for (const entry of entries) {
-            const fullPath = join(baseDir, entry);
-            const stat = statSync(fullPath);
-
-            if (!stat.isDirectory()) continue;
-
-            const legacyRequestPath = join(fullPath, 'request.json');
-            if (existsSync(legacyRequestPath)) {
-                dirs.push(fullPath);
-                continue;
-            }
-
-            // Step format: simulations/<name>/<step>/request.json
-            const stepEntries = readdirSync(fullPath);
-            for (const step of stepEntries) {
-                const stepPath = join(fullPath, step);
-                const stepStat = statSync(stepPath);
-                if (!stepStat.isDirectory()) continue;
-                if (existsSync(join(stepPath, 'request.json'))) {
-                    dirs.push(stepPath);
-                }
-            }
-        }
-    } catch (err: any) {
-        console.error(`Error reading directory: ${err.message}`);
-    }
-
-    return dirs.sort();
-}
-
-/** Run a single simulation; baseDir is used for display name (e.g. dialog/3). */
-async function runSingleSimulation(simDir: string, baseDir: string): Promise<boolean> {
-    const requestPath = join(simDir, 'request.json');
-    const responsePath = join(simDir, 'invoke-capture.json');
-    const simName = simDisplayName(baseDir, simDir) || simDir.split(/[/\\]/).pop() || simDir;
-
-    console.log(`\n📁 Simulation: ${simName}`);
-    console.log(`   Path: ${simDir}`);
-
-    // Читаем request.json
-    let requestData: any;
-    try {
-        const requestContent = readFileSync(requestPath, 'utf-8');
-        requestData = JSON.parse(requestContent);
-    } catch (err: any) {
-        console.error(`❌ Error reading request.json: ${err.message}`);
-        return false;
-    }
-
-    const message = requestData.task ||
-        requestData.message ||
-        requestData.result?.message ||
-        requestData.context?.task ||
-        requestData.context?.message ||
-        'N/A';
-
-    // Контекст - базовый формат
-    const context = requestData.context?.version
-        ? requestData.context
-        : {
-            version: '1.0',
-            session_id: 'stateless',
-            ...requestData.context
-        };
-
-    console.log(`   Action: ${requestData.action || 'N/A'}`);
-    console.log(`   Task: ${message}`);
-
-    // Вызываем сервер
-    try {
-        const {invoke} = await import('../src/services/utils/invoke.service.js');
-        const {requestService} = await import('../src/services/core/request/request.service.js');
-
-        console.log('\n⏳ Invoking server...');
-
-        const invokeInput: any = {
-            context: context,
-        };
-
-        if (requestData.result && typeof requestData.result === 'object') {
-            invokeInput.result = requestData.result;
-        }
-
-        // Handle task/message from various sources
-        if (requestData.task) {
-            invokeInput.task = requestData.task;
-        } else if (requestData.message) {
-            invokeInput.message = requestData.message;
-        } else if (requestData.result?.message) {
-            // Support format: { result: { message: "..." } }
-            invokeInput.message = requestData.result.message;
-        } else if (requestData.result?.choice) {
-            // Support format: { result: { choice: "..." } } for router selections
-            invokeInput.selectedAction = { actionId: requestData.result.choice };
-        }
-
-        if (requestData.action) {
-            invokeInput.action = requestData.action;
-        }
-
-        if (requestData.selectedAction) {
-            invokeInput.selectedAction = requestData.selectedAction;
-        }
-
-        if (requestData.stepId) {
-            invokeInput.stepId = requestData.stepId;
-            invokeInput.stepResult = requestData.result;
-        }
-
-        const {promiseId} = await invoke('simulation-client', invokeInput);
-
-        console.log(`   Promise ID: ${promiseId}`);
-
-        // Ждем результат (polling)
-        let result = null;
-        const maxAttempts = 60;
-        const delay = 500;
-
-        for (let i = 0; i < maxAttempts; i++) {
-            await new Promise(resolve => setTimeout(resolve, delay));
-
-            result = await requestService.getResult(promiseId);
-
-            if (result && result.status === 'completed') {
-                console.log(`   Status: ${result.status} (attempt ${i + 1})`);
-                break;
-            }
-
-            if (i % 10 === 0) {
-                console.log(`   Waiting... (attempt ${i + 1}/${maxAttempts})`);
-            }
-        }
-
-        if (!result) {
-            console.error('❌ No result after timeout');
-            return false;
-        }
-
-        // Форматируем даты
-        const formatDate = (d: any) => d?.toISOString ? d.toISOString() : d;
-
-        // Формируем ответ
-        const response = {
-            success: result.status === 'completed',
-            data: {
-                id: result.id,
-                promiseId: result.promiseId,
-                clientId: result.clientId,
-                status: result.status,
-                priority: result.priority,
-                context: result.context,
-                message: result.message,
-                codeBlocks: result.codeBlocks,
-                result: result.result,
-                error: result.error,
-                createdAt: formatDate(result.createdAt),
-                startedAt: formatDate(result.startedAt),
-                completedAt: formatDate(result.completedAt),
-            }
-        };
-
-        // Сохраняем с отступами
-        writeFileSync(responsePath, JSON.stringify(response, null, 2));
-        console.log(`\n✅ Response saved to: invoke-capture.json`);
-        console.log(`   Outcome: ${result.result?.['outcome'] || 'N/A'}`);
-
-        return true;
-
-    } catch (err: any) {
-        console.error(`\n❌ Error: ${err.message}`);
-        return false;
-    }
-}
-
-// Основная логика
 async function main() {
-    // Используем корневую папку симуляций на уровне репозитория:
-    // c:/workspace/.../simulations (см. simulations/SCHEMA.md, ADR-0001).
     const baseDir = join(__dirname, '..', '..', 'simulations');
 
     if (isAll) {
-        // Запустить все симуляции
         console.log('\n🔄 Running all simulations...\n');
 
         const simDirs = findSimulationDirs(baseDir);
@@ -266,7 +74,6 @@ async function main() {
                 console.log(`\n❌ ${simName}: Провалено`);
             }
 
-            // Небольшая пауза между симуляциями
             await new Promise(resolve => setTimeout(resolve, 200));
         }
 
@@ -277,7 +84,6 @@ async function main() {
         console.log('='.repeat(50) + '\n');
 
     } else {
-        // Запустить одну симуляцию
         const simDir = join(baseDir, simDirArg!);
 
         if (!existsSync(simDir) || !existsSync(join(simDir, 'request.json'))) {

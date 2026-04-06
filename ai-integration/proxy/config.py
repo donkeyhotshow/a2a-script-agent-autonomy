@@ -12,10 +12,13 @@ Usage:
     ollama_host = settings.ollama_host
 """
 
+import logging
 import os
 import sys
 from pathlib import Path
 from typing import Literal, Optional
+
+_config_log = logging.getLogger(__name__)
 
 try:
     from pydantic import field_validator, ValidationError
@@ -23,7 +26,7 @@ try:
     HAS_PYDANTIC = True
 except ImportError:
     HAS_PYDANTIC = False
-    print("Warning: pydantic not installed. Using legacy configuration.")
+    _config_log.warning("pydantic not installed — using legacy configuration")
 
 # Always resolve ai-integration/.env (this file lives at ai-integration/proxy/config.py).
 _AI_INTEGRATION_ENV = Path(__file__).resolve().parent.parent / '.env'
@@ -60,8 +63,8 @@ class LegacyConfig:
     STORAGE_DIR = os.environ.get('STORAGE_DIR', 'proxy_logs')
     PROMISES_DIR = os.environ.get('PROMISES_DIR', os.path.join(STORAGE_DIR, 'promises'))
     
-    # Request Handling Configuration (0 = no timeout on forwarded LLM requests)
-    _ft = int(os.environ.get('FORWARD_TIMEOUT_SECONDS', '0'))
+    # Request Handling Configuration (30s default timeout on forwarded LLM requests)
+    _ft = int(os.environ.get('FORWARD_TIMEOUT_SECONDS', '30'))
     FORWARD_TIMEOUT_SECONDS = _ft
     FORWARD_TIMEOUT = None if _ft == 0 else _ft
     PROMISE_TTL_SECONDS = int(os.environ.get('PROMISE_TTL_SECONDS', '86400'))
@@ -95,9 +98,9 @@ class LegacyConfig:
     
     # Provider Configuration
     PROVIDERS_CONFIG = os.environ.get('PROVIDERS_CONFIG', 'config/providers.json')
-    DEFAULT_PROVIDER = os.environ.get('DEFAULT_PROVIDER', 'ollama')
+    DEFAULT_PROVIDER = os.environ.get('DEFAULT_PROVIDER', 'z_ai')
     ENABLE_FALLBACK = os.environ.get('ENABLE_FALLBACK', 'true').lower() in {'1', 'true', 'yes', 'y', 'on', 't'}
-    PROVIDER_TIMEOUT = int(os.environ.get('PROVIDER_TIMEOUT', '0'))  # 0 = no aiohttp total limit on LLM calls
+    PROVIDER_TIMEOUT = int(os.environ.get('PROVIDER_TIMEOUT', '30'))  # 30s default aiohttp total timeout on LLM calls
     
     # Provider API Keys
     Z_AI_API_KEY = os.environ.get('Z_AI_API_KEY', '')
@@ -184,8 +187,7 @@ if HAS_PYDANTIC:
         # ===========================================
         # Request Handling Configuration
         # ===========================================
-        # forward_timeout_seconds: 0 = unlimited (wait for upstream). Set env for a cap.
-        forward_timeout_seconds: int = 0
+        forward_timeout_seconds: int = 30
         """Timeout for forwarding requests in seconds. 0 = no limit."""
         
         promise_ttl_seconds: int = 86400
@@ -269,7 +271,7 @@ if HAS_PYDANTIC:
         enable_fallback: bool = True
         """Enable fallback chain between providers."""
         
-        provider_timeout: int = 0
+        provider_timeout: int = 30
         """
         aiohttp total timeout for provider sessions (seconds). 0 = no limit.
         Set via PROVIDER_TIMEOUT environment variable.
@@ -349,10 +351,10 @@ if HAS_PYDANTIC:
         @field_validator('forward_timeout_seconds', mode='before')
         @classmethod
         def default_forward_timeout(cls, v: Optional[int]) -> int:
-            """0 = no timeout. Omit or set FORWARD_TIMEOUT_SECONDS=0 for no limit."""
+            """30s default timeout. 0 = no timeout. Omit or set FORWARD_TIMEOUT_SECONDS=0 for no limit."""
             if v is not None:
                 return v
-            return 0
+            return 30
         
         @field_validator('proxy_port', 'ollama_timeout', 'ollama_idle_timeout',
                         'promise_ttl_seconds', 'promise_max_workers',
@@ -545,6 +547,12 @@ if 'PROMISE_DELAY_BEFORE_EXECUTE' not in dir():
     PROMISE_DELAY_BEFORE_EXECUTE = 2.0
 
 
+def ollama_upstream_base() -> str:
+    """Return OLLAMA_HOST with no trailing slash (for appending /path)."""
+    h = OLLAMA_HOST
+    return (h.rstrip("/") or h) if h else h
+
+
 # ===========================================
 # Validation Function
 # ===========================================
@@ -557,13 +565,16 @@ def validate_config() -> bool:
         True if valid, False otherwise.
     """
     if not HAS_PYDANTIC:
-        print("Warning: pydantic not installed, cannot validate.")
+        _config_log.warning("pydantic not installed — cannot validate configuration")
         return True
     
     try:
         Settings()
         return True
-    except ValidationError:
+    except ValidationError as e:
+        for err in e.errors():
+            loc = ".".join(str(x) for x in err.get("loc", ()))
+            _config_log.error("validate_config: %s — %s", loc, err.get("msg"))
         return False
 
 

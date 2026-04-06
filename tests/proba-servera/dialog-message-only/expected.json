@@ -1,0 +1,16 @@
+{
+  "context": {
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "string"
+      }
+    ]
+  },
+  "outcome": "failed",
+  "error": "string"
+}

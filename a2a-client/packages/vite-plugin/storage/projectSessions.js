@@ -1,5 +1,7 @@
 import fs from 'fs';
 import path from 'path';
+import { compareSessionCreatedAtDesc } from '@a2a-client/shared/session-sort.mjs';
+import { getProjectDotA2aSessionsDir } from '@a2a-client/shared/project-sessions-dir.mjs';
 import { loadProjects } from './projects.js';
 
 export function normalizeProjectPath(p) {
@@ -66,7 +68,7 @@ export function findSessionProjectPath(cwd, sessionId) {
 }
 
 export function getSessionsDir(projectPath) {
-  return path.join(projectPath, '.a2a', 'sessions');
+  return getProjectDotA2aSessionsDir(projectPath);
 }
 
 export function listSessions(projectPath) {
@@ -85,7 +87,7 @@ export function listSessions(projectPath) {
       }
     })
     .filter(Boolean)
-    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    .sort(compareSessionCreatedAtDesc);
 }
 
 export function loadSession(projectPath, sessionId) {
@@ -131,14 +133,16 @@ export function resolveProjectPathForApi(cwd, sessionId, sources = {}) {
   if (projectRoot) {
     try {
       return resolveSessionProjectPath(cwd, { projectRoot });
-    } catch {
+    } catch (e) {
+      console.error('[projectSessions] resolve projectRoot failed:', projectRoot, e?.message || e);
       return null;
     }
   }
   if (projectId) {
     try {
       return resolveSessionProjectPath(cwd, { projectId });
-    } catch {
+    } catch (e) {
+      console.error('[projectSessions] resolve projectId failed:', projectId, e?.message || e);
       return null;
     }
   }

@@ -9,7 +9,10 @@ import threading
 import hashlib
 import datetime
 import time
+import logging
 from typing import Any, Optional
+
+logger = logging.getLogger(__name__)
 
 from .config import AI_HUB_CONFIG
 
@@ -18,6 +21,8 @@ _CONFIG_LOCK = threading.Lock()
 _CONFIG_CACHE: Optional[dict] = None
 _CONFIG_MTIME: Optional[float] = None
 _CONFIG_PATH: Optional[str] = None
+_WARNED_NO_HUB_PATH = False
+_WARNED_MISSING_HUB_FILES: set[str] = set()
 
 
 _TRUTHY = {'1', 'true', 'yes', 'y', 'on', 't'}
@@ -73,15 +78,23 @@ def _compile_rules(rules: Any) -> list[dict]:
         if isinstance(path_regex, str) and path_regex.strip():
             try:
                 compiled_rule['_path_re'] = re.compile(path_regex)
-            except re.error:
-                pass
+            except re.error as e:
+                logger.warning(
+                    "Invalid path_regex for rule %s: %s — pattern ignored",
+                    compiled_rule["id"],
+                    e,
+                )
 
         prompt_regex = when.get('prompt_regex')
         if isinstance(prompt_regex, str) and prompt_regex.strip():
             try:
                 compiled_rule['_prompt_re'] = re.compile(prompt_regex, flags=re.IGNORECASE | re.MULTILINE)
-            except re.error:
-                pass
+            except re.error as e:
+                logger.warning(
+                    "Invalid prompt_regex for rule %s: %s — pattern ignored",
+                    compiled_rule["id"],
+                    e,
+                )
 
         compiled.append(compiled_rule)
 
@@ -90,6 +103,7 @@ def _compile_rules(rules: Any) -> list[dict]:
 
 def _normalize_config(raw: Any) -> dict:
     if not isinstance(raw, dict):
+        logger.warning("AI hub config root must be a JSON object; got %s", type(raw).__name__)
         raw = {}
 
     model_aliases_raw = raw.get('model_aliases')
@@ -127,16 +141,24 @@ def _normalize_config(raw: Any) -> dict:
 
 
 def get_ai_hub_config() -> dict:
-    global _CONFIG_CACHE, _CONFIG_MTIME, _CONFIG_PATH
+    global _CONFIG_CACHE, _CONFIG_MTIME, _CONFIG_PATH, _WARNED_NO_HUB_PATH
 
     config_path = AI_HUB_CONFIG or _default_ai_hub_config_path()
     if not config_path:
+        if not _WARNED_NO_HUB_PATH:
+            logger.warning(
+                "AI_HUB_CONFIG unset and no default docs/ai-hub.config(.example).json; using empty hub rules"
+            )
+            _WARNED_NO_HUB_PATH = True
         return {'model_aliases': {}, 'strict_model_aliases': False, 'rules': [], 'virtual_models': {}}
 
     try:
         stat = os.stat(config_path)
         mtime = stat.st_mtime
     except FileNotFoundError:
+        if config_path not in _WARNED_MISSING_HUB_FILES:
+            logger.warning("AI_HUB_CONFIG file not found: %s (empty hub rules)", config_path)
+            _WARNED_MISSING_HUB_FILES.add(config_path)
         return {'model_aliases': {}, 'strict_model_aliases': False, 'rules': [], 'virtual_models': {}}
 
     with _CONFIG_LOCK:
@@ -146,8 +168,13 @@ def get_ai_hub_config() -> dict:
         try:
             with open(config_path, 'r', encoding='utf-8') as f:
                 raw = json.load(f)
-        except Exception as e:
-            print(f"[X] Could not load AI_HUB_CONFIG={config_path}: {e}")
+        except (json.JSONDecodeError, OSError, UnicodeDecodeError) as e:
+            logger.error(
+                "Could not load AI_HUB_CONFIG=%s: %s (using empty rules)",
+                config_path,
+                e,
+                exc_info=True,
+            )
             raw = {}
 
         _CONFIG_CACHE = _normalize_config(raw)
@@ -157,13 +184,36 @@ def get_ai_hub_config() -> dict:
 
 
 def _normalize_path(path: str) -> str:
-    return (path or '').lstrip('/')
+    """Strip leading/trailing slashes so `/api/chat` and `/api/chat/` match the same rule path."""
+    return (path or '').strip().strip('/')
 
 
 def _normalize_model_key(model: str) -> str:
     model = (model or '').strip().lower()
     model = re.sub(r'[\s_]+', '-', model)
     return model
+
+
+def _message_content_to_text(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, (int, float, bool)):
+        return str(content)
+    if isinstance(content, list):
+        segments: list[str] = []
+        for block in content:
+            if isinstance(block, dict):
+                txt = block.get('text')
+                if isinstance(txt, str) and txt:
+                    segments.append(txt)
+                else:
+                    inner = block.get('content')
+                    if isinstance(inner, str) and inner:
+                        segments.append(inner)
+            elif isinstance(block, str):
+                segments.append(block)
+        return '\n'.join(segments)
+    return ''
 
 
 def _extract_prompt(body_json: Optional[dict]) -> str:
@@ -176,8 +226,22 @@ def _extract_prompt(body_json: Optional[dict]) -> str:
     if isinstance(messages, list):
         parts: list[str] = []
         for msg in messages:
-            if isinstance(msg, dict) and isinstance(msg.get('content'), str):
-                parts.append(msg['content'])
+            if not isinstance(msg, dict):
+                continue
+            content = msg.get('content')
+            text = _message_content_to_text(content)
+            if text:
+                parts.append(text)
+            tool_calls = msg.get('tool_calls')
+            if tool_calls and isinstance(tool_calls, list):
+                try:
+                    tc_s = json.dumps(tool_calls, default=str)
+                except (TypeError, ValueError):
+                    tc_s = str(tool_calls)
+                if not text:
+                    parts.append(tc_s)
+                elif tc_s:
+                    parts.append(tc_s)
         return '\n'.join(parts)
     return ''
 
@@ -296,7 +360,8 @@ def _safe_format(template: Any, **kwargs: Any) -> Any:
         return template
     try:
         return template.format(**kwargs)
-    except Exception:
+    except (KeyError, ValueError) as e:
+        logger.warning("template format failed (using raw template): %s", e)
         return template
 
 

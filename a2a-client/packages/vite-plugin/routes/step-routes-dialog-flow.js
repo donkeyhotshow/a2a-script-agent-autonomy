@@ -1,20 +1,4 @@
 import fs from 'fs';
-import http from 'http';
-import pathMod from 'path';
-
-import {
-    buildStepRecord,
-    extractA2aExecute,
-    mergeDialogHistoryForInvoke,
-    mergeResponseContext,
-    pickInvokeContextPatch,
-    sanitizeContextForServer,
-    sanitizeInvokeBodyForA2aUpstream,
-    unwrapA2aResponse,
-} from './utils/builders.js';
-import { toMinimalNextAck } from './utils/session-projection-dto.js';
-import * as stepHandlers from './handlers/step-handlers.js';
-import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.js';
 import {
     buildSubmitResult,
     normalizeRouterStepSubmit,
@@ -22,8 +6,14 @@ import {
     validateSubmitResult,
 } from './step-routes-router-flow.js';
 import { maybeChainAgentTools } from './step-routes-agent-flow.js';
-import { loadSession, saveSession, resolveProjectPathForApi } from '../storage/projectSessions.js';
-import { registerStepSessionsParent } from '../storage/newSessions.js';
+import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.js';
+import * as stepHandlers from './handlers/step-handlers.js';
+import { validateSessionId, resolveProjectStorage, loadSessionData, saveSessionData } from './session-manager.js';
+import { mergeContext, processTaskAndContext, prepareServerRequest } from './context-processor.js';
+import { sendHttpRequest } from './http-invoker.js';
+import { parseServerResponse, processResponseData, extractAssistantMessage, createResponseAck } from './response-handler.js';
+import { saveClientResult, saveRequestToServer, ensureStepDirectory, saveServerPromise, saveStepData, updateSessionAfterResponse, updateSessionForPromise, finalizeSession } from './persistence-manager.js';
+import { unwrapA2aResponse } from './utils/builders.js';
 
 export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' }) {
     const nextMatch = path.match(/^\/sessions\/([^/]+)\/next$/);
@@ -32,7 +22,7 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
     }
 
     const sessionId = nextMatch[1];
-    if (!stepHandlers.isValidSessionId(sessionId)) {
+    if (!validateSessionId(sessionId)) {
         res.writeHead(400).end(JSON.stringify({ error: 'Invalid session ID' }));
         return true;
     }
@@ -43,45 +33,27 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
         try {
             const d = JSON.parse(body || '{}');
 
-            const projectPath =
-                storageMode === 'project'
-                    ? resolveProjectPathForApi(cwd, sessionId, {
-                          projectId: d.projectId,
-                          projectRoot: d.projectRoot,
-                      })
-                    : null;
-            if (storageMode === 'project') {
-                if (!projectPath) {
-                    res.writeHead(404).end(
-                        JSON.stringify({ error: 'Session not found (unknown project)' })
-                    );
-                    return;
-                }
-                const stepsParent = pathMod.join(projectPath, '.a2a', 'session-steps');
-                fs.mkdirSync(stepsParent, { recursive: true });
-                registerStepSessionsParent(sessionId, stepsParent);
-                const unreg = () => registerStepSessionsParent(sessionId, null);
-                res.once('finish', unreg);
-                res.once('close', unreg);
+            const projectStorage = resolveProjectStorage({
+                cwd,
+                sessionId,
+                projectId: d.projectId,
+                projectRoot: d.projectRoot,
+                storageMode,
+            });
+            const projectPath = projectStorage?.projectPath;
+
+            if (storageMode === 'project' && !projectPath) {
+                res.writeHead(404).end(JSON.stringify({ error: 'Session not found (unknown project)' }));
+                return;
             }
 
-            let session;
-            if (projectPath) {
-                session = loadSession(projectPath, sessionId);
-                if (!session) {
-                    registerStepSessionsParent(sessionId, null);
-                    res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
-                    return;
-                }
-            } else {
-                session = stepHandlers.loadNewSession(cwd, sessionId);
-                if (!session) {
-                    res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
-                    return;
-                }
+            const session = loadSessionData({ cwd, sessionId, projectPath });
+            if (!session) {
+                res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
+                return;
             }
 
-            const currentStep = session.currentStep || 1;
+            const currentStep = Number(session.currentStep) || 1;
             let prevStepData = stepHandlers.loadServerResponse(cwd, sessionId, currentStep);
             if (!prevStepData && projectPath && currentStep === 1) {
                 prevStepData = { context: session.context, execute: session.execute };
@@ -92,276 +64,73 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
             submitResult = normalizeRouterStepSubmit(submitResult, prevStepData);
             const submitResultError = validateSubmitResult(submitResult);
             if (submitResultError) {
-                res.writeHead(400).end(
-                    JSON.stringify({
-                        error: submitResultError,
-                    })
-                );
+                res.writeHead(400).end(JSON.stringify({ error: submitResultError }));
                 return;
             }
-            console.log(
-                '[VitePlugin] Request body parsed - task:',
-                d.task,
-                'result:',
-                d.result,
-                'submitResult:',
-                submitResult,
-                'hasChoices:',
-                hasChoices
-            );
 
             const nextStepNum = currentStep + 1;
-            console.log(
-                '[VitePlugin] Saving client-result for step:',
-                nextStepNum,
-                'data:',
-                { result: submitResult }
-            );
-            stepHandlers.saveClientResult(cwd, sessionId, nextStepNum, { result: submitResult });
-            console.log('[VitePlugin] Successfully saved client-result for step:', nextStepNum);
+            saveClientResult({ cwd, sessionId, nextStepNum, submitResult });
 
-            const previousContext = prevStepData?.context || {};
-            console.log('[VitePlugin] Previous step context:', previousContext);
-
-            let mergedContext = { ...previousContext };
-            if (prevStepData?.result?.context) {
-                const filteredContext = pickInvokeContextPatch(prevStepData.result.context);
-                mergedContext = { ...mergedContext, ...filteredContext };
-            }
-
-             const sessionContext = session.context || {};
-             const previousExecution = sessionContext.execution || {};
-             if (previousExecution.action && !mergedContext.execution) {
-                 mergedContext.execution = previousExecution;
-                 console.log('[VitePlugin] Preserving execution.action from session:', previousExecution.action);
-             }
-             if (sessionContext.llmModel && !mergedContext.llmModel) {
-                 mergedContext.llmModel = sessionContext.llmModel;
-             }
-            // Client API: keep storage session id + project scope on session.context (stripped before /invoke).
-            mergedContext.sessionId = sessionId;
-            if (sessionContext.projectId) {
-                mergedContext.projectId = sessionContext.projectId;
-            }
-            if (sessionContext.projectRoot) {
-                mergedContext.projectRoot = sessionContext.projectRoot;
-            }
-
-            // Router beat B: choice submit must keep execution.step === 'router' (not session seed agent/new).
-            if (
-                hasChoices &&
-                submitResult &&
-                typeof submitResult.choice === 'string' &&
-                prevStepData?.context?.execution &&
-                typeof prevStepData.context.execution === 'object' &&
-                prevStepData.context.execution.step === 'router'
-            ) {
-                mergedContext.execution = { ...prevStepData.context.execution };
-            }
-
-            // Router beat B: a new pipeline choice must not carry llmPromiseId from the prior router/classify hop
-            // (server dialog processor would attempt LLM recovery and fail).
-            if (hasChoices && submitResult && typeof submitResult.choice === 'string') {
-                delete mergedContext.llmPromiseId;
-            }
-
-            const effectiveTask = submitResult?.message;
-            console.log(
-                '[VitePlugin] Building request - effectiveTask:',
-                effectiveTask,
-                'result:',
-                submitResult
-            );
-            console.log('[VitePlugin] Effective task sent to server:', effectiveTask);
-
-            const execAction = mergedContext.execution?.action;
-            const execStep = mergedContext.execution?.step;
-            if (effectiveTask) {
-                mergedContext.task = effectiveTask;
-                if (execAction === 'dialog') {
-                    mergeDialogHistoryForInvoke(mergedContext, effectiveTask);
-                } else {
-                    console.log('[VitePlugin] Set context.task to latest submit:', effectiveTask);
-                }
-            } else if (mergedContext.task) {
-                console.log(
-                    '[VitePlugin] Preserved context.task from previous context:',
-                    mergedContext.task
-                );
-            }
-
-            // First beat (task form, step new): run sync invoke so router execute is returned immediately.
-            // Applies to task *or* mode-seeded agent|dialog|… (same input form); not router choice submits.
-            const shouldSyncInvoke =
-                execStep === 'new' &&
-                typeof effectiveTask === 'string' &&
-                effectiveTask.trim().length > 0 &&
-                !hasChoices;
-
-            // Router beat B (pipeline choice): force sync invoke so the server processes this request
-            // immediately (waitTerminalRequest + processRequestByPromiseId). Without sync, async-only
-            // mode relies on the queue tick; pending rows with retryAfter are invisible to listPending and
-            // the Client API can poll forever with stale router execute.
-            const syncRouterChoice =
-                hasChoices && submitResult && typeof submitResult.choice === 'string';
-
-            const contextForServer = sanitizeContextForServer(mergedContext);
-            const requestToServer = sanitizeInvokeBodyForA2aUpstream({
-                context: contextForServer,
-                result: submitResult,
-                ...(effectiveTask ? { task: effectiveTask } : {}),
-                ...(shouldSyncInvoke || syncRouterChoice ? { sync: true } : {}),
+            let mergedContext = mergeContext({
+                prevStepData,
+                sessionContext: session.context || {},
+                submitResult,
+                hasChoices,
             });
 
-            stepHandlers.saveRequestToServer(cwd, sessionId, nextStepNum, requestToServer);
+            const { effectiveTask, mergedContext: updatedMergedContext } = processTaskAndContext({
+                mergedContext,
+                submitResult,
+                prevStepData,
+            });
+            mergedContext = updatedMergedContext;
 
-            const stepDir = stepHandlers.getNewStepDir(cwd, sessionId, nextStepNum);
-            if (!fs.existsSync(stepDir)) fs.mkdirSync(stepDir, { recursive: true });
+            const requestToServer = prepareServerRequest({
+                mergedContext,
+                submitResult,
+                effectiveTask,
+            });
 
-            const a2aServerUrl = getA2aServerBaseUrl();
-            const urlObj = new URL(`${a2aServerUrl}/api/v1/invoke`);
+            saveRequestToServer({ cwd, sessionId, nextStepNum, requestToServer });
+            ensureStepDirectory({ cwd, sessionId, nextStepNum });
 
-            let serverResponse = null;
-            let promiseData = null;
-
-            const reqOptions = {
-                hostname: urlObj.hostname,
-                port: urlObj.port,
-                path: urlObj.pathname,
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-            };
-
-            const xhrReq = http.request(reqOptions, (xhrRes) => {
-                let data = '';
-                xhrRes.on('data', (chunk) => (data += chunk));
-                xhrRes.on('end', async () => {
-                    console.log(`[VitePlugin-Invoke] Response [${xhrRes.statusCode}] from A2A Server`);
+            sendHttpRequest({
+                requestToServer,
+                onResponse: async (xhrRes, data) => {
                     try {
-                        console.log(
-                            '[VitePlugin] A2A response:',
-                            xhrRes.statusCode,
-                            'data:',
-                            data.substring(0, 200)
-                        );
-                        let parseErrMsg = null;
-                        try {
-                            if (!data || data.trim() === '') {
-                                throw new Error('Empty response from A2A server');
-                            }
-                            const a2aData = JSON.parse(data);
-
-                            if (a2aData.data?.promiseId) {
-                                console.log(
-                                    '[VitePlugin] Async invoke — promiseId (daemon completes via GET /promise):',
-                                    a2aData.data.promiseId
-                                );
-                                promiseData = {
-                                    promiseId: a2aData.data.promiseId,
-                                    status: 'pending',
-                                    submittedAt: new Date().toISOString(),
-                                };
-                                stepHandlers.saveServerPromise(cwd, sessionId, nextStepNum, promiseData);
-                            } else if (xhrRes.statusCode >= 200 && xhrRes.statusCode < 300) {
-                                console.log('[VitePlugin] Sync invoke response');
-                                serverResponse = a2aData;
-                            } else {
-                                console.error('[VitePlugin] A2A error status:', xhrRes.statusCode);
-                            }
-                        } catch (parseErr) {
-                            parseErrMsg = parseErr?.message || String(parseErr);
-                            console.error('[vite-plugin-a2a] Failed to parse A2A response:', parseErrMsg);
-                        }
+                        const a2aData = parseServerResponse(data);
+                        const { serverResponse, promiseData } = processResponseData({ a2aData, xhrRes });
 
                         const hasPromise = !!promiseData?.promiseId;
                         const hasServer = !!serverResponse;
 
                         if (hasPromise && !hasServer) {
-                            session.currentStep = nextStepNum;
-                            session.updatedAt = new Date().toISOString();
-                            if (submitResult?.message) {
-                                session.messages = session.messages || [];
-                                session.messages.push({
-                                    role: 'user',
-                                    content: submitResult.message,
-                                    step: nextStepNum,
-                                });
-                            }
-                            session.promiseId = promiseData.promiseId;
-                            session.context = mergedContext;
-                            if (projectPath) saveSession(projectPath, session);
-                            stepHandlers.saveNewSession(cwd, session);
+                            updateSessionForPromise({ session, nextStepNum, submitResult, promiseData, mergedContext });
+                            saveSessionData({ projectPath, session });
+                            saveServerPromise({ cwd, sessionId, nextStepNum, promiseData });
 
                             res.setHeader('Content-Type', 'application/json');
-                            res.end(
-                                JSON.stringify(
-                                    toMinimalNextAck({
-                                        success: true,
-                                        step: nextStepNum,
-                                        promiseId: promiseData.promiseId,
-                                    })
-                                )
-                            );
+                            res.end(JSON.stringify(createResponseAck({
+                                success: true,
+                                step: nextStepNum,
+                                promiseId: promiseData.promiseId,
+                            })));
                             return;
                         }
 
-                        session.currentStep = nextStepNum;
-                        session.updatedAt = new Date().toISOString();
-
                         const a2aPayload = unwrapA2aResponse(serverResponse) || serverResponse;
-                        const history =
-                            a2aPayload?.context?.history || serverResponse?.result?.context?.history;
-                        let assistantMessage =
-                            a2aPayload?.execute?.message ||
-                            serverResponse?.result?.execute?.message ||
-                            a2aPayload?.result?.execute?.message ||
-                            serverResponse?.result?.message ||
-                            a2aPayload?.message ||
-                            serverResponse?.message ||
-                            null;
+                        const history = a2aPayload?.context?.history || serverResponse?.result?.context?.history;
+                        const assistantMessage = extractAssistantMessage({ serverResponse, a2aPayload, history });
 
-                        if (
-                            assistantMessage &&
-                            typeof assistantMessage === 'string' &&
-                            (assistantMessage.length < 35 || !assistantMessage.match(/[.!?]$/))
-                        ) {
-                            if (Array.isArray(history)) {
-                                const historyMsg = history.find((h) => h.role === 'assistant');
-                                if (historyMsg?.message) {
-                                    assistantMessage = historyMsg.message;
-                                }
-                            }
-                        }
+                        const savedContext = updateSessionAfterResponse({
+                            session,
+                            nextStepNum,
+                            submitResult,
+                            assistantMessage,
+                            serverResponse,
+                            mergedContext,
+                        });
 
-                        if (submitResult?.message) {
-                            session.messages = session.messages || [];
-                            session.messages.push({
-                                role: 'user',
-                                content: submitResult.message,
-                                step: nextStepNum,
-                            });
-                        }
-
-                        if (assistantMessage) {
-                            session.messages = session.messages || [];
-                            session.messages.push({
-                                role: 'assistant',
-                                content: assistantMessage,
-                                step: nextStepNum,
-                            });
-                        }
-
-                        session.messages = session.messages || [];
-
-                        const savedContext = serverResponse
-                            ? mergeResponseContext(mergedContext, serverResponse)
-                            : mergedContext;
-                        session.context = savedContext;
-                        session.promiseId = null;
-
-                        // Router first-beat: server returns execution { action: task, step: router }.
-                        // Session may still be mode-seeded with agent/new in pre-invoke mergedContext — do not treat
-                        // that as "already in agent pipeline" for maybeChainAgentTools (would run the chain on router execute).
                         const postExec = savedContext?.execution;
                         const serverOnRouterBeat =
                             postExec &&
@@ -375,39 +144,22 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
 
                         const hasRealData = serverResponse || submitResult;
                         if (hasRealData) {
-                            console.log('[VitePlugin] Saving step:', nextStepNum);
-                            if (serverResponse) {
-                                const stepRecord = buildStepRecord({
-                                    sessionId,
-                                    stepNum: nextStepNum,
-                                    serverResponse,
-                                    messages: session.messages || [],
-                                    fallbackContext: mergedContext,
-                                });
-                                if (stepRecord) {
-                                    stepHandlers.saveServerResponse(
-                                        cwd,
-                                        sessionId,
-                                        nextStepNum,
-                                        stepRecord
-                                    );
-                                }
-                            } else {
-                                stepHandlers.saveNewStep(cwd, sessionId, nextStepNum, {
-                                    step: nextStepNum,
-                                    execute: null,
-                                    messages: session.messages || [],
-                                    context: mergedContext,
-                                    result: submitResult,
-                                });
-                            }
+                            saveStepData({
+                                cwd,
+                                sessionId,
+                                stepNum: nextStepNum,
+                                serverResponse,
+                                messages: session.messages,
+                                mergedContext: savedContext,
+                                submitResult,
+                            });
                         }
 
                         if (serverResponse && hasServer && !hasPromise && !serverOnRouterBeat) {
                             const agentResult = await maybeChainAgentTools({
                                 cwd,
                                 sessionId,
-                                a2aServerUrl,
+                                a2aServerUrl: getA2aServerBaseUrl(),
                                 startStepNum: nextStepNum,
                                 serverResponse,
                                 mergedContext,
@@ -418,84 +170,59 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                             finalSavedContext = agentResult.savedContext;
                         }
 
-                        session.currentStep = finalStepNum;
-                        session.context = finalSavedContext;
-                        const finalExecute = extractA2aExecute(finalServerResponse);
-                        if (finalExecute) {
-                            session.execute = finalExecute;
-                        }
-
-                        if (projectPath) saveSession(projectPath, session);
-                        stepHandlers.saveNewSession(cwd, session);
+                        finalizeSession({ session, finalStepNum, finalSavedContext, finalServerResponse });
+                        saveSessionData({ projectPath, session });
 
                         res.setHeader('Content-Type', 'application/json');
                         if (!hasServer) {
-                            const errBody = toMinimalNextAck({
+                            const errBody = createResponseAck({
                                 success: false,
                                 step: nextStepNum,
                                 promiseId: null,
-                                error: parseErrMsg || 'A2A invoke failed',
+                                error: 'A2A invoke failed',
                             });
                             res.writeHead(xhrRes.statusCode >= 400 ? xhrRes.statusCode : 502);
                             res.end(JSON.stringify(errBody));
                             return;
                         }
 
-                        res.end(
+                        res.end(JSON.stringify(createResponseAck({
+                            success: true,
+                            step: finalStepNum,
+                            promiseId: null,
+                        })));
+                    } catch (e) {
+                        console.error('[vite-plugin-a2a] Error in A2A response handler:', e?.stack || e?.message || e);
+                        const detail =
+                            process.env.NODE_ENV !== 'production' ? String(e?.message || e) : undefined;
+                        res.writeHead(500).end(
                             JSON.stringify(
-                                toMinimalNextAck({
-                                    success: true,
-                                    step: finalStepNum,
-                                    promiseId: null,
-                                })
+                                detail ? { error: 'Internal server error', detail } : { error: 'Internal server error' }
                             )
                         );
-                    } catch (e) {
-                        console.error(
-                            '[vite-plugin-a2a] Error in A2A response handler:',
-                            e.message
-                        );
+                    }
+                },
+                onError: (e) => {
+                    try {
+                        console.error('[vite-plugin-a2a] A2A Server request failed:', e.message);
+                        session.currentStep = nextStepNum;
+                        session.updatedAt = new Date().toISOString();
+                        saveSessionData({ projectPath, session });
+
+                        res.setHeader('Content-Type', 'application/json');
+                        res.writeHead(503);
+                        res.end(JSON.stringify(createResponseAck({
+                            success: false,
+                            step: nextStepNum,
+                            promiseId: null,
+                            error: 'A2A server unavailable: ' + e.message,
+                        })));
+                    } catch (err) {
+                        console.error('[vite-plugin-a2a] Error in A2A error handler:', err.message);
                         res.writeHead(500).end(JSON.stringify({ error: 'Internal server error' }));
                     }
-                });
+                },
             });
-
-            xhrReq.on('error', (e) => {
-                try {
-                    console.error('[vite-plugin-a2a] A2A Server request failed:', e.message);
-                    session.currentStep = nextStepNum;
-                    session.updatedAt = new Date().toISOString();
-                    if (projectPath) saveSession(projectPath, session);
-                    stepHandlers.saveNewSession(cwd, session);
-
-                    res.setHeader('Content-Type', 'application/json');
-                    res.writeHead(503);
-                    res.end(
-                        JSON.stringify(
-                            toMinimalNextAck({
-                                success: false,
-                                step: nextStepNum,
-                                promiseId: null,
-                                error: 'A2A server unavailable: ' + e.message,
-                            })
-                        )
-                    );
-                } catch (err) {
-                    console.error(
-                        '[vite-plugin-a2a] Error in A2A error handler:',
-                        err.message
-                    );
-                    res.writeHead(500).end(JSON.stringify({ error: 'Internal server error' }));
-                }
-            });
-
-            const invokePayload = requestToServer;
-            console.log(
-                '[VitePlugin] === SENDING TO A2A SERVER ===',
-                Object.keys(invokePayload)
-            );
-            xhrReq.write(JSON.stringify(invokePayload));
-            xhrReq.end();
         } catch (e) {
             res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
         }

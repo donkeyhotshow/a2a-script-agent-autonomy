@@ -405,7 +405,7 @@ export async function runSimulation(simName: string): Promise<{ success: boolean
     
     try {
         // Import the run script
-        const {runSingleSimulation} = await import('./sim-run.helper.js');
+        const {runSingleSimulation} = await import('../scripts/sim-run-core.js');
         await runSingleSimulation(simDir, SIMULATIONS_BASE);
         return { success: true };
     } catch (err: any) {

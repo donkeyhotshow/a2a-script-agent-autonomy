@@ -48,8 +48,8 @@
         "scan-session-responses:strict": "node tests/direct-tests/validators/scan-session-responses.mjs --strict",
         "verify:gray-room": "node tests/direct-tests/validators/verify-gray-room-state.mjs",
         "audit:sim-choice-descriptions": "node tests/direct-tests/validators/audit-sim-choice-descriptions.mjs",
-        "mama:audit-execute-shape": "node tests/indirect-tests/validators/audit-execute-shape-simulations.mjs",
-        "audit:sticky-router": "node tests/indirect-tests/validators/audit-sticky-router.mjs",
+        "validate:proba-servera": "tsx tests/proba-servera/validate.mts",
+        "test:human-review:all": "node scripts/run-human-review-all.mjs",
         "docs:system-errors": "node scripts/generate-system-errors-docs.mjs"
     },
     "devDependencies": {
@@ -71,7 +71,6 @@
         "@libp2p/mplex": "^12.0.15",
         "@libp2p/tcp": "^11.0.14",
         "@types/commander": "^2.12.0",
-        "@types/node-fetch": "^2.6.13",
         "a2a-js": "^0.2.0",
         "axios": "^1.14.0",
         "bullmq": "^5.73.0",

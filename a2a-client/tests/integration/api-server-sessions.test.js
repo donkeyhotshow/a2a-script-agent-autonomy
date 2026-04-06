@@ -14,7 +14,7 @@ vi.mock('@a2a/rag', () => ({
     },
 }));
 
-/** Do not call a real A2A Server during integration tests — return a minimal sync invoke payload. */
+/** Stub upstream: async-only /invoke (promiseId), matches production. */
 vi.mock('../../packages/sdk/src/server/services/upstream.service.ts', async (importOriginal) => {
     const mod = await importOriginal();
     return {
@@ -28,22 +28,9 @@ vi.mock('../../packages/sdk/src/server/services/upstream.service.ts', async (imp
                     json: async () => ({
                         success: true,
                         data: {
-                            sync: true,
-                            execute: {
-                                form: {
-                                    title: 'Test',
-                                    inputs: [],
-                                    choices: [
-                                        { id: 'dialog', label: 'Dialog', description: 'Test choice' },
-                                    ],
-                                },
-                            },
-                            message: '',
-                            context: {
-                                execution: { action: 'task', step: 'new' },
-                                history: [],
-                                workbench: { sections: {} },
-                            },
+                            promiseId: 'prom_integration_mock',
+                            status: 'pending',
+                            pollUrl: '/requests/prom_integration_mock',
                         },
                     }),
                 };

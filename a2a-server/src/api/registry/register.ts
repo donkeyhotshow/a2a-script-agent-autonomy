@@ -37,16 +37,22 @@ router.post('/', (req: Request, res: Response) => {
     maxLoad: typeof body.maxLoad === 'number' ? body.maxLoad : undefined,
   };
 
-  const record = agentRegistry.register(reg);
-  logger.info('[registry/register] Registered agent', { agentId: record.agentId });
+  try {
+    const record = agentRegistry.register(reg);
+    logger.info('[registry/register] Registered agent', { agentId: record.agentId });
 
-  res.status(201).json({
-    success: true,
-    agentId: record.agentId,
-    health: record.health,
-    load: record.load,
-    heartbeat: record.heartbeat,
-  });
+    res.status(201).json({
+      success: true,
+      agentId: record.agentId,
+      health: record.health,
+      load: record.load,
+      heartbeat: record.heartbeat,
+    });
+  } catch (err) {
+    const error = err as Error;
+    logger.warn('[registry/register] Registration failed', { agentId: reg.agentId, error: error.message });
+    res.status(429).json({ success: false, error: error.message });
+  }
 });
 
 export default router;

@@ -2,7 +2,7 @@
  * Tests for toRagSearchResult function
  */
 
-import { toRagSearchResult } from './protocol-rag-search';
+import { toRagSearchResult } from './protocol-rag-search.js';
 
 describe('toRagSearchResult', () => {
     const mockResults = [
@@ -160,5 +160,58 @@ describe('toRagSearchResult', () => {
         expect(result.results).toHaveLength(3); // Grouped by file
         expect(result.files).toHaveLength(3);
         expect(result.query).toBeUndefined();
+    });
+
+    it('should handle a single raw chunk', () => {
+        const one = [mockResults[0]];
+        const result = toRagSearchResult(one, { query: 'x' });
+        expect(result.results).toHaveLength(1);
+        expect(result.files).toEqual(['src/auth.js']);
+        expect(result.results[0].score).toBe(0.95);
+    });
+
+    it('should return empty page when page is past end', () => {
+        const result = toRagSearchResult(mockResults, {
+            query: 'q',
+            page: 10,
+            pageSize: 2,
+            maxResults: 10,
+        });
+        expect(result.total).toBe(3);
+        expect(result.results).toHaveLength(0);
+        expect(result.files).toHaveLength(0);
+        expect(result.hasMore).toBe(false);
+    });
+
+    it('should tolerate missing startLine and endLine on chunk', () => {
+        const raw = [
+            {
+                chunk: {
+                    filePath: 'bare.txt',
+                    content: 'hello world',
+                },
+                score: 0.5,
+            },
+        ];
+        const result = toRagSearchResult(raw, { query: 'hello' });
+        expect(result.results).toHaveLength(1);
+        expect(result.results[0].file).toBe('bare.txt');
+        expect(result.results[0].matches.length).toBeGreaterThan(0);
+    });
+
+    it('should break ties on duplicate filePath by keeping highest score only', () => {
+        const dup = [
+            {
+                chunk: { filePath: 'same.ts', content: 'a', startLine: 1, endLine: 1 },
+                score: 0.9,
+            },
+            {
+                chunk: { filePath: 'same.ts', content: 'b', startLine: 2, endLine: 2 },
+                score: 0.9,
+            },
+        ];
+        const result = toRagSearchResult(dup, { query: 'q' });
+        expect(result.results).toHaveLength(1);
+        expect(result.results[0].score).toBe(0.9);
     });
 });

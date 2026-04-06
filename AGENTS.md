@@ -101,7 +101,7 @@ You still run **`/next`** + poll **`/async`** afterward; the two-beat router may
 
 Implementation: [`session-create-initial.js`](a2a-client/packages/vite-plugin/routes/utils/session-create-initial.js) (also `POST .../sessions/task-add` and `.../task-execute`).
 
-Operator narrative and curl: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
+Operator narrative, **`POST /api/a2a/sessions` body** (`mode` vs `execution`, fallbacks, legacy aliases), and curl: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 
 ### Why iteration stops (misreads and mitigations)
 
@@ -159,7 +159,7 @@ NOT: `{ "execute": { "action": "...", ... } }` or `{ "result": { "content": "...
 ## A2A Protocol
 
 ### Overview
-Request-response pattern with sync (immediate `execute`) and async (polling `promiseId`) flows.
+`POST /api/v1/invoke` returns **`promiseId`**; terminal **`execute` / `context`** come from **`GET /api/v1/requests/{id}/result`** (poll until `completed` / `failed`). The Client API uses the same contour via **`/next` + `GET …/async`**.
 
 ### Action-Key Shape (Mandatory)
 All `execute` and `result` objects use single action-type key:
@@ -173,12 +173,12 @@ LLM controls `context.execution.step` → server persists via transforms.
 
 ### Request Flows
 
-| Flow | When | Response | Example |
-|------|------|----------|---------|
-| Sync | Simple ops, form interactions | Immediate `execute` | `task: "dialog"` → `execute.form` |
-| Async | LLM processing, long-running | `promiseId` for polling | LLM calls → `promiseId` → poll |
+| Step | Response |
+|------|----------|
+| `POST /api/v1/invoke` | `{ data: { promiseId, status: "pending", pollUrl } }` |
+| Poll `GET /api/v1/requests/{promiseId}/result` | `status` → `completed` / `failed`; body includes `execute`, `context` when done |
 
-Enable sync with `DEFAULT_SYNC_MODE=1` or request `sync: true`.
+**Dialog/LLM deferral:** For the dialog transform pipeline, many hub/transform/LLM failures **do not** finalize `promiseId` as `failed` immediately; the server re-queues the same id (`pending` + `retryAfter`) until success or max retries. Normative detail: **[`docs/PROMISE-RETRY-DIALOG.md`](docs/PROMISE-RETRY-DIALOG.md)**.
 
 ### Context Fields (System-Managed)
 - `context.history` — execution records
@@ -203,13 +203,14 @@ Note: Server always applies transforms; `response.md` optional (no LLM).
 | SKIP_AUTH | 1 (dev) | No |
 | ENCRYPTION_KEY | 32 chars | Yes |
 | JWT_SECRET | 32+ chars | Yes |
-| DEFAULT_SYNC_MODE | 1 | No |
 | A2A_GRAY_ROOM_ENABLED | unset or `1` = on; `0`/`false` = off | No |
 | A2A_BLACK_ROOM_ENABLED | Enable Black Room (Algorithm Mode) | No |
 | A2A_BLACK_ROOM_OLLAMA_URL | Ollama URL for Black Room (default: http://localhost:11435) | No |
 | A2A_BLACK_ROOM_DEFAULT_MODEL | Default Ollama model for algorithms (default: llama3.1:8b) | No |
 | A2A_BLACK_ROOM_TIMEOUT_MS | Timeout for algorithm execution (default: 30000ms) | No |
 | A2A_ALGORITHM_REGISTRY_PATH | Path to algorithm templates (default: ./prompts/algorithms/) | No |
+| REQUEST_RETRY_DELAY_MS | Dialog deferral: ms before a re-queued request is eligible (default 15000) | No |
+| REQUEST_MAX_RETRIES | Dialog deferral: max re-queues per `promiseId` (default 15) | No |
 
 **Black Room — agent duty:** When work touches Black Room, **remind the operator** to **pick a brick** (one explicit critique angle) before expanding the module — see [`docs/BLACK-ROOM.md`](docs/BLACK-ROOM.md) (*Reminder chain*).
 
@@ -243,7 +244,7 @@ Use **`start-all.bat`** at the repository root for any full or partial “turn i
 The **operator sequence** is spelled out above: [Unified manual path (Client API)](#unified-manual-path-client-api). This subsection is the technical backing.
 
 1. **Session lifecycle** (create session, `next`, poll `async`, disk step folders) is owned by the **Client API**, not by calling **`POST /api/v1/invoke`** on the A2A Server alone. In the default dev stack, that is **same origin as the web app**: `http://localhost:5173/api/a2a/*`. The UI, curl-based operators, and methodology that drive **sessions** all hit this surface.
-2. **Standalone SDK** (`a2a-client/packages/sdk`) can expose the **same route contract** on its own HTTP port (often `3001` or `PORT`). That is an alternate deployment, not a different protocol. Normative split: [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md).
+2. **Standalone SDK** (`a2a-client/packages/sdk`) can expose the **same route contract** on its own HTTP port (often `3001` or `PORT`). That is an alternate deployment, not a different protocol. Normative split: [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md). **GET session / messages** query flags (`unwrap`, `includeContext`, `afterSeq`): [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) § *GET session JSON shape*.
 3. **A2A Server (`:3000`)** is **stateless** `invoke` + request IDs. The Client API proxies to it and persists steps under `a2a-client/storage/sessions/`.
 4. **Agent mode** is **not** a separate HTTP route. You **select it at session creation** via `mode` / `execution` in the `POST /sessions` body (or it appears later in `context` after server turns). Ongoing checks: `context.execution.action === 'agent'` and/or workbench; see [ADR-0030](docs/adr/ADR-0030-unified-agent-mode.md) and [`a2a-client/docs/WEB_UI_PROTOCOL.md`](a2a-client/docs/WEB_UI_PROTOCOL.md).
 
@@ -259,7 +260,8 @@ Operator curl walkthrough: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 | GET | `/api/a2a/projects` | List projects |
 | GET | `/api/a2a/sessions` | List sessions |
 | POST | `/api/a2a/sessions` | Create session (body: `task`, optional **`mode`** or **`execution`**, `projectId` / `projectRoot`) |
-| GET | `/api/a2a/sessions/{id}` | Get session |
+| GET | `/api/a2a/sessions/{id}` | Get session (`?includeContext=1` debug; **403** in production) |
+| GET | `/api/a2a/sessions/{id}/messages` | Message delta (`afterSeq`, `limit`, `withExecute`) — [`WEB_UI_PROTOCOL.md`](a2a-client/docs/WEB_UI_PROTOCOL.md) § *GET `/messages`* |
 | PUT | `/api/a2a/sessions/{id}` | Update session |
 | POST | `/api/a2a/sessions/{id}/next` | Send message (ack only) |
 | GET | `/api/a2a/sessions/{id}/async` | Poll async (preferred) |
@@ -354,7 +356,7 @@ See [docs/adr/README.md](docs/adr/README.md) for full index (includes **Tooling*
 | **Promise** | Async request ID for polling long-running work |
 | **Gray Room** | Серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту |
 | **Router** | Keyword-based routing (dialog/agent/task-decomposition) |
-| **Sync Mode** | Immediate execute response (no promiseId) |
+| **Sync golden (`simulations/sync/`)** | Simulation folder style (invoke-shaped goldens). Server transport is always **`promiseId` + poll** — not inline execute on POST; see **Purple alert** in [`GLOSSARY.md`](GLOSSARY.md). |
 | **Web DTO** | Client-sanitized execute (only form, not tool calls) |
 | **operationHistory** | Легковесный трек операций (llm_call, transform, interrupt) для debug/audit |
 

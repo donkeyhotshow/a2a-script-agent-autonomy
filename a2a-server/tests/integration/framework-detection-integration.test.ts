@@ -55,9 +55,9 @@ describe('Framework Detection Integration', () => {
             message: 'Hello'
         };
 
-        // We need to call a function that triggers framework detection
-        // executePendingRow is the one we modified
-        await (processorService as any).executePendingRow(request);
+        vi.mocked(requestService.claimPendingByPromiseId).mockResolvedValueOnce(request as any);
+
+        await processorService.processRequestByPromiseId(promiseId);
 
         // Check if updateStatus was called with the modified context in the result
         expect(requestService.updateStatus).toHaveBeenCalledWith(
@@ -92,12 +92,13 @@ describe('Framework Detection Integration', () => {
             message: 'Hello'
         };
 
-        await (processorService as any).executePendingRow(request);
+        vi.mocked(requestService.claimPendingByPromiseId).mockResolvedValueOnce(request as any);
 
-        // Result context should NOT have frameworks if none detected
+        await processorService.processRequestByPromiseId(promiseId);
+
         const calls = (requestService.updateStatus as any).mock.calls;
         const lastCallResult = calls[0][2];
-        
-        expect(lastCallResult.context.frameworks).toBeUndefined();
+
+        expect(lastCallResult?.context?.frameworks).toBeUndefined();
     });
 });

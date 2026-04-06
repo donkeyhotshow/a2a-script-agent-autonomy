@@ -39,9 +39,9 @@
 | detect-logging-strategy | logging | script | Детекция стратегии логирования | all | ✅ |
 | suggest-structured-logging | logging | ollama | Предложение structured logging | all | ✅ |
 | implement-elk-stack | logging | agent | Реализация ELK stack | all | ⏳ |
-| detect-websockets | realtime | script | Детекция WebSockets | all | ✅ |
-| suggest-socket-io | realtime | ollama | Предложение Socket.io | all | ✅ |
-| implement-websockets | realtime | agent | Реализация WebSockets | all | ⏳ |
+| detect-websockets | realtime | script | Детекция WebSockets | all | ❌ |
+| suggest-socket-io | realtime | ollama | Предложение Socket.io | all | ❌ |
+| implement-websockets | realtime | agent | Реализация WebSockets | all | ❌ |
 | detect-file-uploads | files | script | Детекция загрузки файлов | all | ✅ |
 | suggest-file-storage | files | ollama | Предложение хранилища файлов | all | ✅ |
 | implement-s3-integration | files | agent | Реализация S3 интеграции | all | ⏳ |

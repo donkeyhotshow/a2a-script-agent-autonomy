@@ -46,6 +46,15 @@ def _get_body(request) -> Tuple[bytes, Optional[Dict]]:
     body_json = None
     if request.method in ['POST', 'PUT', 'PATCH']:
         body_json = _safe_json_loads(body)
+        if (
+            body_json is None
+            and body.strip()
+            and 'json' in (request.content_type or '').lower()
+        ):
+            logger.warning(
+                "Declared JSON Content-Type but body did not parse (%d bytes)",
+                len(body),
+            )
     return body, body_json
 
 

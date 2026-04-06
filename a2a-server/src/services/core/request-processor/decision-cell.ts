@@ -1,4 +1,5 @@
 import { logger } from '../../../utils/logger.js';
+import { tryParseJsonFromLlmText } from '../../../utils/strip-markdown-json-fence.js';
 import { llmService } from '../../llm/llm-service.js';
 
 export interface Decision {
@@ -54,25 +55,14 @@ export class DecisionCell {
       ]
     });
 
-    // Try to extract and validate JSON from response
     const content = response.content?.trim() || '';
-    let decision: Decision | null = null;
-    
-    // Try direct JSON parse first
-    try {
-      const parsed = JSON.parse(content);
-      decision = validateDecision(parsed);
-    } catch {
-      // Try JSON extraction if direct parse fails
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        try {
-          const parsed = JSON.parse(jsonMatch[0]);
-          decision = validateDecision(parsed);
-        } catch {
-          // Fall through to fallback
-        }
-      }
+    const parsed = tryParseJsonFromLlmText(content);
+    const decision = parsed !== null ? validateDecision(parsed) : null;
+    if (decision === null && content.length > 0) {
+      logger.debug('[DecisionCell] JSON parse/validate failed', {
+        sessionId,
+        preview: content.slice(0, 120),
+      });
     }
 
     if (decision) {

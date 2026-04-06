@@ -11,171 +11,24 @@ import {Router, Request, Response} from 'express';
 import path from 'path';
 import fs from 'fs/promises';
 import {sessionService} from '../../services/session-service.js';
-import {
-    saveRequestToServer,
-    saveClientResult,
-    saveServerPromise,
-    saveServerResponse,
-    getStepDir,
-} from '../../services/step-storage.js';
-import {getStorageDir} from '../../services/storage.js';
+import {saveServerPromise, saveServerResponse, getStepDir} from '../../services/step-storage.js';
+import {getStorageSessionsRoot, isNodeEnoent} from '../../services/storage.js';
 import {serverFetch, getServerBaseUrl} from '../../services/index.js';
-import {applyAgentRagChainAfterSyncInvoke} from '../../lib/agent-rag-chain.js';
-import {extractA2aExecute, sanitizeInvokeBodyForA2aUpstream} from '../../lib/a2a-invoke-builders.js';
+import {extractA2aExecute} from '../../lib/a2a-invoke-builders.js';
 import {pickInvokeContextPatch} from '../../lib/context-invoke-patch.js';
-import {buildWebExecute, sanitizeApiRecordExecuteFields} from '../../lib/web-execute-dto.js';
+import {buildWebExecute} from '../../lib/web-execute-dto.js';
+import {
+    applyIncludeContextSessionProjection,
+    setStepNum,
+    toWebClientSessionPayload,
+} from '../../lib/session-routes-shared.js';
 import {buildInitialInvokeRequestBody} from '../../../lib/first-invoke-payload.js';
 import {
     normalizePromisePollStatus,
     parseA2aInvokeResponse,
     validateClientResultPayload,
+    isRecoverableAsyncSnapshot,
 } from '../../../client-api-envelope.js';
-
-function getStepNum(session: { metadata?: Record<string, unknown> }): number {
-    const n = session.metadata?.stepNum;
-    return typeof n === 'number' ? n : 1;
-}
-
-function setStepNum(sessionId: string, stepNum: number): void {
-    const s = sessionService.getSession(sessionId);
-    if (s) {
-        sessionService.updateSession(sessionId, {
-            metadata: { ...s.metadata, stepNum },
-        });
-    }
-}
-
-/** Match Vite `toPublicSession(..., false)` — omit context in JSON. */
-function stripContextForWeb<T extends Record<string, unknown>>(obj: T | null | undefined): Omit<T, 'context'> | null {
-    if (!obj || typeof obj !== 'object') return null;
-    const {context: _c, ...rest} = obj;
-    return rest as Omit<T, 'context'>;
-}
-
-function toWebClientSessionPayload<T extends Record<string, unknown>>(obj: T | null | undefined) {
-    const stripped = stripContextForWeb(obj);
-    if (!stripped) return null;
-    return sanitizeApiRecordExecuteFields(stripped as Record<string, unknown>);
-}
-
-/** Validate request-to-server before sending to A2A: task|context required, context.execution valid when present */
-function validateRequestToServer(body: { task?: string; context?: Record<string, unknown> }): string | null {
-    const hasTask = typeof body.task === 'string' && body.task.length > 0;
-    const ctx = body.context;
-    const hasContext = ctx && typeof ctx === 'object';
-    if (!hasTask && !hasContext) return 'task or context is required';
-    if (hasContext && ctx.execution !== undefined) {
-        const ex = ctx.execution as Record<string, unknown>;
-        if (ex && typeof ex === 'object' && ex.action !== undefined && typeof ex.action !== 'string') {
-            return 'context.execution.action must be a string when present';
-        }
-    }
-    return null;
-}
-
-async function invokeAndPersistContinuation(params: {
-    sessionId: string;
-    nextStep: number;
-    requestBody: Record<string, unknown>;
-    upstreamErrorCode: string;
-    res: Response;
-}): Promise<{ ackStep: number; promiseId: string | null } | null> {
-    const { sessionId, nextStep, requestBody, upstreamErrorCode, res } = params;
-    let serverResponse: Record<string, unknown> | null = null;
-    let promiseId: string | null = null;
-    let ackStep = nextStep;
-    try {
-        const serverBase = await getServerBaseUrl();
-        const upstreamBody = sanitizeInvokeBodyForA2aUpstream(requestBody) as Record<string, unknown>;
-        const err = validateRequestToServer({ context: upstreamBody.context as Record<string, unknown> });
-        if (err) {
-            res.status(400).json({ success: false, error: { code: 'INVALID_REQUEST', message: err } });
-            return null;
-        }
-        await saveRequestToServer(sessionId, nextStep, {
-            step: nextStep,
-            ...upstreamBody,
-        });
-        const upstream = await serverFetch('POST', serverBase, '/api/v1/invoke', upstreamBody);
-        serverResponse = await upstream.json().catch(() => null);
-        if (!upstream.ok || !serverResponse) {
-            res.status(upstream.status >= 400 ? upstream.status : 502).json({
-                success: false,
-                error: { code: upstreamErrorCode, message: 'A2A invoke failed' },
-            });
-            return null;
-        }
-        const unwrapped = parseA2aInvokeResponse(serverResponse as Record<string, unknown>);
-        promiseId = unwrapped.promiseId;
-        if (promiseId) {
-            await saveServerPromise(sessionId, nextStep, {
-                promiseId,
-                status: (unwrapped.data?.status as string) || 'pending',
-                submittedAt: new Date().toISOString(),
-            });
-            setStepNum(sessionId, nextStep);
-        } else if (unwrapped.data) {
-            await saveServerResponse(sessionId, nextStep, {
-                step: nextStep,
-                ...unwrapped.data,
-            });
-            setStepNum(sessionId, nextStep);
-        }
-        if (unwrapped.context && typeof unwrapped.context === 'object') {
-            sessionService.updateSessionContext(sessionId, pickInvokeContextPatch(unwrapped.context));
-        }
-        if (unwrapped.execute && typeof unwrapped.execute === 'object') {
-            sessionService.updateSession(sessionId, {
-                currentExecute: unwrapped.execute as Record<string, unknown>,
-            });
-        }
-        ackStep = await persistSyncThenRagChain(
-            sessionId,
-            nextStep,
-            serverResponse as Record<string, unknown>,
-            unwrapped.promiseId
-        );
-        return { ackStep, promiseId };
-    } catch (serverError) {
-        res.status(503).json({
-            success: false,
-            error: {
-                code: upstreamErrorCode,
-                message: serverError instanceof Error ? serverError.message : 'Upstream error',
-            },
-        });
-        return null;
-    }
-}
-
-/** After context/execute updates from a sync invoke, run client rag-search chain (parity with Vite stepRoutes). */
-async function persistSyncThenRagChain(
-    sessionId: string,
-    startStep: number,
-    serverResponse: Record<string, unknown> | null,
-    promiseId: string | null
-): Promise<number> {
-    if (!serverResponse || promiseId) return startStep;
-    const sess = sessionService.getSession(sessionId);
-    const rawCtx = sess?.context;
-    if (!rawCtx || typeof rawCtx !== 'object') return startStep;
-    const ctx = rawCtx as Record<string, unknown>;
-    const out = await applyAgentRagChainAfterSyncInvoke({
-        sessionId,
-        startStepNum: startStep,
-        serverResponse,
-        context: ctx,
-    });
-    if (out.finalStep > startStep) {
-        setStepNum(sessionId, out.finalStep);
-        sessionService.updateSessionContext(sessionId, out.finalContext);
-        const fe = extractA2aExecute(out.finalResponse);
-        if (fe) {
-            sessionService.updateSession(sessionId, {currentExecute: fe});
-        }
-    }
-    return out.finalStep;
-}
 
 const router = Router();
 
@@ -215,14 +68,164 @@ router.get('/', (req: Request, res: Response) => {
     }
 });
 
+function isActivePromiseStatus(st: unknown): boolean {
+    return st === 'pending' || st === 'processing' || st === 'waiting';
+}
+
+async function listSessionStepNums(sessionId: string): Promise<number[]> {
+    const dir = path.join(getStorageSessionsRoot(), sessionId);
+    let entries: string[];
+    try {
+        entries = await fs.readdir(dir);
+    } catch {
+        return [];
+    }
+    return entries
+        .map((e) => Number(e))
+        .filter((n) => Number.isInteger(n) && n > 0)
+        .sort((a, b) => a - b);
+}
+
+async function findActiveAsyncFromDisk(
+    sessionId: string
+): Promise<{ stepNum: number; promiseId: string; disk: Record<string, unknown> } | null> {
+    for (const stepNum of await listSessionStepNums(sessionId)) {
+        const f = path.join(getStepDir(sessionId, stepNum), 'server-promise.json');
+        let raw: string;
+        try {
+            raw = await fs.readFile(f, 'utf-8');
+        } catch {
+            continue;
+        }
+        const serverPromise = JSON.parse(raw) as Record<string, unknown>;
+        const promiseId = serverPromise.promiseId;
+        const st = serverPromise.status;
+        const recoverable =
+            (st === 'failed' || st === 'error') && isRecoverableAsyncSnapshot(serverPromise);
+        if (typeof promiseId === 'string' && (isActivePromiseStatus(st) || recoverable)) {
+            return { stepNum, promiseId, disk: serverPromise };
+        }
+    }
+    return null;
+}
+
+/**
+ * GET /api/sessions/:sessionId/async
+ * Vite parity: resolve active server-promise step, poll A2A result, merge retryAfter/asyncPending, persist when terminal.
+ */
+router.get('/:sessionId/async', async (req: Request, res: Response) => {
+    try {
+        const { sessionId } = req.params;
+        const session = sessionService.getSession(sessionId);
+        if (!session) {
+            res.status(404).json({ error: 'Session not found' });
+            return;
+        }
+
+        const hit = await findActiveAsyncFromDisk(sessionId);
+        if (!hit) {
+            res.json({
+                asyncPending: false,
+                completed: true,
+                status: 'idle',
+                result: null,
+            });
+            return;
+        }
+
+        let diskPromise: Record<string, unknown> = hit.disk;
+        try {
+            const f = path.join(getStepDir(sessionId, hit.stepNum), 'server-promise.json');
+            diskPromise = JSON.parse(await fs.readFile(f, 'utf-8')) as Record<string, unknown>;
+        } catch {
+            /* use hit.disk */
+        }
+
+        const serverBase = await getServerBaseUrl();
+        const upstreamPath = `/requests/${encodeURIComponent(hit.promiseId)}/result`;
+        const upstream = await serverFetch('GET', serverBase, upstreamPath, null);
+        const rawResponse = (await upstream.json()) as Record<string, unknown>;
+
+        if (!upstream.ok || rawResponse == null) {
+            res.status(upstream.status >= 400 ? upstream.status : 502).json({
+                error: (rawResponse?.error as string) || 'Failed to get promise result',
+            });
+            return;
+        }
+
+        const promiseStatus = rawResponse.success
+            ? (rawResponse.data as Record<string, unknown>)
+            : rawResponse;
+        if (!promiseStatus || typeof promiseStatus !== 'object') {
+            res.status(502).json({ error: 'Invalid upstream response' });
+            return;
+        }
+
+        const updatedPromise = {
+            ...diskPromise,
+            ...promiseStatus,
+            checkedAt: new Date().toISOString(),
+        };
+        await saveServerPromise(sessionId, hit.stepNum, updatedPromise as Record<string, unknown>);
+
+        const normalizedStatus = normalizePromisePollStatus(updatedPromise);
+        const terminalSnapshot = !normalizedStatus.asyncPending;
+
+        if (terminalSnapshot && normalizedStatus.completed) {
+            const unwrapped = parseA2aInvokeResponse(rawResponse);
+            await saveServerResponse(sessionId, hit.stepNum, {
+                step: hit.stepNum,
+                ...promiseStatus,
+            });
+            setStepNum(sessionId, hit.stepNum);
+            if (unwrapped.context && typeof unwrapped.context === 'object') {
+                sessionService.updateSessionContext(sessionId, pickInvokeContextPatch(unwrapped.context));
+            }
+            const fe = extractA2aExecute(promiseStatus);
+            if (fe) {
+                sessionService.updateSession(sessionId, { currentExecute: fe });
+            }
+        }
+
+        let safeResult = promiseStatus.result ?? null;
+        if (safeResult && typeof safeResult === 'object') {
+            safeResult = { ...(safeResult as Record<string, unknown>) };
+            delete (safeResult as Record<string, unknown>).context;
+        }
+        const statusStr = normalizedStatus.status;
+        const asyncPending = normalizedStatus.asyncPending;
+        const pollCtx = promiseStatus.context;
+        const webExecute = promiseStatus.execute
+            ? buildWebExecute(promiseStatus.execute, {
+                  context:
+                      pollCtx && typeof pollCtx === 'object' && pollCtx !== null ? pollCtx : undefined,
+              })
+            : null;
+
+        res.json({
+            asyncPending,
+            status: statusStr,
+            result: safeResult,
+            execute: webExecute,
+            completed: normalizedStatus.completed,
+            requestPhase: normalizedStatus.requestPhase,
+            retryAfter: normalizedStatus.retryAfter,
+        });
+    } catch (error) {
+        console.error('[SESSIONS API] Error in GET /sessions/:sessionId/async:', error);
+        res.status(500).json({ error: 'Failed to poll session async' });
+    }
+});
+
 /**
  * GET /api/sessions/:id
  * Get session by ID
  *
  * | Query | `execute` / context |
  * |-------|------------------------|
- * | (none) | Web DTO: `buildWebExecute` strips client-only tool keys; `context` omitted (see `toWebClientSessionPayload`). |
- * | `?includeContext=1` | Raw session snapshot: full `execute` keys + `context` (debug / tooling only; parity with Vite `toPublicSession(..., true)`). |
+ * | (none) | Web DTO: `buildWebExecute` strips client-only tool keys; `context` omitted (see `toWebClientSessionPayload`). Response **`{ success, session }`** — Vite `/api/a2a/sessions/:id` returns **unwrapped** session JSON at root (ADR-0028). |
+ * | `?includeContext=1` | Full in-memory session + **`stage`**, **`asyncPending`**, **`promiseStatus`** ([`applyIncludeContextSessionProjection`](../../lib/session-routes-shared.ts)) — Vite `toPublicSession(..., true)` parity for those fields. **403 when `NODE_ENV=production`** (same as Vite). |
+ * | `?unwrap=1` | **Top-level session JSON** (same object as `session` in the default envelope) — curl parity with Vite’s unwrapped `GET …/sessions/:id` body. |
  */
 router.get('/:id', (req: Request, res: Response) => {
     try {
@@ -242,17 +245,42 @@ router.get('/:id', (req: Request, res: Response) => {
 
         const includeContext =
             req.query.includeContext === '1' || req.query.includeContext === 'true';
+        if (includeContext && process.env.NODE_ENV === 'production') {
+            res.status(403).json({
+                success: false,
+                error: {
+                    code: 'INCLUDE_CONTEXT_FORBIDDEN',
+                    message: 'includeContext is debug-only and not available in production',
+                },
+            });
+            return;
+        }
+
+        const unwrap =
+            req.query.unwrap === '1' || req.query.unwrap === 'true';
+
         if (includeContext) {
+            const body = applyIncludeContextSessionProjection(session as Record<string, unknown>);
+            if (unwrap) {
+                res.json(body);
+                return;
+            }
             res.json({
                 success: true,
-                session: session as Record<string, unknown>,
+                session: body,
             });
+            return;
+        }
+
+        const slim = toWebClientSessionPayload(session as Record<string, unknown>);
+        if (unwrap) {
+            res.json(slim);
             return;
         }
 
         res.json({
             success: true,
-            session: toWebClientSessionPayload(session as Record<string, unknown>),
+            session: slim,
         });
     } catch (error) {
         console.error('[SESSIONS API] Error getting session:', error);
@@ -268,7 +296,8 @@ router.get('/:id', (req: Request, res: Response) => {
 
 /**
  * GET /api/sessions/:id/messages
- * Get all messages from a session
+ * Default: `{ success, data, count }`. If **`afterSeq`** query is present, **Vite delta shape**:
+ * `{ sessionId, afterSeq, lastSeq, hasMore, messages, asyncPending, promiseStatus, currentStep }` and optional `execute` when `withExecute=1`.
  */
 router.get('/:id/messages', (req: Request, res: Response) => {
     try {
@@ -283,6 +312,56 @@ router.get('/:id/messages', (req: Request, res: Response) => {
                     message: `Session ${id} not found`
                 }
             });
+            return;
+        }
+
+        const rawAfter = req.query.afterSeq;
+        const deltaMode = rawAfter !== undefined;
+
+        if (deltaMode) {
+            const afterSeq = Math.max(0, parseInt(String(rawAfter ?? '0'), 10) || 0);
+            const limit = Math.min(
+                200,
+                Math.max(1, parseInt(String(req.query.limit ?? '50'), 10) || 50)
+            );
+            const withExecute = req.query.withExecute === '1';
+            const rawList = sessionService.getMessages(id);
+            const messages = rawList.map((m, idx) => {
+                const base =
+                    m && typeof m === 'object' && !Array.isArray(m)
+                        ? { ...(m as Record<string, unknown>) }
+                        : { content: m as unknown };
+                return { ...base, seq: idx + 1 };
+            });
+            const lastSeq = messages.length;
+            const batch = messages.filter((m) => m.seq > afterSeq).slice(0, limit);
+            const s = session as unknown as Record<string, unknown>;
+            const promiseId = s.promiseId;
+            const promiseStatus = s.promiseStatus;
+            const asyncPending =
+                s.asyncPending ??
+                !!(
+                    typeof promiseId === 'string' &&
+                    isActivePromiseStatus(promiseStatus)
+                );
+            const publicLite = toWebClientSessionPayload(session as Record<string, unknown>);
+            const execute = withExecute
+                ? ((publicLite as Record<string, unknown> | null)?.execute ?? null)
+                : undefined;
+            const payload: Record<string, unknown> = {
+                sessionId: id,
+                afterSeq,
+                lastSeq,
+                hasMore: afterSeq + batch.length < lastSeq,
+                messages: batch,
+                asyncPending,
+                promiseStatus: promiseStatus ?? null,
+                currentStep: session.currentStep ?? null,
+            };
+            if (withExecute) {
+                payload.execute = execute;
+            }
+            res.json(payload);
             return;
         }
 
@@ -329,7 +408,7 @@ router.get('/:sessionId/step/:stepNum/:file', async (req: Request, res: Response
             const content = await fs.readFile(filePath, 'utf-8');
             res.json(JSON.parse(content));
         } catch (err: unknown) {
-            if ((err as { code?: string })?.code === 'ENOENT') {
+            if (isNodeEnoent(err)) {
                 res.status(404).json({ error: 'File not found' });
             } else {
                 throw err;
@@ -353,9 +432,9 @@ router.get('/:sessionId/promise/:promiseId', async (req: Request, res: Response)
         const serverBase = await getServerBaseUrl();
         const path = `/requests/${encodeURIComponent(promiseId)}/result`;
         const upstream = await serverFetch('GET', serverBase, path, null);
-        const rawResponse = (await upstream.json().catch(() => null)) as Record<string, unknown> | null;
+        const rawResponse = (await upstream.json()) as Record<string, unknown>;
 
-        if (!upstream.ok || !rawResponse) {
+        if (!upstream.ok || rawResponse == null) {
             res.status(upstream.status || 500).json({
                 error: (rawResponse?.error as string) || 'Failed to get promise result',
             });
@@ -405,7 +484,7 @@ router.get('/:sessionId/history/:fromStep', async (req: Request, res: Response) 
     try {
         const { sessionId, fromStep } = req.params;
         const startStep = Number(fromStep);
-        const sessionDir = path.join(getStorageDir(), 'sessions', sessionId);
+        const sessionDir = path.join(getStorageSessionsRoot(), sessionId);
         
         const messages: Array<{step: number; content: unknown}> = [];
         
@@ -419,7 +498,7 @@ router.get('/:sessionId/history/:fromStep', async (req: Request, res: Response) 
                 const stepMessages = JSON.parse(content);
                 messages.push({ step, content: stepMessages });
             } catch (err: unknown) {
-                if ((err as { code?: string })?.code === 'ENOENT') {
+                if (isNodeEnoent(err)) {
                     break; // No more steps
                 }
                 throw err;
@@ -441,7 +520,7 @@ router.get('/:sessionId/history/:fromStep', async (req: Request, res: Response) 
 router.get('/:sessionId/latest', async (req: Request, res: Response) => {
     try {
         const { sessionId } = req.params;
-        const sessionDir = path.join(getStorageDir(), 'sessions', sessionId);
+        const sessionDir = path.join(getStorageSessionsRoot(), sessionId);
         
         // Find the highest step number
         let latestStep = 0;
@@ -454,7 +533,7 @@ router.get('/:sessionId/latest', async (req: Request, res: Response) => {
                 }
             }
         } catch (err: unknown) {
-            if ((err as { code?: string })?.code !== 'ENOENT') throw err;
+            if (!isNodeEnoent(err)) throw err;
         }
         
         if (latestStep === 0) {
@@ -473,8 +552,10 @@ router.get('/:sessionId/latest', async (req: Request, res: Response) => {
                 const content = await fs.readFile(filePath, 'utf-8');
                 const key = file.replace('.json', '');
                 result[key] = JSON.parse(content);
-            } catch {
-                // File doesn't exist, skip
+            } catch (e) {
+                if (!isNodeEnoent(e)) {
+                    console.error('[SESSIONS API] Step file read/parse failed:', file, e instanceof Error ? e.message : e);
+                }
             }
         }
         

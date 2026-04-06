@@ -14,8 +14,8 @@
  * after a sub-goal failure (see orchestrator-kernel.ts for event wiring).
  */
 
-import { randomUUID } from 'crypto';
-import { ArtifactStore } from './artifact-store.js';
+import { randomUUID } from 'node:crypto';
+import { ArtifactStore, createArtifactWriteInput } from './artifact-store.js';
 import { TicketSync } from './ticket-sync.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
@@ -106,16 +106,15 @@ export class GoalPlanner {
 
     const artifactId = `exec-plan-${randomUUID()}`;
     await this.artifactStore.write(
-      {
+      createArtifactWriteInput({
         artifact_id: artifactId,
         artifact_type: 'EXECUTION_PLAN',
         session_id: sessionId,
         turn_id: turnId,
-        created_at: new Date().toISOString(),
         schema_version: '1.0',
         summary: `Execution plan for: ${goal.slice(0, 80)} (${subGoals.length} sub-goals, ${criticalPath.length} critical)`,
         data: plan as unknown as Record<string, unknown>,
-      },
+      }),
       COMPONENT_ID,
     );
 
@@ -182,12 +181,11 @@ export class GoalPlanner {
 
     const artifactId = `replan-${randomUUID()}`;
     await this.artifactStore.write(
-      {
+      createArtifactWriteInput({
         artifact_id: artifactId,
         artifact_type: 'REPLAN_DECISION',
         session_id: sessionId,
         turn_id: turnId,
-        created_at: new Date().toISOString(),
         schema_version: '1.0',
         summary: `Replan after failure of '${failedGoalId}': ${reason.slice(0, 60)}`,
         data: {
@@ -196,7 +194,7 @@ export class GoalPlanner {
           failure_reason: reason,
           new_plan: newPlan as unknown as Record<string, unknown>,
         },
-      },
+      }),
       COMPONENT_ID,
     );
 

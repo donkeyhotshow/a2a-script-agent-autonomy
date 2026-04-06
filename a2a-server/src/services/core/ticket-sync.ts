@@ -141,7 +141,14 @@ export class TicketSync {
     try {
       const raw = await fs.promises.readFile(this.currentTicketPath, 'utf8');
       return this._parseTicket(raw);
-    } catch {
+    } catch (err: unknown) {
+      const code = (err as NodeJS.ErrnoException)?.code;
+      if (code !== 'ENOENT') {
+        logger.warn('[ticket-sync] resumeActivePlan read failed', {
+          path: this.currentTicketPath,
+          error: err instanceof Error ? err.message : String(err),
+        });
+      }
       return null;
     }
   }
@@ -268,8 +275,10 @@ export class TicketSync {
         risk_factors: [],
         fallback_strategy,
       };
-    } catch {
-      logger.warn('[ticket-sync] Failed to parse CURRENT_TICKET.md');
+    } catch (err: unknown) {
+      logger.warn('[ticket-sync] Failed to parse CURRENT_TICKET.md', {
+        error: err instanceof Error ? err.message : String(err),
+      });
       return null;
     }
   }

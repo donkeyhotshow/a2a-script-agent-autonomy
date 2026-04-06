@@ -538,46 +538,14 @@ interface SessionSummary {
 - SessionId/ProjectId передаются в URL пути, а не в теле запроса
 - Client API сама хранит всю информацию о сессиях
 
-### Два типа ответов
+### Ответ invoke (async-only)
 
-Сервер может ответить синхронно или асинхронно.
-
-> **Стандарт:** Все запросы используют **Async Flow с `promiseId`**. Server возвращает `promiseId`, Client API
-> опрашивает статус до `completed`. Sync Flow (`sync: true`) — опционален для простых тестов.
-
-#### Синхронный ответ (Sync Flow) — опциональный
-
-Сервер обрабатывает запрос синхронно и сразу возвращает результат. Клиент отправляет `sync: true` для принудительного sync режима:
+`POST /api/v1/invoke` **всегда** возвращает **`promiseId`**; объект **`execute` / `context`** приходит в **`GET /api/v1/requests/{promiseId}/result`** после `status: completed` (или `failed`).
 
 ```json
-// Запрос клиента
-{
-  "task": "dialog",
-  "sync": true  // Принудительный sync режим
-}
-
-// Ответ сервера
-{
-  "success": true,
-  "data": {
-    "context": { ... },
-    "execute": {
-      "form": {
-        "choices": [...]  // или input: [...], или message: "..."
-      }
-    },
-    "status": "completed",
-    "sync": true
-  }
-}
+// POST /api/v1/invoke — немедленный ответ
+{ "success": true, "data": { "promiseId": "prom_…", "status": "pending", "pollUrl": "/requests/prom_…" } }
 ```
-
-**Когда используется sync flow:**
-- UI взаимодействия (формы, выбор опций)
-- Простые операции без LLM
-- Симуляции и тесты
-- **Прямые задачи:** dialog, chat → сразу input форма
-- Маршрутизация: общие задачи → роутер с вариантами
 
 <span id="async-flow-promiseid"></span>
 

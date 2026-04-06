@@ -10,7 +10,12 @@ export default defineConfig({
         globals: true,
         environment: 'node',
         include: ['tests/**/*.test.ts'],
-        exclude: ['**/node_modules/**', '**/dist/**'],
+        exclude: [
+            '**/node_modules/**',
+            '**/dist/**',
+            /** Exploratory suite: `npm run test:human-review` in a2a-server */
+            '**/tests/human-review/**',
+        ],
         setupFiles: ['tests/setup.ts'],
         coverage: {
             provider: 'v8',

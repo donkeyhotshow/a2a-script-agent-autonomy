@@ -87,7 +87,7 @@ function runViteClientPromisePoll({
                 };
                 stepHandlers.saveServerPromise(cwd, sessionId, currentStep, updatedPromise);
 
-                if (isPromisePollComplete(promiseStatus)) {
+                if (isPromisePollComplete(updatedPromise)) {
                     const assistantMessage =
                         promiseStatus?.execute?.message ||
                         promiseStatus?.result?.message ||
@@ -146,7 +146,8 @@ function runViteClientPromisePoll({
                     });
                 }
 
-                const normalizedStatus = normalizePromisePollStatus(promiseStatus);
+                // Merge disk promise (retryAfter, requestPhase) so recoverable failed + backoff stays asyncPending.
+                const normalizedStatus = normalizePromisePollStatus(updatedPromise);
                 const includeCtx = requestUrl.searchParams.get('includeContext') === '1';
                 let safeResult = promiseStatus.result || null;
                 if (!includeCtx && safeResult && typeof safeResult === 'object') {

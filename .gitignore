@@ -25,3 +25,6 @@ simulations/**/invoke-capture.json
 # Cursor hook ticker (regenerated every N minutes locally)
 hooks/CURSOR_AGENT_SIGNAL.json
 hooks/CURSOR_AGENT_SIGNAL.md
+
+# Vitest JSON scratch from human-review runners
+**/tests/human-review/.last-vitest.json

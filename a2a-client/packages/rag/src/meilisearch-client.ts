@@ -43,9 +43,17 @@ export class MeilisearchClient {
     initialized = false;
 
     constructor(config: MeilisearchConfig = {}) {
-        this.host = config.host ?? process.env.MEILISEARCH_HOST ?? 'http://localhost:7700';
+        const host = config.host ?? process.env.MEILISEARCH_HOST;
+        if (!host || !String(host).trim()) {
+            throw new Error('[MeilisearchClient] host required: set MEILISEARCH_HOST or config.host');
+        }
+        this.host = host.trim();
         this.apiKey = config.apiKey ?? process.env.MEILISEARCH_API_KEY;
-        this.indexName = config.indexName ?? 'code';
+        const indexName = config.indexName ?? process.env.MEILISEARCH_INDEX;
+        if (!indexName || !String(indexName).trim()) {
+            throw new Error('[MeilisearchClient] indexName required: set MEILISEARCH_INDEX or config.indexName');
+        }
+        this.indexName = indexName.trim();
     }
 
     private _getHeaders(): Record<string, string> {
@@ -90,8 +98,8 @@ export class MeilisearchClient {
                     const data = (await response.json()) as { status?: string };
                     if (data.status === 'ready') return;
                 }
-            } catch {
-                // continue
+            } catch (e) {
+                console.error('[meilisearch] index status poll failed:', e instanceof Error ? e.message : e);
             }
             await new Promise((r) => setTimeout(r, 500));
         }
@@ -174,7 +182,8 @@ export class MeilisearchClient {
                 headers: {'Content-Type': 'application/json'},
             });
             return response.ok;
-        } catch {
+        } catch (e) {
+            console.error('[meilisearch] health check failed:', e instanceof Error ? e.message : e);
             return false;
         }
     }

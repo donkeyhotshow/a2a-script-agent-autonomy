@@ -60,8 +60,7 @@ Payload that was forwarded to the A2A Server (`/api/v1/invoke`).
 {
   "task": "...",
   "context": { ... },
-  "result": { ... },
-  "sync": true | false
+  "result": { ... }
 }
 ```
 

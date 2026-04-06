@@ -1,4 +1,3 @@
-import { FrameworkDetectorService } from '../src/services/framework-detector.service.js';
 import * as processorService from '../src/services/core/request-processor/request-processor.service.js';
 import { requestService } from '../src/services/core/request/request.service.js';
 
@@ -12,7 +11,7 @@ requestService.getNextPending = async () => null;
 requestService.claimPendingByPromiseId = async () => null;
 
 async function run() {
-    console.log('Testing FrameworkDetectorService directly...');
+    console.log('Testing executePendingRow with synthetic codeBlocks...');
     
     const promiseId = 'test-script-123';
     const context = { session_id: 'test' };

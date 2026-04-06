@@ -1,3 +1,5 @@
+import { logger } from '../../utils/logger.js';
+
 export type TCB = {
   id: string;
   task: string;
@@ -31,7 +33,11 @@ export async function grayRoomParallel(
       runtimeMs: 0,
     };
     threads.push(tcb);
-    runSubthread(tcb).catch((e) => (tcb.status = 'failed'));
+    runSubthread(tcb).catch((e: unknown) => {
+      tcb.status = 'failed';
+      tcb.error = e instanceof Error ? e.message : String(e);
+      logger.error('[grayRoomParallel] Subthread failed', { id: tcb.id, error: tcb.error });
+    });
   }
 
   for (let i = 0; i < maxStepsPerThread * 2; i++) {

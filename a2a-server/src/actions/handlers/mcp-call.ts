@@ -85,8 +85,10 @@ function resolveServerCommand(serverName: string): string[] | null {
   try {
     const registry = JSON.parse(raw) as Record<string, string[]>;
     return registry[serverName] ?? null;
-  } catch {
-    logger.warn('[mcp-call] MCP_SERVERS env is not valid JSON');
+  } catch (err: unknown) {
+    logger.warn('[mcp-call] MCP_SERVERS env is not valid JSON', {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 }
@@ -165,8 +167,14 @@ export async function executeMcpCall(input: McpCallInput): Promise<McpCallOutput
         let msg: JsonRpcResponse;
         try {
           msg = JSON.parse(trimmed) as JsonRpcResponse;
-        } catch {
-          continue; // non-JSON lines from server (e.g. startup log)
+        } catch (err: unknown) {
+          if (trimmed.startsWith('{')) {
+            logger.debug('[mcp-call] JSON-RPC line looked like JSON but failed to parse', {
+              preview: trimmed.slice(0, 200),
+              error: err instanceof Error ? err.message : String(err),
+            });
+          }
+          continue;
         }
 
         if (!initDone) {

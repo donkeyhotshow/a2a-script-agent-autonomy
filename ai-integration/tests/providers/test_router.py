@@ -164,6 +164,14 @@ class TestProviderRouter:
         assert len(result.embeddings) == 1
         assert result.embeddings[0] == [0.1, 0.2, 0.3]
     
+    def test_resolve_model_fallback_from_config_without_provider_instances(self, router):
+        """default_provider fallback_models applies even when initialize() never ran."""
+        router.config.default_provider = "mock2"
+        router.config.providers["mock2"].fallback_models = {"legacy-x": "model-b"}
+        router._providers = {}
+        router._initialized = False
+        assert router._resolve_model("legacy-x") == "model-b"
+
     def test_get_provider_chain(self, router):
         """Test getting provider chain"""
         router._providers = {

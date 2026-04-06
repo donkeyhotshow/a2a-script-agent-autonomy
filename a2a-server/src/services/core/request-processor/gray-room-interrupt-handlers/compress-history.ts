@@ -1,5 +1,5 @@
 import {resolveGrayRoomLlmModelFromContext} from '../llm-model-resolver.js';
-import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
+import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../../transform/types.js';
 
 /**
  * Handle compress_history interrupt
@@ -7,6 +7,7 @@ import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../trans
  */
 import { AgentSwing } from '../../agent-swing.js';
 import { pollReadyThenFetch } from '../../../../daemon/llm-hub-poll.js';
+import { logger } from '../../../../utils/logger.js';
 
 export async function handleCompressHistory(
     interrupt: InterruptDirective,
@@ -44,18 +45,9 @@ export async function handleCompressHistory(
             meta: `from=${history.length} to=${result.best_history.length} score=${result.score.toFixed(2)} options=${result.options_considered}` 
         });
     } catch (err) {
-        console.warn('[GrayRoom:compress_history] AgentSwing Failed', { error: String(err) });
+        logger.warn('[GrayRoom:compress_history] AgentSwing Failed', { error: String(err) });
         trace.push({ kind: 'sidecar_llm', purpose: 'compress_history', ok: false, meta: 'error' });
     }
     
     return { nextCtx, continueLoop: false };
-}
-
-/**
- * Mock function for pollReadyThenFetch - in real implementation this would be imported
- */
-async function pollReadyThenFetch(aiHubUrl: string, promiseId: string): Promise<string | null> {
-    // This is a placeholder - the actual implementation would be imported from daemon/llm-hub-poll.js
-    // For now, we'll return null to indicate this needs proper implementation
-    return null;
 }

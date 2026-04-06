@@ -2,13 +2,17 @@
 Ollama Manager Module
 Handles Ollama server start/stop/management
 """
+import logging
 import os
+import subprocess
 import threading
 import time
 import requests
 
 from .config import OLLAMA_IDLE_TIMEOUT, OLLAMA_KEEP_ALIVE, OLLAMA_HOST, OLLAMA_MODELS
 from .network import check_port_occupied
+
+logger = logging.getLogger(__name__)
 
 
 class OllamaManager:
@@ -30,10 +34,8 @@ class OllamaManager:
         try:
             resp = requests.get(f"{self.base_url}/api/tags", timeout=2)
             return resp.status_code == 200
-        except Exception as e:
-            # Логируем ошибку для диагностики проблем с подключением к Ollama
-            import logging
-            logging.getLogger(__name__).warning(f"Ollama check failed for {self.base_url}: {type(e).__name__}: {e}")
+        except requests.RequestException as e:
+            logger.warning("Ollama check failed for %s: %s", self.base_url, e)
             return False
     
     def start(self) -> dict:
@@ -44,7 +46,6 @@ class OllamaManager:
             
             try:
                 # Запускаем ollama serve на нужном порту
-                import subprocess
                 env = {**os.environ, 'OLLAMA_HOST': f'http://localhost:{self.port}'}
                 if OLLAMA_MODELS:
                     env['OLLAMA_MODELS'] = OLLAMA_MODELS
@@ -65,6 +66,7 @@ class OllamaManager:
                 
                 return {'status': 'started', 'url': self.base_url, 'pid': self.process.pid if self.process else None}
             except Exception as e:
+                logger.warning("Ollama start failed: %s", e, exc_info=True)
                 return {'status': 'error', 'error': str(e)}
     
     def stop(self) -> dict:
@@ -75,6 +77,10 @@ class OllamaManager:
                 try:
                     self.process.wait(timeout=5)
                 except subprocess.TimeoutExpired:
+                    logger.warning(
+                        "Ollama subprocess PID %s did not exit within 5s; sending kill",
+                        getattr(self.process, "pid", None),
+                    )
                     self.process.kill()
                 self.process = None
             self._running = False
@@ -131,6 +137,11 @@ def get_ollama_host_port():
         try:
             port = int(port_str)
         except ValueError:
+            logger.warning(
+                "OLLAMA_HOST port not an integer (%r in %r); using 11435",
+                port_str,
+                OLLAMA_HOST,
+            )
             port = 11435
     else:
         port = 11435

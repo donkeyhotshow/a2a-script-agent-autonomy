@@ -356,7 +356,7 @@ export class PollingDaemon {
         }
         
         this._stats.timeouts++;
-        console.warn(`[PollingDaemon] Poll timeout after ${this.maxPolls} attempts`);
+        console.error(`[PollingDaemon] Poll timeout after ${this.maxPolls} attempts`);
         
         // Track global stats
         const duration = Date.now() - pollStartTime;

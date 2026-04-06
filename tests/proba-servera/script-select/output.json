@@ -1,0 +1,23 @@
+{
+  "context": {
+    "task": "fix vue imports",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Вибір зроблено",
+      "description": "Вибрано: fix-vue-imports",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Message",
+          "required": true
+        }
+      ]
+    }
+  }
+}

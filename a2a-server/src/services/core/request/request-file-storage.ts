@@ -3,7 +3,7 @@
  * Each request stored as {promiseId}.json in storage dir.
  */
 
-import * as fs from 'fs/promises';
+import * as fs from 'node:fs/promises';
 import * as path from 'path';
 
 export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';

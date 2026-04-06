@@ -17,7 +17,7 @@ export type { JSONReportOptions } from './reporter/formats/json.js';
 export type { HTMLReportOptions } from './reporter/formats/html.js';
 export type { ConsoleReporterOptions } from './reporter/formats/console.js';
 
-export { formatDuration, formatPercentage, getStatusIcon } from './reporter/report-formatter.js';
+export { formatDuration, formatPercentage, getStatusIcon } from './reporter/utils/format-utils.js';
 export { calculateCategorySummaries, generateRecommendations, type CategorySummary } from './reporter/result-aggregator.js';
 
 /**

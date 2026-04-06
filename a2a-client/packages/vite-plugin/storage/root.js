@@ -6,6 +6,14 @@ export function getStorageRoot() {
   return path.join(process.cwd(), 'storage');
 }
 
+export function getStorageKvRoot() {
+  return path.join(getStorageRoot(), 'kv');
+}
+
+export function getStorageSessionsRoot() {
+  return path.join(getStorageRoot(), 'sessions');
+}
+
 export function ensureDir(dirPath) {
   if (!dirPath) return;
   if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });

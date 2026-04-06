@@ -1,0 +1,12 @@
+{
+  "context": {
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    }
+  },
+  "result": {
+    "message": "Hello, this is a test message"
+  }
+}

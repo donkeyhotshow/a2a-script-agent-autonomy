@@ -129,8 +129,11 @@ async function mamaShift(opts = {}) {
                 : 'sim:validate:all';
         await runCmd('Mama Sims Validate', 'npm', ['run', simValidateScript]);
 
+        // 7. Proba-servera (in-process invoke — no HTTP)
+        await runCmd('Mama depth (proba-servera)', 'npm', ['run', 'validate:proba-servera']);
+
         console.log(
-            '👩 MAMA: "Смена закрыта: indirect + scans + direct Vitest + server Vitest (offline) + client + web Vitest + sim:lint + sim:validate:all. Папа, если стек жив — знакомься с проводом."\n'
+            '👩 MAMA: "Смена закрыта: indirect + scans + direct Vitest + server Vitest (offline) + client + web Vitest + sim:lint + sim:validate:all + proba-servera. Папа, если стек жив — знакомься с проводом."\n'
         );
     } catch (e) {
         console.error('👩 MAMA: "Стоп! На моей смене косяки. Папа может спать дальше."');
@@ -166,8 +169,7 @@ async function papaShift(opts = {}) {
     }
 
     try {
-        // 1. Direct E2E Tests (Papa core)
-        // Имитируем "Tier 2" для CI - снижаем нагрузку на LLM
+        // Direct E2E Tests (Papa: Client API contour)
         const env = { ...process.env, E2E_DIRECT_LOW_LLM: '1' };
         if (process.env.PAPA_REQUIRE_ASYNC === '1' || opts.recon) {
             env.REQUIRE_ASYNC_PIPELINE = '1';

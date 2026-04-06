@@ -13,6 +13,7 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "test": "vitest run",
+    "test:human-review": "node scripts/run-human-review.mjs",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:mocks": "cross-env TEST_MODE=mocked vitest run",
