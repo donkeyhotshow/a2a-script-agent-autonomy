@@ -1,12 +1,13 @@
 {
+  "$proba": {
+    "ignorePaths": ["context.workbench"],
+    "inputAbsentPaths": ["context.history"]
+  },
   "context": {
     "task": "string",
     "execution": {
       "action": "dialog",
       "step": "request"
-    },
-    "workbench": {
-      "sections": {}
     },
     "history": [
       {
@@ -20,17 +21,13 @@
     ]
   },
   "execute": {
+    "message": "string",
     "form": {
-      "title": "string",
-      "description": "string",
-      "input": [
-        {
-          "name": "message",
-          "type": "string",
-          "label": "string",
-          "required": true
-        }
-      ]
+      "textarea": {
+        "name": "string",
+        "label": "string",
+        "required": true
+      }
     }
   }
 }

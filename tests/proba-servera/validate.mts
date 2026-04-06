@@ -10,6 +10,7 @@
  * removes those paths from both clones before compare. If input has non-empty `context.history`,
  * expected must include `context.history` (unless `$proba.skipHistoryTemplate: true`).
  * `context.history` array length in expected must match actual (unless `$proba.skipHistoryLengthCheck`).
+ * **`$proba.inputAbsentPaths`** — list of dot/bracket paths that must **not** exist in `input.json` (e.g. `["context.history"]`).
  *
  * **Directive objects** (leaf or nested): only `$`-prefixed keys, e.g. `{ "$regex": "^prefix", "$flags": "i" }`,
  * `{ "$type": "string" }`, `{ "$enum": ["a","b"] }`, `{ "$minLength": 1 }`. Normalized to placeholders for the
@@ -18,6 +19,7 @@
  * Optional: PROBA_SERVERA_USE_HTTP=1 → fetch http://localhost:3000/api/v1/invoke (legacy).
  * Stack gate (default): probes ai-integration + Ollama (+ a2a-server if HTTP mode).
  *   Skip: PROBA_SERVERA_SKIP_STACK_CHECK=1. Probe timeout: PROBA_STACK_PROBE_MS (ms) — not applied to promiseId poll loops.
+ *   Single case: PROBA_SERVERA_ONLY=<folder-name> (e.g. script-select).
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -195,6 +197,8 @@ type ProbaMeta = {
   skipHistoryTemplate?: boolean;
   /** When true, do not require `actual.context.history.length === expected.context.history.length`. */
   skipHistoryLengthCheck?: boolean;
+  /** Paths that must be absent from `input.json` (request body before invoke). */
+  inputAbsentPaths?: string[];
 };
 
 /** Object whose keys are all `$…` — treated as a precise-check directive, not a plain subtree. */
@@ -394,6 +398,43 @@ function deletePath(root: unknown, pathStr: string): void {
   }
 }
 
+/** True if `pathStr` resolves to a defined value on `root` (empty array counts as present). */
+function pathExists(root: unknown, pathStr: string): boolean {
+  const segs = parsePathSegments(pathStr);
+  if (segs.length === 0) return false;
+  let cur: unknown = root;
+  for (let i = 0; i < segs.length; i++) {
+    const s = segs[i];
+    if (cur === null || typeof cur !== 'object') return false;
+    if (Array.isArray(cur)) {
+      const idx = typeof s === 'number' ? s : Number.NaN;
+      if (!Number.isInteger(idx) || idx < 0 || idx >= cur.length) return false;
+      cur = cur[idx];
+    } else {
+      const key = String(s);
+      if (!(key in (cur as Record<string, unknown>))) return false;
+      cur = (cur as Record<string, unknown>)[key];
+    }
+  }
+  return true;
+}
+
+function assertInputAbsentPaths(
+  input: Record<string, unknown>,
+  paths: string[] | undefined
+): string | null {
+  if (!paths || paths.length === 0) return null;
+  const found: string[] = [];
+  for (const p of paths) {
+    if (pathExists(input, p)) found.push(p);
+  }
+  if (found.length === 0) return null;
+  return (
+    `input.json must not contain path(s): ${found.map((x) => JSON.stringify(x)).join(', ')} ` +
+    '(set in expected.json `$proba.inputAbsentPaths`).'
+  );
+}
+
 function splitExpectedPayload(raw: unknown): {
   meta: ProbaMeta;
   body: Record<string, unknown>;
@@ -413,6 +454,9 @@ function splitExpectedPayload(raw: unknown): {
     }
     if (p.skipHistoryTemplate === true) meta.skipHistoryTemplate = true;
     if (p.skipHistoryLengthCheck === true) meta.skipHistoryLengthCheck = true;
+    if (Array.isArray(p.inputAbsentPaths)) {
+      meta.inputAbsentPaths = (p.inputAbsentPaths as unknown[]).filter((x) => typeof x === 'string') as string[];
+    }
   }
   return { meta, body };
 }
@@ -672,6 +716,16 @@ async function runCase(caseDir: string): Promise<boolean | null> {
   const expectedRaw = JSON.parse(fs.readFileSync(expectedPath, 'utf8'));
   const { meta: probaMeta, body: expectedBody } = splitExpectedPayload(expectedRaw);
 
+  const inputAbsentErr = assertInputAbsentPaths(input, probaMeta.inputAbsentPaths);
+  if (inputAbsentErr) {
+    console.log(`❌ FAIL: ${path.basename(caseDir)} (${inputAbsentErr})`);
+    fs.writeFileSync(
+      reportPath,
+      `# Test Failure Report: ${path.basename(caseDir)}\n\n## Error\n\n${inputAbsentErr}\n`
+    );
+    return false;
+  }
+
   const historyTemplateErr = assertExpectedHistoryWhenInputHasHistory(input, expectedBody, probaMeta);
   if (historyTemplateErr) {
     console.log(`❌ FAIL: ${path.basename(caseDir)} (${historyTemplateErr})`);
@@ -837,9 +891,18 @@ async function main() {
   }
 
   const testDir = path.join(__dirname);
-  const cases = fs
+  const only = (process.env.PROBA_SERVERA_ONLY || '').trim();
+  let cases = fs
     .readdirSync(testDir)
     .filter((f) => fs.statSync(path.join(testDir, f)).isDirectory() && !f.startsWith('.'));
+  if (only) {
+    if (!cases.includes(only)) {
+      console.error(`PROBA_SERVERA_ONLY=${JSON.stringify(only)} — no such case folder under ${testDir}`);
+      process.exit(1);
+    }
+    cases = [only];
+    console.log(`Running single case: ${only}\n`);
+  }
 
   const results: { case: string; passed: boolean }[] = [];
   let allPass = true;

@@ -11,7 +11,8 @@
       "context.llmPromiseId",
       "context.session_id",
       "execute"
-    ]
+    ],
+    "inputAbsentPaths": ["context.history"]
   },
   "context": {
     "transformSchema": "agent"

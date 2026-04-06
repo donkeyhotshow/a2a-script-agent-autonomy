@@ -4,28 +4,17 @@
       "context.session_id",
       "context.result",
       "context.choice_id",
-      "context.message"
+      "context.message",
+      "context.workbench"
     ],
-    "skipHistoryLengthCheck": true
+    "inputAbsentPaths": ["context.history"]
   },
   "context": {
     "task": "string",
     "execution": {
       "action": "string",
       "step": "string"
-    },
-    "history": [
-      {
-        "role": "user",
-        "message": "string"
-      },
-      {
-        "role": "system",
-        "message": {
-          "$regex": "^choice:"
-        }
-      }
-    ]
+    }
   },
   "execute": {
     "form": {
@@ -33,8 +22,8 @@
       "description": "string",
       "input": [
         {
-          "name": "string",
-          "type": "string",
+          "name": "message",
+          "type": "text",
           "label": "string",
           "required": true
         }

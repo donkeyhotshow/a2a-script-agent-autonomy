@@ -4,6 +4,8 @@
 
 **Purpose:** One folder per case (`input.json` + `expected.json`). Each run exercises the same **invoke body** shape as **`POST /api/v1/invoke`**, then compares a **key-structure subset** of the terminal payload to `expected.json`.
 
+**Normative contract:** **[`simulations/`](../../simulations/)** (per-step `request.json` / `response.json`, plus [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md)) is the **source of truth** for payload shape, action-key rules, and golden flows. Proba is a **regression harness** (in-process invoke + optional `$proba` helpers); it does **not** define a parallel schema. If proba and a golden sim disagree, **fix proba** (or extend the sim first, then align proba).
+
 **Default mode (no HTTP to a2a-server):** `validate.mts` loads a2a-server config/registry, calls **`invoke()`** in-process (`a2a-server/src/services/utils/invoke.service.js`), waits until the stored request row is **completed** or **failed** (same `promiseId` polling idea as production — **no poll deadline**), and normalizes the result to `{ context, execute?, outcome?, error? }`.
 
 **Optional HTTP mode:** `PROBA_SERVERA_USE_HTTP=1` — `POST http://localhost:3000/api/v1/invoke` and poll `http://localhost:3000/api/v1/requests/{promiseId}/result` until terminal (no wall-clock cap on that poll loop).
@@ -13,6 +15,8 @@
 **Checks:** (1) **Key-structure subset** on `expected.json` (minus top-level `$proba`); optional **`$proba.ignorePaths`**; **`$…` directive objects** (`$regex`, `$type`, `$enum`, length bounds) for precise checks before structure normalization. (2) If **`input.json` has non-empty `context.history`**, **`expected.json` must declare `context.history`** unless `$proba.skipHistoryTemplate`. **Array lengths** in `expected` must match `actual` (including `context.history`) unless `$proba.skipHistoryLengthCheck`. (3) **Semantic** — if `outcome !== 'failed'`, `context.task` is set, and `context.history` is non-empty, at least one entry must have `role: user`.
 
 ## Source of truth (fixtures)
+
+Same as **normative contract** above: copy beats from **`simulations/sync/...`** step folders; do not invent fields that are not present in the matching golden unless the server truly emits them and you document why (prefer extending the sim golden first).
 
 | Use | Path |
 |-----|------|
@@ -41,6 +45,7 @@ Align **`context` / `result`** with the matching golden step where you copied a 
 
 - From repo root: **`npm run validate:proba-servera`** (`package.json` → `tsx tests/proba-servera/validate.mts`).
 - **`PROBA_STACK_PROBE_MS`** — per-probe timeout (default 4000 ms).
+- **`PROBA_SERVERA_ONLY`** — run one folder only (e.g. `PROBA_SERVERA_ONLY=script-select`).
 
 ## Artifacts
 

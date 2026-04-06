@@ -2,16 +2,37 @@
   "$proba": {
     "ignorePaths": [
       "context.task",
-      "context.history",
-      "context.execution",
-      "context.workbench",
+      "context.session_id",
       "context.repo_map",
       "context.requestPhase",
       "context.llmPromiseId",
-      "context.session_id",
+      "context.result",
       "context.transformSchema",
-      "execute"
+      "context.message",
+      "context.choice_id",
+      "context.workbench.slots"
+    ],
+    "skipHistoryLengthCheck": true
+  },
+  "context": {
+    "execution": {
+      "action": "agent",
+      "step": "tool_grep_search"
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "history": [
+      {
+        "role": "string",
+        "message": "string"
+      }
     ]
   },
-  "context": {}
+  "execute": {
+    "grep-search": {
+      "pattern": "string",
+      "path": "string"
+    }
+  }
 }

@@ -1,31 +1,38 @@
 {
   "$proba": {
-    "skipHistoryLengthCheck": true,
-    "ignorePaths": ["context.history", "context.execution", "execute", "context.workbench"]
+    "ignorePaths": [
+      "context.task",
+      "context.session_id",
+      "context.repo_map",
+      "context.requestPhase",
+      "context.llmPromiseId",
+      "context.result",
+      "context.transformSchema",
+      "context.message",
+      "context.choice_id",
+      "context.workbench.slots"
+    ],
+    "skipHistoryLengthCheck": true
   },
   "context": {
     "execution": {
       "action": "agent",
-      "step": "tool_run_script"
+      "step": "tool_execute_command"
     },
     "workbench": {
       "sections": {}
     },
     "history": [
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" }
+      {
+        "role": "string",
+        "message": "string"
+      }
     ]
   },
   "execute": {
-    "run-script": {
-      "scriptId": "validate-helper"
+    "execute-command": {
+      "command": "node -e \"const h = require('./utils/helpers'); console.log(h.calculateTotal([{price: 10}, {price: 20}]));\"",
+      "timeout": 10000
     }
   }
 }

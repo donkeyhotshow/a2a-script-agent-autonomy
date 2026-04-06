@@ -1,4 +1,7 @@
 {
+  "$proba": {
+    "inputAbsentPaths": ["context.history"]
+  },
   "context": {
     "task": "string",
     "execution": {

@@ -3,6 +3,7 @@ import {
     extractLlmTextFromHubResponseBody,
     initAiHubChatPromise,
     parseOllamaChatResponseBody,
+    pollReadyThenFetch,
     resolveLlmPromiseRecovery,
 } from '../../src/daemon/llm-hub-poll.js';
 
@@ -178,5 +179,42 @@ describe('resolveLlmPromiseRecovery', () => {
         vi.stubGlobal('fetch', f);
         const r = await resolveLlmPromiseRecovery('http://hub', 'pid-a2a');
         expect(r).toEqual({kind: 'ready', responseMd: body});
+    });
+});
+
+describe('pollReadyThenFetch', () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        delete process.env.LLM_POLL_INTERVAL_MS;
+    });
+
+    it('polls GET /promise/:id until done, then returns response text', async () => {
+        process.env.LLM_POLL_INTERVAL_MS = '1';
+        let statusCalls = 0;
+        vi.stubGlobal(
+            'fetch',
+            vi.fn(async (url: string) => {
+                const u = String(url);
+                if (u.includes('/promise/hub-llm-1/response')) {
+                    return new Response(JSON.stringify({message: {content: 'final'}}), {status: 200});
+                }
+                if (u.includes('/promise/hub-llm-1') && !u.includes('/response')) {
+                    statusCalls += 1;
+                    if (statusCalls === 1) {
+                        return new Response(JSON.stringify({promiseId: 'hub-llm-1', status: 'pending'}), {
+                            status: 202,
+                        });
+                    }
+                    return new Response(
+                        JSON.stringify({promiseId: 'hub-llm-1', status: 'done', result_status_code: 200}),
+                        {status: 200}
+                    );
+                }
+                return new Response('unexpected', {status: 500});
+            })
+        );
+        const r = await pollReadyThenFetch('http://hub', 'hub-llm-1');
+        expect(r).toBe('final');
+        expect(statusCalls).toBe(2);
     });
 });

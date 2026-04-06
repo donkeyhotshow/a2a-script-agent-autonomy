@@ -5,6 +5,12 @@
       "action": "agent",
       "step": "start"
     },
+    "history": [
+      {
+        "role": "user",
+        "message": "analyze codebase structure"
+      }
+    ],
     "workbench": {
       "sections": {
         "scratchpad": {

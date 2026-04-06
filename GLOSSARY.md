@@ -27,6 +27,7 @@
 | **ErrorClassifier** | Система классификации ошибок в `tests/monitor-tasks/errors.js`. Распознает 30+ типов ошибок (connection, http, schema, llm, session, router, task, gray-room, filesystem, network, parse, async). Для каждой ошибки: severity (critical/high/medium/low), hint, quick fix, direct test command, diagnostic steps, environment diagnostic. Поддерживает генерацию PowerShell скриптов для диагностики |
 | **Direct Tests** | Набор скриптов в `tests/direct-tests/` для диагностики проблем без запуска полного стека: `run-checks.ps1`, `test-dialog-flow.ps1`, `dialog/run-dialog-direct-ollama.ps1`. Task Monitor автоматически предлагает релевантные direct tests при ошибках |
 | **Schema validation** | Проверка форм контрактов (execute/result, сессии, симуляции). **Первый слой:** скрипты в [`tests/direct-tests/validators/`](tests/direct-tests/validators/README.md) — из корня репозитория `npm run scan-promise-bodies`, `scan-session-responses`, `verify:gray-room`, `audit:sim-choice-descriptions` и др. **Дальше:** золотые симуляции `npm run sim:lint` / `sim:validate`, зеркала MD/JSON `sim:check-md`, общие гварды (`tests/direct-tests/lib/a2a-schema-guards.mjs` и связанные тесты). См. [`AGENTS.md`](AGENTS.md) → Offline validators |
+| **Yellow alert (scan)** | Команда для ИИ: скан кода на недочёты/костыли/недорешения — [`docs/YELLOW-ALERT-SCAN.md`](docs/YELLOW-ALERT-SCAN.md); в глоссарии: [Yellow alert (scan)](#yellow-alert-scan--жёлтая-тревога-скан) vs [operator](#yellow-alert-operator--жёлтая-тревога-оператор) |
 | **Task Monitor Modules** | Модульная архитектура: `task-monitor-core.js` (конфигурация, состояние, логирование), `task-monitor-api.js` (Client API вызовы), `task-monitor-processing.js` (обработка задач), `task-monitor-daemon.js` (daemon режим), `task-monitor-utils.js` (утилиты), `task-monitor-validation.js` (валидация), `errors.js` (классификация ошибок) |
 
 ## Alerts (тревоги)
@@ -50,9 +51,9 @@ Operational **alert levels**: scope tags for triage (**which subsystem you touch
 
 **Server only** — `a2a-server` (`/api/v1/invoke`, transforms, Gray Room chain, request processor). Assume the defect is on the server until proven otherwise. **Not** the same as **Gray Room** ([Core terms](#core-terms)).
 
-### Yellow alert (proxy) — **Жёлтая тревога (proxy)**
+### Black alert (proxy) — **Черная тревога (proxy)**
 
-**Proxy only** — `ai-integration` (hub/proxy to Ollama, proxy logs, model routing). *Older notes sometimes used «красная» for proxy; yellow is the label for this layer.* Distinct from **Yellow alert (operator)** below.
+**Proxy only** — `ai-integration` (hub/proxy to Ollama, proxy logs, model routing). *Older notes sometimes used «красная» for proxy; black is the label for this layer.* Distinct from **Black alert (operator)** below.
 
 ### Blue alert — **Голубая тревога**
 
@@ -86,13 +87,15 @@ Operational **alert levels**: scope tags for triage (**which subsystem you touch
 
 **Documentation debt** — **canonical** README, ADRs, `ENV-MATRIX`, operator docs **do not match** behavior or code in production paths. **Not** **Brown alert** — Brown is **distill** from noisy artifacts into **the right** place; **Amber** is **fix** the already-canonical doc or the **code** so they agree. Clear the alert when the **lie** or **gap** is removed (update doc, or change code + doc together).
 
+### Yellow alert (scan) — **Жёлтая тревога (скан)**
+
+**AI / IDE command** — proactive pass over the codebase for **shortcomings, hacks, and unfinished fixes** (TODO/FIXME, fragile error handling, sync/async smells, contract drift, test gaps). **Normative procedure:** [`docs/YELLOW-ALERT-SCAN.md`](docs/YELLOW-ALERT-SCAN.md) (invocation text, pattern hints, report format). **Not** a subsystem scope tag (unlike **Black alert (proxy)** for `ai-integration`).
+
 ### Yellow alert (operator) — **Жёлтая тревога (оператор)**
 
-**Not** a subsystem scope tag (unlike **Yellow alert (proxy)** above).
+**Escalation label** — You tell the agent (LLM or assistant) that something is **wrong** here, and it **insists** that the behavior is **correct as-is**.
 
-**Meaning:** You tell the agent (LLM or assistant) that something is **wrong** here, and it **insists** that the behavior is **correct as-is**.
-
-**Activation:** Treat the alert as **on** after your correction has been **ignored twice** — two rounds where you point out the mistake and there is no substantive fix or acknowledgment. **Next step:** restate with concrete evidence (file, line, failing test, expected vs actual), narrow the claim, or change verification path (direct test, smaller repro).
+**Activation:** Treat the alert as **on** after your correction has been **ignored twice** — two rounds where you point out the mistake and there is no substantive fix or acknowledgment. **Next step:** restate with concrete evidence (file, line, failing test, expected vs actual), narrow the claim, or change verification path (direct test, smaller repro). **Distinct from** [Yellow alert (scan)](#yellow-alert-scan--жёлтая-тревога-скан) — scan is **routine triage**; operator is **pushback escalation**.
 
 ### Rooms vs alerts
 

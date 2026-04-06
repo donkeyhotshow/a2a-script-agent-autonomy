@@ -222,7 +222,11 @@ export async function initAiHubChatPromise(
 }
 
 /**
- * Poll `/promises/status` until `llmPromiseId` is ready, then GET `/promise/:id/response`.
+ * Poll until the hub marks `llmPromiseId` done, then GET `/promise/:id/response`.
+ *
+ * Uses **`GET /promise/:id`** (canonical status per ai-integration) instead of relying on
+ * `GET /promises/status` “ready” list, which scans the whole promises directory and can
+ * miss a just-completed id under load or race with listing.
  */
 export async function pollReadyThenFetch(
     base: string,
@@ -237,29 +241,45 @@ export async function pollReadyThenFetch(
         86_400_000
     );
     const started = Date.now();
+    const statusUrl = `${normalizedBase}/promise/${encodeURIComponent(llmPromiseId)}`;
     for (;;) {
         if (opts?.a2aPromiseId) {
             await requestService.patchRequestContext(opts.a2aPromiseId, {requestPhase: 'llm_waiting'});
         }
-        let res: Response;
+        let statusRes: Response;
         try {
-            res = await fetch(`${normalizedBase}/promises/status`, {headers: {'Accept-Encoding': 'identity'}});
+            statusRes = await fetch(statusUrl, {headers: {'Accept-Encoding': 'identity'}});
         } catch (e) {
-            logger.warn('[llm-hub-poll] promises/status fetch failed', {error: String(e)});
+            logger.warn('[llm-hub-poll] promise status fetch failed', {llmPromiseId, error: String(e)});
             if (Date.now() - started > pollTimeoutMs) throw new Error('LLM promise timeout');
             await new Promise((r) => setTimeout(r, pollIntervalMs));
             continue;
         }
-        if (res.ok) {
-            let data: {ready?: Array<{promiseId?: string}>};
+        if (statusRes.status === 202) {
+            if (Date.now() - started > pollTimeoutMs) throw new Error('LLM promise timeout');
+            await new Promise((r) => setTimeout(r, pollIntervalMs));
+            continue;
+        }
+        if (statusRes.status === 500) {
+            logger.warn('[llm-hub-poll] hub promise in error state', {llmPromiseId});
+            return null;
+        }
+        if (statusRes.status === 404) {
+            logger.warn('[llm-hub-poll] promise not found (may be pruned or wrong id)', {llmPromiseId});
+            if (Date.now() - started > pollTimeoutMs) throw new Error('LLM promise timeout');
+            await new Promise((r) => setTimeout(r, pollIntervalMs));
+            continue;
+        }
+        if (statusRes.ok) {
+            let meta: {status?: string};
             try {
-                data = JSON.parse(await res.text()) as {ready?: Array<{promiseId?: string}>};
+                meta = JSON.parse(await statusRes.text()) as {status?: string};
             } catch {
                 if (Date.now() - started > pollTimeoutMs) throw new Error('LLM promise timeout');
                 await new Promise((r) => setTimeout(r, pollIntervalMs));
                 continue;
             }
-            if ((data.ready ?? []).some((p) => p.promiseId === llmPromiseId)) {
+            if (meta.status === 'done') {
                 const mode = opts?.responseMode ?? 'llm_text';
                 if (mode === 'raw_json') {
                     const rawUrl = `${normalizedBase}/promise/${encodeURIComponent(llmPromiseId)}/body_raw`;

@@ -1,6 +1,6 @@
 # Test Failure Report: router-new-task
 
-**Timestamp:** 2026-04-06T09:44:46.764Z
+**Timestamp:** 2026-04-06T17:27:58.262Z
 
 ## Summary
 
@@ -107,10 +107,6 @@
     "context": {
       "type": "object",
       "keys": {
-        "session_id": {
-          "type": "string",
-          "keys": null
-        },
         "task": {
           "type": "string",
           "keys": null
@@ -127,19 +123,6 @@
               "keys": null
             }
           }
-        },
-        "result": {
-          "type": "object",
-          "keys": {
-            "message": {
-              "type": "string",
-              "keys": null
-            }
-          }
-        },
-        "message": {
-          "type": "string",
-          "keys": null
         }
       }
     },
@@ -188,16 +171,27 @@
 
 ```json
 {
+  "$proba": {
+    "ignorePaths": [
+      "context.session_id",
+      "context.result",
+      "context.message",
+      "context.execution.routerAnalysis"
+    ],
+    "inputAbsentPaths": [
+      "context.history"
+    ]
+  },
   "context": {
     "task": "string",
     "execution": {
-      "action": "string",
-      "step": "string"
+      "action": "task",
+      "step": "router"
     }
   },
   "execute": {
     "form": {
-      "title": "string",
+      "title": "Оберіть спосіб виконання",
       "choices": [
         {
           "id": "string",
@@ -215,7 +209,7 @@
 ```json
 {
   "context": {
-    "session_id": "srv_sess_f6d51aa4-8eb4-48e2-9b47-12099b0e7ad3",
+    "session_id": "srv_sess_7f351088-719e-4aca-a856-7a4f3e8f32ec",
     "task": "analyze the codebase",
     "execution": {
       "action": "task",

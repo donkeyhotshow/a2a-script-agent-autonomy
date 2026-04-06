@@ -1,29 +1,36 @@
 {
   "$proba": {
-    "skipHistoryLengthCheck": true,
-    "ignorePaths": ["context.history", "context.execution", "execute", "context.workbench"]
+    "ignorePaths": [
+      "context.task",
+      "context.session_id",
+      "context.repo_map",
+      "context.requestPhase",
+      "context.llmPromiseId",
+      "context.result",
+      "context.transformSchema",
+      "context.message",
+      "context.choice_id",
+      "context.workbench.slots"
+    ],
+    "skipHistoryLengthCheck": true
   },
   "context": {
     "execution": {
       "action": "agent",
-      "step": "tool_write_file"
+      "step": "tool_edit_patch"
     },
     "workbench": {
       "sections": {}
     },
     "history": [
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" },
-      { "role": "string", "message": "string" }
+      {
+        "role": "string",
+        "message": "string"
+      }
     ]
   },
   "execute": {
-    "write-file": {
+    "edit-patch": {
       "path": "utils/helpers.js",
       "content": "function calculateTotal(items) {\n  return items.reduce((sum, item) => sum + item.price, 0);\n}\n\nmodule.exports = { calculateTotal };"
     }

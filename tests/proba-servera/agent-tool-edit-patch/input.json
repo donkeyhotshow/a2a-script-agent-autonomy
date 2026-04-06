@@ -35,14 +35,6 @@
         "step": "tool_file_exists",
         "message": "File exists: utils/helpers.js"
       }
-    ],
-    "workbench": {
-      "sections": {}
-    }
-  },
-  "result": {
-    "edit-patch": {
-      "path": "utils/helpers.js"
-    }
+    ]
   }
 }

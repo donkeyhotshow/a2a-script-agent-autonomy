@@ -19,6 +19,7 @@ Guidance for agents working in this repository.
 | **Sessions / curl / agent tests** | Same surface: not `invoke` alone — [technical notes](#sessions-tests-and-agent-mode-where-to-send-http) |
 | **Schema debugging start point** | **[`tests/direct-tests/README.md`](tests/direct-tests/README.md)** — reproduce shape issues here first, then sims/e2e |
 | **Offline validators (LLM / execute shape, sessions, sims)** | **[`tests/direct-tests/validators/README.md`](tests/direct-tests/validators/README.md)** — scripts flag contract mistakes (e.g. top-level `message` + tool vs `execute.message`); run from repo root: `scan-promise-bodies`, `scan-session-responses`, `verify:gray-room`, `audit:sim-choice-descriptions`, `sim:check-md` |
+| **Yellow alert (AI code scan)** | **[`docs/YELLOW-ALERT-SCAN.md`](docs/YELLOW-ALERT-SCAN.md)** — paste invocation; debt/hacks/TODO/contract smells; not the same as *Yellow alert (operator)* in [`GLOSSARY.md`](GLOSSARY.md) |
 | Imports | **Server / NodeNext:** `.js` on relative imports. **`premium-ui`:** `@/` (Vite) — [`.cursor/rules/code-hierarchy.mdc`](.cursor/rules/code-hierarchy.mdc) |
 | Test ENCRYPTION_KEY | Exactly 32 characters |
 | Test DB | `a2a_test` (not `a2a_server`) |

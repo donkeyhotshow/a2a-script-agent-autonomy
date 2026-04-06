@@ -1,10 +1,8 @@
-import { exec } from 'node:child_process';
-import { promisify } from 'util';
+import { execFile } from 'node:child_process';
+import { config, isDevelopment } from '../../config/index.js';
 import path from 'path';
 import { NodeVM } from 'vm2';
 import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
-
-const execAsync = promisify(exec);
 
 export interface VerificationResult {
   file_path: string;
@@ -88,9 +86,19 @@ export class SWEVerifier {
 
     // 2. Hero-stage sandbox execution
     const testCommand = process.env.TEST_COMMAND;
-    if (testCommand) {
+    if (testCommand && isDevelopment) {
       try {
-        const { stdout, stderr } = await execAsync(testCommand, { timeout: 30000 });
+        // Split command into argv array for safe execution
+        const argv = testCommand.split(/\s+/);
+        const { stdout, stderr } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
+          execFile(argv[0], argv.slice(1), { timeout: 30000 }, (error, stdout, stderr) => {
+            if (error) {
+              reject({ error, stdout, stderr });
+            } else {
+              resolve({ stdout, stderr });
+            }
+          });
+        });
         const res: VerificationResult = {
           file_path: filePath,
           stage: 'hero_stage',
@@ -100,12 +108,13 @@ export class SWEVerifier {
         };
         await this.emitArtifact(res);
         return res;
-      } catch (e: any) {
+      } catch (e: unknown) {
+        const errorMessage = e instanceof Error ? e.message : String(e);
         const res: VerificationResult = {
           file_path: filePath,
           stage: 'hero_stage',
           passed: false,
-          errors: [e.message, e.stdout, e.stderr].filter(Boolean),
+          errors: [errorMessage],
           timestamp: new Date().toISOString()
         };
         await this.emitArtifact(res);

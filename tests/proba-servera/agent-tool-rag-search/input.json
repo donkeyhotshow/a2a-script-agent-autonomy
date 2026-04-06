@@ -1,28 +1,18 @@
 {
   "context": {
-    "task": "зчитати файл і знайти функцію",
+    "task": "Повний контракт agent у a2a-script-agent: золота simulations/sync/agent і всі типи execute, які бачить web-клієнт.",
     "execution": {
       "action": "agent",
-      "step": "tool_rag"
+      "step": "human_gate"
     },
     "history": [
       {
         "role": "user",
-        "message": "Знайди функцію calculateTotal в utils/helpers.js"
+        "message": "Запусти повний прохід інструментів на симуляції sync/agent: RAG, list-directory, read-file, grep, file-exists, edit-patch, write-file, shell, run-script, script — шляхи лише в межах цього репо."
       }
-    ],
-    "workbench": {
-      "sections": {}
-    }
+    ]
   },
   "result": {
-    "rag-search": {
-      "query": "simulations sync agent SCHEMA received.json",
-      "limit": 8,
-      "page": 1,
-      "hasMore": false,
-      "files": [],
-      "results": []
-    }
+    "choice": "proceed_agent_toolchain"
   }
 }

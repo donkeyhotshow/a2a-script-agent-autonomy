@@ -1,10 +1,13 @@
 {
   "context": {
-    "session_id": "srv_sess_8263840c-5e13-4038-b1c6-22c77f71c45d",
+    "session_id": "srv_sess_24ff7a66-85a6-4bf8-9fd2-39d11bc7c3cd",
     "task": "fix vue imports",
     "execution": {
       "action": "task",
       "step": "router"
+    },
+    "workbench": {
+      "sections": {}
     },
     "result": {
       "choice": "fix-vue-imports"

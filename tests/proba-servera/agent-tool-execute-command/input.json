@@ -45,17 +45,6 @@
         "step": "tool_write_file",
         "message": "Wrote utils/helpers.js (50 bytes)"
       }
-    ],
-    "workbench": {
-      "sections": {}
-    }
-  },
-  "result": {
-    "execute-command": {
-      "command": "node -e \"const h = require('./utils/helpers'); console.log(h.calculateTotal([{price: 10}, {price: 20}]));\"",
-      "exitCode": 0,
-      "stdout": "30\n",
-      "stderr": ""
-    }
+    ]
   }
 }
