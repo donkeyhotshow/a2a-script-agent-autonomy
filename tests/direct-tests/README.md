@@ -20,7 +20,7 @@
 **Hardening / reduce LLM work:**
 - `--only=case1,case2` — run specific cases only (e.g., `--only=routerAgentNoLoop,routerDialogNoLoop`)
 - `E2E_DIRECT_LOW_LLM=1` — enables both merges below
-- `E2E_DIRECT_MERGE_INVOKE=1` — one sync invoke replaces 3 cases (3→1 LLM)
+- `E2E_DIRECT_MERGE_INVOKE=1` — one **invoke + poll** round-trip replaces 3 cases (3→1 LLM)
 - `E2E_DIRECT_MERGE_CLIENT_SESSION_SCHEMA=1` — one session replaces 9 cases (9→1 session)
 
 Subset examples:
@@ -236,7 +236,7 @@ $env:A2A_SERVER_URL="http://127.0.0.1:3000"; node tests/direct-tests/router-choi
 ```
 
 What it does:
-1. `POST /api/v1/invoke` with **`{ task: "fix vue imports", sync: true }`** (first-request schema branch) → expect router `execute.form.choices`.
-2. Second invoke with **`context.session_id: "stateless"`** + **`context.task` + `context.execution` + `result.choice: "fix-vue-imports"`** → expect **no** router form again (scripted registry action). (Invoke responses may omit `session_id`; explicit `stateless` matches the server default contour.)
+1. `POST /api/v1/invoke` with **`{ task: "fix vue imports" }`**, then poll **`GET …/requests/{promiseId}/result`** → expect router `execute.form.choices`.
+2. Second invoke + poll with **`context.session_id: "stateless"`** + **`context.task` + `context.execution` + `result.choice: "fix-vue-imports"`** → expect **no** router form again (scripted registry action). (Invoke POST ack may omit `session_id`; explicit `stateless` matches the server default contour.)
 
 For LLM pipeline choices (`dialog` / `agent` / `task-decomposition`), use the **Client API** session flow (`e2e-dialog-test.js` cases above) — those paths invoke the dialog processor and are not duplicated here.

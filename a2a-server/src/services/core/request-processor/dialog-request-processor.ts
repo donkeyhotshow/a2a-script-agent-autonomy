@@ -27,7 +27,13 @@ import {
     readGrayRoomInterruptBudget,
     shouldUseGrayRoom
 } from './gray-room-trigger.js';
-import {resolveTransformSchema, normalizeContext, extractSchemaName, resolveResultObject} from './normalization.js';
+import {
+    resolveTransformSchema,
+    normalizeContext,
+    extractSchemaName,
+    resolveResultObject,
+} from './normalization.js';
+import {tryParseJsonFromLlmText} from '../../../utils/strip-markdown-json-fence.js';
 import {resolveLlmModelFromContext} from './llm-model-resolver.js';
 import {requestService} from '../request/request.service.js';
 import {CognitionBase} from '../cognition-base.js';
@@ -64,6 +70,118 @@ function dialogFailedWithContext(ctx: Record<string, unknown>, error: string): P
         error,
         context: ctx as unknown as RequestContextBlock,
     };
+}
+
+function isDialogExecuteMissingOrEmpty(execute: ProcessResult['execute']): boolean {
+    if (execute == null || typeof execute !== 'object') {
+        return true;
+    }
+    const ex = execute as Record<string, unknown>;
+    return Object.keys(ex).filter((k) => ex[k] != null).length === 0;
+}
+
+function lastAssistantMessageFromContext(context: Record<string, unknown> | undefined): string | undefined {
+    const h = context?.['history'];
+    if (!Array.isArray(h)) {
+        return undefined;
+    }
+    for (let i = h.length - 1; i >= 0; i--) {
+        const row = h[i];
+        if (!row || typeof row !== 'object' || Array.isArray(row)) {
+            continue;
+        }
+        const r = row as Record<string, unknown>;
+        if (r['role'] === 'assistant' && typeof r['message'] === 'string' && r['message'].trim()) {
+            return r['message'].trim();
+        }
+    }
+    return undefined;
+}
+
+function extractDialogFallbackAssistantText(responseMd: string): string {
+    const trimmed = (responseMd || '').trim();
+    if (!trimmed) {
+        return 'The model returned no visible text (empty response). Check LLM hub / model settings.';
+    }
+    const parsed = tryParseJsonFromLlmText(trimmed);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        const p = parsed as Record<string, unknown>;
+        const ex = p['execute'];
+        if (ex && typeof ex === 'object' && !Array.isArray(ex)) {
+            const msg = (ex as Record<string, unknown>)['message'];
+            if (typeof msg === 'string' && msg.trim()) {
+                return msg.trim();
+            }
+        }
+        const topMsg = p['message'];
+        if (typeof topMsg === 'string' && topMsg.trim()) {
+            return topMsg.trim();
+        }
+    }
+    const lines = trimmed.split(/\r?\n/).map((l) => l.trim());
+    const first = lines.find((l) => l.length > 0);
+    return first ?? trimmed.slice(0, 500);
+}
+
+/**
+ * Gray-room response transform can yield context patches without `execute`, which breaks the Client API
+ * (persisted server-response.json is context-only). For dialog schema, synthesize a standard continue form.
+ */
+function ensureDialogExecuteWhenMissing(
+    result: ProcessResult,
+    schemaName: string,
+    responseMd: string
+): void {
+    if (schemaName !== 'dialog') {
+        return;
+    }
+    if (result.outcome === 'failed') {
+        return;
+    }
+    if (!isDialogExecuteMissingOrEmpty(result.execute)) {
+        return;
+    }
+
+    const ctx = result.context as Record<string, unknown> | undefined;
+    let text = lastAssistantMessageFromContext(ctx);
+    if (!text) {
+        text = extractDialogFallbackAssistantText(responseMd);
+    }
+
+    const baseCtx: Record<string, unknown> =
+        ctx && typeof ctx === 'object' && !Array.isArray(ctx) ? {...ctx} : {};
+    const hist: unknown[] = Array.isArray(baseCtx['history']) ? [...(baseCtx['history'] as unknown[])] : [];
+    const hasAssistant = hist.some(
+        (row) =>
+            row &&
+            typeof row === 'object' &&
+            !Array.isArray(row) &&
+            (row as Record<string, unknown>)['role'] === 'assistant'
+    );
+    if (!hasAssistant && text) {
+        hist.push({role: 'assistant', message: text});
+        baseCtx['history'] = hist;
+    }
+
+    result.context = baseCtx as RequestContextBlock;
+    result.execute = {
+        form: {
+            title: 'Dialog',
+            description: text,
+            input: [
+                {
+                    name: 'message',
+                    type: 'text',
+                    label: 'Message',
+                    required: false,
+                },
+            ],
+        },
+    };
+
+    logger.warn('[DialogRequestProcessor] Dialog gray-room result had no execute; applied fallback form', {
+        preview: text.slice(0, 120),
+    });
 }
 
 export class DialogRequestProcessor extends BaseRequestProcessor {
@@ -259,6 +377,8 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                         };
                     }
                 }
+
+                ensureDialogExecuteWhenMissing(grayRoomResult, schemaName, llmResult.responseMd);
 
                 return grayRoomResult;
             }

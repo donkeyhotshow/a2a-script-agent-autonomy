@@ -70,8 +70,9 @@ export function normalizeRouterStepSubmit(submitResult, prevStepData) {
 export function buildSubmitResult({ body, hasChoices }) {
     const { result, task } = body || {};
     if (result) return result;
-    if (!task) return undefined;
-    return { [hasChoices ? 'choice' : 'message']: task };
+    if (task === undefined || task === null) return undefined;
+    const coerced = hasChoices ? String(task).trim() : String(task);
+    return { [hasChoices ? 'choice' : 'message']: coerced };
 }
 
 export function validateSubmitResult(submitResult) {

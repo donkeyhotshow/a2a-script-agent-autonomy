@@ -1,4 +1,4 @@
-import http from 'http';
+import http from 'node:http';
 import {existsSync} from 'node:fs';
 import app from './app.js';
 import {config} from './config/index.js';
@@ -65,11 +65,15 @@ async function bootstrap(): Promise<void> {
 
     // ADR-0080+: Initialize distributed services
     logger.info('[A2A] Initializing Distributed Core 2.5...');
-    void llmService.chat({ messages: [] }).catch((err: unknown) => {
-        logger.warn('[Bootstrap] LLM warm-up failed', {
-            error: err instanceof Error ? err.message : String(err),
+    void llmService
+        .chat({
+            messages: [{ role: 'user', content: 'warm-up: reply with OK only.' }],
+        })
+        .catch((err: unknown) => {
+            logger.warn('[Bootstrap] LLM warm-up failed', {
+                error: err instanceof Error ? err.message : String(err),
+            });
         });
-    });
     peerRelay.joinRoom('main', 'server-01');
 
     server.listen(config.port, () => {
@@ -123,10 +127,19 @@ process.on('uncaughtException', (error) => {
 });
 
 // Handle unhandled promise rejections
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason) => {
+    const msg = reason instanceof Error ? reason.message : String(reason);
+    const name = reason instanceof Error ? reason.name : '';
+    if (
+        msg === 'terminated' ||
+        name === 'AbortError' ||
+        /aborted|terminated/i.test(msg)
+    ) {
+        logger.debug('[Process] Dropped rejection (request aborted)', { reason: msg });
+        return;
+    }
     logger.error('Unhandled promise rejection', {
         reason: String(reason),
-        promise: String(promise),
     });
 });
 

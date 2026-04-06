@@ -171,7 +171,7 @@ export async function invokeAndPersistContinuation(params: {
     }
 }
 
-/** After context/execute updates from a sync invoke, run client rag-search chain (parity with Vite stepRoutes). */
+/** After a terminal upstream response is merged (no in-flight `promiseId` for this step), run client rag-search chain (parity with Vite stepRoutes). */
 export async function persistSyncThenRagChain(
     sessionId: string,
     startStep: number,

@@ -1,5 +1,5 @@
 /**
- * Client-side tool execution + sync re-invoke chain (agent mode).
+ * Client-side tool execution + chained POST /invoke (agent mode), async-only server.
  * When A2A returns a single client-executable execute key, run it under the session project path and POST /invoke again.
  * Supports: rag-search, read-file, list-directory, grep-search, file-exists, write-file,
  * execute-command, run-script, edit-patch. (execute.script is not auto-chained — use SDK / UI.)
@@ -138,7 +138,8 @@ async function runClientToolForExecute(cwd, projectPath, toolKey, payload) {
 }
 
 /**
- * Follow-up sync invokes while the latest response asks for a chainable client tool execute key.
+ * Follow-up chained invokes while the latest response asks for a chainable client tool execute key.
+ * Stops when POST /invoke returns promiseId (normal async path); outer flow must poll and resume.
  *
  * @returns {{ serverResponse: object, stepNum: number, savedContext: object }}
  */

@@ -91,4 +91,18 @@ describe('session-projection-dto', () => {
         });
         expect(out.session.execute).toEqual(out.execute);
     });
+
+    it('sanitizes top-level execute when session has no projected execute', () => {
+        const out = toPublicNextResponse({
+            success: true,
+            execute: {'read-file': {path: 'a.ts'}},
+            session: {
+                id: 'sess_no_exec',
+                context: {execution: {action: 'agent', step: 'x'}},
+            },
+        });
+        expect(out.execute).not.toHaveProperty('read-file');
+        expect(out.execute?.message).toBe('Reading files…');
+        expect(out.execute?.attachments?.readFiles).toEqual([{path: 'a.ts'}]);
+    });
 });

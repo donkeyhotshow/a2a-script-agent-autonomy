@@ -171,7 +171,10 @@ def handle_promise(session: requests.Session, args: argparse.Namespace, entry: D
     logging.info("Ticket %s – %s", promise_id, describe_pending(entry))
     snapshot = fetch_request_snapshot(session, args.proxy_url, promise_id, args.timeout)
     if snapshot:
-        logging.debug("Request body: %s", shorten_text(snapshot.get("body", ""), limit=1000))
+        _b = snapshot.get("body", "")
+        if isinstance(_b, (dict, list)):
+            _b = json.dumps(_b, ensure_ascii=False)
+        logging.debug("Request body: %s", shorten_text(str(_b), limit=1000))
     if args.dry_run or args.no_auto_approve:
         logging.info("Auto-approve disabled; skipping execution for %s", promise_id)
         return

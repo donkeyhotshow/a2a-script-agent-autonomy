@@ -9,7 +9,7 @@ import { maybeChainAgentTools } from './step-routes-agent-flow.js';
 import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import { validateSessionId, resolveProjectStorage, loadSessionData, saveSessionData } from './session-manager.js';
-import { mergeContext, processTaskAndContext, determineInvokeMode, prepareServerRequest } from './context-processor.js';
+import { mergeContext, processTaskAndContext, prepareServerRequest } from './context-processor.js';
 import { sendHttpRequest } from './http-invoker.js';
 import { parseServerResponse, processResponseData, extractAssistantMessage, createResponseAck } from './response-handler.js';
 import { saveClientResult, saveRequestToServer, ensureStepDirectory, saveServerPromise, saveStepData, updateSessionAfterResponse, updateSessionForPromise, finalizeSession } from './persistence-manager.js';
@@ -85,19 +85,10 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
             });
             mergedContext = updatedMergedContext;
 
-            const { shouldSyncInvoke, syncRouterChoice } = determineInvokeMode({
-                execStep: mergedContext.execution?.step,
-                effectiveTask,
-                hasChoices,
-                submitResult,
-            });
-
             const requestToServer = prepareServerRequest({
                 mergedContext,
                 submitResult,
                 effectiveTask,
-                shouldSyncInvoke,
-                syncRouterChoice,
             });
 
             saveRequestToServer({ cwd, sessionId, nextStepNum, requestToServer });

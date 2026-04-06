@@ -19,7 +19,7 @@ export function getStepDir(sessionId: string, stepNum: number): string {
     return path.join(SESSIONS_DIR, sessionId, String(stepNum));
 }
 
-/** Step artifact written after sync invoke (same layout as Vite step handlers). */
+/** Reads `server-response.json` for a step (same layout as Vite step handlers). */
 export async function readServerResponse(
     sessionId: string,
     stepNum: number

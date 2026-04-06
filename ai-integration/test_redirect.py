@@ -35,7 +35,8 @@ try:
         try:
             data = response.json()
             print(json.dumps(data, indent=2, ensure_ascii=False))
-        except:
+        except json.JSONDecodeError:
+            print("Failed to decode JSON, printing raw text:")
             print(response.text)
             
 except Exception as e:

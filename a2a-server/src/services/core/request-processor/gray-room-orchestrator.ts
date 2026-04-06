@@ -9,7 +9,12 @@ import {initAiHubChatPromise, pollReadyThenFetch} from '../../../daemon/llm-hub-
 import {BlackRoomOrchestrator} from '../black-room/black-room-orchestrator.js';
 import type {AlgorithmContext, AlgorithmData} from '../black-room/types.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
-import {validateDialogExecuteShape, validateLlmOutputShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
+import {
+    validateExecuteShapeForSchema,
+    validateLlmOutputShape,
+    validateRouterResultShape,
+    shouldEnforceTransformStrictMode,
+} from './validators/transform-execute-validator.js';
 import {resolveExecution, resolveHistoryLength, toInvokeShapeForPromptsTransform} from './normalization.js';
 import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver.js';
 import {globalArtifactStore} from '../artifact-store.js';
@@ -125,14 +130,22 @@ export class GrayRoomOrchestrator {
         }
         // -------------------------------------------------------------
 
-        // ADR-0093: Internal Debate for the first turn to refine the plan.
+        // ADR-0093: Internal Debate for the first turn to refine the plan (agent-style tasks).
         // Skip when recovering from a hub promise: `md` is the completed hub body; debate would
-        // replace it and runs 3 sync Ollama calls (proxy 500 on read timeout).
-        if (turn === 0 && processInterrupts && !isRecovered) {
+        // replace it and runs 3 sync hub calls (proxy errors / timeouts).
+        // Skip for `dialog` schema: the main dialog LLM response is already the user-facing turn;
+        // debate was causing failed invokes (e.g. upstream/proxy "terminated") before response transform.
+        if (turn === 0 && processInterrupts && !isRecovered && schemaName !== 'dialog') {
             logger.info('[GrayRoom] Running ADR-0093 Internal Debate');
-            const debateResult = await llmService.debate((workingCtx['task'] as string) || '', workingCtx);
-            md = debateResult.plan;
-            workingCtx['debate_consensus'] = debateResult.consensus;
+            try {
+                const debateResult = await llmService.debate((workingCtx['task'] as string) || '', workingCtx);
+                md = debateResult.plan;
+                workingCtx['debate_consensus'] = debateResult.consensus;
+            } catch (e) {
+                logger.warn('[GrayRoom] Internal debate skipped — using primary LLM output', {
+                    error: String(e),
+                });
+            }
         }
         // ---------------------------------------------------------
 
@@ -316,7 +329,8 @@ export class GrayRoomOrchestrator {
                     remainingBudget: interruptBudget,
                     lastReason: interrupt.reason,
                 });
-                return this.mergeTraceIntoResult(result, trace, grayRoom);
+                resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
+                return;
             }
 
             if (typeof interrupt.maxTurns === 'number' && Number.isFinite(interrupt.maxTurns) && interrupt.maxTurns >= 0) {
@@ -491,7 +505,7 @@ export class GrayRoomOrchestrator {
                     context: mergedInner,
                     execute: normalizedExecute,
                 };
-                this.warnOnInvalidExecute(res, 'grayRoom.finalize');
+                this.warnOnInvalidExecute(res, 'grayRoom.finalize', activeSchemaName, rawOutput);
                 touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
                 resolve(this.mergeTraceIntoResult(res, trace, grayRoom));
                 return;
@@ -582,8 +596,12 @@ export class GrayRoomOrchestrator {
                     remainingBudget: 0,
                     lastReason: 'hard_timeout',
                 });
+                const timeoutCtxBase =
+                    result.context && typeof result.context === 'object' && !Array.isArray(result.context)
+                        ? {...(result.context as Record<string, unknown>)}
+                        : {...workingCtx};
                 resolve(this.mergeTraceIntoResult(
-                    {...result, context: {...c, hard_timeout: true}} as ProcessResult,
+                    {...result, context: {...timeoutCtxBase, hard_timeout: true}} as ProcessResult,
                     trace,
                     grayRoom
                 ));
@@ -665,7 +683,7 @@ export class GrayRoomOrchestrator {
                 execute: rawOutput.execute as ProcessResult['execute'] | undefined,
                 ...(interruptPassthrough ? {interrupt: interruptPassthrough} : {}),
             };
-            this.warnOnInvalidExecute(result, 'runResponseTransform');
+            this.warnOnInvalidExecute(result, 'runResponseTransform', schemaName, rawOutput);
 
             return {rawOutput, result};
         } catch (err) {
@@ -758,10 +776,23 @@ export class GrayRoomOrchestrator {
         return {...result, context: ctx};
     }
 
-    private warnOnInvalidExecute(result: ProcessResult, source: string): void {
+    private warnOnInvalidExecute(
+        result: ProcessResult,
+        source: string,
+        schemaName: string,
+        rawTransformOutput?: Record<string, unknown>
+    ): void {
+        const topMsg =
+            rawTransformOutput && typeof rawTransformOutput['message'] === 'string'
+                ? (rawTransformOutput['message'] as string).trim()
+                : '';
         const issues = [
-            ...validateDialogExecuteShape(result.execute),
-            ...validateLlmOutputShape(result)
+            ...validateExecuteShapeForSchema(schemaName, result.execute),
+            ...(schemaName === 'router' ? validateRouterResultShape(result) : []),
+            ...validateLlmOutputShape({
+                ...(topMsg ? {message: topMsg} : {}),
+                execute: result.execute,
+            }),
         ];
         if (issues.length === 0) return;
         if (shouldEnforceTransformStrictMode()) {

@@ -34,9 +34,9 @@ stateDiagram-v2
 }
 ```
 
-### Response (Sync Mode)
+### Пример ответа (снимок сессии)
 
-**Server → Client API:**
+**Client API → клиент** (типичный JSON сессии после создания; не сырой ack `POST /api/v1/invoke`, который даёт только `promiseId`):
 ```json
 {
   "sessionId": "sess_abc123",

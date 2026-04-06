@@ -7,20 +7,13 @@
  * - execute.script (step execution)
  * - result with action-key shape
  *
- * SYNC/ASYNC Handling:
- * - Simple tasks (no LLM required) are processed synchronously, returning execute immediately
- * - Complex tasks (LLM required) return promiseId for async processing
+ * ASYNC-only: POST /api/v1/invoke always returns promiseId; clients poll GET …/requests/:id/result.
  */
 
 import {parseContextBlock} from '../../protocol/context-parser.js';
 import type {ContextBlock, FileBlock} from '../../types/index.js';
 import {CURRENT_PROTOCOL_VERSION} from '../../protocol/versioning/protocol-versions.js';
-import {
-    requestService,
-    type RequestResult,
-    humanizeUpstreamErrorMessage,
-} from '../core/request/request.service.js';
-import {processRequestByPromiseId} from '../core/request-processor/request-processor.service.js';
+import {requestService} from '../core/request/request.service.js';
 import {resolveExecution, resolveResultObject} from '../core/request-processor/normalization.js';
 import {ACTION_TO_SCHEMA} from '../../config/router-static.js';
 import {trackRequestStart} from './pipeline-observability.service.js';
@@ -56,143 +49,10 @@ export interface InvokeInput {
     stepResult?: unknown;  // result with action-key shape: { "script": {...}, "read-file": {...} }
     result?: Record<string, unknown>;  // action-key result: { choice: "..." } or { message: "..." }
     code_blocks?: FileBlock[];
-    sync?: boolean;  // force synchronous processing for testing/simulations
 }
 
 export interface InvokeResult {
     promiseId?: string;
-    execute?: Record<string, unknown>;
-    context?: Record<string, unknown>;
-    message?: string;
-    sync?: boolean;
-}
-
-async function waitTerminalRequest(promiseId: string, maxMs: number): Promise<RequestResult | null> {
-    const deadline = Date.now() + maxMs;
-    while (Date.now() < deadline) {
-        const row = await requestService.getResult(promiseId);
-        // Storage may not be visible for a tick after create — retry instead of aborting sync chain.
-        if (!row) {
-            await new Promise((r) => setTimeout(r, 30));
-            continue;
-        }
-        if (row.status === 'completed' || row.status === 'failed') {
-            return row;
-        }
-        if (row.status === 'pending') {
-            await processRequestByPromiseId(promiseId);
-        } else {
-            await new Promise((r) => setTimeout(r, 30));
-        }
-    }
-    return null;
-}
-
-/**
- * Sanitize context for client response - remove internal/server-only fields
- */
-function sanitizeClientContext(ctx: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
-    if (!ctx || typeof ctx !== 'object' || Array.isArray(ctx)) {
-        return ctx;
-    }
-
-    // Fields to remove from client response (internal/server-only)
-    const internalFields = new Set([
-        'session_id',      // Server-side session ID
-        'result',          // Intermediate processing state
-        'choice_id',       // Duplicate of execution.action
-        'transformSchema', // Internal routing field
-        'message',         // Duplicate of task
-        'llmPromiseId',    // Internal LLM tracking
-        'hubLlmResubmitCount', // Internal hub resubmit guard
-        'llmModel',        // Internal LLM config
-        'ai_action',       // Internal flag
-        'previousChoice',  // Internal routing
-        'operationHistory', // Internal debug
-        'form_submission', // Internal form state
-        'form_data',       // Internal form state
-        'form_id',         // Internal form state
-        'selected_choice', // Internal form state
-    ]);
-
-    const sanitized: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(ctx)) {
-        if (internalFields.has(key)) {
-            continue;
-        }
-
-        // Clean up history - remove system messages that are internal
-        if (key === 'history' && Array.isArray(value)) {
-            sanitized[key] = value.filter((entry: unknown) => {
-                if (typeof entry !== 'object' || entry === null) return true;
-                const role = (entry as Record<string, unknown>)?.role;
-                // Keep only user and assistant messages, filter system/debug
-                return role === 'user' || role === 'assistant';
-            });
-            continue;
-        }
-
-        sanitized[key] = value;
-    }
-
-    return sanitized;
-}
-
-function syncFailureUserMessage(terminal: RequestResult): string | undefined {
-    const pr = terminal.result as Record<string, unknown> | undefined;
-    if (typeof pr?.error === 'string') {
-        return humanizeUpstreamErrorMessage(pr.error);
-    }
-    const te = terminal.error as Record<string, unknown> | null | undefined;
-    if (te && typeof te.message === 'string') {
-        return humanizeUpstreamErrorMessage(te.message);
-    }
-    return undefined;
-}
-
-async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> {
-    let current = rootPromiseId;
-    const hopMax = 16;
-    const waitMs = 120_000;
-
-    for (let hop = 0; hop < hopMax; hop++) {
-        const terminal = await waitTerminalRequest(current, waitMs);
-        if (!terminal) {
-            return {promiseId: rootPromiseId};
-        }
-
-        const pr = terminal.result as Record<string, unknown> | undefined;
-
-        if (terminal.status === 'failed') {
-            // Failed outcomes should NOT include execute - only outcome, error, context
-            return {
-                sync: true,
-                outcome: 'failed',
-                error: terminal.error || 'Request processing failed',
-                context: sanitizeClientContext(pr?.context as Record<string, unknown>),
-            };
-        }
-
-        const follow =
-            pr && typeof pr['followUpRequestId'] === 'string'
-                ? (pr['followUpRequestId'] as string)
-                : '';
-        if (follow) {
-            current = follow;
-            continue;
-        }
-
-        const ex = pr?.execute as Record<string, unknown> | undefined;
-        // Server NEVER returns execute.wait — client detects async (no sync flag)
-        // and renders waiting UI based on promise status polling.
-        return {
-            sync: true,
-            execute: ex && typeof ex === 'object' ? ex : {},
-            context: sanitizeClientContext(pr?.context as Record<string, unknown>),
-        };
-    }
-
-    return {promiseId: rootPromiseId};
 }
 
 function ensureContextSessionId(ctx: Record<string, unknown>): string {
@@ -316,16 +176,6 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
     
     // Track request start for observability
     trackRequestStart(promiseId);
-
-    const explicitSync = input.sync === true;
-    const explicitAsync = input.sync === false;
-    const envDefaultSync =
-        process.env.DEFAULT_SYNC_MODE === '1' || process.env.DEFAULT_SYNC_MODE === 'true';
-    const useSync = explicitSync || (envDefaultSync && !explicitAsync);
-
-    if (useSync) {
-        return runSyncInvokeChain(promiseId);
-    }
 
     return {promiseId};
 }

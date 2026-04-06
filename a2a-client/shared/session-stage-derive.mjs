@@ -57,5 +57,9 @@ export function deriveSessionStage(params) {
         return 'dialog-input';
     }
 
+    if (status === 'pending' || status === 'processing' || status === 'waiting') {
+        return 'awaiting-async';
+    }
+
     return 'dialog-input';
 }

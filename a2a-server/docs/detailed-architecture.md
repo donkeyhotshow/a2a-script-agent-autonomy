@@ -97,7 +97,7 @@ POST /api/v1/invoke
 
 | Endpoint | Method | Auth | Описание |
 |----------|--------|------|----------|
-| `/api/v1/invoke` | POST | Bearer/Basic | Создать запрос (sync-like) |
+| `/api/v1/invoke` | POST | Bearer/Basic | Создать запрос (ack: `promiseId`; терминал — poll `GET …/result`) |
 
 
 
@@ -526,6 +526,7 @@ simulations/
 | `HOST` | `localhost` | Хост для сервера |
 | `JWT_EXPIRES_IN` | `1h` | JWT токен expires |
 | `LOG_LEVEL` | `info` | error / warn / info / debug |
+| `REGISTRY_TOKEN` | - | Shared token for registry API authentication |
 
 #### Переменные для Разработки
 
@@ -555,6 +556,10 @@ simulations/
 | `5173` | Web UI (Vite dev server) |
 
 > **Примечание:** Порты `5432` (PostgreSQL) и `6379` (Redis) больше не используются - сервер stateless.
+
+#### Registry API Security
+
+Registry routes (`/api/registry/*`) require authentication via `X-Registry-Token` header with `REGISTRY_TOKEN` value. In production, ensure the server is bound to localhost (default) for loopback-only access.
 
 ### Запуск в Dev-режиме
 

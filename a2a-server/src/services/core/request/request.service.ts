@@ -100,6 +100,12 @@ export function humanizeUpstreamErrorMessage(raw: string): string {
     if (/llm response fetch failed|^llm error:/i.test(s)) {
         return CLIENT_SAFE_PROCESSING_ERROR;
     }
+    if (/\bollama\b/i.test(s)) {
+        return CLIENT_SAFE_PROCESSING_ERROR;
+    }
+    if (/\b127\.0\.0\.1:\d{2,5}\b/.test(s) || /\blocalhost:\d{2,5}\b/i.test(s)) {
+        return CLIENT_SAFE_PROCESSING_ERROR;
+    }
     return s;
 }
 
@@ -339,7 +345,7 @@ export class RequestService {
     }
 
     /**
-     * Claim a specific pending request (for sync /invoke — same transition as getNextPending).
+     * Claim a specific pending request (async pipeline — same transition as getNextPending).
      */
     async claimPendingByPromiseId(promiseId: string): Promise<RequestResult | null> {
         const req = await getRequestStorage().load(promiseId);

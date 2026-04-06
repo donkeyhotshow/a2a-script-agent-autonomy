@@ -8,7 +8,7 @@ Stateless A2A backend for invoke processing, routing, transforms, and async prom
 
 - Runtime: Node.js 20+, TypeScript, Express
 - Core mode: stateless request processing (no server-side session storage)
-- Main flow: `POST /api/v1/invoke` -> sync execute or async `promiseId`
+- Main flow: `POST /api/v1/invoke` returns `promiseId`; terminal `execute` / `context` via `GET /api/v1/requests/:promiseId/result` (poll)
 - Async polling: `/api/v1/requests/:promiseId/status` and `/api/v1/requests/:promiseId/result`
 - Session bridge route for client API: `POST /api/a2a/sessions/:sessionId/next`
 
@@ -57,7 +57,6 @@ Key vars used most often:
 
 - `PORT`
 - `SKIP_AUTH`
-- `DEFAULT_SYNC_MODE`
 - `AI_HUB_URL`
 - `LLM_PROVIDER`
 - `OLLAMA_MODEL`

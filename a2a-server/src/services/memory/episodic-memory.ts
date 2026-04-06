@@ -225,9 +225,15 @@ export class EpisodicMemory {
         this.backend = new PostgresBackend(dbUrl);
         return;
       } catch (err: unknown) {
-        logger.warn('[EpisodicMemory] Postgres backend unavailable, using JSON file', {
-          error: err instanceof Error ? err.message : String(err),
-        });
+        const detail = err instanceof Error ? err.message : String(err);
+        const missingPg = /Cannot find module ['"]pg['"]/.test(detail);
+        if (missingPg) {
+          logger.debug('[EpisodicMemory] Optional pg not installed, using JSON file');
+        } else {
+          logger.warn('[EpisodicMemory] Postgres backend unavailable, using JSON file', {
+            error: detail,
+          });
+        }
       }
     }
     this.backend = new JsonFileBackend(jsonFilePath);

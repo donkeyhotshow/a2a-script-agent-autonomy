@@ -1,7 +1,7 @@
 # Human-review test run (ai-integration)
 
-**When:** 2026-04-05T22:49:49.002685+00:00
-**Exit code:** 1
+**When:** 2026-04-05T23:19:31.974675+00:00
+**Exit code:** 0
 
 ## Summary
 
@@ -17,19 +17,14 @@ rootdir: C:\workspace\org-carrier\a2a-script-agent\ai-integration
 configfile: pyproject.toml
 plugins: anyio-4.12.1, asyncio-1.3.0
 asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
-collecting ... collected 1 item
+collecting ... collected 4 items
 
-tests/human-review/test_extract_prompt_multimodal.py::test_extract_prompt_collects_text_from_multimodal_message_content FAILED [100%]
+tests/human-review/test_extract_prompt_multimodal.py::test_extract_prompt_collects_text_from_multimodal_message_content PASSED [ 25%]
+tests/human-review/test_extract_prompt_numeric_content.py::test_extract_prompt_stringifies_numeric_message_content PASSED [ 50%]
+tests/human-review/test_extract_prompt_tool_calls.py::test_extract_prompt_includes_tool_call_metadata_for_rule_matching PASSED [ 75%]
+tests/human-review/test_match_when_path_trailing_slash.py::test_match_when_path_treats_trailing_slash_as_equivalent PASSED [100%]
 
-================================== FAILURES ===================================
-______ test_extract_prompt_collects_text_from_multimodal_message_content ______
-tests\human-review\test_extract_prompt_multimodal.py:18: in test_extract_prompt_collects_text_from_multimodal_message_content
-    assert "hello multimodal" in _extract_prompt(body)
-E   AssertionError: assert 'hello multimodal' in ''
-E    +  where '' = _extract_prompt({'messages': [{'content': [{'text': 'hello multimodal', 'type': 'text'}], 'role': 'user'}]})
-=========================== short test summary info ===========================
-FAILED tests/human-review/test_extract_prompt_multimodal.py::test_extract_prompt_collects_text_from_multimodal_message_content
-============================== 1 failed in 1.21s ==============================
+============================== 4 passed in 1.25s ==============================
 
 
 ```

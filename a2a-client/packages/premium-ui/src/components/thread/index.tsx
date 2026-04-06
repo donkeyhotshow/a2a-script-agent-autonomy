@@ -31,12 +31,7 @@ import { useMediaQuery } from "@/hooks/useMediaQuery";
 import { Label } from "../ui/label";
 import { Switch } from "../ui/switch";
 import { GitHubSVG } from "../icons/github";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../ui/tooltip";
+
 import { useFileUpload } from "@/hooks/use-file-upload";
 import { ContentBlocksPreview } from "./ContentBlocksPreview";
 import {
@@ -155,11 +150,9 @@ export function Thread() {
     } catch {
       // no-op
     }
-  }, [stream.error]);
+   }, [stream.error]);
 
-
-
-  const handleSubmit = (e: FormEvent) => {
+   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     if ((input.trim().length === 0 && contentBlocks.length === 0) || isLoading)
       return;

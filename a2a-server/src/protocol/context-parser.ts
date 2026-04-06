@@ -113,6 +113,13 @@ export function validateContextBlock(context: unknown): { valid: boolean; errors
         errors.push('llmModel must be a non-empty string when present');
     }
 
+    if (ctx['execution'] !== undefined) {
+        const ex = ctx['execution'];
+        if (!isObject(ex) || Array.isArray(ex)) {
+            errors.push('execution must be a plain object when present');
+        }
+    }
+
     if (ctx['errors'] !== undefined) {
         const errs = ctx['errors'];
         if (!Array.isArray(errs)) {

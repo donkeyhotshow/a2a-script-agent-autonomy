@@ -157,7 +157,7 @@ NOT: `{ "execute": { "action": "...", ... } }` or `{ "result": { "content": "...
 ## A2A Protocol
 
 ### Overview
-Request-response pattern with sync (immediate `execute`) and async (polling `promiseId`) flows.
+`POST /api/v1/invoke` returns **`promiseId`**; terminal **`execute` / `context`** come from **`GET /api/v1/requests/{id}/result`** (poll until `completed` / `failed`). The Client API uses the same contour via **`/next` + `GET …/async`**.
 
 ### Action-Key Shape (Mandatory)
 All `execute` and `result` objects use single action-type key:
@@ -171,12 +171,10 @@ LLM controls `context.execution.step` → server persists via transforms.
 
 ### Request Flows
 
-| Flow | When | Response | Example |
-|------|------|----------|---------|
-| Sync | Simple ops, form interactions | Immediate `execute` | `task: "dialog"` → `execute.form` |
-| Async | LLM processing, long-running | `promiseId` for polling | LLM calls → `promiseId` → poll |
-
-Enable sync with `DEFAULT_SYNC_MODE=1` or request `sync: true`.
+| Step | Response |
+|------|----------|
+| `POST /api/v1/invoke` | `{ data: { promiseId, status: "pending", pollUrl } }` |
+| Poll `GET /api/v1/requests/{promiseId}/result` | `status` → `completed` / `failed`; body includes `execute`, `context` when done |
 
 **Dialog/LLM deferral:** For the dialog transform pipeline, many hub/transform/LLM failures **do not** finalize `promiseId` as `failed` immediately; the server re-queues the same id (`pending` + `retryAfter`) until success or max retries. Normative detail: **[`docs/PROMISE-RETRY-DIALOG.md`](docs/PROMISE-RETRY-DIALOG.md)**.
 
@@ -203,7 +201,6 @@ Note: Server always applies transforms; `response.md` optional (no LLM).
 | SKIP_AUTH | 1 (dev) | No |
 | ENCRYPTION_KEY | 32 chars | Yes |
 | JWT_SECRET | 32+ chars | Yes |
-| DEFAULT_SYNC_MODE | 1 | No |
 | A2A_GRAY_ROOM_ENABLED | unset or `1` = on; `0`/`false` = off | No |
 | A2A_BLACK_ROOM_ENABLED | Enable Black Room (Algorithm Mode) | No |
 | A2A_BLACK_ROOM_OLLAMA_URL | Ollama URL for Black Room (default: http://localhost:11435) | No |
@@ -355,7 +352,7 @@ See [docs/adr/README.md](docs/adr/README.md) for full index (includes **Tooling*
 | **Promise** | Async request ID for polling long-running work |
 | **Gray Room** | Серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту |
 | **Router** | Keyword-based routing (dialog/agent/task-decomposition) |
-| **Sync Mode** | Immediate execute response (no promiseId) |
+| **Sync golden (`simulations/sync/`)** | Simulation folder style (invoke-shaped goldens). Server transport is always **`promiseId` + poll** — not inline execute on POST; see **Purple alert** in [`GLOSSARY.md`](GLOSSARY.md). |
 | **Web DTO** | Client-sanitized execute (only form, not tool calls) |
 | **operationHistory** | Легковесный трек операций (llm_call, transform, interrupt) для debug/audit |
 

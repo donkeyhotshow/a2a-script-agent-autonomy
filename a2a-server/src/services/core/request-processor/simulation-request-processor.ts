@@ -24,11 +24,11 @@ import type {
 } from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {
-    validateAgentExecuteShape,
-    validateDialogExecuteShape,
+    validateExecuteShapeForSchema,
+    isAgentTransformSchema,
     validateResultShape,
     validateLlmOutputShape,
-    shouldEnforceTransformStrictMode
+    shouldEnforceTransformStrictMode,
 } from './validators/transform-execute-validator.js';
 
 /**
@@ -234,7 +234,12 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                 responseData = responseTransformResult.output;
                 
                 // Validate execute shape based on schema type (agent or dialog)
-                this.validateTransformExecute(schemaName, responseData.execute, 'simulation.response');
+                this.validateTransformExecute(
+                    schemaName,
+                    responseData.execute,
+                    'simulation.response',
+                    responseData
+                );
                 
                 // Validate result shape (action-key format)
                 this.validateTransformResult(responseData.result, 'simulation.response');
@@ -438,22 +443,22 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
     private validateTransformExecute(
         schemaName: string,
         execute: ProcessResult['execute'] | undefined,
-        source: string
+        source: string,
+        rawTransformOutput?: Record<string, unknown>
     ): void {
-        const isAgentSchema = schemaName === 'agent' || 
-            schemaName.startsWith('agent-') || 
-            schemaName === 'coder' || 
-            schemaName === 'analyze' ||
-            schemaName === 'auto-ai' ||
-            schemaName === 'fix-vue-imports' ||
-            schemaName === 'fix-laravel-namespaces-and-uses';
-        
-        const validator = isAgentSchema ? validateAgentExecuteShape : validateDialogExecuteShape;
+        const isAgentSchema = isAgentTransformSchema(schemaName);
+        const topMsg =
+            rawTransformOutput && typeof rawTransformOutput['message'] === 'string'
+                ? (rawTransformOutput['message'] as string).trim()
+                : '';
         const issues = [
-            ...validator(execute),
-            ...validateLlmOutputShape({ message: rawOutput.message as string, execute })
+            ...validateExecuteShapeForSchema(schemaName, execute),
+            ...validateLlmOutputShape({
+                ...(topMsg ? {message: topMsg} : {}),
+                execute,
+            }),
         ];
-        
+
         if (issues.length > 0) {
             if (shouldEnforceTransformStrictMode()) {
                 const codes = issues.map((i) => i.code).join(', ');

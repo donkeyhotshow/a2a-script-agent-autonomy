@@ -1,5 +1,6 @@
 /**
- * After a sync A2A invoke, run client-side rag-search and re-invoke (ISSUE 8b, SDK parity with Vite stepRoutes).
+ * After an A2A invoke ack, run client-side rag-search and re-invoke (ISSUE 8b, SDK parity with Vite stepRoutes).
+ * Server is async-only: if chained POST /invoke returns promiseId, chain stops; caller polls /result and continues elsewhere.
  */
 
 import { RAGSearcher } from '@a2a/rag';
@@ -58,7 +59,7 @@ export type AgentRagChainResult = {
 };
 
 /**
- * If the latest sync response requests execute["rag-search"], run RAG and POST /invoke until it stops or max depth.
+ * If the latest invoke response requests execute["rag-search"], run RAG and POST /invoke until it stops, max depth, or promiseId.
  */
 export async function applyAgentRagChainAfterSyncInvoke(options: {
     sessionId: string;

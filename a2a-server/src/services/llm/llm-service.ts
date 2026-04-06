@@ -42,18 +42,16 @@ export class LlmService {
 
     logger.info('[LlmService] Routing request', { provider, model });
 
-    switch (provider) {
-      case 'ollama':
-        return this.chatOllama(model, request);
-      case 'openai':
-      case 'gemini':
-      case 'anthropic':
-        // Placeholder for real API calls - in a real system we'd use SDKs or fetch
-        // For now, let's assume we proxy everything to our existing AI Hub/Ollama logic
-        return this.chatOllama(model, request);
-      default:
-        throw new Error(`Unsupported provider: ${provider}`);
-    }
+     switch (provider) {
+       case 'ollama':
+         return this.chatOllama(model, request);
+       case 'openai':
+       case 'gemini':
+       case 'anthropic':
+         throw new Error(`Provider '${provider}' is not yet implemented. Only 'ollama' is currently supported.`);
+       default:
+         throw new Error(`Unsupported provider: ${provider}`);
+     }
   }
 
   private async chatOllama(model: string, request: LlmRequest): Promise<LlmResponse> {

@@ -147,9 +147,13 @@ def promise_request(promise_id: str):
 
     body_str = body_content.decode('utf-8', errors='replace') if body_content else None
     if body_str is None:
-        body_str = request_snapshot.get('body')
-        if isinstance(body_str, bytes):
-            body_str = body_str.decode('utf-8', errors='replace')
+        snap_body = request_snapshot.get('body')
+        if isinstance(snap_body, (dict, list)):
+            body_str = json.dumps(snap_body, ensure_ascii=False)
+        elif isinstance(snap_body, bytes):
+            body_str = snap_body.decode('utf-8', errors='replace')
+        else:
+            body_str = snap_body
 
     return {
         "promiseId": promise_id,

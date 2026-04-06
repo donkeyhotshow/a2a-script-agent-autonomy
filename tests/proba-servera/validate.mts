@@ -205,7 +205,6 @@ function generateErrorReport(
 function inputToInvokePayload(body: Record<string, unknown>): Record<string, unknown> {
   const out: Record<string, unknown> = {
     context: body.context,
-    sync: true,
   };
   if (typeof body.task === 'string') out.task = body.task;
   if (typeof body.message === 'string') out.message = body.message;
@@ -225,7 +224,6 @@ function normalizeInvokeResult(invokeResult: {
   outcome?: string;
   error?: string;
   message?: string;
-  sync?: boolean;
   promiseId?: string;
 }): Record<string, unknown> {
   const result: Record<string, unknown> = {
@@ -245,25 +243,53 @@ function normalizeInvokeResult(invokeResult: {
   return result;
 }
 
+async function pollHttpResult(promiseId: string): Promise<Record<string, unknown>> {
+  const deadline = Date.now() + 120_000;
+  const url = `http://localhost:3000/api/v1/requests/${encodeURIComponent(promiseId)}/result`;
+  for (;;) {
+    if (Date.now() > deadline) throw new Error(`HTTP poll timeout for ${promiseId}`);
+    const res = await fetch(url);
+    if (!res.ok) {
+      await new Promise((r) => setTimeout(r, 40));
+      continue;
+    }
+    const wrapped = (await res.json()) as {
+      success?: boolean;
+      data?: Record<string, unknown>;
+    };
+    const data = wrapped.data;
+    const st = data?.status;
+    if (st === 'completed' || st === 'failed' || st === 'cancelled') {
+      if (st === 'failed') {
+        return normalizeInvokeResult({
+          context: data?.context as Record<string, unknown>,
+          outcome: 'failed',
+          error: data?.error,
+        });
+      }
+      return normalizeInvokeResult({
+        context: data?.context as Record<string, unknown>,
+        execute: data?.execute as Record<string, unknown>,
+      });
+    }
+    await new Promise((r) => setTimeout(r, 40));
+  }
+}
+
 async function callViaHttp(input: Record<string, unknown>): Promise<Record<string, unknown>> {
   const res = await fetch('http://localhost:3000/api/v1/invoke', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...input, sync: true }),
+    body: JSON.stringify(input),
   });
   if (!res.ok) throw new Error(`Server error: ${res.status}`);
   const wrapped = (await res.json()) as {
     success?: boolean;
-    data?: { context?: unknown; execute?: unknown };
+    data?: { promiseId?: string };
   };
-  const data = wrapped.data;
-  if (data && typeof data === 'object') {
-    return {
-      context: (data.context as Record<string, unknown>) ?? {},
-      execute: (data.execute as Record<string, unknown>) ?? {},
-    };
-  }
-  return wrapped as Record<string, unknown>;
+  const pid = wrapped.data?.promiseId;
+  if (!pid) throw new Error('No promiseId from HTTP invoke');
+  return pollHttpResult(pid);
 }
 
 let invokeFn: (typeof import('../../a2a-server/src/services/utils/invoke.service.js'))['invoke'] | null =
@@ -282,16 +308,53 @@ async function initInProcessInvoke(): Promise<void> {
   invokeFn = mod.invoke;
 }
 
+async function waitTerminalInProcess(promiseId: string): Promise<{
+  status: string;
+  result?: Record<string, unknown>;
+  error?: unknown;
+}> {
+  const { requestService } = await import('../../a2a-server/src/services/core/request/request.service.js');
+  const { processRequestByPromiseId } = await import(
+    '../../a2a-server/src/services/core/request-processor/request-processor.service.js'
+  );
+  const deadline = Date.now() + 120_000;
+  for (;;) {
+    if (Date.now() > deadline) throw new Error(`In-process poll timeout for ${promiseId}`);
+    const row = await requestService.getResult(promiseId);
+    if (!row) {
+      await new Promise((r) => setTimeout(r, 30));
+      continue;
+    }
+    if (row.status === 'completed' || row.status === 'failed') {
+      return { status: row.status, result: row.result as Record<string, unknown>, error: row.error };
+    }
+    if (row.status === 'pending') {
+      await processRequestByPromiseId(promiseId);
+    } else {
+      await new Promise((r) => setTimeout(r, 30));
+    }
+  }
+}
+
 async function callInProcess(input: Record<string, unknown>): Promise<Record<string, unknown>> {
   await initInProcessInvoke();
   const payload = inputToInvokePayload(input);
   const r = await invokeFn!('proba-servera', payload as Parameters<NonNullable<typeof invokeFn>>[1]);
-  if (!r.sync && r.promiseId && r.execute === undefined) {
-    throw new Error(
-      `Async invoke only (promiseId=${r.promiseId}). Use sync-friendly case or set DEFAULT_SYNC_MODE=1 in .env`
-    );
+  const pid = r.promiseId;
+  if (!pid) throw new Error('invoke() returned no promiseId');
+  const terminal = await waitTerminalInProcess(pid);
+  const res = terminal.result ?? {};
+  if (terminal.status === 'failed') {
+    return normalizeInvokeResult({
+      context: res.context as Record<string, unknown>,
+      outcome: 'failed',
+      error: terminal.error ?? res.error,
+    });
   }
-  return normalizeInvokeResult(r);
+  return normalizeInvokeResult({
+    context: res.context as Record<string, unknown>,
+    execute: res.execute as Record<string, unknown>,
+  });
 }
 
 async function runCase(caseDir: string): Promise<boolean | null> {

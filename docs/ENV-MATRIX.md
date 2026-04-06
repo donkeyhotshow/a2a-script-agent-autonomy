@@ -14,9 +14,9 @@ Canonical cross-module environment alignment for client, server, and ai-integrat
 | Variable | dev | CI | prod | Notes |
 |---|---|---|---|---|
 | `SKIP_AUTH` | `1` allowed | `1` only in test jobs | `0` required | Dev/test bypass only. Do not use in production. |
-| `DEFAULT_SYNC_MODE` | `1` for sync simulations/UI flows | Optional per job | Usually unset/`0` | Async (`promiseId`) remains default production mode. |
 | `JWT_SECRET` | Required (>=32 chars) | Required (secret) | Required (secret) | Server auth secret. |
 | `ENCRYPTION_KEY` | Required (exactly 32 chars) | Required (secret) | Required (secret) | Required by tests and runtime encryption flows. |
+| `ALLOW_TOOLS_EVOLVE` | unset (=disabled) | unset | unset | Admin-only flag for dangerous `/api/tools/evolve` endpoint. Enable only in dev. |
 
 ## Polling and Time Budgets
 
@@ -32,6 +32,8 @@ Canonical cross-module environment alignment for client, server, and ai-integrat
 | `A2A_GRAY_ROOM_ENABLED` | unset (=on) or `1` | unset or `1` | policy | Default **on** when unset; set `0`/`false`/`off` to skip interrupt expansion (one response transform). |
 | `A2A_GRAY_ROOM_MAX_TURNS` | `10` | `10` | tuned | Fallback budget when `A2A_MAX_INTERRUPT_TURNS` unset. |
 | `A2A_COMPRESS_HISTORY_MIN_ENTRIES` | `0` | `0` | `0` or tuned | Skip compress sidecar under threshold. |
+| `FORWARD_TIMEOUT_SECONDS` | `30` | `30` | tuned | ai-integration proxy forward timeout in seconds. 0 = unlimited. |
+| `PROVIDER_TIMEOUT` | `30` | `30` | tuned | ai-integration provider session timeout in seconds. 0 = unlimited. |
 
 ## Baseline Rules
 

@@ -72,20 +72,7 @@ export function processTaskAndContext({ mergedContext, submitResult, prevStepDat
     return { effectiveTask, mergedContext };
 }
 
-export function determineInvokeMode({ execStep, effectiveTask, hasChoices, submitResult }) {
-    const shouldSyncInvoke =
-        execStep === 'new' &&
-        typeof effectiveTask === 'string' &&
-        effectiveTask.trim().length > 0 &&
-        !hasChoices;
-
-    const syncRouterChoice =
-        hasChoices && submitResult && typeof submitResult.choice === 'string';
-
-    return { shouldSyncInvoke, syncRouterChoice };
-}
-
-export function prepareServerRequest({ mergedContext, submitResult, effectiveTask, shouldSyncInvoke, syncRouterChoice }) {
+export function prepareServerRequest({ mergedContext, submitResult, effectiveTask }) {
     const contextForServer = sanitizeContextForServer(mergedContext);
     const execAction = mergedContext.execution?.action;
     let topLevelTask = effectiveTask;
@@ -100,7 +87,6 @@ export function prepareServerRequest({ mergedContext, submitResult, effectiveTas
         context: contextForServer,
         result: submitResult,
         ...(topLevelTask ? { task: topLevelTask } : {}),
-        ...(shouldSyncInvoke || syncRouterChoice ? { sync: true } : {}),
     };
 
     return sanitizeInvokeBodyForA2aUpstream(requestToServer);

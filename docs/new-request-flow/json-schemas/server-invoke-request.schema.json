@@ -31,10 +31,6 @@
   },
   "additionalProperties": false,
   "properties": {
-    "sync": {
-      "type": "boolean",
-      "description": "Force synchronous processing for testing/simulations."
-    },
     "task": {
       "$ref": "#/definitions/taskString"
     },

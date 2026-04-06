@@ -69,10 +69,17 @@ const POLL_INTERVAL_MS = 15_000;
 
 const DEFAULT_MAX_LOAD = 10;
 
+/** Maximum number of agents allowed in the registry */
+const MAX_AGENTS = 1000;
+
+/** Minimum time between registrations for the same agentId (rate limiting) */
+const REGISTER_RATE_LIMIT_MS = 10_000;
+
 // ── Registry implementation ───────────────────────────────────────────────────
 
 class AgentRegistryV2 {
   private readonly agents = new Map<string, AgentRecord>();
+  private readonly lastRegisters = new Map<string, number>();
   private pollerHandle: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
@@ -86,6 +93,22 @@ class AgentRegistryV2 {
    * 'online' and updates all fields.
    */
   register(reg: AgentRegistration): AgentRecord {
+    const now = Date.now();
+
+    // Rate limiting: prevent rapid registrations from the same agentId
+    const lastRegister = this.lastRegisters.get(reg.agentId);
+    if (lastRegister && now - lastRegister < REGISTER_RATE_LIMIT_MS) {
+      throw new Error(`Rate limited: cannot register agent ${reg.agentId} again so soon`);
+    }
+
+    // Evict offline agents to free up space
+    this.evictOfflineAgents();
+
+    // Check capacity
+    if (this.agents.size >= MAX_AGENTS) {
+      throw new Error(`Registry at capacity (${MAX_AGENTS}), cannot register new agent`);
+    }
+
     const existing = this.agents.get(reg.agentId);
     const record: AgentRecord = {
       agentId: reg.agentId,
@@ -95,9 +118,10 @@ class AgentRegistryV2 {
       maxLoad: reg.maxLoad ?? DEFAULT_MAX_LOAD,
       health: 'online',
       load: existing?.load ?? 0,
-      heartbeat: Date.now(),
+      heartbeat: now,
     };
     this.agents.set(reg.agentId, record);
+    this.lastRegisters.set(reg.agentId, now);
     logger.info('[RegistryV2] Agent registered', { agentId: reg.agentId, caps: reg.caps });
     return record;
   }
@@ -210,6 +234,23 @@ class AgentRegistryV2 {
     }
 
     return { ...counts, total: all.length, agents };
+  }
+
+  // ── Eviction ──────────────────────────────────────────────────────────────
+
+  /**
+   * Evict offline agents with the oldest heartbeats to free up space.
+   */
+  private evictOfflineAgents(): void {
+    const offline = Array.from(this.agents.values())
+      .filter((a) => a.health === 'offline')
+      .sort((a, b) => a.heartbeat - b.heartbeat);
+
+    for (const agent of offline) {
+      this.agents.delete(agent.agentId);
+      logger.info('[RegistryV2] Evicted offline agent', { agentId: agent.agentId });
+      if (this.agents.size < MAX_AGENTS) break;
+    }
   }
 
   // ── Background health poller ──────────────────────────────────────────────

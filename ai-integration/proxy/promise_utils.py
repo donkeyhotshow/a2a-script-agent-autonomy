@@ -119,6 +119,12 @@ def _prepare_execute_body(body_value: Any) -> Optional[bytes]:
         return None
     if isinstance(body_value, (bytes, bytearray)):
         return bytes(body_value)
+    if isinstance(body_value, dict):
+        parsed = dict(body_value)
+        parsed.pop('promise', None)
+        return json.dumps(parsed, ensure_ascii=False).encode('utf-8')
+    if isinstance(body_value, list):
+        return json.dumps(body_value, ensure_ascii=False).encode('utf-8')
 
     text = str(body_value)
     try:
@@ -175,11 +181,22 @@ def create_request_log(request_obj, body_data: bytes = None):
     else:
         body_text = request_obj.get_data(as_text=True) if request_obj.method in ['POST', 'PUT', 'PATCH'] else ""
 
+    body_field: Any = body_text
+    if isinstance(body_text, str) and body_text.strip():
+        s = body_text.strip()
+        if s.startswith(("{", "[")):
+            try:
+                parsed = json.loads(body_text)
+                if isinstance(parsed, (dict, list)):
+                    body_field = parsed
+            except json.JSONDecodeError:
+                pass
+
     return {
         "method": request_obj.method,
         "path": request_obj.path,
         "url": request_obj.url,
         "headers": dict(request_obj.headers),
         "args": dict(request_obj.args),
-        "body": body_text
+        "body": body_field
     }

@@ -2,7 +2,7 @@ import { llmService } from './llm-service.js';
 import { logger } from '../../utils/logger.js';
 import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
 import { readFile } from 'node:fs/promises';
-import { execSync } from 'child_process';
+import { execSync } from 'node:child_process';
 
 export interface BugFixPatch {
   file: string;

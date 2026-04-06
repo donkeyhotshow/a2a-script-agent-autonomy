@@ -41,8 +41,6 @@ npm run sim:quality
 
 ## Live Client API smoke (not goldens)
 
-With the dev stack up (`start-all.bat`), replay golden `client.json` bodies against `/api/a2a/sessions` + `/next` + `/async`:
-
-`node scripts/e2e-client-api-replay-sync-script.mjs` (see repo `scripts/`).
+With the dev stack up (`start-all.bat`), exercise the Client API (`/api/a2a/sessions` + `/next` + poll `/async`), e.g. `node tests/direct-tests/e2e-dialog-test.js` or `node scripts/agent-dialog-runner.mjs`.
 
 Related: [`tasks/script-dialog-agent-response-parity.md`](../../../tasks/script-dialog-agent-response-parity.md), [`simulations/sync/agent/description.md`](../agent/description.md) (parallel “full chain” for agent).

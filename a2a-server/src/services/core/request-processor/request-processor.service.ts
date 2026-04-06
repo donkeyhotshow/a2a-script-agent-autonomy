@@ -318,7 +318,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
 }
 
 /**
- * Process a specific pending request by promiseId (sync /invoke).
+ * Process a specific pending request by promiseId (async invoke queue).
  */
 export async function processRequestByPromiseId(promiseId: string): Promise<ProcessResult | null> {
     const request = await requestService.claimPendingByPromiseId(promiseId);

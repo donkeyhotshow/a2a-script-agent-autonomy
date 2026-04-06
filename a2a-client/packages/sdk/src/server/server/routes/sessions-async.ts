@@ -21,7 +21,6 @@ import {
     validateSubmitResult,
 } from '@a2a-client/shared/router-submit.mjs';
 import {
-    determineInvokeMode,
     mergeContext,
     prepareServerRequest,
     processTaskAndContext,
@@ -216,23 +215,10 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
         });
         mergedContext = mergedAfterTask;
 
-        const ex = mergedContext.execution;
-        const execStep =
-            ex && typeof ex === 'object' && !Array.isArray(ex) && typeof (ex as Record<string, unknown>).step === 'string'
-                ? String((ex as Record<string, unknown>).step)
-                : undefined;
-        const { shouldSyncInvoke, syncRouterChoice } = determineInvokeMode({
-            execStep,
-            effectiveTask,
-            hasChoices,
-            submitResult,
-        });
         const requestBody = prepareServerRequest({
             mergedContext,
             submitResult,
             effectiveTask,
-            shouldSyncInvoke,
-            syncRouterChoice,
         });
 
         await saveClientResult(sessionId, stepNum, {

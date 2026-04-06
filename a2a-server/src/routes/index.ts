@@ -58,7 +58,6 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
             selectedAction?: { actionId: string };
             stepId?: string;
             stepResult?: unknown;
-            sync?: boolean;
         };
 
         const validation = validateInvokeRequest(body);
@@ -87,51 +86,16 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
             stepId: body.stepId,
             stepResult: body.stepResult,
             result: body.result as Record<string, unknown> | undefined,
-            sync: body.sync,
         });
 
-        // Sync chain timed out or could not attach a terminal payload — must poll by promiseId, not empty sync JSON.
         const pid = invokeResult.promiseId;
-        const incomplete =
-            typeof pid === 'string' &&
-            pid.length > 0 &&
-            invokeResult.execute === undefined &&
-            invokeResult.message === undefined &&
-            invokeResult.context === undefined;
-        if (incomplete) {
-            res.json({
-                success: true,
-                data: {
-                    promiseId: pid,
-                    status: 'pending',
-                    pollUrl: `/requests/${pid}`,
-                }
-            });
-            return;
-        }
-
-        // Synchronous response
-        if (invokeResult.sync || body.sync) {
-            res.json({
-                success: true,
-                data: {
-                    sync: true,
-                    execute: invokeResult.execute,
-                    message: invokeResult.message,
-                    context: invokeResult.context,
-                }
-            });
-            return;
-        }
-
-        // Async response with promiseId
-        console.log('[a2a-server] /invoke returning promiseId', { promiseId: invokeResult.promiseId });
+        console.log('[a2a-server] /invoke returning promiseId', { promiseId: pid });
         res.json({
             success: true,
             data: {
-                promiseId: invokeResult.promiseId,
+                promiseId: pid,
                 status: 'pending',
-                pollUrl: `/requests/${invokeResult.promiseId}`,
+                pollUrl: `/requests/${pid}`,
             }
         });
     } catch (error) {

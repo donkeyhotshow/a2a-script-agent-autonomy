@@ -11,14 +11,21 @@ import {ACTION_TO_SCHEMA} from '../../../config/router-static.js';
  * When `context` is already nested, returns `ctx` unchanged.
  */
 export function toInvokeShapeForPromptsTransform(ctx: Record<string, unknown>): Record<string, unknown> {
-    if (ctx && typeof ctx === 'object' && !Array.isArray(ctx) && 'context' in ctx) {
+    if (!ctx || typeof ctx !== 'object' || Array.isArray(ctx)) {
+        return {context: {}, task: undefined, message: undefined, result: {}};
+    }
+    const inner = ctx['context'];
+    const hasUsableNestedContext =
+        inner != null && typeof inner === 'object' && !Array.isArray(inner);
+    if (ctx && typeof ctx === 'object' && !Array.isArray(ctx) && hasUsableNestedContext) {
         return ctx;
     }
+    const { context: _ignoredContext, ...rest } = ctx;
     return {
-        context: ctx,
-        task: (ctx['task'] as string | undefined) ?? (ctx['message'] as string | undefined),
-        message: ctx['message'],
-        result: (ctx['result'] as Record<string, unknown> | undefined) ?? {},
+        context: rest,
+        task: (rest['task'] as string | undefined) ?? (rest['message'] as string | undefined),
+        message: rest['message'],
+        result: (rest['result'] as Record<string, unknown> | undefined) ?? {},
     };
 }
 
@@ -33,7 +40,9 @@ export function toInvokeShapeForPromptsTransform(ctx: Record<string, unknown>): 
 export function resolveExecution(ctx: Record<string, unknown>): Record<string, unknown> | undefined {
     const root = ctx['execution'];
     if (root && typeof root === 'object' && !Array.isArray(root)) {
-        return root as Record<string, unknown>;
+        if (Object.keys(root as Record<string, unknown>).length > 0) {
+            return root as Record<string, unknown>;
+        }
     }
     const inner = ctx['context'] as Record<string, unknown> | undefined;
     const nested = inner?.['execution'];

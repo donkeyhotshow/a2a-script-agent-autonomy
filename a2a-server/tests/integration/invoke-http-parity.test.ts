@@ -22,11 +22,10 @@ function loadProbaCase(name: string): Record<string, unknown> {
     return JSON.parse(raw) as Record<string, unknown>;
 }
 
-/** Async invoke: never ask for sync terminal on POST (explicit async). */
+/** Invoke body (async-only server — no `sync` field). */
 function toAsyncHttpBody(input: Record<string, unknown>): Record<string, unknown> {
     const out: Record<string, unknown> = {
         context: input.context,
-        sync: false,
     };
     if (typeof input.task === 'string') out.task = input.task;
     if (typeof input.message === 'string') out.message = input.message;
@@ -80,7 +79,6 @@ async function pollResultUntilTerminal(promiseId: string): Promise<{
 describe('Invoke HTTP parity (async poll)', () => {
     beforeAll(() => {
         process.env.SKIP_AUTH = '1';
-        delete process.env.DEFAULT_SYNC_MODE;
     });
 
     const testTimeoutMs = POLL_MS + 15_000;

@@ -6,7 +6,7 @@ import fs from 'fs';
 import path from 'path';
 import * as stepHandlers from '../handlers/step-handlers.js';
 import { isActivePromiseStatus, isRecoverableAsyncSnapshot } from '../../storage/promise-status.js';
-import { buildExecuteProjection } from './execute-projection-dto.js';
+import { buildExecuteProjection, buildWebExecute } from './execute-projection-dto.js';
 import { collectSessionMessagesFlat } from './message-timeline.js';
 import { deriveSessionStage } from './session-stage-machine.js';
 import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.js';
@@ -17,6 +17,10 @@ import {
     findOpenAsyncStepWithoutResponse,
 } from '../../storage/newSessions.js';
 import http from 'http';
+
+function hasProjectedExecutePayload(ex) {
+    return ex != null && typeof ex === 'object' && !Array.isArray(ex) && Object.keys(ex).length > 0;
+}
 
 function debugProjectionLog(event, payload) {
     if (process.env.A2A_SESSION_DTO_DEBUG !== '1') return;
@@ -364,7 +368,23 @@ export function toPublicNextResponse(response, includeContext = false) {
     }
     const sessionExecute = out.session?.execute ?? null;
     const topExecute = out.execute ?? null;
-    out.execute = topExecute || sessionExecute || null;
+    const sessionContext =
+        out.session?.context && typeof out.session.context === 'object' && !Array.isArray(out.session.context)
+            ? out.session.context
+            : undefined;
+    let resolvedExecute = null;
+    if (hasProjectedExecutePayload(sessionExecute)) {
+        resolvedExecute = sessionExecute;
+    } else if (topExecute != null && typeof topExecute === 'object' && !Array.isArray(topExecute)) {
+        const sanitized = buildWebExecute(topExecute, sessionContext ? { context: sessionContext } : undefined);
+        if (hasProjectedExecutePayload(sanitized)) {
+            resolvedExecute = sanitized;
+        }
+    }
+    if (resolvedExecute == null) {
+        resolvedExecute = sessionExecute ?? topExecute ?? null;
+    }
+    out.execute = resolvedExecute;
     if (!includeContext) {
         delete out.context;
     }

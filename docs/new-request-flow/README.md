@@ -21,44 +21,18 @@
 
 ## Поток задачи (Task Flow): Web → Client API → Server
 
-Система поддерживает два типа потоков в зависимости от типа операции и настроек:
-
-### Sync Flow (Для тестирования/симуляций)
-*Включается установкой переменной окружения `DEFAULT_SYNC_MODE=1`*
-- **Когда:** Простые операции, взаимодействие с формами, выбор вариантов
-- **Ответ:** Немедленный объект `execute` с данными формы/ввода
-- **Пример использования:** UI взаимодействия, простые действия, автоматизированное тестирование
-- **Пример:**
-  - `task: "dialog"` → `execute.form.textarea` (прямой диалог)
-  - `task: "analyze code"` → `execute.form.choices` (роутер с вариантами)
-- **Поток:**
-  1. **Web:** поле ввода задачи + кнопка Send → панель с прелоадером
-  2. **POST /api/a2a/sessions** (Web → Client API): `{ projectId, task }`
-  3. **Client API** сохраняет сессию, проксирует на Server: `{ task }`
-  4. **Server** возвращает немедленный результат с `execute.form.textarea` или `execute.form.choices`
-  5. **Client API** возвращает `execute.*` в Web
-  6. **Прелоадер скрывается** после получения ответа (с учетом минимального времени показа 5000мс)
-
-### Async Flow (PromiseId - По умолчанию)
-*Стандартный режим для сложных операций, требующих обработки LLM*
-- **Когда:** Сложная обработка ИИ, вызовы LLM, длительные операции
-- **Ответ:** `promiseId` для опроса статуса/результата
-- **Пример использования:** Генерация ИИ, сложный анализ, внешние вызовы API
-- **Поток:**
+### Поток (async-only)
+- **Server `POST /api/v1/invoke`:** всегда **`promiseId`** в ответе; готовый **`execute` / `context`** — после опроса **`GET /api/v1/requests/{promiseId}/result`**.
+- **Client API (Web):** после **`POST …/next`** опрос **`GET /api/a2a/sessions/{id}/async`** (или legacy promise-route), затем гидратация сессии.
+- **Поток UI:**
   1. **Web:** поле ввода задачи + кнопка Send → панель с прелоадером
   2. **POST /api/a2a/sessions** (Web → Client API): `{ projectId, task }`
   3. **Client API** сохраняет сессию, проксирует на Server: `{ task }`
   4. **Server** возвращает `{ promiseId, status: "pending" }`
-  5. **Client API** опрашивает статус через `GET /api/a2a/sessions/{id}/async` (предпочтительно для веб-UI) или `GET /api/a2a/sessions/{id}/promise/{promiseId}` (legacy)
-  6. **После завершения** Server возвращает результат:
-     - Если задача содержит "dialog" — `execute.form.textarea` (прямой диалог)
-     - Иначе `execute.form.choices` (роутер с вариантами)
+  5. **Client API** опрашивает `GET /api/a2a/sessions/{id}/async` (предпочтительно) или `GET /api/a2a/sessions/{id}/promise/{promiseId}` (legacy)
+  6. **После завершения** в ответе появляются `execute` / `context` (форма диалога, роутер с `choices`, и т.д.)
   7. **Client API** возвращает `execute.*` в Web
-  8. **Прелоадер скрывается** после получения финального результата
-
-#### Обнаружение типа потока
-- **Запрос от Client:** Включите `sync: true` для принудительного синхронного ответа
-- **Ответ от Server:** `sync: true` + `execute` = синхронный, `promiseId` = асинхронный
+  8. **Прелоадер скрывается** после финального результата
 
 Дополнительные сценарии:
 - [Remote web viewer + local client workflow](REMOTE-CLIENT-WEB.md) — когда ты сидишь на телефоне и весь лог/история остаются на локальном клиенте.

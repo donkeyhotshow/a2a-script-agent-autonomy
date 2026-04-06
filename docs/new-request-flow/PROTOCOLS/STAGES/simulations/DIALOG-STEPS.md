@@ -30,8 +30,7 @@
 ```json
 {
     "task": "диалог",
-    "projectId": "123",
-    "sync": true
+    "projectId": "123"
 }
 ```
 

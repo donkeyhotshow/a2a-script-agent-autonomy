@@ -5,7 +5,7 @@ Two buckets for **reliable** checks without mixing “is the port up?” with �
 | Role | Folder (normative home) | What goes here |
 |------|-------------------------|----------------|
 | **Папа (Papa) — API contour** | [`tests/direct-tests/`](tests/direct-tests/) | Тесты **через тот же контур, что и оператор/UI**: Client API (`/api/a2a/…`), сессии `create` / `next` / `async`, E2E-раннеры, hub reachability. Failures = проводка, рантайм, контракт «на проводе» у внешнего API. |
-| **Мама (Mama) — глубина и оффлайн** | [`tests/indirect-tests/`](tests/indirect-tests/) + [`tests/proba-servera/`](tests/proba-servera/) | **Оффлайн:** валидаторы по JSON/MD, `sim:lint` / `sim:check-md`, Vitest по схеме, red/gray room. **Глубина (invoke без HTTP):** [`tests/proba-servera/`](tests/proba-servera/) — вызов `invoke()` из `a2a-server` in-process (как `scripts/run-simulation.ts`), `sync: true`, сравнение **структуры ключей** `{ context, execute }` с `expected.json`. Поднятый `:3000` **не нужен**. Опционально: `PROBA_SERVERA_USE_HTTP=1` — старый путь через `fetch` к `/api/v1/invoke`. Запуск: `npm run validate:proba-servera`. При падении — `error-report.md` в папке кейса. |
+| **Мама (Mama) — глубина и оффлайн** | [`tests/indirect-tests/`](tests/indirect-tests/) + [`tests/proba-servera/`](tests/proba-servera/) | **Оффлайн:** валидаторы по JSON/MD, `sim:lint` / `sim:check-md`, Vitest по схеме, red/gray room. **Глубина (invoke):** [`tests/proba-servera/`](tests/proba-servera/) — in-process `invoke()` → **`promiseId`**, затем опрос до терминала (как live stack), сравнение **структуры ключей** `{ context, execute }` с `expected.json`. Поднятый `:3000` **не нужен** для in-process. Опционально: `PROBA_SERVERA_USE_HTTP=1` — `fetch` к `/api/v1/invoke` + poll `…/result`. Запуск: `npm run validate:proba-servera`. При падении — `error-report.md` в папке кейса. |
 
 **Коротко:** Папа бьёт по **публичному API-контуру** (как клиент). Мама в **глубине** проверяет контракт invoke и статику; `proba-servera` обходит HTTP и гоняет тот же код, что маршрут `/invoke`.
 
@@ -82,7 +82,7 @@ npm run test:gang
 
 | Script | Checks | Typical failure |
 |--------|--------|---------------|
-| `npm run validate:proba-servera` | Per-case `input.json` → `invoke()` (sync) → key tree vs `expected.json` | Wrong `execute` action key, missing `workbench`, router shape drift |
+| `npm run validate:proba-servera` | Per-case `input.json` → `invoke()` → poll `promiseId` to terminal → key tree vs `expected.json` | Wrong `execute` action key, missing `workbench`, router shape drift |
 
 ## Indirect test inventory (Mama)
 

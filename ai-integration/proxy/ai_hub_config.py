@@ -184,13 +184,36 @@ def get_ai_hub_config() -> dict:
 
 
 def _normalize_path(path: str) -> str:
-    return (path or '').lstrip('/')
+    """Strip leading/trailing slashes so `/api/chat` and `/api/chat/` match the same rule path."""
+    return (path or '').strip().strip('/')
 
 
 def _normalize_model_key(model: str) -> str:
     model = (model or '').strip().lower()
     model = re.sub(r'[\s_]+', '-', model)
     return model
+
+
+def _message_content_to_text(content: Any) -> str:
+    if isinstance(content, str):
+        return content
+    if isinstance(content, (int, float, bool)):
+        return str(content)
+    if isinstance(content, list):
+        segments: list[str] = []
+        for block in content:
+            if isinstance(block, dict):
+                txt = block.get('text')
+                if isinstance(txt, str) and txt:
+                    segments.append(txt)
+                else:
+                    inner = block.get('content')
+                    if isinstance(inner, str) and inner:
+                        segments.append(inner)
+            elif isinstance(block, str):
+                segments.append(block)
+        return '\n'.join(segments)
+    return ''
 
 
 def _extract_prompt(body_json: Optional[dict]) -> str:
@@ -203,8 +226,22 @@ def _extract_prompt(body_json: Optional[dict]) -> str:
     if isinstance(messages, list):
         parts: list[str] = []
         for msg in messages:
-            if isinstance(msg, dict) and isinstance(msg.get('content'), str):
-                parts.append(msg['content'])
+            if not isinstance(msg, dict):
+                continue
+            content = msg.get('content')
+            text = _message_content_to_text(content)
+            if text:
+                parts.append(text)
+            tool_calls = msg.get('tool_calls')
+            if tool_calls and isinstance(tool_calls, list):
+                try:
+                    tc_s = json.dumps(tool_calls, default=str)
+                except (TypeError, ValueError):
+                    tc_s = str(tool_calls)
+                if not text:
+                    parts.append(tc_s)
+                elif tc_s:
+                    parts.append(tc_s)
         return '\n'.join(parts)
     return ''
 

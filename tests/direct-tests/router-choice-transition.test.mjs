@@ -11,13 +11,16 @@ const serverLive = await pingA2AServerHealth();
 
 describe('server invoke schema (router flows)', () => {
   it('allows first-request { task } only', () => {
-    expect(validateServerInvokeRequest({ task: 'hello', sync: true })).toBe(true);
+    expect(validateServerInvokeRequest({ task: 'hello' })).toBe(true);
+  });
+
+  it('rejects unknown root property sync (async-only API)', () => {
+    expect(validateServerInvokeRequest({ task: 'hello', sync: true })).toBe(false);
   });
 
   it('allows follow-up { context: { task, execution }, result }', () => {
     expect(
       validateServerInvokeRequest({
-        sync: true,
         context: {
           session_id: 'srv_sess_x',
           task: 'hello',

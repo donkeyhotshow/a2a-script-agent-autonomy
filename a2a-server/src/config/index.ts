@@ -44,6 +44,12 @@ const configSchema = z.object({
 
     // Optional: Skip auth in dev
     skipAuth: boolean.default(false),
+
+    // Tools evolve admin flag
+    allowToolsEvolve: boolean.default(false),
+
+    // Registry authentication
+    registryToken: z.string().optional(),
 });
 
 // Environment mapping
@@ -56,6 +62,8 @@ function mapEnvironmentVariables() {
         logLevel: process.env.LOG_LEVEL,
         logFormat: process.env.LOG_FORMAT,
         skipAuth: process.env.SKIP_AUTH,
+        allowToolsEvolve: process.env.ALLOW_TOOLS_EVOLVE,
+        registryToken: process.env.REGISTRY_TOKEN,
     };
 }
 

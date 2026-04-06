@@ -16,7 +16,7 @@
 **Output:** env_keys[]
 
 ```typescript
-import fs from 'fs';
+import fs from 'node:fs';
 
 interface EnvKey {
   key: string;

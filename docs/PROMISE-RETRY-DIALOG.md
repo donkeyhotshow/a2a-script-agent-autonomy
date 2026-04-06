@@ -8,7 +8,7 @@ Normative behavior for **server-issued `promiseId`** rows stored under `a2a-serv
    For requests routed to the **dialog** processor (transform / LLM pipeline: dialog, agent, task-decomposition, etc.), if processing fails because the hub is down, transforms fail, LLM init/fetch fails, or recovery after restart fails, the server **must not** immediately mark the request **`failed`** when recovery is plausible.
 
 2. **Re-queue with backoff**  
-   In those cases the server **re-queues** the **same `promiseId`**: status returns to **`pending`**, with **`retryAfter`** set (see env). The background processor and sync `/invoke` wait chain pick it up again only after the backoff (see implementation: pending listing and `claimPendingByPromiseId` both honor `retryAfter`).
+   In those cases the server **re-queues** the **same `promiseId`**: status returns to **`pending`**, with **`retryAfter`** set (see env). The background processor picks it up again only after the backoff (see implementation: pending listing and `claimPendingByPromiseId` both honor `retryAfter`).
 
 3. **Poll until terminal**  
    Clients **continue polling** until status is **`completed`** or **`failed`**. During deferral, status stays **`pending`** or **`processing`** — not a final failure — so `server-promise.json` must not show **`failed`** solely because of a transient LLM/hub/transform error.
