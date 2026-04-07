@@ -84,7 +84,7 @@ Client Request → Request Service → Queue → Request Processor → Phase Mac
 ### 5. LLM Integration
 
 **LLM Provider Abstraction:**
-- Support for multiple LLM providers (OpenAI, Ollama)
+- Support for multiple LLM providers (OpenAI, Local LLM upstream)
 - Fallback mechanisms for provider unavailability
 - Configurable timeouts and retry policies
 - Context-aware prompt generation

@@ -30,7 +30,7 @@ Static findings from repo scans (TODO/FIXME, `@ts-ignore`, weak typing hotspots)
 | `invoke-route-ajv-any-casts.md` | invoke AJV `any` |
 | `invoke-route-console-log-traffic.md` | `/invoke` `console.log` |
 | `invoke-route-schema-validation-bypass.md` | invoke if schema missing |
-| `llm-service-provider-fallback-to-ollama.md` | provider vs hub path |
+| `llm-service-provider-fallback-to-compat_llm.md` | provider vs hub path |
 | `message-service-in-memory-unbounded.md` | message `Map` unbounded |
 | `p2p-libp2p-ts-ignore-and-any.md` | P2P `node.ts` + `crdt.ts` typing |
 | `premium-ui-stream-interrupt-placeholder.md` | HITL interrupt stub |

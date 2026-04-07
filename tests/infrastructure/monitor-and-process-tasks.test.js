@@ -183,7 +183,7 @@ describe('monitor-and-process-tasks.js', () => {
       expect(source).toContain('healthCheck()');
       expect(source).toContain('clientApi');
       expect(source).toContain('a2aServer');
-      expect(source).toContain('ollama');
+      expect(source).toContain('compat_llm');
       expect(source).toContain('aiHub');
     });
 

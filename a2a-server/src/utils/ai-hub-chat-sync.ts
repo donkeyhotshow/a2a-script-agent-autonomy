@@ -21,7 +21,7 @@ export type AiHubChatRequestBody = {
 /** @deprecated Use {@link AiHubChatRequestBody}. */
 export type AiHubSyncChatBody = AiHubChatRequestBody;
 
-/** Ollama `/api/chat` JSON (proxy may add eval counters). */
+/** Local LLM upstream `/api/chat` JSON (proxy may add eval counters). */
 export type AiHubChatResponseJson = {
     message?: {content?: string};
     prompt_eval_count?: number;

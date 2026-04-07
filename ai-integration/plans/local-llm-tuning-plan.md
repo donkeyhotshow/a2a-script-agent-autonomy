@@ -1,7 +1,7 @@
-# План: Ollama Tuning и Loop Detection
+# План: local LLM tuning и loop detection
 
 > **Статус:** В основном выполнено ✅
-> - ✅ OllamaManager с start/stop/restart (`ollama_manager.py`)
+> - ✅ LocalLlmManager с start/stop/restart (`local_llm_manager.py`)
 > - ✅ Idle timeout для авто-остановки
 > - ✅ Temperature=0 по умолчанию
 > - ❌ Loop detection (n-gram analysis)
@@ -28,7 +28,7 @@
 - ⏳ Portion repetition - >30% текста повторяется
 - ⏳ Max tokens threshold - слишком длинный вывод без смысла
 - ⏳ При обнаружении loop:
-    - Сброс Ollama (restart subprocess)
+    - Сброс локального upstream (restart subprocess)
     - Пометка запроса как `invalid=true`
     - Логирование инцидента
 
@@ -56,7 +56,7 @@
     - порог повторения 30%
     - max_tokens_limit
 2.2. Интеграция в streaming pipeline
-2.3. Auto-restart Ollama при детекции
+2.3. Auto-restart локального upstream при детекции
 2.4. Пометка promise как invalid
 2.5. Логирование инцидентов
 ```
@@ -82,15 +82,15 @@ LOOP_DETECTION = {
 ## Файлы для изменения
 
 - `proxy.py` - LLM параметры и loop detection
-- Новая директория: `ollama/` - модуль loop detection
+- Новая директория: `loop_detect/` - модуль loop detection
 
 ## Что ещё нужно (дополнения):
 
 - ⏳ **Timeout** - макс. время генерации (default: 120 сек)
 - ⏳ **Model management** - выбор модели, очистка памяти
-- ⏳ **Health check** - проверка доступности Ollama
+- ⏳ **Health check** - проверка доступности upstream
 - ⏳ **Retry logic** - повтор при ошибках подключения
-- ⏳ **Request queue** - очередь при занятости Ollama
+- ⏳ **Request queue** - очередь при занятости upstream
 - ⏳ **Memory management** - очистка after each request
 - ⏳ **Metrics** - время ответа, кол-во loop-ов, ошибок
 - ⏳ **Config via env** - все параметры через переменные
@@ -98,9 +98,9 @@ LOOP_DETECTION = {
 ### Дополнительные env переменные:
 
 ```python
-OLLAMA_TIMEOUT = 120          # timeout в секундах
-OLLAMA_MODEL = "qwen3:8b"       # модель по умолчанию
-OLLAMA_REQUEST_TIMEOUT = 60  # таймаут на запрос
-OLLAMA_QUEUE_SIZE = 10       # макс. очередь
-OLLAMA_MAX_RETRIES = 3       # кол-во попыток
+LOCAL_LLM_TIMEOUT = 120          # timeout в секундах
+LOCAL_LLM_MODEL = "qwen3:8b"       # модель по умолчанию
+LOCAL_LLM_REQUEST_TIMEOUT = 60  # таймаут на запрос
+LOCAL_LLM_QUEUE_SIZE = 10       # макс. очередь
+LOCAL_LLM_MAX_RETRIES = 3       # кол-во попыток
 ```

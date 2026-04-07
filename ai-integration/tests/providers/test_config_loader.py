@@ -67,7 +67,7 @@ class TestParseConfig:
         data = {
             "providers": {
                 "provider1": {
-                    "type": "ollama",
+                    "type": "compat_llm",
                     "url": "http://localhost:11434",
                     "enabled": True,
                     "priority": 1,
@@ -97,12 +97,12 @@ class TestParseConfig:
 class TestDefaultConfig:
     """Test default configuration generation"""
     
-    def test_default_has_ollama(self):
-        """Test default config includes Ollama"""
+    def test_default_has_compat_llm(self):
+        """Test default config includes Local LLM upstream"""
         config = _default_config()
         
-        assert "ollama" in config.providers
-        assert config.providers["ollama"].type == "ollama"
+        assert "compat_llm" in config.providers
+        assert config.providers["compat_llm"].type == "compat_llm"
         assert config.default_provider == "z_ai"
     
     def test_default_has_cloud_providers(self):
@@ -118,7 +118,7 @@ class TestDefaultConfig:
         """Test default fallback chain"""
         config = _default_config()
         
-        assert config.fallback_chain == ["z_ai", "ollama", "groq", "openrouter"]
+        assert config.fallback_chain == ["z_ai", "compat_llm", "groq", "openrouter"]
 
 
 class TestLoadProvidersConfig:
@@ -147,8 +147,8 @@ class TestLoadProvidersConfig:
         """Test that loading nonexistent file returns default config"""
         config = load_providers_config("/nonexistent/path/providers.json")
         
-        # Should return default config with ollama
-        assert "ollama" in config.providers
+        # Should return default config with compat_llm
+        assert "compat_llm" in config.providers
     
     def test_load_invalid_json_returns_default(self, tmp_path):
         """Test that loading invalid JSON returns default config"""
@@ -158,7 +158,7 @@ class TestLoadProvidersConfig:
         config = load_providers_config(str(config_file))
         
         # Should return default config
-        assert "ollama" in config.providers
+        assert "compat_llm" in config.providers
 
 
 class TestSaveProvidersConfig:

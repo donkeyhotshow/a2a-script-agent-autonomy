@@ -5,15 +5,15 @@
 
 ## Context
 
-The AI Integration proxy serves multiple providers (Z.AI, Ollama, virtual models). The a2a-server dialog and gray-room paths called the hub with model names taken only from environment variables, so sessions could not pin a model per task. `GET /api/tags` needed a single discoverable list with backend attribution.
+The AI Integration proxy serves multiple providers (Z.AI, Local LLM upstream, virtual models). The a2a-server dialog and gray-room paths called the hub with model names taken only from environment variables, so sessions could not pin a model per task. `GET /api/tags` needed a single discoverable list with backend attribution.
 
 ## Decision
 
-1. **Invoke contract:** Clients may set **`context.llmModel`** (validated optional string in `parseContextBlock`) or top-level **`llmModel`** on `POST /api/v1/invoke`; `invoke.service` copies the latter onto context. Resolution helper `resolveLlmModelFromContext` applies in `DialogRequestProcessor` and inside `GrayRoomOrchestrator` for every `/api/chat` call (main loop and interrupt sidecars), falling back to `LLM_MODEL` / `Z_AI_MODEL` / `OLLAMA_MODEL` / default.
+1. **Invoke contract:** Clients may set **`context.llmModel`** (validated optional string in `parseContextBlock`) or top-level **`llmModel`** on `POST /api/v1/invoke`; `invoke.service` copies the latter onto context. Resolution helper `resolveLlmModelFromContext` applies in `DialogRequestProcessor` and inside `GrayRoomOrchestrator` for every `/api/chat` call (main loop and interrupt sidecars), falling back to `LLM_MODEL` / `Z_AI_MODEL` / `LOCAL_LLM_MODEL` / default.
 
 2. **Client API:** `POST /api/a2a/sessions` accepts optional **`llmModel`** in the JSON body; it is stored on `session.context` and merged into invoke context on `/next` when not already set. `pickInvokeContextPatch` preserves `llmModel` when merging server responses.
 
-3. **Proxy:** `GET /api/tags` returns a merged Ollama-shaped list; each model row includes **`provider`** (`z_ai`, `ollama`, `virtual`, …). See `ai-integration/docs/api-reference/PROXY_API.md`.
+3. **Proxy:** `GET /api/tags` returns a merged Local LLM upstream-shaped list; each model row includes **`provider`** (`z_ai`, `compat_llm`, `virtual`, …). See `ai-integration/docs/api-reference/PROXY_API.md`.
 
 ## Consequences
 

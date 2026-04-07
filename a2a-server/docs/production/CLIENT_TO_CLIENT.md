@@ -15,7 +15,7 @@ PostgreSQL + Redis
 a2a-server
       │
       ▼ AI-Action Transform
-Ollama (LLM)
+Local LLM upstream (LLM)
       │
       ▼ Execute actions
 a2a-server
@@ -30,7 +30,7 @@ Client (Web UI) ← ТУТА ВОЗВРАТ
 2. **RequestService** сохраняет запрос в PostgreSQL (status: pending)
 3. **RequestProcessor** опрашивает каждые 5 сек pending запросы
 4. **NeuronActivator** активирует нужные нейроны
-5. **AI-Action Transform** отправляет контекст в LLM (Ollama)
+5. **AI-Action Transform** отправляет контекст в LLM (Local LLM upstream)
 6. **LLM** контролирует выполнение через `context.execution.step`
 7. **Actions** выполняются на сервере или клиенте (script, read-file, etc.)
 8. **Result** возвращается обратно **Client** (тому же клиенту)
@@ -47,7 +47,7 @@ Client (Web UI) ← ТУТА ВОЗВРАТ
 | Feature | Production | Simulation |
 |---------|------------|------------|
 | HTTP | Real | Mocked |
-| LLM Calls | Real Ollama | Mock/Replay |
+| LLM Calls | Real Local LLM upstream | Mock/Replay |
 | Data | Real DB | Test fixtures |
 | Results | Actual execution | Deterministic |
 

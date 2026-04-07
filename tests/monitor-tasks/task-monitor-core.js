@@ -240,7 +240,7 @@ class TaskMonitorCore {
     console.log('   Sim lint:     npm run sim:lint -- --all');
     console.log('   Sim validate: npm run sim:validate -- --all');
     console.log('   Health:       curl http://localhost:3000/health');
-    console.log('   Ollama:       curl http://localhost:11435/api/tags');
+    console.log('   Local LLM upstream:       curl http://localhost:11435/api/tags');
     console.log('   Reset state:  npm run monitor:reset');
     console.log(`${'='.repeat(70)}\n`);
   }
@@ -256,7 +256,7 @@ class TaskMonitorCore {
     console.log('Service Status:');
     console.log(`  Client API: ${health.clientApi ? '✅' : '❌'} ${health.details.clientApi}`);
     console.log(`  A2A Server: ${health.a2aServer ? '✅' : '❌'} ${health.details.a2aServer}`);
-    console.log(`  Ollama:     ${health.ollama ? '✅' : '❌'} ${health.details.ollama}`);
+    console.log(`  Local LLM upstream:     ${health.compat_llm ? '✅' : '❌'} ${health.details.compat_llm}`);
     console.log(`  AI Hub:     ${health.aiHub ? '✅' : '❌'} ${health.details.aiHub}`);
 
     if (!health.allOk) {

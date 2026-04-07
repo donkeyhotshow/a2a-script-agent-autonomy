@@ -18,7 +18,7 @@
 | [RECON-ACTIONS.md](./RECON-ACTIONS.md) | Recon / indexing actions |
 | [PROJECT-CONTEXT-DETECTOR.md](./PROJECT-CONTEXT-DETECTOR.md) | `.a2a/*` context schema and activation flow |
 
-Executors (in tables): **script** | **ollama** | **agent**.
+Executors (in tables): **script** | **compat_llm** | **agent**.
 
 ## Pipeline (sketch)
 

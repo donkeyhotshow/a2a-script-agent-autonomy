@@ -8,7 +8,7 @@
 
 | If you are debugging… | Use |
 |------------------------|-----|
-| Wrong `execute` / `result` keys, router beats, Client API session steps | [Dialog](#dialog), `dialog/run-dialog-direct-ollama.ps1`, `e2e-dialog-test.js` |
+| Wrong `execute` / `result` keys, router beats, Client API session steps | [Dialog](#dialog), `dialog/run-dialog-direct-local-hub.ps1`, `e2e-dialog-test.js` |
 | **Sticky router** (same `form.choices` again after a router choice, or `task`/`router` never clears) | `node tests/direct-tests/e2e-dialog-test.js --only=routerAgentNoLoop` — also `routerAgentNoLoopTaskShorthand`, `routerAgentNoLoopUtf8Task`, **`routerDialogNoLoop`** / **`routerDialogNoLoopTaskShorthand`** (after **dialog** choice), `routerWrongBeatMessage`. Replay: `replay-session-from-disk.js … --assert-no-sticky-router`. **Direct server invoke repro (fast scripted choice):** `node tests/direct-tests/router-choice-transition-run.mjs` — uses keyword task → `fix-vue-imports` choice (no LLM dialog pipeline). Vitest: `router-choice-transition.test.mjs` validates `server-invoke-request.schema.json` + optional live check when `GET {A2A_SERVER_URL}/health` is OK (default `http://127.0.0.1:3000`) |
 | **Replay a saved session folder** (`client-result.json` per step) | [replay-session-from-disk.js](#replay-saved-session-steps) — needs UTF-8 `replay-create.json` (or path arg) matching how the session was opened |
 | Stack reachability before deep JSON work | [run-checks.ps1](#hub-checks-by-stack-part) (`-Scope …`) |
@@ -50,7 +50,7 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 | [run-checks.ps1](run-checks.ps1) | Hub: health checks by scope (LLM, ServerLLM, ClientServer, …) |
 | [run-post-start-all.ps1](run-post-start-all.ps1) | Chains hub + Vitest + node + PS1 flows; run manually after the stack is up ([PAPA-MAMA.md](../../PAPA-MAMA.md)) |
 | [scripts/](scripts/) | Runners → `scripts/tests/` and root `scripts/` (prod-test, pre-release, web-ui-smoke-report) |
-| [dialog/](dialog/) | Dialog flow with direct Ollama (bypass ai-integration timeout) |
+| [dialog/](dialog/) | Dialog flow with direct Local LLM upstream (bypass ai-integration timeout) |
 | [rag/](rag/), [sdk/](sdk/), [ai-integration/](ai-integration/), [server/](server/) | Runners → packages (RAG, SDK, AI, sim) |
 
 ---
@@ -61,10 +61,10 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 
 | Scope | Checks |
 |-------|--------|
-| `LLM` | Ollama + AI proxy |
-| `ServerLLM` | Server + Ollama + AI proxy |
+| `LLM` | Local LLM upstream + AI proxy |
+| `ServerLLM` | Server + Local LLM upstream + AI proxy |
 | `ClientServer` | Client API + Server |
-| `ClientServerLLM` | Client + Server + Ollama + AI proxy |
+| `ClientServerLLM` | Client + Server + Local LLM upstream + AI proxy |
 | `WebClient` | Web UI + Client API |
 | `WebClientServer` | Web + Client + Server |
 | `Full` | Web + Client + Server + LLM |
@@ -85,9 +85,9 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 # Full dialog chain: task -> choices -> choice dialog -> input -> message -> message
 .\tests\direct-tests\test-dialog-flow.ps1
 
-# With Ollama checks + retry helper
-.\tests\direct-tests\dialog\run-dialog-direct-ollama.ps1
-.\tests\direct-tests\dialog\run-dialog-direct-ollama.ps1 -RetryRequest "a2a-server\storage\requests\prom_xxx.json"
+# With Local LLM upstream checks + retry helper
+.\tests\direct-tests\dialog\run-dialog-direct-local-hub.ps1
+.\tests\direct-tests\dialog\run-dialog-direct-local-hub.ps1 -RetryRequest "a2a-server\storage\requests\prom_xxx.json"
 ```
 
 ai-integration uses FORWARD_TIMEOUT_SECONDS=180 (set in start-ai-integration.bat) for slow models.
@@ -142,7 +142,7 @@ node tests/direct-tests/replay-session-from-disk.js a2a-client/storage/sessions/
 
 - `test-services-basic.ps1`, `test-web-ui.ps1`, `test-a2a-client.ps1` — services / web / client checks
 - `web-ui-smoke-report.ps1` — smoke report from logs
-- `prod-test.js` — production test requests (Client API → Server → Ollama)
+- `prod-test.js` — production test requests (Client API → Server → Local LLM upstream)
 - `pre-release.js` — pre-release validation
 
 ## RAG (`a2a-client/packages/rag/scripts/`)

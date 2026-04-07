@@ -5,7 +5,7 @@ Contains all Flask route handlers
 This module imports routes from separate functional modules:
 - health_routes.py: Health check endpoints
 - metrics_routes.py: Prometheus metrics endpoint
-- ollama_routes.py: Ollama management endpoints
+- local_llm_routes.py: local upstream LLM process endpoints
 - promise_routes.py: Promise/async request management endpoints
 - daemon_routes.py: Daemon management endpoints
 - cleanup_routes.py: Storage cleanup endpoints
@@ -26,7 +26,7 @@ from . import app
 # Import all route modules (this registers the routes with the app)
 from . import health_routes
 from . import metrics_routes
-from . import ollama_routes
+from . import local_llm_routes
 from . import promise_routes
 from . import daemon_routes
 from . import cleanup_routes
@@ -41,7 +41,7 @@ def api_v1_generate():
     """
     High-level text generation endpoint.
 
-    Normalizes the underlying Ollama / OpenAI style responses into a simple
+    Normalizes the underlying local / OpenAI style responses into a simple
     shape consumed by the Node.js A2A server:
         { "text": string, "tokensUsed"?: number, "raw"?: any }
     """
@@ -114,7 +114,7 @@ def api_v1_generate():
     tokens_used = None
 
     if isinstance(data, dict):
-        # Ollama-style
+        # Local LLM upstream-style
         if isinstance(data.get('response'), str):
             text = data['response']
 
@@ -206,7 +206,7 @@ def api_v1_embed():
     if cached is not None:
         return Response(_json_bytes(cached), status=200, mimetype='application/json')
 
-    # Forward as-is to embeddings endpoint (Ollama-compatible)
+    # Forward as-is to embeddings endpoint (compat HTTP)
     upstream_response = handle_proxy_request('api/embeddings', request)
 
     status = upstream_response.status_code
@@ -236,7 +236,7 @@ def api_v1_embed():
     embedding = None
 
     if isinstance(data, dict):
-        # Ollama-style: { "embedding": [...] }
+        # Single-object embedding shape
         if isinstance(data.get('embedding'), list):
             embedding = data['embedding']
 

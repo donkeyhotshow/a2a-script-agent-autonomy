@@ -25,7 +25,7 @@ Current operational state for the `ai-integration` module.
 | Component | Port | Status |
 |-----------|------|--------|
 | AI Proxy | 11434 | Expected healthy |
-| Ollama | 11435 | Expected healthy |
+| Local LLM upstream | 11435 | Expected healthy |
 | Promise daemon | n/a | Enabled via config |
 
 **2026-04-06:** LLM `POST`/`PUT`/`PATCH` to `api/chat|generate|embeddings` always use the promise pipeline (`proxy_handler.py` + `promise_manager.handle_promise_mode`); traces live under `proxy_logs/promises/<id>/` only (no `proxy_logs/requests/` for those). Disk-cache hit → HTTP **200** `{ promiseId, status: completed, cached, responseBody }`; miss → **202** + poll. Docs: [`docs/api-reference/PROXY_API.md`](docs/api-reference/PROXY_API.md).
@@ -34,11 +34,11 @@ Current operational state for the `ai-integration` module.
 
 **2026-04-07:** L3 cache: `normalize_body_for_cache` also strips adapter noise on `messages[]` (`id`, `message_id`, …) and sorts `options` for stable keys. Optional metrics: `LLM_DISK_CACHE_LOG=1` → grep `llm_disk_cache` (hit/miss, stage). Proba: `PROBA_WARM_CACHE=1` + [`tests/proba-servera/LLM-CACHE-PATHS.md`](../tests/proba-servera/LLM-CACHE-PATHS.md).
 
-**2026-04-05:** `resolve_routing` (`proxy/router_manager.py`): if the JSON body omits `model` and the provider router is initialized, the request is routed to the configured default provider’s model (Z.AI / GLM), not straight to Ollama. LLM cache keys (`proxy/caching.py`): additional volatile fields (`*_at`, keys containing `timestamp`, `*_time` except a small blocklist, `user`, etc.) are excluded from the hash so repeated identical prompts hit disk cache even when clients add timestamps.
+**2026-04-05:** `resolve_routing` (`proxy/router_manager.py`): if the JSON body omits `model` and the provider router is initialized, the request is routed to the configured default provider’s model (Z.AI / GLM), not straight to Local LLM upstream. LLM cache keys (`proxy/caching.py`): additional volatile fields (`*_at`, keys containing `timestamp`, `*_time` except a small blocklist, `user`, etc.) are excluded from the hash so repeated identical prompts hit disk cache even when clients add timestamps.
 
 **2026-04-03:** Promise completion (`proxy/promises.py`): `_promise_set_done` does not mark a promise `done` on non-2xx HTTP **or** on 2xx with a JSON `error` envelope (OpenAI-style), including when `Content-Type` omits `json`. `is_llm_upstream_response_ok()` gates **all** LLM response caches: `proxy_handler.py` (sync path: no store + reject bad hits), `daemon.py` / `promise_routes.py` (invalidate poisoned cache entries on read). Tests: `tests/test_promises_llm_failure.py`.
 
-**2026-04-03 (API keys):** Upstream auth is driven by `config/providers.json` → `api_keys[]` (each entry: `id`, `provider`, `secret`, `priority`, `enabled`). Ollama uses placeholder secret `__OLLAMA_LOCAL__` (no `Authorization`). Z.AI and other cloud rows use real secrets; `${Z_AI_API_KEY}` still resolves from env. On HTTP 429 or JSON `error.code` **1302** (rate limit), the proxy tries the next key for the same provider. Implementation: `proxy/api_key_routing.py`, `proxy_handler.py`, `daemon.py` (reads `routing.json`), `proxy/providers/config_loader.py`.
+**2026-04-03 (API keys):** Upstream auth is driven by `config/providers.json` → `api_keys[]` (each entry: `id`, `provider`, `secret`, `priority`, `enabled`). Local LLM upstream uses placeholder secret `__LOCAL_LLM_KEY_PLACEHOLDER__` (no `Authorization`). Z.AI and other cloud rows use real secrets; `${Z_AI_API_KEY}` still resolves from env. On HTTP 429 or JSON `error.code` **1302** (rate limit), the proxy tries the next key for the same provider. Implementation: `proxy/api_key_routing.py`, `proxy_handler.py`, `daemon.py` (reads `routing.json`), `proxy/providers/config_loader.py`.
 **Docs:** [`docs/configuration/PROVIDERS_AND_API_KEYS.md`](docs/configuration/PROVIDERS_AND_API_KEYS.md).
 **Bootstrap:** `config/providers.example.json` (tracked) → copy to `config/providers.json` (gitignored); `python scripts/ensure-providers-config.py` if missing.
 
@@ -64,14 +64,14 @@ curl http://localhost:11435/api/tags
 
 ### Proxy Tags Normalization (Multi-Provider Model List)
 
-**Task:** Normalize `/api/tags` endpoint to combine models from multiple providers (Z.AI + Ollama) into unified list while routing requests to correct backend.
+**Task:** Normalize `/api/tags` endpoint to combine models from multiple providers (Z.AI + Local LLM upstream) into unified list while routing requests to correct backend.
 
 **Requirements:**
-1. `/api/tags` returns combined list: Z.AI models (e.g., `glm-4.7-flash`) + Ollama models (e.g., `qwen3:8b`)
-2. Each model entry includes `provider` field indicating backend system (`z_ai` or `ollama`)
+1. `/api/tags` returns combined list: Z.AI models (e.g., `glm-4.7-flash`) + Local LLM upstream models (e.g., `qwen3:8b`)
+2. Each model entry includes `provider` field indicating backend system (`z_ai` or `compat_llm`)
 3. Model selection in request routes to correct provider:
    - `glm-4.7-flash` → Z.AI provider
-   - `qwen3:8b` → Ollama provider
+   - `qwen3:8b` → Local LLM upstream provider
 4. Maintain backward compatibility with existing `virtual_models` config
 
 **Files to modify:**
@@ -96,9 +96,9 @@ curl http://localhost:11435/api/tags
 
 ### Proposed: Black Room (Algorithm Mode)
 
-**Concept:** Local Ollama execution layer for deterministic algorithmic tasks, complementing Gray Room's Prompt Mode.
+**Concept:** Local Local LLM upstream execution layer for deterministic algorithmic tasks, complementing Gray Room's Prompt Mode.
 
-- **Location:** This module (`ai-integration`) — manages direct Ollama communication
+- **Location:** This module (`ai-integration`) — manages direct Local LLM upstream communication
 - **Trigger:** `interrupt.reason: "algorithm_invoke"` from a2a-server Gray Room
 - **Algorithm IDs:** `ctx-gather-*`, `edit-apply-*`, `pattern-match-*`, `validate-*`
 - **Docs:** [`docs/BLACK-ROOM.md`](docs/BLACK-ROOM.md) — full architecture and protocol
@@ -123,7 +123,7 @@ Implemented in [`proxy/promises.py`](proxy/promises.py) and [`proxy/daemon.py`](
 
 ### Provider Connection Resilience
 
-Implemented in [`proxy/providers/ollama_provider.py`](proxy/providers/ollama_provider.py):
+Implemented in [`proxy/providers/compat_llm_provider.py`](proxy/providers/compat_llm_provider.py):
 
 - **Exponential backoff**: 1s → 2s → 4s → 8s → 16s → 30s (max)
 - **Max retries**: 5 attempts before marking as failed
@@ -142,8 +142,8 @@ Returns provider connection status:
   "poll_interval": 5.0,
   "auto_execute": true,
   "providers": {
-    "ollama": {
-      "name": "ollama",
+    "compat_llm": {
+      "name": "compat_llm",
       "connection_state": "connected",
       "last_error": null,
       "health": "healthy"
@@ -154,9 +154,9 @@ Returns provider connection status:
 
 ### Verification Steps
 
-1. Stop Ollama via docker-compose
+1. Stop Local LLM upstream via docker-compose
 2. Send async request
-3. Start Ollama
+3. Start Local LLM upstream
 4. Check `/daemon/status` - should show "recovered" within 30s
 
 ---
@@ -165,7 +165,7 @@ Returns provider connection status:
 
 - [README.md](README.md)
 - [proxy/config.py](proxy/config.py)
-- [proxy/providers/ollama_provider.py](proxy/providers/ollama_provider.py)
+- [proxy/providers/compat_llm_provider.py](proxy/providers/compat_llm_provider.py)
 - [proxy/daemon_routes.py](proxy/daemon_routes.py)
 - [scripts/cleanup_artifacts.py](scripts/cleanup_artifacts.py)
 - [scripts/cleanup-old-artifacts.py](scripts/cleanup-old-artifacts.py) (enhanced: +cache cleanup, 7d logs, 14d pending, 30d completed)
@@ -181,9 +181,9 @@ Returns provider connection status:
 - [x] **CCP-AI-01 where-to-scan**: Primary folders for cleanup scans зафиксированы: `proxy/`, `scripts/`, `config/`, `tests/`.
 - [x] **CCP-AI-02 signal-set (CDM-02)**: (1) duplicate adapters, (2) legacy compatibility bridges, (3) dead exports, (4) unused route branches, (5) overlapping DTO/response builders. **How:** ripgrep `provider`, `proxy`, `daemon`, `cleanup`, `compat`, `deprecated`, `re-export` across CCP-AI-01 folders; verify each route in `proxy/` is reachable from app entry.
 - [x] **CDM-03 evidence format**: Each cleanup candidate must be recorded as one row: `path` · `why redundant` · `usage proof` · `safe removal check` (pytest / health curls as applicable).
-- [x] **CCP-AI-03 bridge-detection** (2026-03-27): No standalone compat shim layer: integration surface is `proxy/` (FastAPI app + routes) and `proxy/providers/` (Ollama provider implements the shared provider contract). “Bridges” are normal adapter boundaries, not temporary re-exports; refactors follow provider API changes, not a separate removal calendar.
+- [x] **CCP-AI-03 bridge-detection** (2026-03-27): No standalone compat shim layer: integration surface is `proxy/` (FastAPI app + routes) and `proxy/providers/` (Local LLM upstream provider implements the shared provider contract). “Bridges” are normal adapter boundaries, not temporary re-exports; refactors follow provider API changes, not a separate removal calendar.
 - [x] **CCP-AI-04 dead-path-check** (2026-03-27): Same bar as CDM-03 — before deleting a module, prove no imports from `proxy/` / `scripts/` entrypoints and run applicable checks (`pytest`, [`scripts/tests/daemon_resilience.py`](scripts/tests/daemon_resilience.py), health curls from **Fast Checks**).
-- [x] **CCP-AI-05 safe-remove-gate (CDM-04)** (2026-03-27): Do not merge removals without `curl` health on `11434` (and Ollama `11435` if LLM paths touched) plus targeted tests; full proxy behavior = manual/async smoke as in **Resilience Features** / daemon docs.
+- [x] **CCP-AI-05 safe-remove-gate (CDM-04)** (2026-03-27): Do not merge removals without `curl` health on `11434` (and Local LLM upstream `11435` if LLM paths touched) plus targeted tests; full proxy behavior = manual/async smoke as in **Resilience Features** / daemon docs.
 
 ---
 

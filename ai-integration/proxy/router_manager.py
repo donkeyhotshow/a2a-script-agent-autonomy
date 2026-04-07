@@ -8,14 +8,14 @@ from typing import Optional, Any, Dict, Tuple
 
 logger = logging.getLogger(__name__)
 
-from .config import ollama_upstream_base
-from .ollama_manager import get_ollama_manager
+from .config import local_llm_upstream_base
+from .local_llm_manager import get_local_llm_manager
 from .api_key_routing import write_routing_hint
 from .promise_utils import pass_through_llm_upstream_headers
 
 
-def _translate_ollama_to_openai_path(path: str) -> str:
-    """Translate Ollama-style API paths to OpenAI-compatible paths"""
+def _translate_compat_to_openai_path(path: str) -> str:
+    """Translate Local LLM upstream-style API paths to OpenAI-compatible paths"""
     path_norm = path.lstrip('/')
     translations = {
         'api/chat': 'chat/completions',
@@ -51,7 +51,7 @@ def initialize_router_if_needed(router):
             finally:
                 loop.close()
         except Exception as e:
-            logger.warning(f"Failed to initialize router: {e}, falling back to Ollama")
+            logger.warning(f"Failed to initialize router: {e}, falling back to Local LLM upstream")
 
 
 def resolve_routing(
@@ -73,7 +73,7 @@ def resolve_routing(
 
     routed_provider_name = None
     routed_provider_type = None
-    fallback_base = ollama_upstream_base()
+    fallback_base = local_llm_upstream_base()
 
     def _nonempty_model(m: Optional[str]) -> bool:
         if m is None:
@@ -95,7 +95,7 @@ def resolve_routing(
             provider_name, provider = provider_chain[0]
             provider_type = getattr(provider.config, 'type', '')
             if provider_type in ('openai', 'z_ai'):
-                translated_path = _translate_ollama_to_openai_path(path)
+                translated_path = _translate_compat_to_openai_path(path)
                 target_url = _join_provider_base_path(provider.config.url, translated_path)
                 logger.info(f"Routed request for model '{model}' to provider '{provider_name}' -> {target_url} (translated from {path})")
             else:
@@ -106,7 +106,7 @@ def resolve_routing(
             routed_provider_type = provider_type
         else:
             target_url = f"{fallback_base}/{path}"
-            logger.warning(f"No provider available for model '{model}', falling back to Ollama")
+            logger.warning(f"No provider available for model '{model}', falling back to Local LLM upstream")
     else:
         target_url = f"{fallback_base}/{path}"
 
@@ -115,16 +115,16 @@ def resolve_routing(
             folder_path,
             provider_name=routed_provider_name,
             provider_type=routed_provider_type,
-            key_failover=routed_provider_type != 'ollama',
+            key_failover=routed_provider_type != 'compat_llm',
         )
 
     return target_url, headers, routed_provider_name, routed_provider_type
 
 
-def auto_start_ollama(path: str) -> None:
-    """Auto-start Ollama if enabled and path matches"""
-    from .config import OLLAMA_AUTO_START
-    if OLLAMA_AUTO_START and path.startswith('api/'):
-        mgr = get_ollama_manager()
+def auto_start_local_llm_upstream(path: str) -> None:
+    """Auto-start Local LLM upstream if enabled and path matches"""
+    from .config import LOCAL_LLM_AUTO_START
+    if LOCAL_LLM_AUTO_START and path.startswith('api/'):
+        mgr = get_local_llm_manager()
         if not mgr.is_running():
             mgr.start()

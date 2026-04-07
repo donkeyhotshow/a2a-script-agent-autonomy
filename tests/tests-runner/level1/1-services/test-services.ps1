@@ -34,7 +34,7 @@ $services = @(
         Optional = $true
     },
     @{
-        Name = "Ollama"
+        Name = "Local LLM upstream"
         Port = 11435
         Url = "http://localhost:11435/api/tags"
         Description = "LLM runtime"

@@ -11,7 +11,7 @@ This document describes the integration between A2A Server and External AI Hub P
 │   A2A Server    │    │  External AI     │    │   AI Services   │
 │   (Node.js)     │───▶│  Hub Proxy       │───▶│                 │
 │                 │    │  (Python)        │    │  • OpenAI       │
-│  • Routes       │    │                   │    │  • Ollama       │
+│  • Routes       │    │                   │    │  • Local LLM upstream       │
 │  • Services     │    │  • Load Balancer  │    │  • Custom APIs  │
 │  • Middleware   │    │  • Caching        │    │  • Fallbacks    │
 │  • Config       │    │  • Rate Limiting  │    │                 │

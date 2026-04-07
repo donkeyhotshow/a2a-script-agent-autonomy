@@ -162,6 +162,6 @@ class RequestProcessor:
         if isinstance(self.body_json, dict):
             self.body_json.pop('promise', None)
     
-    def get_target_url(self, ollama_host: str) -> str:
+    def get_target_url(self, local_llm_upstream_host: str) -> str:
         """Get the target URL for proxying"""
-        return f"{ollama_host}/{self.path}"
+        return f"{local_llm_upstream_host}/{self.path}"

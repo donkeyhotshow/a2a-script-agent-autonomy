@@ -10,9 +10,9 @@ Operational notes today: [`../DEV_STATE.md`](../DEV_STATE.md).
 
 | Doc | Topic |
 |-----|--------|
-| [`configuration/PROVIDERS_AND_API_KEYS.md`](configuration/PROVIDERS_AND_API_KEYS.md) | `api_keys` pool, Ollama `__OLLAMA_LOCAL__`, rate-limit failover, `routing.json`, secrets in JSON not `.env` |
+| [`configuration/PROVIDERS_AND_API_KEYS.md`](configuration/PROVIDERS_AND_API_KEYS.md) | `api_keys` pool, Local LLM upstream `__LOCAL_LLM_KEY_PLACEHOLDER__`, rate-limit failover, `routing.json`, secrets in JSON not `.env` |
 | [`../config/README.md`](../config/README.md) | `providers.json` vs `providers.example.json`, gitignore, loader fallback |
-| [`api-reference/PROXY_API.md`](api-reference/PROXY_API.md) | HTTP surface: health, `/api/tags`, Ollama proxy, **`/v1/*` OpenAI-compatible**, errors |
+| [`api-reference/PROXY_API.md`](api-reference/PROXY_API.md) | HTTP surface: health, `/api/tags`, Local LLM upstream proxy, **`/v1/*` OpenAI-compatible**, errors |
 | [`TESTING.md`](TESTING.md) | `pytest`, `/v1` route prefix in tests |
 | [`troubleshooting/TROUBLESHOOTING.md`](troubleshooting/TROUBLESHOOTING.md) | §9 upstream limits (1302), auth |
 

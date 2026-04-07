@@ -2,24 +2,24 @@
  * Direct hub API check: first POST /api/chat?promise=1 fills L3 disk cache;
  * second identical body returns HTTP 200 with cached: true (try_resolve_promise_from_cache).
  *
- * Requires: ai-integration (AI_HUB_URL) + Ollama with at least one model.
+ * Requires: ai-integration (AI_HUB_URL) + Local LLM upstream with at least one model.
  *   node tests/proba-servera/cache-api-smoke.mjs
- * Env: AI_HUB_URL, OLLAMA_TAGS_URL (default http://localhost:11435/api/tags), PROBA_CACHE_SMOKE_MODEL
+ * Env: AI_HUB_URL, LOCAL_LLM_TAGS_URL (default http://localhost:11435/api/tags), PROBA_CACHE_SMOKE_MODEL
  */
 import process from 'node:process';
 
 const hub = (process.env.AI_HUB_URL || 'http://localhost:11434').replace(/\/$/, '');
-const tagsUrl = (process.env.OLLAMA_TAGS_URL || 'http://localhost:11435/api/tags').replace(/\/$/, '');
+const tagsUrl = (process.env.LOCAL_LLM_TAGS_URL || 'http://localhost:11435/api/tags').replace(/\/$/, '');
 const deadlineMs = Number(process.env.PROBA_CACHE_SMOKE_TIMEOUT_MS || '180000') || 180000;
 
 async function pickModel() {
   const envModel = (process.env.PROBA_CACHE_SMOKE_MODEL || '').trim();
   if (envModel) return envModel;
   const r = await fetch(tagsUrl);
-  if (!r.ok) throw new Error(`Ollama tags ${tagsUrl} → ${r.status}`);
+  if (!r.ok) throw new Error(`Local LLM upstream tags ${tagsUrl} → ${r.status}`);
   const j = await r.json();
   const name = j?.models?.[0]?.name;
-  if (typeof name !== 'string' || !name) throw new Error('No Ollama models; pull one or set PROBA_CACHE_SMOKE_MODEL');
+  if (typeof name !== 'string' || !name) throw new Error('No Local LLM upstream models; pull one or set PROBA_CACHE_SMOKE_MODEL');
   return name;
 }
 
@@ -85,7 +85,7 @@ async function main() {
   if (a.httpStatus === 200 && a.json.cached === true) {
     console.log('First response was already cached (warm cache). Running second POST to confirm hit…');
   } else if (a.httpStatus === 202 && a.json.promiseId) {
-    console.log('First POST → 202 pending, waiting for Ollama…');
+    console.log('First POST → 202 pending, waiting for Local LLM upstream…');
     await waitDone(a.json.promiseId);
     console.log('First promise done (cache populated).');
   } else {

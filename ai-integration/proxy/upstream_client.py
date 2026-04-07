@@ -1,6 +1,6 @@
 """
 Upstream Client Module
-Handles forwarding requests to upstream servers (Ollama or external providers)
+Handles forwarding requests to upstream servers (Local LLM upstream or external providers)
 """
 import logging
 import requests

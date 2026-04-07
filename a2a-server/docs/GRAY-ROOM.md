@@ -6,7 +6,7 @@
 |------|----------|--------------------|
 | **Red room** | Client auto-completes tool `execute`, then sends next turn | One user-visible step per tool cycle |
 | **Gray room** | Server runs substeps (compress, thinking, re-LLM) | **None** — client gets one response after the chain finishes |
-| **Black room** | Algorithm Mode — local Ollama execution for deterministic tasks | Proposed per [ADR-0058](../../docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md), see [BLACK-ROOM.md](../../ai-integration/docs/BLACK-ROOM.md) (in ai-integration) |
+| **Black room** | Algorithm Mode — local Local LLM upstream execution for deterministic tasks | Proposed per [ADR-0058](../../docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md), see [BLACK-ROOM.md](../../ai-integration/docs/BLACK-ROOM.md) (in ai-integration) |
 
 **Status:** Implemented as an **overlay** on one invoke: [`DialogRequestProcessor`](../src/services/core/request-processor/dialog-request-processor.ts) delegates to [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts). Interrupt trace for the client is merged via [`mergeInterruptTraceIntoContext`](../src/transform/interrupt-trace-contract.ts) (see § Concept Boundary).
 
@@ -117,7 +117,7 @@ Adding **`prompts/transforms/<your-name>/`** (with `server-transforms-*.json` an
 
 ### Hub promise recovery (`recovered: true`)
 
-When `runLoop` is entered from **recovery** (hub `llmPromiseId` already finished; `responseMd` is the stored hub body), **ADR-0093 Internal Debate** (`llmService.debate`, three synchronous hub/Ollama calls) is **skipped** (`!isRecovered`). Otherwise debate **replaces** `md` before the first response transform and can fail with long Ollama timeouts while the main hub promise was already done — see [`BREAK_STATE.md`](../../BREAK_STATE.md) *inc-2026-04-06-b*.
+When `runLoop` is entered from **recovery** (hub `llmPromiseId` already finished; `responseMd` is the stored hub body), **ADR-0093 Internal Debate** (`llmService.debate`, three synchronous hub/Local LLM upstream calls) is **skipped** (`!isRecovered`). Otherwise debate **replaces** `md` before the first response transform and can fail with long Local LLM upstream timeouts while the main hub promise was already done — see [`BREAK_STATE.md`](../../BREAK_STATE.md) *inc-2026-04-06-b*.
 
 ### Error paths (sidecar / sub-LLM)
 
@@ -170,7 +170,7 @@ When `runLoop` is entered from **recovery** (hub `llmPromiseId` already finished
 - **Thinking step** — Store structured reasoning in `context.workbench.slots.thinking`, then run the main LLM again with that context.
 - **RAG pagination** — `auto_rag_page` re-enters the main loop; optional **`@a2a/rag`** search when `data.query` and `A2A_RAG_PROJECT_PATH` / `data.projectPath` are set (see § Implemented `reason` values).
 - **`auto_read_file` / `clarify` / `interrupt.schema`** — implemented in `applyInterrupt` / the loop (`maxTurns` clamping applies per § Loop limits).
-- **Black Room algorithms** — `algorithm_invoke` routes deterministic tasks to local Ollama for cost-effective, consistent execution (see ADR-0058).
+- **Black Room algorithms** — `algorithm_invoke` routes deterministic tasks to local Local LLM upstream for cost-effective, consistent execution (see ADR-0058).
 
 ## Protocol: `interrupt` on transform output
 
@@ -208,7 +208,7 @@ The **response** transform must place `interrupt` on the same object that carrie
 | `auto_rag_page` | Merges `data`, sets `_interrupt_reason`, then **re-enters** the main loop (`continueLoop: true`). If **`data.query`** is non-empty and **`data.projectPath`** or env **`A2A_RAG_PROJECT_PATH`** is set, the server runs **`@a2a/rag`** (`createRAGClientService` → `initialize` → `search`), appends hits to **`context.ragResults`**, and adds **`context._server_rag_page`**. If query or path is missing, behavior is merge-only (no server search). | `true` |
 | `auto_read_file` | Reads `data.filePath` or `data.path` via the workspace `read-file` handler; merges into `context.files`. | `false` — returns with updated context and the same primary `execute`. |
 | `clarify` | Stores `data` under `context.workbench.slots.clarify`. | `false` — same as `auto_read_file` for loop semantics. |
-| `algorithm_invoke` | Routes to **Black Room** (Algorithm Mode) for deterministic execution on local Ollama. Requires `interrupt.algorithmId` and merges results into `context.workbench.slots.blackRoomContext`. | `false` — returns with algorithm results merged into context. |
+| `algorithm_invoke` | Routes to **Black Room** (Algorithm Mode) for deterministic execution on local Local LLM upstream. Requires `interrupt.algorithmId` and merges results into `context.workbench.slots.blackRoomContext`. | `false` — returns with algorithm results merged into context. |
 | *(anything else)* | Logged; loop stops; client gets current result **without** `interrupt` consumption beyond that. | `false` |
 
 ## Loop limits and truncation
@@ -221,7 +221,7 @@ The **response** transform must place `interrupt` on the same object that carrie
 
 - The **first** main LLM call for an invoke still registers `llmPromiseId` on the request via `requestService.updateLlmPromiseId`.
 - **Interrupt** sub-calls use distinct `X-Server-Promise-Id` values (e.g. `${promiseId}-compress`, `${promiseId}-think`, `${promiseId}-intr-<n>`) and **do not** replace that mapping.
-- Model: `OLLAMA_MODEL` (default `qwen3:8b`); base URL: `AI_HUB_URL` (default `http://localhost:11434`).
+- Model: `LOCAL_LLM_MODEL` (default `qwen3:8b`); base URL: `AI_HUB_URL` (default `http://localhost:11434`).
 
 ## Simulations (goldens)
 

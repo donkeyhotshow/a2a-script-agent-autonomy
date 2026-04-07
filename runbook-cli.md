@@ -45,8 +45,8 @@ The system manages the following services:
 
 | Service | Port | API Endpoint | Dependencies |
 |---------|------|--------------|--------------|
-| Ollama | 11435 | `/api/tags` | None |
-| AI Integration (Proxy) | 11434 | `/health` | Ollama |
+| Local LLM upstream | 11435 | `/api/tags` | None |
+| AI Integration (Proxy) | 11434 | `/health` | Local LLM upstream |
 | A2A Server | 3000 | `/health` | AI Integration |
 | Client API | 3001 | `/api/a2a/projects` | A2A Server |
 | Web UI | 5173 | `/api/a2a/projects` | Client API |

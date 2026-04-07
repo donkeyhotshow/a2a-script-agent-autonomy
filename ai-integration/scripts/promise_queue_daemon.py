@@ -23,7 +23,7 @@ USER_AGENT = "ai-integration-promise-daemon/1.0"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Poll proxy tickets (promise queue) and optionally execute them against Ollama."
+        description="Poll proxy tickets (promise queue) and optionally execute them against Local LLM upstream."
     )
     parser.add_argument(
         "--proxy-url",

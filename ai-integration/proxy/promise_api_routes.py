@@ -275,7 +275,7 @@ def promise_answer(promise_id: str):
 
 @app.route('/promise/<promise_id>/execute', methods=['POST'])
 def promise_execute(promise_id: str):
-    """Execute request to Ollama in background; return 202 immediately (non-blocking)."""
+    """Execute request to Local LLM upstream in background; return 202 immediately (non-blocking)."""
     rec = get_promise(promise_id)
     if rec is None:
         return Response(
@@ -290,25 +290,25 @@ def promise_execute(promise_id: str):
             mimetype='application/json',
         )
 
-    # Check if Ollama is busy before executing
-    from .ollama_manager import get_ollama_manager
-    mgr = get_ollama_manager()
-    ollama_status = mgr.get_status()
+    # Check if Local LLM upstream is busy before executing
+    from .local_llm_manager import get_local_llm_manager
+    mgr = get_local_llm_manager()
+    upstream_llm_status = mgr.get_status()
     
-    if ollama_status.get('running') is not True:
+    if upstream_llm_status.get('running') is not True:
         return Response(
-            _json_bytes({"error": "ollama_not_running", "message": "Ollama is not running. Start Ollama first."}),
+            _json_bytes({"error": "local_llm_upstream_not_running", "message": "Local LLM upstream is not running. Start Local LLM upstream first."}),
             status=503,
             mimetype='application/json',
         )
     
-    # Check if Ollama is idle (not busy with previous request)
-    idle_seconds = ollama_status.get('idle_seconds', 0)
-    if idle_seconds < 5:  # Ollama was active in the last 5 seconds
+    # Check if Local LLM upstream is idle (not busy with previous request)
+    idle_seconds = upstream_llm_status.get('idle_seconds', 0)
+    if idle_seconds < 5:  # Local LLM upstream was active in the last 5 seconds
         return Response(
             _json_bytes({
-                "error": "ollama_busy", 
-                "message": "Ollama is busy with another request. Please wait or cancel the current request.",
+                "error": "local_llm_upstream_busy", 
+                "message": "Local LLM upstream is busy with another request. Please wait or cancel the current request.",
                 "idle_seconds": idle_seconds
             }),
             status=503,

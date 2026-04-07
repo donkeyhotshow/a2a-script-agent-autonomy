@@ -6,13 +6,13 @@ This glossary defines key terms and concepts specific to the AI Integration modu
 
 ## Core Concepts
 
-### Proxy (Ollama Proxy)
-A service that intercepts and logs requests to Ollama LLM, operating on port 11434 by default. It forwards requests to the actual Ollama instance (port 11435) while providing additional features like logging, simulation, and model mapping.
+### Proxy (Local LLM upstream Proxy)
+A service that intercepts and logs requests to Local LLM upstream LLM, operating on port 11434 by default. It forwards requests to the actual Local LLM upstream instance (port 11435) while providing additional features like logging, simulation, and model mapping.
 
 ### LLM Provider
 A generic interface for connecting to various Large Language Model services:
 - **OpenAI** - OpenAI API compatible models
-- **Ollama** - Local LLM deployment
+- **Local LLM upstream** - Local LLM deployment
 - **HuggingFace** - HuggingFace inference endpoints
 
 ### Promise (Async Promise)
@@ -32,8 +32,8 @@ Core component that processes incoming requests, routes them to appropriate LLM 
 ### Router
 Component responsible for selecting the appropriate LLM provider based on model mapping configuration and request parameters.
 
-### Ollama Manager
-Service that automatically starts and stops the Ollama process based on usage patterns (idle timeout).
+### Local LLM upstream Manager
+Service that automatically starts and stops the Local LLM upstream process based on usage patterns (idle timeout).
 
 ### Caching Layer
 System for caching LLM responses to reduce redundant API calls and improve performance.
@@ -48,17 +48,17 @@ JSON configuration file that defines model mappings, routing rules, and simulati
 
 ### Environment Variables
 - `PROXY_PORT` - Proxy listener port (default: 11434)
-- `OLLAMA_HOST` - Target Ollama host (default: http://localhost:11435)
+- `LOCAL_LLM_UPSTREAM_URL` - Target Local LLM upstream host (default: http://localhost:11435)
 - `SIMULATION_ENABLED` - Enable ML simulation mode
-- `OLLAMA_AUTO_START` - Auto-start Ollama on demand
+- `LOCAL_LLM_AUTO_START` - Auto-start Local LLM upstream on demand
 
 ## API Endpoints
 
 ### `/health` - Liveness Probe
 Basic health check endpoint.
 
-### `/health/ollama` - Ollama Availability
-Detailed Ollama status including availability and idle time.
+### `/health/compat_llm` - Local LLM upstream Availability
+Detailed Local LLM upstream status including availability and idle time.
 
 ### `/v1/chat/completions` - OpenAI Compatible API
 OpenAI Chat Completions API endpoint for LLM interactions.
@@ -75,5 +75,5 @@ Client Request → Proxy (11434) → Router → LLM Provider
                                       ↓
                               [Cache Layer]
                                       ↓
-                              [Ollama/HuggingFace/OpenAI]
+                              [Local LLM upstream/HuggingFace/OpenAI]
 ```

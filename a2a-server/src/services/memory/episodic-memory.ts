@@ -315,7 +315,7 @@ export class EpisodicMemory {
 
 /**
  * Produce a 384-dim placeholder embedding from a string.
- * This is replaced at runtime by the AI-proxy layer (Ollama nomic-embed-text).
+ * This is replaced at runtime by the AI-proxy layer (Local LLM upstream nomic-embed-text).
  * The placeholder uses character-code bucketing so short strings still produce
  * a non-zero vector that can be compared for unit tests.
  */

@@ -1,5 +1,5 @@
 """
-Ollama Proxy Package
+Local LLM upstream Proxy Package
 """
 
 import time

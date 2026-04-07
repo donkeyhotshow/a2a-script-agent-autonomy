@@ -2,9 +2,9 @@
 
 ## Sources
 
-- [`ai-integration/plans/promise-queue-plan.md`](../../ai-integration/plans/promise-queue-plan.md) — ⏳ / ❌ sections (UI drag-drop, log filtering, embedded Ollama notes, etc.)
+- [`ai-integration/plans/promise-queue-plan.md`](../../ai-integration/plans/promise-queue-plan.md) — ⏳ / ❌ sections (UI drag-drop, log filtering, embedded Local LLM upstream notes, etc.)
 - [`ai-integration/DEV_STATE.md`](../../ai-integration/DEV_STATE.md)
-- Root [`AGENTS.md`](../../AGENTS.md) — canonical ports (Ollama **11435**, proxy **11434**)
+- Root [`AGENTS.md`](../../AGENTS.md) — canonical ports (Local LLM upstream **11435**, proxy **11434**)
 
 ## Agent prompt (copy)
 

@@ -55,4 +55,4 @@ docker-build:
 	docker build -t ai-integration .
 
 docker-run:
-	docker run -p 11435:11435 -e OLLAMA_HOST=http://host.docker.internal:11434 ai-integration
+	docker run -p 11435:11435 -e LOCAL_LLM_UPSTREAM_URL=http://host.docker.internal:11434 ai-integration

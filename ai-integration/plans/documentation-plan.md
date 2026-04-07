@@ -45,7 +45,7 @@
 ### 5. Параметры провайдеров (срок: 10.03.2026)
 
 - [ ] Уточнить параметры провайдеров
-- [ ] По умолчанию `ollama`
+- [ ] По умолчанию `compat_llm`
 - [ ] Fallback на `groq/openrouter`
 - [ ] Timeout/retry настройки
 - [ ] Требуемые API ключи
@@ -63,7 +63,7 @@
 
 ### Health
 - `GET /health` - основной health check
-- `GET /health/ollama` - проверка Ollama
+- `GET /health/compat_llm` - проверка Local LLM upstream
 - `GET /health/ready` - проверка готовности
 
 ### Metrics
@@ -77,11 +77,11 @@
 - `POST /promise/<promiseId>/execute` - выполнить
 - `GET /promises/pending` - список pending promises
 
-### Ollama
-- `GET /ollama/status` - статус Ollama
-- `POST /ollama/start` - запустить
-- `POST /ollama/stop` - остановить
-- `POST /ollama/restart` - перезапустить
+### Local LLM upstream
+- `GET /compat_llm/status` - статус Local LLM upstream
+- `POST /compat_llm/start` - запустить
+- `POST /compat_llm/stop` - остановить
+- `POST /compat_llm/restart` - перезапустить
 
 ### Daemon
 - `GET /daemon/status` - статус daemon

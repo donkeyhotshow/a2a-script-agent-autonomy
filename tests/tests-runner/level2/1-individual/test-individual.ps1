@@ -92,11 +92,11 @@ $components = @(
                 }
             },
             @{
-                Name = "Ollama Connection"
+                Name = "Local LLM upstream Connection"
                 Optional = $true
                 Test = {
                     $response = Invoke-RestMethod -Uri "http://localhost:11435/api/tags" -TimeoutSec 10
-                    if (-not $response.models -or $response.models.Count -eq 0) { throw "No Ollama models available" }
+                    if (-not $response.models -or $response.models.Count -eq 0) { throw "No Local LLM upstream models available" }
                 }
             }
         )

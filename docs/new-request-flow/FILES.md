@@ -14,7 +14,7 @@ c:/workspace/org-carrier/a2a-script-agent/
 │   ├── packages/        # npm пакети (sdk, rag, execution, embedding, history, json, types)
 │   └── web/             # Web UI (порт 5173)
 ├── a2a-server/          # Серверна частина (порт 3000)
-├── ai-integration/    # AI Hub proxy → Ollama (див. порти нижче)
+├── ai-integration/    # AI Hub proxy → Local LLM upstream (див. порти нижче)
 └── docs/new-request-flow/    # Документація та плани
 ```
 
@@ -75,7 +75,7 @@ NPM пакети всередині monorepo:
 
 ## External AI Hub (`ai-integration/`)
 
-Проксі до Ollama: **Hub :11434** → **Ollama :11435**, async `promiseId`. Дерево каталогів і інтеграція з сервером: [SERVER-ARCHITECTURE.md](SERVER-ARCHITECTURE.md#external-ai-hub-integration); контракт promise / endpoints: [PROTOCOL.md](PROTOCOL.md#async-flow-promiseid).
+Проксі до Local LLM upstream: **Hub :11434** → **Local LLM upstream :11435**, async `promiseId`. Дерево каталогів і інтеграція з сервером: [SERVER-ARCHITECTURE.md](SERVER-ARCHITECTURE.md#external-ai-hub-integration); контракт promise / endpoints: [PROTOCOL.md](PROTOCOL.md#async-flow-promiseid).
 
 ---
 
@@ -122,8 +122,8 @@ simulations/
 | Server          | 3000  | A2A Server HTTP API                     |
 | Client API      | 5173 (`/api/a2a/*` на Vite) або 3001 (standalone SDK) | Сесії, проксі на сервер |
 | Web UI          | 5173  | Vite dev server                         |
-| AI Hub (ai-integration) | 11434 | Проксі / async promise до Ollama |
-| Ollama          | 11435 | Локальна LLM                            |
+| AI Hub (ai-integration) | 11434 | Проксі / async promise до Local LLM upstream |
+| Local LLM upstream          | 11435 | Локальна LLM                            |
 
 ---
 
@@ -144,10 +144,10 @@ SKIP_AUTH=1
 
 ```
 PROXY_PORT=11434
-OLLAMA_HOST=http://localhost:11435
+LOCAL_LLM_UPSTREAM_URL=http://localhost:11435
 SIMULATION_ENABLED=false
-OLLAMA_AUTO_START=true
-OLLAMA_IDLE_TIMEOUT=300
+LOCAL_LLM_AUTO_START=true
+LOCAL_LLM_IDLE_TIMEOUT=300
 ```
 
 ---

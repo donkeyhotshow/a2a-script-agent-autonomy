@@ -1,5 +1,5 @@
 /**
- * Black Room Orchestrator — algorithm calls go through AI Integration hub (not direct Ollama).
+ * Black Room Orchestrator — algorithm calls go through AI Integration hub (not direct Local LLM upstream).
  *
  * Handles deterministic algorithm execution for the Black Room (Algorithm Mode)
  * as defined in ADR-0058.

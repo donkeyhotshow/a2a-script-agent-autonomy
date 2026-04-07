@@ -7,15 +7,15 @@ $ErrorActionPreference = "Stop"
 
 # Configuration - hardcoded as requested
 $SERVICES = @{
-    'ollama' = @{
+    'local_llm' = @{
         Port = 11435
-        StartScript = Join-Path $PSScriptRoot 'scripts\start-ollama.bat'
+        StartScript = Join-Path $PSScriptRoot 'scripts\start-local-llm.bat'
         Dependencies = @()
     }
     'ai-integration' = @{
         Port = 11434
         StartScript = Join-Path $PSScriptRoot 'scripts\start-ai-integration.bat'
-        Dependencies = @('ollama')
+        Dependencies = @('local_llm')
     }
     'a2a-server' = @{
         Port = 3000
@@ -58,7 +58,7 @@ function Test-ServiceHealth {
 
     # Define health endpoints
     $healthEndpoints = @{
-        'ollama' = '/api/tags'
+        'local_llm' = '/api/tags'
         'ai-integration' = '/health'
         'a2a-server' = '/health'
         'client-api' = '/api/a2a/projects'
@@ -304,7 +304,7 @@ try {
         "start" {
             Write-Log "=== runbook-cli.ps1 : Standardized service startup ==="
 
-            $allServices = @('ollama', 'ai-integration', 'a2a-server', 'client-api', 'web-ui')
+            $allServices = @('local_llm', 'ai-integration', 'a2a-server', 'client-api', 'web-ui')
             $targetServices = $Services.Count -gt 0 ? $Services : $allServices
             $order = Get-DependencyOrder $targetServices
 
@@ -371,7 +371,7 @@ try {
             # ==========================================
             Write-Log ""
             Write-Log "[Final Check] Verifying all PIDs captured..."
-            Verify-AndCapturePid 11435 "OLLAMA_PID" "Ollama" | Out-Null
+            Verify-AndCapturePid 11435 "LOCAL_LLM_PID" "Local LLM upstream" | Out-Null
             Verify-AndCapturePid 11434 "AI_INTEGRATION_PID" "ai-integration" | Out-Null
             Verify-AndCapturePid 3000 "A2A_SERVER_PID" "a2a-server" | Out-Null
             Verify-AndCapturePid 3001 "CLIENT_API_PID" "client-api" | Out-Null
@@ -384,7 +384,7 @@ try {
             Write-Log "=== All services started successfully ==="
             Write-Log ""
             Write-Log "Services:"
-            Write-Log "  - Ollama:       http://localhost:11435"
+            Write-Log "  - Local LLM upstream:       http://localhost:11435"
             Write-Log "  - ai-integration: http://localhost:11434 (API proxy)"
             Write-Log "  - a2a-server:   http://localhost:3000"
             Write-Log "  - client-api:   http://localhost:3001"
@@ -399,7 +399,7 @@ try {
         }
 
         "stop" {
-            $allServices = @('ollama', 'ai-integration', 'a2a-server', 'client-api', 'web-ui')
+            $allServices = @('local_llm', 'ai-integration', 'a2a-server', 'client-api', 'web-ui')
             $targetServices = $Services.Count -gt 0 ? $Services : $allServices
 
             # Stop in reverse dependency order
@@ -412,7 +412,7 @@ try {
 
         "restart" {
             # Stop all first
-            $allServices = @('ollama', 'ai-integration', 'a2a-server', 'client-api', 'web-ui')
+            $allServices = @('local_llm', 'ai-integration', 'a2a-server', 'client-api', 'web-ui')
             [array]::Reverse($allServices)
             foreach ($service in $allServices) {
                 Stop-Service $service
@@ -432,9 +432,9 @@ try {
         default {
             Write-Host "Usage: .\runbook-cli.ps1 -Command <command> [-Services <service1,service2,...>]"
             Write-Host "Commands: start, stop, restart, status"
-            Write-Host "Services: ollama, ai-integration, a2a-server, client-api, web-ui"
+            Write-Host "Services: local_llm, ai-integration, a2a-server, client-api, web-ui"
             Write-Host "Example: .\runbook-cli.ps1 -Command start"
-            Write-Host "Example: .\runbook-cli.ps1 -Command start -Services ollama,a2a-server"
+            Write-Host "Example: .\runbook-cli.ps1 -Command start -Services local_llm,a2a-server"
         }
     }
 } catch {

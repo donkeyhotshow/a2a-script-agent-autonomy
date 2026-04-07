@@ -28,7 +28,6 @@ if exist %PID_FILE% (
 REM Phase 1: Kill by port
 echo.
 echo === Phase 1: Kill by port ===
-call :p1 "Ollama" "11434"
 call :p1 "ai-integration" "11434"
 call :p1 "a2a-server" "3000"
 call :p1 "client-api" "3001"
@@ -37,8 +36,7 @@ call :p1 "web-ui" "5173"
 REM Phase 2: Verify ports
 echo.
 echo === Phase 2: Verify ports are free ===
-call :p2 "Ollama" "11434"
-call :p2 "ai-integration" "11435"
+call :p2 "ai-integration" "11434"
 call :p2 "a2a-server" "3000"
 call :p2 "client-api" "3001"
 call :p2 "web-ui" "5173"
@@ -46,7 +44,6 @@ call :p2 "web-ui" "5173"
 REM Phase 3: Kill by PID/name
 echo.
 echo === Phase 3: Kill by PID and process name ===
-call :p3 "Ollama" "OLLAMA_PID" "ollama.exe" ""
 call :p3 "ai-integration" "AI_INTEGRATION_PID" "python.exe" "uvicorn.exe"
 call :p3 "a2a-server" "A2A_SERVER_PID" "node.exe" ""
 call :p3 "client-api" "CLIENT_API_PID" "node.exe" ""
@@ -59,8 +56,7 @@ REM Phase 5: Final check
 echo.
 echo === Phase 5: Verify processes gone and cleanup ===
 ping -n 2 -w 500 localhost >nul
-call :p5 "Ollama" "11434"
-call :p5 "ai-integration" "11435"
+call :p5 "ai-integration" "11434"
 call :p5 "a2a-server" "3000"
 call :p5 "client-api" "3001"
 call :p5 "web-ui" "5173"

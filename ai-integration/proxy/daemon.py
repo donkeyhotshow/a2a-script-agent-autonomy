@@ -341,7 +341,7 @@ class PromiseDaemon:
             cache_key=cache_key,
         )
 
-        # Execute request (use FORWARD_TIMEOUT for Ollama, not execute_timeout)
+        # Execute request (use FORWARD_TIMEOUT for Local LLM upstream, not execute_timeout)
         req_timeout = FORWARD_TIMEOUT
         try:
             use_failover = (

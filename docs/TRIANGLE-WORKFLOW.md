@@ -2,11 +2,11 @@
 
 **When to use:** Loader stuck, wrong screen, wrong turn, or payload shape does not match the scenario you expect.
 
-**Triangle:** three layers — **C** = ai-integration (LLM path), **B** = a2a-server (invoke/transforms), **A** = Client API (session + `/next` + `/async` + storage). **Ollama** (if present) is only the backend behind **C**, not a separate operator surface.
+**Triangle:** three layers — **C** = ai-integration (LLM path), **B** = a2a-server (invoke/transforms), **A** = Client API (session + `/next` + `/async` + storage). **Local LLM upstream** (if present) is only the backend behind **C**, not a separate operator surface.
 
 **Repeatable unit:** the **Triangle loop** below. Run **0** after any infra fix, port change, or `start-all` restart. For each turn you drive over HTTP, repeat **1 → 2 → (3 if sending) → 1**.
 
-**Operator API (curl / Client API, normative):** [`OPERATOR-CURL.md`](OPERATOR-CURL.md) — [Minimal mental model](OPERATOR-CURL.md#minimal-mental-model) (create, router, `/async`), [`POST /api/a2a/sessions` body](OPERATOR-CURL.md#post-apia2asessions-body-create), [Driver checklist](OPERATOR-CURL.md#driver-checklist-anti-stop), [Ollama generating vs stuck](OPERATOR-CURL.md#ollama-is-generating--pause-other-work), [GET session / unwrap / messages](OPERATOR-CURL.md#web-access-and-a2a-server), [Direct A2A invoke (debug only)](OPERATOR-CURL.md#direct-a2a-server-invoke-debug-only-fallback).
+**Operator API (curl / Client API, normative):** [`OPERATOR-CURL.md`](OPERATOR-CURL.md) — [Minimal mental model](OPERATOR-CURL.md#minimal-mental-model) (create, router, `/async`), [`POST /api/a2a/sessions` body](OPERATOR-CURL.md#post-apia2asessions-body-create), [Driver checklist](OPERATOR-CURL.md#driver-checklist-anti-stop), [Local LLM upstream generating vs stuck](OPERATOR-CURL.md#compat_llm-is-generating--pause-other-work), [GET session / unwrap / messages](OPERATOR-CURL.md#web-access-and-a2a-server), [Direct A2A invoke (debug only)](OPERATOR-CURL.md#direct-a2a-server-invoke-debug-only-fallback).
 
 ---
 
@@ -64,7 +64,7 @@ Do **not** use the browser spinner as “done.”
 |------|--------|
 | **W1** | `GET {BASE}/api/a2a/sessions/{id}/async` |
 | **W2** | If response indicates work still pending (`asyncPending` / non-terminal `status`): wait with **backoff**, **repeat W1** until terminal. **No** fixed max attempts — see root [`AGENTS.md`](../AGENTS.md). |
-| **W3** | If still pending and the **integration/backend** is idle while the server stays busy: treat as **stuck** — [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) (*Ollama is generating* / stuck promise). Fix infra or server, then **go to 0**. |
+| **W3** | If still pending and the **integration/backend** is idle while the server stays busy: treat as **stuck** — [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) (*Local LLM upstream is generating* / stuck promise). Fix infra or server, then **go to 0**. |
 | **W4** | After terminal: **S1** again so `execute` / `context` match the latest step. |
 
 ---

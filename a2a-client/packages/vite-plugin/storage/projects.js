@@ -27,7 +27,7 @@ export function loadProjects(cwd) {
       }
     } catch (err) {
       console.error('[projects] Failed to load external:', err?.message || err);
-      throw err instanceof Error ? err : new Error(String(err));
+      // Fall back to storage or default
     }
   }
 
@@ -43,7 +43,8 @@ export function loadProjects(cwd) {
       return [{id: 'default', name: 'Workspace', path: cwd}];
     }
     console.error('[projects] Failed to read storage projects.json:', e?.message || e);
-    throw e instanceof Error ? e : new Error(String(e));
+    // Fall back to default
+    return [{id: 'default', name: 'Workspace', path: cwd}];
   }
 }
 

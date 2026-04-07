@@ -108,14 +108,14 @@ Use this as a **literal** loop for curl or scripts so a low-context prompt does 
 5. If still stuck, re-run step 2; if **`GET …/sessions/{id}`** shows **`asyncPending`** but thin **`execute`**, keep polling **`/async`** then re-GET session. For **direct** A2A polling you need a server **`prom_*` id** (from step `server-promise.json` or server logs), not from the Client API `/next` ack — see *Direct A2A Server invoke* below.
 6. Do **not** treat “I sent one `/next`” as done; parity with the web UI is **next + poll until settled**.
 
-### Ollama is generating — pause other work
+### Local LLM upstream is generating — pause other work
 
-When **`GET …/async`** keeps `asyncPending` (or **`GET …/api/v1/requests/{promiseId}/result`** returns `"status":"processing"`), the chain is often **waiting on Ollama** (via ai-integration). **Do not** immediately restart the stack or assume a bug.
+When **`GET …/async`** keeps `asyncPending` (or **`GET …/api/v1/requests/{promiseId}/result`** returns `"status":"processing"`), the chain is often **waiting on Local LLM upstream** (via ai-integration). **Do not** immediately restart the stack or assume a bug.
 
-1. **Confirm** a run is in progress: Ollama logs, **`GET http://localhost:11435/api/ps`** (running models when supported), host CPU/GPU activity, ai-integration / proxy logs (e.g. under `ai-integration/proxy_logs/` when enabled).
-2. **After** that, **stop disruptive actions** until the call finishes: no **`kill-all` / `start-all`**, no extra heavy parallel sessions on the **same** Ollama, no extra `/next` spam on the same session unless you mean to replace or cancel work.
+1. **Confirm** a run is in progress: Local LLM upstream logs, **`GET http://localhost:11435/api/ps`** (running models when supported), host CPU/GPU activity, ai-integration / proxy logs (e.g. under `ai-integration/proxy_logs/` when enabled).
+2. **After** that, **stop disruptive actions** until the call finishes: no **`kill-all` / `start-all`**, no extra heavy parallel sessions on the **same** Local LLM upstream, no extra `/next` spam on the same session unless you mean to replace or cancel work.
 
-If Ollama is **idle** but status stays `processing`, treat it as a **stuck** pipeline — debug per root **`AGENTS.md`** → *Common Issues* and *Debugging*.
+If Local LLM upstream is **idle** but status stays `processing`, treat it as a **stuck** pipeline — debug per root **`AGENTS.md`** → *Common Issues* and *Debugging*.
 
 Narrative table of common “why iteration stopped” traps and mitigations (IDE vs driver): root **`AGENTS.md`** → *Why iteration stops (misreads and mitigations)*.
 

@@ -9,7 +9,7 @@
  * Usage:
  *   node tests/direct-tests/gray-room-test.js
  *
- * Requires: Client API (5173) + A2A Server (3000) + Ollama (11435/11434)
+ * Requires: Client API (5173) + A2A Server (3000) + Local LLM upstream (11435/11434)
  * Env: CLIENT_API_URL, SERVER_URL
  */
 

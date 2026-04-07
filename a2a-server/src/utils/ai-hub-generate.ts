@@ -9,7 +9,7 @@ export type AiHubGenerateRequestBody = {
 };
 
 /**
- * Sync `POST /api/generate` via AI Integration hub; returns Ollama top-level `response` text.
+ * Sync `POST /api/generate` via AI Integration hub; returns Local LLM upstream top-level `response` text.
  */
 export async function fetchAiHubGenerateText(
     hubBase: string,

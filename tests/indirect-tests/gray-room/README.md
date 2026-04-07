@@ -2,7 +2,7 @@
 
 **Meaning:** inside one server turn, the **gray room** runs a chain of response transforms and **interrupt handlers** (`compress_history`, `thinking`, `auto_read_file`, `auto_rag_page`, `clarify`, `algorithm_invoke` — see `gray-room-orchestrator.ts`). **Horizontal** = ordered list of those handlers, not the session step column.
 
-**Mama** = validate a **saved** `context.workbench.slots.interruptTrace` (UA-S-01 in `interrupt-trace-contract.ts`) against an expected sequence. No Ollama.
+**Mama** = validate a **saved** `context.workbench.slots.interruptTrace` (UA-S-01 in `interrupt-trace-contract.ts`) against an expected sequence. No Local LLM upstream.
 
 ## Validator
 

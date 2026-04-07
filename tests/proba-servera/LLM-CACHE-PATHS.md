@@ -1,6 +1,6 @@
 # Proba → LLM disk cache (L3) path inventory
 
-Proba drives **a2a-server** in-process (default) or HTTP invoke; the server calls **ai-integration** (AI hub, default `AI_HUB_URL` → `11434`), which forwards to **Ollama** (`11435`).
+Proba drives **a2a-server** in-process (default) or HTTP invoke; the server calls **ai-integration** (AI hub, default `AI_HUB_URL` → `11434`), which forwards to **Local LLM upstream** (`11435`).
 
 ## Hub entry: promise vs sync
 

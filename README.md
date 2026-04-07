@@ -108,7 +108,7 @@ These scripts follow the port-kill / verify / PID cleanup pattern documented in 
 │  5432* │ PostgreSQL        │ pgvector extension (5432-5442)│
 │  6379* │ Redis             │ Caching & queues (6379-6389)  │
 │ 11434* │ AI Hub Proxy        │ Python Flask (11434-11444)   │
-│ 11435* │ Ollama              │ LLM inference (11435-11445)    │
+│ 11435* │ Local LLM upstream              │ LLM inference (11435-11445)    │
 └─────────────────────────────────────────────────────────────┘
 * Actual ports may differ if defaults are busy. Check `.env.local` after start.
 ```
@@ -116,10 +116,10 @@ These scripts follow the port-kill / verify / PID cleanup pattern documented in 
 ### Health Gating with Exponential Backoff
 
 Services start in dependency order with automatic retry:
-1. **Infrastructure**: PostgreSQL → Redis → (Ollama if proxy needed)
+1. **Infrastructure**: PostgreSQL → Redis → (Local LLM upstream if proxy needed)
 2. **Backend**: Server (waits for PostgreSQL + Redis)
 3. **Client**: Client API → Web UI (waits for Server)
-4. **AI**: Proxy (waits for Ollama)
+4. **AI**: Proxy (waits for Local LLM upstream)
 
 Each service waits for healthy dependencies before starting, with exponential backoff retry (500ms → 750ms → 1.1s → ... up to 10s).
 

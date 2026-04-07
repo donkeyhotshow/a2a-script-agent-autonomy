@@ -4,8 +4,6 @@ REM UTF-8 console is set by start-all.bat; avoid chcp here (LF-only or Git Bash 
 cd /d "%~dp0.."
 
 set PROXY_PORT=11434
-set OLLAMA_PORT=11435
-set OLLAMA_MODELS=C:\Users\dev\Desktop\.ollama
 set PID_FILE=.pids.txt
 
 echo [AI-Integration] Starting on port %PROXY_PORT%...
@@ -25,7 +23,7 @@ if errorlevel 1 (
     cd ..
     exit /b 1
 )
-start "ai-integration" cmd /c "set OLLAMA_HOST=http://localhost:%OLLAMA_PORT% && set OLLAMA_MODELS=%OLLAMA_MODELS% && set FORWARD_TIMEOUT_SECONDS=180 && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port %PROXY_PORT%"
+start "ai-integration" cmd /c "set FORWARD_TIMEOUT_SECONDS=180 && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port %PROXY_PORT%"
 cd ..
 
 REM Uvicorn can take longer than 5s on cold start; poll up to about 40 seconds

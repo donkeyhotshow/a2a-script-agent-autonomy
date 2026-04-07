@@ -280,9 +280,9 @@ class TestGetRouter:
 class TestProviderRegistry:
     """Test provider type registry"""
     
-    def test_registry_has_ollama(self):
-        """Test registry includes ollama"""
-        assert "ollama" in PROVIDER_REGISTRY
+    def test_registry_has_compat_llm(self):
+        """Test registry includes compat_llm"""
+        assert "compat_llm" in PROVIDER_REGISTRY
     
     def test_registry_has_openai(self):
         """Test registry includes openai"""

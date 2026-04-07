@@ -91,7 +91,7 @@ _VOLATILE_CACHE_KEY_SUFFIX_TIME_BLOCKLIST = frozenset(
 
 LLM_CACHE_KIND = "llm"
 
-# Keys often echoed on chat message objects by adapters; do not affect Ollama semantics.
+# Keys often echoed on chat message objects by adapters; do not affect Local LLM upstream semantics.
 _MESSAGE_NOISE_KEYS = frozenset(
     {
         "id",
@@ -185,7 +185,7 @@ def _tool_def_sort_key(tool: Any) -> str:
 
 
 def _normalize_tools_for_cache(raw: Any) -> Any:
-    """Stable order for tool definition lists (Ollama/OpenAI-style); order rarely affects semantics."""
+    """Stable order for tool definition lists (Local LLM upstream/OpenAI-style); order rarely affects semantics."""
     if not isinstance(raw, list):
         return raw
     items: list[Any] = []
@@ -199,7 +199,7 @@ def _normalize_tools_for_cache(raw: Any) -> Any:
 
 def _normalize_llm_chat_body_dict(data: Dict[str, Any]) -> Dict[str, Any]:
     """
-    Canonicalize Ollama-style /api/chat JSON for cache keys: drop adapter noise on
+    Canonicalize Local LLM upstream-style /api/chat JSON for cache keys: drop adapter noise on
     messages, stable-sort options. Applied after volatile-key strip.
     """
     out = dict(data)
@@ -344,12 +344,12 @@ def build_v1_api_route_fingerprint(upstream_path: str, payload: Dict[str, Any]) 
                 out["provider"] = str(pname)
                 out["provider_type"] = str(getattr(prov.config, "type", ""))
             else:
-                out["provider"] = "ollama_fallback"
-                out["provider_type"] = "ollama"
+                out["provider"] = "compat_llm_fallback"
+                out["provider_type"] = "compat_llm"
         else:
             out["model_resolved"] = out["model"]
-            out["provider"] = "ollama_fallback"
-            out["provider_type"] = "ollama"
+            out["provider"] = "compat_llm_fallback"
+            out["provider_type"] = "compat_llm"
     except Exception as exc:
         logger.warning(
             "v1 cache route fingerprint failed (using minimal route id): %s",
@@ -444,7 +444,7 @@ class ProxyCache:
     File-system only cache (no TTL, no memory cache).
     
     Used for caching responses to /api/v1/generate, /api/v1/embed,
-    and promise-based requests to Ollama.
+    and promise-based requests to Local LLM upstream.
     """
 
     def __init__(self) -> None:

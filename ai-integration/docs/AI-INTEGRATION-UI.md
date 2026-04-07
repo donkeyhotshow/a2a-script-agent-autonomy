@@ -1,14 +1,14 @@
 # AI-Integration Web UI & Promise Diagnostics
 
 ## Зачем
-`ai-integration` уже управляет всеми вызовами к Ollama и хранит асинхронные `promiseId`. Веб-интерфейс позволяет быстро просматривать `pending` обещания, копировать запрос, вручную подставлять ответ или переслать запрос дальше — это ускоряет отладку и выкатку новых моделей.
+`ai-integration` уже управляет всеми вызовами к Local LLM upstream и хранит асинхронные `promiseId`. Веб-интерфейс позволяет быстро просматривать `pending` обещания, копировать запрос, вручную подставлять ответ или переслать запрос дальше — это ускоряет отладку и выкатку новых моделей.
 
 ## Что нужно сделать
 - Прокси должен выгружать новые endpoints:
   - `GET /promises/pending` — список ожидающих `promiseId`, отсортированных по `created_at`.
   - `GET /promise/<promise_id>/request` — JSON тела запроса (`headers`, `body`, `method`, `path`).
   - `POST /promise/<promise_id>/answer` — вручную установить результат (код, тип содержимого, тело).
-  - `POST /promise/<promise_id>/execute` — форвардит запрос к реальному Ollama и сохраняет ответ через `.promises`.
+  - `POST /promise/<promise_id>/execute` — форвардит запрос к реальному Local LLM upstream и сохраняет ответ через `.promises`.
   - Статические файлы `ai-integration/web/*.html|.js` выдаются через `@app.route('/web/<path:filename>')`.
 - Web UI (`promise-viewer.html`) должна:<br>
   1. Запрашивать `pending` promises и показывать первый.
@@ -38,7 +38,7 @@ python ai-integration/scripts/promise_queue_daemon.py --interval 3 --log-level D
 - `--response-attempts` / `--response-delay` — рестартит ответ до получения `status 200`.
 - `--max-empty-cycles` — выйти после заданного числа циклов без тикетов.
 
-Скрипт полезен, когда нужно держать очередь promise «обработанной» без ручного клика на веб-интерфейсе: он сам одобряет запрос, а затем пишет стрим из Ollama/Qwen в лог.
+Скрипт полезен, когда нужно держать очередь promise «обработанной» без ручного клика на веб-интерфейсе: он сам одобряет запрос, а затем пишет стрим из Local LLM upstream/Qwen в лог.
 
 ## Расширенные ссылки
 - Подробный план API/UI и workflow — `ai-integration/docs/promise-viewer-plan.md`.

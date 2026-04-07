@@ -22,7 +22,7 @@ from .prompt_manager import (
     PromptDecomposer,
     ResultComposer,
     AbstractPromptManager,
-    convert_abstract_to_ollama,
+    convert_abstract_to_compat_llm,
     analyze_prompt_complexity,
     should_learn_from_prompt
 )
@@ -52,7 +52,7 @@ __all__ = [
     "PromptDecomposer",
     "ResultComposer",
     "AbstractPromptManager",
-    "convert_abstract_to_ollama",
+    "convert_abstract_to_compat_llm",
     "analyze_prompt_complexity",
     "should_learn_from_prompt",
     "LearningCandidate",

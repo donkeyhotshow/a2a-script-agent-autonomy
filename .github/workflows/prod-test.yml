@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'Test mode (all, client, server, ollama)'
+        description: 'Test mode (all, client, server, compat_llm)'
         required: false
         default: 'all'
         type: choice
@@ -12,13 +12,13 @@ on:
           - all
           - client
           - server
-          - ollama
+          - compat_llm
       label:
         description: 'Run label/tag'
         required: false
         default: ''
       skip_model_check:
-        description: 'Skip Ollama model check'
+        description: 'Skip Local LLM upstream model check'
         required: false
         type: boolean
         default: false
@@ -32,7 +32,7 @@ on:
       - develop
 
 env:
-  OLLAMA_PORT: 11435
+  LOCAL_LLM_PORT: 11435
   PROXY_PORT: 11434
   SERVER_PORT: 3000
   CLIENT_API_PORT: 3001
@@ -58,18 +58,18 @@ jobs:
           cd a2a-server && npm ci
           cd ../a2a-client/packages/sdk && npm ci
           
-      - name: Check Ollama installation
+      - name: Check Local LLM upstream installation
         run: |
-          if (Get-Command ollama -ErrorAction SilentlyContinue) {
-            Write-Host "Ollama found"
+          if (Get-Command compat_llm -ErrorAction SilentlyContinue) {
+            Write-Host "Local LLM upstream found"
           } else {
-            Write-Host "Ollama not found - will skip Ollama tests"
+            Write-Host "Local LLM upstream not found - will skip Local LLM upstream tests"
           }
           
-      - name: Start Ollama service
-        if: false  # Ollama typically runs as a service on Windows
+      - name: Start Local LLM upstream service
+        if: false  # Local LLM upstream typically runs as a service on Windows
         run: |
-          ollama serve &
+          compat_llm serve &
           sleep 5
           
       - name: Start a2a-server

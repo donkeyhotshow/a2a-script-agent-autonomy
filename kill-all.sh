@@ -33,8 +33,7 @@ log() {
 # Service definitions
 # Format: name|port|pidkey|process1,process2
 SERVICES=(
-    "Ollama|11434|OLLAMA_PID|ollama"
-    "ai-integration|11435|AI_INTEGRATION_PID|python,uvicorn"
+    "ai-integration|11434|AI_INTEGRATION_PID|python,uvicorn"
     "a2a-server|3000|A2A_SERVER_PID|node"
     "client-api|3001|CLIENT_API_PID|node"
     "web-ui|5173|WEB_UI_PID|node"

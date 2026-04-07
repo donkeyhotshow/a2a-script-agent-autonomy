@@ -196,7 +196,7 @@ class TaskMonitorUtils {
     switch (status) {
       case 'timeout':
         actions.push('Check A2A server request processor');
-        actions.push('Verify Ollama model availability');
+        actions.push('Verify Local LLM upstream model availability');
         actions.push('Review session logs for stuck promises');
         break;
       case 'failed':
@@ -409,7 +409,7 @@ class TaskMonitorUtils {
               severity: 'medium',
               message: `Promise ${promiseId} processing for extended time with ${history.length} history entries`
             });
-            inspection.recommendations.push('Check if Ollama is actually generating: curl http://localhost:11435/api/ps');
+            inspection.recommendations.push('Check if Local LLM upstream is actually generating: curl http://localhost:11435/api/ps');
           }
         } catch (e) {
           inspection.issues.push({

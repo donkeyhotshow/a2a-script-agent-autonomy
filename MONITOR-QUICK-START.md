@@ -6,7 +6,7 @@ This document is the **operator entry point** for the Task Monitor: the same **C
 |--------------|------------|
 | **Why** not `invoke` alone, router beats, curl shape | [`AGENTS.md`](AGENTS.md) → *Unified manual path*, *Router dialog* |
 | **Indexed prompts** and stack rules | [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md), [`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md) |
-| **Env / ports** | [`.env.example`](.env.example) (`TASK_MONITOR_*`, `WEB_PORT`, `OLLAMA_HOST`, `AI_HUB_URL`) |
+| **Env / ports** | [`.env.example`](.env.example) (`TASK_MONITOR_*`, `WEB_PORT`, `LOCAL_LLM_UPSTREAM_URL`, `AI_HUB_URL`) |
 | **Schema / shape debugging** | [`tests/direct-tests/README.md`](tests/direct-tests/README.md) |
 | **Terminology** | [`GLOSSARY.md`](GLOSSARY.md) → Task Monitor, ErrorClassifier, Direct Tests |
 | **Red alert — human solo cycle** | [Solo developer workflow checklist](#red-alert-solo-developer-workflow-checklist) below |
@@ -150,7 +150,7 @@ Defined in [`.env.example`](.env.example). Common overrides:
 | `TASK_MONITOR_AI_HUB_URL` | AI Integration proxy base (default `http://localhost:11434`) — used to read `GET …/health` |
 | `TASK_MONITOR_SKIP_PROMISE_GATE` | `1` / `true` — skip the interactive **OK** prompt when `promise_daemon_only` is on (CI / scripts) |
 
-`OLLAMA_HOST` and `AI_HUB_URL` are used for health checks when set.
+`LOCAL_LLM_UPSTREAM_URL` and `AI_HUB_URL` are used for health checks when set.
 
 ## AI Integration promise queue (`PROMISE_DAEMON_ONLY`)
 

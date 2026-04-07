@@ -156,14 +156,14 @@ Template (copy block per incident):
 ### inc-2026-04-06-a — Hub promise “done” but server keeps `POST /api/chat` (`hubLlmResubmitCount` ↑)
 
 - **Symptom:** Same `a2a-server/storage/requests/prom_*.json` row, no new server files; proxy shows completed promise bodies; `context.requestPhase: llm_error`, `hubLlmResubmitCount` growing.
-- **Cause:** `GET /promise/:id/response` returned A2A- or provider-shaped JSON, not Ollama `{message:{content}}`. `fetchLlmResponse` returned null → `resolveLlmPromiseRecovery` → **resubmit** → `llmPromiseId` cleared → new hub chat each retry.
-- **Fix:** [`a2a-server/src/daemon/llm-hub-poll.ts`](a2a-server/src/daemon/llm-hub-poll.ts) — `extractLlmTextFromHubResponseBody`: if Ollama extract is empty but body non-empty, pass **raw** text through. Tests: `tests/unit/llm-hub-poll.test.ts`.
+- **Cause:** `GET /promise/:id/response` returned A2A- or provider-shaped JSON, not Local LLM upstream `{message:{content}}`. `fetchLlmResponse` returned null → `resolveLlmPromiseRecovery` → **resubmit** → `llmPromiseId` cleared → new hub chat each retry.
+- **Fix:** [`a2a-server/src/daemon/llm-hub-poll.ts`](a2a-server/src/daemon/llm-hub-poll.ts) — `extractLlmTextFromHubResponseBody`: if Local LLM upstream extract is empty but body non-empty, pass **raw** text through. Tests: `tests/unit/llm-hub-poll.test.ts`.
 - **Doc:** [docs/PROMISE-RETRY-DIALOG.md](docs/PROMISE-RETRY-DIALOG.md) § *Hub response body shape*.
 
-### inc-2026-04-06-b — Recovery OK then ~180s fail: proxy `Read timed out` on Ollama :11435
+### inc-2026-04-06-b — Recovery OK then ~180s fail: proxy `Read timed out` on Local LLM upstream :11435
 
 - **Symptom:** `server.log`: `[ResponsePath] Recovery function failed` with `HTTPConnectionPool(host='localhost', port=11435): Read timed out. (read timeout=180)` during gray room; `context.requestPhase` stuck `llm_error`, high `retryCount`.
-- **Cause:** After hub body was fetched, [`GrayRoomOrchestrator.runLoop`](a2a-server/src/services/core/request-processor/gray-room-orchestrator.ts) still ran **ADR-0093 Internal Debate** (`llmService.debate` — **3×** sync hub/Ollama calls), replacing `md` before response transform.
+- **Cause:** After hub body was fetched, [`GrayRoomOrchestrator.runLoop`](a2a-server/src/services/core/request-processor/gray-room-orchestrator.ts) still ran **ADR-0093 Internal Debate** (`llmService.debate` — **3×** sync hub/Local LLM upstream calls), replacing `md` before response transform.
 - **Fix:** Run internal debate only when **`!isRecovered`** (recovery path passes `recovered: true` from [`response-path.ts`](a2a-server/src/services/core/request-processor/response-path.ts)).
 - **Doc:** [a2a-server/docs/GRAY-ROOM.md](a2a-server/docs/GRAY-ROOM.md) § *Hub promise recovery*.
 

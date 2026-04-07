@@ -300,7 +300,7 @@ steps:
 ┌───────────────────────────────────────────────────┼─────────┐
 │              ai-integration/proxy                 │         │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────┴──────┐  │
-│  │ promises.py │───▶│proxy_handler│───▶│ ollama_manager │  │
+│  │ promises.py │───▶│proxy_handler│───▶│ compat_llm_manager │  │
 │  │             │◀───│             │◀───│                │  │
 │  └─────────────┘    └─────────────┘    └────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
@@ -388,16 +388,16 @@ sequenceDiagram
 
 | Провайдер | Конфигурация | Адаптер |
 |-----------|--------------|---------|
-| Ollama | `OLLAMA_MODEL`, `AI_HUB_URL` | `ollama-adapter.ts` |
+| Local LLM upstream | `LOCAL_LLM_MODEL`, `AI_HUB_URL` | `compat_llm-adapter.ts` |
 | OpenAI | `OPENAI_API_KEY`, `OPENAI_MODEL` | `llm-adapter.ts` |
 | Placeholder | `LLM_PROVIDER=placeholder` | `llm-adapter.ts` |
 
 ### Конфигурация Подключения
 
 ```typescript
-// Ollama Adapter
+// Local LLM upstream Adapter
 {
-  provider: 'ollama',
+  provider: 'compat_llm',
   model: 'qwen3:8b',
   url: 'http://localhost:11435',
   pollIntervalMs: 2000,
@@ -540,9 +540,9 @@ simulations/
 
 | Переменная | Описание |
 |------------|----------|
-| `LLM_PROVIDER` | `ollama` / `openai` / auto |
+| `LLM_PROVIDER` | `compat_llm` / `openai` / auto |
 | `AI_HUB_URL` | URL ai-integration proxy |
-| `OLLAMA_MODEL` | `qwen3:8b` |
+| `LOCAL_LLM_MODEL` | `qwen3:8b` |
 | `OPENAI_API_KEY` | OpenAI API ключ |
 | `POLL_INTERVAL_MS` | `2000` - интервал polling |
 | `POLL_TIMEOUT_MS` | `120000` - таймаут polling |
@@ -566,7 +566,7 @@ Registry routes (`/api/registry/*`) require authentication via `X-Registry-Token
 #### Требования
 
 - Node.js 20+
-- Ollama (опционально, для AI-функций)
+- Local LLM upstream (опционально, для AI-функций)
 
 #### Команды
 
@@ -593,17 +593,17 @@ npm run dev:no-auth      # Без auth (SKIP_AUTH=1)
 
 ```yaml
 services:
-  ollama:
-    image: ollama/ollama:latest
+  compat_llm:
+    image: compat_llm/compat_llm:latest
     ports: ["11438:11435"]
     volumes:
-      - ollama_data:/root/.ollama
+      - compat_llm_data:/root/.compat_llm
 
   ai-proxy:
     build: ./ai-integration
     ports: ["11434:11435"]
     environment:
-      - OLLAMA_HOST=http://ollama:11435
+      - LOCAL_LLM_UPSTREAM_URL=http://compat_llm:11435
 ```
 
 ### Health Checks
@@ -667,7 +667,7 @@ flowchart TB
 
     subgraph AI["External AI"]
         AIHub[AI Hub Proxy]
-        Ollama[Ollama]
+        Local LLM upstream[Local LLM upstream]
         OpenAI[OpenAI]
     end
 
@@ -676,7 +676,7 @@ flowchart TB
     Services --> Postgres
     Services --> Redis
     Protocol --> AIHub
-    AIHub --> Ollama
+    AIHub --> Local LLM upstream
     AIHub --> OpenAI
 ```
 

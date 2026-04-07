@@ -15,7 +15,7 @@ Upstream credentials for cloud providers are **not** taken from client requests;
 
 ## Two layers
 
-1. **`providers`** — logical backends (`z_ai`, `ollama`, `groq`, …): URL, type, model lists, priority, optional legacy `api_key`.
+1. **`providers`** — logical backends (`z_ai`, `compat_llm`, `groq`, …): URL, type, model lists, priority, optional legacy `api_key`.
 2. **`api_keys`** — **pool of credentials**: each row has a global **`id`**, a **`provider`** name (must match a key under `providers`), and a **`secret`**.
 
 Routing still picks a **provider** by model; **which secret** is used comes from the `api_keys` rows for that provider (see below).
@@ -25,17 +25,17 @@ Routing still picks a **provider** by model; **which secret** is used comes from
 | Field | Meaning |
 |--------|---------|
 | `id` | Stable identifier (e.g. `z-ai-primary`). Surfaced on `GET /api/tags` as `api_key_id` for the first key of that provider. |
-| `provider` | Same string as in `providers` (e.g. `z_ai`, `ollama`). |
-| `secret` | Bearer token for cloud APIs, or the Ollama placeholder (below). Values may use `${ENV_VAR}` syntax; the loader resolves env **after** reading the file. |
+| `provider` | Same string as in `providers` (e.g. `z_ai`, `compat_llm`). |
+| `secret` | Bearer token for cloud APIs, or the Local LLM upstream placeholder (below). Values may use `${ENV_VAR}` syntax; the loader resolves env **after** reading the file. |
 | `enabled` | If `false`, the row is skipped. |
 | `priority` | **Lower number = tried first.** On rate-limit failover, the proxy tries the **next** enabled row for the **same** `provider`. |
 
-### Ollama (`__OLLAMA_LOCAL__`)
+### Local LLM upstream (`__LOCAL_LLM_KEY_PLACEHOLDER__`)
 
-Local Ollama does not use a real API key. Use a single row with:
+Local Local LLM upstream does not use a real API key. Use a single row with:
 
 ```json
-"secret": "__OLLAMA_LOCAL__"
+"secret": "__LOCAL_LLM_KEY_PLACEHOLDER__"
 ```
 
 The proxy **does not** send `Authorization` for that credential.
@@ -74,9 +74,9 @@ The built-in promise daemon uses that file to repeat the same **key-pool** behav
 {
   "api_keys": [
     {
-      "id": "ollama-local",
-      "provider": "ollama",
-      "secret": "__OLLAMA_LOCAL__",
+      "id": "compat-llm-local",
+      "provider": "compat_llm",
+      "secret": "__LOCAL_LLM_KEY_PLACEHOLDER__",
       "enabled": true,
       "priority": 1
     },

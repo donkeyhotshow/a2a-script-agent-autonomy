@@ -60,7 +60,7 @@ class ErrorClassifier {
         hint: 'Bad gateway. AI hub or upstream service unavailable',
         severity: 'critical' },
       { pattern: /status\s*503|503/i, type: 'http', subtype: 'unavailable',
-        hint: 'Service unavailable. Ollama may be down or AI hub not responding',
+        hint: 'Service unavailable. Local LLM upstream may be down or AI hub not responding',
         severity: 'critical' },
       { pattern: /status\s*504|504/i, type: 'http', subtype: 'gateway-timeout',
         hint: 'Gateway timeout. AI hub timeout - increase FORWARD_TIMEOUT_SECONDS',
@@ -80,9 +80,9 @@ class ErrorClassifier {
         hint: 'Type error in response. Check data types match expected schema',
         severity: 'medium' },
 
-      // LLM/Ollama errors
-      { pattern: /ollama|model.*not.*found|no.*such.*model/i, type: 'llm', subtype: 'model',
-        hint: 'Ollama model issue. Check: curl http://localhost:11435/api/tags. Pull model: ollama pull qwen3:8b',
+      // LLM/Local LLM upstream errors
+      { pattern: /local_hub|model.*not.*found|no.*such.*model/i, type: 'llm', subtype: 'model',
+        hint: 'Local LLM upstream model issue. Check: curl http://localhost:11435/api/tags and ensure the model is available on your server.',
         severity: 'critical' },
       { pattern: /context.*length|token.*limit|too.*long/i, type: 'llm', subtype: 'context',
         hint: 'Context too long for model. Gray room is on by default; raise A2A_GRAY_ROOM_MAX_TURNS or compress history. To strip interrupt chain: A2A_GRAY_ROOM_ENABLED=0',
@@ -94,7 +94,7 @@ class ErrorClassifier {
         hint: 'GPU/CUDA out of memory. Switch to CPU model or reduce batch size',
         severity: 'high' },
       { pattern: /load.*model|loading.*model/i, type: 'llm', subtype: 'loading',
-        hint: 'Model still loading. Wait for Ollama to finish loading',
+        hint: 'Model still loading. Wait for Local LLM upstream to finish loading',
         severity: 'medium' },
 
       // Session/state errors
@@ -124,7 +124,7 @@ class ErrorClassifier {
         hint: 'No task files found in prompts-to-agent-mode directory',
         severity: 'low' },
       { pattern: /task.*timeout|timed.*out/i, type: 'task', subtype: 'timeout',
-        hint: 'Task processing timeout. Check if Ollama is generating or stuck',
+        hint: 'Task processing timeout. Check if Local LLM upstream is generating or stuck',
         severity: 'high' },
       { pattern: /extract.*task|parse.*task/i, type: 'task', subtype: 'parse-error',
         hint: 'Failed to extract task from file. Check markdown format',
@@ -133,7 +133,7 @@ class ErrorClassifier {
         hint: 'Router dialog stuck. Verify Beat A (message) vs Beat B (choice). See AGENTS.md Router dialog section',
         severity: 'high' },
       { pattern: /promise.*stuck|processing.*forever/i, type: 'task', subtype: 'promise-stuck',
-        hint: 'Promise stuck in processing. Check Ollama status with curl http://localhost:11435/api/ps',
+        hint: 'Promise stuck in processing. Check Local LLM upstream status with curl http://localhost:11435/api/ps',
         severity: 'high' },
       { pattern: /session.*expired|invalid.*session/i, type: 'task', subtype: 'session-invalid',
         hint: 'Session expired or invalid. Clear state: npm run monitor:reset',
@@ -198,7 +198,7 @@ class ErrorClassifier {
 
       // Gray room / async specific
       { pattern: /async.*pending.*forever|never.*completes/i, type: 'async', subtype: 'infinite-pending',
-        hint: 'Async operation never completed. Check Ollama status and restart if idle',
+        hint: 'Async operation never completed. Check Local LLM upstream status and restart if idle',
         severity: 'high' },
       { pattern: /promise.*leak|unresolved.*promise/i, type: 'async', subtype: 'leak',
         hint: 'Promise leak detected. Some async operations not properly tracked',
@@ -216,13 +216,13 @@ class ErrorClassifier {
     this.directTests = {
       connection: '.\\tests\\direct-tests\\run-checks.ps1 -Scope ClientServerLLM',
       schema: '.\\tests\\direct-tests\\test-dialog-flow.ps1',
-      dialog: '.\\tests\\direct-tests\\dialog\\run-dialog-direct-ollama.ps1',
+      dialog: '.\\tests\\direct-tests\\dialog\\run-dialog-direct-local-hub.ps1',
       sim: 'npm run sim:lint -- --all --json',
       simValidate: 'npm run sim:validate -- --all --json',
       health: 'curl http://localhost:3000/health && curl http://localhost:5173/api/a2a/projects',
-      ollama: 'curl http://localhost:11435/api/tags',
-      ollamaPs: 'curl http://localhost:11435/api/ps',
-      ollamaLogs: 'docker logs ollama 2>&1 | tail -50',
+      localLlmTags: 'curl http://localhost:11435/api/tags',
+      localLlmPs: 'curl http://localhost:11435/api/ps',
+      localLlmLogs: 'docker logs <your-local-llm-container> 2>&1 | tail -50',
       stack: '.\\start-all.bat (from repo root)',
       sessionInspect: 'curl http://localhost:5173/api/a2a/sessions/{sessionId}?includeContext=1',
       sessionSteps: 'curl http://localhost:5173/api/a2a/sessions/{sessionId}/steps',
@@ -237,8 +237,8 @@ class ErrorClassifier {
       full: [
         { step: 1, name: 'Stack Health Check', cmd: 'health', critical: true },
         { step: 2, name: 'Connection Check', cmd: 'connection', critical: true },
-        { step: 3, name: 'Ollama Models', cmd: 'ollama', critical: false },
-        { step: 4, name: 'Ollama Status', cmd: 'ollamaPs', critical: false },
+        { step: 3, name: 'Local LLM upstream Models', cmd: 'localLlmTags', critical: false },
+        { step: 4, name: 'Local LLM upstream Status', cmd: 'localLlmPs', critical: false },
         { step: 5, name: 'Schema Validation', cmd: 'sim', critical: false }
       ],
       connection: [
@@ -246,8 +246,8 @@ class ErrorClassifier {
         { step: 2, name: 'Connection Test', cmd: 'connection', critical: true }
       ],
       llm: [
-        { step: 1, name: 'Ollama Models', cmd: 'ollama', critical: true },
-        { step: 2, name: 'Ollama Running', cmd: 'ollamaPs', critical: true },
+        { step: 1, name: 'Local LLM upstream Models', cmd: 'localLlmTags', critical: true },
+        { step: 2, name: 'Local LLM upstream Running', cmd: 'localLlmPs', critical: true },
         { step: 3, name: 'Full Stack', cmd: 'connection', critical: false }
       ],
       schema: [
@@ -339,9 +339,9 @@ class ErrorClassifier {
           ]);
         } else if (subtype === 'unavailable' || subtype === 'bad-gateway') {
           addStep('Check upstream services', [
-            `Check Ollama: ${this.directTests.ollama}`,
+            `Check Local LLM upstream: ${this.directTests.localLlmTags}`,
             `Check AI Hub: curl http://localhost:11434/health`,
-            `Check Ollama status: ${this.directTests.ollamaPs}`
+            `Check Local LLM upstream status: ${this.directTests.localLlmPs}`
           ]);
         } else {
           addStep('Check server health', [
@@ -365,17 +365,17 @@ class ErrorClassifier {
         break;
 
       case 'llm':
-        addStep('Check LLM/Ollama status', [
-          `List models: ${this.directTests.ollama}`,
-          `Check running: ${this.directTests.ollamaPs}`,
-          'Verify model is pulled: ollama pull qwen3:8b'
+        addStep('Check LLM/Local LLM upstream status', [
+          `List models: ${this.directTests.localLlmTags}`,
+          `Check running: ${this.directTests.localLlmPs}`,
+          'Verify the qwen3:8b model is available on your local HTTP LLM (see /api/tags).'
         ]);
         if (subtype === 'context') {
           steps.push('  Consider: A2A_GRAY_ROOM_ENABLED=1 for long context handling');
           steps.push('  Or reduce task complexity in prompt');
         }
         if (subtype === 'gpu-memory') {
-          steps.push('  Switch to CPU: Set OLLAMA_GPU=0 or use smaller model');
+          steps.push('  Switch to CPU: Set LOCAL_LLM_GPU=0 or use smaller model');
         }
         break;
 
@@ -399,11 +399,11 @@ class ErrorClassifier {
       case 'task':
         if (subtype === 'timeout' || subtype === 'promise-stuck') {
           addStep('Diagnose task timeout', [
-            `Check Ollama: ${this.directTests.ollamaPs}`,
-            `Check if generating: ${this.directTests.ollamaPs}`,
+            `Check Local LLM upstream: ${this.directTests.localLlmPs}`,
+            `Check if generating: ${this.directTests.localLlmPs}`,
             `View AI Hub logs: ${this.directTests.logsAiHub}`
           ]);
-          steps.push('  DO NOT restart if Ollama is actively generating');
+          steps.push('  DO NOT restart if Local LLM upstream is actively generating');
           steps.push('  Wait for generation to complete or model to load');
         }
         if (subtype === 'router-stuck') {
@@ -457,20 +457,20 @@ class ErrorClassifier {
       'connection:reset': 'Check if service crashed: .\\tests\\direct-tests\\run-checks.ps1 -Scope ClientServer',
       'http:auth': 'Set SKIP_AUTH=1 in .env.local',
       'http:notfound': 'Check URL paths in TASK_MONITOR_*_URL vars',
-      'http:unavailable': 'Check Ollama: curl http://localhost:11435/api/ps',
-      'http:bad-gateway': 'Check AI Hub and Ollama are running',
+      'http:unavailable': 'Check Local LLM upstream: curl http://localhost:11435/api/ps',
+      'http:bad-gateway': 'Check AI Hub and Local LLM upstream are running',
       'schema:action-key': 'Fix JSON shape: single key per execute/result object',
       'schema:validation': 'Run: npm run sim:lint -- --all',
-      'llm:model': 'Pull model: ollama pull qwen3:8b',
+      'llm:model': 'Ensure qwen3:8b (or chosen model) exists on local HTTP LLM (/api/tags).',
       'llm:context': 'Gray room on by default; increase budgets or disable with A2A_GRAY_ROOM_ENABLED=0',
-      'llm:gpu-memory': 'Switch to CPU: $env:OLLAMA_GPU=0',
+      'llm:gpu-memory': 'Switch to CPU: $env:LOCAL_LLM_GPU=0',
       'llm:loading': 'Wait for model to load, then retry',
       'session:not-found': 'Clear state: npm run monitor:reset',
       'session:state-corrupt': 'Reset: npm run monitor:reset && restart',
       'router:choice': 'Check form.choices before sending choice ID',
       'router:beat': 'See AGENTS.md Router dialog section',
-      'task:timeout': 'Check Ollama generating: curl http://localhost:11435/api/ps',
-      'task:promise-stuck': 'DO NOT restart if Ollama generating; wait or kill process',
+      'task:timeout': 'Check Local LLM upstream generating: curl http://localhost:11435/api/ps',
+      'task:promise-stuck': 'DO NOT restart if Local LLM upstream generating; wait or kill process',
       'task:router-stuck': 'Verify Beat A/B: Run .\\tests\\direct-tests\\test-dialog-flow.ps1',
       'gray-room:processing': 'Check A2A_GRAY_ROOM_MAX_TURNS setting',
       'filesystem:not-found': 'Check TASK_MONITOR_TASKS_DIR path exists',
@@ -484,7 +484,7 @@ class ErrorClassifier {
       'monitor:retry-exhausted': 'Increase TASK_MONITOR_MAX_POLL_ATTEMPTS',
       'monitor:state-error': 'Reset: npm run monitor:reset',
       'monitor:concurrency': 'Stop other monitor instances',
-      'async:infinite-pending': 'Check Ollama: curl http://localhost:11435/api/ps',
+      'async:infinite-pending': 'Check Local LLM upstream: curl http://localhost:11435/api/ps',
       'async:leak': 'Restart monitor and check for leaks',
       'module:import': 'Run: npm install in all packages',
       'module:esm': 'Check package.json type field'
@@ -502,7 +502,7 @@ class ErrorClassifier {
       'connection': 'connection',
       'http': 'connection',
       'schema': 'schema',
-      'llm': 'ollama',
+      'llm': 'localLlmTags',
       'router': 'dialog',
       'task': 'schema',
       'gray-room': 'sim'

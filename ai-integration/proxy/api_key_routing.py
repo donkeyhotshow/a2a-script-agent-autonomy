@@ -1,5 +1,5 @@
 """
-API key pool: each key has id + provider; Ollama uses a placeholder secret (no Bearer).
+API key pool: each key has id + provider; Local LLM upstream uses a placeholder secret (no Bearer).
 Rate-limit responses trigger failover to the next key for the same provider.
 """
 from __future__ import annotations
@@ -12,7 +12,7 @@ from typing import Any, Callable, Optional, Tuple
 import requests
 
 from .providers.config_loader import (
-    OLLAMA_API_KEY_PLACEHOLDER,
+    LOCAL_LLM_KEY_PLACEHOLDER,
     ProvidersConfig,
     load_providers_config,
 )
@@ -20,11 +20,11 @@ from .providers.config_loader import (
 logger = logging.getLogger(__name__)
 
 
-def is_ollama_placeholder(secret: Optional[str]) -> bool:
+def is_local_llm_key_placeholder(secret: Optional[str]) -> bool:
     if not secret:
         return True
     s = str(secret).strip()
-    return s == OLLAMA_API_KEY_PLACEHOLDER or s == ""
+    return s == LOCAL_LLM_KEY_PLACEHOLDER or s == ""
 
 
 def _parse_json_object_body(
@@ -139,10 +139,10 @@ def forward_with_api_key_failover(
     keys = get_api_keys_for_provider(cfg, provider_name)
     req = request_fn or _do_http
 
-    if provider_type == "ollama":
+    if provider_type == "compat_llm":
         hdr = _merge_upstream_headers(base_header_subset, None)
         resp = req(method, target_url, body=body, headers=hdr, params=forward_args or {}, timeout=timeout)
-        oid = keys[0].id if keys else "ollama-local"
+        oid = keys[0].id if keys else "compat-llm-local"
         return resp, oid
 
     if not keys:
@@ -153,7 +153,7 @@ def forward_with_api_key_failover(
     last: Optional[requests.Response] = None
     for entry in keys:
         secret = entry.secret
-        if is_ollama_placeholder(secret):
+        if is_local_llm_key_placeholder(secret):
             hdr = _merge_upstream_headers(base_header_subset, None)
         else:
             hdr = _merge_upstream_headers(base_header_subset, secret)

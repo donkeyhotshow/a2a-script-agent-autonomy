@@ -115,7 +115,7 @@ Two surfaces: **IDE / Cursor agent** (edits repo, runs tools) vs **Client API se
 | Wrong router beat | Read `GET …/sessions/{id}`; send **`message`** / `task` as text when there are **no** `form.choices`; send **`choice`** / `task` as **choice `id`** when choices exist. | Scripted rule: after each response, **inspect** `execute.form`; branch body shape before next `/next`. |
 | Stopped after `/next` ack | N/A | Poll **`GET …/async`** until final; **`GET …/sessions/{id}`** if unsure. |
 | Raw `invoke` only | Prefer Client API for session persistence; use server direct only as **documented** workaround. | Default path: **`POST /sessions`** → `/next` → `/async`, not `POST /api/v1/invoke` alone. |
-| Stack / promise pending | Diagnose ports (`AGENTS.md` Debugging), retry with backoff; log env (Ollama, AI hub). If Ollama is **actively generating**, do **not** restart the stack — [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) → *Ollama is generating — pause other work*. If Ollama is **idle** but status stays `processing`, treat as **stuck**. | Same; do not declare failure on first `pending`. After you confirm the model is working on the request, avoid parallel load / restarts until `async` settles. If Ollama is **idle** but status stays `processing`, treat as **stuck** — same section. |
+| Stack / promise pending | Diagnose ports (`AGENTS.md` Debugging), retry with backoff; log env (Local LLM upstream, AI hub). If Local LLM upstream is **actively generating**, do **not** restart the stack — [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) → *Local LLM upstream is generating — pause other work*. If Local LLM upstream is **idle** but status stays `processing`, treat as **stuck**. | Same; do not declare failure on first `pending`. After you confirm the model is working on the request, avoid parallel load / restarts until `async` settles. If Local LLM upstream is **idle** but status stays `processing`, treat as **stuck** — same section. |
 | 401 / 400 (auth, `ENCRYPTION_KEY`) | Fix `.env` (32-char key, `JWT_SECRET`); retry. | Same. |
 | “Need more context” loop-killer | State assumptions, proceed, verify; don’t halt on questions unless the user must decide. | Seed **`mode: "agent"`** + concrete **`task`** on create when allowed. |
 | No definition of done | Add tests, checklist, or sim run before declaring complete. | Use [`a2a-client/docs/api-testing-plan.md`](a2a-client/docs/api-testing-plan.md) for manual Client API depth. |
@@ -212,8 +212,8 @@ Note: Server always applies transforms; `response.md` optional (no LLM).
 | JWT_SECRET | 32+ chars | Yes |
 | A2A_GRAY_ROOM_ENABLED | unset or `1` = on; `0`/`false` = off | No |
 | A2A_BLACK_ROOM_ENABLED | Enable Black Room (Algorithm Mode) | No |
-| A2A_BLACK_ROOM_OLLAMA_URL | Ollama URL for Black Room (default: http://localhost:11435) | No |
-| A2A_BLACK_ROOM_DEFAULT_MODEL | Default Ollama model for algorithms (default: llama3.1:8b) | No |
+| A2A_BLACK_ROOM_COMPAT_LLM_URL | Local LLM upstream URL for Black Room (default: http://localhost:11435) | No |
+| A2A_BLACK_ROOM_DEFAULT_MODEL | Default Local LLM upstream model for algorithms (default: llama3.1:8b) | No |
 | A2A_BLACK_ROOM_TIMEOUT_MS | Timeout for algorithm execution (default: 30000ms) | No |
 | A2A_ALGORITHM_REGISTRY_PATH | Path to algorithm templates (default: ./prompts/algorithms/) | No |
 | REQUEST_RETRY_DELAY_MS | Dialog deferral: ms before a re-queued request is eligible (default 15000) | No |
@@ -225,7 +225,7 @@ Note: Server always applies transforms; `response.md` optional (no LLM).
 
 ```
 Web UI (5173) → Client API (5173/api/a2a) → A2A Server (3000) → AI Hub (11434)
-      ↓ Session Storage ↓                           → Ollama (11435)
+      ↓ Session Storage ↓                           → Local LLM upstream (11435)
 ```
 
 ### Invoke payload privacy
@@ -235,7 +235,7 @@ Web UI (5173) → Client API (5173/api/a2a) → A2A Server (3000) → AI Hub (11
 ### Ports
 | Port | Service | Role |
 |------|---------|------|
-| 11435 | Ollama | LLM |
+| 11435 | Local LLM upstream | LLM |
 | 11434 | AI Integration | Proxy |
 | 3000 | a2a-server | API (stateless) |
 | 5173 | Vite | Web UI + Client API |
@@ -304,13 +304,13 @@ a2a-client/storage/sessions/{sessionId}/
 # Health checks
 curl http://localhost:3000/health              # A2A Server
 curl http://localhost:11434/health             # AI Integration
-curl http://localhost:11435/api/tags           # Ollama
+curl http://localhost:11435/api/tags           # Local LLM upstream
 curl http://localhost:5173/api/a2a/projects    # Client API
 
 # Test async (2-minute timeout typical)
 curl http://localhost:3000/api/v1/requests/{promiseId}/result
 # Check status, wait, retry if "processing"
-# While "processing": confirm Ollama is actually generating (e.g. curl http://localhost:11435/api/ps) before restarts; see docs/OPERATOR-CURL.md → "Ollama is generating — pause other work"
+# While "processing": confirm Local LLM upstream is actually generating (e.g. curl http://localhost:11435/api/ps) before restarts; see docs/OPERATOR-CURL.md → "Local LLM upstream is generating — pause other work"
 ```
 
 ---
@@ -336,9 +336,9 @@ cd a2a-client && npm test
 | 404 on `/invoke` | Use `/api/v1/invoke` |
 | 400 on `/steps` | Check execute/messages/context fields |
 | 401 Unauthorized | Set JWT_SECRET (32+ chars); use SKIP_AUTH=1 (dev) |
-| Promise stays "pending" | Check Ollama, AI Hub, LLM response time (2 min). If status is `processing`, **first** confirm Ollama (or proxy) is **actively generating**; **then** pause other work (no stack restart, no parallel load on the same Ollama, no extra `/next` spam) until the call completes — [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) → *Ollama is generating — pause other work*. If Ollama is **idle** but status stays `processing`, treat as **stuck**. |
+| Promise stays "pending" | Check Local LLM upstream, AI Hub, LLM response time (2 min). If status is `processing`, **first** confirm Local LLM upstream (or proxy) is **actively generating**; **then** pause other work (no stack restart, no parallel load on the same Local LLM upstream, no extra `/next` spam) until the call completes — [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) → *Local LLM upstream is generating — pause other work*. If Local LLM upstream is **idle** but status stays `processing`, treat as **stuck**. |
 | Session not found | Verify ID format `sess_{timestamp}_{random}` |
-| LLM not responding | Check Ollama models: `curl http://localhost:11435/api/tags` |
+| LLM not responding | Check Local LLM upstream models: `curl http://localhost:11435/api/tags` |
 
 ---
 
@@ -391,7 +391,7 @@ See [DEV_STATE.md](DEV_STATE.md) and [docs/DOCUMENTATION-MACHINE-READABLE.md](do
 ## Operational Protocol
 
 ### Phases (Simple to Complex)
-1. **Environment** — Ports, Ollama, env vars
+1. **Environment** — Ports, Local LLM upstream, env vars
 2. **Component Validation** — Unit tests, linting
 3. **Integration (Simulations)** — sim:lint, sim:validate
 4. **End-to-End** — Full system startup

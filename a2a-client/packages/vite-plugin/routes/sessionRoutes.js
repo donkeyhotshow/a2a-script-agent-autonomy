@@ -356,11 +356,17 @@ export function createSessionRoutes({ cwd }) {
                 if (storageMode === 'project') {
                     const qPid = url.searchParams.get('projectId')?.trim() || '';
                     const qRoot = url.searchParams.get('projectRoot')?.trim() || '';
-                    const { session: s } = locateProjectModeSession(cwd, sessionId, {
-                        projectId: qPid || null,
-                        projectRoot: qRoot || null,
-                    });
-                    session = s;
+                    try {
+                        const { session: s } = locateProjectModeSession(cwd, sessionId, {
+                            projectId: qPid || null,
+                            projectRoot: qRoot || null,
+                        });
+                        session = s;
+                    } catch (e) {
+                        console.error('[sessionRoutes] Failed to locate project session:', e?.message || e);
+                        res.writeHead(500).end(JSON.stringify({ error: 'Failed to load session configuration' }));
+                        return;
+                    }
                 } else {
                     session = loadNewSession(cwd, sessionId);
                 }
@@ -401,12 +407,18 @@ export function createSessionRoutes({ cwd }) {
                                 typeof d.projectRoot === 'string' && d.projectRoot.trim()
                                     ? d.projectRoot.trim()
                                     : null;
-                            const located = locateProjectModeSession(cwd, sessionId, {
-                                projectId: qPid,
-                                projectRoot: qRoot,
-                            });
-                            existing = located.session;
-                            projectPath = located.projectPath;
+                            try {
+                                const located = locateProjectModeSession(cwd, sessionId, {
+                                    projectId: qPid,
+                                    projectRoot: qRoot,
+                                });
+                                existing = located.session;
+                                projectPath = located.projectPath;
+                            } catch (e) {
+                                console.error('[sessionRoutes] Failed to locate project session:', e?.message || e);
+                                res.writeHead(500).end(JSON.stringify({ error: 'Failed to load session configuration' }));
+                                return;
+                            }
                         } else {
                             existing = loadNewSession(cwd, sessionId);
                         }
@@ -442,14 +454,23 @@ export function createSessionRoutes({ cwd }) {
                 if (storageMode === 'project') {
                     const qPid = url.searchParams.get('projectId')?.trim() || '';
                     const qRoot = url.searchParams.get('projectRoot')?.trim() || '';
-                    const { session: s, projectPath } = locateProjectModeSession(
-                        cwd,
-                        sessionId,
-                        {
-                            projectId: qPid || null,
-                            projectRoot: qRoot || null,
-                        }
-                    );
+                    let s, projectPath;
+                    try {
+                        const located = locateProjectModeSession(
+                            cwd,
+                            sessionId,
+                            {
+                                projectId: qPid || null,
+                                projectRoot: qRoot || null,
+                            }
+                        );
+                        s = located.session;
+                        projectPath = located.projectPath;
+                    } catch (e) {
+                        console.error('[sessionRoutes] Failed to locate project session:', e?.message || e);
+                        res.writeHead(500).end(JSON.stringify({ error: 'Failed to load session configuration' }));
+                        return;
+                    }
                     if (s) {
                         const inflight = getProjectModeInflightPromise(cwd, sessionId, projectPath, s);
                         if (inflight?.promiseId) {

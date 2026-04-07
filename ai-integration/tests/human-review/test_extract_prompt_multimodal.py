@@ -1,5 +1,5 @@
 """
-Human-review: rule routing uses _extract_prompt; multimodal Ollama bodies use list-shaped content.
+Human-review: rule routing uses _extract_prompt; multimodal Local LLM upstream bodies use list-shaped content.
 Expected: text segments still contribute to the prompt string (rules / logging).
 """
 

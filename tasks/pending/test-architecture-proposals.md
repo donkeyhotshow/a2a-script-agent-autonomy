@@ -342,7 +342,7 @@ Step 3: context.execution={action:"agent", step:"request"}, execute.form.input=[
 **Код:** `a2a-server/src/services/core/black-room/black-room-orchestrator.ts` содержит логику ретраев, валидации output, и построения prompt.
 
 **Предложение:**
-- Написать unit test для `BlackRoomOrchestrator` (mocking `fetch` to Ollama)
+- Написать unit test для `BlackRoomOrchestrator` (mocking `fetch` to Local LLM upstream)
 - Добавить `algorithm_invoke` в `validate-gray-room-horizontal.mjs`
 
 **Acceptance:**

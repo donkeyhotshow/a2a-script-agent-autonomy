@@ -6,9 +6,9 @@ const {EmbeddingClient, createEmbeddingClient, DIMENSIONS, DEFAULT_MODELS} = req
 
 describe('EmbeddingClient', () => {
     describe('constructor', () => {
-        test('should use ollama as default provider', () => {
+        test('should use local_hub as default provider', () => {
             const client = new EmbeddingClient();
-            expect(client.provider).toBe('ollama');
+            expect(client.provider).toBe('local_hub');
             expect(client.baseUrl).toBe('http://localhost:11435');
             expect(client.model).toBe('nomic-embed-text');
         });
@@ -147,7 +147,7 @@ describe('EmbeddingClient', () => {
 
     describe('DEFAULT_MODELS', () => {
         test('should have default models defined', () => {
-            expect(DEFAULT_MODELS.ollama).toBe('nomic-embed-text');
+            expect(DEFAULT_MODELS.compat_llm).toBe('nomic-embed-text');
             expect(DEFAULT_MODELS.openai).toBe('text-embedding-3-small');
             expect(DEFAULT_MODELS.mock).toBe('nomic-embed-text');
         });

@@ -45,7 +45,7 @@
 | File | Status | Finding (if failed) |
 |------|--------|------------------------|
 | `deep-clone-json-undefined.test.ts` | **PASS** | Documents JSON clone dropping `undefined` (expected `JSON.stringify` behavior). |
-| `humanize-upstream-infra-leak.test.ts` | **PASS** | Ollama / `127.0.0.1:*` / `localhost:*` patterns → `CLIENT_SAFE_PROCESSING_ERROR`. |
+| `humanize-upstream-infra-leak.test.ts` | **PASS** | Local LLM upstream / `127.0.0.1:*` / `localhost:*` patterns → `CLIENT_SAFE_PROCESSING_ERROR`. |
 | `invoke-shape-null-context.test.ts` | **PASS** | `toInvokeShapeForPromptsTransform` only treats non-null object `context` as nested envelope; `context: null` is folded into flat shape. |
 | `merge-inner-history-invariant.test.ts` | **PASS** | Non-array `history` from handler does not replace a valid array from prior inner context. |
 | `resolve-execution-empty-root.test.ts` | **PASS** | Root `execution: {}` is ignored; nested `context.execution` is used. |
@@ -83,7 +83,7 @@
 - [x] **Server:** gray-room merge — **Coerce or reject** non-array `history`; never overwrite a valid array with a string or other type.
 - [x] **Server:** `resolveExecution` — **Treat root `{}` as missing** and fall back to nested `context.execution` so nested action is visible.
 - [x] **Server:** `validateContextBlock` — **Reject `execution` as array**; malformed contexts must fail validation.
-- [x] **Server:** `humanizeUpstreamErrorMessage` — **Scrub Ollama / host / port patterns**; user-visible copy stays product-safe.
+- [x] **Server:** `humanizeUpstreamErrorMessage` — **Scrub Local LLM upstream / host / port patterns**; user-visible copy stays product-safe.
 - [x] **AI hub:** `_extract_prompt` — **Extend** for list multimodal segments, numeric `content`, and assistant rows with `tool_calls` but empty `content`.
 - [x] **AI hub:** `_match_when` path — **Normalize trailing slash** in comparison (e.g. `/api/chat` ≡ `/api/chat/`) so rules are robust; document if any exception is required.
 

@@ -23,7 +23,7 @@ export const DEFAULT_PORTS = {
   clientApi: { port: 3001, range: [3001, 3011], priority: 2, envVar: 'CLIENT_API_PORT' },
   web: { port: 5173, range: [5173, 5183], priority: 3, envVar: 'WEB_PORT' },
   proxy: { port: 11434, range: [11434, 11444], priority: 4, envVar: 'PROXY_PORT' },
-  ollama: { port: 11435, range: [11435, 11445], priority: 5, envVar: 'OLLAMA_PORT' },
+  compat_llm: { port: 11435, range: [11435, 11445], priority: 5, envVar: 'LOCAL_LLM_PORT' },
   postgres: { port: 5432, range: [5432, 5442], priority: 0, envVar: 'POSTGRES_PORT' },
   redis: { port: 6379, range: [6379, 6389], priority: 0, envVar: 'REDIS_PORT' },
 };

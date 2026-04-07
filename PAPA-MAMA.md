@@ -64,7 +64,7 @@ npm run test:gang
 
 1. **Mama first (before starting stack):**
    ```powershell
-   # Fast static checks — no Ollama, no ports, no stack
+   # Fast static checks — no Local LLM upstream, no ports, no stack
    node tests/indirect-tests/run-all.mjs
    .\tests\indirect-tests\run-server-unit-tests.ps1
    ```

@@ -75,7 +75,7 @@ export function shouldDeferDialogProcessorFailure(err: string): boolean {
 }
 
 /**
- * User-visible copy for invoke/session paths. Never mention proxy, Ollama, or ports — details stay in server logs.
+ * User-visible copy for invoke/session paths. Never mention proxy, Local LLM upstream, or ports — details stay in server logs.
  */
 export const CLIENT_SAFE_PROCESSING_ERROR = "We couldn't complete this step. Please try again.";
 
@@ -101,7 +101,7 @@ export function humanizeUpstreamErrorMessage(raw: string): string {
     if (/llm response fetch failed|^llm error:/i.test(s)) {
         return CLIENT_SAFE_PROCESSING_ERROR;
     }
-    if (/\bollama\b/i.test(s)) {
+    if (/\bcompat_llm\b/i.test(s)) {
         return CLIENT_SAFE_PROCESSING_ERROR;
     }
     if (/\b127\.0\.0\.1:\d{2,5}\b/.test(s) || /\blocalhost:\d{2,5}\b/i.test(s)) {

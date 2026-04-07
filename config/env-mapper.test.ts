@@ -18,19 +18,19 @@ vi.mocked(dotenv.config).mockImplementation(() => ({}));
 
 const ALL_ENV_KEYS = [
   // ports
-  'SERVER_PORT', 'CLIENT_API_PORT', 'WEB_PORT', 'PROXY_PORT', 'OLLAMA_PORT', 'POSTGRES_PORT', 'REDIS_PORT',
+  'SERVER_PORT', 'CLIENT_API_PORT', 'WEB_PORT', 'PROXY_PORT', 'LOCAL_LLM_PORT', 'POSTGRES_PORT', 'REDIS_PORT',
   // database
   'DATABASE_URL', 'REDIS_URL', 'POSTGRES_USER', 'POSTGRES_PASSWORD', 'POSTGRES_DB',
   // ai
-  'OLLAMA_HOST', 'OLLAMA_MODEL', 'OLLAMA_TIMEOUT', 'OLLAMA_MODELS', 'OLLAMA_KEEP_ALIVE', 'OLLAMA_IDLE_TIMEOUT', 'OLLAMA_AUTO_START',
-  'LLM_PROVIDER', 'USE_OLLAMA', 'AI_HUB_URL', 'POLL_INTERVAL_MS', 'POLL_TIMEOUT_MS', 'OPENAI_API_KEY', 'OPENAI_MODEL',
+  'LOCAL_LLM_UPSTREAM_URL', 'LOCAL_LLM_MODEL', 'LOCAL_LLM_TIMEOUT', 'LOCAL_LLM_MODELS', 'LOCAL_LLM_KEEP_ALIVE', 'LOCAL_LLM_IDLE_TIMEOUT', 'LOCAL_LLM_AUTO_START',
+  'LLM_PROVIDER', 'USE_LOCAL_LLM', 'AI_HUB_URL', 'POLL_INTERVAL_MS', 'POLL_TIMEOUT_MS', 'OPENAI_API_KEY', 'OPENAI_MODEL',
   // security
   'JWT_SECRET', 'JWT_EXPIRES_IN', 'JWT_REFRESH_EXPIRES_IN', 'ENCRYPTION_KEY', 'SKIP_AUTH', 'API_KEY_PREFIX',
   // server
   'NODE_ENV', 'HOST', 'A2A_DEFAULT_EMAIL', 'A2A_DEFAULT_PASSWORD',
   // proxy
   'PROXY_HOST', 'STORAGE_DIR', 'PROMISES_DIR', 'FORWARD_TIMEOUT_SECONDS', 'PROMISE_TTL_SECONDS', 'PROMISE_MAX_WORKERS',
-  'AI_HUB_CONFIG', 'OLLAMA_SERVER_HEADER', 'SIMULATION_ENABLED', 'SIMULATION_DATA_PATH', 'HEALTH_CHECK_INTERVAL', 'HEALTH_CHECK_TIMEOUT',
+  'AI_HUB_CONFIG', 'LOCAL_LLM_SERVER_HEADER', 'SIMULATION_ENABLED', 'SIMULATION_DATA_PATH', 'HEALTH_CHECK_INTERVAL', 'HEALTH_CHECK_TIMEOUT',
   // storage
   'GIT_SSH_KEY_PATH', 'GIT_CLONE_BASE_PATH', 'FILE_CACHE_PATH', 'MAX_FILE_SIZE_MB',
   // logging
@@ -64,7 +64,7 @@ describe('env-mapper', () => {
       process.env.CLIENT_API_PORT = '3001';
       process.env.WEB_PORT = '5173';
       process.env.PROXY_PORT = '11434';
-      process.env.OLLAMA_PORT = '11435';
+      process.env.LOCAL_LLM_PORT = '11435';
       process.env.POSTGRES_PORT = '5432';
       process.env.REDIS_PORT = '6379';
 
@@ -74,7 +74,7 @@ describe('env-mapper', () => {
       expect(result.ports.clientApiPort).toBe('3001');
       expect(result.ports.webPort).toBe('5173');
       expect(result.ports.proxyPort).toBe('11434');
-      expect(result.ports.ollamaPort).toBe('11435');
+      expect(result.ports.localLlmPort).toBe('11435');
       expect(result.ports.postgresPort).toBe('5432');
       expect(result.ports.redisPort).toBe('6379');
     });
@@ -105,17 +105,17 @@ describe('env-mapper', () => {
 
   describe('ai section', () => {
     it('maps AI/LLM env vars', () => {
-      process.env.OLLAMA_HOST = 'http://localhost:11435';
-      process.env.OLLAMA_MODEL = 'qwen2.5:7b';
-      process.env.OLLAMA_TIMEOUT = '60';
+      process.env.LOCAL_LLM_UPSTREAM_URL = 'http://localhost:11435';
+      process.env.LOCAL_LLM_MODEL = 'qwen2.5:7b';
+      process.env.LOCAL_LLM_TIMEOUT = '60';
       process.env.OPENAI_API_KEY = 'sk-123';
       process.env.OPENAI_MODEL = 'gpt-4o-mini';
 
       const result = mapEnvironmentVariables();
 
-      expect(result.ai.ollamaHost).toBe('http://localhost:11435');
-      expect(result.ai.ollamaModel).toBe('qwen2.5:7b');
-      expect(result.ai.ollamaTimeout).toBe('60');
+      expect(result.ai.localLlmUpstreamUrl).toBe('http://localhost:11435');
+      expect(result.ai.localLlmModel).toBe('qwen2.5:7b');
+      expect(result.ai.localLlmTimeout).toBe('60');
       expect(result.ai.openaiApiKey).toBe('sk-123');
       expect(result.ai.openaiModel).toBe('gpt-4o-mini');
     });

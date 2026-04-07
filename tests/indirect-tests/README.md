@@ -16,7 +16,7 @@ npm run test:indirect
 node tests/indirect-tests/run-all.mjs
 node tests/indirect-tests/run-all.mjs --json
 
-# Run server unit tests (no Ollama required)
+# Run server unit tests (no Local LLM upstream required)
 npm run test:server:unit
 # Or with filter
 powershell -File tests/indirect-tests/run-server-unit-tests.ps1 -Filter "router"
@@ -66,14 +66,14 @@ If `e2e-dialog-test.js` or session flows fail:
 3. Check `validate-import-extensions.mjs` — NodeNext import issues break runtime
 
 ### CI / pre-commit
-These tests are designed for CI pipelines where starting Ollama + AI proxy + full stack is expensive or impossible.
+These tests are designed for CI pipelines where starting Local LLM upstream + AI proxy + full stack is expensive or impossible.
 
 ---
 
 ## Coverage Gaps (intentional)
 
 Indirect tests **do not** cover:
-- LLM response quality (requires live Ollama)
+- LLM response quality (requires live Local LLM upstream)
 - End-to-end session flows (requires Client API)
 - Async promise handling (requires full stack)
 

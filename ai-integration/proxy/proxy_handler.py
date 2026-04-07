@@ -1,6 +1,6 @@
 """
 Proxy Handler Module
-Main proxy logic for forwarding requests to Ollama
+Main proxy logic for forwarding requests to Local LLM upstream
 Uses modular architecture with separate processors
 """
 import os
@@ -17,18 +17,18 @@ from typing import Optional, Any
 logger = logging.getLogger(__name__)
 
 from .config import (
-    OLLAMA_HOST,
-    ollama_upstream_base,
+    LOCAL_LLM_UPSTREAM_URL,
+    local_llm_upstream_base,
     STORAGE_DIR,
     FORWARD_TIMEOUT,
-    OLLAMA_AUTO_START,
+    LOCAL_LLM_AUTO_START,
     SIMULATION_ENABLED,
     SIMULATION_DATA_PATH,
     PROMISE_DELAY_BEFORE_EXECUTE,
     PROMISE_DAEMON_ONLY,
 )
 from .api_key_routing import forward_with_api_key_failover, write_routing_hint
-from .ollama_manager import get_ollama_manager, check_port_occupied, get_ollama_host_port
+from .local_llm_manager import get_local_llm_manager, check_port_occupied, get_local_llm_upstream_host_port
 from .ai_hub_config import (
     get_ai_hub_config, _is_truthy, _normalize_path, _normalize_model_key,
     _extract_prompt, _get_virtual_model, _virtual_show_response, _virtual_tags_entry,
@@ -57,8 +57,8 @@ from .router_manager import (
     get_router,
     initialize_router_if_needed,
     resolve_routing,
-    auto_start_ollama,
-    _translate_ollama_to_openai_path,
+    auto_start_local_llm_upstream,
+    _translate_compat_to_openai_path,
 )
 from .simulation_handler import handle_simulated_response, handle_virtual_show_response
 
@@ -95,14 +95,14 @@ def _handle_api_tags_unified(
     folder_path: str,
 ) -> Response:
     """
-    Combined /api/tags: provider-config models (e.g. z_ai) + live Ollama + virtual_models.
-    Each entry includes a string \"provider\" (e.g. z_ai, ollama, virtual).
+    Combined /api/tags: provider-config models (e.g. z_ai) + live Local LLM upstream + virtual_models.
+    Each entry includes a string \"provider\" (e.g. z_ai, compat_llm, virtual).
     """
     models: list[dict[str, Any]] = []
     existing: set[str] = set()
 
     if router._initialized:
-        for entry in router.tag_entries_from_non_ollama_providers():
+        for entry in router.tag_entries_from_non_compat_providers():
             if not isinstance(entry, dict):
                 continue
             k = _normalize_model_key(entry.get('name') or entry.get('model') or '')
@@ -110,23 +110,23 @@ def _handle_api_tags_unified(
                 existing.add(k)
             models.append(entry)
 
-    ollama_models_injected = 0
-    ollama_base = ollama_upstream_base()
-    if ollama_base:
-        ollama_url = f"{ollama_base}/api/tags"
-        _, ollama_tags = _fetch_tags_response(ollama_url, headers, forward_args or {})
-        if isinstance(ollama_tags, dict):
-            for entry in ollama_tags.get('models') or []:
+    compat_models_injected = 0
+    upstream_tags_base = local_llm_upstream_base()
+    if upstream_tags_base:
+        local_llm_upstream_url = f"{upstream_tags_base}/api/tags"
+        _, upstream_tags_payload = _fetch_tags_response(local_llm_upstream_url, headers, forward_args or {})
+        if isinstance(upstream_tags_payload, dict):
+            for entry in upstream_tags_payload.get('models') or []:
                 if not isinstance(entry, dict):
                     continue
                 name_key = _normalize_model_key(entry.get('name') or entry.get('model') or '')
                 if not name_key or name_key in existing:
                     continue
                 row = dict(entry)
-                row.setdefault('provider', 'ollama')
+                row.setdefault('provider', 'compat_llm')
                 existing.add(name_key)
                 models.append(row)
-                ollama_models_injected += 1
+                compat_models_injected += 1
 
     virtual_models = cfg.get('virtual_models') or {}
     virtual_models_injected = 0
@@ -154,7 +154,7 @@ def _handle_api_tags_unified(
             "content": out[:10000].decode('utf-8', errors='replace'),
             "simulated": True,
             "virtual_models_injected": virtual_models_injected,
-            "ollama_models_injected": ollama_models_injected,
+            "compat_models_injected": compat_models_injected,
             "multi_provider_tags": True,
         })
     return response
@@ -167,8 +167,8 @@ def handle_proxy_request(path: str, request) -> Response:
     legacy_requests_log = False
     folder_path = ''
     
-    # Auto-start Ollama if enabled
-    auto_start_ollama(path)
+    # Auto-start Local LLM upstream if enabled
+    auto_start_local_llm_upstream(path)
     
     try:
         # Base headers from incoming request (for content-type, etc.)
@@ -205,7 +205,7 @@ def handle_proxy_request(path: str, request) -> Response:
                 if response:
                     return response
         
-        # Combined multi-provider /api/tags (Z.AI config + live Ollama + virtual_models)
+        # Combined multi-provider /api/tags (Z.AI config + live Local LLM upstream + virtual_models)
         if request.method == 'GET' and path_norm == 'api/tags':
             return _handle_api_tags_unified(cfg, router, base_headers, forward_args, legacy_requests_log, folder_path)
 
@@ -311,8 +311,8 @@ def handle_proxy_request(path: str, request) -> Response:
                 
     except requests.exceptions.ConnectionError as e:
         error_data = {
-            "error": "Ollama not available",
-            "message": f"Could not connect to Ollama at {OLLAMA_HOST}",
+            "error": "Local LLM upstream not available",
+            "message": f"Could not connect to Local LLM upstream at {LOCAL_LLM_UPSTREAM_URL}",
             "details": str(e)
         }
         if legacy_requests_log:

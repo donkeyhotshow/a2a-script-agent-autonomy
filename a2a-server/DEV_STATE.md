@@ -26,7 +26,7 @@
 ## Recent (2026-04-06)
 
 - **Blue-alert / execute contract:** Gray room `warnOnInvalidExecute` uses `validateExecuteShapeForSchema(schemaName)` (agent vs dialog) instead of always dialog rules; passes transform `message` + `execute` into `validateLlmOutputShape`; **`router`** schema also runs `validateRouterResultShape` (non-empty `form.choices`). `isAgentTransformSchema` treats any `fix-vue-imports*` prefix as agent-shaped (decline/batched). Simulation `validateTransformExecute` fixed (was referencing undefined `rawOutput`); passes `responseData` for top-level `message`.
-- **Human-review (implemented):** `toInvokeShapeForPromptsTransform` (`context: null` envelope), `resolveExecution` (empty root `{}` ignored), `mergeGrayRoomFinalizeInnerContext` (non-array `history` cannot clobber array), `validateContextBlock` (`execution` not array), `humanizeUpstreamErrorMessage` (Ollama / loopback ports). See [`docs/HUMAN-REVIEW-FINDINGS.md`](../../docs/HUMAN-REVIEW-FINDINGS.md).
+- **Human-review (implemented):** `toInvokeShapeForPromptsTransform` (`context: null` envelope), `resolveExecution` (empty root `{}` ignored), `mergeGrayRoomFinalizeInnerContext` (non-array `history` cannot clobber array), `validateContextBlock` (`execution` not array), `humanizeUpstreamErrorMessage` (Local LLM upstream / loopback ports). See [`docs/HUMAN-REVIEW-FINDINGS.md`](../../docs/HUMAN-REVIEW-FINDINGS.md).
 - **Tests**: `determineRequestType` table in `request-processor.service.test.ts`; invoke HTTP parity + assert `context.session_id`; action-parser invalid JSON DSL fallback; materialize `result.choice` → history.
 - **Poll context**: `GET /api/v1/requests/:id/result` now includes `context.session_id` (added to `POLL_CONTEXT_KEYS` in `requests.routes.ts`) so pollers see server session id on terminal payloads.
 
@@ -243,7 +243,7 @@ curl -s -X POST http://localhost:3000/api/v1/invoke \
 
 
 ### Recent (2026-04-03)
-- **Vitest:** Dropped stale excluded suites; removed tests that imported deleted modules (`neurons-v2`, `ollama-adapter`, `rag` entity scorer, `llm-client`, `auth.middleware`, `neuron-activator`, old `simulation/*`). `vitest.config.ts` excludes only `node_modules` / `dist`.
+- **Vitest:** Dropped stale excluded suites; removed tests that imported deleted modules (`neurons-v2`, `compat_llm-adapter`, `rag` entity scorer, `llm-client`, `auth.middleware`, `neuron-activator`, old `simulation/*`). `vitest.config.ts` excludes only `node_modules` / `dist`.
 - **Auto-AI index:** Added [`src/actions/definitions/auto-ai-index.ts`](src/actions/definitions/auto-ai-index.ts) (`AUTO_AI_CATEGORIES`, `AUTO_AI_ACTION_IDS`, helpers) for `definitions-load` + `auto-ai-index` unit tests.
 - **Router static JSON:** Fixed corrupt trailing `]` / `}` in [`shared/router-static-choices.json`](../shared/router-static-choices.json) (was breaking `JSON.parse` in `src/config/router-static.ts`).
 - **Sequence / Gray Room (incremental):** [`sequence-workbench.ts`](src/services/core/request-processor/sequence-workbench.ts) implements `step_complete` against `context.workbench.sections.sequence` (replaces broken `session-manager` import). [`docs/references/sequence-schema.json`](../docs/references/sequence-schema.json) documents `SequenceStep` + `SequencePlan`. No `POST /api/v1/sequence` on the stateless server—queue edits stay on Client API or invoke `context`.

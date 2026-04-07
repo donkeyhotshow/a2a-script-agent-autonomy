@@ -16,8 +16,8 @@ logger = logging.getLogger(__name__)
 from .base import ProviderConfig
 from .. import config as proxy_config
 
-# Ollama local — no Bearer; stored as explicit api_key row in settings
-OLLAMA_API_KEY_PLACEHOLDER = "__OLLAMA_LOCAL__"
+# Local LLM upstream local — no Bearer; stored as explicit api_key row in settings
+LOCAL_LLM_KEY_PLACEHOLDER = "__LOCAL_LLM_KEY_PLACEHOLDER__"
 
 
 @dataclass
@@ -235,8 +235,8 @@ def _parse_config(data: Dict[str, Any]) -> ProvidersConfig:
             if not isinstance(sec_raw, str):
                 sec_raw = ""
             secret = _resolve_env_var(sec_raw) if sec_raw else ""
-            if not secret and prov == "ollama":
-                secret = OLLAMA_API_KEY_PLACEHOLDER
+            if not secret and prov == "compat_llm":
+                secret = LOCAL_LLM_KEY_PLACEHOLDER
             if not secret:
                 logger.warning(
                     "api_keys: skipping id=%r provider=%r (empty secret after env resolve)",
@@ -271,15 +271,15 @@ def _parse_config(data: Dict[str, Any]) -> ProvidersConfig:
 
 
 def _backfill_api_keys_from_providers(config: ProvidersConfig) -> None:
-    """Ensure Ollama placeholder row; add legacy provider secrets when a provider has no keys."""
-    if "ollama" in config.providers and not any(k.provider == "ollama" for k in config.api_keys):
+    """Ensure Local LLM upstream placeholder row; add legacy provider secrets when a provider has no keys."""
+    if "compat_llm" in config.providers and not any(k.provider == "compat_llm" for k in config.api_keys):
         config.api_keys.append(
             ApiKeyEntry(
-                id="ollama-local",
-                provider="ollama",
-                secret=OLLAMA_API_KEY_PLACEHOLDER,
-                enabled=config.providers["ollama"].enabled,
-                priority=int(config.providers["ollama"].priority),
+                id="compat-llm-local",
+                provider="compat_llm",
+                secret=LOCAL_LLM_KEY_PLACEHOLDER,
+                enabled=config.providers["compat_llm"].enabled,
+                priority=int(config.providers["compat_llm"].priority),
             )
         )
 
@@ -288,7 +288,7 @@ def _backfill_api_keys_from_providers(config: ProvidersConfig) -> None:
         by_prov.setdefault(k.provider, []).append(k)
 
     for name, pc in config.providers.items():
-        if pc.type == "ollama":
+        if pc.type == "compat_llm":
             continue
         if not pc.enabled:
             continue
@@ -314,11 +314,11 @@ def _default_config() -> ProvidersConfig:
     """Create default configuration"""
     config = ProvidersConfig()
     
-    # Ollama (local)
-    config.providers['ollama'] = ProviderConfig(
-        name='ollama',
-        type='ollama',
-        url=os.environ.get('OLLAMA_HOST', 'http://localhost:11435'),
+    # Local LLM upstream (local)
+    config.providers['compat_llm'] = ProviderConfig(
+        name='compat_llm',
+        type='compat_llm',
+        url=os.environ.get('LOCAL_LLM_UPSTREAM_URL', 'http://localhost:11435'),
         enabled=True,
         priority=1,
         models=['qwen3:8b', 'mistral', 'codellama'],
@@ -411,7 +411,7 @@ def _default_config() -> ProvidersConfig:
     )
     
     # Default fallback chain
-    config.fallback_chain = ['z_ai', 'ollama', 'groq', 'openrouter']
+    config.fallback_chain = ['z_ai', 'compat_llm', 'groq', 'openrouter']
 
     config.default_provider = 'z_ai'
 

@@ -569,7 +569,7 @@ interface SessionSummary {
 
 #### Асинхронный ответ (Async Flow с PromiseId)
 
-Когда сервер отправляет запрос к External AI Hub (прокси для Ollama) или выполняет сложную AI обработку, он использует `promiseId`:
+Когда сервер отправляет запрос к External AI Hub (прокси для Local LLM upstream) или выполняет сложную AI обработку, он использует `promiseId`:
 
 ```json
 // Запрос клиента (без sync флага)
@@ -590,7 +590,7 @@ interface SessionSummary {
 
 **Как работает promiseId:**
 
-1. Сервер отправляет запрос к External AI Hub (порт **11434**, прокси к Ollama **11435**) с заголовком `X-Promise: true`
+1. Сервер отправляет запрос к External AI Hub (порт **11434**, прокси к Local LLM upstream **11435**) с заголовком `X-Promise: true`
 2. Hub сразу возвращает `promiseId` (статус pending)
 3. Сервер продолжает workflow - отправляет execute клиенту
 4. Сервер периодически опрашивает `GET /promise/{id}` для проверки статуса

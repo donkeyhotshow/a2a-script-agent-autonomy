@@ -13,13 +13,13 @@
 - Docker + Docker Compose (только для AI Integration)
 - Node.js 18+ (для a2a-server и a2a-client)
 - Python 3.9+ (для ai-integration прокси)
-- Ollama с установленными моделями
+- Local LLM upstream с установленными моделями
 
 ### 1.2 Требуемые порты
 | Порт | Компонент | Описание |
 |------|-----------|----------|
-| 11435 | Ollama | Локальная LLM |
-| 11434 | AI Integration | Прокси / promise → Ollama :11435 |
+| 11435 | Local LLM upstream | Локальная LLM |
+| 11434 | AI Integration | Прокси / promise → Local LLM upstream :11435 |
 | 3000 | a2a-server | A2A API сервер (stateless) |
 | 3001 | a2a-client (SDK) | Client API (опционально; Web чаще Vite 5173 + `/api/a2a/*`) |
 | 5173 | Vite Dev | Web UI |
@@ -30,14 +30,10 @@
 
 ## 2. Последовательность запуска
 
-### ЭТАП 1: Запуск Ollama (единственная внешняя зависимость)
+### ЭТАП 1: Запуск Local LLM upstream (единственная внешняя зависимость)
 
 ```bash
-# Запуск Ollama
-docker run -d -v ollama_data:/root/.ollama -p 11435:11435 --name ollama ollama/ollama:latest
-
-# Установка модели (обязательно)
-docker exec ollama ollama pull qwen3:8b
+# Запустите локальный HTTP LLM на порту 11435 и подтяните нужную модель (команды зависят от дистрибутива).
 
 # Проверка
 curl http://localhost:11435/api/tags
@@ -70,8 +66,8 @@ python -m proxy
 
 ```bash
 # Основные переменные (stateless - нет database/redis)
-export OLLAMA_URL="http://localhost:11435"
-export OLLAMA_MODEL="qwen3:8b"
+export LOCAL_LLM_UPSTREAM_URL="http://localhost:11435"
+export LOCAL_LLM_MODEL="qwen3:8b"
 export SKIP_AUTH="1"  # Только для dev!
 export ENCRYPTION_KEY="12345678901234567890123456789012"  # 32 символа
 
@@ -132,9 +128,7 @@ npm run dev
 ## 3. Упрощенный запуск (все скриптом)
 
 ```bash
-# 1. Только Ollama нужен
-docker run -d -v ollama_data:/root/.ollama -p 11435:11435 --name ollama ollama/ollama:latest
-docker exec ollama ollama pull qwen3:8b
+# 1. Поднимите локальный HTTP LLM на порту 11435 (команда зависит от вашего дистрибутива)
 
 # 2. Запуск всех компонентов Node.js
 ./start-all.bat  # Windows
@@ -160,7 +154,7 @@ curl http://localhost:3001/api/health
 # AI Integration (если запущен)
 curl http://localhost:11434/health
 
-# Ollama
+# Local LLM upstream
 curl http://localhost:11435/api/tags
 # {"models": [...]}
 ```
@@ -199,15 +193,14 @@ cd a2a-server
 npm run dev  # смотреть ошибки в консоли
 ```
 
-### Проблема: Нет соединения с Ollama
+### Проблема: Нет соединения с Local LLM upstream
 
 ```bash
-# Проверка Ollama
+# Проверка Local LLM upstream
 curl http://localhost:11435/api/tags
 # Должен вернуть список моделей
 
-# Если не работает - перезапуск
-docker restart ollama
+# Если не работает — перезапустите процесс локального LLM на 11435
 ```
 
 ### Проблема: Сессии не сохраняются
@@ -226,7 +219,7 @@ ls -la storage/
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌─────────────────┐
-│   Web UI    │────▶│ Client API   │────▶│ a2a-server  │────▶│ AI Hub → Ollama │
+│   Web UI    │────▶│ Client API   │────▶│ a2a-server  │────▶│ AI Hub → Local LLM upstream │
 │    :5173    │     │5173 or :3001 │     │    :3000    │     │ :11435 → :11434 │
 └─────────────┘     └──────┬───────┘     └─────────────┘     └─────────────────┘
                            │

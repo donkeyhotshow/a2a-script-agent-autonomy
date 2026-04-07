@@ -7,18 +7,18 @@ const os = require('os');
 
 // Configuration - hardcoded as requested
 const SERVICES = {
-  'ollama': {
+  'compat_llm': {
     port: 11435,
-    startCmd: 'ollama serve',
+    startCmd: 'compat_llm serve',
     healthEndpoint: '/api/tags',
     dependencies: [],
-    logfile: path.join(__dirname, '..', 'logs', 'ollama.log')
+    logfile: path.join(__dirname, '..', 'logs', 'compat_llm.log')
   },
   'ai-integration': {
     port: 11434,
     startCmd: 'cd ai-integration && npm run dev',
     healthEndpoint: '/health',
-    dependencies: ['ollama'],
+    dependencies: ['compat_llm'],
     logfile: path.join(__dirname, '..', 'ai-integration', 'logs', 'ai-integration.log')
   },
   'a2a-server': {

@@ -25,7 +25,7 @@ class ProviderStatus(Enum):
 class ProviderConfig:
     """Configuration for an LLM provider"""
     name: str
-    type: str  # 'ollama', 'openai', 'huggingface'
+    type: str  # 'compat_llm', 'openai', 'huggingface'
     url: str
     enabled: bool = True
     priority: int = 1
@@ -293,7 +293,7 @@ class LLMProvider(ABC):
             "supports_fallback": bool(self.config.fallback_models),
         }
         
-        # Add connection state if provider has it (for OllamaProvider)
+        # Add connection state if provider has it (for Local LLM upstreamProvider)
         if hasattr(self, 'connection_state'):
             status["connection_state"] = self.connection_state
             status["last_error"] = self.last_error

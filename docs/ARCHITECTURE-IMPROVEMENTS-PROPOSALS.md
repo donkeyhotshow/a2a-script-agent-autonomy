@@ -43,7 +43,7 @@ type AgentDelegation = {
 | Mode | LLM | Use Case | Cost |
 |------|-----|----------|------|
 | Prompt Mode | Paid API (Z.AI, GPT-4) | Strategy, reasoning | $$ |
-| Algorithm Mode | Local Ollama | Pattern match, edits | $ (free) |
+| Algorithm Mode | Local Local LLM upstream | Pattern match, edits | $ (free) |
 
 **Trigger:** `interrupt.reason: "algorithm_invoke"`
 

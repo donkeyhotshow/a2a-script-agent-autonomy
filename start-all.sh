@@ -8,12 +8,10 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
-OLLAMA_PORT=11435
 PROXY_PORT=11434
 SERVER_PORT=3000
 CLIENT_API_PORT=3001
 WEB_PORT=5173
-OLLAMA_MODELS='/home/dev/.ollama'
 PID_FILE='.pids.txt'
 
 # Colors
@@ -84,7 +82,7 @@ log STEP "STARTUP" "Standardized service startup"
 # Step 1: Kill existing processes
 # ==========================================
 echo ""
-log STEP "Step 1/8" "Cleaning environment with kill-all.sh..."
+log STEP "Step 1/7" "Cleaning environment with kill-all.sh..."
 
 if [[ -f "kill-all.sh" ]]; then
     chmod +x kill-all.sh
@@ -99,10 +97,10 @@ sleep 2
 # Step 2: Verify all ports are free
 # ==========================================
 echo ""
-log STEP "Step 2/8" "Verifying all ports are free..."
+log STEP "Step 2/7" "Verifying all ports are free..."
 
 PORTS_OK=1
-for port in $OLLAMA_PORT $PROXY_PORT $SERVER_PORT $CLIENT_API_PORT $WEB_PORT; do
+for port in $PROXY_PORT $SERVER_PORT $CLIENT_API_PORT $WEB_PORT; do
     if check_port_free "$port" 10; then
         log OK "Port $port verified free"
     else
@@ -120,56 +118,20 @@ fi
 # Step 3: Clear PID file
 # ==========================================
 echo ""
-log STEP "Step 3/8" "Clearing PID file..."
+log STEP "Step 3/7" "Clearing PID file..."
 
 rm -f "$PID_FILE"
 touch "$PID_FILE"
 log OK "$PID_FILE reset"
 
 # ==========================================
-# Step 4: Start Ollama
+# Step 4: Start ai-integration
 # ==========================================
 echo ""
-log STEP "Step 4/8" "Starting Ollama on port $OLLAMA_PORT..."
-
-if ! command -v ollama &> /dev/null; then
-    log ERROR "Ollama not found. Please install Ollama first."
-    exit 1
-fi
-
-export OLLAMA_HOST="0.0.0.0:$OLLAMA_PORT"
-export OLLAMA_MODELS="$OLLAMA_MODELS"
-export OLLAMA_ORIGINS="*"
-
-ollama serve &
-OLLAMA_PID=$!
-sleep 3
-
-# Verify Ollama started
-OLLAMA_CHECK_PID=$(get_pid_on_port $OLLAMA_PORT)
-if [[ -n "$OLLAMA_CHECK_PID" ]]; then
-    echo "OLLAMA_PID=$OLLAMA_CHECK_PID" >> "$PID_FILE"
-    log OK "Ollama started (PID: $OLLAMA_CHECK_PID)"
-else
-    log WARN "Could not verify Ollama PID"
-fi
-
-# Wait for Ollama to be ready
-if wait_for_health "http://localhost:$OLLAMA_PORT/api/tags" 30; then
-    log OK "Ollama is ready"
-else
-    log WARN "Ollama may not be ready yet"
-fi
-
-# ==========================================
-# Step 5: Start ai-integration
-# ==========================================
-echo ""
-log STEP "Step 5/8" "Starting ai-integration on port $PROXY_PORT..."
+log STEP "Step 4/7" "Starting ai-integration on port $PROXY_PORT..."
 
 cd ai-integration
 python scripts/ensure-providers-config.py || { log WARN "ai-integration: ensure-providers-config failed (missing config/providers.example.json?)"; exit 1; }
-export OLLAMA_HOST="http://localhost:$OLLAMA_PORT"
 python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port $PROXY_PORT &
 AI_PID=$!
 cd ..
@@ -188,7 +150,7 @@ fi
 # Step 6: Start a2a-server
 # ==========================================
 echo ""
-log STEP "Step 6/8" "Starting a2a-server on port $SERVER_PORT..."
+log STEP "Step 5/7" "Starting a2a-server on port $SERVER_PORT..."
 
 cd a2a-server
 npm run dev &
@@ -214,7 +176,7 @@ fi
 # Step 7: Start client-api
 # ==========================================
 echo ""
-log STEP "Step 7/8" "Starting client-api on port $CLIENT_API_PORT..."
+log STEP "Step 6/7" "Starting client-api on port $CLIENT_API_PORT..."
 
 cd a2a-client/packages/sdk
 npm run dev &
@@ -235,7 +197,7 @@ fi
 # Step 8: Start web-ui
 # ==========================================
 echo ""
-log STEP "Step 8/8" "Starting web-ui on port $WEB_PORT..."
+log STEP "Step 7/7" "Starting web-ui on port $WEB_PORT..."
 
 cd a2a-client
 npm run dev &
@@ -260,7 +222,6 @@ log STEP "SUMMARY" "All services started successfully"
 
 echo ""
 echo "Services:"
-echo "  - Ollama:       http://localhost:$OLLAMA_PORT"
 echo "  - ai-integration: http://localhost:$PROXY_PORT (API proxy)"
 echo "  - a2a-server:   http://localhost:$SERVER_PORT"
 echo "  - client-api:   http://localhost:$CLIENT_API_PORT"

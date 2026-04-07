@@ -1,10 +1,10 @@
 # @a2a/embedding - Embedding Client Module
 
-> Provides embedding generation for semantic search using Ollama, OpenAI, Cohere, or Voyage AI.
+> Provides embedding generation for semantic search using Local LLM upstream, OpenAI, Cohere, or Voyage AI.
 
 ## Features
 
-- **Multiple providers**: Ollama (local)
+- **Multiple providers**: Local LLM upstream (local)
 - **Batch processing**: Efficient embedding of multiple texts
 - **Caching**: In-memory and file-based caching
 - **Deterministic fallback**: For testing without API keys
@@ -20,9 +20,9 @@ npm install @a2a/embedding
 ```javascript
 const { createEmbeddingClient } = require('@a2a/embedding');
 
-// Using Ollama (local)
+// Using Local LLM upstream (local)
 const client = createEmbeddingClient({
-  provider: 'ollama',
+  provider: 'compat_llm',
   baseUrl: 'http://localhost:11435',
   model: 'nomic-embed-text',
 });
@@ -33,12 +33,12 @@ const embedding = await client.embed('Hello world');
 
 ## Providers
 
-### Ollama (Local)
+### Local LLM upstream (Local)
 
 ```javascript
 const client = createEmbeddingClient({
-  provider: 'ollama',
-  baseUrl: process.env.OLLAMA_BASE_URL || 'http://localhost:11435',
+  provider: 'compat_llm',
+  baseUrl: process.env.LOCAL_LLM_EMBEDDING_BASE_URL || 'http://localhost:11435',
   model: 'nomic-embed-text', // or bge-m3, bge-small
 });
 ```
@@ -69,7 +69,7 @@ const embeddings = await client.embedBatch(texts);
 
 ```javascript
 const client = createEmbeddingClient({
-  provider: 'ollama',
+  provider: 'compat_llm',
   cacheFile: './embeddings-cache.json', // Persist to file
 });
 
@@ -98,7 +98,7 @@ console.log(models); // ['nomic-embed-text', 'bge-m3', ...]
 
 | Option    | Type   | Default          | Description                                    |
 |-----------|--------|------------------|------------------------------------------------|
-| provider  | string | ollama           | Provider: ollama, openai, cohere, voyage, mock |
+| provider  | string | compat_llm           | Provider: compat_llm, openai, cohere, voyage, mock |
 | baseUrl   | string | provider default | Custom API URL                                 |
 | model     | string | provider default | Model name                                     |
 | apiKey    | string | env              | API key                                        |
@@ -109,8 +109,8 @@ console.log(models); // ['nomic-embed-text', 'bge-m3', ...]
 ## Environment Variables
 
 ```bash
-# Ollama
-OLLAMA_BASE_URL=http://localhost:11435
+# Local LLM upstream
+LOCAL_LLM_EMBEDDING_BASE_URL=http://localhost:11435
 
 # OpenAI
 OPENAI_API_KEY=sk-...
@@ -124,7 +124,7 @@ VOYAGE_API_KEY=...
 
 ## Models
 
-### Ollama
+### Local LLM upstream
 
 - nomic-embed-text (768d)
 - mxbai-embed-large (1536d)
@@ -156,7 +156,7 @@ Creates an embedding client.
 
 ```javascript
 const client = createEmbeddingClient({
-  provider: 'ollama',
+  provider: 'compat_llm',
   model: 'nomic-embed-text',
 });
 ```

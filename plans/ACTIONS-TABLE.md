@@ -3,7 +3,7 @@
 ## Категории исполнителей
 
 - **script** - Автоматический скрипт (быстро, детерминировано)
-- **ollama** - LLM через Ollama (анализ, генерация, рекомендации)
+- **compat_llm** - LLM через Local LLM upstream (анализ, генерация, рекомендации)
 - **agent** - A2A агент (сложная логика, итерации)
 
 ## Таблица действий
@@ -11,40 +11,40 @@
 | actionId | categoryId | executorSystemId | title | canMigrateToScript |
 |----------|-----------|------------------|-------|-------------------|
 | detect-n-plus-one | laravel-query | script | Детекция N+1 queries | ✅ |
-| suggest-eager-loading | laravel-query | ollama | Предложение eager loading | ✅ |
+| suggest-eager-loading | laravel-query | compat_llm | Предложение eager loading | ✅ |
 | add-eager-loading | laravel-query | agent | Применение eager loading | ⏳ |
 | analyze-controller-size | laravel-arch | script | Анализ размера контроллеров | ✅ |
-| suggest-service-layer | laravel-arch | ollama | Предложение Service Layer | ✅ |
+| suggest-service-layer | laravel-arch | compat_llm | Предложение Service Layer | ✅ |
 | extract-service-layer | laravel-arch | agent | Извлечение Service Layer | ⏳ |
 | detect-god-objects | laravel-arch | script | Детекция God Objects | ✅ |
-| suggest-refactoring | laravel-arch | ollama | Предложение рефакторинга | ✅ |
+| suggest-refactoring | laravel-arch | compat_llm | Предложение рефакторинга | ✅ |
 | apply-refactoring | laravel-arch | agent | Применение рефакторинга | ⏳ |
 | validate-inertia-props | inertia | script | Валидация Inertia props | ✅ |
 | generate-ts-types | inertia | script | Генерация TS типов из PHP | ✅ |
 | detect-unused-props | inertia | script | Детекция неиспользуемых props | ✅ |
-| optimize-shared-data | inertia | ollama | Оптимизация shared data | ✅ |
+| optimize-shared-data | inertia | compat_llm | Оптимизация shared data | ✅ |
 | detect-options-api | vue | script | Детекция Options API | ✅ |
-| suggest-composition-api | vue | ollama | Предложение Composition API | ✅ |
+| suggest-composition-api | vue | compat_llm | Предложение Composition API | ✅ |
 | migrate-to-composition | vue | agent | Миграция на Composition API | ⏳ |
-| extract-composables | vue | ollama | Извлечение composables | ✅ |
+| extract-composables | vue | compat_llm | Извлечение composables | ✅ |
 | detect-prop-drilling | vue | script | Детекция prop drilling | ✅ |
-| suggest-store | vue | ollama | Предложение Pinia store | ✅ |
+| suggest-store | vue | compat_llm | Предложение Pinia store | ✅ |
 | analyze-component-size | vue | script | Анализ размера компонентов | ✅ |
-| suggest-component-split | vue | ollama | Предложение разделения | ✅ |
+| suggest-component-split | vue | compat_llm | Предложение разделения | ✅ |
 | detect-duplicate-classes | tailwind | script | Детекция дубликатов классов | ✅ |
-| suggest-apply | tailwind | ollama | Предложение @apply | ✅ |
+| suggest-apply | tailwind | compat_llm | Предложение @apply | ✅ |
 | extract-component-classes | tailwind | agent | Извлечение в компоненты | ⏳ |
 | detect-any-types | typescript | script | Детекция any типов | ✅ |
-| suggest-types | typescript | ollama | Предложение типов | ✅ |
+| suggest-types | typescript | compat_llm | Предложение типов | ✅ |
 | add-types | typescript | agent | Добавление типов | ⏳ |
 | generate-interfaces | typescript | script | Генерация interfaces из PHP | ✅ |
 | eslint-autofix | eslint | script | Автоматическое исправление | ✅ |
-| suggest-custom-rules | eslint | ollama | Предложение кастомных правил | ✅ |
+| suggest-custom-rules | eslint | compat_llm | Предложение кастомных правил | ✅ |
 | analyze-test-coverage | vitest | script | Анализ покрытия тестов | ✅ |
-| suggest-missing-tests | vitest | ollama | Предложение недостающих тестов | ✅ |
+| suggest-missing-tests | vitest | compat_llm | Предложение недостающих тестов | ✅ |
 | generate-unit-tests | vitest | agent | Генерация unit тестов | ⏳ |
 | generate-e2e-tests | playwright | agent | Генерация E2E тестов | ⏳ |
-| suggest-page-objects | playwright | ollama | Предложение Page Objects | ✅ |
+| suggest-page-objects | playwright | compat_llm | Предложение Page Objects | ✅ |
 | generate-crud-module | code-gen | agent | Генерация CRUD модуля | ⏳ |
 | generate-form | code-gen | agent | Генерация формы | ⏳ |
 | generate-api-endpoint | code-gen | agent | Генерация API endpoint | ⏳ |
@@ -55,21 +55,21 @@
 | scan-dependencies | security | script | Сканирование зависимостей | ✅ |
 | detect-sql-injection | security | script | Детекция SQL injection | ✅ |
 | detect-xss | security | script | Детекция XSS | ✅ |
-| suggest-security-fix | security | ollama | Предложение исправления | ✅ |
+| suggest-security-fix | security | compat_llm | Предложение исправления | ✅ |
 | apply-security-fix | security | agent | Применение исправления | ⏳ |
 | analyze-bundle-size | performance | script | Анализ размера бандла | ✅ |
-| suggest-code-splitting | performance | ollama | Предложение code splitting | ✅ |
+| suggest-code-splitting | performance | compat_llm | Предложение code splitting | ✅ |
 | apply-lazy-loading | performance | agent | Применение lazy loading | ⏳ |
 | analyze-query-performance | performance | script | Анализ производительности запросов | ✅ |
-| suggest-indexes | performance | ollama | Предложение индексов | ✅ |
+| suggest-indexes | performance | compat_llm | Предложение индексов | ✅ |
 | add-indexes | performance | agent | Добавление индексов | ⏳ |
-| generate-readme | documentation | ollama | Генерация README | ✅ |
+| generate-readme | documentation | compat_llm | Генерация README | ✅ |
 | generate-api-docs | documentation | script | Генерация API документации | ✅ |
 | generate-changelog | documentation | script | Генерация changelog | ✅ |
 | update-phpdoc | documentation | agent | Обновление PHPDoc | ⏳ |
 | update-jsdoc | documentation | agent | Обновление JSDoc | ⏳ |
 | setup-ci-pipeline | devops | script | Настройка CI pipeline | ✅ |
-| optimize-build | devops | ollama | Оптимизация сборки | ✅ |
+| optimize-build | devops | compat_llm | Оптимизация сборки | ✅ |
 | setup-deployment | devops | agent | Настройка деплоя | ⏳ |
 
 ## Категории
@@ -144,7 +144,7 @@ DevOps автоматизация
 
 - **Всего действий**: 60
 - **script**: 30 (50%)
-- **ollama**: 18 (30%)
+- **compat_llm**: 18 (30%)
 - **agent**: 12 (20%)
 - **Можно мигрировать на script**: 10 (83% от agent)
 

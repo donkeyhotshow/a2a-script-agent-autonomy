@@ -13,7 +13,7 @@ This document is the **single linear spine** for: run stack → drive the agent 
    - **Stuck async** — Poll `/async`; do not stop after `/next` ack alone ([`docs/OPERATOR-CURL.md`](../docs/OPERATOR-CURL.md) → *Driver checklist*).
    - **Wrong router beat** — Mis-sent `message` vs `choice` → session idle or wrong branch (`AGENTS.md` → *Why iteration stops*).
    - **401 / env** — `ENCRYPTION_KEY` 32 chars, `JWT_SECRET`, `SKIP_AUTH` in dev.
-   - **LLM / hub** — Ollama tags, timeouts; treat `pending` with backoff.
+   - **LLM / hub** — Local LLM upstream tags, timeouts; treat `pending` with backoff.
    - **Schema / golden** — `npm run sim:lint` / `npm run sim:validate`; [`simulations/SCHEMA.md`](../simulations/SCHEMA.md).
 7. **Record** — Update [`DEV_STATE.md`](../DEV_STATE.md), module `DEV_STATE` if touched, [`work/STATE.md`](../work/STATE.md) when work-scope changes; add `tasks/pending/*.md` for follow-ups. Mark the prompt file **Completion** when criteria are met.
 8. **Improve** — If the agent or stack failed: fix code/client/server, **then** update the prompt or linked doc so the next run encodes the lesson (no “tribal knowledge” only in chat). Idle queue is **not** done — prune → discover → write tasks (`AGENTS.md` → *Empty queue*).

@@ -347,7 +347,11 @@ export function saveNewStep(cwd, sessionId, stepNum, stepData) {
   ensureDir(stepDir);
   if (stepData.files) {
     Object.entries(stepData.files).forEach(([filename, content]) => {
-      fs.writeFileSync(path.join(stepDir, filename), content);
+      const resolvedPath = path.resolve(stepDir, filename);
+      if (path.relative(stepDir, resolvedPath).startsWith('..')) {
+        throw new Error(`Path traversal attempt: ${filename}`);
+      }
+      fs.writeFileSync(resolvedPath, content);
     });
   }
   const messages = Array.isArray(stepData.messages) ? stepData.messages : [];

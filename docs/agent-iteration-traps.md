@@ -32,7 +32,7 @@ Repo norms that override the default “answer once and exit” habit live in [`
 
 | # | Trap | Cursor agent | Client API driver |
 |---|------|----------------|-------------------|
-| 7 | **Stack down / pending promise / restart during inference** | Retry with backoff; run health checks from [`AGENTS.md`](../AGENTS.md) Debugging. If status is `processing`, **confirm** Ollama is actually generating (e.g. `GET http://localhost:11435/api/ps`) **before** `kill-all` / `start-all` — [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) → *Ollama is generating — pause other work*. | Same; log `promiseId` and poll until terminal state or timeout. If Ollama is idle but still `processing`, treat as **stuck** (same doc). |
+| 7 | **Stack down / pending promise / restart during inference** | Retry with backoff; run health checks from [`AGENTS.md`](../AGENTS.md) Debugging. If status is `processing`, **confirm** Local LLM upstream is actually generating (e.g. `GET http://localhost:11435/api/ps`) **before** `kill-all` / `start-all` — [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) → *Local LLM upstream is generating — pause other work*. | Same; log `promiseId` and poll until terminal state or timeout. If Local LLM upstream is idle but still `processing`, treat as **stuck** (same doc). |
 | 8 | **Auth / env** | `JWT_SECRET` (32+ chars), `ENCRYPTION_KEY` exactly 32 chars, `SKIP_AUTH=1` in dev as documented. Fix env, retry—do not stop on first 401/400 without diagnosis. | Surface HTTP status and response body in logs. |
 | 9 | **Started from sims/e2e for schema bug** | For schema/action-key shape failures, start at `tests/direct-tests` first, then escalate (session flow -> sims -> e2e). See [`AGENTS.md`](../AGENTS.md), [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md). | Same escalation order; avoid burning retries on high-latency e2e before direct reproduction. |
 
@@ -54,5 +54,5 @@ Repo norms that override the default “answer once and exit” habit live in [`
 ## Quick links
 
 - [`AGENTS.md`](../AGENTS.md) — empty queue, router two beats, Client API path, checklist  
-- [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) — operator curl walkthrough; *Ollama is generating — pause other work*  
+- [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) — operator curl walkthrough; *Local LLM upstream is generating — pause other work*  
 - [`methodology/tasks.md`](../archive/methodology/tasks.md) — task wording and queue protocol  

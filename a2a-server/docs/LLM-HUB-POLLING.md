@@ -1,6 +1,6 @@
 ## LLM Hub Polling (A2A Server → AI Hub)
 
-This document describes how the server polls the AI Hub (ai-integration / Ollama proxy) for LLM promise completion and which environment variables control the behavior.
+This document describes how the server polls the AI Hub (ai-integration / Local LLM upstream proxy) for LLM promise completion and which environment variables control the behavior.
 
 ### Env variables and precedence
 

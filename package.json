@@ -64,7 +64,6 @@
         "express": "^5.2.1",
         "glob": "^13.0.6",
         "ioredis": "^5.10.1",
-        "langgraph-js": "^1.0.1-alpha.18",
         "libp2p": "^3.1.7",
         "litellm": "^0.12.0",
         "loro-crdt": "^1.10.8",

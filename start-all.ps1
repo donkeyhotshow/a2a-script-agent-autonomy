@@ -17,7 +17,6 @@
 [CmdletBinding()]
 param(
     [switch]$SkipKill,
-    [switch]$SkipOllama,
     [switch]$SkipAiIntegration,
     [switch]$SkipServer,
     [switch]$SkipClientApi,
@@ -29,10 +28,7 @@ param(
 # Configuration
 $Config = @{
     PidFile = '.pids.txt'
-    OllamaModels = 'C:\Users\dev\Desktop\.ollama'
     Services = @(
-        @{ Name = 'Ollama'; Port = 11435; PidKey = 'OLLAMA_PID'; Enabled = -not $SkipOllama;
-           Command = { param($p) & ollama serve }; WorkingDir = $null; HealthUrl = 'http://localhost:11435/api/tags'; LogFile = $null }
         @{ Name = 'ai-integration'; Port = 11434; PidKey = 'AI_INTEGRATION_PID'; Enabled = -not $SkipAiIntegration;
            Command = { param($p) & python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port $p }; WorkingDir = 'ai-integration'; HealthUrl = $null; LogFile = 'logs/ai.log' }
         @{ Name = 'a2a-server'; Port = 3000; PidKey = 'A2A_SERVER_PID'; Enabled = -not $SkipServer;
@@ -133,11 +129,6 @@ function Start-Service {
         return $false
     }
     Write-Log "Port $($Svc.Port) verified free" 'OK'
-
-    # Prepare environment
-    $env:OLLAMA_HOST = "0.0.0.0:$($Svc.Port)"
-    $env:OLLAMA_MODELS = $Config.OllamaModels
-    $env:OLLAMA_ORIGINS = "*"
 
     # Start process
     $originalDir = Get-Location

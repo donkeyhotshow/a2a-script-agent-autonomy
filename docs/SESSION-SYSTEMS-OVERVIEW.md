@@ -23,7 +23,7 @@ A2A Server (3000)
 AI Integration (11434)
   ├─ Promise Routes (async exec)
   ├─ Daemon (background)
-  └─ Ollama (LLM)
+  └─ Local LLM upstream (LLM)
 ```
 
 ---
@@ -410,7 +410,7 @@ storage/sessions/{sessionId}/
 │  ┌────────────────────────────────────────────────────────────┐ │
 │  │ 1. Create promise                                          │ │
 │  │ 2. Daemon processes in background                         │ │
-│  │ 3. Call Ollama for LLM                                    │ │
+│  │ 3. Call Local LLM upstream for LLM                                    │ │
 │  │ 4. Return result (completed/processing/failed)           │ │
 │  └────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────┘

@@ -10,7 +10,7 @@ export const portConfigSchema = z.object({
   clientApiPort: portSchema(3001),
   webPort: portSchema(5173),
   proxyPort: portSchema(11434),
-  ollamaPort: portSchema(11435),
+  localLlmPort: portSchema(11435),
   postgresPort: portSchema(5432),
   redisPort: portSchema(6379),
 });

@@ -1,6 +1,6 @@
 # Proba-servera (`tests/proba-servera`)
 
-**Stack triage — session + sims + proba (Ollama = integration backend only):** [`docs/TRIANGLE-WORKFLOW.md`](../../docs/TRIANGLE-WORKFLOW.md)
+**Stack triage — session + sims + proba (Local LLM upstream = integration backend only):** [`docs/TRIANGLE-WORKFLOW.md`](../../docs/TRIANGLE-WORKFLOW.md)
 
 **Authoring (add/edit cases):** [`AUTHORING.md`](AUTHORING.md)
 

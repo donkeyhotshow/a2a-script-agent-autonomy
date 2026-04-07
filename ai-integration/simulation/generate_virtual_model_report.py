@@ -138,7 +138,7 @@ def main() -> int:
         env = os.environ.copy()
         env["AI_HUB_CONFIG"] = cfg_path
         env["PROXY_PORT"] = str(args.proxy_port)
-        env.setdefault("OLLAMA_HOST", "http://localhost:11435")
+        env.setdefault("LOCAL_LLM_UPSTREAM_URL", "http://localhost:11435")
         env.setdefault("FORWARD_TIMEOUT_SECONDS", "2")
 
         base_url = f"http://localhost:{args.proxy_port}"

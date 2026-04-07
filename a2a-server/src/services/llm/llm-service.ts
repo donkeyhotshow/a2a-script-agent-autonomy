@@ -2,7 +2,7 @@ import { logger } from '../../utils/logger.js';
 import { resolveAiHubBaseUrl } from '../../utils/ai-hub-url.js';
 import { fetchAiHubChatJson } from '../../utils/ai-hub-chat-sync.js';
 
-export type LlmProvider = 'anthropic' | 'openai' | 'gemini' | 'ollama';
+export type LlmProvider = 'anthropic' | 'openai' | 'gemini' | 'local_hub';
 
 export interface LlmMessage {
   role: 'system' | 'user' | 'assistant';
@@ -32,7 +32,7 @@ export class LlmService {
   private defaultModel: string;
 
   constructor() {
-    this.defaultProvider = (process.env.A2A_LLM_PROVIDER as LlmProvider) || 'ollama';
+    this.defaultProvider = (process.env.A2A_LLM_PROVIDER as LlmProvider) || 'local_hub';
     this.defaultModel = process.env.A2A_LLM_MODEL || 'qwen3:8b';
   }
 
@@ -42,19 +42,19 @@ export class LlmService {
 
     logger.info('[LlmService] Routing request', { provider, model });
 
-     switch (provider) {
-       case 'ollama':
-         return this.chatOllama(model, request);
-       case 'openai':
-       case 'gemini':
-       case 'anthropic':
-         throw new Error(`Provider '${provider}' is not yet implemented. Only 'ollama' is currently supported.`);
-       default:
-         throw new Error(`Unsupported provider: ${provider}`);
-     }
+    switch (provider) {
+      case 'local_hub':
+        return this.chatViaHub(model, request);
+      case 'openai':
+      case 'gemini':
+      case 'anthropic':
+        throw new Error(`Provider '${provider}' is not yet implemented. Only 'local_hub' is currently supported.`);
+      default:
+        throw new Error(`Unsupported provider: ${provider}`);
+    }
   }
 
-  private async chatOllama(model: string, request: LlmRequest): Promise<LlmResponse> {
+  private async chatViaHub(model: string, request: LlmRequest): Promise<LlmResponse> {
     const base = resolveAiHubBaseUrl();
     const r = await fetchAiHubChatJson(base, {
       model,

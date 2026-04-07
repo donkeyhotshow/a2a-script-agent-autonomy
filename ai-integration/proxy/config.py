@@ -9,7 +9,7 @@ Usage:
     
     # Access validated settings
     port = settings.proxy_port
-    ollama_host = settings.ollama_host
+    local_llm_upstream_url = settings.local_llm_upstream_url
 """
 
 import logging
@@ -48,16 +48,17 @@ class LegacyConfig:
     PROXY_PORT = int(os.environ.get('PROXY_PORT', '11435'))
     PROXY_HOST = os.environ.get('PROXY_HOST', '0.0.0.0')
     
-    # Ollama Configuration
-    OLLAMA_HOST = os.environ.get('OLLAMA_HOST', 'http://localhost:11434').strip()
-    OLLAMA_MODEL = os.environ.get('OLLAMA_MODEL', 'qwen3:8b')
-    OLLAMA_TIMEOUT = int(os.environ.get('OLLAMA_TIMEOUT', '180'))  # 180s for slow qwen3:8b model
-    OLLAMA_MODELS = os.environ.get('OLLAMA_MODELS', os.path.expanduser('~/.ollama'))
-    OLLAMA_KEEP_ALIVE = os.environ.get('OLLAMA_KEEP_ALIVE', '5m')
-    
-    # Ollama Manager Configuration
-    OLLAMA_IDLE_TIMEOUT = int(os.environ.get('OLLAMA_IDLE_TIMEOUT', '300'))
-    OLLAMA_AUTO_START = os.environ.get('OLLAMA_AUTO_START', 'false').lower() in {'1', 'true', 'yes', 'y', 'on', 't'}
+    # Local LLM upstream (HTTP /api/* on separate port)
+    LOCAL_LLM_UPSTREAM_URL = os.environ.get('LOCAL_LLM_UPSTREAM_URL', 'http://localhost:11435').strip()
+    LOCAL_LLM_MODEL = os.environ.get('LOCAL_LLM_MODEL', 'qwen3:8b')
+    LOCAL_LLM_TIMEOUT = int(os.environ.get('LOCAL_LLM_TIMEOUT', '180'))
+    LOCAL_LLM_MODELS_DIR = os.environ.get(
+        'LOCAL_LLM_MODELS_DIR', os.path.expanduser('~/.a2a/local-llm-models')
+    )
+    LOCAL_LLM_KEEP_ALIVE = os.environ.get('LOCAL_LLM_KEEP_ALIVE', '5m')
+
+    LOCAL_LLM_IDLE_TIMEOUT = int(os.environ.get('LOCAL_LLM_IDLE_TIMEOUT', '300'))
+    LOCAL_LLM_AUTO_START = os.environ.get('LOCAL_LLM_AUTO_START', 'false').lower() in {'1', 'true', 'yes', 'y', 'on', 't'}
     
     # Storage Configuration
     STORAGE_DIR = os.environ.get('STORAGE_DIR', 'proxy_logs')
@@ -72,7 +73,7 @@ class LegacyConfig:
     
     # AI Hub Configuration
     AI_HUB_CONFIG = os.environ.get('AI_HUB_CONFIG', '').strip()
-    OLLAMA_SERVER_HEADER = os.environ.get('OLLAMA_SERVER_HEADER', 'ollama').strip() or 'ollama'
+    LOCAL_LLM_SERVER_HEADER = os.environ.get('LOCAL_LLM_SERVER_HEADER', 'compat-llm').strip() or 'compat-llm'
     
     # Simulation Configuration
     SIMULATION_ENABLED = os.environ.get('SIMULATION_ENABLED', 'false').lower() == 'true'
@@ -149,31 +150,28 @@ if HAS_PYDANTIC:
         """Host binding for the proxy server."""
         
         # ===========================================
-        # Ollama Configuration
+        # Local LLM upstream
         # ===========================================
-        ollama_host: str = 'http://localhost:11435'
-        """Host:port of the actual Ollama instance."""
-        
-        ollama_model: str = 'qwen3:8b'
-        """Default Ollama model to use."""
-        
-        ollama_timeout: int = 180
-        """Timeout for Ollama requests in seconds. Default 180s for slow qwen3:8b model responses."""
-        
-        ollama_models: str = '~/.ollama'
-        """Path to Ollama models directory."""
-        
-        ollama_keep_alive: str = '5m'
+        local_llm_upstream_url: str = 'http://localhost:11435'
+        """Base URL of the local HTTP LLM server (separate from this proxy port)."""
+
+        local_llm_model: str = 'qwen3:8b'
+        """Default model id for the local upstream."""
+
+        local_llm_timeout: int = 180
+        """Timeout for upstream requests in seconds."""
+
+        local_llm_models_dir: str = '~/.a2a/local-llm-models'
+        """Directory for upstream model weights/cache (passed to child process if set)."""
+
+        local_llm_keep_alive: str = '5m'
         """keep_alive duration for models."""
-        
-        # ===========================================
-        # Ollama Manager Configuration
-        # ===========================================
-        ollama_idle_timeout: int = 300
-        """Seconds until Ollama is stopped when idle."""
-        
-        ollama_auto_start: bool = True
-        """Auto-start Ollama on demand."""
+
+        local_llm_idle_timeout: int = 300
+        """Seconds until upstream is stopped when idle (manager)."""
+
+        local_llm_auto_start: bool = True
+        """Auto-start upstream when enabled and command is configured."""
         
         # ===========================================
         # Storage Configuration
@@ -202,8 +200,8 @@ if HAS_PYDANTIC:
         ai_hub_config: Optional[str] = None
         """Path to JSON config with rules/mapping/simulation settings."""
         
-        ollama_server_header: str = 'ollama'
-        """Value for Ollama server header."""
+        local_llm_server_header: str = 'compat-llm'
+        """Value for upstream identification header."""
         
         # ===========================================
         # Simulation Configuration
@@ -266,7 +264,7 @@ if HAS_PYDANTIC:
         """Path to providers configuration JSON file."""
         
         default_provider: str = 'z_ai'
-        """Default LLM provider to use (Z.AI by default, Ollama stays as optional fallback)."""
+        """Default LLM provider to use (Z.AI by default; local compat optional)."""
         
         enable_fallback: bool = True
         """Enable fallback chain between providers."""
@@ -323,18 +321,16 @@ if HAS_PYDANTIC:
         # Validators
         # ===========================================
         
-        @field_validator('ollama_models', mode='before')
+        @field_validator('local_llm_models_dir', mode='before')
         @classmethod
-        def expand_ollama_models_path(cls, v: str) -> str:
-            """Expand ~ to home directory in ollama_models path."""
+        def expand_local_llm_models_dir(cls, v: str) -> str:
             if v and v.startswith('~'):
                 return os.path.expanduser(v)
             return v
 
-        @field_validator('ollama_host', mode='before')
+        @field_validator('local_llm_upstream_url', mode='before')
         @classmethod
-        def strip_ollama_host(cls, v: str) -> str:
-            """Remove accidental whitespace around the Ollama host."""
+        def strip_local_llm_upstream_url(cls, v: str) -> str:
             if isinstance(v, str):
                 return v.strip()
             return v
@@ -356,7 +352,7 @@ if HAS_PYDANTIC:
                 return v
             return 30
         
-        @field_validator('proxy_port', 'ollama_timeout', 'ollama_idle_timeout',
+        @field_validator('proxy_port', 'local_llm_timeout', 'local_llm_idle_timeout',
                         'promise_ttl_seconds', 'promise_max_workers',
                         'health_check_interval', 'health_check_timeout')
         @classmethod
@@ -388,7 +384,7 @@ if HAS_PYDANTIC:
             """Convert log level to uppercase."""
             return v.upper() if isinstance(v, str) else v
         
-        @field_validator('ollama_auto_start', 'simulation_enabled', mode='before')
+        @field_validator('local_llm_auto_start', 'simulation_enabled', mode='before')
         @classmethod
         def parse_boolean(cls, v) -> bool:
             """Parse various boolean string representations."""
@@ -429,13 +425,13 @@ if HAS_PYDANTIC:
     # Export legacy-style constants for backward compatibility
     PROXY_PORT = settings.proxy_port
     PROXY_HOST = settings.proxy_host
-    OLLAMA_HOST = settings.ollama_host
-    OLLAMA_MODEL = settings.ollama_model
-    OLLAMA_TIMEOUT = settings.ollama_timeout
-    OLLAMA_MODELS = settings.ollama_models
-    OLLAMA_KEEP_ALIVE = settings.ollama_keep_alive
-    OLLAMA_IDLE_TIMEOUT = settings.ollama_idle_timeout
-    OLLAMA_AUTO_START = settings.ollama_auto_start
+    LOCAL_LLM_UPSTREAM_URL = settings.local_llm_upstream_url
+    LOCAL_LLM_MODEL = settings.local_llm_model
+    LOCAL_LLM_TIMEOUT = settings.local_llm_timeout
+    LOCAL_LLM_MODELS_DIR = settings.local_llm_models_dir
+    LOCAL_LLM_KEEP_ALIVE = settings.local_llm_keep_alive
+    LOCAL_LLM_IDLE_TIMEOUT = settings.local_llm_idle_timeout
+    LOCAL_LLM_AUTO_START = settings.local_llm_auto_start
     STORAGE_DIR = settings.storage_dir
     PROMISES_DIR = settings.promises_dir
     FORWARD_TIMEOUT_SECONDS = settings.forward_timeout_seconds
@@ -443,7 +439,7 @@ if HAS_PYDANTIC:
     PROMISE_TTL_SECONDS = settings.promise_ttl_seconds
     PROMISE_MAX_WORKERS = settings.promise_max_workers
     AI_HUB_CONFIG = settings.ai_hub_config or ''
-    OLLAMA_SERVER_HEADER = settings.ollama_server_header
+    LOCAL_LLM_SERVER_HEADER = settings.local_llm_server_header
     SIMULATION_ENABLED = settings.simulation_enabled
     SIMULATION_DATA_PATH = settings.simulation_data_path
     HEALTH_CHECK_INTERVAL = settings.health_check_interval
@@ -486,13 +482,13 @@ else:
     legacy = LegacyConfig()
     PROXY_PORT = legacy.PROXY_PORT
     PROXY_HOST = legacy.PROXY_HOST
-    OLLAMA_HOST = legacy.OLLAMA_HOST
-    OLLAMA_MODEL = legacy.OLLAMA_MODEL
-    OLLAMA_TIMEOUT = legacy.OLLAMA_TIMEOUT
-    OLLAMA_MODELS = legacy.OLLAMA_MODELS
-    OLLAMA_KEEP_ALIVE = legacy.OLLAMA_KEEP_ALIVE
-    OLLAMA_IDLE_TIMEOUT = legacy.OLLAMA_IDLE_TIMEOUT
-    OLLAMA_AUTO_START = legacy.OLLAMA_AUTO_START
+    LOCAL_LLM_UPSTREAM_URL = legacy.LOCAL_LLM_UPSTREAM_URL
+    LOCAL_LLM_MODEL = legacy.LOCAL_LLM_MODEL
+    LOCAL_LLM_TIMEOUT = legacy.LOCAL_LLM_TIMEOUT
+    LOCAL_LLM_MODELS_DIR = legacy.LOCAL_LLM_MODELS_DIR
+    LOCAL_LLM_KEEP_ALIVE = legacy.LOCAL_LLM_KEEP_ALIVE
+    LOCAL_LLM_IDLE_TIMEOUT = legacy.LOCAL_LLM_IDLE_TIMEOUT
+    LOCAL_LLM_AUTO_START = legacy.LOCAL_LLM_AUTO_START
     STORAGE_DIR = legacy.STORAGE_DIR
     PROMISES_DIR = legacy.PROMISES_DIR
     FORWARD_TIMEOUT_SECONDS = legacy.FORWARD_TIMEOUT_SECONDS
@@ -500,7 +496,7 @@ else:
     PROMISE_TTL_SECONDS = legacy.PROMISE_TTL_SECONDS
     PROMISE_MAX_WORKERS = legacy.PROMISE_MAX_WORKERS
     AI_HUB_CONFIG = legacy.AI_HUB_CONFIG
-    OLLAMA_SERVER_HEADER = legacy.OLLAMA_SERVER_HEADER
+    LOCAL_LLM_SERVER_HEADER = legacy.LOCAL_LLM_SERVER_HEADER
     SIMULATION_ENABLED = legacy.SIMULATION_ENABLED
     SIMULATION_DATA_PATH = legacy.SIMULATION_DATA_PATH
     HEALTH_CHECK_INTERVAL = legacy.HEALTH_CHECK_INTERVAL
@@ -547,9 +543,9 @@ if 'PROMISE_DELAY_BEFORE_EXECUTE' not in dir():
     PROMISE_DELAY_BEFORE_EXECUTE = 2.0
 
 
-def ollama_upstream_base() -> str:
-    """Return OLLAMA_HOST with no trailing slash (for appending /path)."""
-    h = OLLAMA_HOST
+def local_llm_upstream_base() -> str:
+    """Return LOCAL_LLM_UPSTREAM_URL with no trailing slash (for appending /path)."""
+    h = LOCAL_LLM_UPSTREAM_URL
     return (h.rstrip("/") or h) if h else h
 
 
@@ -586,9 +582,9 @@ def print_config() -> None:
     print()
     print(f"  Proxy Port:           {PROXY_PORT}")
     print(f"  Proxy Host:           {PROXY_HOST}")
-    print(f"  Ollama Host:          {OLLAMA_HOST}")
-    print(f"  Ollama Model:         {OLLAMA_MODEL}")
-    print(f"  Ollama Timeout:       {OLLAMA_TIMEOUT}s")
+    print(f"  Local LLM upstream:   {LOCAL_LLM_UPSTREAM_URL}")
+    print(f"  Local LLM model:      {LOCAL_LLM_MODEL}")
+    print(f"  Local LLM timeout:    {LOCAL_LLM_TIMEOUT}s")
     print(f"  Storage Directory:    {STORAGE_DIR}")
     print(f"  Promises Directory:   {PROMISES_DIR}")
     print(f"  Promise TTL:          {PROMISE_TTL_SECONDS}s")

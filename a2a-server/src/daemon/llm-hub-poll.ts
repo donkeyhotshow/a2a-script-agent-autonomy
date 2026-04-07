@@ -1,5 +1,5 @@
 /**
- * Background polling: A2A Server → AI Hub (Ollama proxy).
+ * Background polling: A2A Server → AI Hub (LLM proxy).
  * Waits until ai-integration reports the LLM promise ready, then fetches response body.
  */
 
@@ -9,25 +9,25 @@ import {resolveAiHubBaseUrl} from '../utils/ai-hub-url.js';
 import {AI_HUB_JSON_HEADERS, type AiHubChatRequestBody} from '../utils/ai-hub-chat-sync.js';
 import {tryParseJsonFromLlmText} from '../utils/strip-markdown-json-fence.js';
 
-/** Ollama /api/chat uses `message.content`; /api/generate uses top-level `response`. */
-type OllamaChatShape = {message?: {content?: string}; response?: string};
+/** Hub /api/chat uses `message.content`; /api/generate uses top-level `response`. */
+type HubCompatChatShape = {message?: {content?: string}; response?: string};
 
-/** Ollama /api/chat JSON; models may wrap it in ```json ... ``` despite JSON content-type. */
-export function parseOllamaChatResponseBody(raw: string): OllamaChatShape | null {
+/** Hub /api/chat JSON; models may wrap it in ```json ... ``` despite JSON content-type. */
+export function parseHubCompatChatResponseBody(raw: string): HubCompatChatShape | null {
     const trimmed = raw.trim();
     const parsed = tryParseJsonFromLlmText(trimmed);
     if (parsed !== null && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        return parsed as OllamaChatShape;
+        return parsed as HubCompatChatShape;
     }
 
-    logger.debug('[llm-hub-poll] Ollama chat body is not parseable JSON', {
+    logger.debug('[llm-hub-poll] hub compat chat body is not parseable JSON', {
         length: trimmed.length,
         preview: trimmed.slice(0, 160).replace(/\s+/g, ' '),
     });
     return null;
 }
 
-function extractOllamaText(chat: OllamaChatShape | null): string | null {
+function extractHubCompatChatText(chat: HubCompatChatShape | null): string | null {
     if (!chat) return null;
     const fromChat = chat.message?.content;
     if (typeof fromChat === 'string' && fromChat.trim() !== '') return fromChat;
@@ -38,17 +38,17 @@ function extractOllamaText(chat: OllamaChatShape | null): string | null {
 
 /**
  * Extract assistant text from hub `/promise/:id/response` body.
- * Hub may store Ollama /chat, /generate, or provider-native / A2A-shaped JSON — only the first two
- * match {@link parseOllamaChatResponseBody}. Returning null for a non-empty done body caused
+ * Hub may store /chat, /generate, or provider-native / A2A-shaped JSON — only the first two
+ * match {@link parseHubCompatChatResponseBody}. Returning null for a non-empty done body caused
  * {@link resolveLlmPromiseRecovery} to signal resubmit and the dialog processor to POST a new
  * `/api/chat`, spamming the proxy while the original promise had already completed.
  */
 export function extractLlmTextFromHubResponseBody(raw: string): string | null {
     const trimmed = raw.trim();
     if (!trimmed) return null;
-    const chatData = parseOllamaChatResponseBody(raw);
-    const fromOllama = extractOllamaText(chatData);
-    if (fromOllama !== null && fromOllama !== '') return fromOllama;
+    const chatData = parseHubCompatChatResponseBody(raw);
+    const fromHubCompat = extractHubCompatChatText(chatData);
+    if (fromHubCompat !== null && fromHubCompat !== '') return fromHubCompat;
     return trimmed;
 }
 

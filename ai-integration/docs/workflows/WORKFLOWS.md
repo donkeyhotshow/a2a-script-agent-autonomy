@@ -92,7 +92,7 @@ Requests can use model aliases that are resolved to actual models.
 ```
 Client: POST /api/chat {"model": "rnj-1"}
    → Resolver: "rnj-1" → "qwen3:8b"
-   → Proxy forwards to Ollama with resolved model
+   → Proxy forwards to Local LLM upstream with resolved model
 ```
 
 ---
@@ -152,7 +152,7 @@ If primary provider fails, system can fall back to backup.
 ```json
 {
   "providers": {
-    "ollama": {
+    "compat_llm": {
       "enabled": true,
       "priority": 1
     },
@@ -171,7 +171,7 @@ If primary provider fails, system can fall back to backup.
 curl http://localhost:11434/v1/providers
 
 # Enable/disable provider
-curl -X POST http://localhost:11434/v1/providers/ollama/enable
+curl -X POST http://localhost:11434/v1/providers/compat_llm/enable
 curl -X POST http://localhost:11434/v1/providers/openai/disable
 ```
 
@@ -194,7 +194,7 @@ AI_HUB_CONFIG=docs/ai-hub.config.example.json
 Client: POST /api/chat {"prompt": "..."}
    → AI Hub Config checks simulation rules
    → If confidence >= 0.75 → simulate response
-   → Else → forward to real Ollama
+   → Else → forward to real Local LLM upstream
 ```
 
 ### Testing
@@ -202,7 +202,7 @@ Client: POST /api/chat {"prompt": "..."}
 # Get simulation status
 curl http://localhost:11434/simulation/status
 
-# Force real Ollama
+# Force real Local LLM upstream
 curl -X POST http://localhost:11434/simulation/force-real
 ```
 
@@ -233,30 +233,30 @@ curl -X POST http://localhost:11434/v1/chat/completions \
 
 ---
 
-## 9. Ollama Management Flow
+## 9. Local LLM upstream Management Flow
 
 ### Description
-Proxy can auto-start/stop Ollama based on usage.
+Proxy can auto-start/stop Local LLM upstream based on usage.
 
 ### Configuration
 ```bash
-OLLAMA_AUTO_START=true
-OLLAMA_IDLE_TIMEOUT=300
+LOCAL_LLM_AUTO_START=true
+LOCAL_LLM_IDLE_TIMEOUT=300
 ```
 
 ### Manual Control
 ```bash
 # Get status
-curl http://localhost:11434/ollama/status
+curl http://localhost:11434/compat_llm/status
 
 # Start
-curl http://localhost:11434/ollama/start
+curl http://localhost:11434/compat_llm/start
 
 # Stop
-curl -X POST http://localhost:11434/ollama/stop
+curl -X POST http://localhost:11434/compat_llm/stop
 
 # Restart
-curl -X POST http://localhost:11434/ollama/restart
+curl -X POST http://localhost:11434/compat_llm/restart
 ```
 
 ---
@@ -276,7 +276,7 @@ curl http://localhost:11434/health
 ```
 
 ### Available Services
-- `ollama` - LLM server (port 11435)
+- `compat_llm` - LLM server (port 11435)
 - `ai-integration` - Proxy (port 11434)
 - `ai-integration-dev` - Dev mode (port 11438)
 

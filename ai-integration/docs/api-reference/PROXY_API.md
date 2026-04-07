@@ -2,13 +2,13 @@
 
 ## Overview
 
-This document provides comprehensive API reference for the AI Integration proxy module. The proxy acts as an intermediary between clients and LLM providers (Ollama, OpenAI, HuggingFace).
+This document provides comprehensive API reference for the AI Integration proxy module. The proxy acts as an intermediary between clients and LLM providers (Local LLM upstream, OpenAI, HuggingFace).
 
 **Auth forwarding policy (mandatory):**
 
 - Clients **MUST NOT** forward their own `Authorization` / `API-Key` / similar provider credentials through this proxy.
 - The proxy is the **only** place that injects upstream auth headers (for example, `Authorization: Bearer <key>` when calling Z.AI, using the **`api_keys`** pool in **`config/providers.json`** — see [`docs/configuration/PROVIDERS_AND_API_KEYS.md`](../configuration/PROVIDERS_AND_API_KEYS.md)).
-- Any incoming auth headers from the client are ignored for upstream provider calls; do not rely on “header passthrough” from the app or a2a-server to Z.AI/Ollama.
+- Any incoming auth headers from the client are ignored for upstream provider calls; do not rely on “header passthrough” from the app or a2a-server to Z.AI/Local LLM upstream.
 
 ## Base URL
 
@@ -28,21 +28,21 @@ Liveness probe - basic health check.
 {
   "status": "running",
   "proxy_port": 11434,
-  "ollama_host": "http://localhost:11435",
-  "ollama_available": true
+  "local_llm_upstream_host": "http://localhost:11435",
+  "local_llm_upstream_available": true
 }
 ```
 
-#### GET /health/ollama
-Deep health check - Ollama availability.
+#### GET /health/compat_llm
+Deep health check - Local LLM upstream availability.
 
 **Response:**
 ```json
 {
   "status": "healthy",
-  "ollama_available": true,
-  "ollama_url": "http://localhost:11435",
-  "ollama_pid": 12345,
+  "local_llm_upstream_available": true,
+  "local_llm_upstream_url": "http://localhost:11435",
+  "local_llm_upstream_pid": 12345,
   "idle_seconds": 120
 }
 ```
@@ -54,29 +54,29 @@ Readiness probe - checks if proxy can handle requests.
 ```json
 {
   "status": "ready",
-  "ollama_available": true,
+  "local_llm_upstream_available": true,
   "cache_status": "active"
 }
 ```
 
 ---
 
-### Ollama-compatible discovery
+### Local LLM upstream-compatible discovery
 
 #### GET /api/tags
 
 Combined model list for UIs and the a2a-server stack.
 
-**Behavior:** Merges (in order) models from enabled **non-Ollama** providers in `config/providers.json` (e.g. Z.AI), then live models from `OLLAMA_HOST/api/tags` when reachable, then `virtual_models` from the AI Hub JSON config.
+**Behavior:** Merges (in order) models from enabled **non-Local LLM upstream** providers in `config/providers.json` (e.g. Z.AI), then live models from `LOCAL_LLM_UPSTREAM_URL/api/tags` when reachable, then `virtual_models` from the AI Hub JSON config.
 
-**Response shape:** Ollama-style `{ "models": [ ... ] }`. Each element includes a string **`provider`** identifying the backend (`z_ai`, `ollama`, `virtual`, …). Non-Ollama rows may include **`api_key_id`** (first key id for that provider in `config/providers.json` → `api_keys`). Clients should send `model` on `POST /api/chat` / `POST /api/generate` with one of the listed names; the proxy routes to the correct provider.
+**Response shape:** Local LLM upstream-style `{ "models": [ ... ] }`. Each element includes a string **`provider`** identifying the backend (`z_ai`, `compat_llm`, `virtual`, …). Non-Local LLM upstream rows may include **`api_key_id`** (first key id for that provider in `config/providers.json` → `api_keys`). Clients should send `model` on `POST /api/chat` / `POST /api/generate` with one of the listed names; the proxy routes to the correct provider.
 
 ---
 
-### Ollama Management
+### Local LLM upstream Management
 
-#### GET /ollama/status
-Get Ollama status.
+#### GET /compat_llm/status
+Get Local LLM upstream status.
 
 **Response:**
 ```json
@@ -87,14 +87,14 @@ Get Ollama status.
 }
 ```
 
-#### GET /ollama/start
-Start Ollama instance.
+#### GET /compat_llm/start
+Start Local LLM upstream instance.
 
-#### POST /ollama/stop
-Stop Ollama instance.
+#### POST /compat_llm/stop
+Stop Local LLM upstream instance.
 
-#### POST /ollama/restart
-Restart Ollama instance.
+#### POST /compat_llm/restart
+Restart Local LLM upstream instance.
 
 ---
 
@@ -158,10 +158,10 @@ Get original request body (method, path, headers, body).
 Get final response (stored assistant-oriented body — see `body.md` pipeline).
 
 #### GET /promise/{promise_id}/body_raw
-When the hub persisted `body_raw.json` on success, returns that **full provider JSON** (OpenAI/Ollama-style envelope). Used by `a2a-server` `fetchAiHubChatJson` / `pollReadyThenFetch` with `responseMode: raw_json`. **404** if no raw file (older promises or non-JSON upstream).
+When the hub persisted `body_raw.json` on success, returns that **full provider JSON** (OpenAI/Local LLM upstream-style envelope). Used by `a2a-server` `fetchAiHubChatJson` / `pollReadyThenFetch` with `responseMode: raw_json`. **404** if no raw file (older promises or non-JSON upstream).
 
 #### POST /promise/{promise_id}/execute
-Execute promise against Ollama (non-blocking, returns 202).
+Execute promise against Local LLM upstream (non-blocking, returns 202).
 
 #### POST /promise/{promise_id}/answer
 Manually set answer for promise.
@@ -232,7 +232,7 @@ Prometheus-compatible metrics.
 | `ai_proxy_requests_total` | Counter | Total requests |
 | `ai_proxy_request_duration_seconds` | Histogram | Request duration |
 | `ai_proxy_errors_total` | Counter | Total errors |
-| `ollama_model_loaded` | Gauge | Model loaded status |
+| `local_llm_model_loaded` | Gauge | Model loaded status |
 | `ai_proxy_uptime_seconds` | Gauge | Uptime in seconds |
 
 ---
@@ -276,10 +276,10 @@ Disable a provider.
 ### Native API
 
 #### POST /api/v1/generate
-Ollama generate endpoint.
+Local LLM upstream generate endpoint.
 
 #### POST /api/v1/embed
-Ollama embed endpoint.
+Local LLM upstream embed endpoint.
 
 ---
 

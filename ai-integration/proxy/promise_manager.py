@@ -205,7 +205,7 @@ def handle_promise_mode(
                     trace_dir,
                     provider_name=routed_provider_name,
                     provider_type=routed_provider_type,
-                    key_failover=routed_provider_type != 'ollama',
+                    key_failover=routed_provider_type != 'compat_llm',
                 )
         except Exception as e:
             logger.warning("Failed to save promise trace: %s", e, exc_info=True)

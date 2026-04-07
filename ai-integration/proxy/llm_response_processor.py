@@ -10,7 +10,7 @@ from .promise_utils import _safe_json_loads
 
 def _provider_error_from_json_body(body: bytes) -> Optional[str]:
     """
-    Detect OpenAI/Z.AI/Ollama-style JSON error envelopes returned with HTTP 2xx.
+    Detect OpenAI/Z.AI/Local LLM upstream-style JSON error envelopes returned with HTTP 2xx.
     Some providers use wrong or missing Content-Type; we sniff JSON objects with an `error` key.
     """
     if not body:

@@ -1,6 +1,6 @@
 """
 Promise Execution Module
-Contains logic for executing promises against Ollama in background threads
+Contains logic for executing promises against Local LLM upstream in background threads
 """
 from __future__ import annotations
 

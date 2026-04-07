@@ -17,8 +17,8 @@ export interface PortConfig {
     webPort: number;
     /** AI Proxy port (Python Flask) */
     proxyPort: number;
-    /** Ollama Docker port */
-    ollamaPort: number;
+    /** Local LLM upstream Docker port */
+    localLlmPort: number;
     /** PostgreSQL port */
     postgresPort: number;
     /** Redis port */
@@ -67,24 +67,24 @@ export interface DatabaseConfig {
 // AI/LLM Configuration
 // ===========================================
 export interface AIConfig {
-    /** Ollama host URL */
-    ollamaHost: string;
-    /** Default Ollama model */
-    ollamaModel: string;
-    /** Ollama request timeout in seconds */
-    ollamaTimeout: number;
-    /** Ollama models directory path */
-    ollamaModels: string;
-    /** Ollama keep-alive duration */
-    ollamaKeepAlive: string;
-    /** Ollama idle timeout in seconds */
-    ollamaIdleTimeout: number;
-    /** Auto-start Ollama on demand */
-    ollamaAutoStart: boolean;
-    /** LLM provider (ollama, openai) */
-    llmProvider: 'ollama' | 'openai' | '';
-    /** Use Ollama flag */
-    useOllama: boolean;
+    /** Local LLM upstream host URL */
+    localLlmUpstreamUrl: string;
+    /** Default Local LLM upstream model */
+    localLlmModel: string;
+    /** Local LLM upstream request timeout in seconds */
+    localLlmTimeout: number;
+    /** Local LLM upstream models directory path */
+    localLlmModels: string;
+    /** Local LLM upstream keep-alive duration */
+    localLlmKeepAlive: string;
+    /** Local LLM upstream idle timeout in seconds */
+    localLlmIdleTimeout: number;
+    /** Auto-start Local LLM upstream on demand */
+    localLlmAutoStart: boolean;
+    /** LLM provider (compat_llm, openai) */
+    llmProvider: 'compat_llm' | 'openai' | '';
+    /** Use Local LLM upstream flag */
+    useLocalLlm: boolean;
     /** AI Hub/Proxy URL */
     aiHubUrl: string;
     /** Polling interval for async operations (ms) */
@@ -147,8 +147,8 @@ export interface ProxyConfig {
     promiseMaxWorkers: number;
     /** Path to AI Hub JSON config */
     aiHubConfig?: string;
-    /** Ollama server header value */
-    ollamaServerHeader: string;
+    /** Local LLM upstream server header value */
+    localLlmServerHeader: string;
     /** Enable simulation mode */
     simulationEnabled: boolean;
     /** Simulation data path */

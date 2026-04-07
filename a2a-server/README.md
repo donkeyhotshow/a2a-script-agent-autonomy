@@ -59,7 +59,7 @@ Key vars used most often:
 - `SKIP_AUTH`
 - `AI_HUB_URL`
 - `LLM_PROVIDER`
-- `OLLAMA_MODEL`
+- `LOCAL_LLM_MODEL`
 - `A2A_MAX_INTERRUPT_TURNS`
 - `REQUEST_RETRY_DELAY_MS` — dialog/LLM failures: backoff before same `promiseId` is processed again (default 15000)
 - `REQUEST_MAX_RETRIES` — cap on automatic re-queues per `promiseId` (default 15)

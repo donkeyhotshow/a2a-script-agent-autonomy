@@ -114,12 +114,10 @@ cd /d "%~dp0"
 echo === start-all.bat : Standardized service startup ===
 
 set PID_FILE=.pids.txt
-set OLLAMA_PORT=11435
 set PROXY_PORT=11434
 set SERVER_PORT=3000
 set CLIENT_API_PORT=3001
 set WEB_PORT=5173
-set OLLAMA_MODELS=C:\Users\dev\Desktop\.ollama
 set EXIT_CODE=0
 
 REM Logs are overwritten on each start (fixed names in project logs folders)
@@ -128,7 +126,7 @@ REM ==========================================
 REM Step 1: Kill existing processes first
 REM ==========================================
 echo.
-echo [Step 1/8] Cleaning environment with kill-all.bat...
+echo [Step 1/7] Cleaning environment with kill-all.bat...
 call kill-all.bat
 if errorlevel 1 (
     echo [WARN] kill-all.bat reported issues, continuing with caution...
@@ -139,9 +137,9 @@ REM ==========================================
 REM Step 2: Verify all ports are free
 REM ==========================================
 echo.
-echo [Step 2/8] Verifying all ports are free...
+echo [Step 2/7] Verifying all ports are free...
 set PORTS_OK=1
-for %%p in (%OLLAMA_PORT% %PROXY_PORT% %SERVER_PORT% %CLIENT_API_PORT% %WEB_PORT%) do (
+for %%p in (%PROXY_PORT% %SERVER_PORT% %CLIENT_API_PORT% %WEB_PORT%) do (
     call :verify_port_free %%p 10
     if errorlevel 1 (
         echo   [ERROR] Port %%p still occupied
@@ -159,52 +157,43 @@ REM ==========================================
 REM Step 3: Clear PID file
 REM ==========================================
 echo.
-echo [Step 3/8] Clearing PID file...
+echo [Step 3/7] Clearing PID file...
 if exist %PID_FILE% del %PID_FILE%
 echo. > %PID_FILE%
 echo [OK] %PID_FILE% reset
 
 REM ==========================================
-REM Step 4: Start Ollama
+REM Step 4: Start ai-integration
 REM ==========================================
 echo.
-echo [Step 4/8] Starting Ollama on port %OLLAMA_PORT%...
-call scripts\start-ollama.bat
-if errorlevel 1 set EXIT_CODE=1
-:ollama_done
-
-REM ==========================================
-REM Step 5: Start ai-integration
-REM ==========================================
-echo.
-echo [Step 5/8] Starting ai-integration on port %PROXY_PORT%...
+echo [Step 4/7] Starting ai-integration on port %PROXY_PORT%...
 call scripts\start-ai-integration.bat
 if errorlevel 1 set EXIT_CODE=1
 :ai_done
 
 REM ==========================================
-REM Step 6: Start a2a-server
+REM Step 5: Start a2a-server
 REM ==========================================
 echo.
-echo [Step 6/8] Starting a2a-server on port %SERVER_PORT%...
+echo [Step 5/7] Starting a2a-server on port %SERVER_PORT%...
 call scripts\start-a2a-server.bat
 if errorlevel 1 set EXIT_CODE=1
 :server_done
 
 REM ==========================================
-REM Step 7: Start client-api
+REM Step 6: Start client-api
 REM ==========================================
 echo.
-echo [Step 7/8] Starting client-api on port %CLIENT_API_PORT%...
+echo [Step 6/7] Starting client-api on port %CLIENT_API_PORT%...
 call scripts\start-client-api.bat
 if errorlevel 1 set EXIT_CODE=1
 :client_api_done
 
 REM ==========================================
-REM Step 8: Start web-ui
+REM Step 7: Start web-ui
 REM ==========================================
 echo.
-echo [Step 8/8] Starting web-ui on port %WEB_PORT%...
+echo [Step 7/7] Starting web-ui on port %WEB_PORT%...
 call scripts\start-web-ui.bat
 if errorlevel 1 set EXIT_CODE=1
 :web_ui_done
@@ -215,8 +204,6 @@ REM ==========================================
 echo.
 echo [Final Check] Verifying all PIDs captured...
 set VERIFY_FAIL=0
-call :verify_and_capture_pid %OLLAMA_PORT% OLLAMA_PID "Ollama"
-if errorlevel 1 set VERIFY_FAIL=1
 call :verify_and_capture_pid %PROXY_PORT% AI_INTEGRATION_PID "ai-integration"
 if errorlevel 1 set VERIFY_FAIL=1
 call :verify_and_capture_pid %SERVER_PORT% A2A_SERVER_PID "a2a-server"
@@ -236,7 +223,6 @@ echo   a2a-server:     %CD%\a2a-server\logs\server.log
 echo   web-ui:         %CD%\a2a-client\logs\web-ui.log
 echo   client-api:     %CD%\a2a-client\logs\client-api.log
 echo   ai-integration: console window titled "ai-integration" (no default file log^)
-echo   Ollama:         console from ollama serve (or check port %OLLAMA_PORT%^)
 echo.
 
 if %EXIT_CODE% neq 0 (
@@ -253,7 +239,6 @@ if %EXIT_CODE% neq 0 (
 echo === All services started successfully ===
 echo.
 echo Services:
-echo   - Ollama:       http://localhost:%OLLAMA_PORT%
 echo   - ai-integration: http://localhost:%PROXY_PORT% (API proxy)
 echo   - a2a-server:   http://localhost:%SERVER_PORT%
 echo   - client-api:   http://localhost:%CLIENT_API_PORT%

@@ -1,6 +1,6 @@
 /**
  * @a2a/embedding - Embedding client for semantic search.
- * Supports Ollama, OpenAI, Cohere, Voyage AI, mock.
+ * Supports local HTTP embeddings, OpenAI, Cohere, Voyage AI, mock.
  */
 
 import crypto from 'crypto';
@@ -8,7 +8,7 @@ import fs from 'fs/promises';
 import path from 'path';
 
 export const PROVIDERS = {
-    OLLAMA: 'ollama',
+    LOCAL_HUB: 'local_hub',
     OPENAI: 'openai',
     COHERE: 'cohere',
     VOYAGE: 'voyage',
@@ -34,7 +34,7 @@ export const DIMENSIONS: Record<string, number> = {
 };
 
 export const DEFAULT_MODELS: Record<string, string> = {
-    ollama: 'nomic-embed-text',
+    local_hub: 'nomic-embed-text',
     openai: 'text-embedding-3-small',
     cohere: 'embed-multilingual-v3.0',
     voyage: 'voyage-code-2',
@@ -74,9 +74,9 @@ export class EmbeddingClient {
     timeout: number;
 
     constructor(config: EmbeddingConfig = {}) {
-        this.provider = config.provider ?? PROVIDERS.OLLAMA;
+        this.provider = config.provider ?? PROVIDERS.LOCAL_HUB;
         this.apiKey = config.apiKey ?? process.env.EMBEDDING_API_KEY;
-        this.baseUrl = config.baseUrl ?? (this.provider === PROVIDERS.OLLAMA ? (process.env.OLLAMA_BASE_URL ?? 'http://localhost:11435') : undefined);
+        this.baseUrl = config.baseUrl ?? (this.provider === PROVIDERS.LOCAL_HUB ? (process.env.LOCAL_LLM_EMBEDDING_BASE_URL ?? 'http://localhost:11435') : undefined);
         const resolvedModel = config.model ?? DEFAULT_MODELS[this.provider];
         if (!resolvedModel || !String(resolvedModel).trim()) {
             throw new Error(
@@ -138,8 +138,8 @@ export class EmbeddingClient {
 
         let embedding: number[];
         switch (this.provider) {
-            case PROVIDERS.OLLAMA:
-                embedding = await this._embedOllama(text);
+            case PROVIDERS.LOCAL_HUB:
+                embedding = await this._embedLocalHub(text);
                 break;
             case PROVIDERS.OPENAI:
                 embedding = await this._embedOpenAI(text);
@@ -180,8 +180,8 @@ export class EmbeddingClient {
         if (toEmbed.length > 0 && this.provider !== PROVIDERS.MOCK) {
             let embeddings: number[][];
             switch (this.provider) {
-                case PROVIDERS.OLLAMA:
-                    embeddings = await this._embedBatchOllama(toEmbed.map((t) => t.text));
+                case PROVIDERS.LOCAL_HUB:
+                    embeddings = await this._embedBatchLocalHub(toEmbed.map((t) => t.text));
                     break;
                 case PROVIDERS.OPENAI:
                     embeddings = await this._embedBatchOpenAI(toEmbed.map((t) => t.text));
@@ -216,25 +216,25 @@ export class EmbeddingClient {
         return results as number[][];
     }
 
-    private getOllamaBaseUrl(): string {
-        return this.baseUrl ?? process.env.OLLAMA_BASE_URL ?? 'http://localhost:11435';
+    private getLocalHubEmbedBaseUrl(): string {
+        return this.baseUrl ?? process.env.LOCAL_LLM_EMBEDDING_BASE_URL ?? 'http://localhost:11435';
     }
 
-    private async _embedOllama(text: string): Promise<number[]> {
-        const baseUrl = this.getOllamaBaseUrl();
+    private async _embedLocalHub(text: string): Promise<number[]> {
+        const baseUrl = this.getLocalHubEmbedBaseUrl();
         const response = await fetch(`${baseUrl}/api/embeddings`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({model: this.model, prompt: text}),
             signal: AbortSignal.timeout(this.timeout),
         });
-        if (!response.ok) throw new Error(`Ollama API error: ${response.status} ${await response.text()}`);
+        if (!response.ok) throw new Error(`Local embedding API error: ${response.status} ${await response.text()}`);
         const data = (await response.json()) as { embedding: number[] };
         return data.embedding;
     }
 
-    private async _embedBatchOllama(texts: string[]): Promise<number[][]> {
-        const baseUrl = this.getOllamaBaseUrl();
+    private async _embedBatchLocalHub(texts: string[]): Promise<number[][]> {
+        const baseUrl = this.getLocalHubEmbedBaseUrl();
         const all: number[][] = [];
         for (let i = 0; i < texts.length; i += this.batchSize) {
             const batch = texts.slice(i, i + this.batchSize);
@@ -247,7 +247,7 @@ export class EmbeddingClient {
                         signal: AbortSignal.timeout(this.timeout),
                     });
                     if (!response.ok) {
-                        throw new Error(`Ollama API error: ${response.status} ${await response.text()}`);
+                        throw new Error(`Local embedding API error: ${response.status} ${await response.text()}`);
                     }
                     const data = (await response.json()) as { embedding: number[] };
                     return data.embedding;
@@ -384,8 +384,8 @@ export class EmbeddingClient {
     async isAvailable(): Promise<boolean> {
         try {
             switch (this.provider) {
-                case PROVIDERS.OLLAMA: {
-                    const url = this.getOllamaBaseUrl();
+                case PROVIDERS.LOCAL_HUB: {
+                    const url = this.getLocalHubEmbedBaseUrl();
                     const r = await fetch(`${url}/api/tags`, {method: 'GET', signal: AbortSignal.timeout(5000)});
                     return r.ok;
                 }
@@ -406,8 +406,8 @@ export class EmbeddingClient {
     }
 
     async listModels(): Promise<string[]> {
-        if (this.provider === PROVIDERS.OLLAMA) {
-            const url = this.getOllamaBaseUrl();
+        if (this.provider === PROVIDERS.LOCAL_HUB) {
+            const url = this.getLocalHubEmbedBaseUrl();
             const response = await fetch(`${url}/api/tags`);
             if (!response.ok) {
                 throw new Error(`[EmbeddingClient] listModels failed: ${response.status} ${await response.text()}`);

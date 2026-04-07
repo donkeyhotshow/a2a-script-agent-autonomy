@@ -23,14 +23,8 @@ param(
 
 # Service definitions: name -> { port, processes, patterns }
 $Services = @{
-    'Ollama' = @{
-        Port = 11434
-        PidKey = 'OLLAMA_PID'
-        Processes = @('ollama.exe')
-        Patterns = @('ollama')
-    }
     'ai-integration' = @{
-        Port = 11435
+        Port = 11434
         PidKey = 'AI_INTEGRATION_PID'
         Processes = @('python.exe', 'uvicorn.exe')
         Patterns = @('uvicorn', 'ai-integration', 'proxy.asgi')

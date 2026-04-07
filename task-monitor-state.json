@@ -1,93 +1,111 @@
 {
-  "lastChecked": "2026-04-06T23:19:48.028Z",
+  "lastChecked": "2026-04-07T00:16:44.493Z",
   "processedTasks": [
     {
       "name": "ai-integration-configuration-system-plan.md",
       "status": "failed",
-      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
-      "updatedAt": "2026-04-06T22:14:24.962Z"
+      "detail": "Timed out after 302s (action=agent | status=pending)",
+      "updatedAt": "2026-04-06T22:56:20.758Z"
     },
     {
       "name": "ai-integration-promise-queue-plan.md",
       "status": "failed",
-      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
-      "updatedAt": "2026-04-06T22:19:27.322Z"
+      "detail": "Timed out after 301s (action=task | step=router | status=processing)",
+      "updatedAt": "2026-04-06T23:01:21.983Z"
     },
     {
       "name": "ai-integration-ui-improvements-plan.md",
       "status": "failed",
-      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
-      "updatedAt": "2026-04-06T22:24:29.419Z"
+      "detail": "Timed out after 301s (action=agent | step=new | status=pending)",
+      "updatedAt": "2026-04-06T23:06:23.167Z"
     },
     {
       "name": "client-api-01-sessions-create-load.md",
       "status": "failed",
-      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
-      "updatedAt": "2026-04-06T22:29:31.490Z"
+      "detail": "Timed out after 301s (action=agent | status=processing)",
+      "updatedAt": "2026-04-06T23:11:24.711Z"
     },
     {
       "name": "client-api-02-next-ack-first.md",
       "status": "failed",
-      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
-      "updatedAt": "2026-04-06T22:34:33.111Z"
+      "detail": "Timed out after 301s (action=agent | step=request | status=processing)",
+      "updatedAt": "2026-04-06T23:16:26.191Z"
     },
     {
       "name": "client-api-03-async-resolves-pending.md",
       "status": "failed",
-      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
-      "updatedAt": "2026-04-06T22:39:34.971Z"
+      "detail": "Timed out after 301s (unknown)",
+      "updatedAt": "2026-04-06T23:21:27.133Z"
     },
     {
       "name": "client-api-04-session-rebuild-highest-step.md",
       "status": "failed",
-      "detail": "Timed out after 301s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
-      "updatedAt": "2026-04-06T22:44:36.456Z"
+      "detail": "Timed out after 302s (action=agent | step=request | status=processing)",
+      "updatedAt": "2026-04-06T23:26:29.406Z"
     },
     {
       "name": "client-api-05-red-room-artifacts.md",
       "status": "failed",
-      "detail": "Timed out after 301s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
-      "updatedAt": "2026-04-06T22:49:37.914Z"
+      "detail": "Timed out after 301s (action=agent | step=new | status=pending)",
+      "updatedAt": "2026-04-06T23:31:30.560Z"
     },
     {
       "name": "dev-state-client-test-failures.md",
       "status": "failed",
-      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
-      "updatedAt": "2026-04-06T22:54:40.166Z"
+      "detail": "Timed out after 301s (action=task | step=router | status=processing)",
+      "updatedAt": "2026-04-06T23:36:31.750Z"
     },
     {
       "name": "dev-state-orchestrator-metrics.md",
       "status": "failed",
-      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
-      "updatedAt": "2026-04-06T22:59:41.768Z"
+      "detail": "Timed out after 301s (action=task | step=router | status=processing)",
+      "updatedAt": "2026-04-06T23:41:33.057Z"
     },
     {
       "name": "dev-state-router-drift-optional.md",
       "status": "failed",
-      "detail": "Timed out after 301s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
-      "updatedAt": "2026-04-06T23:04:43.305Z"
+      "detail": "Timed out after 301s (action=agent | step=request | status=pending)",
+      "updatedAt": "2026-04-06T23:46:34.382Z"
     },
     {
       "name": "doc-adr-0012-session-store-enhancements.md",
       "status": "failed",
-      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
-      "updatedAt": "2026-04-06T23:09:45.029Z"
+      "detail": "Timed out after 302s (action=agent | step=request | status=pending)",
+      "updatedAt": "2026-04-06T23:51:35.992Z"
     },
     {
       "name": "doc-adr-0021-cross-browser-matrix.md",
       "status": "failed",
-      "detail": "Timed out after 302s (action=task | step=router | status=idle | awaiting form (Оберіть спосіб виконання))",
-      "updatedAt": "2026-04-06T23:14:46.814Z"
+      "detail": "Timed out after 301s (action=agent | step=request | status=processing)",
+      "updatedAt": "2026-04-06T23:56:37.414Z"
     },
     {
       "name": "doc-adr-0025-promise-ui-decouple.md",
       "status": "failed",
-      "detail": "Timed out after 301s (unknown)",
-      "updatedAt": "2026-04-06T23:19:48.013Z"
+      "detail": "Timed out after 302s (action=agent | step=tool_read_file | status=idle)",
+      "updatedAt": "2026-04-07T00:01:39.252Z"
+    },
+    {
+      "name": "doc-adr-0027-planning-readme-missing.md",
+      "status": "failed",
+      "detail": "Timed out after 302s (action=agent | step=tool_list_directory | status=idle)",
+      "updatedAt": "2026-04-07T00:06:41.061Z"
+    },
+    {
+      "name": "doc-adr-0035-open-followups.md",
+      "status": "failed",
+      "detail": "Timed out after 302s (action=agent | step=tool_rag | status=idle)",
+      "updatedAt": "2026-04-07T00:11:42.931Z"
+    },
+    {
+      "name": "doc-adr-0036-master-orchestration-memory-proposed.md",
+      "status": "failed",
+      "detail": "Timed out after 302s (action=agent | step=request | status=processing)",
+      "updatedAt": "2026-04-07T00:16:44.480Z"
     }
   ],
-  "currentTask": "doc-adr-0027-planning-readme-missing.md",
-  "sessionId": "sess_1775517588020",
+  "currentTask": "doc-adr-reference-not-implemented-v2.md",
+  "sessionId": "sess_1775521004484",
   "status": "processing",
   "activeTasks": {}
 }

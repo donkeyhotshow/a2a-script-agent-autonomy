@@ -52,7 +52,7 @@ import { service } from './services/my-service.js';
 |--------|---------------|------------|
 | a2a-client | UI + Client API | `/api/a2a/*` routes |
 | a2a-server | Core logic + LLM | `/api/v1/invoke` |
-| ai-integration | Proxy to Ollama | Port 11434 |
+| ai-integration | Proxy to Local LLM upstream | Port 11434 |
 
 ## Cross-Module Rules
 

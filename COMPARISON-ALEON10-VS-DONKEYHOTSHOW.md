@@ -51,7 +51,7 @@
 a2a-server/src/services/
 ├── core/black-room/              # NEW: Algorithm mode (ADR-0058)
 │   ├── algorithm-registry.ts     # Manages algorithm definitions
-│   ├── black-room-orchestrator.ts # Executes algorithms on Ollama
+│   ├── black-room-orchestrator.ts # Executes algorithms on Local LLM upstream
 │   └── types.ts                  # Algorithm types
 ├── gray-room/                    # Refactored Gray Room
 │   ├── compress-history.ts        # History compression

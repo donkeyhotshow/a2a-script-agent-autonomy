@@ -1,9 +1,9 @@
 {
   "api_keys": [
     {
-      "id": "ollama-local",
-      "provider": "ollama",
-      "secret": "__OLLAMA_LOCAL__",
+      "id": "compat-llm-local",
+      "provider": "compat_llm",
+      "secret": "__LOCAL_LLM_KEY_PLACEHOLDER__",
       "enabled": true,
       "priority": 1
     },
@@ -23,9 +23,9 @@
     }
   ],
   "providers": {
-    "ollama": {
-      "type": "ollama",
-      "url": "${OLLAMA_HOST:-http://localhost:11435}",
+    "compat_llm": {
+      "type": "compat_llm",
+      "url": "${LOCAL_LLM_UPSTREAM_URL:-http://localhost:11435}",
       "enabled": false,
       "priority": 1,
       "models": ["qwen3:8b"],
@@ -109,7 +109,7 @@
     }
   },
   "default_provider": "z_ai",
-  "fallback_chain": ["z_ai", "ollama", "groq", "openrouter"],
+  "fallback_chain": ["z_ai", "compat_llm", "groq", "openrouter"],
   "enable_fallback": true,
   "provider_timeout": 0
 }

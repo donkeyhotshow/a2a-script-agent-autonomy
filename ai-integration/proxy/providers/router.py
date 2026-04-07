@@ -19,7 +19,7 @@ from .base import (
     ChatMessage,
     EmbeddingResult,
 )
-from .ollama_provider import OllamaProvider
+from .compat_llm_provider import CompatLlmProvider
 from .openai_compatible_provider import OpenAICompatibleProvider, OpenRouterProvider, GroqProvider, CohereProvider, ZAIProvider
 from .huggingface_provider import HuggingFaceProvider
 from .config_loader import load_providers_config, ProvidersConfig
@@ -27,7 +27,7 @@ from .config_loader import load_providers_config, ProvidersConfig
 
 # Provider type registry
 PROVIDER_REGISTRY: Dict[str, Type[LLMProvider]] = {
-    'ollama': OllamaProvider,
+    'compat_llm': CompatLlmProvider,
     'openai': OpenAICompatibleProvider,
     'openrouter': OpenRouterProvider,
     'groq': GroqProvider,
@@ -94,7 +94,7 @@ class ProviderRouter:
 
         When Z.AI is default, only models that no registered provider claims
         are left unchanged (or mapped via the default provider's resolve_model).
-        Ollama-local names like qwen3:8b must not be rewritten to the Z.AI default.
+        Local-hub names like qwen3:8b must not be rewritten to the Z.AI default.
         """
         if not model or not str(model).strip():
             if not self._initialized:
@@ -122,16 +122,16 @@ class ProviderRouter:
                 return resolved
         return model
 
-    def tag_entries_from_non_ollama_providers(self) -> list[dict[str, Any]]:
+    def tag_entries_from_non_compat_providers(self) -> list[dict[str, Any]]:
         """
-        Ollama-shaped tag rows for models declared on non-Ollama providers (e.g. z_ai).
-        Live Ollama /api/tags is merged separately in the proxy handler.
+        Tag rows shaped like /api/tags for models declared on non-local providers (e.g. z_ai).
+        Live upstream /api/tags is merged separately in the proxy handler.
         """
         out: list[dict[str, Any]] = []
         if not self._initialized:
             return out
         for name, provider in self._providers.items():
-            if provider.config.type == "ollama":
+            if provider.config.type == "compat_llm":
                 continue
             if not provider.config.enabled:
                 continue
@@ -390,7 +390,7 @@ class ProviderRouter:
         """Get default embedding model"""
         # Common embedding models by provider
         embedding_models = {
-            'ollama': 'nomic-embed-text',
+            'compat_llm': 'nomic-embed-text',
             'openrouter': 'sentence-transformers/all-MiniLM-L6-v2',
         }
         

@@ -18,13 +18,13 @@ export class Session {
         this.title = data.title;
         this.task = data.task;
         // DEBUG: Log when fallback status is used - may indicate data issue
-        if (!data.status) {
+        if (!data.status && process.env.NODE_ENV !== 'production') {
             console.warn('[Session] WARNING: Using default PENDING status - data.status was:', data.status, 'session id:', data.id);
         }
         this.status = data.status || 'PENDING';
         this.selectedAction = data.selectedAction;
         // DEBUG: Log when fallback context is used - may indicate missing context
-        if (!data.context) {
+        if (!data.context && process.env.NODE_ENV !== 'production') {
             console.warn('[Session] WARNING: Using default {} context - data.context was:', data.context, 'session id:', data.id);
         }
         this.context = data.context || {};
@@ -32,7 +32,7 @@ export class Session {
         this.createdAt = data.createdAt;
         this.updatedAt = data.updatedAt;
         // DEBUG: Log when messages array fallback is used
-        if (!Array.isArray(data.messages)) {
+        if (!Array.isArray(data.messages) && process.env.NODE_ENV !== 'production') {
             console.warn('[Session] WARNING: Using default [] messages - data.messages was:', typeof data.messages, 'session id:', data.id);
         }
         this.messages = Array.isArray(data.messages) ? data.messages : [];
@@ -40,16 +40,16 @@ export class Session {
         this.messageCount = Array.isArray(data.messages) ? data.messages.length : 0;
         
         // New protocol fields - DEBUG logging for fallbacks
-        if (!data.context?.execution) {
+        if (!data.context?.execution && process.env.NODE_ENV !== 'production') {
             console.warn('[Session] DEBUG: execution using null fallback - data.context?.execution:', data.context?.execution);
         }
         this.execution = data.context?.execution || null;
-        if (!data.context?.history) {
+        if (!data.context?.history && process.env.NODE_ENV !== 'production') {
             console.warn('[Session] DEBUG: history using [] fallback - data.context?.history:', data.context?.history);
         }
         this.history = data.context?.history || [];
         this.workbench = data.context?.workbench ?? null;
-        if (!this.workbench) {
+        if (!this.workbench && process.env.NODE_ENV !== 'production') {
             console.warn('[Session] DEBUG: workbench empty');
         }
     }

@@ -25,7 +25,7 @@
 На клієнті доступний пакет `@a2a/rag` з:
 
 - **BM25/TF-IDF** - точний пошук коду
-- **Semantic search** - семантичний пошук з Ollama
+- **Semantic search** - семантичний пошук з Local LLM upstream
 - **Hybrid search** - гібридний пошук
 - **Query understanding** - розуміння запиту
 - **Search suggestions** - підказки автодоповнення

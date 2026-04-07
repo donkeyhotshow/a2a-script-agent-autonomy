@@ -2,39 +2,39 @@ import {afterEach, describe, expect, it, vi} from 'vitest';
 import {
     extractLlmTextFromHubResponseBody,
     initAiHubChatPromise,
-    parseOllamaChatResponseBody,
+    parseHubCompatChatResponseBody,
     pollReadyThenFetch,
     resolveLlmPromiseRecovery,
 } from '../../src/daemon/llm-hub-poll.js';
 
-describe('parseOllamaChatResponseBody', () => {
+describe('parseHubCompatChatResponseBody', () => {
     it('parses plain JSON', () => {
-        const o = parseOllamaChatResponseBody('{"message":{"content":"x"}}');
+        const o = parseHubCompatChatResponseBody('{"message":{"content":"x"}}');
         expect(o?.message?.content).toBe('x');
     });
 
     it('parses markdown-fenced JSON', () => {
         const raw = '```json\n{"message":{"content":"hi"}}\n```';
-        const o = parseOllamaChatResponseBody(raw);
+        const o = parseHubCompatChatResponseBody(raw);
         expect(o?.message?.content).toBe('hi');
     });
 
     it('returns null on garbage', () => {
-        expect(parseOllamaChatResponseBody('not json')).toBeNull();
+        expect(parseHubCompatChatResponseBody('not json')).toBeNull();
     });
 
-    it('parses Ollama /api/generate shape (top-level response)', () => {
-        const o = parseOllamaChatResponseBody('{"model":"qwen","response":"hello","done":true}');
+    it('parses Local LLM upstream /api/generate shape (top-level response)', () => {
+        const o = parseHubCompatChatResponseBody('{"model":"qwen","response":"hello","done":true}');
         expect(o?.response).toBe('hello');
     });
 });
 
 describe('extractLlmTextFromHubResponseBody', () => {
-    it('returns Ollama chat content when present', () => {
+    it('returns Local LLM upstream chat content when present', () => {
         expect(extractLlmTextFromHubResponseBody('{"message":{"content":"x"}}')).toBe('x');
     });
 
-    it('returns full raw body when JSON is not Ollama-shaped (e.g. A2A response object)', () => {
+    it('returns full raw body when JSON is not Local LLM upstream-shaped (e.g. A2A response object)', () => {
         const a2a = JSON.stringify({
             step: 'response',
             execute: {message: 'hi', form: {textarea: {name: 'task'}}},
@@ -168,7 +168,7 @@ describe('resolveLlmPromiseRecovery', () => {
         expect(r).toEqual({kind: 'ready', responseMd: 'from-generate'});
     });
 
-    it('ready when hub body is A2A-shaped JSON (no Ollama message wrapper)', async () => {
+    it('ready when hub body is A2A-shaped JSON (no Local LLM upstream message wrapper)', async () => {
         const body = JSON.stringify({step: 'response', execute: {message: 'ok'}, completed: false});
         const f = vi.fn(async (url: string) => {
             if (url.includes('/promise/pid-a2a/response')) {

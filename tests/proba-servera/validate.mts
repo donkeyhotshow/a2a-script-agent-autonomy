@@ -20,7 +20,7 @@
  * key-structure pass; checked precisely in `collectDirectiveErrors`.
  *
  * Optional: PROBA_SERVERA_USE_HTTP=1 → fetch http://localhost:3000/api/v1/invoke (legacy).
- * Stack gate (default): probes ai-integration + Ollama (+ a2a-server if HTTP mode).
+ * Stack gate (default): probes ai-integration + Local LLM upstream (+ a2a-server if HTTP mode).
  *   Skip: PROBA_SERVERA_SKIP_STACK_CHECK=1. Probe timeout: PROBA_STACK_PROBE_MS (ms) — not applied to promiseId poll loops.
  *   Single case: PROBA_SERVERA_ONLY=<folder-name> (e.g. script-select).
  *   L3 cache warm: PROBA_WARM_CACHE=1 — invoke-only pass before the normal run (fills ai-integration disk cache).
@@ -65,7 +65,7 @@ async function probeUrl(url: string, ms = STACK_PROBE_MS): Promise<boolean> {
 }
 
 /**
- * Proba-servera hits the real LLM chain (ai-integration → Ollama). If those are down,
+ * Proba-servera hits the real LLM chain (ai-integration → Local LLM upstream). If those are down,
  * results are meaningless noise — exit before running cases.
  * Opt out: PROBA_SERVERA_SKIP_STACK_CHECK=1
  */
@@ -79,16 +79,16 @@ async function assertProbaStackOrExit(): Promise<void> {
 
   const aiHub = (process.env.AI_HUB_URL || 'http://localhost:11434').replace(/\/$/, '');
   const integrationHealth = `${aiHub}/health`;
-  const ollamaTags = 'http://localhost:11435/api/tags';
+  const upstreamTagsUrlConst = 'http://localhost:11435/api/tags';
   const a2aHealth = 'http://localhost:3000/health';
   const httpMode =
     process.env.PROBA_SERVERA_USE_HTTP === '1' || process.env.PROBA_SERVERA_USE_HTTP === 'true';
 
   const intOk = await probeUrl(integrationHealth);
-  const ollamaOk = await probeUrl(ollamaTags);
+  const upstreamTagsOk = await probeUrl(upstreamTagsUrlConst);
   const serverOk = httpMode ? await probeUrl(a2aHealth) : true;
 
-  if (intOk && ollamaOk && serverOk) {
+  if (intOk && upstreamTagsOk && serverOk) {
     return;
   }
 
@@ -100,7 +100,7 @@ async function assertProbaStackOrExit(): Promise<void> {
     '',
     'Proba-servera aborted: required services are not reachable.',
     `  ai-integration  ${integrationHealth}  →  ${intOk ? 'OK' : 'FAIL'}`,
-    `  Ollama          ${ollamaTags}  →  ${ollamaOk ? 'OK' : 'FAIL'}`,
+    `  Local LLM upstream          ${upstreamTagsUrlConst}  →  ${upstreamTagsOk ? 'OK' : 'FAIL'}`,
   ];
   if (httpMode) {
     lines.push(`  a2a-server      ${a2aHealth}  →  ${serverOk ? 'OK' : 'FAIL'}`);

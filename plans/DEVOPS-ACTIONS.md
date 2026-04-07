@@ -3,45 +3,45 @@
 | actionId | categoryId | executorSystemId | title | tool | canMigrateToScript |
 |----------|-----------|------------------|-------|------|-------------------|
 | detect-docker | containers | script | Детекция Docker | docker | ✅ |
-| optimize-dockerfile | containers | ollama | Оптимизация Dockerfile | docker | ✅ |
-| suggest-multi-stage-build | containers | ollama | Предложение multi-stage build | docker | ✅ |
+| optimize-dockerfile | containers | compat_llm | Оптимизация Dockerfile | docker | ✅ |
+| suggest-multi-stage-build | containers | compat_llm | Предложение multi-stage build | docker | ✅ |
 | detect-docker-compose | containers | script | Детекция Docker Compose | docker | ✅ |
-| optimize-docker-compose | containers | ollama | Оптимизация docker-compose.yml | docker | ✅ |
+| optimize-docker-compose | containers | compat_llm | Оптимизация docker-compose.yml | docker | ✅ |
 | detect-kubernetes | orchestration | script | Детекция Kubernetes | k8s | ✅ |
 | generate-k8s-manifests | orchestration | agent | Генерация K8s манифестов | k8s | ⏳ |
-| suggest-helm-charts | orchestration | ollama | Предложение Helm charts | k8s | ✅ |
+| suggest-helm-charts | orchestration | compat_llm | Предложение Helm charts | k8s | ✅ |
 | detect-ci-pipeline | ci-cd | script | Детекция CI pipeline | all | ✅ |
-| suggest-github-actions | ci-cd | ollama | Предложение GitHub Actions | github | ✅ |
+| suggest-github-actions | ci-cd | compat_llm | Предложение GitHub Actions | github | ✅ |
 | generate-github-workflow | ci-cd | agent | Генерация GitHub workflow | github | ⏳ |
-| suggest-gitlab-ci | ci-cd | ollama | Предложение GitLab CI | gitlab | ✅ |
+| suggest-gitlab-ci | ci-cd | compat_llm | Предложение GitLab CI | gitlab | ✅ |
 | generate-gitlab-ci | ci-cd | agent | Генерация .gitlab-ci.yml | gitlab | ⏳ |
 | detect-monitoring | monitoring | script | Детекция мониторинга | all | ✅ |
-| suggest-prometheus | monitoring | ollama | Предложение Prometheus | prometheus | ✅ |
+| suggest-prometheus | monitoring | compat_llm | Предложение Prometheus | prometheus | ✅ |
 | setup-prometheus | monitoring | agent | Настройка Prometheus | prometheus | ⏳ |
-| suggest-grafana | monitoring | ollama | Предложение Grafana | grafana | ✅ |
+| suggest-grafana | monitoring | compat_llm | Предложение Grafana | grafana | ✅ |
 | setup-grafana-dashboards | monitoring | agent | Настройка Grafana dashboards | grafana | ⏳ |
 | detect-logging | logging | script | Детекция логирования | all | ✅ |
-| suggest-elk-stack | logging | ollama | Предложение ELK stack | elk | ✅ |
+| suggest-elk-stack | logging | compat_llm | Предложение ELK stack | elk | ✅ |
 | setup-elk | logging | agent | Настройка ELK | elk | ⏳ |
-| suggest-loki | logging | ollama | Предложение Loki | loki | ✅ |
+| suggest-loki | logging | compat_llm | Предложение Loki | loki | ✅ |
 | detect-secrets | secrets | script | Детекция секретов | all | ✅ |
-| suggest-vault | secrets | ollama | Предложение Vault | vault | ✅ |
+| suggest-vault | secrets | compat_llm | Предложение Vault | vault | ✅ |
 | setup-vault | secrets | agent | Настройка Vault | vault | ⏳ |
 | detect-env-files | secrets | script | Детекция .env файлов | all | ✅ |
-| suggest-secrets-manager | secrets | ollama | Предложение Secrets Manager | aws | ✅ |
+| suggest-secrets-manager | secrets | compat_llm | Предложение Secrets Manager | aws | ✅ |
 | detect-nginx | webserver | script | Детекция Nginx | nginx | ✅ |
-| optimize-nginx-config | webserver | ollama | Оптимизация Nginx config | nginx | ✅ |
-| suggest-load-balancer | webserver | ollama | Предложение load balancer | all | ✅ |
+| optimize-nginx-config | webserver | compat_llm | Оптимизация Nginx config | nginx | ✅ |
+| suggest-load-balancer | webserver | compat_llm | Предложение load balancer | all | ✅ |
 | detect-ssl-certificates | ssl | script | Детекция SSL сертификатов | all | ✅ |
-| suggest-letsencrypt | ssl | ollama | Предложение Let's Encrypt | letsencrypt | ✅ |
+| suggest-letsencrypt | ssl | compat_llm | Предложение Let's Encrypt | letsencrypt | ✅ |
 | setup-ssl-automation | ssl | agent | Настройка SSL автоматизации | all | ⏳ |
 | detect-backup-strategy | backup | script | Детекция стратегии бэкапов | all | ✅ |
-| suggest-backup-solution | backup | ollama | Предложение решения бэкапов | all | ✅ |
+| suggest-backup-solution | backup | compat_llm | Предложение решения бэкапов | all | ✅ |
 | setup-automated-backups | backup | agent | Настройка автоматических бэкапов | all | ⏳ |
 | detect-infrastructure-as-code | iac | script | Детекция IaC | all | ✅ |
-| suggest-terraform | iac | ollama | Предложение Terraform | terraform | ✅ |
+| suggest-terraform | iac | compat_llm | Предложение Terraform | terraform | ✅ |
 | generate-terraform-config | iac | agent | Генерация Terraform конфига | terraform | ⏳ |
-| suggest-ansible | iac | ollama | Предложение Ansible | ansible | ✅ |
+| suggest-ansible | iac | compat_llm | Предложение Ansible | ansible | ✅ |
 
 ## Активация по контексту
 
@@ -69,5 +69,5 @@
 ## Статистика
 - Всего: 39 действий
 - script: 16 (41%)
-- ollama: 16 (41%)
+- compat_llm: 16 (41%)
 - agent: 7 (18%)

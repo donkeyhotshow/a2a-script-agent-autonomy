@@ -38,7 +38,7 @@ class TaskMonitorValidation {
     const results = {
       clientApi: false,
       a2aServer: false,
-      ollama: false,
+      compat_llm: false,
       aiHub: false,
       allOk: false,
       details: {}
@@ -46,7 +46,7 @@ class TaskMonitorValidation {
     };
 
     // Use environment variables for service URLs or fall back to defaults
-    const ollamaUrl = process.env.OLLAMA_HOST || 'http://localhost:11435';
+    const compat_llmUrl = process.env.LOCAL_LLM_UPSTREAM_URL || 'http://localhost:11435';
     const aiHubUrl = process.env.AI_HUB_URL || 'http://localhost:11434';
 
     try {
@@ -68,12 +68,12 @@ class TaskMonitorValidation {
     }
 
     try {
-      // Check Ollama
-      const ollamaRes = await axios.get(`${ollamaUrl}/api/tags`, { timeout: 5000 });
-      results.ollama = ollamaRes.status === 200 && Array.isArray(ollamaRes.data.models);
-      results.details.ollama = results.ollama ? 'OK' : 'Failed';
+      // Check Local LLM upstream
+      const compat_llmRes = await axios.get(`${compat_llmUrl}/api/tags`, { timeout: 5000 });
+      results.compat_llm = compat_llmRes.status === 200 && Array.isArray(compat_llmRes.data.models);
+      results.details.compat_llm = results.compat_llm ? 'OK' : 'Failed';
     } catch (error) {
-      results.details.ollama = `Error: ${error.message}`;
+      results.details.compat_llm = `Error: ${error.message}`;
     }
 
     try {
@@ -85,7 +85,7 @@ class TaskMonitorValidation {
       results.details.aiHub = `Error: ${error.message}`;
     }
 
-    results.allOk = results.clientApi && results.a2aServer && results.ollama && results.aiHub;
+    results.allOk = results.clientApi && results.a2aServer && results.compat_llm && results.aiHub;
 
     if (typeof this.scanApplicationLogs === 'function') {
       try {

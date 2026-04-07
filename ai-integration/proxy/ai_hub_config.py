@@ -392,7 +392,7 @@ def _build_simulated_body(action: dict, *, model: Optional[str], prompt: str, pa
 
     builder = str(builder)
 
-    if builder == 'ollama.generate':
+    if builder == 'compat_llm.generate':
         text = _safe_format(action.get('text', ''), model=model or '', prompt=prompt or '', path=_normalize_path(path))
         resp = {
             "model": model or (request_json or {}).get('model') or "unknown",

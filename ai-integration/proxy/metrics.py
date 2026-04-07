@@ -5,7 +5,7 @@ Metrics:
 - ai_proxy_requests_total - total requests counter
 - ai_proxy_request_duration_seconds - request duration histogram
 - ai_proxy_errors_total - error counter
-- ollama_model_loaded - gauge for model availability
+- local_llm_model_loaded - gauge for model availability
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ class PrometheusMetrics:
         self._latency_count: int = 0
         
         # Gauge
-        self._ollama_model_loaded: int = 0
+        self._local_llm_model_loaded: int = 0
         
         # Start time
         self._start_time: float = time.time()
@@ -86,10 +86,10 @@ class PrometheusMetrics:
             self._errors_total += 1
             self._errors_by_type[error_type] += 1
 
-    def set_ollama_loaded(self, loaded: bool) -> None:
-        """Set Ollama model loaded gauge."""
+    def set_local_llm_loaded(self, loaded: bool) -> None:
+        """Set Local LLM upstream model loaded gauge."""
         with self._lock:
-            self._ollama_model_loaded = 1 if loaded else 0
+            self._local_llm_model_loaded = 1 if loaded else 0
 
     def prometheus_format(self) -> str:
         """Return metrics in Prometheus text format."""
@@ -151,10 +151,10 @@ class PrometheusMetrics:
                 lines.append(f'ai_proxy_errors_total{{type="{error_type}"}} {count}')
             lines.append("")
             
-            # Ollama model loaded gauge
-            lines.append("# HELP ollama_model_loaded Whether Ollama model is loaded (1=yes, 0=no)")
-            lines.append("# TYPE ollama_model_loaded gauge")
-            lines.append(f"ollama_model_loaded {self._ollama_model_loaded}")
+            # Local LLM upstream model loaded gauge
+            lines.append("# HELP local_llm_model_loaded Whether Local LLM upstream model is loaded (1=yes, 0=no)")
+            lines.append("# TYPE local_llm_model_loaded gauge")
+            lines.append(f"local_llm_model_loaded {self._local_llm_model_loaded}")
             lines.append("")
             
             return "\n".join(lines)
@@ -173,7 +173,7 @@ class PrometheusMetrics:
                 "avg_duration_seconds": avg_duration,
                 "latency_sum_seconds": self._latency_sum,
                 "latency_count": self._latency_count,
-                "ollama_model_loaded": bool(self._ollama_model_loaded),
+                "local_llm_model_loaded": bool(self._local_llm_model_loaded),
                 "uptime_seconds": time.time() - self._start_time,
                 "generated_at": time.time(),
             }

@@ -20,21 +20,21 @@
 
 ## Задачи
 
-### 0. Управление Ollama (встроено в daemon прокси)
+### 0. Управление Local LLM upstream (встроено в daemon прокси)
 
-- ⏳ Ollama работает внутри daemon прокси (не внешний процесс)
-- ⏳ Ollama стартует при потребности (первый запрос с LLM)
-- ⏳ Ollama останавливается при ненадобности (после idle таймаута)
-- ⏳ Внутренний порт для Ollama (не 11435, напр. 11434)
+- ⏳ Local LLM upstream работает внутри daemon прокси (не внешний процесс)
+- ⏳ Local LLM upstream стартует при потребности (первый запрос с LLM)
+- ⏳ Local LLM upstream останавливается при ненадобности (после idle таймаута)
+- ⏳ Внутренний порт для Local LLM upstream (не 11435, напр. 11434)
 - ⏳ API endpoints:
-    - `GET /ollama/status` - статус (running/stopped)
-    - `POST /ollama/start` - запустить Ollama
-    - `POST /ollama/stop` - остановить Ollama
-    - `POST /ollama/restart` - перезапустить
+    - `GET /compat_llm/status` - статус (running/stopped)
+    - `POST /compat_llm/start` - запустить Local LLM upstream
+    - `POST /compat_llm/stop` - остановить Local LLM upstream
+    - `POST /compat_llm/restart` - перезапустить
 - ⏳ Конфигурация:
-    - `OLLAMA_PORT` - внутренний порт (по умолчанию 11435)
-    - `OLLAMA_IDLE_TIMEOUT` - таймаут простоя (по умолчанию 300 сек)
-    - `OLLAMA_AUTO_START` - автозапуск (по умолчанию false)
+    - `LOCAL_LLM_PORT` - внутренний порт (по умолчанию 11435)
+    - `LOCAL_LLM_IDLE_TIMEOUT` - таймаут простоя (по умолчанию 300 сек)
+    - `LOCAL_LLM_AUTO_START` - автозапуск (по умолчанию false)
 
 ### 1. Фильтр сохраняемого в лог (Log Filtering)
 
@@ -62,21 +62,21 @@
 
 ## Реализация
 
-### Этап 0: Ollama встроена в daemon прокси (2-3 дня)
+### Этап 0: Local LLM upstream встроена в daemon прокси (2-3 дня)
 
 ```
-0.1. Внутренний класс OllamaManager внутри proxy:
-    - Flask route для /ollama/*
-    - subprocess для ollama serve на OLLAMA_PORT
+0.1. Внутренний класс Local LLM upstreamManager внутри proxy:
+    - Flask route для /compat_llm/*
+    - subprocess для compat_llm serve на LOCAL_LLM_PORT
     - idle timer для авто-остановки
-0.2. Конфигурация OLLAMA_PORT, OLLAMA_IDLE_TIMEOUT
+0.2. Конфигурация LOCAL_LLM_PORT, LOCAL_LLM_IDLE_TIMEOUT
 0.3. API endpoints внутри proxy:
-    - GET /ollama/status
-    - POST /ollama/start
-    - POST /ollama/stop
+    - GET /compat_llm/status
+    - POST /compat_llm/start
+    - POST /compat_llm/stop
 0.4. Auto-start при первом LLM запросе
 0.5. Auto-stop после idle таймаута
-0.6. Проксирование /api/generate на OLLAMA_PORT
+0.6. Проксирование /api/generate на LOCAL_LLM_PORT
 ```
 
 ### Этап 1: Log Filtering (1-2 дня)

@@ -4,7 +4,7 @@
 Approved
 
 ## Context
-A2A is currently optimized for a single LLM provider. To increase resilience and cost-efficiency, we need to support multiple providers (OpenAI, Gemini, Anthropic, Ollama, DeepSeek).
+A2A is currently optimized for a single LLM provider. To increase resilience and cost-efficiency, we need to support multiple providers (OpenAI, Gemini, Anthropic, Local LLM upstream, DeepSeek).
 
 ## Decision
 Implement an `LLMShim` layer that abstract provider-specific APIs behind a unified interface. Use environment variables like `A2A_PROVIDER` and `A2A_MODEL` to define routing and fallbacks.

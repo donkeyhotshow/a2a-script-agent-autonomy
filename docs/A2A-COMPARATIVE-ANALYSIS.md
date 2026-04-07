@@ -12,7 +12,7 @@ Purpose: Clarify system parts, their roles, and how they differ from popular age
 | **Client API** | 5173/api/a2a | Session lifecycle, storage, routing | OpenAI Assistants API threads |
 | **A2A Server** | 3000 | Core logic, LLM orchestration, transforms | LangGraph agent runtime |
 | **AI Integration** | 11434 | Provider abstraction, proxy, health | LiteLLM proxy |
-| **Ollama** | 11435 | Local LLM execution | Local LLM server |
+| **Local LLM upstream** | 11435 | Local LLM execution | Local LLM server |
 
 ---
 
@@ -257,7 +257,7 @@ while run.status in ["queued", "in_progress"]:
 ```typescript
 // packages/rag/src/rag-service.ts
 const results = await ragService.search({
-  query: "How to configure Ollama?",
+  query: "How to configure Local LLM upstream?",
   corpus: ["docs/**/*.md"],
   algorithm: "bm25",  // or "vector"
   limit: 5

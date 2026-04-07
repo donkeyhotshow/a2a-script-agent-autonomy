@@ -10,10 +10,10 @@ services:
     environment:
       - PROXY_PORT=11434
       - PROXY_HOST=0.0.0.0
-      - OLLAMA_HOST=http://ollama:11434
-      - OLLAMA_MODEL=${OLLAMA_MODEL:-qwen3:8b}
-      - OLLAMA_TIMEOUT=6000
-      - OLLAMA_AUTO_START=false
+      - LOCAL_LLM_UPSTREAM_URL=http://compat_llm:11434
+      - LOCAL_LLM_MODEL=${LOCAL_LLM_MODEL:-qwen3:8b}
+      - LOCAL_LLM_TIMEOUT=6000
+      - LOCAL_LLM_AUTO_START=false
       - STORAGE_DIR=/app/proxy_logs
       - LOG_LEVEL=INFO
       - LOG_FORMAT=json
@@ -27,7 +27,7 @@ services:
       retries: 5
       start_period: 30s
     depends_on:
-      ollama:
+      compat_llm:
         condition: service_healthy
     networks:
       - a2a-network
@@ -35,14 +35,14 @@ services:
       - ai
       - full
 
-  # Ollama for AI inference
-  ollama:
-    image: ollama/ollama:latest
-    container_name: a2a-ollama
+  # Local LLM upstream for AI inference
+  compat_llm:
+    image: compat_llm/compat_llm:latest
+    container_name: a2a-compat_llm
     ports:
-      - "${OLLAMA_PORT:-11435}:11434"
+      - "${LOCAL_LLM_PORT:-11435}:11434"
     volumes:
-      - ollama_data:/root/.ollama
+      - compat_llm_data:/root/.compat_llm
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
       interval: 10s
@@ -63,7 +63,7 @@ services:
       - full
 
 volumes:
-  ollama_data:
+  compat_llm_data:
   ai_proxy_logs:
 
 networks:
