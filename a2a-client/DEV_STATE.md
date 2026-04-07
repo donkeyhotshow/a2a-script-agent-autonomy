@@ -17,6 +17,7 @@ This module **owns session persistence and the Client API** (`/api/a2a/*`). Task
 - **Async-only:** no sync invoke flag; after `/next`, drive **`/async`** (and promise polling helpers) until terminal — see root [`AGENTS.md`](../AGENTS.md).
 - **Router:** if latest `execute.form` has **`choices`**, next body uses **`result.choice`** / shorthand `task` as choice id; otherwise **`result.message`** / `task` as text — [`AGENTS.md`](../AGENTS.md) *Router dialog*.
 - **Storage:** `a2a-client/storage/sessions/{id}/{step}/` — rebuild from highest step with `server-response.json` when investigating monitor sessions.
+- **Agent tool chain (`chain-guards` + `agent-rag-chain`):** `execute['run-script']` must chain when the model sends **`command`** (shell one-liner) as well as **`scriptId`** (registry). Previously only `scriptId` validated — sessions stuck on `tool_run_script` with no `context.result`. Evidence: `tests/direct-tests/chain-guards-message-plus-tool.test.mjs`.
 
 ---
 

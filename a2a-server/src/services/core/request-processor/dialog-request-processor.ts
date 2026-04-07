@@ -116,7 +116,11 @@ function ensureWorkbenchSectionsShape(context: Record<string, unknown> | undefin
         return;
     }
     const wb = context['workbench'];
-    if (!wb || typeof wb !== 'object' || Array.isArray(wb)) {
+    if (wb === undefined || wb === null) {
+        context['workbench'] = {sections: {}};
+        return;
+    }
+    if (typeof wb !== 'object' || Array.isArray(wb)) {
         return;
     }
     const w = wb as Record<string, unknown>;
@@ -401,6 +405,8 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                             r.context = {...r.context, session_id: sessionIdValue};
                         }
                     }
+                    // Same normalization as after grayRoom.runLoop (recovery skips that path).
+                    finalizeDialogGrayRoomResult(r, schemaName, '');
                     return r;
                 }
             }

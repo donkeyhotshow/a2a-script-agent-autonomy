@@ -2,6 +2,30 @@
 
 Repo norms that override the default “answer once and exit” habit live in [`AGENTS.md`](../AGENTS.md) (empty queue, vague prompts, router). This page lists **failure modes** and **mitigations** for two surfaces: **Cursor / IDE agents** and **Client API session drivers** (scripts, operators).
 
+## Iterative runbook (practical)
+
+Use this short loop on every cycle so work does not stall on vague prompts or pending async turns:
+
+1. **Pick one concrete unit** — one task file, one failing test, or one session failure.
+2. **Run one step end-to-end** — execute, verify (`tests`/`sim`/`/async`), and capture evidence.
+3. **Classify failure by layer** — A (Client/session), B (server/contract), C (hub/provider).
+4. **Apply one fix only** — avoid batching unrelated changes in the same loop.
+5. **Re-run the same unit** — prove the fix changed behavior, not just code.
+6. **Write state before next loop** — update `DEV_STATE` + next explicit action.
+
+### Stop conditions (strict)
+
+- **Allowed stop:** user acceptance, or blocker with evidence + owner + next experiment.
+- **Not allowed stop:** empty queue, one-line prompt, or `/next` ack without settled `/async`.
+- **Monitor rule:** one prompt per `monitor:once` run is acceptable; repeat loops until success or logged blocker.
+
+### Evidence rule (mandatory)
+
+- **Do not conclude from theory only.** Each loop must add at least one practical artifact: command output, session id + async status, test/sim result, or a concrete diff.
+- **If practical evidence is missing, create it first.** Run a minimal experiment (single task, single endpoint, single failing test) and log the result before decisions.
+- **Write evidence in state.** Add short proof lines to `DEV_STATE` (what was run, what changed, what failed/passed).
+- **No evidence = no closure.** Treat evidence gaps as an open item, not as completion.
+
 ## 1. Misread of “done” or empty work
 
 | # | Trap | Cursor agent | Client API driver |
@@ -43,6 +67,7 @@ Repo norms that override the default “answer once and exit” habit live in [`
 | 10 | **Over-cautious “need more context”** | Default: state assumptions, proceed; ask only when blocked. | N/A (deterministic driver). |
 | 11 | **Implicit one-response habit** | User/rules: iterate until criteria met. | Explicit loops and budgets in code. |
 | 12 | **No written criteria** | Attach tests, sim commands, or checklist to the task. | Assertions on session JSON or exit codes. |
+| 18 | **No practical evidence recorded** | Always attach at least one runtime/test artifact per loop; if none exists, run a minimal check and log it before closing. | Same: keep run id (`sessionId`/`promiseId`) + terminal status in output/state. |
 
 ## 5. Repo-specific process
 

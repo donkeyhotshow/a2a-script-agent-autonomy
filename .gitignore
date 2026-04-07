@@ -28,3 +28,6 @@ simulations/**/invoke-capture.json
 # Vitest JSON scratch from human-review runners
 **/tests/human-review/.last-vitest.json
 tests/proba-servera/**/output.json
+
+# Cross-system hub: raw dumps before promoting to fixtures/ (see cross-system-contracts/README.md)
+cross-system-contracts/scratch/

@@ -36,6 +36,8 @@
         "scan-session-responses": "node tests/direct-tests/validators/scan-session-responses.mjs",
         "verify:gray-room": "node tests/direct-tests/validators/verify-gray-room-state.mjs",
         "audit:sim-choice-descriptions": "node tests/direct-tests/validators/audit-sim-choice-descriptions.mjs",
+        "cross-system:validate": "node scripts/cross-system-validate.mjs",
+        "cross-system:new-fixture": "node scripts/new-cross-system-fixture.mjs",
         "validate:proba-servera": "tsx tests/proba-servera/validate.mts",
         "verify:proba-cache-api": "node tests/proba-servera/cache-api-smoke.mjs",
         "test:human-review:all": "node scripts/run-human-review-all.mjs"

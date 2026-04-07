@@ -43,7 +43,12 @@ export function getValidatedToolKey(ex) {
 
     if (toolKey === 'run-script') {
         const rs = ex['run-script'];
-        if (!rs || typeof rs.scriptId !== 'string' || !rs.scriptId.trim()) {
+        if (!rs || typeof rs !== 'object' || Array.isArray(rs)) {
+            return null;
+        }
+        const hasScriptId = typeof rs.scriptId === 'string' && rs.scriptId.trim().length > 0;
+        const hasCommand = typeof rs.command === 'string' && rs.command.trim().length > 0;
+        if (!hasScriptId && !hasCommand) {
             return null;
         }
     }

@@ -9,6 +9,7 @@
 | **`tasks/completed/`** | Finished tickets kept for audit (e.g. closed magenta/npm audit log). |
 | [`prompts-to-agent-mode/`](../prompts-to-agent-mode/README.md) | **Stack queue** — flat `.md` files consumed by Task Monitor; each task should be runnable via Client API + agent after the stack is up. |
 | [`tasks/ide-prompts/`](ide-prompts/README.md) | **IDE prompts** — docs, methodology, ADR, sim authoring, module plans; copy-paste in Cursor, not in the default monitor scan. |
+| [`cross-system-contracts/`](../cross-system-contracts/README.md) | **Inter-system** contracts — evidence paths, curated `fixtures/`, backlog [`tasks/pending/cross-system-parameter-hunt.md`](pending/cross-system-parameter-hunt.md). |
 
 ## Self-Upgrade order (policy)
 

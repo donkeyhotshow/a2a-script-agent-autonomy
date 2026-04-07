@@ -22,6 +22,7 @@ Guidance for agents working in this repository.
 | **Offline validators (LLM / execute shape, sessions, sims)** | **[`tests/direct-tests/validators/README.md`](tests/direct-tests/validators/README.md)** — scripts flag contract mistakes (e.g. top-level `message` + tool vs `execute.message`); run from repo root: `scan-promise-bodies`, `scan-session-responses`, `verify:gray-room`, `audit:sim-choice-descriptions`, `sim:check-md` |
 | **Triangle triage + colored alerts** | **[`docs/TRIANGLE-WORKFLOW.md`](docs/TRIANGLE-WORKFLOW.md)** — vertices **A/B/C**, loop **0→4**; **[`GLOSSARY.md`](GLOSSARY.md)** *Alerts* (triage colors) vs *Rooms* (Gray/Red/Black **Room** runtime) |
 | **Iterativity + full normalization** | **[`DEV_STATE.md`](DEV_STATE.md)** *Iterativity — conditions for full project normalization* — per-cycle gates, queue honesty, stop rules; **[`docs/agent-iteration-traps.md`](docs/agent-iteration-traps.md)** |
+| **Practical evidence (mandatory)** | Every loop must record runtime evidence (test output, `sessionId`/`promiseId`, async status, or concrete diff). If missing, run a minimal experiment first, then log it — [`docs/agent-iteration-traps.md`](docs/agent-iteration-traps.md) *Evidence rule* |
 | **Yellow alert (AI code scan)** | **[`docs/YELLOW-ALERT-SCAN.md`](docs/YELLOW-ALERT-SCAN.md)** — paste invocation; debt/hacks/TODO/contract smells; not the same as *Yellow alert (operator)* in [`GLOSSARY.md`](GLOSSARY.md) |
 | **Async-only (no sync switch)** | Never add **sync** invoke, **inline** LLM forwarding, or operator docs that tell people to **disable** the promise queue to “unstick” work — [Async-only transport](#5-async-only-transport-mandatory) |
 | Imports | **Server / NodeNext:** `.js` on relative imports. **`premium-ui`:** `@/` (Vite) — [`.cursor/rules/code-hierarchy.mdc`](.cursor/rules/code-hierarchy.mdc) |
@@ -45,6 +46,17 @@ Guidance for agents working in this repository.
 Stopping with an empty queue **without** (1)–(3) is a protocol violation. Full rationale: [DEV_STATE Protocol](#dev-state-protocol); task wording: [methodology/tasks.md](archive/methodology/tasks.md).
 
 **Minimal or vague user prompt is not a stop signal.** Silence, a one-liner, or no restated acceptance criteria does **not** mean “single turn then exit.” Keep iterating until stated criteria are met (or until you have honestly blocked and logged why). If there is no pending task text, still run (1)–(3) above instead of stopping. A stuck session after `next` is usually a **router contract** issue—inspect `GET …/sessions/{id}` and send **`message`** vs **`choice`** per [Router dialog](#router-dialog-two-beats--read-this); that is a fix, not an excuse to halt.
+
+### Evidence-first loop (mandatory)
+
+Every iteration must include **practical evidence**, not only reasoning:
+
+1. Run one concrete check (test/sim, session turn, curl poll, or targeted script).
+2. Capture identifiers + terminal signal (`sessionId`/`promiseId`, pending/completed/failed, pass/fail).
+3. If evidence is missing, run a **minimal experiment** first, then continue decisions.
+4. Write the evidence in `DEV_STATE` (what ran, observed outcome, next action).
+
+**No evidence = no closure.** Missing runtime proof is an open item, not completion.
 
 ---
 

@@ -128,8 +128,46 @@ async function runClientToolForExecute(cwd, projectPath, toolKey, payload) {
             }
             return { key: 'execute-command', value: await runClientExecuteCommand(cwdAbs, p) };
         }
-        case 'run-script':
+        case 'run-script': {
+            // LLMs often emit run-script { command: "npm run ..." } instead of scriptId; chain must still run.
+            if (typeof p.command === 'string' && p.command.trim()) {
+                let cwdAbs = projectPath;
+                if (p.cwd && typeof p.cwd === 'string') {
+                    const r = resolveUnderProjectRoot(projectPath, p.cwd);
+                    if (!r) {
+                        return {
+                            key: 'run-script',
+                            value: {
+                                success: false,
+                                scriptId: '',
+                                inlineCommand: true,
+                                error: 'cwd outside project',
+                                output: '',
+                            },
+                        };
+                    }
+                    cwdAbs = r;
+                }
+                const inlinePayload =
+                    typeof p.timeout === 'number'
+                        ? p
+                        : {...p, timeout: 600000};
+                const ec = await runClientExecuteCommand(cwdAbs, inlinePayload);
+                return {
+                    key: 'run-script',
+                    value: {
+                        success: ec.success,
+                        scriptId: '',
+                        inlineCommand: true,
+                        output: [ec.stdout, ec.stderr].filter(Boolean).join('\n'),
+                        error: ec.error || (ec.exitCode !== 0 && ec.stderr ? ec.stderr : undefined),
+                        exitCode: ec.exitCode,
+                        timedOut: ec.timedOut,
+                    },
+                };
+            }
             return { key: 'run-script', value: await runClientRegisteredScript(projectPath, p) };
+        }
         case 'edit-patch':
             return { key: 'edit-patch', value: await runClientEditPatch(projectPath, p) };
         default:

@@ -187,6 +187,8 @@ Defined in [`.env.example`](.env.example). Common overrides:
 | `TASK_MONITOR_POLL_INTERVAL_MS` | Delay between async polls (default `5000`) |
 | `TASK_MONITOR_MAX_POLL_ATTEMPTS` | Minimum iteration ceiling per task phase (default `120`); effective ceiling is at least `ceil(POLL_TIMEOUT_MS / POLL_INTERVAL_MS) + 100` |
 | `TASK_MONITOR_POLL_TIMEOUT_MS` | Wall-clock cap for polling (default `600000`, ~10m) |
+| `TASK_MONITOR_STALL_POLLS` | Fail-fast guard for stagnant async loops: repeated busy polls with the same stall key (per-step, or `agent_tool_phase` for all `agent` `tool_*` steps — default `40`); set `0` to disable |
+| `TASK_MONITOR_AGENT_TOOL_STALL_MS` | Wall-clock cap (default `180000`) while `action=agent` stays in any `tool_*` step with async busy; `0` disables |
 | `TASK_MONITOR_TASKS_DIR` | Directory of task markdown files |
 | `TASK_MONITOR_TASK_LIST` | Optional path to a line-based list of `.md` filenames (order preserved); overrides directory scan |
 | `TASK_MONITOR_MAX_TASKS_PER_RUN` | Cap on executed (non-skipped) prompts per `--once` run; `0` = no limit. If **unset**, `--once` defaults to **1** in the entry script |

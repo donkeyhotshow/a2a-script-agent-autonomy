@@ -215,6 +215,10 @@ class TaskMonitorProcessing {
       );
       const startTime = Date.now();
       let attempts = 0;
+      let idleToolLoopHits = 0;
+      let lastStallKey = null;
+      let stallHits = 0;
+      let agentToolPhaseStart = null;
 
       while (attempts < attemptCeiling) {
         if (Date.now() - startTime > this.pollTimeoutMs) {
@@ -229,11 +233,67 @@ class TaskMonitorProcessing {
           await new Promise(resolve => setTimeout(resolve, pollInterval));
           continue;
         }
-        // Check asyncPending to determine if still waiting for LLM
-        const isAsyncPending = asyncResult.asyncPending === true || asyncResult.status === 'processing';
-        const isCompleted = asyncResult.completed === true || asyncResult.status === 'completed';
+        // Treat `pending` like processing — otherwise we fall through and reset stall counters when the hub flips pending/processing.
+        const isAsyncPending =
+          asyncResult.asyncPending === true ||
+          asyncResult.status === 'processing' ||
+          asyncResult.status === 'pending';
+        const isCompleted =
+          asyncResult.completed === true ||
+          asyncResult.status === 'completed' ||
+          asyncResult.status === 'idle';
         const hasPromiseId = asyncResult.result?.promiseId || asyncResult.execute?.promiseId;
         await this.describeAsyncResult(asyncResult, isAsyncPending);
+
+        const stepNow =
+          asyncResult?.context?.execution?.step ||
+          asyncResult?.execute?.step ||
+          null;
+        const actionNow =
+          asyncResult?.context?.execution?.action ||
+          asyncResult?.execute?.action ||
+          null;
+
+        // Wall clock: agent may bounce between tool_read_file / tool_list_directory — step-based stall never trips.
+        const inAgentToolWait =
+          isAsyncPending &&
+          actionNow === 'agent' &&
+          stepNow &&
+          String(stepNow).startsWith('tool_');
+        if (this.agentToolStallMs > 0 && inAgentToolWait) {
+          if (agentToolPhaseStart == null) agentToolPhaseStart = Date.now();
+          else if (Date.now() - agentToolPhaseStart >= this.agentToolStallMs) {
+            failureReason = `Agent tool phase exceeded TASK_MONITOR_AGENT_TOOL_STALL_MS (${this.agentToolStallMs}ms) at step=${stepNow}`;
+            break;
+          }
+        } else {
+          agentToolPhaseStart = null;
+        }
+
+        // Stagnation: one key for all agent tool_* steps so switching tools does not reset the counter.
+        let stallKey = null;
+        if (isAsyncPending && stepNow) {
+          if (actionNow === 'agent' && String(stepNow).startsWith('tool_')) {
+            stallKey = 'agent_tool_phase';
+          } else {
+            stallKey = String(stepNow);
+          }
+        }
+        if (stallKey) {
+          if (stallKey === lastStallKey) {
+            stallHits += 1;
+          } else {
+            lastStallKey = stallKey;
+            stallHits = 1;
+          }
+          if (this.stallPolls > 0 && stallHits >= this.stallPolls) {
+            failureReason = `Stalled async loop: key=${stallKey} repeated ${stallHits} busy polls (step=${stepNow})`;
+            break;
+          }
+        } else {
+          lastStallKey = null;
+          stallHits = 0;
+        }
 
         if (!isAsyncPending && idleGateAttempts < 5) {
           const sd = await this.getSession(session.id, { includeContext: true });
@@ -297,6 +357,21 @@ class TaskMonitorProcessing {
             success = true;
             return true;
           }
+
+          // Guard: agent/tool loop can settle to idle repeatedly at tool_run_script
+          // without producing terminal result; fail fast with clear diagnosis.
+          const step = sessionData?.context?.execution?.step || sessionData?.execute?.step;
+          const action = sessionData?.context?.execution?.action;
+          const asyncStatus = asyncResult?.status;
+          if (action === 'agent' && step === 'tool_run_script' && (asyncStatus === 'idle' || asyncStatus === 'completed')) {
+            idleToolLoopHits += 1;
+            if (idleToolLoopHits >= 3) {
+              failureReason = 'Agent loop detected: repeated idle at step=tool_run_script with no terminal result';
+              break;
+            }
+          } else {
+            idleToolLoopHits = 0;
+          }
         }
 
         // Unknown state, wait a bit
@@ -306,6 +381,11 @@ class TaskMonitorProcessing {
 
       if (routerStuckExit) {
         console.error(`Task ${taskFile.name} aborted: ${failureReason}`);
+        return false;
+      }
+
+      if (failureReason) {
+        console.error(`Task ${taskFile.name} failed: ${failureReason}`);
         return false;
       }
 
@@ -496,8 +576,14 @@ class TaskMonitorProcessing {
   }
 
   checkTaskCompletion(asyncResult) {
-    const isAsyncPending = asyncResult.asyncPending === true || asyncResult.status === 'processing';
-    const isCompleted = asyncResult.completed === true || asyncResult.status === 'completed';
+    const isAsyncPending =
+      asyncResult.asyncPending === true ||
+      asyncResult.status === 'processing' ||
+      asyncResult.status === 'pending';
+    const isCompleted =
+      asyncResult.completed === true ||
+      asyncResult.status === 'completed' ||
+      asyncResult.status === 'idle';
     const hasPromiseId = asyncResult.result?.promiseId || asyncResult.execute?.promiseId;
 
     // Task is completed if not pending and not waiting on promise

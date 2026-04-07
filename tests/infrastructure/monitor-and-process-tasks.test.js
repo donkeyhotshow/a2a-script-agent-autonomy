@@ -151,6 +151,13 @@ describe('monitor-and-process-tasks.js', () => {
       expect(source).toContain('Resuming session');
       expect(source).toContain('session-resume');
     });
+
+    it('should treat status=pending as async busy and support agent tool stall + phase key', () => {
+      const source = readMonitorSources(testDir);
+      expect(source).toContain("asyncResult.status === 'pending'");
+      expect(source).toContain('TASK_MONITOR_AGENT_TOOL_STALL_MS');
+      expect(source).toContain('agent_tool_phase');
+    });
   });
 
   describe('Integration Features', () => {

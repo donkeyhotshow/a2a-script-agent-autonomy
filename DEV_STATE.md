@@ -17,6 +17,8 @@
 
 **Default team habit:** treat **agent-mode dialog** as the main ongoing activity — web UI or the same Client API flow (`mode: "agent"`, `/next`, poll `/async`, correct `message` vs `choice`). **[`npm run monitor:once`](MONITOR-QUICK-START.md)** (one prompt per run by default) is the batched automation for that same path; IDE work closes the loop on what sessions expose.
 
+**Cross-system shapes (wrong returns between layers):** hub [`cross-system-contracts/README.md`](cross-system-contracts/README.md), sequence [`cross-system-contracts/SEQUENCE.md`](cross-system-contracts/SEQUENCE.md), operator notes [`cross-system-contracts/PRACTICE.md`](cross-system-contracts/PRACTICE.md), **`npm run cross-system:validate`**, backlog [`tasks/pending/cross-system-parameter-hunt.md`](tasks/pending/cross-system-parameter-hunt.md).
+
 ---
 
 ## Triangle workflow + colored alerts (whole-stack lens)
@@ -46,6 +48,7 @@
 3. **Verify what changed** — At least one of: module tests, `tests/direct-tests` for shape, or `sim:lint` / `sim:validate` for touched sim surfaces ([`tests/direct-tests/README.md`](tests/direct-tests/README.md)).
 4. **Queue honesty** — Remove done items from `DEV_STATE` / `tasks/`; **discover** new gaps; **write** concrete next steps. **Empty queue ≠ done** — run [`AGENTS.md`](AGENTS.md) *Empty queue* (prune → discover → write → drive stack).
 5. **Hygiene when stuck** — **Hygiene** section in this file (processes + storage + optional monitor reset); **do not** wipe LLM disk cache unless explicitly requested.
+6. **Evidence first** — Each loop must record practical artifacts (test output, `sessionId`/`promiseId`, async terminal status, or concrete diff). If missing, run a minimal experiment first and log it in state (see [`AGENTS.md`](AGENTS.md) *Evidence-first loop* and [`docs/agent-iteration-traps.md`](docs/agent-iteration-traps.md) *Evidence rule*).
 
 **Continue iterating until** (normalization bar for the current scope): no open **P0** for that scope (broken stack, wrong router contract, sync invoke escape hatch, or doc that lies about the Client API path), and the **next** prune/discover pass either adds only **P1+** items or none — then record **as-of date** in `DEV_STATE` instead of declaring “forever done.”
 
@@ -65,7 +68,8 @@ If any probe fails: start with **`start-all.bat`**, then re-run the curls in *He
 
 - **Operator + narrative index:** [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md) · [`COMPLETION-REPORT.md`](COMPLETION-REPORT.md).
 - **State file:** `task-monitor-state.json` — `currentTask`, `sessionId`, `status`, `processedTasks[]`. **Regression tests:** `npm run test:monitor` (repo root).
-- **Timeouts:** **`TASK_MONITOR_POLL_TIMEOUT_MS`** wall cap is authoritative (~**600000ms** default); poll iteration ceiling scales with timeout ÷ interval so **`TASK_MONITOR_MAX_POLL_ATTEMPTS`** cannot shorten a run below that wall clock. Vitest: `npx vitest run tests/infrastructure/monitor-and-process-tasks.test.js`. Override via `TASK_MONITOR_*` env. Still inspect `GET /api/a2a/sessions/{id}` + `/async` when stuck ([`AGENTS.md`](AGENTS.md) *Stack / promise pending*).
+- **Timeouts:** **`TASK_MONITOR_POLL_TIMEOUT_MS`** wall cap is authoritative (~**600000ms** default); poll iteration ceiling scales with timeout ÷ interval so **`TASK_MONITOR_MAX_POLL_ATTEMPTS`** cannot shorten a run below that wall clock. Async `/async` **`pending`** is treated as busy (same as `processing`). **`TASK_MONITOR_AGENT_TOOL_STALL_MS`** (default **180000**) fails fast if `action=agent` stays in any **`tool_*`** step that long; **`TASK_MONITOR_STALL_POLLS`** uses an **`agent_tool_phase`** key so rotating tool steps still counts toward stall. Vitest: `npx vitest run tests/infrastructure/monitor-and-process-tasks.test.js`. Still inspect `GET /api/a2a/sessions/{id}` + `/async` when stuck ([`AGENTS.md`](AGENTS.md) *Stack / promise pending*).
+- **Agent tool chain (2026-04-07):** Client API **`execute['run-script']`** with **`command`** (LLM one-liner) is now chained like **`scriptId`** — previously `getValidatedToolKey` rejected it and sessions stuck on **`tool_run_script`** with no `context.result` ([`a2a-client/DEV_STATE.md`](a2a-client/DEV_STATE.md)). **Evidence:** `npx vitest run tests/direct-tests/chain-guards-message-plus-tool.test.mjs tests/infrastructure/monitor-and-process-tasks.test.js` → **29 passed** (2026-04-07). **Next:** reload Vite if dev server was already running, then **`npm run monitor:once`** (or one manual session) to confirm a full agent turn completes past inline `run-script`.
 - **Promise queue:** with **`PROMISE_DAEMON_ONLY`** (hub default), LLM `?promise=1` tickets must be drained — **`start-all.bat`** now starts the **promise-queue-daemon** window; manual: `scripts/start-promise-queue-daemon.bat` or `cd ai-integration && python scripts/promise_queue_daemon.py` (hub **`http://localhost:11434`**). **`hub_promise_empty`** / stuck `pending` usually means the daemon was not hitting the hub.
 
 **Authoritative human queue (if used):** [`work/STATE.md`](work/STATE.md) — table *Очередь задач*.
@@ -118,8 +122,8 @@ Then `start-all.bat` and retry.
 
 ## Next (ordered)
 
-1. **Broader offline:** `npm run test:direct-tests` (Vitest under `tests/direct-tests/`) · `npm run test:gang` (Papa–Mama orchestrator) if you change session/proxy contracts — **last stage** `validate:proba-servera` needs **ai-integration `:11434`** unless **`PROBA_SERVERA_SKIP_STACK_CHECK=1`** (see script output).
-2. **Sims:** `npm run sim:lint -- --all` · `npm run sim:validate -- --all` (from root; runs via `a2a-server`).
+1. **Broader offline:** `npm run test:direct-tests` (Vitest under `tests/direct-tests/`) — **2026-04-07:** 33 passed · `npm run test:gang` (Papa–Mama orchestrator) if you change session/proxy contracts — **last stage** `validate:proba-servera` needs **ai-integration `:11434`** unless **`PROBA_SERVERA_SKIP_STACK_CHECK=1`**. **PowerShell:** `$env:PROBA_SERVERA_SKIP_STACK_CHECK = '1'; npm run test:gang`. **Proba `agent-tool-rag-search`:** fixed **2026-04-07** — LLM recovery path now runs **`finalizeDialogGrayRoomResult`** (was skipping `context.workbench`); `ensureWorkbenchSectionsShape` also creates **`{ workbench: { sections: {} } }`** when missing ([`dialog-request-processor.ts`](a2a-server/src/services/core/request-processor/dialog-request-processor.ts)).
+2. **Sims:** `npm run sim:lint -- --all` · `npm run sim:validate -- --all` (from root; runs via `a2a-server`) — **2026-04-07:** 32 sims lint-clean, 170 validate steps OK.
 3. **Live stack / north star:** `start-all.bat` → `npm run monitor:once` (or one manual Client API session per [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md)); set **`TASK_MONITOR_SKIP_PROMISE_GATE=1`** when hub reports `promise_daemon_only` and the queue is drained.
 4. **Test-architecture debt (fixtures / gray paths):** [`tasks/pending/test-architecture-proposals.md`](tasks/pending/test-architecture-proposals.md).
 

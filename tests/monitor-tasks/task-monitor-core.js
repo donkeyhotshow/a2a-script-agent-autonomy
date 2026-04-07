@@ -18,6 +18,11 @@ class TaskMonitorCore {
     // Defaults: 120 × 5s ≈ 10m wall time (local LLM agent turns often exceed 5m; old 60×5s ≈ 301s false timeouts)
     this.maxPollAttempts = parseInt(process.env.TASK_MONITOR_MAX_POLL_ATTEMPTS || '120', 10);
     this.pollTimeoutMs = parseInt(process.env.TASK_MONITOR_POLL_TIMEOUT_MS || '600000', 10);
+    // Fail faster when async status/step does not change for too many polls (0 disables).
+    this.stallPolls = parseInt(process.env.TASK_MONITOR_STALL_POLLS || '40', 10);
+    /** Wall clock while agent stays in tool_* steps (async busy); 0 disables. Default 3m — faster than full poll timeout when tools keep rotating. */
+    const _ats = parseInt(process.env.TASK_MONITOR_AGENT_TOOL_STALL_MS || '180000', 10);
+    this.agentToolStallMs = Number.isFinite(_ats) && _ats >= 0 ? _ats : 0;
     /** 0 = no limit. With `node … --once`, entry defaults env to 1 unless TASK_MONITOR_MAX_TASKS_PER_RUN is set. */
     const _maxTasks = parseInt(process.env.TASK_MONITOR_MAX_TASKS_PER_RUN || '0', 10);
     this.maxTasksPerRun = Number.isFinite(_maxTasks) && _maxTasks >= 0 ? _maxTasks : 0;

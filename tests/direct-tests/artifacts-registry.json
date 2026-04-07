@@ -1,6 +1,17 @@
 {
-  "clientSessions": [],
-  "serverPromiseIds": [],
+  "clientSessions": [
+    "sess_1775581836957",
+    "sess_1775581836969",
+    "sess_1775581836981",
+    "sess_1775581836994",
+    "sess_1775581837106",
+    "sess_1775581837143",
+    "sess_1775581856938"
+  ],
+  "serverPromiseIds": [
+    "prom_5398c2ed-bf86-4ebf-9955-7e1726904965",
+    "prom_6321e4fa-893b-43ec-b15e-f33153ee67f3"
+  ],
   "aiIntegration": {
     "requestIds": [],
     "promiseIds": [],
