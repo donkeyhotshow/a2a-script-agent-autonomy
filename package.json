@@ -23,6 +23,7 @@
         "monitor:daemon": "node monitor-and-process-tasks.js --daemon",
         "monitor:once": "node monitor-and-process-tasks.js --once",
         "monitor:reset": "node -e \"require('fs').unlinkSync('task-monitor-state.json')\" 2>nul || exit 0",
+        "cleanup:state": "node cleanup-session-state.js",
         "test:direct-tests": "vitest run tests/direct-tests",
         "test:indirect": "node tests/indirect-tests/run-all.mjs",
         "validate:mama-red-vertical": "node tests/indirect-tests/red-room/validate-red-room-dialog-vertical.mjs",

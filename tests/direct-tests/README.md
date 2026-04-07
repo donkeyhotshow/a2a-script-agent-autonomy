@@ -74,7 +74,7 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 .\tests\direct-tests\run-checks.ps1 -Scope ClientServerLLM
 .\tests\direct-tests\run-checks.ps1 -Scope Full
 # Override ports/URLs:
-.\tests\direct-tests\run-checks.ps1 -Scope Full -ServerPort 3000 -ClientPort 5173 -WebPort 5173 -AiProxyUrl http://localhost:11435
+.\tests\direct-tests\run-checks.ps1 -Scope Full -ServerPort 3000 -ClientPort 5173 -WebPort 5173 -AiProxyUrl http://localhost:11434
 ```
 
 ## Dialog

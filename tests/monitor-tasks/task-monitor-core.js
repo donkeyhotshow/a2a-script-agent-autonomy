@@ -12,8 +12,9 @@ class TaskMonitorCore {
     this.tasksDir = path.resolve(process.env.TASK_MONITOR_TASKS_DIR || 'prompts-to-agent-mode');
     this.hooksDir = path.join(process.cwd(), 'hooks');
     this.pollIntervalMs = parseInt(process.env.TASK_MONITOR_POLL_INTERVAL_MS || '5000', 10);
-    this.maxPollAttempts = parseInt(process.env.TASK_MONITOR_MAX_POLL_ATTEMPTS || '60', 10);
-    this.pollTimeoutMs = parseInt(process.env.TASK_MONITOR_POLL_TIMEOUT_MS || '300000', 10);
+    // Defaults: 120 × 5s ≈ 10m wall time (local LLM agent turns often exceed 5m; old 60×5s ≈ 301s false timeouts)
+    this.maxPollAttempts = parseInt(process.env.TASK_MONITOR_MAX_POLL_ATTEMPTS || '120', 10);
+    this.pollTimeoutMs = parseInt(process.env.TASK_MONITOR_POLL_TIMEOUT_MS || '600000', 10);
     this.logLevel = process.env.TASK_MONITOR_LOG_LEVEL || 'info';
     this.aiHubUrl = (process.env.TASK_MONITOR_AI_HUB_URL || 'http://localhost:11434').replace(
       /\/$/,

@@ -8,7 +8,7 @@ Each `*.md` file here is **one** suspicious artifact or cluster: extract signal 
 |-----------|----------|
 | [`archive-methodology-missing.md`](archive-methodology-missing.md) | Broken links to `archive/methodology/*` |
 | [`greedy-dump-references.md`](greedy-dump-references.md) | Prompts/docs pointing at missing `greedy-dump/` tree |
-| [`free-llm-keys-secret-file.md`](free-llm-keys-secret-file.md) | `FREE_LLM_KEYS.md` at repo root |
+| [`free-llm-keys-secret-file.md`](free-llm-keys-secret-file.md) | Root secrets file removed; template [`ai-integration/FREE_LLM_KEYS.md`](../../ai-integration/FREE_LLM_KEYS.md) |
 | [`root-debug-log.md`](root-debug-log.md) | `debug.log` at repo root |
 | [`comparison-fork-aleon10-donkeyhotshow.md`](comparison-fork-aleon10-donkeyhotshow.md) | `COMPARISON-ALEON10-VS-DONKEYHOTSHOW.md` |
 | [`prompts-greedy-dump-integration-link.md`](prompts-greedy-dump-integration-link.md) | Missing `tasks/pending/greedy-dump-integration.md` |

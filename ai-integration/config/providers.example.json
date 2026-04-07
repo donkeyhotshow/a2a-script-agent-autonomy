@@ -10,16 +10,65 @@
     {
       "id": "z-ai-primary",
       "provider": "z_ai",
-      "secret": "PASTE_PRIMARY_Z_AI_KEY_HERE",
+      "secret": "${Z_AI_API_KEY:-}",
       "enabled": true,
       "priority": 1
     },
     {
       "id": "z-ai-secondary",
       "provider": "z_ai",
-      "secret": "PASTE_SECONDARY_Z_AI_KEY_HERE",
-      "enabled": true,
+      "secret": "${Z_AI_API_KEY_SECONDARY:-}",
+      "enabled": false,
       "priority": 2
+    },
+    {
+      "id": "groq-primary",
+      "provider": "groq",
+      "secret": "${GROQ_API_KEY:-}",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "id": "openrouter-primary",
+      "provider": "openrouter",
+      "secret": "${OPENROUTER_API_KEY:-}",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "id": "qwen-dashscope-primary",
+      "provider": "qwen_dashscope",
+      "secret": "${QWEN_API_KEY:-}",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "id": "mistral-codestral-primary",
+      "provider": "mistral_codestral",
+      "secret": "${MISTRAL_API_KEY:-}",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "id": "together-primary",
+      "provider": "together",
+      "secret": "${TOGETHER_API_KEY:-}",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "id": "cerebras-primary",
+      "provider": "cerebras",
+      "secret": "${CEREBRAS_API_KEY:-}",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "id": "cohere-primary",
+      "provider": "cohere",
+      "secret": "${COHERE_API_KEY:-}",
+      "enabled": true,
+      "priority": 1
     }
   ],
   "providers": {
@@ -32,13 +81,41 @@
       "timeout": 0,
       "max_retries": 3
     },
-    "openrouter": {
+    "z_ai": {
+      "type": "z_ai",
+      "url": "${Z_AI_BASE_URL:-https://api.z.ai/api/paas/v4/}",
+      "api_key": "${Z_AI_API_KEY:-}",
+      "enabled": true,
+      "priority": 1,
+      "models": ["${Z_AI_MODEL:-glm-4.7-flash}"],
+      "fallback_models": {
+        "qwen3:8b": "glm-4.7-flash"
+      },
+      "timeout": 0,
+      "max_retries": 2,
+      "request_delay_seconds": 10.0
+    },
+    "qwen_dashscope": {
       "type": "openai",
-      "url": "https://openrouter.ai/api/v1",
-      "api_key": "${OPENROUTER_API_KEY}",
+      "url": "${QWEN_BASE_URL:-https://dashscope-intl.aliyuncs.com/compatible-mode/v1}",
+      "api_key": "${QWEN_API_KEY:-}",
       "enabled": false,
       "priority": 2,
+      "models": ["${QWEN_MODEL:-qwen-turbo}"],
+      "fallback_models": {
+        "qwen3:8b": "qwen-turbo"
+      },
+      "timeout": 0,
+      "max_retries": 2
+    },
+    "openrouter": {
+      "type": "openai",
+      "url": "${OPENROUTER_BASE_URL:-https://openrouter.ai/api/v1}",
+      "api_key": "${OPENROUTER_API_KEY:-}",
+      "enabled": false,
+      "priority": 3,
       "models": [
+        "${OPENROUTER_MODEL:-openrouter/auto}",
         "meta-llama/llama-3-8b-instruct",
         "mistralai/mistral-7b-instruct",
         "google/gemma-7b-it",
@@ -53,11 +130,12 @@
     },
     "groq": {
       "type": "openai",
-      "url": "https://api.groq.com/openai/v1",
-      "api_key": "${GROQ_API_KEY}",
+      "url": "${GROQ_BASE_URL:-https://api.groq.com/openai/v1}",
+      "api_key": "${GROQ_API_KEY:-}",
       "enabled": false,
-      "priority": 3,
+      "priority": 4,
       "models": [
+        "${GROQ_MODEL:-llama-3.1-8b-instant}",
         "qwen3-8b-8192",
         "qwen3-70b-8192",
         "mixtral-8x7b-32768",
@@ -70,12 +148,42 @@
       "timeout": 0,
       "max_retries": 2
     },
+    "mistral_codestral": {
+      "type": "openai",
+      "url": "${MISTRAL_BASE_URL:-https://codestral.mistral.ai/v1}",
+      "api_key": "${MISTRAL_API_KEY:-}",
+      "enabled": false,
+      "priority": 5,
+      "models": ["${MISTRAL_MODEL:-codestral-latest}"],
+      "timeout": 0,
+      "max_retries": 2
+    },
+    "together": {
+      "type": "openai",
+      "url": "${TOGETHER_BASE_URL:-https://api.together.ai/v1}",
+      "api_key": "${TOGETHER_API_KEY:-}",
+      "enabled": false,
+      "priority": 6,
+      "models": ["${TOGETHER_MODEL:-meta-llama/Llama-3.3-70B-Instruct-Turbo}"],
+      "timeout": 0,
+      "max_retries": 2
+    },
+    "cerebras": {
+      "type": "openai",
+      "url": "${CEREBRAS_BASE_URL:-https://api.cerebras.ai/v1}",
+      "api_key": "${CEREBRAS_API_KEY:-}",
+      "enabled": false,
+      "priority": 7,
+      "models": ["${CEREBRAS_MODEL:-llama-3.3-70b}"],
+      "timeout": 0,
+      "max_retries": 2
+    },
     "huggingface": {
       "type": "huggingface",
       "url": "https://api-inference.huggingface.co",
-      "api_key": "${HF_TOKEN}",
+      "api_key": "${HF_TOKEN:-}",
       "enabled": false,
-      "priority": 4,
+      "priority": 8,
       "models": [
         "meta-llama/Llama-2-7b-chat-hf",
         "mistralai/Mistral-7B-v0.1"
@@ -84,32 +192,31 @@
       "max_retries": 1
     },
     "cohere": {
-      "type": "openai",
-      "url": "https://api.cohere.ai/v1",
-      "api_key": "${COHERE_API_KEY}",
+      "type": "cohere",
+      "url": "${COHERE_BASE_URL:-https://api.cohere.ai/v1}",
+      "api_key": "${COHERE_API_KEY:-}",
       "enabled": false,
-      "priority": 5,
-      "models": ["command-r", "command-r-plus"],
+      "priority": 9,
+      "models": [
+        "${COHERE_MODEL:-command-r}",
+        "command-r-plus"
+      ],
       "timeout": 0,
       "max_retries": 2
-    },
-    "z_ai": {
-      "type": "z_ai",
-      "url": "${Z_AI_BASE_URL:-https://api.z.ai/api/paas/v4/}",
-      "api_key": "PASTE_PRIMARY_Z_AI_KEY_HERE",
-      "enabled": true,
-      "priority": 6,
-      "models": ["${Z_AI_MODEL:-glm-4.7-flash}"],
-      "fallback_models": {
-        "qwen3:8b": "glm-4.7-flash"
-      },
-      "timeout": 0,
-      "max_retries": 2,
-      "request_delay_seconds": 10.0
     }
   },
   "default_provider": "z_ai",
-  "fallback_chain": ["z_ai", "compat_llm", "groq", "openrouter"],
+  "fallback_chain": [
+    "z_ai",
+    "compat_llm",
+    "groq",
+    "openrouter",
+    "qwen_dashscope",
+    "mistral_codestral",
+    "together",
+    "cerebras",
+    "cohere"
+  ],
   "enable_fallback": true,
   "provider_timeout": 0
 }

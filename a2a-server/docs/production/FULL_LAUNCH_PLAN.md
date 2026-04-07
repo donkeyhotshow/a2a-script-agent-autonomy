@@ -13,13 +13,13 @@
 - Docker + Docker Compose (только для AI Integration)
 - Node.js 18+ (для a2a-server и a2a-client)
 - Python 3.9+ (для ai-integration прокси)
-- Local LLM upstream с установленными моделями
+- **LLM backend** — по желанию: локальный HTTP-совместимый сервер и/или внешние провайдеры в конфиге прокси; репозиторий **`start-all` / `runbook-cli` не поднимает** отдельный «local LLM» процесс
 
 ### 1.2 Требуемые порты
 | Порт | Компонент | Описание |
 |------|-----------|----------|
-| 11435 | Local LLM upstream | Локальная LLM |
-| 11434 | AI Integration | Прокси / promise → Local LLM upstream :11435 |
+| 11434 | AI Integration | Прокси / promise (**операторская точка C1** треугольника: `GET /health`) |
+| 11435 | Local LLM upstream (типично) | Только если вы сами запускаете локальную LLM; URL задаётся `LOCAL_LLM_UPSTREAM_URL` / провайдерами |
 | 3000 | a2a-server | A2A API сервер (stateless) |
 | 3001 | a2a-client (SDK) | Client API (опционально; Web чаще Vite 5173 + `/api/a2a/*`) |
 | 5173 | Vite Dev | Web UI |
@@ -30,31 +30,20 @@
 
 ## 2. Последовательность запуска
 
-### ЭТАП 1: Запуск Local LLM upstream (единственная внешняя зависимость)
+> **Треугольник (см. `docs/TRIANGLE-WORKFLOW.md`):** первый контурный чек — **`GET http://localhost:11434/health`** (hub). Локальная LLM на **11435** — не часть `start-all`; поднимайте её отдельно, если `LOCAL_LLM_UPSTREAM_URL` указывает на неё.
+
+### ЭТАП 1 (опционально): Локальный HTTP LLM
+
+Если используете локальный upstream (часто порт **11435**):
 
 ```bash
-# Запустите локальный HTTP LLM на порту 11435 и подтяните нужную модель (команды зависят от дистрибутива).
-
-# Проверка
+# Команды зависят от дистрибутива. Проверка типичного API локального LLM:
 curl http://localhost:11435/api/tags
 ```
 
-**Ожидаемый ответ:**
-```json
-{
-  "models": [
-    {
-      "name": "qwen3:8b",
-      "size": ...,
-      "modified_at": "..."
-    }
-  ]
-}
-```
+Без доступного backend для прокси LLM-запросы из стека не выполнятся — либо поднимите upstream, либо настройте внешний провайдер в ai-integration.
 
-> ⚠️ **КРИТИЧНО:** Без модели дальнейший запуск невозможен!
-
-### ЭТАП 2: Запуск AI Integration (опционально, для проксирования)
+### ЭТАП 2: Запуск AI Integration (прокси)
 
 ```bash
 cd ai-integration
@@ -128,9 +117,9 @@ npm run dev
 ## 3. Упрощенный запуск (все скриптом)
 
 ```bash
-# 1. Поднимите локальный HTTP LLM на порту 11435 (команда зависит от вашего дистрибутива)
+# start-all поднимает ai-integration (:11434), a2a-server, client-api, web-ui — без отдельного старта Local LLM.
+# При необходимости поднимите upstream до/после и проверьте GET http://localhost:11434/health
 
-# 2. Запуск всех компонентов Node.js
 ./start-all.bat  # Windows
 # или
 ./start-all.sh   # Linux/Mac (если есть)
@@ -151,10 +140,10 @@ curl http://localhost:3000/health
 curl http://localhost:3001/api/health
 # {"status": "ok"}
 
-# AI Integration (если запущен)
+# AI Integration (hub — основной gate)
 curl http://localhost:11434/health
 
-# Local LLM upstream
+# Local LLM upstream (если настроен и запущен отдельно)
 curl http://localhost:11435/api/tags
 # {"models": [...]}
 ```
@@ -193,15 +182,14 @@ cd a2a-server
 npm run dev  # смотреть ошибки в консоли
 ```
 
-### Проблема: Нет соединения с Local LLM upstream
+### Проблема: Нет соединения с LLM / hub unhealthy
 
 ```bash
-# Проверка Local LLM upstream
+curl http://localhost:11434/health
+# Затем проверьте upstream из конфига (часто 11435):
 curl http://localhost:11435/api/tags
-# Должен вернуть список моделей
-
-# Если не работает — перезапустите процесс локального LLM на 11435
 ```
+Сверьте `LOCAL_LLM_UPSTREAM_URL` и провайдеры в ai-integration; репозиторий не стартует upstream за вас.
 
 ### Проблема: Сессии не сохраняются
 
@@ -219,8 +207,8 @@ ls -la storage/
 
 ```
 ┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌─────────────────┐
-│   Web UI    │────▶│ Client API   │────▶│ a2a-server  │────▶│ AI Hub → Local LLM upstream │
-│    :5173    │     │5173 or :3001 │     │    :3000    │     │ :11435 → :11434 │
+│   Web UI    │────▶│ Client API   │────▶│ a2a-server  │────▶│ AI Hub (:11434) → upstream (env) │
+│    :5173    │     │5173 or :3001 │     │    :3000    │     │ типично :11435 если локально   │
 └─────────────┘     └──────┬───────┘     └─────────────┘     └─────────────────┘
                            │
                            │ JSON files
@@ -255,4 +243,4 @@ ls -la storage/
 
 ---
 
-**Последнее обновление:** 2026-03-07 (переход на stateless)
+**Последнее обновление:** 2026-04-07 (stateless + треугольник: gate на :11434, upstream вне start-all)

@@ -1,5 +1,7 @@
 # AI Integration Troubleshooting Guide
 
+**Triangle:** Operators should treat **`GET http://localhost:11434/health`** as the hub gate (**C1**). Repository **`start-all` / `runbook-cli`** do not start a local upstream; configure **`LOCAL_LLM_UPSTREAM_URL`**, providers, or your own process.
+
 ## Common Issues
 
 ### 1. Local LLM upstream Not Available
@@ -8,12 +10,13 @@
 
 **Diagnosis:**
 ```bash
+curl http://localhost:11434/health
 curl http://localhost:11434/health/local-llm-upstream
 curl http://localhost:11435/api/tags
 ```
 
 **Solutions:**
-- Start local HTTP LLM: set `LOCAL_LLM_SERVE_CMD` / your process manager, or `GET /local-llm-upstream/start` on the proxy when configured.
+- Start local HTTP LLM (your command / process manager), or `GET /local-llm-upstream/start` on the proxy when configured — not via removed `scripts/start-local-llm.bat`.
 - Check if port 11435 is in use: `netstat -ano | findstr 11435`
 - Check logs from the process you use to run the local HTTP LLM.
 

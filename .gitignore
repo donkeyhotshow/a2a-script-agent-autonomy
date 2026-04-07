@@ -22,6 +22,9 @@ a2a-client/storage/
 simulations/**/invoke-capture.json
 .env*
 
+# Local operator cheatsheet only — never commit real keys (see ai-integration/FREE_LLM_KEYS.md)
+**/FREE_LLM_KEYS.local.md
+
 # Vitest JSON scratch from human-review runners
 **/tests/human-review/.last-vitest.json
 tests/proba-servera/**/output.json

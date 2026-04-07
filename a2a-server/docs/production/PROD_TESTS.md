@@ -2,6 +2,8 @@
 
 > **⚠️ DEPRECATED**: Use `tests/direct-tests/run-checks.ps1` instead.
 
+**Stack triage (triangle):** Day-to-day gate for layer **C** is the AI hub — `GET http://localhost:11434/health` (see [`docs/TRIANGLE-WORKFLOW.md`](../../../docs/TRIANGLE-WORKFLOW.md)). `run-checks.ps1` uses **`-AiProxyUrl http://localhost:11434`** for that layer. This harness’s **`compat_llm`** mode still posts to a **direct** upstream base URL (default **`http://localhost:11435`**) when you want to hit `POST …/api/generate` without the proxy.
+
 ## Overview
 
 The `scripts/prod-test.js` helper exercises the real production stack in three slices (client → server → Local LLM upstream, server-only, and Local LLM upstream-only) and saves every request/response pair to `tmp/prod-test-results/<timestamp>/`.
@@ -124,17 +126,14 @@ This is wrong! Local LLM upstream should be on 11435, and ai-integration proxy s
 
 | Service | Port | Health Endpoint |
 |---------|------|-----------------|
+| AI Integration (hub) | 11434 | `GET http://localhost:11434/health` (primary **C1** gate) |
 | a2a-server | 3000 | `GET http://localhost:3000/health` |
 | a2a-server | 3000 | `GET http://localhost:3000/health/ready` |
-| AI Integration proxy | 11434 | `GET http://localhost:11434/` (returns empty if not Flask) |
-| Local LLM upstream (direct) | 11435 | `GET http://localhost:11435/api/tags` |
-
-Run these commands to verify services are running:
+| Local LLM upstream (direct, optional) | 11435 | `GET http://localhost:11435/api/tags` — only if you run a local upstream; not started by repo `start-all` |
 
 ```bash
-# Check server health
+curl -s http://localhost:11434/health
 curl -s http://localhost:3000/health
-
-# Check Local LLM upstream models (direct)
+# If using a local upstream on 11435:
 curl -s http://localhost:11435/api/tags
 ```

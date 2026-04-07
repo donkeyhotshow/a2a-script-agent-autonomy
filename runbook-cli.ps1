@@ -7,15 +7,10 @@ $ErrorActionPreference = "Stop"
 
 # Configuration - hardcoded as requested
 $SERVICES = @{
-    'local_llm' = @{
-        Port = 11435
-        StartScript = Join-Path $PSScriptRoot 'scripts\start-local-llm.bat'
-        Dependencies = @()
-    }
     'ai-integration' = @{
         Port = 11434
         StartScript = Join-Path $PSScriptRoot 'scripts\start-ai-integration.bat'
-        Dependencies = @('local_llm')
+        Dependencies = @()
     }
     'a2a-server' = @{
         Port = 3000
@@ -58,7 +53,6 @@ function Test-ServiceHealth {
 
     # Define health endpoints
     $healthEndpoints = @{
-        'local_llm' = '/api/tags'
         'ai-integration' = '/health'
         'a2a-server' = '/health'
         'client-api' = '/api/a2a/projects'
@@ -304,7 +298,7 @@ try {
         "start" {
             Write-Log "=== runbook-cli.ps1 : Standardized service startup ==="
 
-            $allServices = @('local_llm', 'ai-integration', 'a2a-server', 'client-api', 'web-ui')
+            $allServices = @('ai-integration', 'a2a-server', 'client-api', 'web-ui')
             $targetServices = $Services.Count -gt 0 ? $Services : $allServices
             $order = Get-DependencyOrder $targetServices
 
@@ -312,7 +306,7 @@ try {
             # Step 1: Kill existing processes first
             # ==========================================
             Write-Log ""
-            Write-Log "[Step 1/8] Cleaning environment with kill-all.bat..."
+            Write-Log "[Step 1/7] Cleaning environment with kill-all.bat..."
             $killAllPath = Join-Path $PSScriptRoot 'kill-all.bat'
             if (Test-Path $killAllPath) {
                 $process = Start-Process -FilePath 'cmd.exe' -ArgumentList "/c `"$killAllPath`"" -NoNewWindow -Wait -PassThru
@@ -328,7 +322,7 @@ try {
             # Step 2: Verify all ports are free
             # ==========================================
             Write-Log ""
-            Write-Log "[Step 2/8] Verifying all ports are free..."
+            Write-Log "[Step 2/7] Verifying all ports are free..."
             $portsOk = $true
             foreach ($serviceName in $order) {
                 $service = $SERVICES[$serviceName]
@@ -348,7 +342,7 @@ try {
             # Step 3: Clear PID file
             # ==========================================
             Write-Log ""
-            Write-Log "[Step 3/8] Clearing PID file..."
+            Write-Log "[Step 3/7] Clearing PID file..."
             if (Test-Path $PID_FILE) {
                 Remove-Item $PID_FILE
             }
@@ -356,12 +350,12 @@ try {
             Write-Log "[OK] $PID_FILE reset"
 
             # ==========================================
-            # Steps 4-8: Start services sequentially
+            # Steps 4-7: Start services sequentially
             # ==========================================
             $step = 4
             foreach ($serviceName in $order) {
                 Write-Log ""
-                Write-Log "[Step $($step)/8] Starting $serviceName..."
+                Write-Log "[Step $($step)/7] Starting $serviceName..."
                 Start-Service $serviceName | Out-Null  # Continue even if one fails
                 $step++
             }
@@ -371,7 +365,6 @@ try {
             # ==========================================
             Write-Log ""
             Write-Log "[Final Check] Verifying all PIDs captured..."
-            Verify-AndCapturePid 11435 "LOCAL_LLM_PID" "Local LLM upstream" | Out-Null
             Verify-AndCapturePid 11434 "AI_INTEGRATION_PID" "ai-integration" | Out-Null
             Verify-AndCapturePid 3000 "A2A_SERVER_PID" "a2a-server" | Out-Null
             Verify-AndCapturePid 3001 "CLIENT_API_PID" "client-api" | Out-Null
@@ -384,7 +377,6 @@ try {
             Write-Log "=== All services started successfully ==="
             Write-Log ""
             Write-Log "Services:"
-            Write-Log "  - Local LLM upstream:       http://localhost:11435"
             Write-Log "  - ai-integration: http://localhost:11434 (API proxy)"
             Write-Log "  - a2a-server:   http://localhost:3000"
             Write-Log "  - client-api:   http://localhost:3001"
@@ -399,7 +391,7 @@ try {
         }
 
         "stop" {
-            $allServices = @('local_llm', 'ai-integration', 'a2a-server', 'client-api', 'web-ui')
+            $allServices = @('ai-integration', 'a2a-server', 'client-api', 'web-ui')
             $targetServices = $Services.Count -gt 0 ? $Services : $allServices
 
             # Stop in reverse dependency order
@@ -412,7 +404,7 @@ try {
 
         "restart" {
             # Stop all first
-            $allServices = @('local_llm', 'ai-integration', 'a2a-server', 'client-api', 'web-ui')
+            $allServices = @('ai-integration', 'a2a-server', 'client-api', 'web-ui')
             [array]::Reverse($allServices)
             foreach ($service in $allServices) {
                 Stop-Service $service
@@ -432,13 +424,12 @@ try {
         default {
             Write-Host "Usage: .\runbook-cli.ps1 -Command <command> [-Services <service1,service2,...>]"
             Write-Host "Commands: start, stop, restart, status"
-            Write-Host "Services: local_llm, ai-integration, a2a-server, client-api, web-ui"
+            Write-Host "Services: ai-integration, a2a-server, client-api, web-ui"
             Write-Host "Example: .\runbook-cli.ps1 -Command start"
-            Write-Host "Example: .\runbook-cli.ps1 -Command start -Services local_llm,a2a-server"
+            Write-Host "Example: .\runbook-cli.ps1 -Command start -Services ai-integration,a2a-server"
         }
     }
 } catch {
     Write-Log "ERROR: $($_.Exception.Message)"
     exit 1
-}</content>
-<parameter name="filePath">runbook-cli.ps1
+}

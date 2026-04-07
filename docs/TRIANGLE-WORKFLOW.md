@@ -2,11 +2,19 @@
 
 **When to use:** Loader stuck, wrong screen, wrong turn, or payload shape does not match the scenario you expect.
 
-**Triangle:** three layers — **C** = ai-integration (LLM path), **B** = a2a-server (invoke/transforms), **A** = Client API (session + `/next` + `/async` + storage). **Local LLM upstream** (if present) is only the backend behind **C**, not a separate operator surface.
+**Triangle:** three layers — **C** = ai-integration (LLM path), **B** = a2a-server (invoke/transforms), **A** = Client API (session + `/next` + `/async` + storage). **Local LLM upstream** (if present) is only the backend behind **C**, not a separate operator surface. Repo **`start-all`** / **`runbook-cli.ps1`** do not start a local upstream; configure **`LOCAL_LLM_UPSTREAM_URL`** / providers when you use one.
 
 **Repeatable unit:** the **Triangle loop** below. Run **0** after any infra fix, port change, or `start-all` restart. For each turn you drive over HTTP, repeat **1 → 2 → (3 if sending) → 1**.
 
 **Operator API (curl / Client API, normative):** [`OPERATOR-CURL.md`](OPERATOR-CURL.md) — [Minimal mental model](OPERATOR-CURL.md#minimal-mental-model) (create, router, `/async`), [`POST /api/a2a/sessions` body](OPERATOR-CURL.md#post-apia2asessions-body-create), [Driver checklist](OPERATOR-CURL.md#driver-checklist-anti-stop), [Local LLM upstream generating vs stuck](OPERATOR-CURL.md#compat_llm-is-generating--pause-other-work), [GET session / unwrap / messages](OPERATOR-CURL.md#web-access-and-a2a-server), [Direct A2A invoke (debug only)](OPERATOR-CURL.md#direct-a2a-server-invoke-debug-only-fallback).
+
+### Colored alerts (triage) vs Rooms (runtime)
+
+**Alerts** — [`GLOSSARY.md`](../GLOSSARY.md) section *Alerts (тревоги)*: labels for *where to look* or *what kind of fix* (e.g. **Gray alert** = server-first triage; **Black alert (proxy)** = hub-first). They are **not** runtime flags unless you add them.
+
+**Rooms** — same glossary, *Core terms*: **Gray Room**, **Red Room**, **Black Room** are **pipeline phases** (server LLM chain, client tools, algorithm mode). **Gray alert ≠ Gray Room** (same doc: *Rooms vs alerts*).
+
+**Quick map:** vertex **A** ↔ often **Blue** / **Purple** / **Teal**; **B** ↔ **Gray alert** + Gray Room *inside* server work; **C** ↔ **Black alert (proxy)**. **Red alert** = full Task Monitor / solo cycle through **A** (sessions), still classifying failures along **B/C** when stuck.
 
 ---
 

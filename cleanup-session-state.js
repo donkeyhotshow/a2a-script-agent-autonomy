@@ -1,6 +1,15 @@
 #!/usr/bin/env node
 
-// Cleanup script: client sessions, server-side logs/promises, AI integration caches.
+/**
+ * Storage cleanup after bad runs — does NOT clear LLM / hub disk cache.
+ *
+ * Order (recommended):
+ * 1) Stop buggy services: `kill-all.bat` (Windows) or `kill-all.ps1` / `kill-all.sh`
+ * 2) Run this script: `node cleanup-session-state.js` (or `npm run cleanup:state`)
+ *
+ * Clears: client session trees, hub proxy logs, in-flight promise snapshots, server request snapshots.
+ * Intentionally skipped: `ai-integration/storage/cache` (LLM disk cache) — keep commented out.
+ */
 
 import fs from 'fs';
 import path from 'path';
@@ -37,9 +46,9 @@ async function main() {
     'ai-integration/proxy_logs',
     'proxy_logs',
 
-    // AI integration promise and cache storage
+    // Hub promise snapshots (not LLM disk cache)
     'ai-integration/storage/promises',
-    // 'ai-integration/storage/cache',
+    // LLM disk cache — do not add: 'ai-integration/storage/cache',
 
     // Server-side persisted request snapshots (invoke / async)
     'a2a-server/storage/requests',

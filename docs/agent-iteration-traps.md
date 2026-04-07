@@ -53,6 +53,7 @@ Repo norms that override the default “answer once and exit” habit live in [`
 
 ## Quick links
 
+- [`DEV_STATE.md`](../DEV_STATE.md) — **Iterativity — full project normalization** (per-cycle conditions, normalization bar, legitimate stop)  
 - [`AGENTS.md`](../AGENTS.md) — empty queue, router two beats, Client API path, checklist  
 - [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) — operator curl walkthrough; *Local LLM upstream is generating — pause other work*  
 - [`methodology/tasks.md`](../archive/methodology/tasks.md) — task wording and queue protocol  

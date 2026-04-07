@@ -42,6 +42,7 @@ README.md          # Feature docs
 - Each module: Own implementation details
 - No abstract statements — all tasks testable
 - Tasks >14 days → backlog with blocker reason
+- **Mandatory:** root `DEV_STATE.md`, every `a2a-*/DEV_STATE.md`, and `AGENTS.md` Quick Reference must link [`docs/PROJECT-RULES-QA.md`](docs/PROJECT-RULES-QA.md) (project rules yes/no log)
 
 ## Empty Queue Protocol
 
@@ -57,10 +58,12 @@ Empty backlog = **NOT** finished. Required actions:
 | Document | Purpose | Update When |
 |----------|---------|-------------|
 | AGENTS.md | Agent rules | Architecture changes |
+| docs/PROJECT-RULES-QA.md | Rules interview log (yes/no) | New answered rule |
 | DEV_STATE.md | Current state | Before/after tasks |
 | docs/adr/*.md | Decisions | New patterns |
+| docs/TRIANGLE-WORKFLOW.md | Stack triage (A/B/C), loop 0–4 | Session/async/debug workflow changes |
+| GLOSSARY.md | Terminology + **Alerts** vs **Rooms** | New concepts or triage labels |
 | tasks/pending/*.md | Work queue | New tasks found |
-| GLOSSARY.md | Terminology | New concepts |
 
 ## README Requirements
 
