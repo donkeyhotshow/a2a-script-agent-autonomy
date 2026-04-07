@@ -4,6 +4,7 @@ import path from 'path';
 import { logger } from '../utils/logger.js';
 import { SkillRegistry } from '../skills/SkillRegistry.js';
 import { config } from '../config/index.js';
+import { validateSkillToolCodeForDeploy } from './tools-evolve-sandbox.js';
 
 const router = express.Router();
 const registry = new SkillRegistry(path.join(process.cwd(), 'a2a-server/src/skills/custom'));

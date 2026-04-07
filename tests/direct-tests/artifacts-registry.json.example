@@ -1,0 +1,9 @@
+{
+  "clientSessions": [],
+  "serverPromiseIds": [],
+  "aiIntegration": {
+    "requestIds": [],
+    "promiseIds": [],
+    "cacheKeys": []
+  }
+}

@@ -10,7 +10,13 @@ import {AI_HUB_JSON_HEADERS, type AiHubChatRequestBody} from '../utils/ai-hub-ch
 import {tryParseJsonFromLlmText} from '../utils/strip-markdown-json-fence.js';
 
 /** Hub /api/chat uses `message.content`; /api/generate uses top-level `response`. */
-type HubCompatChatShape = {message?: {content?: string}; response?: string};
+type HubMessageBlock = {content?: string; reasoning_content?: string};
+/** OpenAI-style `chat.completion` (and some proxies) nest text under `choices[0].message`. */
+type HubCompatChatShape = {
+    message?: HubMessageBlock;
+    response?: string;
+    choices?: Array<{message?: HubMessageBlock}>;
+};
 
 /** Hub /api/chat JSON; models may wrap it in ```json ... ``` despite JSON content-type. */
 export function parseHubCompatChatResponseBody(raw: string): HubCompatChatShape | null {
@@ -27,10 +33,27 @@ export function parseHubCompatChatResponseBody(raw: string): HubCompatChatShape 
     return null;
 }
 
+function textFromHubMessage(m: HubMessageBlock | undefined): string | null {
+    if (!m) return null;
+    const c = m.content;
+    if (typeof c === 'string' && c.trim() !== '') return c;
+    const r = m.reasoning_content;
+    if (typeof r === 'string' && r.trim() !== '') return r;
+    return null;
+}
+
 function extractHubCompatChatText(chat: HubCompatChatShape | null): string | null {
     if (!chat) return null;
-    const fromChat = chat.message?.content;
-    if (typeof fromChat === 'string' && fromChat.trim() !== '') return fromChat;
+    const fromTop = textFromHubMessage(chat.message);
+    if (fromTop !== null) return fromTop;
+    const ch = chat.choices;
+    if (Array.isArray(ch) && ch.length > 0) {
+        const first = ch[0];
+        if (first && typeof first === 'object' && !Array.isArray(first)) {
+            const fromChoice = textFromHubMessage(first.message);
+            if (fromChoice !== null) return fromChoice;
+        }
+    }
     const fromGen = chat.response;
     if (typeof fromGen === 'string' && fromGen.trim() !== '') return fromGen;
     return null;
@@ -38,8 +61,8 @@ function extractHubCompatChatText(chat: HubCompatChatShape | null): string | nul
 
 /**
  * Extract assistant text from hub `/promise/:id/response` body.
- * Hub may store /chat, /generate, or provider-native / A2A-shaped JSON — only the first two
- * match {@link parseHubCompatChatResponseBody}. Returning null for a non-empty done body caused
+ * Hub may store /chat, /generate, OpenAI-style `choices[0].message.content`, or other JSON — only
+ * known shapes match {@link parseHubCompatChatResponseBody}. Returning null for a non-empty done body caused
  * {@link resolveLlmPromiseRecovery} to signal resubmit and the dialog processor to POST a new
  * `/api/chat`, spamming the proxy while the original promise had already completed.
  */

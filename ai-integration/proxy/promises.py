@@ -12,9 +12,11 @@ from .promise_storage import (
     _promise_meta_path,
     _promise_body_path,
     _promise_prune_expired,
+    _maybe_prune_expired,
     _load_promise_from_disk,
     _save_promise,
     create_promise,
+    _delete_promise,
 )
 
 from .promise_retrieval import (

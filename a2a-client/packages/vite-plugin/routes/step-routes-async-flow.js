@@ -312,6 +312,16 @@ function runViteClientPromisePoll({
                           requestPhase: normalizedStatus.requestPhase,
                           retryAfter: normalizedStatus.retryAfter,
                       };
+                // Drivers (Task Monitor) need execution.step/action for stall detection; not in web DTO execute.
+                if (
+                    includeCtx &&
+                    pollCtx &&
+                    typeof pollCtx === 'object' &&
+                    pollCtx.execution &&
+                    typeof pollCtx.execution === 'object'
+                ) {
+                    payload.context = { execution: pollCtx.execution };
+                }
                 res.end(JSON.stringify(payload));
             } catch (e) {
                 console.error('[VitePlugin] ERROR in promise check:', e.message, e.stack);

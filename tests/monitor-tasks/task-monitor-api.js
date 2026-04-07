@@ -59,7 +59,9 @@ class TaskMonitorApi {
 
   async pollAsync(sessionId) {
     try {
-      const response = await axios.get(`${this.baseUrl}/sessions/${sessionId}/async`);
+      const response = await axios.get(`${this.baseUrl}/sessions/${sessionId}/async`, {
+        params: { includeContext: '1' },
+      });
       return response.data;
     } catch (error) {
       if (this.isServerUnavailableError(error)) {

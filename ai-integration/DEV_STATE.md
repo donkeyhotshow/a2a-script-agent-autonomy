@@ -26,6 +26,7 @@ curl http://localhost:11435/api/tags
 
 - Providers: `config/providers.json` (from example) — see [`docs/configuration/PROVIDERS_AND_API_KEYS.md`](docs/configuration/PROVIDERS_AND_API_KEYS.md). `providers.example.json` includes Z.AI, Groq, OpenRouter, Qwen (DashScope intl), Codestral, Together, Cerebras, Cohere (`${VAR:-}` / `api_keys` pool). Wire `.env` from [`FREE_LLM_KEYS.md`](FREE_LLM_KEYS.md) § *.env format*; private notes: `FREE_LLM_KEYS.local.md` (gitignored).
 - Traces: `proxy_logs/promises/<id>/` for LLM promise traffic.
+- **Perf:** TTL prune (`_promise_prune_expired`) is throttled via **`PROMISE_PRUNE_INTERVAL_SECONDS`** (default **60**); collection endpoints use **`_load_promise_from_disk`** so `/promises/pending` stays **O(n)** with large `proxy_logs/promises/` trees. Set interval **`0`** only for debugging (prune every `get_promise`).
 
 ---
 

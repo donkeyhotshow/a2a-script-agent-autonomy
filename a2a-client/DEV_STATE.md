@@ -18,6 +18,7 @@ This module **owns session persistence and the Client API** (`/api/a2a/*`). Task
 - **Router:** if latest `execute.form` has **`choices`**, next body uses **`result.choice`** / shorthand `task` as choice id; otherwise **`result.message`** / `task` as text — [`AGENTS.md`](../AGENTS.md) *Router dialog*.
 - **Storage:** `a2a-client/storage/sessions/{id}/{step}/` — rebuild from highest step with `server-response.json` when investigating monitor sessions.
 - **Agent tool chain (`chain-guards` + `agent-rag-chain`):** `execute['run-script']` must chain when the model sends **`command`** (shell one-liner) as well as **`scriptId`** (registry). Previously only `scriptId` validated — sessions stuck on `tool_run_script` with no `context.result`. Evidence: `tests/direct-tests/chain-guards-message-plus-tool.test.mjs`.
+- **GET `/sessions/:id/async?includeContext=1`:** Task Monitor’s `pollAsync` now requests **`includeContext=1`**; Vite adds **`context.execution`** to the JSON when present so **`step`/`action`** are visible (web `execute` projection omits them). Without this, `agentToolPhaseStart` / stall keys never saw `tool_*` and runs could spin until poll timeout.
 
 ---
 

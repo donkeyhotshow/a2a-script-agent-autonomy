@@ -5,12 +5,12 @@ Handles retrieval of promises by various criteria
 import os
 from typing import Optional
 
-from .promise_storage import PromiseRecord, _promise_prune_expired, _load_promise_from_disk, _PROMISES_LOCK, _PROMISES
+from .promise_storage import PromiseRecord, _maybe_prune_expired, _load_promise_from_disk, _PROMISES_LOCK, _PROMISES
 from .promise_utils import _load_request_snapshot
 
 
 def get_promise(promise_id: str) -> Optional[PromiseRecord]:
-    _promise_prune_expired()
+    _maybe_prune_expired()
     with _PROMISES_LOCK:
         rec = _PROMISES.get(promise_id)
     if rec is not None:

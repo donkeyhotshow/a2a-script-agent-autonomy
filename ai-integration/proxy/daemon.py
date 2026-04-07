@@ -40,7 +40,7 @@ from .promises import (
     _sanitize_execute_headers,
     pass_through_llm_upstream_headers,
     _promise_set_done,
-    _promise_reset_pending,
+    _promise_set_error,
 )
 from .api_key_routing import forward_with_api_key_failover, load_routing_hint
 from .providers.config_loader import load_providers_config
@@ -248,21 +248,13 @@ class PromiseDaemon:
             logger.debug(f"Promise {promise_id} already processed (status={rec.status})")
             return
 
-        # If status is error but it's ready for retry, reset to pending
         if rec.status == 'error':
-            now = time.time()
-            next_attempt = rec.next_attempt_at or 0
-            if next_attempt <= now:
-                logger.info(f"Promise {promise_id} retrying after error")
-                _promise_reset_pending(promise_id)
-                rec = get_promise(promise_id)  # Re-fetch after reset
-                if rec is None or rec.status != 'pending':
-                    logger.warning(f"Failed to reset promise {promise_id} to pending")
-                    return
-            else:
-                logger.debug(f"Promise {promise_id} not yet ready for retry (next_attempt_at={next_attempt})")
-                return
-        
+            logger.debug(
+                "Promise %s is in error state; use POST /promise/<id>/retry to resume (not auto-run)",
+                promise_id,
+            )
+            return
+
         # Check if promise has simulate config - if so, skip daemon execution (inline job handles it)
         # This can be disabled with DAEMON_SKIP_SIMULATE=false
         if rec.simulate is not None and DAEMON_SKIP_SIMULATE:
@@ -272,8 +264,11 @@ class PromiseDaemon:
         # Load request snapshot
         request_snapshot = _load_request_snapshot(rec.log_folder)
         if not request_snapshot:
-            logger.warning(f"Request snapshot missing for {promise_id}, will retry in 10 seconds")
-            _promise_reset_pending(promise_id, delay_seconds=10.0)
+            logger.warning(
+                "Request snapshot missing for %s; set error (use POST /promise/<id>/retry to resume)",
+                promise_id,
+            )
+            _promise_set_error(promise_id, error="request_snapshot_missing", delay_seconds=None)
             return
         
         # Prepare request
@@ -416,8 +411,8 @@ class PromiseDaemon:
             logger.info(f"Promise {promise_id} executed → result {resp.status_code}")
             
         except requests.RequestException as e:
-            _promise_reset_pending(promise_id, delay_seconds=10.0)
-            logger.error(f"Request failed for {promise_id}: {e}, will retry in 10 seconds")
+            _promise_set_error(promise_id, error=str(e), delay_seconds=None)
+            logger.error("Request failed for %s: %s (manual retry via POST /promise/<id>/retry)", promise_id, e)
 
 
 # Global daemon instance

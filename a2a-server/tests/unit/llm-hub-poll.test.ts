@@ -34,6 +34,22 @@ describe('extractLlmTextFromHubResponseBody', () => {
         expect(extractLlmTextFromHubResponseBody('{"message":{"content":"x"}}')).toBe('x');
     });
 
+    it('extracts OpenAI-style chat.completion choices[0].message.content (not whole envelope)', () => {
+        const inner = '```json\n{"step":"tool_rag"}\n```';
+        const envelope = {
+            choices: [
+                {
+                    finish_reason: 'stop',
+                    index: 0,
+                    message: {content: inner, role: 'assistant'},
+                },
+            ],
+            object: 'chat.completion',
+            model: 'glm-4.7-flash',
+        };
+        expect(extractLlmTextFromHubResponseBody(JSON.stringify(envelope))).toBe(inner);
+    });
+
     it('returns full raw body when JSON is not Local LLM upstream-shaped (e.g. A2A response object)', () => {
         const a2a = JSON.stringify({
             step: 'response',

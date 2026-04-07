@@ -6,6 +6,7 @@ import os
 import json
 import logging
 import threading
+from typing import Optional, Tuple
 
 from flask import Flask, request, Response
 from werkzeug.exceptions import BadRequest
@@ -13,14 +14,37 @@ from werkzeug.exceptions import BadRequest
 # Import app from parent module
 from . import app
 from .promises import (
-    get_promise, get_promise_by_server_id, _promise_set_done, _promise_reset_pending,
-    _load_request_snapshot, _json_bytes, _resolve_storage_path,
+    get_promise,
+    get_promise_by_server_id,
+    _promise_set_done,
+    _promise_reset_pending,
+    _load_request_snapshot,
+    _json_bytes,
+    _resolve_storage_path,
+    _delete_promise,
 )
 from .promise_storage import _promise_folder
 from .promise_execution import _run_execute_in_background
 
 # Setup logger
 logger = logging.getLogger(__name__)
+
+_ERROR_SHORT_LEN = 400
+
+
+def _client_wants_full_error() -> bool:
+    v = (request.args.get('detail') or '').strip().lower()
+    return v in ('1', 'true', 'yes', 'full')
+
+
+def _short_error_text(err) -> Tuple[Optional[str], bool]:
+    """Return (text for JSON, truncated)."""
+    if err is None:
+        return None, False
+    s = str(err).strip()
+    if _client_wants_full_error() or len(s) <= _ERROR_SHORT_LEN:
+        return s, False
+    return s[: _ERROR_SHORT_LEN] + '...', True
 
 
 @app.route('/promise/by-server-request/<server_promise_id>', methods=['GET'])
@@ -40,9 +64,29 @@ def promise_by_server_request(server_promise_id: str):
     }
 
 
-@app.route('/promise/<promise_id>', methods=['GET'])
+@app.route('/promise/<promise_id>', methods=['GET', 'DELETE'])
 def promise_status(promise_id: str):
-    """Статус promise по promiseId"""
+    """GET: status. DELETE: remove ticket (any status). ``?detail=1`` — full error text on error."""
+    if request.method == 'DELETE':
+        rec = get_promise(promise_id)
+        if rec is None:
+            return Response(
+                _json_bytes({"error": "promise_not_found", "promiseId": promise_id}),
+                status=404,
+                mimetype='application/json',
+            )
+        if not _delete_promise(promise_id):
+            return Response(
+                _json_bytes({"error": "delete_failed", "promiseId": promise_id}),
+                status=500,
+                mimetype='application/json',
+            )
+        return Response(
+            _json_bytes({"promiseId": promise_id, "deleted": True}),
+            status=200,
+            mimetype='application/json',
+        )
+
     rec = get_promise(promise_id)
     if rec is None:
         return Response(
@@ -59,8 +103,12 @@ def promise_status(promise_id: str):
         )
 
     if rec.status == 'error':
+        err_text, truncated = _short_error_text(rec.error)
+        err_obj = {"promiseId": promise_id, "status": "error", "error": err_text}
+        if truncated:
+            err_obj["error_truncated"] = True
         return Response(
-            _json_bytes({"promiseId": promise_id, "status": "error", "error": rec.error}),
+            _json_bytes(err_obj),
             status=500,
             mimetype='application/json',
         )
@@ -92,8 +140,12 @@ def promise_response(promise_id: str):
         )
 
     if rec.status == 'error':
+        err_text, truncated = _short_error_text(rec.error)
+        err_obj = {"promiseId": promise_id, "status": "error", "error": err_text}
+        if truncated:
+            err_obj["error_truncated"] = True
         return Response(
-            _json_bytes({"promiseId": promise_id, "status": "error", "error": rec.error}),
+            _json_bytes(err_obj),
             status=500,
             mimetype='application/json',
         )
@@ -133,8 +185,12 @@ def promise_body_raw(promise_id: str):
             mimetype='application/json',
         )
     if rec.status == 'error':
+        err_text, truncated = _short_error_text(rec.error)
+        err_obj = {"promiseId": promise_id, "status": "error", "error": err_text}
+        if truncated:
+            err_obj["error_truncated"] = True
         return Response(
-            _json_bytes({"promiseId": promise_id, "status": "error", "error": rec.error}),
+            _json_bytes(err_obj),
             status=500,
             mimetype='application/json',
         )

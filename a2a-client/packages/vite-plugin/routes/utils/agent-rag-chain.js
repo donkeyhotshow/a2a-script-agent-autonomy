@@ -93,24 +93,27 @@ function postInvokeJson(a2aServerUrl, body) {
  * @returns {Promise<{ key: string; value: unknown } | null>}
  */
 async function runClientToolForExecute(cwd, projectPath, toolKey, payload) {
+    const safeCwd = typeof cwd === 'string' && cwd.trim() ? cwd : process.cwd();
+    const safeProject =
+        typeof projectPath === 'string' && projectPath.trim() ? projectPath : safeCwd;
     const p = payload && typeof payload === 'object' ? payload : {};
     switch (toolKey) {
         case 'rag-search':
-            return { key: 'rag-search', value: await runClientRagSearchForExecute(cwd, projectPath, p) };
+            return { key: 'rag-search', value: await runClientRagSearchForExecute(safeCwd, safeProject, p) };
         case 'read-file':
-            return { key: 'read-file', value: await runClientReadFile(projectPath, p) };
+            return { key: 'read-file', value: await runClientReadFile(safeProject, p) };
         case 'list-directory':
-            return { key: 'list-directory', value: await runClientListDirectory(projectPath, p) };
+            return { key: 'list-directory', value: await runClientListDirectory(safeProject, p) };
         case 'file-exists':
-            return { key: 'file-exists', value: await runClientFileExists(projectPath, p) };
+            return { key: 'file-exists', value: await runClientFileExists(safeProject, p) };
         case 'write-file':
-            return { key: 'write-file', value: await runClientWriteFile(projectPath, p) };
+            return { key: 'write-file', value: await runClientWriteFile(safeProject, p) };
         case 'grep-search':
-            return { key: 'grep-search', value: await runClientGrepSearch(projectPath, p) };
+            return { key: 'grep-search', value: await runClientGrepSearch(safeProject, p) };
         case 'execute-command': {
-            let cwdAbs = projectPath;
+            let cwdAbs = safeProject;
             if (p.cwd && typeof p.cwd === 'string') {
-                const r = resolveUnderProjectRoot(projectPath, p.cwd);
+                const r = resolveUnderProjectRoot(safeProject, p.cwd);
                 if (!r) {
                     return {
                         key: 'execute-command',
@@ -131,9 +134,9 @@ async function runClientToolForExecute(cwd, projectPath, toolKey, payload) {
         case 'run-script': {
             // LLMs often emit run-script { command: "npm run ..." } instead of scriptId; chain must still run.
             if (typeof p.command === 'string' && p.command.trim()) {
-                let cwdAbs = projectPath;
+                let cwdAbs = safeProject;
                 if (p.cwd && typeof p.cwd === 'string') {
-                    const r = resolveUnderProjectRoot(projectPath, p.cwd);
+                    const r = resolveUnderProjectRoot(safeProject, p.cwd);
                     if (!r) {
                         return {
                             key: 'run-script',
@@ -166,10 +169,10 @@ async function runClientToolForExecute(cwd, projectPath, toolKey, payload) {
                     },
                 };
             }
-            return { key: 'run-script', value: await runClientRegisteredScript(projectPath, p) };
+            return { key: 'run-script', value: await runClientRegisteredScript(safeProject, p) };
         }
         case 'edit-patch':
-            return { key: 'edit-patch', value: await runClientEditPatch(projectPath, p) };
+            return { key: 'edit-patch', value: await runClientEditPatch(safeProject, p) };
         default:
             return null;
     }
@@ -200,8 +203,11 @@ export async function chainSyncInvokesForAgentTools({
         return { serverResponse: lastResp, stepNum, savedContext: ctx };
     }
 
-    const projectPath =
+    let projectPath =
         process.env.A2A_RAG_PROJECT_PATH || process.env.A2A_PROJECT_PATH || getProjectPathForSessions(cwd);
+    if (typeof projectPath !== 'string' || !projectPath.trim()) {
+        projectPath = typeof cwd === 'string' && cwd.trim() ? cwd : process.cwd();
+    }
 
     let depth = 0;
     while (depth < max) {

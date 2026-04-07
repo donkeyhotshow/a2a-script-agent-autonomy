@@ -5,12 +5,21 @@ class TaskMonitorValidation {
     if (!obj || typeof obj !== 'object') return false;
     const keys = Object.keys(obj);
     if (type === 'execute') {
-      const aux = new Set(['message', 'completed']);
+      // Align with web DTO / server: message, form, attachments are not a second tool key.
+      const aux = new Set(['message', 'completed', 'llmMessage', 'attachments', 'form']);
       const actionKeys = keys.filter((k) => !aux.has(k));
+      if (actionKeys.length === 0) {
+        // e.g. natural-language completion: { message } only — valid surface
+        return keys.length > 0;
+      }
       if (actionKeys.length !== 1) return false;
       return actionKeys[0] !== 'result';
     }
-    return keys.length === 1 && keys[0] !== 'execute';
+    const auxResult = new Set(['message', 'completed', 'llmMessage']);
+    const actionKeys = keys.filter((k) => !auxResult.has(k));
+    if (actionKeys.length === 0) return keys.length > 0;
+    if (actionKeys.length !== 1) return false;
+    return actionKeys[0] !== 'execute';
   }
 
   validateSessionResponse(response) {
@@ -55,9 +64,11 @@ class TaskMonitorValidation {
     const compat_llmUrl = process.env.LOCAL_LLM_UPSTREAM_URL || 'http://localhost:11435';
     const aiHubUrl = process.env.AI_HUB_URL || 'http://localhost:11434';
 
+    const healthTimeout = parseInt(process.env.TASK_MONITOR_HEALTH_TIMEOUT_MS || '15000', 10);
+
     try {
       // Check Client API
-      const clientRes = await axios.get(`${this.baseUrl}/projects`, { timeout: 5000 });
+      const clientRes = await axios.get(`${this.baseUrl}/projects`, { timeout: healthTimeout });
       results.clientApi = clientRes.status === 200 && Array.isArray(clientRes.data.projects);
       results.details.clientApi = results.clientApi ? 'OK' : 'Failed';
     } catch (error) {
@@ -66,7 +77,7 @@ class TaskMonitorValidation {
 
     try {
       // Check A2A Server
-      const serverRes = await axios.get(`${this.serverBaseUrl}/health`, { timeout: 5000 });
+      const serverRes = await axios.get(`${this.serverBaseUrl}/health`, { timeout: healthTimeout });
       results.a2aServer = serverRes.status === 200;
       results.details.a2aServer = results.a2aServer ? 'OK' : 'Failed';
     } catch (error) {
@@ -75,7 +86,7 @@ class TaskMonitorValidation {
 
     try {
       // Check Local LLM upstream
-      const compat_llmRes = await axios.get(`${compat_llmUrl}/api/tags`, { timeout: 5000 });
+      const compat_llmRes = await axios.get(`${compat_llmUrl}/api/tags`, { timeout: healthTimeout });
       results.compat_llm = compat_llmRes.status === 200 && Array.isArray(compat_llmRes.data.models);
       results.details.compat_llm = results.compat_llm ? 'OK' : 'Failed';
     } catch (error) {
@@ -84,7 +95,7 @@ class TaskMonitorValidation {
 
     try {
       // Check AI Hub
-      const aiHubRes = await axios.get(`${aiHubUrl}/health`, { timeout: 5000 });
+      const aiHubRes = await axios.get(`${aiHubUrl}/health`, { timeout: healthTimeout });
       results.aiHub = aiHubRes.status === 200;
       results.details.aiHub = results.aiHub ? 'OK' : 'Failed';
     } catch (error) {

@@ -8,13 +8,21 @@ import {
   isRecoverableAsyncSnapshot,
 } from './promise-status.js';
 
+/** Normalize id for filesystem paths (session-index may store numeric id from legacy JSON). */
+function normalizeSessionIdForDir(sessionId) {
+  if (sessionId == null) return '';
+  const s = typeof sessionId === 'string' ? sessionId : String(sessionId);
+  return s.trim();
+}
+
 /** When set, step files for this session live under `${parent}/${sessionId}/…` (project storage mode). */
 const stepSessionsParentBySessionId = new Map();
 
 export function registerStepSessionsParent(sessionId, absoluteParentDirOrNull) {
-  if (!sessionId) return;
-  if (absoluteParentDirOrNull == null) stepSessionsParentBySessionId.delete(sessionId);
-  else stepSessionsParentBySessionId.set(sessionId, path.resolve(absoluteParentDirOrNull));
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) return;
+  if (absoluteParentDirOrNull == null) stepSessionsParentBySessionId.delete(sid);
+  else stepSessionsParentBySessionId.set(sid, path.resolve(absoluteParentDirOrNull));
 }
 
 /** Test / recovery: in-process Map must not leak across Vitest files. */
@@ -52,7 +60,9 @@ export function deriveSessionMode(session) {
  * @returns {Object|null} Index data or null if not found
  */
 export function loadSessionIndex(cwd, sessionId) {
-  const indexPath = path.join(getNewSessionDir(cwd, sessionId), 'session-index.json');
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) return null;
+  const indexPath = path.join(getNewSessionDir(cwd, sid), 'session-index.json');
   if (!fs.existsSync(indexPath)) return null;
   try {
     return JSON.parse(fs.readFileSync(indexPath, 'utf8'));
@@ -70,12 +80,17 @@ export function loadSessionIndex(cwd, sessionId) {
  * @param {Object} stepData - Step data including context
  */
 export function saveSessionIndex(cwd, sessionId, stepData) {
-  const sessionDir = getNewSessionDir(cwd, sessionId);
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) {
+    console.error('[newSessions] saveSessionIndex: missing sessionId');
+    return;
+  }
+  const sessionDir = getNewSessionDir(cwd, sid);
   ensureDir(sessionDir);
   const indexPath = path.join(sessionDir, 'session-index.json');
   
-  const index = loadSessionIndex(cwd, sessionId) || {
-    sessionId,
+  const index = loadSessionIndex(cwd, sid) || {
+    sessionId: sid,
     steps: []
   };
   
@@ -99,7 +114,7 @@ export function saveSessionIndex(cwd, sessionId, stepData) {
   }
   
   // Try to load client-result for this step
-  const clientResultPath = path.join(getNewStepDir(cwd, sessionId, stepData.step), 'client-result.json');
+  const clientResultPath = path.join(getNewStepDir(cwd, sid, stepData.step), 'client-result.json');
   if (fs.existsSync(clientResultPath)) {
     stepMeta.hasClientResult = true;
   }
@@ -110,7 +125,7 @@ export function saveSessionIndex(cwd, sessionId, stepData) {
     index.promiseId = stepData.promiseId;
     index.promiseStatus = stepData.promiseStatus || 'pending';
   } else {
-    const promiseData = loadServerPromise(cwd, sessionId, stepData.step);
+    const promiseData = loadServerPromise(cwd, sid, stepData.step);
     if (promiseData?.promiseId) {
       index.promiseId = promiseData.promiseId;
       index.promiseStatus = promiseData.status;
@@ -137,7 +152,11 @@ export function saveSessionIndex(cwd, sessionId, stepData) {
 export function saveNewSession(cwd, session) {
   // Save session using step-based storage (modern approach)
   // The session object contains id, title, currentStep, context, etc.
-  const sessionId = session.id;
+  const sessionId = normalizeSessionIdForDir(session?.id);
+  if (!sessionId) {
+    console.error('[newSessions] saveNewSession: missing session.id');
+    return;
+  }
   const stepNum = session.currentStep || 1;
 
   // Persist step-level snapshot only if the step file doesn't already exist.
@@ -179,9 +198,16 @@ export function getNewSessionsDir(cwd) {
 }
 
 export function getNewSessionDir(cwd, sessionId) {
-  const parent = stepSessionsParentBySessionId.get(sessionId);
-  const base = parent ?? getNewSessionsDir(cwd);
-  return path.join(base, sessionId);
+  let sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) {
+    console.error('[newSessions] getNewSessionDir: missing sessionId (using fallback dir)');
+    // Never throw: bad callers / hot-reload edge cases must not 500 the Client API.
+    sid = '_invalid_session';
+  }
+  const parent = stepSessionsParentBySessionId.get(sid);
+  // Treat empty string like missing — path.join(undefined|'', id) throws or mis-resolves.
+  const base = parent && String(parent).trim() ? parent : getNewSessionsDir(cwd);
+  return path.join(base, sid);
 }
 
 export function getNewStepDir(cwd, sessionId, stepNum) {
@@ -195,13 +221,15 @@ export function getNewStepDir(cwd, sessionId, stepNum) {
  * @returns {Object|null} Reconstructed session object or null if no steps found
  */
 export function rebuildSessionIndex(cwd, sessionId) {
-  const allSteps = listNewSteps(cwd, sessionId);
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) return null;
+  const allSteps = listNewSteps(cwd, sid);
   if (allSteps.length === 0) return null;
 
   let latestStepNum = null;
   let latestStep = null;
   for (const stepNum of allSteps.reverse()) {
-    const step = loadNewStep(cwd, sessionId, stepNum);
+    const step = loadNewStep(cwd, sid, stepNum);
     if (step) {
       latestStepNum = stepNum;
       latestStep = step;
@@ -211,10 +239,10 @@ export function rebuildSessionIndex(cwd, sessionId) {
 
   if (latestStepNum == null || !latestStep) {
     return {
-      id: sessionId,
+      id: sid,
       currentStep: allSteps[0] || 0,
       status: 'corrupt',
-      title: `${sessionId} (corrupt)`,
+      title: `${sid} (corrupt)`,
       error: {
         code: 'SESSION_CORRUPT',
         message: 'No valid server-response.json found in any step.',
@@ -223,10 +251,10 @@ export function rebuildSessionIndex(cwd, sessionId) {
   }
 
   // Save index for future fast loads
-  saveSessionIndex(cwd, sessionId, { step: latestStepNum, ...latestStep });
+  saveSessionIndex(cwd, sid, { step: latestStepNum, ...latestStep });
   
   // Return loaded index
-  return loadSessionIndex(cwd, sessionId);
+  return loadSessionIndex(cwd, sid);
 }
 
 /**
@@ -234,9 +262,11 @@ export function rebuildSessionIndex(cwd, sessionId) {
  * Latest such step wins. Prevents projecting the previous step's form while step N has no terminal response.
  */
 export function findOpenAsyncStepWithoutResponse(cwd, sessionId) {
-  const steps = listNewSteps(cwd, sessionId).sort((a, b) => b - a);
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) return null;
+  const steps = listNewSteps(cwd, sid).sort((a, b) => b - a);
   for (const stepNum of steps) {
-    const stepDir = getNewStepDir(cwd, sessionId, stepNum);
+    const stepDir = getNewStepDir(cwd, sid, stepNum);
     const respPath = path.join(stepDir, 'server-response.json');
     const promPath = path.join(stepDir, 'server-promise.json');
     if (!fs.existsSync(promPath)) continue;
@@ -263,23 +293,29 @@ export function findOpenAsyncStepWithoutResponse(cwd, sessionId) {
 }
 
 export function loadNewSession(cwd, sessionId) {
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) return null;
   // Try fast path (index)
-  let index = loadSessionIndex(cwd, sessionId);
+  let index = loadSessionIndex(cwd, sid);
   
   // Rebuild if missing
   if (!index) {
-    index = rebuildSessionIndex(cwd, sessionId);
+    index = rebuildSessionIndex(cwd, sid);
   }
   
   if (!index) return null;
-  if (index.status === 'corrupt') return index;
+  if (index.status === 'corrupt') {
+    // session-index.json may omit `id`; saveNewSession/getNewStepDir require it.
+    const idFromIndex = normalizeSessionIdForDir(index.id);
+    return { ...index, id: idFromIndex || sid };
+  }
 
-  const step = loadNewStep(cwd, sessionId, index.currentStep);
-  if (!step) return rebuildSessionIndex(cwd, sessionId); // Retry rebuild if indexed step is gone
+  const step = loadNewStep(cwd, sid, index.currentStep);
+  if (!step) return rebuildSessionIndex(cwd, sid); // Retry rebuild if indexed step is gone
 
   // Reconstruct session from index + latest step
   const session = {
-    id: sessionId,
+    id: sid,
     currentStep: index.currentStep,
     createdAt: index.createdAt || step.timestamp,
     updatedAt: index.updatedAt || step.timestamp,
@@ -287,7 +323,7 @@ export function loadNewSession(cwd, sessionId) {
     mode: index.mode || deriveSessionMode({ context: step.context })
   };
 
-  const openAsync = findOpenAsyncStepWithoutResponse(cwd, sessionId);
+  const openAsync = findOpenAsyncStepWithoutResponse(cwd, sid);
 
   if (openAsync?.mode === 'pending') {
     session.asyncPending = true;
@@ -323,7 +359,7 @@ export function loadNewSession(cwd, sessionId) {
   }
 
   // Title resolution
-  const step1 = index.currentStep === 1 ? step : loadNewStep(cwd, sessionId, 1);
+  const step1 = index.currentStep === 1 ? step : loadNewStep(cwd, sid, 1);
   if (step1?.title) {
     session.title = step1.title;
   } else if (step1?.execute?.form?.input?.[0]?.label) {
@@ -331,7 +367,7 @@ export function loadNewSession(cwd, sessionId) {
   } else if (step1?.execute?.form?.choices) {
     session.title = 'Selection Session';
   } else {
-    session.title = sessionId;
+    session.title = sid;
   }
 
   return session;
@@ -343,7 +379,12 @@ export function loadNewSession(cwd, sessionId) {
  */
 
 export function saveNewStep(cwd, sessionId, stepNum, stepData) {
-  const stepDir = getNewStepDir(cwd, sessionId, stepNum);
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) {
+    console.error('[newSessions] saveNewStep: missing sessionId');
+    return;
+  }
+  const stepDir = getNewStepDir(cwd, sid, stepNum);
   ensureDir(stepDir);
   if (stepData.files) {
     Object.entries(stepData.files).forEach(([filename, content]) => {
@@ -371,11 +412,13 @@ export function saveNewStep(cwd, sessionId, stepNum, stepData) {
   }
   
   // Update session index for fast recovery (P1)
-  saveSessionIndex(cwd, sessionId, { step: stepNum, ...rest });
+  saveSessionIndex(cwd, sid, { step: stepNum, ...rest });
 }
 
 export function loadNewStep(cwd, sessionId, stepNum) {
-  const stepDir = getNewStepDir(cwd, sessionId, stepNum);
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) return null;
+  const stepDir = getNewStepDir(cwd, sid, stepNum);
   const metaFile = path.join(stepDir, 'server-response.json');
   const legacyFile = path.join(stepDir, 'step.json');
   const file = fs.existsSync(metaFile) ? metaFile : (fs.existsSync(legacyFile) ? legacyFile : null);
@@ -408,12 +451,12 @@ export function loadNewStep(cwd, sessionId, stepNum) {
         if (hasTerminalExecute && (prom == null || typeof prom !== 'object' || isActivePromiseStatus(prom.status))) {
           fs.unlinkSync(promiseFile);
           try {
-            const idx = loadSessionIndex(cwd, sessionId);
+            const idx = loadSessionIndex(cwd, sid);
             if (idx && idx.currentStep === stepNum && (idx.promiseId != null || idx.promiseStatus != null)) {
               idx.promiseId = null;
               idx.promiseStatus = null;
               idx.updatedAt = new Date().toISOString();
-              const indexPath = path.join(getNewSessionDir(cwd, sessionId), 'session-index.json');
+              const indexPath = path.join(getNewSessionDir(cwd, sid), 'session-index.json');
               fs.writeFileSync(indexPath, JSON.stringify(idx, null, 2));
             }
           } catch (eIdx) {
@@ -438,7 +481,9 @@ export function loadNewStep(cwd, sessionId, stepNum) {
 }
 
 export function listNewSteps(cwd, sessionId) {
-  const sessionDir = getNewSessionDir(cwd, sessionId);
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) return [];
+  const sessionDir = getNewSessionDir(cwd, sid);
   if (!fs.existsSync(sessionDir)) return [];
   const entries = fs.readdirSync(sessionDir, {withFileTypes: true});
   return entries
@@ -462,7 +507,9 @@ export function listNewSessions(cwd) {
 }
 
 export function deleteNewSession(cwd, sessionId) {
-  const dir = getNewSessionDir(cwd, sessionId);
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) return;
+  const dir = getNewSessionDir(cwd, sid);
   if (fs.existsSync(dir)) {
     fs.rmSync(dir, {recursive: true, force: true});
   }
@@ -478,7 +525,9 @@ export function getNewSessionLatestStep(cwd, sessionId) {
 }
 
 export function getStepFilePath(cwd, sessionId, stepNum, filename) {
-  return path.join(getNewStepDir(cwd, sessionId, stepNum), filename);
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) return '';
+  return path.join(getNewStepDir(cwd, sid, stepNum), filename);
 }
 
 export function loadStepFile(cwd, sessionId, stepNum, filename) {
@@ -499,7 +548,12 @@ export function loadStepFile(cwd, sessionId, stepNum, filename) {
 }
 
 export function saveStepFile(cwd, sessionId, stepNum, filename, data) {
-  const stepDir = getNewStepDir(cwd, sessionId, stepNum);
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) {
+    console.error('[newSessions] saveStepFile: missing sessionId');
+    return;
+  }
+  const stepDir = getNewStepDir(cwd, sid, stepNum);
   ensureDir(stepDir);
   const filePath = path.join(stepDir, filename);
   fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
@@ -510,17 +564,22 @@ export function loadServerPromise(cwd, sessionId, stepNum) {
 }
 
 export function saveServerPromise(cwd, sessionId, stepNum, promiseData) {
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) {
+    console.error('[newSessions] saveServerPromise: missing sessionId');
+    return;
+  }
   // Filter out unnecessary fields from promise data
   const { createdAt, startedAt, completedAt, checkedAt, ...filteredData } = promiseData;
-  saveStepFile(cwd, sessionId, stepNum, 'server-promise.json', filteredData);
+  saveStepFile(cwd, sid, stepNum, 'server-promise.json', filteredData);
   
   // Update session index with async state (P1)
-  const index = loadSessionIndex(cwd, sessionId);
+  const index = loadSessionIndex(cwd, sid);
   if (index && filteredData.promiseId) {
     index.promiseId = filteredData.promiseId;
     index.promiseStatus = filteredData.status;
     index.updatedAt = new Date().toISOString();
-    const indexPath = path.join(getNewSessionDir(cwd, sessionId), 'session-index.json');
+    const indexPath = path.join(getNewSessionDir(cwd, sid), 'session-index.json');
     fs.writeFileSync(indexPath, JSON.stringify(index, null, 2));
   }
 }
@@ -557,7 +616,11 @@ export function saveServerResponse(cwd, sessionId, stepNum, responseData) {
  * @returns {Object} Validation result with isValid and errors array
  */
 export function validateStepStorage(cwd, sessionId, stepNum) {
-  const stepDir = getNewStepDir(cwd, sessionId, stepNum);
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) {
+    return { isValid: false, errors: ['MISSING_SESSION_ID'] };
+  }
+  const stepDir = getNewStepDir(cwd, sid, stepNum);
   const errors = [];
   
   // Check for mandatory files (at least one must exist)

@@ -340,6 +340,7 @@ class TaskMonitorCore {
       console.log(
         '[task-monitor] TASK_MONITOR_SKIP_PROMISE_GATE or CI set — continuing without confirmation.'
       );
+      await this.logHubPromiseQueueSnapshot();
       return;
     }
 
@@ -347,6 +348,7 @@ class TaskMonitorCore {
       console.warn(
         '[task-monitor] Non-interactive terminal: not waiting for input. Set TASK_MONITOR_SKIP_PROMISE_GATE=1 in CI, or ensure the promise daemon is running.'
       );
+      await this.logHubPromiseQueueSnapshot();
       return;
     }
 
@@ -371,6 +373,44 @@ class TaskMonitorCore {
       rl.close();
     }
     console.log('[task-monitor] Continuing.\n');
+    await this.logHubPromiseQueueSnapshot();
+  }
+
+  /**
+   * GET hub /promises/pending — surfaces backlog when PROMISE_DAEMON_ONLY is on (daemon must drain).
+   */
+  async logHubPromiseQueueSnapshot() {
+    if (process.env.TASK_MONITOR_SKIP_HUB_PENDING_PROBE === '1') {
+      return;
+    }
+    try {
+      const probeMs = parseInt(process.env.TASK_MONITOR_HUB_PENDING_TIMEOUT_MS || '20000', 10);
+      const response = await axios.get(`${this.aiHubUrl}/promises/pending`, {
+        timeout: probeMs,
+        validateStatus: (s) => s === 200,
+      });
+      const list = Array.isArray(response.data) ? response.data : [];
+      const n = list.length;
+      const ids = list
+        .slice(0, 5)
+        .map((row) =>
+          row && typeof row === 'object' && (row.promiseId != null || row.id != null)
+            ? String(row.promiseId != null ? row.promiseId : row.id)
+            : '?'
+        )
+        .filter((x) => x !== '?');
+      console.log(
+        `[task-monitor] Hub promise queue: ${n} pending` +
+          (ids.length ? ` (sample: ${ids.join(', ')})` : '')
+      );
+      if (n > 0) {
+        console.warn(
+          `[task-monitor] If async stays pending/processing, ensure promise-queue-daemon hits ${this.aiHubUrl} (repo: scripts/start-promise-queue-daemon.bat, start-all.bat step 4b).`
+        );
+      }
+    } catch (err) {
+      this.log('warn', `[task-monitor] Could not GET ${this.aiHubUrl}/promises/pending: ${err.message}`);
+    }
   }
 
   logHardBit({ phase, serverBusy = false, llmBusy = false, detail = '' }) {

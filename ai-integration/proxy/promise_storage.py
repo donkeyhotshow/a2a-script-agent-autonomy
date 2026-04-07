@@ -39,6 +39,29 @@ class PromiseRecord:
 _PROMISES_LOCK = __import__('threading').Lock()
 _PROMISES: dict[str, PromiseRecord] = {}
 _PROMISE_EXECUTOR = ThreadPoolExecutor(max_workers=PROMISE_MAX_WORKERS)
+# Full-directory prune on every get_promise() caused O(n²) when listing /promises/pending with many dirs.
+_PROMISE_PRUNE_LAST = 0.0
+
+
+def _prune_interval_seconds() -> float:
+    try:
+        return float(os.environ.get('PROMISE_PRUNE_INTERVAL_SECONDS', '60'))
+    except ValueError:
+        return 60.0
+
+
+def _maybe_prune_expired() -> None:
+    """TTL prune: at most once per PROMISE_PRUNE_INTERVAL_SECONDS (default 60). Set interval <= 0 to run every call."""
+    global _PROMISE_PRUNE_LAST
+    interval = _prune_interval_seconds()
+    if interval <= 0:
+        _promise_prune_expired()
+        return
+    now = time.time()
+    if now - _PROMISE_PRUNE_LAST < interval:
+        return
+    _PROMISE_PRUNE_LAST = now
+    _promise_prune_expired()
 
 
 def _promise_folder(promise_id: str) -> str:
@@ -141,3 +164,23 @@ def create_promise(*, method: str, path: str, target_url: str, log_folder: str, 
     with _PROMISES_LOCK:
         _PROMISES[promise_id] = rec
     return rec
+
+
+def _delete_promise(promise_id: str) -> bool:
+    """Remove promise from memory and delete its on-disk folder."""
+    with _PROMISES_LOCK:
+        _PROMISES.pop(promise_id, None)
+    folder = _promise_folder(promise_id)
+    if not os.path.isdir(folder):
+        return False
+    try:
+        for fn in os.listdir(folder):
+            try:
+                os.remove(os.path.join(folder, fn))
+            except OSError as e:
+                logger.warning("Failed to remove %s/%s: %s", folder, fn, e, exc_info=True)
+        os.rmdir(folder)
+        return True
+    except OSError as e:
+        logger.warning("Failed to delete promise folder %s: %s", folder, e, exc_info=True)
+        return False

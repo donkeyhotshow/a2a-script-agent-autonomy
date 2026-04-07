@@ -128,14 +128,22 @@ def _promise_set_done(promise_id: str, *, status_code: int, headers: dict, body:
     _save_promise(rec)
 
 
-def _promise_set_error(promise_id: str, *, error: str, delay_seconds: float = 10.0) -> None:
+def _promise_set_error(
+    promise_id: str,
+    *,
+    error: str,
+    delay_seconds: Optional[float] = 10.0,
+) -> None:
     rec = get_promise(promise_id)
     if rec is None:
         return
     rec.status = 'error'
     rec.updated_at = time.time()
     rec.error = str(error)
-    rec.next_attempt_at = time.time() + delay_seconds
+    if delay_seconds is None:
+        rec.next_attempt_at = None
+    else:
+        rec.next_attempt_at = time.time() + float(delay_seconds)
     _save_promise(rec)
 
 

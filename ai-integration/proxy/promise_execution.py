@@ -11,7 +11,9 @@ from typing import Any, Dict, Optional, Tuple
 import requests
 
 from .promises import (
-    _promise_set_done, _promise_reset_pending, is_llm_upstream_response_ok,
+    _promise_set_done,
+    _promise_set_error,
+    is_llm_upstream_response_ok,
     save_response,
 )
 from .promise_utils import _sanitize_execute_headers, _prepare_execute_body
@@ -291,7 +293,7 @@ def forward_promise_with_llm_disk_cache(
                 logger.warning("Failed to save response: %s", e, exc_info=True)
         logger.info("Promise %s executed in background → %s", promise_id, resp.status_code)
     except requests.RequestException as exc:
-        _promise_reset_pending(promise_id, delay_seconds=10.0)
+        _promise_set_error(promise_id, error=str(exc), delay_seconds=None)
         if want_trace and trace_dir:
             try:
                 save_response(

@@ -10,6 +10,9 @@ export function resolveUnderProjectRoot(projectPath, rel) {
     if (typeof rel !== 'string' || !rel.trim()) {
         return null;
     }
+    if (typeof projectPath !== 'string' || !projectPath.trim()) {
+        return null;
+    }
     const root = path.resolve(projectPath);
     const abs = path.resolve(root, rel);
     const normRoot = root.endsWith(path.sep) ? root : root + path.sep;

@@ -136,7 +136,9 @@ export async function runClientGrepSearch(projectPath, payload) {
         return { pattern, matches: [], success: false, error: 'path outside project' };
     }
 
-    const rootResolved = path.resolve(projectPath);
+    const safeRoot =
+        typeof projectPath === 'string' && projectPath.trim() ? projectPath : process.cwd();
+    const rootResolved = path.resolve(safeRoot);
     const matches = [];
 
      function lineMatches(line, lineReSource, flags) {

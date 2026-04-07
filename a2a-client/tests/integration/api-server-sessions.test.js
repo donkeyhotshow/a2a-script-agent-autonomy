@@ -68,7 +68,7 @@ beforeAll(async () => {
 
     const mod = await import('../../packages/sdk/src/server/index.ts');
     app = mod.createApp();
-});
+}, 60_000);
 
 afterAll(async () => {
     try {

@@ -358,6 +358,31 @@ class TaskMonitorProcessing {
             return true;
           }
 
+          // Agent terminal beat: step completed with execute.message only (no separate result object)
+          const execStep = sessionData?.context?.execution?.step;
+          const execAction = sessionData?.context?.execution?.action;
+          const finalMsg =
+            (sessionData?.execute && typeof sessionData.execute.message === 'string'
+              ? sessionData.execute.message
+              : null) ||
+            (sessionData?.context?.execution &&
+            typeof sessionData.context.execution.message === 'string'
+              ? sessionData.context.execution.message
+              : null);
+          if (
+            execAction === 'agent' &&
+            execStep === 'completed' &&
+            finalMsg &&
+            finalMsg.trim()
+          ) {
+            console.log(
+              `Task ${taskFile.name} completed (agent step=completed, final message present)`
+            );
+            await this.markTaskAsCompleted(taskFile.name);
+            success = true;
+            return true;
+          }
+
           // Guard: agent/tool loop can settle to idle repeatedly at tool_run_script
           // without producing terminal result; fail fast with clear diagnosis.
           const step = sessionData?.context?.execution?.step || sessionData?.execute?.step;

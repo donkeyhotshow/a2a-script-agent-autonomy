@@ -94,7 +94,7 @@ ai-integration uses FORWARD_TIMEOUT_SECONDS=180 (set in start-ai-integration.bat
 
 ## Artifact tracking and cleanup
 
-Direct Node-based tests (`e2e-dialog-test.js`, `gray-room-test.js`) record the client sessions and server promiseIds they create into `artifacts-registry.json` in this folder.
+Direct Node-based tests (`e2e-dialog-test.js`, `gray-room-test.js`) append client sessions and server `promiseId`s to **`artifacts-registry.json`** (gitignored; shape: [`artifacts-registry.json.example`](artifacts-registry.json.example)). If the file is missing, the registry starts empty and is created on first write.
 
 To remove those artifacts and run ai-integration cleanup after a batch of direct tests:
 
@@ -107,7 +107,7 @@ What it does:
 - Deletes recorded Client API sessions via `DELETE /api/a2a/sessions/:id`
 - Deletes matching A2A Server request files from `a2a-server/storage/requests/{promiseId}.json`
 - Runs `tests/direct-tests/ai-integration/run-test-cleanup.ps1` to clear ai-integration requests/promises/cache
-- Clears `tests/direct-tests/artifacts-registry.json`
+- Clears the registry file (empties tracked IDs)
 
 ## Replay saved session steps
 

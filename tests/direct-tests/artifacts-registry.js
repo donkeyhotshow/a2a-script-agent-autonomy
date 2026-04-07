@@ -6,6 +6,7 @@ import {fileURLToPath} from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+/** Tracked path is gitignored; copy `artifacts-registry.json.example` if you need a file on disk. */
 const registryPath = path.resolve(__dirname, 'artifacts-registry.json');
 
 function getEmptyRegistry() {

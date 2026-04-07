@@ -121,10 +121,13 @@ function ensureWorkbenchSectionsShape(context: Record<string, unknown> | undefin
         return;
     }
     if (typeof wb !== 'object' || Array.isArray(wb)) {
+        context['workbench'] = {sections: {}};
         return;
     }
     const w = wb as Record<string, unknown>;
     if (w['sections'] === undefined) {
+        w['sections'] = {};
+    } else if (typeof w['sections'] !== 'object' || w['sections'] === null || Array.isArray(w['sections'])) {
         w['sections'] = {};
     }
 }

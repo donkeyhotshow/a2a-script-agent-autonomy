@@ -15,7 +15,7 @@ from .config import PROMISE_DELAY_BEFORE_EXECUTE
 from .promises import (
     create_promise,
     _promise_set_done,
-    _promise_reset_pending,
+    _promise_set_error,
     _write_json_file,
     _json_bytes,
     create_request_log,
@@ -124,7 +124,7 @@ def create_promise_job(
         )
     except Exception as e:
         logger.exception("create_promise_job failed promise_id=%s", promise.promise_id)
-        _promise_reset_pending(promise.promise_id, delay_seconds=10.0)
+        _promise_set_error(promise.promise_id, error=str(e), delay_seconds=None)
         if want_trace and trace_dir:
             from .promises import save_response
             save_response(trace_dir, {"error": "promise_error", "message": str(e)})
