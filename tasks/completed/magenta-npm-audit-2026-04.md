@@ -15,6 +15,6 @@
 ## Verification
 
 - `cd a2a-server && npx vitest run tests/integration/sync-flow.test.ts` — pass (full suite may race on shared `storage/requests` if parallel tests collide).
-- `a2a-client` full `npm test` — some failures observed **unrelated** to this change (SDK `shared/api-helpers.js` path, embedding defaults, ADR state test); re-run after those are fixed on main.
+- `cd a2a-client && npm test` — green after `shared/api-helpers.js` shim, ADR parse throw, embedding `dist` rebuild.
 
 **Ref:** [`docs/PURPLE-ALERT-HARMFUL-HUNT.md`](../../docs/PURPLE-ALERT-HARMFUL-HUNT.md).

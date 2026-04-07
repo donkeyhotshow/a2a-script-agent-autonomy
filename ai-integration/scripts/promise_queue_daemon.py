@@ -114,8 +114,11 @@ def fetch_request_snapshot(
         return None
 
 
-def execute_promise(session: requests.Session, proxy_url: str, promise_id: str, timeout: float) -> Optional[Dict[str, Any]]:
-    url = f"{proxy_url.rstrip('/')}/promise/{promise_id}/execute"
+def reset_error_promise_to_pending(
+    session: requests.Session, proxy_url: str, promise_id: str, timeout: float
+) -> bool:
+    """Match built-in proxy daemon: /promises/pending can list error rows ready for retry; execute only accepts pending."""
+    url = f"{proxy_url.rstrip('/')}/promise/{promise_id}/retry"
     try:
         response = session.post(url, timeout=timeout)
         payload = None
@@ -124,10 +127,55 @@ def execute_promise(session: requests.Session, proxy_url: str, promise_id: str, 
         except ValueError:
             payload = None
         if not response.ok:
-            logging.warning("Execute returned %s for %s: %s", response.status_code, promise_id, payload or response.text[:200])
+            logging.warning(
+                "Retry reset returned %s for %s: %s",
+                response.status_code,
+                promise_id,
+                payload or response.text[:200],
+            )
+            return False
+        logging.info("Promise %s reset to pending for retry (%s)", promise_id, payload or "ok")
+        return True
+    except requests.RequestException as exc:
+        logging.warning("Retry reset failed for %s: %s", promise_id, exc)
+        return False
+
+
+def execute_promise(session: requests.Session, proxy_url: str, promise_id: str, timeout: float) -> Optional[Dict[str, Any]]:
+    url = f"{proxy_url.rstrip('/')}/promise/{promise_id}/execute"
+    try:
+        for attempt in range(2):
+            response = session.post(url, timeout=timeout)
+            payload = None
+            try:
+                payload = response.json()
+            except ValueError:
+                payload = None
+            if response.ok:
+                logging.info(
+                    "Promise %s executed → result %s",
+                    promise_id,
+                    payload.get("result_status_code") if isinstance(payload, dict) else "ok",
+                )
+                return payload
+            if (
+                attempt == 0
+                and response.status_code == 409
+                and isinstance(payload, dict)
+                and payload.get("error") == "promise_not_pending"
+                and str(payload.get("current_status", "")).lower() == "error"
+            ):
+                logging.info("Execute 409 (error state) for %s — resetting to pending and retrying once", promise_id)
+                if reset_error_promise_to_pending(session, proxy_url, promise_id, timeout):
+                    continue
+            logging.warning(
+                "Execute returned %s for %s: %s",
+                response.status_code,
+                promise_id,
+                payload or response.text[:200],
+            )
             return None
-        logging.info("Promise %s executed → result %s", promise_id, payload.get("result_status_code") if isinstance(payload, dict) else "ok")
-        return payload
+        return None
     except requests.RequestException as exc:
         logging.warning("Execution failed for %s: %s", promise_id, exc)
         return None
@@ -179,6 +227,11 @@ def handle_promise(session: requests.Session, args: argparse.Namespace, entry: D
     if args.dry_run or args.no_auto_approve:
         logging.info("Auto-approve disabled; skipping execution for %s", promise_id)
         return
+    entry_status = (entry.get("status") or "pending").strip().lower()
+    if entry_status == "error":
+        if not reset_error_promise_to_pending(session, args.proxy_url, promise_id, args.timeout):
+            logging.warning("Skipping execute for %s (could not reset from error)", promise_id)
+            return
     execute_payload = execute_promise(session, args.proxy_url, promise_id, args.timeout)
     if execute_payload is None:
         logging.warning("Skipping response fetch because execution failed for %s", promise_id)

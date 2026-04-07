@@ -206,14 +206,17 @@ class TaskMonitorProcessing {
         await this.logAgentExecution(session.id, 'after-initial-monitor-gate');
       }
 
-      // Poll for completion using configurable settings
-      const maxAttempts = this.maxPollAttempts;
-      const pollInterval = this.pollIntervalMs;
+      // Poll for completion: wall clock (`pollTimeoutMs`) is authoritative. `maxPollAttempts` alone
+      // used to cap ~60×5s≈5m while `.env` could set 10m+ — raise the attempt ceiling to match timeout.
+      const pollInterval = Math.max(1, this.pollIntervalMs);
+      const attemptCeiling = Math.max(
+        this.maxPollAttempts,
+        Math.ceil(this.pollTimeoutMs / pollInterval) + 100
+      );
       const startTime = Date.now();
       let attempts = 0;
 
-      while (attempts < maxAttempts) {
-        // Check overall timeout
+      while (attempts < attemptCeiling) {
         if (Date.now() - startTime > this.pollTimeoutMs) {
           console.error(`Poll timeout exceeded (${this.pollTimeoutMs}ms)`);
           break;

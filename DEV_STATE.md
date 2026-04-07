@@ -65,7 +65,7 @@ If any probe fails: start with **`start-all.bat`**, then re-run the curls in *He
 
 - **Operator + narrative index:** [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md) · [`COMPLETION-REPORT.md`](COMPLETION-REPORT.md).
 - **State file:** `task-monitor-state.json` — `currentTask`, `sessionId`, `status`, `processedTasks[]`. **Regression tests:** `npm run test:monitor` (repo root).
-- **Timeouts:** defaults **120 × 5s** attempts + **600000ms** wall cap (~10m); `monitorActiveTasks` timeout aligned with `pollTimeoutMs`. Vitest: `npx vitest run tests/infrastructure/monitor-and-process-tasks.test.js` (reads `tests/monitor-tasks/*.js` + entry). Override via `TASK_MONITOR_*` env. Still inspect `GET /api/a2a/sessions/{id}` + `/async` when stuck ([`AGENTS.md`](AGENTS.md) *Stack / promise pending*).
+- **Timeouts:** **`TASK_MONITOR_POLL_TIMEOUT_MS`** wall cap is authoritative (~**600000ms** default); poll iteration ceiling scales with timeout ÷ interval so **`TASK_MONITOR_MAX_POLL_ATTEMPTS`** cannot shorten a run below that wall clock. Vitest: `npx vitest run tests/infrastructure/monitor-and-process-tasks.test.js`. Override via `TASK_MONITOR_*` env. Still inspect `GET /api/a2a/sessions/{id}` + `/async` when stuck ([`AGENTS.md`](AGENTS.md) *Stack / promise pending*).
 - **Promise queue:** with **`PROMISE_DAEMON_ONLY`** (hub default), LLM `?promise=1` tickets must be drained — **`start-all.bat`** now starts the **promise-queue-daemon** window; manual: `scripts/start-promise-queue-daemon.bat` or `cd ai-integration && python scripts/promise_queue_daemon.py` (hub **`http://localhost:11434`**). **`hub_promise_empty`** / stuck `pending` usually means the daemon was not hitting the hub.
 
 **Authoritative human queue (if used):** [`work/STATE.md`](work/STATE.md) — table *Очередь задач*.
@@ -80,7 +80,7 @@ If any probe fails: start with **`start-all.bat`**, then re-run the curls in *He
 | Invoke + processors | [a2a-server/DEV_STATE.md](a2a-server/DEV_STATE.md) |
 | AI hub + promises | [ai-integration/DEV_STATE.md](ai-integration/DEV_STATE.md) |
 
-**Security (as-of 2026-04-07):** Harmful-pattern pass logged in [`docs/PURPLE-ALERT-HARMFUL-HUNT.md`](docs/PURPLE-ALERT-HARMFUL-HUNT.md) (*Last run log*). **Fix applied:** `a2a-server` `bug-fixer` `getGitDiff` uses `spawnSync('git', […])` instead of shell-interpolated `execSync`. **Magenta:** production `npm audit --omit=dev` **0** for root, `a2a-server`, `a2a-client` (2026-04-07). Summary: [`tasks/pending/magenta-npm-audit-2026-04.md`](tasks/pending/magenta-npm-audit-2026-04.md).
+**Security (as-of 2026-04-07):** Harmful-pattern pass logged in [`docs/PURPLE-ALERT-HARMFUL-HUNT.md`](docs/PURPLE-ALERT-HARMFUL-HUNT.md) (*Last run log*). **Fix applied:** `a2a-server` `bug-fixer` `getGitDiff` uses `spawnSync('git', […])` instead of shell-interpolated `execSync`. **Magenta:** production `npm audit --omit=dev` **0** for root, `a2a-server`, `a2a-client` (2026-04-07). Summary: [`tasks/completed/magenta-npm-audit-2026-04.md`](tasks/completed/magenta-npm-audit-2026-04.md).
 
 ---
 
@@ -118,7 +118,7 @@ Then `start-all.bat` and retry.
 
 ## Next (ordered)
 
-1. **Broader offline:** `npm run test:direct-tests` (Vitest under `tests/direct-tests/`) · `npm run test:gang` (Papa–Mama orchestrator) if you change session/proxy contracts.
+1. **Broader offline:** `npm run test:direct-tests` (Vitest under `tests/direct-tests/`) · `npm run test:gang` (Papa–Mama orchestrator) if you change session/proxy contracts — **last stage** `validate:proba-servera` needs **ai-integration `:11434`** unless **`PROBA_SERVERA_SKIP_STACK_CHECK=1`** (see script output).
 2. **Sims:** `npm run sim:lint -- --all` · `npm run sim:validate -- --all` (from root; runs via `a2a-server`).
 3. **Live stack / north star:** `start-all.bat` → `npm run monitor:once` (or one manual Client API session per [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md)); set **`TASK_MONITOR_SKIP_PROMISE_GATE=1`** when hub reports `promise_daemon_only` and the queue is drained.
 4. **Test-architecture debt (fixtures / gray paths):** [`tasks/pending/test-architecture-proposals.md`](tasks/pending/test-architecture-proposals.md).

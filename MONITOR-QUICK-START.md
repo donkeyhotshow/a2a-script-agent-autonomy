@@ -147,7 +147,7 @@ Enforced by [`tests/infrastructure/monitor-and-process-tasks.test.js`](tests/inf
 | Tasks never start | **`start-all.bat`**, curls in root [`DEV_STATE.md`](DEV_STATE.md) *Health checks* |
 | No **`hooks/`** files | Hooks are written for **failed** or **timed-out** tasks only |
 | **Session not found** in logs | Note **`sessionId`** from create step; inspect storage under **`a2a-client/storage/sessions/`** |
-| **~10m timeout** | Default poll cap; raise **`TASK_MONITOR_POLL_TIMEOUT_MS`** / **`TASK_MONITOR_MAX_POLL_ATTEMPTS`** |
+| **~10m timeout** | Wall clock **`TASK_MONITOR_POLL_TIMEOUT_MS`** (default ~10m) wins; iteration cap auto-scales with timeout + interval so low **`TASK_MONITOR_MAX_POLL_ATTEMPTS`** alone cannot cut a long run short (~302s bug fixed). |
 | **`promise_daemon_only`** gate | Set **`TASK_MONITOR_SKIP_PROMISE_GATE=1`** when daemon drains the queue (CI / scripts) |
 
 ## Prerequisites
@@ -185,7 +185,7 @@ Defined in [`.env.example`](.env.example). Common overrides:
 | `TASK_MONITOR_SERVER_API_URL` | Server API for health (default `http://localhost:3000/api/v1`) |
 | `TASK_MONITOR_PROJECT_ID` | Project for new sessions; if empty, first project from `GET /projects` |
 | `TASK_MONITOR_POLL_INTERVAL_MS` | Delay between async polls (default `5000`) |
-| `TASK_MONITOR_MAX_POLL_ATTEMPTS` | Max poll iterations per task phase (default `120`) |
+| `TASK_MONITOR_MAX_POLL_ATTEMPTS` | Minimum iteration ceiling per task phase (default `120`); effective ceiling is at least `ceil(POLL_TIMEOUT_MS / POLL_INTERVAL_MS) + 100` |
 | `TASK_MONITOR_POLL_TIMEOUT_MS` | Wall-clock cap for polling (default `600000`, ~10m) |
 | `TASK_MONITOR_TASKS_DIR` | Directory of task markdown files |
 | `TASK_MONITOR_TASK_LIST` | Optional path to a line-based list of `.md` filenames (order preserved); overrides directory scan |

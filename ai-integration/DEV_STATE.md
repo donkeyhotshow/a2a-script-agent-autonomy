@@ -6,7 +6,7 @@
 
 ## Role for the north star
 
-**Hub on 11434** sits between a2a-server and providers (e.g. Local LLM upstream **11435**). LLM traffic uses the **promise pipeline** (async); clients must poll — if the hub or **promise-queue daemon** is misconfigured, Task Monitor will see **`pending` / `processing`** until timeout. Repo root **`start-all.bat`** starts **`scripts/start-promise-queue-daemon.bat`**, which runs **`python scripts/promise_queue_daemon.py`** against the hub (**default base URL `http://localhost:11434`**, not :11435).
+**Hub on 11434** sits between a2a-server and providers (e.g. Local LLM upstream **11435**). LLM traffic uses the **promise pipeline** (async); clients must poll — if the hub or **promise-queue daemon** is misconfigured, Task Monitor will see **`pending` / `processing`** until timeout. Repo root **`start-all.bat`** starts **`scripts/start-promise-queue-daemon.bat`**, which runs **`python scripts/promise_queue_daemon.py`** against the hub (**default base URL `http://localhost:11434`**, not :11435). That script now calls **`POST /promise/<id>/retry`** before **`/execute`** when `/promises/pending` returns **`status: error`** (same as the in-process proxy daemon), so **`409 promise_not_pending`** spam stops. Upstream **401** (e.g. missing Qwen/DashScope auth) still requires correct **`providers.json` / `.env`** keys.
 
 **Triangle vertex C** — [`docs/TRIANGLE-WORKFLOW.md`](../docs/TRIANGLE-WORKFLOW.md). **Black alert (proxy)** ([`GLOSSARY.md`](../GLOSSARY.md) *Alerts*).
 
