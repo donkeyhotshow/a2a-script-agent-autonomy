@@ -19,7 +19,7 @@ start-all.bat    # Start all services
 kill-all.ps1     # Stop all services
 ```
 
-**Restart (Windows):** To stop or refresh **any** part of the stack, use **`start-all.bat`** from the repo root again (it calls `kill-all.bat`, verifies ports, then starts everything in order). Do **not** restart individual services with `npm run dev` (or similar) inside `a2a-server`, `a2a-client`, `packages/sdk`, etc.—that leaves orphan processes, port conflicts, and a stale `.pids.txt`. See also [`AGENTS.md`](../AGENTS.md) (live stack restart).
+**Restart (Windows):** To stop or refresh **any** part of the stack, use **`start-all.bat`** from the repo root again (it calls `kill-all.bat`, verifies ports, then starts everything in order). **`start-all.bat`** also opens a **promise-queue-daemon** window that polls the hub on **11434** and **`POST /promise/<id>/execute`** when **`PROMISE_DAEMON_ONLY`** is on (default); without it, sessions can sit **`pending`** until Task Monitor times out. Do **not** restart individual services with `npm run dev` (or similar) inside `a2a-server`, `a2a-client`, `packages/sdk`, etc.—that leaves orphan processes, port conflicts, and a stale `.pids.txt`. See also [`AGENTS.md`](../AGENTS.md) (live stack restart).
 
 **LLM / hub busy:** If a Client API session is waiting on the LLM (`asyncPending` / server `processing`), **confirm** your configured upstream (per `ai-integration` / `providers.json`) is actually working **before** killing or restarting the stack. Normative wording: [`OPERATOR-CURL.md`](OPERATOR-CURL.md).
 

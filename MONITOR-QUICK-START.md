@@ -100,13 +100,55 @@ Minimal bureaucracy for a **solo developer**, with guardrails against self-decep
 
 ## What the instrument does
 
-1. Reads each `*.md` in `prompts-to-agent-mode/` (or `TASK_MONITOR_TASKS_DIR`).
+1. Builds the prompt queue: optional **`TASK_MONITOR_TASK_LIST`** (one filename per line, in that order); otherwise every `*.md` under `TASK_MONITOR_TASKS_DIR`, sorted **A–Z** for stable sequencing. Skips `README.md`, `ONE-PIPELINE.md`, `STACK-RUN.md`, and files already marked completed in the markdown body.
 2. **`POST /api/a2a/sessions`** with **`mode: "agent"`** and task text from the file.
 3. **`POST /api/a2a/sessions/{id}/next`** and **`GET /api/a2a/sessions/{id}/async`** in a loop until the step settles.
 4. When the hydrated session shows **`form.choices`**, sends a **choice** (same contract as the UI: `result.choice` or top-level `task` as choice `id`).
-5. Writes **`task-monitor-state.json`**, and on failures may emit **`hooks/`** payloads for follow-up.
+5. Writes **`task-monitor-state.json`** (`TASK_MONITOR_STATE_FILE`): on **failure** keeps **`sessionId`** + **`currentTask`** so the next run **resumes** the same Client API session when the prompt file matches (`TASK_MONITOR_RESUME`, default on). On **success** clears those fields. Failures may also emit **`hooks/`** payloads.
 
-The monitor is **not** a substitute for understanding the router: if the server asks an unexpected question, inspect **`GET /api/a2a/sessions/{id}`** (`includeContext=1` when debugging) and continue the dialog manually or adjust automation — see [`tasks/pending/monitor-router-interaction-followup.md`](tasks/pending/monitor-router-interaction-followup.md) for a real example.
+The monitor is **not** a substitute for understanding the router: if the server asks an unexpected question, inspect **`GET /api/a2a/sessions/{id}`** (`includeContext=1` when debugging) and continue manually or adjust automation — see [`AGENTS.md`](AGENTS.md) *Router dialog* and [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
+
+## Six reliability fixes (covered by static tests)
+
+Enforced by [`tests/infrastructure/monitor-and-process-tasks.test.js`](tests/infrastructure/monitor-and-process-tasks.test.js) over the entry script + [`tests/monitor-tasks/*.js`](tests/monitor-tasks/):
+
+| # | Fix | Where |
+|---|-----|--------|
+| 1 | Router **`form.choices`**: auto-pick **agent** when present; else **`POST /next`** with **`result.message`** / `task` | [`task-monitor-processing.js`](tests/monitor-tasks/task-monitor-processing.js) (`tryAdvanceMonitorGate`) |
+| 2 | Initial **`/next`**: `task` shorthand, fallback **`result.message`** | [`task-monitor-processing.js`](tests/monitor-tasks/task-monitor-processing.js) (`processTask`) |
+| 3 | Task text from markdown: first meaningful line, else **`Untitled task`** | [`task-monitor-utils.js`](tests/monitor-tasks/task-monitor-utils.js) |
+| 4 | Async loop: wait while **`promiseId`** and not completed | [`task-monitor-processing.js`](tests/monitor-tasks/task-monitor-processing.js) |
+| 5 | **Hardbit** flags: only flip server busy when explicitly set | [`task-monitor-core.js`](tests/monitor-tasks/task-monitor-core.js) (`logHardBit`) |
+| 6 | Session checks: missing id / **404** → clear errors, no blind continue | [`task-monitor-api.js`](tests/monitor-tasks/task-monitor-api.js) |
+
+## Daemon behavior
+
+- **Signals:** **`SIGINT`** / **`SIGTERM`** → **`gracefulShutdown()`** (finish in-flight work where possible).
+- **Status:** ~**30s** `[daemon status]` lines (completed / failed counts).
+- **Hooks:** on failure or timeout, JSON under **`hooks/`** (type **`task_monitor_issue`**, stage metadata when available).
+- **Batch:** **`processNewTasks`**, **`monitorActiveTasks`**, **`cleanupCompletedTasks`**; **`activeTasks`** map in memory + state file.
+
+## Key features
+
+| Feature | Benefit |
+|---------|---------|
+| Graceful shutdown | Clean exit under Ctrl+C / service restarts |
+| Status reporting | Visible progress during long LLM turns |
+| Hook documents | IDE/agent can pick up failures without re-parsing logs |
+| Health check | Fails fast if Client API / server / hub / optional upstream are down |
+| Promise tracking | Aligns with async-only stack (`promiseId` + poll) |
+| ErrorClassifier | Typed hints, env vars, suggested direct tests |
+
+## Troubleshooting
+
+| Symptom | What to check |
+|---------|----------------|
+| Hang after Ctrl+C | Shutdown waits on in-flight session; up to ~30s |
+| Tasks never start | **`start-all.bat`**, curls in root [`DEV_STATE.md`](DEV_STATE.md) *Health checks* |
+| No **`hooks/`** files | Hooks are written for **failed** or **timed-out** tasks only |
+| **Session not found** in logs | Note **`sessionId`** from create step; inspect storage under **`a2a-client/storage/sessions/`** |
+| **~10m timeout** | Default poll cap; raise **`TASK_MONITOR_POLL_TIMEOUT_MS`** / **`TASK_MONITOR_MAX_POLL_ATTEMPTS`** |
+| **`promise_daemon_only`** gate | Set **`TASK_MONITOR_SKIP_PROMISE_GATE=1`** when daemon drains the queue (CI / scripts) |
 
 ## Prerequisites
 
@@ -121,7 +163,7 @@ From repo root:
 ```bash
 npm run monitor              # daemon: continuous watch loop
 npm run monitor:daemon       # same (explicit)
-npm run monitor:once         # one pass over tasks, then exit
+npm run monitor:once         # by default: one non-skipped prompt per run, then exit (see TASK_MONITOR_MAX_TASKS_PER_RUN)
 npm run monitor:reset        # remove task-monitor-state.json (Windows-friendly)
 ```
 
@@ -142,13 +184,17 @@ Defined in [`.env.example`](.env.example). Common overrides:
 | `TASK_MONITOR_CLIENT_API_URL` | Client API base (default `http://localhost:5173/api/a2a`) |
 | `TASK_MONITOR_SERVER_API_URL` | Server API for health (default `http://localhost:3000/api/v1`) |
 | `TASK_MONITOR_PROJECT_ID` | Project for new sessions; if empty, first project from `GET /projects` |
-| `TASK_MONITOR_POLL_INTERVAL_MS` | Delay between async polls |
-| `TASK_MONITOR_MAX_POLL_ATTEMPTS` | Max poll iterations per task phase |
-| `TASK_MONITOR_POLL_TIMEOUT_MS` | Wall-clock cap for polling |
+| `TASK_MONITOR_POLL_INTERVAL_MS` | Delay between async polls (default `5000`) |
+| `TASK_MONITOR_MAX_POLL_ATTEMPTS` | Max poll iterations per task phase (default `120`) |
+| `TASK_MONITOR_POLL_TIMEOUT_MS` | Wall-clock cap for polling (default `600000`, ~10m) |
 | `TASK_MONITOR_TASKS_DIR` | Directory of task markdown files |
+| `TASK_MONITOR_TASK_LIST` | Optional path to a line-based list of `.md` filenames (order preserved); overrides directory scan |
+| `TASK_MONITOR_MAX_TASKS_PER_RUN` | Cap on executed (non-skipped) prompts per `--once` run; `0` = no limit. If **unset**, `--once` defaults to **1** in the entry script |
 | `TASK_MONITOR_LOG_LEVEL` | `error` / `warn` / `info` / `debug` — `debug` prints full classified error JSON |
 | `TASK_MONITOR_AI_HUB_URL` | AI Integration proxy base (default `http://localhost:11434`) — used to read `GET …/health` |
 | `TASK_MONITOR_SKIP_PROMISE_GATE` | `1` / `true` — skip the interactive **OK** prompt when `promise_daemon_only` is on (CI / scripts) |
+| `TASK_MONITOR_STATE_FILE` | Path to JSON cursor (`sessionId`, `currentTask`, `processedTasks`, …); default `task-monitor-state.json` |
+| `TASK_MONITOR_RESUME` | `1` (default) — reuse `sessionId` from state when `currentTask` equals the prompt file; `0` / `false` / `no` — always `POST /sessions` |
 
 `LOCAL_LLM_UPSTREAM_URL` and `AI_HUB_URL` are used for health checks when set.
 
@@ -180,9 +226,15 @@ See [`tests/direct-tests/README.md`](tests/direct-tests/README.md) for scopes an
 
 ## Tests
 
+From repository root (paths are fixed in the suite — do not rely on Vitest cwd):
+
 ```bash
-npx vitest run monitor-and-process-tasks.test.js
+npm run test:monitor
+# equivalent:
+npx vitest run tests/infrastructure/monitor-and-process-tasks.test.js
 ```
+
+Expect **19 passed** — static checks over [`monitor-and-process-tasks.js`](monitor-and-process-tasks.js) plus [`tests/monitor-tasks/*.js`](tests/monitor-tasks/). The same suite runs at the end of **`npm run test:before-start`** (after indirect tests and server unit script).
 
 ## Implementation map
 
@@ -194,4 +246,4 @@ npx vitest run monitor-and-process-tasks.test.js
 | Errors + direct-test hints | [`tests/monitor-tasks/errors.js`](tests/monitor-tasks/errors.js) |
 | Config + `logError` | [`tests/monitor-tasks/task-monitor-core.js`](tests/monitor-tasks/task-monitor-core.js) |
 
-For narrative history of fixes and architecture notes, see [`COMPLETION-REPORT.md`](COMPLETION-REPORT.md) if present.
+For a short index + git pointers, see [`COMPLETION-REPORT.md`](COMPLETION-REPORT.md).

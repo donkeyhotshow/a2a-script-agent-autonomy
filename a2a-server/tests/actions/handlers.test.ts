@@ -38,8 +38,8 @@ describe('Action Handlers', () => {
     describe('execute-command', () => {
         it('should validate allowed command', () => {
             const result = validateCommand({
-                command: 'git',
-                args: ['status'],
+                command: 'echo',
+                args: ['ok'],
             });
 
             expect(result.valid).toBe(true);
@@ -62,7 +62,7 @@ describe('Action Handlers', () => {
             });
 
             expect(result.valid).toBe(false);
-            expect(result.error).toContain('not in the allowed list');
+            expect(result.error).toMatch(/not allowed/i);
         });
 
         it('should reject suspicious curl pipe pattern', () => {

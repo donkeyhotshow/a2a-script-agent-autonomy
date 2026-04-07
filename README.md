@@ -203,6 +203,12 @@ For comprehensive Web UI testing including browser interaction and SSE connectiv
 # Unit tests
 npm test
 
+# Task Monitor — static regression (Client API session driver wiring; repo root)
+npm run test:monitor
+
+# Offline gate: indirect tests + server unit script + test:monitor
+npm run test:before-start
+
 # Integration tests (requires DB)
 SKIP_AUTH=1 npm run test:integration
 

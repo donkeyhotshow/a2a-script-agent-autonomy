@@ -13,6 +13,7 @@ Guidance for agents working in this repository.
 | **Windows live stack restart** | **`start-all.bat`** from repo root only — not per-service `npm run dev` ([`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md)) |
 | **Unified manual path** | **Client API only:** create session → **`mode: "agent"`** (or `execution.action`) → **`task`** → `next` + poll `async` — [Unified manual path](#unified-manual-path-client-api) |
 | **Backlog prompts (live stack)** | **[`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md)** + **[`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md)** — indexed tasks; **must** use Client API as the UI (`sessions` / `next` / `async` + seed `mode: "agent"`), not `invoke` alone |
+| **Task Monitor (run + docs + static tests)** | **[`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md)** · `npm run monitor` / `monitor:once` · regression: **`npm run test:monitor`** (also last step of **`npm run test:before-start`**) |
 | **Self-Upgrade order (policy)** | Do **`tasks/`** + **[`tasks/ide-prompts/`](tasks/ide-prompts/README.md)** first; **before large monitor / session volume**, archive needed **`a2a-client/storage/sessions/`** trees ([`tasks/README.md`](tasks/README.md) step 2); run **`prompts-to-agent-mode/`** / monitor **after** — not enforced in code; **[`tasks/README.md`](tasks/README.md)** (*Self-Upgrade order*) |
 | **Single pipeline (API → prompts → observe → improve)** | **[`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md)** — linear sequence + failure classes + doc map |
 | **Master prompt (run full prompt index + loop)** | **[`START-FULL-SPECTRUM.md`](START-FULL-SPECTRUM.md)** — root; paste Agent block into IDE or session `task` |
@@ -158,7 +159,13 @@ NOT: `{ "execute": { "action": "...", ... } }` or `{ "result": { "content": "...
 - Form metadata: title/description (not input array)
 
 ### 5. Async-only transport (MANDATORY)
-**Do not** introduce or document a “switch to sync” path. This stack is **async end-to-end**: `POST /api/v1/invoke` returns **`promiseId`** only; terminal `execute` / `context` come from **polling** (`GET …/requests/{id}/result`, Client API **`GET …/async`**). For **ai-integration**, **`?promise=1`** traffic is **queued** when **`PROMISE_DAEMON_ONLY`** is on (default): drain it with the **promise-queue daemon** or **`POST …/promise/<id>/execute`** — **not** by turning the queue off for inline/synchronous forwarding. PRs and operator runbooks must **never** treat disabling the queue or adding a sync invoke flag as an acceptable workaround.
+**Do not** introduce or document a "switch to sync" path. This stack is **async end-to-end**: `POST /api/v1/invoke` returns **`promiseId`** only; terminal `execute` / `context` come from **polling** (`GET …/requests/{id}/result`, Client API **`GET …/async`**). For **ai-integration**, **`?promise=1`** traffic is **queued** when **`PROMISE_DAEMON_ONLY`** is on (default): drain it with the **promise-queue daemon** or **`POST …/promise/<id>/execute`** — **not** by turning the queue off for inline/synchronous forwarding. PRs and operator runbooks must **never** treat disabling the queue or adding a sync invoke flag as an acceptable workaround.
+
+### 6. Client-Server Data Separation (MANDATORY)
+Strict separation between a2a-client and a2a-server must be maintained to prevent data leakage:
+- Client must not send internal data (sessionIds, project metadata) to server.
+- Server must not send internal data (gray room processing, secrets, internal LLM chains like compress_history, thinking, auto_rag_page, auto_read_file, clarify) to client.
+- Server responses should only include sanitized execute/context for client consumption. Internal server-side operations (e.g., gray room) must not appear in responses, as they could expose sensitive processing details or secrets if leaked.
 
 ---
 
@@ -233,6 +240,7 @@ Web UI (5173) → Client API (5173/api/a2a) → A2A Server (3000) → AI Hub (11
 ### Invoke payload privacy
 - The Client API keeps the human-facing `sessionId`/`projectId` confined to `a2a-client/storage/…` and **strips them** before proxying to `/api/v1/invoke`. Project metadata (`projectId`/`projectRoot`) and any camelCase `sessionId` are removed before the server ever sees the payload.
 - The stateless A2A Server always assigns its own `context.session_id` (currently `srv_sess_<uuid>`), returns it inside the response context, and the Client API reuses that server-issued token for follow-up invokes. That lets multi-step actions stay bound to a server session without leaking project or storage identifiers.
+- Server responses must be sanitized: internal processing like gray room (server-side LLM chains) must not be included, as they are internal server operations that could expose secrets if leaked.
 
 ### Ports
 | Port | Service | Role |
@@ -361,7 +369,7 @@ See [docs/adr/README.md](docs/adr/README.md) for full index (includes **Tooling*
 | **Action-Key Shape** | Single action type per execute/result object |
 | **Workbench** | Structured state in `context.workbench.sections` |
 | **Promise** | Async request ID for polling long-running work |
-| **Gray Room** | Серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту; без `interrupt` у agent-class **`result.completed`** (из JSON модели) может открыть syndicate / SIEGE — [`a2a-server/docs/GRAY-ROOM.md`](a2a-server/docs/GRAY-ROOM.md) |
+| **Gray Room** | Серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту; не должна передаваться в ответе сервера — только внутренний процесс; без `interrupt` у agent-class **`result.completed`** (из JSON модели) может открыть syndicate / SIEGE — [`a2a-server/docs/GRAY-ROOM.md`](a2a-server/docs/GRAY-ROOM.md) |
 | **Router** | Keyword-based routing (dialog/agent/task-decomposition) |
 | **Sync golden (`simulations/sync/`)** | Simulation folder style (invoke-shaped goldens). Server transport is always **`promiseId` + poll** — not inline execute on POST; see **Purple alert** in [`GLOSSARY.md`](GLOSSARY.md). |
 | **Web DTO** | Client-sanitized execute (only form, not tool calls) |

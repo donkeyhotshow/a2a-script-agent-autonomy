@@ -55,6 +55,16 @@ else
 fi
 
 echo ""
+log STEP "Phase 0" "Kill promise-queue-daemon by PID (if recorded)"
+if [[ -n "${PIDS[PROMISE_QUEUE_DAEMON_PID]}" ]]; then
+    pq_pid="${PIDS[PROMISE_QUEUE_DAEMON_PID]}"
+    if kill -0 "$pq_pid" 2>/dev/null; then
+        kill -9 "$pq_pid" 2>/dev/null || true
+        log OK "Killed promise-queue-daemon PID $pq_pid"
+    fi
+fi
+
+echo ""
 log STEP "Phase 1" "Kill by port (find and terminate port listeners)"
 
 for svc_def in "${SERVICES[@]}"; do

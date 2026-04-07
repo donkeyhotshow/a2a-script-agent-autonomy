@@ -11,6 +11,16 @@ import dotenv from 'dotenv';
 dotenv.config();
 dotenv.config({ path: '.env.local' });
 
+// `--once`: one prompt file per invocation by default (override with TASK_MONITOR_MAX_TASKS_PER_RUN=0 for full queue).
+const _argvEarly = process.argv.slice(2);
+if (
+  _argvEarly.includes('--once') &&
+  !(_argvEarly.includes('--daemon')) &&
+  !Object.prototype.hasOwnProperty.call(process.env, 'TASK_MONITOR_MAX_TASKS_PER_RUN')
+) {
+  process.env.TASK_MONITOR_MAX_TASKS_PER_RUN = '1';
+}
+
 import { ServerUnavailableError, ErrorClassifier } from './tests/monitor-tasks/errors.js';
 import { TaskMonitorCore } from './tests/monitor-tasks/task-monitor-core.js';
 import { TaskMonitorApi } from './tests/monitor-tasks/task-monitor-api.js';
@@ -51,7 +61,7 @@ class TaskMonitor extends TaskMonitorCore {
 // Export for use
 export { TaskMonitor, ServerUnavailableError };
 
-// CLI: default daemon; --once = one batch then exit; --daemon explicit
+// CLI: default daemon; --once = sequential run then exit (default 1 task; see TASK_MONITOR_MAX_TASKS_PER_RUN); --daemon explicit
 (async () => {
   const monitor = new TaskMonitor();
   const argv = process.argv.slice(2);

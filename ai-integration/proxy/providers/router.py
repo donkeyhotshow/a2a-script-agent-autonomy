@@ -101,13 +101,22 @@ class ProviderRouter:
                 return (model or "").strip()
             return self._get_default_model()
         model = str(model).strip()
-        # Map legacy names from static config so routing works even if no provider instance
-        # registered (e.g. z_ai health_check failed during initialize).
-        dp_cfg = self.config.get_provider(self.config.default_provider)
-        if dp_cfg and isinstance(dp_cfg.fallback_models, dict):
-            alt = dp_cfg.fallback_models.get(model)
-            if isinstance(alt, str) and alt.strip():
-                model = alt.strip()
+        # Map legacy hub names via default_provider only when a single enabled provider
+        # claims this name in fallback_models. If several do (e.g. qwen3:8b → different
+        # upstream IDs), keep the alias so _get_provider_chain can try each provider.
+        claimants = sum(
+            1
+            for pc in self.config.providers.values()
+            if pc.enabled and model in (pc.fallback_models or {})
+        )
+        if claimants <= 1:
+            dp_cfg = self.config.get_provider(self.config.default_provider)
+            if dp_cfg and isinstance(dp_cfg.fallback_models, dict):
+                alt = dp_cfg.fallback_models.get(model)
+                if isinstance(alt, str) and alt.strip():
+                    model = alt.strip()
+        if claimants > 1:
+            return model
         if not self._initialized:
             return model
         for _name, provider in self._providers.items():

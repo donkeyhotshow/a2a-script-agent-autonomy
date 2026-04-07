@@ -65,5 +65,5 @@ End with:
 
 ## Relation to other alerts
 
-- **Orange** (dedupe), **Amber** (doc/code mismatch), **Teal** (API contract), **Magenta** (deps) — findings from this scan may **map** to those labels when you open real work items.
+- **Purple** (dedupe), **Amber** (doc/code mismatch), **Teal** (API contract), **Magenta** (deps) — findings from this scan may **map** to those labels when you open real work items.
 - **Offline validators** — automation for known contract mistakes; this scan catches **broader** human-judgment smells.

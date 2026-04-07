@@ -14,7 +14,7 @@
 
 **Rooms** — same glossary, *Core terms*: **Gray Room**, **Red Room**, **Black Room** are **pipeline phases** (server LLM chain, client tools, algorithm mode). **Gray alert ≠ Gray Room** (same doc: *Rooms vs alerts*).
 
-**Quick map:** vertex **A** ↔ often **Blue** / **Purple** / **Teal**; **B** ↔ **Gray alert** + Gray Room *inside* server work; **C** ↔ **Black alert (proxy)**. **Red alert** = full Task Monitor / solo cycle through **A** (sessions), still classifying failures along **B/C** when stuck.
+**Quick map:** vertex **A** ↔ often **Blue** / **Orange** / **Teal**; **B** ↔ **Gray alert** + Gray Room *inside* server work; **C** ↔ **Black alert (proxy)**. **Red alert** = full Task Monitor / solo cycle through **A** (sessions), still classifying failures along **B/C** when stuck.
 
 ---
 

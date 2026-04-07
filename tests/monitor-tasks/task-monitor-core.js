@@ -10,11 +10,17 @@ class TaskMonitorCore {
     this.projectId = process.env.TASK_MONITOR_PROJECT_ID || null; // Will auto-fetch if null
     this.stateFile = path.resolve(process.env.TASK_MONITOR_STATE_FILE || 'task-monitor-state.json');
     this.tasksDir = path.resolve(process.env.TASK_MONITOR_TASKS_DIR || 'prompts-to-agent-mode');
+    this.taskListPath = process.env.TASK_MONITOR_TASK_LIST
+      ? path.resolve(process.cwd(), process.env.TASK_MONITOR_TASK_LIST)
+      : null;
     this.hooksDir = path.join(process.cwd(), 'hooks');
     this.pollIntervalMs = parseInt(process.env.TASK_MONITOR_POLL_INTERVAL_MS || '5000', 10);
     // Defaults: 120 × 5s ≈ 10m wall time (local LLM agent turns often exceed 5m; old 60×5s ≈ 301s false timeouts)
     this.maxPollAttempts = parseInt(process.env.TASK_MONITOR_MAX_POLL_ATTEMPTS || '120', 10);
     this.pollTimeoutMs = parseInt(process.env.TASK_MONITOR_POLL_TIMEOUT_MS || '600000', 10);
+    /** 0 = no limit. With `node … --once`, entry defaults env to 1 unless TASK_MONITOR_MAX_TASKS_PER_RUN is set. */
+    const _maxTasks = parseInt(process.env.TASK_MONITOR_MAX_TASKS_PER_RUN || '0', 10);
+    this.maxTasksPerRun = Number.isFinite(_maxTasks) && _maxTasks >= 0 ? _maxTasks : 0;
     this.logLevel = process.env.TASK_MONITOR_LOG_LEVEL || 'info';
     this.aiHubUrl = (process.env.TASK_MONITOR_AI_HUB_URL || 'http://localhost:11434').replace(
       /\/$/,
@@ -67,12 +73,14 @@ class TaskMonitorCore {
   }
 
   resetStateForFreshRun() {
-    console.log('Clearing previous monitor state for a fresh run...');
+    console.log(
+      'Preparing run: clearing activeTasks map only — sessionId / currentTask stay in state file for resume.'
+    );
     this.activeTasks.clear();
-    // Keep processedTasks to avoid reprocessing completed/failed tasks
-    const processedTasks = this.state.processedTasks || [];
-    this.state = this.buildInitialState();
-    this.state.processedTasks = processedTasks;
+    if (!this.state || typeof this.state !== 'object') {
+      this.state = this.buildInitialState();
+    }
+    this.state.activeTasks = {};
     this.saveState();
   }
 

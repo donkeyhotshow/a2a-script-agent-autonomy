@@ -75,14 +75,35 @@ class TaskMonitorProcessing {
   async getTaskFiles() {
     try {
       const skipNames = new Set(['README.md', 'ONE-PIPELINE.md', 'STACK-RUN.md']);
-      const files = fs.readdirSync(this.tasksDir);
-      return files
-        .filter(file => file.endsWith('.md') && !skipNames.has(file))
-        .map(file => ({
-          name: file,
-          path: path.join(this.tasksDir, file),
-          content: fs.readFileSync(path.join(this.tasksDir, file), 'utf8')
-        }));
+      if (this.taskListPath && fs.existsSync(this.taskListPath)) {
+        const lines = fs.readFileSync(this.taskListPath, 'utf8').split(/\r?\n/);
+        const names = lines.map((l) => l.trim()).filter((l) => l && !l.startsWith('#'));
+        const out = [];
+        for (const raw of names) {
+          const file = raw.endsWith('.md') ? raw : `${raw}.md`;
+          if (skipNames.has(file)) continue;
+          const full = path.join(this.tasksDir, path.basename(file));
+          if (!fs.existsSync(full)) {
+            this.log('warn', `[task-monitor] TASK_MONITOR_TASK_LIST: missing ${file}, skipping`);
+            continue;
+          }
+          out.push({
+            name: path.basename(full),
+            path: full,
+            content: fs.readFileSync(full, 'utf8'),
+          });
+        }
+        return out;
+      }
+      const files = fs
+        .readdirSync(this.tasksDir)
+        .filter((file) => file.endsWith('.md') && !skipNames.has(file))
+        .sort((a, b) => a.localeCompare(b, 'en'));
+      return files.map((file) => ({
+        name: file,
+        path: path.join(this.tasksDir, file),
+        content: fs.readFileSync(path.join(this.tasksDir, file), 'utf8'),
+      }));
     } catch (error) {
       this.logError('getTaskFiles', error);
       return [];
@@ -108,39 +129,75 @@ class TaskMonitorProcessing {
     let lastAsyncResult = null;
 
     try {
-      session = await this.createSession(taskDescription);
+      const resumeOn =
+        !/^(0|false|no)$/i.test(String(process.env.TASK_MONITOR_RESUME ?? '1').trim());
+      let resumed = false;
+
+      if (
+        resumeOn &&
+        this.state.sessionId &&
+        this.state.currentTask === taskFile.name
+      ) {
+        const existing = await this.getSession(this.state.sessionId);
+        if (existing && typeof existing === 'object') {
+          const sid = existing.id || this.state.sessionId;
+          session = { id: sid };
+          resumed = true;
+          this.state.sessionId = sid;
+          this.state.currentTask = taskFile.name;
+          this.state.status = 'processing';
+          this.saveState();
+          console.log(
+            `[task-monitor] Resuming session ${sid} from state file (${path.basename(this.stateFile)}) for ${taskFile.name}`
+          );
+          this.logHardBit({ phase: 'session-resume', detail: 'reused sessionId from state' });
+          await this.logAgentExecution(session.id, 'after-session-resume');
+        } else {
+          this.log(
+            'warn',
+            `State session ${this.state.sessionId} not found on Client API — creating a new session`
+          );
+          this.state.sessionId = null;
+          this.state.currentTask = null;
+          this.saveState();
+        }
+      }
+
       if (!session) {
-        console.error(`Failed to create session for task ${taskFile.name}`);
-        failureReason = 'Session creation failed';
-        return false;
-      }
+        session = await this.createSession(taskDescription);
+        if (!session) {
+          console.error(`Failed to create session for task ${taskFile.name}`);
+          failureReason = 'Session creation failed';
+          return false;
+        }
 
-      this.state.sessionId = session.id;
-      this.state.currentTask = taskFile.name;
-      this.state.status = 'processing';
-      this.saveState();
-      this.logHardBit({ phase: 'session-start', detail: 'session created with task' });
-      await this.logAgentExecution(session.id, 'after-session-create');
+        this.state.sessionId = session.id;
+        this.state.currentTask = taskFile.name;
+        this.state.status = 'processing';
+        this.saveState();
+        this.logHardBit({ phase: 'session-start', detail: 'session created with task' });
+        await this.logAgentExecution(session.id, 'after-session-create');
 
-      // Session was created with task in context
-      // Server may need explicit routing input; try with task field first
-      nextResult = await this.sendNext(session.id, { task: taskDescription });
-      if (!nextResult || nextResult.error) {
-        // Fallback: send as message in result payload
-        console.log('Initial task send failed, retrying with result.message');
-        nextResult = await this.sendNext(session.id, { result: { message: taskDescription } });
+        // Session was created with task in context
+        // Server may need explicit routing input; try with task field first
+        nextResult = await this.sendNext(session.id, { task: taskDescription });
+        if (!nextResult || nextResult.error) {
+          // Fallback: send as message in result payload
+          console.log('Initial task send failed, retrying with result.message');
+          nextResult = await this.sendNext(session.id, { result: { message: taskDescription } });
+        }
+        if (!nextResult) {
+          console.error(`Failed to send initial next for task ${taskFile.name}`);
+          failureReason = 'Initial next failed';
+          return false;
+        }
+        this.logHardBit({
+          phase: 'initial-next',
+          detail: `sent task input (message/task)`,
+          serverBusy: true
+        });
+        await this.logAgentExecution(session.id, 'after-initial-next');
       }
-      if (!nextResult) {
-        console.error(`Failed to send initial next for task ${taskFile.name}`);
-        failureReason = 'Initial next failed';
-        return false;
-      }
-      this.logHardBit({
-        phase: 'initial-next',
-        detail: `sent task input (message/task)`,
-        serverBusy: true
-      });
-      await this.logAgentExecution(session.id, 'after-initial-next');
 
       let idleGateAttempts = 0;
       let routerStuckExit = false;
@@ -303,10 +360,20 @@ class TaskMonitorProcessing {
     } finally {
       if (!abortDueToServer) {
         this.recordProcessedTask(taskFile.name, success ? 'completed' : 'failed', success ? null : failureReason);
-        this.state.status = 'idle';
       }
-      this.state.sessionId = null;
-      this.state.currentTask = null;
+      if (success) {
+        this.state.status = 'idle';
+        this.state.sessionId = null;
+        this.state.currentTask = null;
+      } else if (!abortDueToServer && session?.id) {
+        this.state.status = 'processing';
+        this.state.sessionId = session.id;
+        this.state.currentTask = taskFile.name;
+      } else if (!abortDueToServer) {
+        this.state.status = 'idle';
+        this.state.sessionId = null;
+        this.state.currentTask = null;
+      }
       this.saveState();
     }
   }
@@ -438,10 +505,8 @@ class TaskMonitorProcessing {
   }
 
   isTaskTimeout(taskMeta) {
-    const now = new Date();
-    const startedAt = new Date(taskMeta.startedAt);
-    const elapsedMinutes = (now - startedAt) / (1000 * 60);
-    return elapsedMinutes > 5; // 5 minute timeout
+    const elapsedMs = Date.now() - new Date(taskMeta.startedAt).getTime();
+    return elapsedMs > this.pollTimeoutMs;
   }
 
   async handleTaskCompletion(taskName, taskMeta, asyncResult) {
@@ -496,15 +561,16 @@ class TaskMonitorProcessing {
 
   async handleTaskTimeout(taskName, taskMeta, asyncResult) {
     const stageInfo = await this.describeTaskStage(taskMeta.sessionId, asyncResult);
+    const timeoutMin = Math.max(1, Math.round(this.pollTimeoutMs / 60000));
     console.error(
-      `Task ${taskName} timed out after 5 minutes (stage=${stageInfo.stage} detail=${stageInfo.detail})`
+      `Task ${taskName} timed out after ~${timeoutMin}m (poll cap ${this.pollTimeoutMs}ms) (stage=${stageInfo.stage} detail=${stageInfo.detail})`
     );
 
     await this.createHookDocument(
       taskMeta.sessionId,
       taskName,
       'timeout',
-      'Task timed out after 5 minutes',
+      `Task timed out after monitor poll window (~${timeoutMin}m)`,
       stageInfo
     );
 

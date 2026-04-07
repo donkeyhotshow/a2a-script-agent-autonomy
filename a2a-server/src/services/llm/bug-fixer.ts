@@ -2,7 +2,7 @@ import { llmService } from './llm-service.js';
 import { logger } from '../../utils/logger.js';
 import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
 import { readFile } from 'node:fs/promises';
-import { execSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 
 export interface BugFixPatch {
   file: string;
@@ -58,11 +58,19 @@ function extractFilePath(code: string, error: string): string | null {
  */
 async function getGitDiff(filePath: string): Promise<string> {
   try {
-    const diff = execSync(`git diff --no-color "${filePath}"`, { 
+    const r = spawnSync('git', ['diff', '--no-color', '--', filePath], {
       encoding: 'utf-8',
-      timeout: 5000 
+      timeout: 5000,
+      maxBuffer: 10 * 1024 * 1024,
     });
-    return diff || '';
+    if (r.error) {
+      logger.debug('[BugFixer] git diff unavailable', {
+        filePath,
+        error: r.error.message,
+      });
+      return '';
+    }
+    return typeof r.stdout === 'string' ? r.stdout : '';
   } catch (err: unknown) {
     logger.debug('[BugFixer] git diff unavailable', {
       filePath,

@@ -126,7 +126,7 @@ REM ==========================================
 REM Step 1: Kill existing processes first
 REM ==========================================
 echo.
-echo [Step 1/7] Cleaning environment with kill-all.bat...
+echo [Step 1/8] Cleaning environment with kill-all.bat...
 call kill-all.bat
 if errorlevel 1 (
     echo [WARN] kill-all.bat reported issues, continuing with caution...
@@ -137,7 +137,7 @@ REM ==========================================
 REM Step 2: Verify all ports are free
 REM ==========================================
 echo.
-echo [Step 2/7] Verifying all ports are free...
+echo [Step 2/8] Verifying all ports are free...
 set PORTS_OK=1
 for %%p in (%PROXY_PORT% %SERVER_PORT% %CLIENT_API_PORT% %WEB_PORT%) do (
     call :verify_port_free %%p 10
@@ -157,7 +157,7 @@ REM ==========================================
 REM Step 3: Clear PID file
 REM ==========================================
 echo.
-echo [Step 3/7] Clearing PID file...
+echo [Step 3/8] Clearing PID file...
 if exist %PID_FILE% del %PID_FILE%
 echo. > %PID_FILE%
 echo [OK] %PID_FILE% reset
@@ -166,16 +166,24 @@ REM ==========================================
 REM Step 4: Start ai-integration
 REM ==========================================
 echo.
-echo [Step 4/7] Starting ai-integration on port %PROXY_PORT%...
+echo [Step 4/8] Starting ai-integration on port %PROXY_PORT%...
 call scripts\start-ai-integration.bat
 if errorlevel 1 set EXIT_CODE=1
 :ai_done
 
 REM ==========================================
+REM Step 4b: Promise queue daemon (PROMISE_DAEMON_ONLY default on — drains ?promise=1 on hub)
+REM ==========================================
+echo.
+echo [Step 4b/8] Starting promise-queue-daemon (ai-integration hub)...
+call scripts\start-promise-queue-daemon.bat
+if errorlevel 1 set EXIT_CODE=1
+
+REM ==========================================
 REM Step 5: Start a2a-server
 REM ==========================================
 echo.
-echo [Step 5/7] Starting a2a-server on port %SERVER_PORT%...
+echo [Step 5/8] Starting a2a-server on port %SERVER_PORT%...
 call scripts\start-a2a-server.bat
 if errorlevel 1 set EXIT_CODE=1
 :server_done
@@ -184,7 +192,7 @@ REM ==========================================
 REM Step 6: Start client-api
 REM ==========================================
 echo.
-echo [Step 6/7] Starting client-api on port %CLIENT_API_PORT%...
+echo [Step 6/8] Starting client-api on port %CLIENT_API_PORT%...
 call scripts\start-client-api.bat
 if errorlevel 1 set EXIT_CODE=1
 :client_api_done
@@ -193,7 +201,7 @@ REM ==========================================
 REM Step 7: Start web-ui
 REM ==========================================
 echo.
-echo [Step 7/7] Starting web-ui on port %WEB_PORT%...
+echo [Step 7/8] Starting web-ui on port %WEB_PORT%...
 call scripts\start-web-ui.bat
 if errorlevel 1 set EXIT_CODE=1
 :web_ui_done
@@ -240,6 +248,7 @@ echo === All services started successfully ===
 echo.
 echo Services:
 echo   - ai-integration: http://localhost:%PROXY_PORT% (API proxy)
+echo   - promise-queue-daemon: separate window (drains hub promise queue when PROMISE_DAEMON_ONLY is on)
 echo   - a2a-server:   http://localhost:%SERVER_PORT%
 echo   - client-api:   http://localhost:%CLIENT_API_PORT%
 echo   - web-ui:       http://localhost:%WEB_PORT%

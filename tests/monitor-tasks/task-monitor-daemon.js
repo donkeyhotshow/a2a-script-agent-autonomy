@@ -53,12 +53,18 @@ class TaskMonitorDaemon {
     }
 
     console.log(`Found ${taskFiles.length} task files`);
+    if (this.maxTasksPerRun > 0) {
+      console.log(
+        `TASK_MONITOR_MAX_TASKS_PER_RUN=${this.maxTasksPerRun} — will stop after that many non-skipped task(s) this run.`
+      );
+    }
     let successCount = 0;
     let failureCount = 0;
     let skipCount = 0;
 
     // Process each task that hasn't been completed
     let encounteredServerUnavailable = false;
+    let tasksExecutedThisRun = 0;
     for (const taskFile of taskFiles) {
       // Check if task is already marked as completed
       if (taskFile.content.includes('[X] Completed') ||
@@ -81,6 +87,14 @@ class TaskMonitorDaemon {
         }
         console.log(`Failed to process task: ${taskFile.name}`);
         failureCount++;
+        tasksExecutedThisRun++;
+        this.saveState();
+        if (this.maxTasksPerRun > 0 && tasksExecutedThisRun >= this.maxTasksPerRun) {
+          console.log(
+            `Stopping after ${tasksExecutedThisRun} executed task(s) (TASK_MONITOR_MAX_TASKS_PER_RUN=${this.maxTasksPerRun}). Re-run for the next prompt.`
+          );
+          break;
+        }
         continue;
       }
       if (success) {
@@ -91,9 +105,16 @@ class TaskMonitorDaemon {
         failureCount++;
         // Continue with other tasks even if one fails
       }
+      tasksExecutedThisRun++;
 
       // Save state between tasks
       this.saveState();
+      if (this.maxTasksPerRun > 0 && tasksExecutedThisRun >= this.maxTasksPerRun) {
+        console.log(
+          `Stopping after ${tasksExecutedThisRun} executed task(s) (TASK_MONITOR_MAX_TASKS_PER_RUN=${this.maxTasksPerRun}). Re-run for the next prompt.`
+        );
+        break;
+      }
     }
 
     // Run final health check
@@ -123,13 +144,14 @@ class TaskMonitorDaemon {
 
     if (encounteredServerUnavailable) {
       this.state.status = 'server-unavailable';
-    } else if (taskFiles.length === 0 || successCount === 0 && failureCount === 0) {
+    } else if (taskFiles.length === 0 || (successCount === 0 && failureCount === 0)) {
       this.state.status = 'idle';
+    } else if (failureCount > 0) {
+      this.state.status = this.state.sessionId ? 'processing' : 'error';
     } else {
-      this.state.status = failureCount > 0 ? 'error' : 'completed';
+      this.state.status = 'completed';
     }
-    this.state.currentTask = null;
-    this.state.sessionId = null;
+    // sessionId / currentTask: leave as set by processTask (kept on failure for resume via state file)
     this.saveState();
   }
 

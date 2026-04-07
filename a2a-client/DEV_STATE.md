@@ -8,7 +8,7 @@
 
 This module **owns session persistence and the Client API** (`/api/a2a/*`). Task Monitor and manual operators must go through **5173** (or standalone SDK with the same contract): create session → `/next` → poll **`GET …/async`** until settled; hydrate with **`GET …/sessions/{id}`** when debugging router/forms.
 
-**Triangle vertex A** — [`docs/TRIANGLE-WORKFLOW.md`](../docs/TRIANGLE-WORKFLOW.md). Triage labels often starting here: **Blue** / **Purple** / **Teal** ([`GLOSSARY.md`](../GLOSSARY.md) *Alerts*).
+**Triangle vertex A** — [`docs/TRIANGLE-WORKFLOW.md`](../docs/TRIANGLE-WORKFLOW.md). Triage labels often starting here: **Blue** / **Orange** / **Teal** ([`GLOSSARY.md`](../GLOSSARY.md) *Alerts*).
 
 ---
 

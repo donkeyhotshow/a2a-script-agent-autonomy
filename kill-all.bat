@@ -41,6 +41,11 @@ call :p2 "a2a-server" "3000"
 call :p2 "client-api" "3001"
 call :p2 "web-ui" "5173"
 
+REM Phase 2b: Promise queue daemon (separate window; not on a dedicated port)
+echo.
+echo === Phase 2b: Stop promise-queue-daemon window (best-effort) ===
+taskkill /FI "WINDOWTITLE eq promise-queue-daemon*" /F >nul 2>&1
+
 REM Phase 3: Kill by PID/name
 echo.
 echo === Phase 3: Kill by PID and process name ===

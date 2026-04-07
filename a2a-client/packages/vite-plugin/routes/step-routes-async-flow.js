@@ -6,6 +6,9 @@ import { buildExecuteProjection } from './utils/execute-projection-dto.js';
 import { isPromisePollComplete } from '../storage/promise-status.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.js';
+import { maybeChainAgentTools } from './step-routes-agent-flow.js';
+import { finalizeSession } from './persistence-manager.js';
+import { unwrapA2aResponse } from './utils/builders.js';
 import {
     normalizePromisePollStatus,
     isRecoverableAsyncSnapshot,
@@ -120,7 +123,7 @@ function runViteClientPromisePoll({
     const xhrReq = http.request(reqOptions, (xhrRes) => {
         let data = '';
         xhrRes.on('data', (chunk) => (data += chunk));
-        xhrRes.on('end', () => {
+        xhrRes.on('end', async () => {
             console.log(`[VitePlugin-Poll] Status [${xhrRes.statusCode}] for promise [${promiseId}]`);
             try {
                 if (!data || data.trim() === '') {
@@ -142,7 +145,12 @@ function runViteClientPromisePoll({
                     compactPromiseForStorageIfNeeded(updatedPromise)
                 );
 
+                /** For wire projection after optional client tool chain */
+                let wireServerBody = promiseStatus;
+                let completedPollHandled = false;
+
                 if (isPromisePollComplete(updatedPromise)) {
+                    completedPollHandled = true;
                     const assistantMessage =
                         promiseStatus?.execute?.message ||
                         promiseStatus?.result?.message ||
@@ -172,53 +180,114 @@ function runViteClientPromisePoll({
                         stepHandlers.saveServerResponse(cwd, sessionId, currentStep, stepRecord);
                     }
 
-                    if (promiseStatus.execute) {
-                        session.execute = promiseStatus.execute;
+                    const mergedForChain =
+                        (stepRecord && stepRecord.context) ||
+                        promiseStatus.context ||
+                        session.context ||
+                        {};
+                    let chainOut = {
+                        stepNum: currentStep,
+                        savedContext: mergedForChain,
+                        serverResponse: promiseStatus,
+                    };
+                    try {
+                        chainOut = await maybeChainAgentTools({
+                            cwd,
+                            sessionId,
+                            a2aServerUrl: getA2aServerBaseUrl(),
+                            startStepNum: currentStep,
+                            serverResponse: promiseStatus,
+                            mergedContext: mergedForChain,
+                            messages: session.messages || [],
+                        });
+                    } catch (chainErr) {
+                        console.error('[VitePlugin-Poll] agent tool chain:', chainErr?.message || chainErr);
                     }
-                    session.context = stepRecord?.context || session.context;
-                    session.currentStep = currentStep;
-                    session.promiseId = null;
-                    session.promiseStatus = 'completed';
-                    // LLM turn finished but session may continue (new form / message). Only mark
-                    // lifecycle completed when there is no follow-up execute payload.
+
+                    finalizeSession({
+                        session,
+                        finalStepNum: chainOut.stepNum,
+                        finalSavedContext: chainOut.savedContext,
+                        finalServerResponse: chainOut.serverResponse,
+                    });
+
+                    const wrapped = chainOut.serverResponse;
+                    const nextPid =
+                        (wrapped && wrapped.data && wrapped.data.promiseId) ||
+                        (unwrapA2aResponse(wrapped) && unwrapA2aResponse(wrapped).promiseId) ||
+                        null;
+                    if (nextPid) {
+                        session.promiseId = String(nextPid);
+                        session.promiseStatus = 'pending';
+                        stepHandlers.saveServerPromise(cwd, sessionId, chainOut.stepNum, {
+                            promiseId: String(nextPid),
+                            status: 'pending',
+                        });
+                    } else {
+                        session.promiseId = null;
+                        session.promiseStatus = 'completed';
+                    }
+
                     session.status =
-                        promiseStatus.execute && typeof promiseStatus.execute === 'object'
+                        session.promiseId || (session.execute && typeof session.execute === 'object')
                             ? 'active'
                             : 'completed';
                     session.updatedAt = new Date().toISOString();
-                    
-                    // Save session to persist execute and updated status
+
                     if (projectPath) {
                         saveSession(projectPath, session);
                     }
                     stepHandlers.saveNewSession(cwd, session);
-                    
-                    // Also update session-index.json promise status
+
                     stepHandlers.saveServerPromise(cwd, sessionId, currentStep, {
                         promiseId: promiseId,
                         status: 'completed',
                         completedAt: new Date().toISOString(),
                     });
+
+                    wireServerBody =
+                        unwrapA2aResponse(chainOut.serverResponse) || chainOut.serverResponse || promiseStatus;
                 }
 
                 // Merge disk promise (retryAfter, requestPhase) so recoverable failed + backoff stays asyncPending.
-                const normalizedStatus = normalizePromisePollStatus(updatedPromise);
+                let normalizedStatus;
+                if (completedPollHandled) {
+                    if (session.promiseId) {
+                        normalizedStatus = {
+                            status: 'processing',
+                            completed: false,
+                            failed: false,
+                            asyncPending: true,
+                            requestPhase: null,
+                            retryAfter: null,
+                        };
+                    } else {
+                        normalizedStatus = normalizePromisePollStatus({
+                            ...updatedPromise,
+                            execute: wireServerBody.execute,
+                            result: wireServerBody.result,
+                            status: wireServerBody.status || updatedPromise.status,
+                        });
+                    }
+                } else {
+                    normalizedStatus = normalizePromisePollStatus(updatedPromise);
+                }
                 const includeCtx = requestUrl.searchParams.get('includeContext') === '1';
-                let safeResult = promiseStatus.result || null;
+                let safeResult = wireServerBody.result || null;
                 if (!includeCtx && safeResult && typeof safeResult === 'object') {
                     safeResult = { ...safeResult };
                     delete safeResult.context;
                 }
                 const statusStr = normalizedStatus.status;
                 const errWire = statusStr === 'failed' || statusStr === 'error';
-                safeResult = buildWebAsyncResultField(safeResult, promiseStatus);
+                safeResult = buildWebAsyncResultField(safeResult, wireServerBody);
                 res.setHeader('Content-Type', 'application/json');
                 const asyncPending = normalizedStatus.asyncPending;
-                const pollCtx = promiseStatus.context;
+                const pollCtx = wireServerBody.context;
                 const webExecute =
-                    errWire || !promiseStatus.execute
+                    errWire || !wireServerBody.execute
                         ? null
-                        : buildExecuteProjection(promiseStatus.execute, {
+                        : buildExecuteProjection(wireServerBody.execute, {
                               context:
                                   pollCtx && typeof pollCtx === 'object' && pollCtx !== null
                                       ? pollCtx

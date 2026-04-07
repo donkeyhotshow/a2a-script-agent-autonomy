@@ -13,7 +13,8 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 
-DEFAULT_PROXY_URL = os.environ.get("PROMISE_PROXY_URL") or os.environ.get("PROXY_URL") or "http://localhost:11435"
+# Hub is ai-integration (e.g. :11434), not Local LLM upstream (:11435) — pending/execute live on the proxy.
+DEFAULT_PROXY_URL = os.environ.get("PROMISE_PROXY_URL") or os.environ.get("PROXY_URL") or "http://localhost:11434"
 DEFAULT_POLL_INTERVAL = 4.0
 DEFAULT_TIMEOUT = 15.0
 DEFAULT_RESPONSE_ATTEMPTS = 5

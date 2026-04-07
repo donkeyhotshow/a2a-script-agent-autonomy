@@ -82,7 +82,7 @@ log STEP "STARTUP" "Standardized service startup"
 # Step 1: Kill existing processes
 # ==========================================
 echo ""
-log STEP "Step 1/7" "Cleaning environment with kill-all.sh..."
+log STEP "Step 1/8" "Cleaning environment with kill-all.sh..."
 
 if [[ -f "kill-all.sh" ]]; then
     chmod +x kill-all.sh
@@ -97,7 +97,7 @@ sleep 2
 # Step 2: Verify all ports are free
 # ==========================================
 echo ""
-log STEP "Step 2/7" "Verifying all ports are free..."
+log STEP "Step 2/8" "Verifying all ports are free..."
 
 PORTS_OK=1
 for port in $PROXY_PORT $SERVER_PORT $CLIENT_API_PORT $WEB_PORT; do
@@ -118,7 +118,7 @@ fi
 # Step 3: Clear PID file
 # ==========================================
 echo ""
-log STEP "Step 3/7" "Clearing PID file..."
+log STEP "Step 3/8" "Clearing PID file..."
 
 rm -f "$PID_FILE"
 touch "$PID_FILE"
@@ -128,7 +128,7 @@ log OK "$PID_FILE reset"
 # Step 4: Start ai-integration
 # ==========================================
 echo ""
-log STEP "Step 4/7" "Starting ai-integration on port $PROXY_PORT..."
+log STEP "Step 4/8" "Starting ai-integration on port $PROXY_PORT..."
 
 cd ai-integration
 python scripts/ensure-providers-config.py || { log WARN "ai-integration: ensure-providers-config failed (missing config/providers.example.json?)"; exit 1; }
@@ -147,10 +147,23 @@ else
 fi
 
 # ==========================================
-# Step 6: Start a2a-server
+# Step 4b: Promise queue daemon (hub :11434)
 # ==========================================
 echo ""
-log STEP "Step 5/7" "Starting a2a-server on port $SERVER_PORT..."
+log STEP "Step 4b/8" "Starting promise-queue-daemon..."
+HUB_URL="${PROMISE_PROXY_URL:-http://localhost:$PROXY_PORT}"
+(
+  cd ai-integration && exec python scripts/promise_queue_daemon.py --proxy-url "$HUB_URL"
+) &
+PROMISE_DAEMON_BG_PID=$!
+echo "PROMISE_QUEUE_DAEMON_PID=$PROMISE_DAEMON_BG_PID" >> "$PID_FILE"
+log OK "promise-queue-daemon started (PID: $PROMISE_DAEMON_BG_PID, hub $HUB_URL)"
+
+# ==========================================
+# Step 5: Start a2a-server
+# ==========================================
+echo ""
+log STEP "Step 5/8" "Starting a2a-server on port $SERVER_PORT..."
 
 cd a2a-server
 npm run dev &
@@ -176,7 +189,7 @@ fi
 # Step 7: Start client-api
 # ==========================================
 echo ""
-log STEP "Step 6/7" "Starting client-api on port $CLIENT_API_PORT..."
+log STEP "Step 6/8" "Starting client-api on port $CLIENT_API_PORT..."
 
 cd a2a-client/packages/sdk
 npm run dev &
@@ -197,7 +210,7 @@ fi
 # Step 8: Start web-ui
 # ==========================================
 echo ""
-log STEP "Step 7/7" "Starting web-ui on port $WEB_PORT..."
+log STEP "Step 7/8" "Starting web-ui on port $WEB_PORT..."
 
 cd a2a-client
 npm run dev &
@@ -223,6 +236,7 @@ log STEP "SUMMARY" "All services started successfully"
 echo ""
 echo "Services:"
 echo "  - ai-integration: http://localhost:$PROXY_PORT (API proxy)"
+echo "  - promise-queue-daemon: background PID in $PID_FILE (drains hub promise queue)"
 echo "  - a2a-server:   http://localhost:$SERVER_PORT"
 echo "  - client-api:   http://localhost:$CLIENT_API_PORT"
 echo "  - web-ui:       http://localhost:$WEB_PORT"

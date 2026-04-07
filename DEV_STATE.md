@@ -12,8 +12,10 @@
 |------|-----------|
 | Live stack (Windows) | Repo root **`start-all.bat`** — [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md) |
 | Manual same path as UI | [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md) — `POST /api/a2a/sessions` with **`mode: "agent"`**, then `/next` + `GET …/async` |
-| Task Monitor automation | [`monitor-and-process-tasks.js`](monitor-and-process-tasks.js) · state: **`task-monitor-state.json`** · quick ref: [`prompts-to-agent-mode/task-monitor-quick-start.md`](prompts-to-agent-mode/task-monitor-quick-start.md) |
+| Task Monitor automation | [`monitor-and-process-tasks.js`](monitor-and-process-tasks.js) · **`task-monitor-state.json`** · operator: [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md) · prompt stub: [`prompts-to-agent-mode/task-monitor-quick-start.md`](prompts-to-agent-mode/task-monitor-quick-start.md) |
 | Router two beats | [`AGENTS.md`](AGENTS.md) *Router dialog* |
+
+**Default team habit:** treat **agent-mode dialog** as the main ongoing activity — web UI or the same Client API flow (`mode: "agent"`, `/next`, poll `/async`, correct `message` vs `choice`). **[`npm run monitor:once`](MONITOR-QUICK-START.md)** (one prompt per run by default) is the batched automation for that same path; IDE work closes the loop on what sessions expose.
 
 ---
 
@@ -23,7 +25,7 @@
 
 | Vertex | Layer | Typical triage alert (see [`GLOSSARY.md`](GLOSSARY.md) *Alerts*) | Note |
 |--------|--------|------------------------------------------------------------------|------|
-| **A** | Client API + `a2a-client/storage/sessions/` | **Blue** (router / `message` vs `choice`, step storage), **Purple** (async / promise polling), **Teal** (Client ↔ server DTO) | Not the same as **Red Room** (client tool phase after server decision) |
+| **A** | Client API + `a2a-client/storage/sessions/` | **Blue** (router / `message` vs `choice`, step storage), **Orange** (async / promise polling), **Teal** (Client ↔ server DTO) | Not the same as **Red Room** (client tool phase after server decision) |
 | **B** | `a2a-server` (`/api/v1/invoke`, transforms) | **Gray alert** = *assume server bug first* | **Gray Room** = server LLM chain (runtime); different from Gray **alert** |
 | **C** | `ai-integration` hub (`11434`) + upstream (`11435` if used) | **Black alert (proxy)** | Hub health = gate **C1** |
 
@@ -35,7 +37,7 @@
 
 ## Iterativity — conditions for full project normalization
 
-**Normalization** here means: one **contractual** story across **A / B / C** (Client API ↔ server ↔ hub), **async-only** transport, **action-key** shapes, and **canonical docs** that match production paths — without duplicate sources of truth ([`GLOSSARY.md`](GLOSSARY.md) *Orange* / *Brown* / *Amber* alerts).
+**Normalization** here means: one **contractual** story across **A / B / C** (Client API ↔ server ↔ hub), **async-only** transport, **action-key** shapes, and **canonical docs** that match production paths — without duplicate sources of truth ([`GLOSSARY.md`](GLOSSARY.md) *Purple* / *Brown* / *Amber* alerts).
 
 **Each iteration must:**
 
@@ -61,8 +63,10 @@ If any probe fails: start with **`start-all.bat`**, then re-run the curls in *He
 
 ## Task Monitor signal
 
-- **State file:** `task-monitor-state.json` — `currentTask`, `sessionId`, `status`, `processedTasks[]`.
-- **Recent observation:** earlier runs showed **~301s timeouts** when the monitor hit **60 × 5s** poll attempts (same order as `TASK_MONITOR_POLL_TIMEOUT_MS` default was 300s). Defaults are now **120 attempts / 600000ms** (~10m); override via env if needed. Still inspect `GET /api/a2a/sessions/{id}` + `/async` when status stays `pending`/`processing` ([`AGENTS.md`](AGENTS.md) *Stack / promise pending*).
+- **Operator + narrative index:** [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md) · [`COMPLETION-REPORT.md`](COMPLETION-REPORT.md).
+- **State file:** `task-monitor-state.json` — `currentTask`, `sessionId`, `status`, `processedTasks[]`. **Regression tests:** `npm run test:monitor` (repo root).
+- **Timeouts:** defaults **120 × 5s** attempts + **600000ms** wall cap (~10m); `monitorActiveTasks` timeout aligned with `pollTimeoutMs`. Vitest: `npx vitest run tests/infrastructure/monitor-and-process-tasks.test.js` (reads `tests/monitor-tasks/*.js` + entry). Override via `TASK_MONITOR_*` env. Still inspect `GET /api/a2a/sessions/{id}` + `/async` when stuck ([`AGENTS.md`](AGENTS.md) *Stack / promise pending*).
+- **Promise queue:** with **`PROMISE_DAEMON_ONLY`** (hub default), LLM `?promise=1` tickets must be drained — **`start-all.bat`** now starts the **promise-queue-daemon** window; manual: `scripts/start-promise-queue-daemon.bat` or `cd ai-integration && python scripts/promise_queue_daemon.py` (hub **`http://localhost:11434`**). **`hub_promise_empty`** / stuck `pending` usually means the daemon was not hitting the hub.
 
 **Authoritative human queue (if used):** [`work/STATE.md`](work/STATE.md) — table *Очередь задач*.
 
@@ -75,6 +79,8 @@ If any probe fails: start with **`start-all.bat`**, then re-run the curls in *He
 | Client + sessions | [a2a-client/DEV_STATE.md](a2a-client/DEV_STATE.md) |
 | Invoke + processors | [a2a-server/DEV_STATE.md](a2a-server/DEV_STATE.md) |
 | AI hub + promises | [ai-integration/DEV_STATE.md](ai-integration/DEV_STATE.md) |
+
+**Security (as-of 2026-04-07):** Harmful-pattern pass logged in [`docs/PURPLE-ALERT-HARMFUL-HUNT.md`](docs/PURPLE-ALERT-HARMFUL-HUNT.md) (*Last run log*). **Fix applied:** `a2a-server` `bug-fixer` `getGitDiff` uses `spawnSync('git', […])` instead of shell-interpolated `execSync`. **Magenta:** root `npm audit --omit=dev` clean; `a2a-server` / `a2a-client` still have findings — [`tasks/pending/magenta-npm-audit-2026-04.md`](tasks/pending/magenta-npm-audit-2026-04.md).
 
 ---
 
@@ -110,8 +116,16 @@ Then `start-all.bat` and retry.
 
 ---
 
+## Next (ordered)
+
+1. **Broader offline:** `npm run test:direct-tests` (Vitest under `tests/direct-tests/`) · `npm run test:gang` (Papa–Mama orchestrator) if you change session/proxy contracts.
+2. **Sims:** `npm run sim:lint -- --all` · `npm run sim:validate -- --all` (from root; runs via `a2a-server`).
+3. **Live stack / north star:** `start-all.bat` → `npm run monitor:once` (or one manual Client API session per [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md)); set **`TASK_MONITOR_SKIP_PROMISE_GATE=1`** when hub reports `promise_daemon_only` and the queue is drained.
+4. **Test-architecture debt (fixtures / gray paths):** [`tasks/pending/test-architecture-proposals.md`](tasks/pending/test-architecture-proposals.md).
+
 ## Secondary / backlog (not blocking the north star)
 
+- Offline gate (repo root): **`npm run test:before-start`** — indirect + a2a-server Vitest (PowerShell driver) + **`test:monitor`** (verified green **2026-04-07** after import/test alignment fixes).
 - Roadmap: [`tasks/system-improvement-priorities.md`](tasks/system-improvement-priorities.md)
 - Schema debug entry: [`tests/direct-tests/README.md`](tests/direct-tests/README.md)
 - Gray room offline check: `npm run verify:gray-room -- <snapshot.json>`

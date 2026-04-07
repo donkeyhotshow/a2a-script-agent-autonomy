@@ -60,13 +60,18 @@ describe('fetchAiHubChatJson', () => {
         vi.stubGlobal(
             'fetch',
             vi.fn(async (url: string) => {
-                if (String(url).includes('/api/chat?promise=1')) {
+                const u = String(url);
+                if (u.includes('/api/chat?promise=1')) {
                     return new Response(JSON.stringify({promiseId: 'p-async'}), {status: 202});
                 }
-                if (String(url).includes('/promises/status')) {
-                    return new Response(JSON.stringify({ready: [{promiseId: 'p-async'}]}), {status: 200});
+                // pollReadyThenFetch uses GET /promise/:id until status done (not /promises/status)
+                if (u.includes('/promise/p-async') && !u.includes('/body_raw') && !u.includes('/response')) {
+                    return new Response(JSON.stringify({status: 'done'}), {
+                        status: 200,
+                        headers: {'Content-Type': 'application/json'},
+                    });
                 }
-                if (String(url).includes('/promise/p-async/body_raw')) {
+                if (u.includes('/promise/p-async/body_raw')) {
                     return new Response(JSON.stringify(payload), {status: 200, headers: {'Content-Type': 'application/json'}});
                 }
                 return new Response('notfound', {status: 404});

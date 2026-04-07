@@ -99,7 +99,7 @@ Implementation (shared Vite + SDK): [`a2a-client/shared/a2a-invoke-builders.mjs`
 
 Use this as a **literal** loop for curl or scripts so a low-context prompt does not become a single-shot HTTP trace.
 
-**Purple alert (default for this doc):** A2A **`POST /api/v1/invoke` is async-only** (`promiseId` + poll); Client API drivers always **`/next` + poll `GET …/async`**. Full wording: [`docs/AGENT-DIALOG-API-STATE.md`](AGENT-DIALOG-API-STATE.md) § *Purple alert*.
+**Orange alert (default for this doc):** A2A **`POST /api/v1/invoke` is async-only** (`promiseId` + poll); Client API drivers always **`/next` + poll `GET …/async`**. Full wording: [`docs/AGENT-DIALOG-API-STATE.md`](AGENT-DIALOG-API-STATE.md) § *Orange alert*.
 
 1. **`POST /api/a2a/sessions`** — optional: `task`, `mode` (`"agent"` / `"dialog"` / `"task-decomposition"`), or **`execution`**: `{ "action": "…", "step": "…" }`, plus `projectId` / `projectRoot`, `llmModel` (see **`GET http://localhost:11434/api/tags`**), `title`, `id` (full table above; root **`AGENTS.md`**).
 2. **`GET /api/a2a/sessions/{id}`** — if `execute.form.choices` → next body uses **`result.choice`** (or `{ "task": "<id>" }`); else **`result.message`** / `{ "task": "<free text>" }`.

@@ -142,7 +142,7 @@
         "gemma2-9b-it"
       ],
       "fallback_models": {
-        "qwen3:8b": "qwen3-8b-8192",
+        "qwen3:8b": "llama-3.1-8b-instant",
         "mistral": "mixtral-8x7b-32768"
       },
       "timeout": 0,
@@ -208,14 +208,14 @@
   "default_provider": "z_ai",
   "fallback_chain": [
     "z_ai",
-    "compat_llm",
     "groq",
     "openrouter",
     "qwen_dashscope",
     "mistral_codestral",
     "together",
     "cerebras",
-    "cohere"
+    "cohere",
+    "compat_llm"
   ],
   "enable_fallback": true,
   "provider_timeout": 0

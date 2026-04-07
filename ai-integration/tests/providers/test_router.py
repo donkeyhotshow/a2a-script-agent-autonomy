@@ -172,6 +172,15 @@ class TestProviderRouter:
         router._initialized = False
         assert router._resolve_model("legacy-x") == "model-b"
 
+    def test_resolve_model_keeps_shared_hub_alias_for_fallback_chain(self, router):
+        """If 2+ enabled providers map the same hub name, do not remap to default target."""
+        router.config.providers["mock1"].fallback_models = {"hub-alias": "model-a"}
+        router.config.providers["mock2"].fallback_models = {"hub-alias": "model-b"}
+        router.config.default_provider = "mock1"
+        router._providers = {}
+        router._initialized = False
+        assert router._resolve_model("hub-alias") == "hub-alias"
+
     def test_get_provider_chain(self, router):
         """Test getting provider chain"""
         router._providers = {

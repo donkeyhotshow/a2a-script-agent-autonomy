@@ -6,7 +6,7 @@
 
 ## Role for the north star
 
-**Hub on 11434** sits between a2a-server and providers (e.g. Local LLM upstream **11435**). LLM traffic uses the **promise pipeline** (async); clients must poll — if the hub or daemon is misconfigured, Task Monitor will see **`pending` / `processing`** until timeout.
+**Hub on 11434** sits between a2a-server and providers (e.g. Local LLM upstream **11435**). LLM traffic uses the **promise pipeline** (async); clients must poll — if the hub or **promise-queue daemon** is misconfigured, Task Monitor will see **`pending` / `processing`** until timeout. Repo root **`start-all.bat`** starts **`scripts/start-promise-queue-daemon.bat`**, which runs **`python scripts/promise_queue_daemon.py`** against the hub (**default base URL `http://localhost:11434`**, not :11435).
 
 **Triangle vertex C** — [`docs/TRIANGLE-WORKFLOW.md`](../docs/TRIANGLE-WORKFLOW.md). **Black alert (proxy)** ([`GLOSSARY.md`](../GLOSSARY.md) *Alerts*).
 

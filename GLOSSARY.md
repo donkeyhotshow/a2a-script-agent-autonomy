@@ -18,7 +18,7 @@
 | **Red Room** | Красная комната: фаза выполнения инструментов клиентом (read-file, list-directory, file-exists и т.д.) после принятия решения в Gray Room |
 | **Self-Upgrade** | Самоапгрейд: процесс самоулучшения системы через API-диалог (не прямое исполнение). Ключевое различие: агент не выполняет задачи самостоятельно, а направляет их через Client API (`/api/a2a/sessions`, `/next`, `/async`), управляя системой извне. Это создает контролируемый цикл: (1) агент анализирует кодовую базу, (2) формулирует задачи, (3) отправляет через API, (4) получает ответы, (5) корректирует. В dev-режиме проект целится сам на себя (a2a-client → a2a-script-agent), но архитектура позволяет работать с любым проектом. Граница: API-вызовы разделяют "анализирующий" и "исполняющий" контексты. **Порядок (политика):** сначала основные спеки/задачи в `tasks/` и при необходимости `tasks/ide-prompts/`; **перед большим объёмом сессионной работы** — **Session archival**; очередь сессионных промптов `prompts-to-agent-mode/` и Task Monitor — **после**, когда стек и контракты готовы к прогону (см. `tasks/README.md` → *Self-Upgrade order*; автоматической блокировки в коде нет) |
 | **Router** | Keyword-based routing (dialog/agent/task-decomposition) |
-| **Sync golden (`simulations/sync/`)** | Offline fixture layout: invoke-shaped step bundles per [`simulations/SCHEMA.md`](simulations/SCHEMA.md). **Not** HTTP “sync invoke”: A2A **`POST /api/v1/invoke` is async-only** (`promiseId` + poll) — see **Purple alert**. |
+| **Sync golden (`simulations/sync/`)** | Offline fixture layout: invoke-shaped step bundles per [`simulations/SCHEMA.md`](simulations/SCHEMA.md). **Not** HTTP “sync invoke”: A2A **`POST /api/v1/invoke` is async-only** (`promiseId` + poll) — see **Orange alert**. |
 | **Task Monitor** | `monitor-and-process-tasks.js` — автоматизированный скрипт обработки очереди задач. Должен отправлять запросы в сессии через Client API (`POST /api/a2a/sessions/{id}/next` + `GET /api/a2a/sessions/{id}/async`) для ведения многошагового диалога в режиме агента. Требует правильной обработки router-диалога (Beat A/B): определение `form.choices` и отправка либо `message`, либо `choice` в зависимости от ответа сервера. Задачи выполняются итеративно через цикл next+poll до завершения |
 | **MONITOR-QUICK-START** | Root operator doc `MONITOR-QUICK-START.md`: run commands, `TASK_MONITOR_*` env, session-dialog contract (same as web UI), state/hooks, failures → `tests/direct-tests` via ErrorClassifier |
 | **Web DTO** | Client-sanitized execute (form only, not raw tool calls) |
@@ -61,11 +61,11 @@ Operational **alert levels**: scope tags for triage (**which subsystem you touch
 
 ### Purple alert — **Фиолетовая тревога**
 
-**Async-first** — remove or narrow **sync** paths; prefer async (`promiseId`, poll `/result` or Client API `/async`) end-to-end. **Hard rule:** never **switch** the stack to synchronous invoke or **disable** the ai-integration promise queue (`PROMISE_DAEMON_ONLY`) as an operator shortcut — use the daemon or manual `POST /promise/<id>/execute` ([`AGENTS.md`](AGENTS.md) → *Async-only transport*).
+**Консолидация дублей** — merge duplicate code, docs, or routes into **one** canonical path. **Temporary** in-repo harmful-pattern hunt (security grep pass — not the same as dedupe): [`docs/PURPLE-ALERT-HARMFUL-HUNT.md`](docs/PURPLE-ALERT-HARMFUL-HUNT.md).
 
 ### Orange alert — **Оранжевая тревога**
 
-**Deduplication** — consolidate duplicate code, docs, or routes; one canonical path.
+**Async-first** — remove or narrow **sync** paths; prefer async (`promiseId`, poll `/result` or Client API `/async`) end-to-end. **Hard rule:** never **switch** the stack to synchronous invoke or **disable** the ai-integration promise queue (`PROMISE_DAEMON_ONLY`) as an operator shortcut — use the daemon or manual `POST /promise/<id>/execute` ([`AGENTS.md`](AGENTS.md) → *Async-only transport*).
 
 ### Green alert — **Зелёная тревога**
 
@@ -81,7 +81,7 @@ Operational **alert levels**: scope tags for triage (**which subsystem you touch
 
 ### Magenta alert — **Пурпурная тревога**
 
-**Dependencies** — npm/pip/OS packages: **outdated**, **duplicate**, **vulnerable**, **licensing**, **lockfile drift**. **Not** **Orange alert** (dedupe your *own* code/docs) — **Magenta** is **third-party** graph and supply chain. **Not** **Purple alert** (фиолетовая) — async transport; **Magenta** is dependency hygiene.
+**Dependencies** — npm/pip/OS packages: **outdated**, **duplicate**, **vulnerable**, **licensing**, **lockfile drift**. **Not** **Purple alert** (dedupe your *own* code/docs) — **Magenta** is **third-party** graph and supply chain. **Not** **Orange alert** — async transport; **Magenta** is dependency hygiene.
 
 ### Amber alert — **Янтарная тревога**
 

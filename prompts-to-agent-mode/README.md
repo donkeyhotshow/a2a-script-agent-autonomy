@@ -6,7 +6,7 @@
 
 **If you run the live stack:** read **[STACK-RUN.md](STACK-RUN.md)** first.
 
-**Task Monitor:** **[`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** — `npm run monitor` / `npm run monitor:once`, `TASK_MONITOR_*`, router beats. Code: [`../monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`../tests/monitor-tasks/`](../tests/monitor-tasks/).
+**Task Monitor:** **[`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** — `npm run monitor` / `npm run monitor:once`, `TASK_MONITOR_*`, router beats. Code: [`../monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`../tests/monitor-tasks/`](../tests/monitor-tasks/). Static regression: **`npm run test:monitor`** (also runs at end of **`npm run test:before-start`**).
 
 **Linear pipeline:** **[ONE-PIPELINE.md](ONE-PIPELINE.md)**. **Master prompt (daemon + hooks):** **[`../START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md)**.
 
@@ -90,7 +90,7 @@ One file per task. Each file lists **sources** and a **copy-paste prompt**. Chec
 
 | Prompt file | Source |
 |-------------|--------|
-| [task-monitor-quick-start.md](task-monitor-quick-start.md) | In sync with [`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md); [`monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`tests/monitor-tasks/`](../tests/monitor-tasks/), [`hooks/`](../hooks/) |
+| [task-monitor-quick-start.md](task-monitor-quick-start.md) | [`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md); [`../monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`../tests/monitor-tasks/`](../tests/monitor-tasks/), [`../tests/infrastructure/monitor-and-process-tasks.test.js`](../tests/infrastructure/monitor-and-process-tasks.test.js); **`npm run test:monitor`** |
 
 ## IDE-only prompts (docs / methodology / sims)
 

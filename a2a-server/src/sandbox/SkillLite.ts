@@ -1,6 +1,12 @@
 import { logger } from '../utils/logger.js';
 import { execSync } from 'node:child_process';
 
+/**
+ * Stub “L3” sandbox — **not** isolated. `execSync(command)` is shell-equivalent RCE if `command` is ever
+ * influenced by LLM, HTTP, or user input. Before wiring callers: real sandbox (bwrap/seatbelt) + fixed
+ * allowlist, or `spawnSync` with `argv` only (no shell string). See purple hunt log in
+ * `docs/PURPLE-ALERT-HARMFUL-HUNT.md`.
+ */
 export class SkillLiteSandbox {
   /**
    * Execute with OS-native hard isolation (L3)
@@ -13,7 +19,7 @@ export class SkillLiteSandbox {
     // Example: bwrap --ro-bind /usr /usr --dir /tmp --unshare-all ...
     
     try {
-      // Mocked restricted execution
+      // Mocked restricted execution (insecure if command is untrusted — see file-level note)
       const output = execSync(command, { cwd: dir, timeout: 5000 }).toString();
       return output;
     } catch (err: unknown) {

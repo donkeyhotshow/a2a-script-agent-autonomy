@@ -4,7 +4,13 @@ class TaskMonitorValidation {
   validateActionKeyShape(obj, type) {
     if (!obj || typeof obj !== 'object') return false;
     const keys = Object.keys(obj);
-    return keys.length === 1 && (type === 'execute' ? keys[0] !== 'result' : keys[0] !== 'execute');
+    if (type === 'execute') {
+      const aux = new Set(['message', 'completed']);
+      const actionKeys = keys.filter((k) => !aux.has(k));
+      if (actionKeys.length !== 1) return false;
+      return actionKeys[0] !== 'result';
+    }
+    return keys.length === 1 && keys[0] !== 'execute';
   }
 
   validateSessionResponse(response) {

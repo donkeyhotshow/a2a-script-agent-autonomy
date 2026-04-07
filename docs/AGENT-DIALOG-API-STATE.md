@@ -15,7 +15,7 @@
 
 ---
 
-## Purple alert — async-only stack (фиолетовая тревога)
+## Orange alert — async-only stack (оранжевая тревога)
 
 **Product rule:** **`POST /api/v1/invoke` has no sync path** — only **`promiseId`** on the POST ack; terminal **`execute` / `context`** via **`GET …/requests/:id/result`**. The Client API mirrors this with **`/next` + `GET …/async`**.
 
@@ -88,7 +88,7 @@ Content-Type: application/json
 |------|------|
 | 2026-02-09 | Doc/code follow-up to **async-only** invoke: [`SESSION-SYSTEMS-OVERVIEW.md`](SESSION-SYSTEMS-OVERVIEW.md) diagram + E2E pointers; agent RAG/tool chain comments (stop on **`promiseId`**); e2e-dialog JSDoc. |
 | 2026-04-06 | **Removed `sync`** from protocol: A2A **`POST /invoke`** async-only; Client **`/next`** no longer sends `sync`; schema + tests + proba updated. |
-| 2026-04-06 | **Purple alert:** documented — **`sync` forbidden** for Client API agent/dialog drivers; async + `/async` poll only ([`OPERATOR-CURL.md`](OPERATOR-CURL.md) cross-link). |
+| 2026-04-06 | **Orange alert:** documented — **`sync` forbidden** for Client API agent/dialog drivers; async + `/async` poll only ([`OPERATOR-CURL.md`](OPERATOR-CURL.md) cross-link). |
 | 2026-04-06 | Human-review checklist **implemented** (client/server/ai-integration); **Open risks** table refreshed; `/next` `execute` projection + numeric `task` + async stage behavior documented in [`HUMAN-REVIEW-FINDINGS.md`](HUMAN-REVIEW-FINDINGS.md). |
 | 2026-04-06 | **Server fix:** dialog gray-room results with missing `execute` get fallback form + history assistant; gray-room `interruptWhenSatisfied === false` now calls **`resolve()`** (was `return` only). |
 | 2026-04-06 | Live Client API drive: create → `/next` (task) → `/next` (`dialog` or `agent`); router present; **`dialog`** choice ~87s server time; persisted step lacked **`execute`** + no assistant in **messages** (see Stack observations). Hub: GLM completions observed with **empty `message.content`** and **reasoning_tokens**; proxy **503 "Event loop is closed"** / hung health until PID on **11434** cleared and `scripts/start-ai-integration.bat` rerun. |

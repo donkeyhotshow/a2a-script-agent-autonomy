@@ -4,7 +4,7 @@
  * Supports: rag-search, read-file, list-directory, grep-search, file-exists, write-file,
  * execute-command, run-script, edit-patch. (execute.script is not auto-chained — use SDK / UI.)
  *
- * Architecture (T021): this is a **loop** of single-key `execute` responses — not a multi-key `execute`.
+ * Architecture (T021): each iteration is one **tool** action key (optionally with `execute.message` / `execute.completed` alongside — same object).
  * Each iteration: server returns one tool key → client runs tool → client sends `result` → next `/invoke`.
  * See `a2a-server/docs/EXTENDING-LLM-ACTIONS.md` for protocol limits (one action key per `response.json`).
  */

@@ -93,12 +93,15 @@ describe('Error Middleware', () => {
             errorHandler(error, mockReq as Request, mockRes as Response, mockNext);
 
             expect(mockRes.status).toHaveBeenCalledWith(500);
+            const expectedMessage = exposeErrorDetailsToClient()
+                ? 'Unknown error'
+                : 'An unexpected error occurred';
             expect(mockRes.json).toHaveBeenCalledWith(
                 expect.objectContaining({
                     success: false,
                     error: expect.objectContaining({
                         code: 'INTERNAL_ERROR',
-                        message: 'Unknown error',
+                        message: expectedMessage,
                     }),
                 })
             );
@@ -190,9 +193,14 @@ describe('Error Middleware', () => {
             vi.unstubAllEnvs();
         });
 
-        it('should be true when NODE_ENV is not production', () => {
-            vi.stubEnv('NODE_ENV', 'test');
+        it('should be true when NODE_ENV is development', () => {
+            vi.stubEnv('NODE_ENV', 'development');
             expect(exposeErrorDetailsToClient()).toBe(true);
+        });
+
+        it('should be false for NODE_ENV=test (only development exposes by default)', () => {
+            vi.stubEnv('NODE_ENV', 'test');
+            expect(exposeErrorDetailsToClient()).toBe(false);
         });
 
         it('should be false in production unless A2A_ERROR_EXPOSE_DETAILS is set', () => {

@@ -36,6 +36,12 @@ UNBLOCKED.
 
 ---
 
+## Security hygiene
+
+**2026-04-07:** [`bug-fixer.ts`](src/services/llm/bug-fixer.ts) `getGitDiff` — `spawnSync('git', ['diff','--no-color','--', filePath])` instead of shell-interpolated `execSync`. Purple hunt log: [`docs/PURPLE-ALERT-HARMFUL-HUNT.md`](../docs/PURPLE-ALERT-HARMFUL-HUNT.md).
+
+---
+
 ## Verify
 
 ```bash
@@ -43,5 +49,7 @@ cd a2a-server && npm run test
 cd a2a-server && npm run sim:lint -- --all --json
 cd a2a-server && npm run sim:validate -- --all --json
 ```
+
+Repo-root **`npm run test:before-start`** runs indirect (Mama) checks, then **`tests/indirect-tests/run-server-unit-tests.ps1`** (full `a2a-server` Vitest), then **`npm run test:monitor`**.
 
 Docs: [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) · [`simulations/SERVER-CONTRACT.md`](../simulations/SERVER-CONTRACT.md)
