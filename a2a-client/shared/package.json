@@ -21,6 +21,7 @@
     "./session-sort.mjs": "./session-sort.mjs",
     "./projects-document.mjs": "./projects-document.mjs",
     "./safe-path.mjs": "./safe-path.mjs",
-    "./project-sessions-dir.mjs": "./project-sessions-dir.mjs"
+    "./project-sessions-dir.mjs": "./project-sessions-dir.mjs",
+    "./api-helpers.js": "./api-helpers.js"
   }
 }

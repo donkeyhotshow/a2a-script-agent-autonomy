@@ -6,6 +6,8 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
 
+import {logger} from '../../../utils/logger.js';
+
 export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 export interface RequestResult {
@@ -90,6 +92,28 @@ export class RequestFileStorage {
             return fromSerializable(parsed);
         } catch (err) {
             if ((err as NodeJS.ErrnoException).code === 'ENOENT') return null;
+            const isJson =
+                err instanceof SyntaxError ||
+                (typeof err === 'object' &&
+                    err !== null &&
+                    (err as Error).name === 'SyntaxError');
+            if (isJson) {
+                const quarantine = path.join(
+                    this.storageDir,
+                    `${promiseId}.corrupt.${Date.now()}.json`,
+                );
+                try {
+                    await fs.rename(file, quarantine);
+                } catch {
+                    // ignore — file may be gone or rename unsupported
+                }
+                logger.warn('Corrupt request JSON quarantined; load returns null', {
+                    promiseId,
+                    quarantine,
+                    message: (err as Error).message,
+                });
+                return null;
+            }
             throw err;
         }
     }

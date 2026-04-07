@@ -104,7 +104,7 @@ Minimal bureaucracy for a **solo developer**, with guardrails against self-decep
 2. **`POST /api/a2a/sessions`** with **`mode: "agent"`** and task text from the file.
 3. **`POST /api/a2a/sessions/{id}/next`** and **`GET /api/a2a/sessions/{id}/async`** in a loop until the step settles.
 4. When the hydrated session shows **`form.choices`**, sends a **choice** (same contract as the UI: `result.choice` or top-level `task` as choice `id`).
-5. Writes **`task-monitor-state.json`** (`TASK_MONITOR_STATE_FILE`): on **failure** keeps **`sessionId`** + **`currentTask`** so the next run **resumes** the same Client API session when the prompt file matches (`TASK_MONITOR_RESUME`, default on). On **success** clears those fields. Failures may also emit **`hooks/`** payloads.
+5. Writes **`task-monitor-state.json`** (`TASK_MONITOR_STATE_FILE`): on **success** clears **`sessionId`** / **`currentTask`**. On **failure** (timeout, abort, etc.) those fields are **cleared** too so the next run does **not** resume a dead session (`TASK_MONITOR_RESUME` only applies to an in-flight state you hand-edited or interrupted mid-poll). Failures may also emit **`hooks/`** payloads.
 
 The monitor is **not** a substitute for understanding the router: if the server asks an unexpected question, inspect **`GET /api/a2a/sessions/{id}`** (`includeContext=1` when debugging) and continue manually or adjust automation — see [`AGENTS.md`](AGENTS.md) *Router dialog* and [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 
@@ -194,7 +194,7 @@ Defined in [`.env.example`](.env.example). Common overrides:
 | `TASK_MONITOR_AI_HUB_URL` | AI Integration proxy base (default `http://localhost:11434`) — used to read `GET …/health` |
 | `TASK_MONITOR_SKIP_PROMISE_GATE` | `1` / `true` — skip the interactive **OK** prompt when `promise_daemon_only` is on (CI / scripts) |
 | `TASK_MONITOR_STATE_FILE` | Path to JSON cursor (`sessionId`, `currentTask`, `processedTasks`, …); default `task-monitor-state.json` |
-| `TASK_MONITOR_RESUME` | `1` (default) — reuse `sessionId` from state when `currentTask` equals the prompt file; `0` / `false` / `no` — always `POST /sessions` |
+| `TASK_MONITOR_RESUME` | `1` (default) — reuse `sessionId` when state still has `currentTask` matching the prompt (e.g. interrupted run); `0` / `false` / `no` — always `POST /sessions`. Failed runs clear state so the next invocation starts fresh. |
 
 `LOCAL_LLM_UPSTREAM_URL` and `AI_HUB_URL` are used for health checks when set.
 

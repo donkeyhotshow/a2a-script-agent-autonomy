@@ -340,7 +340,7 @@ class TaskMonitorProcessing {
       const classification = this.logError('processTask', error, taskFile.name, extraContext);
 
       // If we have a session, run deep inspection for better diagnostics
-      if (session?.id && classification.severity === 'high' || classification.severity === 'critical') {
+      if (session?.id && (classification.severity === 'high' || classification.severity === 'critical')) {
         console.log(`\n🔍 Running deep session inspection for failed task...`);
         const inspection = await this.inspectSessionForErrors(session.id);
         this.printSessionInspection(inspection);
@@ -365,11 +365,8 @@ class TaskMonitorProcessing {
         this.state.status = 'idle';
         this.state.sessionId = null;
         this.state.currentTask = null;
-      } else if (!abortDueToServer && session?.id) {
-        this.state.status = 'processing';
-        this.state.sessionId = session.id;
-        this.state.currentTask = taskFile.name;
       } else if (!abortDueToServer) {
+        // Do not keep sessionId after failure — resume would re-enter terminal/bad execute (e.g. validation loop).
         this.state.status = 'idle';
         this.state.sessionId = null;
         this.state.currentTask = null;

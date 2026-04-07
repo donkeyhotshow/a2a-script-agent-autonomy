@@ -41,4 +41,6 @@ This module **owns session persistence and the Client API** (`/api/a2a/*`). Task
 cd a2a-client && npm test
 ```
 
+After edits to **`packages/embedding/src`**, run **`cd packages/embedding && npx tsc`** so Vitest (which loads **`dist/`**) matches source. **`shared/api-helpers.js`** re-exports the repo-root [`shared/api-helpers.js`](../shared/api-helpers.js) for `packages/sdk` relative imports.
+
 Deep API checklist: [`docs/api-testing-plan.md`](docs/api-testing-plan.md) · [`docs/OPERATOR-CURL.md`](../docs/OPERATOR-CURL.md).

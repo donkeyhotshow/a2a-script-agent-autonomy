@@ -20,7 +20,7 @@ export function loadAdrComplianceState(projectPath) {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
   } catch (err) {
     console.error('[adrComplianceState] Failed to parse:', file, err?.message || err);
-    return null;
+    throw err instanceof Error ? err : new Error(String(err));
   }
 }
 

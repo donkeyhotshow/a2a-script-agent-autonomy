@@ -80,7 +80,7 @@ If any probe fails: start with **`start-all.bat`**, then re-run the curls in *He
 | Invoke + processors | [a2a-server/DEV_STATE.md](a2a-server/DEV_STATE.md) |
 | AI hub + promises | [ai-integration/DEV_STATE.md](ai-integration/DEV_STATE.md) |
 
-**Security (as-of 2026-04-07):** Harmful-pattern pass logged in [`docs/PURPLE-ALERT-HARMFUL-HUNT.md`](docs/PURPLE-ALERT-HARMFUL-HUNT.md) (*Last run log*). **Fix applied:** `a2a-server` `bug-fixer` `getGitDiff` uses `spawnSync('git', […])` instead of shell-interpolated `execSync`. **Magenta:** root `npm audit --omit=dev` clean; `a2a-server` / `a2a-client` still have findings — [`tasks/pending/magenta-npm-audit-2026-04.md`](tasks/pending/magenta-npm-audit-2026-04.md).
+**Security (as-of 2026-04-07):** Harmful-pattern pass logged in [`docs/PURPLE-ALERT-HARMFUL-HUNT.md`](docs/PURPLE-ALERT-HARMFUL-HUNT.md) (*Last run log*). **Fix applied:** `a2a-server` `bug-fixer` `getGitDiff` uses `spawnSync('git', […])` instead of shell-interpolated `execSync`. **Magenta:** production `npm audit --omit=dev` **0** for root, `a2a-server`, `a2a-client` (2026-04-07). Summary: [`tasks/pending/magenta-npm-audit-2026-04.md`](tasks/pending/magenta-npm-audit-2026-04.md).
 
 ---
 

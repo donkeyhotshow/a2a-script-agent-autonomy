@@ -147,7 +147,7 @@ describe('EmbeddingClient', () => {
 
     describe('DEFAULT_MODELS', () => {
         test('should have default models defined', () => {
-            expect(DEFAULT_MODELS.compat_llm).toBe('nomic-embed-text');
+            expect(DEFAULT_MODELS.local_hub).toBe('nomic-embed-text');
             expect(DEFAULT_MODELS.openai).toBe('text-embedding-3-small');
             expect(DEFAULT_MODELS.mock).toBe('nomic-embed-text');
         });

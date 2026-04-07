@@ -22,6 +22,8 @@ Stateless **invoke** server: Client API forwards context; each call may return *
 
 Session storage is **not** here — see [a2a-client/DEV_STATE.md](../a2a-client/DEV_STATE.md).
 
+**Request files (`storage/requests/*.json`):** corrupt / truncated JSON on `load` is **quarantined** to `{id}.corrupt.{ts}.json`, `load` returns `null` (pollers see missing request instead of `JSON.parse` throw). Test: [`tests/unit/request-file-storage.test.ts`](tests/unit/request-file-storage.test.ts).
+
 ---
 
 ## Processors (mental model)
@@ -39,6 +41,8 @@ UNBLOCKED.
 ## Security hygiene
 
 **2026-04-07:** [`bug-fixer.ts`](src/services/llm/bug-fixer.ts) `getGitDiff` — `spawnSync('git', ['diff','--no-color','--', filePath])` instead of shell-interpolated `execSync`. Purple hunt log: [`docs/PURPLE-ALERT-HARMFUL-HUNT.md`](../docs/PURPLE-ALERT-HARMFUL-HUNT.md).
+
+**Magenta:** [`package.json`](package.json) `overrides.tar` → `^7.5.13` so production `npm audit --omit=dev` is clean (transitive `tar` from `bcrypt` / `node-pre-gyp`).
 
 ---
 
