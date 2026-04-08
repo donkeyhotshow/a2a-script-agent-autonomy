@@ -4,6 +4,21 @@
  */
 const API_PREFIX = '/api/a2a/hub';
 
+/** Pathname + search — tolerates absolute req.url (some proxies) and normal relative paths. */
+function requestUrlParts(req) {
+    const full = String(req.url || '');
+    try {
+        if (/^[a-z][a-z0-9+.-]*:\/\//i.test(full)) {
+            const u = new URL(full);
+            return { pathname: u.pathname, search: u.search };
+        }
+        const u = new URL(full, 'http://127.0.0.1');
+        return { pathname: u.pathname, search: u.search };
+    } catch {
+        return { pathname: '', search: '' };
+    }
+}
+
 function getAiHubBaseUrl() {
     const raw = process.env.AI_HUB_URL || 'http://localhost:11434';
     return String(raw).replace(/\/$/, '');
@@ -27,11 +42,7 @@ function bufferRequestBody(req) {
 
 export function createHubPromiseRoutes() {
     return async function hubPromiseMiddleware(req, res, next) {
-        if (!req.url?.startsWith(`${API_PREFIX}/`)) {
-            return next();
-        }
-        const url = new URL(req.url, 'http://localhost');
-        const pathname = url.pathname;
+        const { pathname, search } = requestUrlParts(req);
         if (!pathname.startsWith(`${API_PREFIX}/`)) {
             return next();
         }
@@ -43,7 +54,7 @@ export function createHubPromiseRoutes() {
             return;
         }
         const hub = getAiHubBaseUrl();
-        const target = `${hub}${sub}${url.search}`;
+        const target = `${hub}${sub}${search}`;
 
         const method = (req.method || 'GET').toUpperCase();
         const headers = {};

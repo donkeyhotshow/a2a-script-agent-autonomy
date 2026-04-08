@@ -58,4 +58,28 @@ describe('hubPromiseRoutes', () => {
         expect(String(target)).toContain('/promises/pending');
         expect(res.statusCode).toBe(200);
     });
+
+    it('proxies when req.url is absolute (query preserved)', async () => {
+        const next = vi.fn();
+        const res = {
+            setHeader: vi.fn(),
+            end: vi.fn(),
+            statusCode: 0,
+        };
+        await mw(
+            {
+                method: 'GET',
+                url: 'http://127.0.0.1:5173/api/a2a/hub/promises/errors?detail=1',
+                headers: {},
+            },
+            res,
+            next
+        );
+        expect(next).not.toHaveBeenCalled();
+        expect(fetch).toHaveBeenCalled();
+        const [target] = fetch.mock.calls[0];
+        expect(String(target)).toContain('/promises/errors');
+        expect(String(target)).toContain('detail=1');
+        expect(res.statusCode).toBe(200);
+    });
 });

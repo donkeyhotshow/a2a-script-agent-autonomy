@@ -1,10 +1,16 @@
 import {beforeEach, describe, expect, it, vi} from 'vitest';
 
-const initAiHubChatPromise = vi.fn();
-
-vi.mock('../../src/daemon/llm-hub-poll.js', () => ({
-    initAiHubChatPromise: (...a: unknown[]) => initAiHubChatPromise(...a),
+const {initAiHubChatPromise} = vi.hoisted(() => ({
+    initAiHubChatPromise: vi.fn(),
 }));
+
+vi.mock('../../src/daemon/llm-hub-poll.js', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../src/daemon/llm-hub-poll.js')>();
+    return {
+        ...actual,
+        initAiHubChatPromise,
+    };
+});
 
 import {AgentSwing} from '../../src/services/core/agent-swing.js';
 

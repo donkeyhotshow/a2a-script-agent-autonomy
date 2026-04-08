@@ -74,9 +74,10 @@ export default function vitePluginA2a() {
                 next();
             });
 
+            // Hub proxy before other /api/a2a/* handlers so promise-queue probes always hit pass-through.
+            server.middlewares.use(createHubPromiseRoutes());
             server.middlewares.use(createProjectRoutes({ cwd }));
             server.middlewares.use(createModelsRoutes());
-            server.middlewares.use(createHubPromiseRoutes());
             server.middlewares.use(createSessionRoutes({ cwd }));
             server.middlewares.use(createStepRoutes({ cwd }));
             server.middlewares.use(createKvRoutes({ cwd }));

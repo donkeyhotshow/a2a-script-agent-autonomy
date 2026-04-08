@@ -1,5 +1,6 @@
 import {describe, it, expect} from 'vitest';
-import {clientSafeWorkbench, filterResponse} from '../../src/routes/requests.routes.js';
+import {filterResponse} from '../../src/routes/requests.routes.js';
+import {clientSafeWorkbench} from '../../src/services/core/request/client-visible-context.js';
 
 describe('filterResponse (poll /result)', () => {
     it('preserves workbench, files, scratchpad, scratchpad_ops on context', () => {
@@ -26,7 +27,7 @@ describe('filterResponse (poll /result)', () => {
         expect(ctx.extraNoise).toBeUndefined();
     });
 
-    it('drops grayRoom from workbench.slots in poll context', () => {
+    it('drops server-owned workbench.slots (grayRoom, interruptTrace, thinking, clarify) from poll context', () => {
         const raw = {
             execute: {message: 'ok'},
             context: {
@@ -35,6 +36,9 @@ describe('filterResponse (poll /result)', () => {
                     slots: {
                         grayRoom: {enabled: true, planId: 'prom_x'},
                         interruptTrace: [{kind: 'llm_output'}],
+                        thinking: {x: 1},
+                        clarify: {y: 1},
+                        editPlan: {keep: true},
                     },
                 },
             },
@@ -43,7 +47,10 @@ describe('filterResponse (poll /result)', () => {
         const slots = (out.context as Record<string, unknown>)['workbench'] as Record<string, unknown>;
         const s = slots['slots'] as Record<string, unknown>;
         expect(s['grayRoom']).toBeUndefined();
-        expect(s['interruptTrace']).toEqual([{kind: 'llm_output'}]);
+        expect(s['interruptTrace']).toBeUndefined();
+        expect(s['thinking']).toBeUndefined();
+        expect(s['clarify']).toBeUndefined();
+        expect(s['editPlan']).toEqual({keep: true});
     });
 
     it('clientSafeWorkbench is noop when grayRoom absent', () => {

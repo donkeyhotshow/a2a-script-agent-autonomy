@@ -86,15 +86,31 @@ function isAgentSchemaName(schemaName: string): boolean {
 }
 
 /**
+ * Agent golden request shape (simulations/sync/agent steps 2 / 15): form + message input when execute is missing.
+ */
+function buildAgentFallbackExecute(description: string): Record<string, unknown> {
+    const desc =
+        typeof description === 'string' && description.trim()
+            ? description.trim()
+            : 'Continue with your task or describe the next step.';
+    return {
+        form: {
+            title: 'Agent',
+            description: desc,
+            input: [{name: 'message', type: 'text', label: 'Message', required: true}],
+        },
+    };
+}
+
+/**
  * When the LLM hub fails but the session must stay usable (router follow-up, hub outage),
  * provide the same shapes as agent-request.json / dialog-request.json when transforms did not yield execute.
  */
 function defaultExecuteWhenLlmUnavailable(schemaName: string): Record<string, unknown> | null {
     if (isAgentSchemaName(schemaName)) {
-        return {
-            message:
-                'Agent: model uses context.task and the agent prompt (no input form when the hub is unavailable).',
-        };
+        return buildAgentFallbackExecute(
+            'Model hub is unavailable. You can still type a message; the session uses context.task and the agent prompt.'
+        );
     }
     if (schemaName === 'dialog') {
         return {
@@ -305,10 +321,7 @@ function ensureAgentExecuteWhenMissing(
     }
 
     result.context = baseCtx as RequestContextBlock;
-    result.execute = {
-        message:
-            'Agent: model uses context.task and the agent prompt (no input form in this fallback path).',
-    };
+    result.execute = buildAgentFallbackExecute(text);
 
     logger.warn('[DialogRequestProcessor] Agent gray-room result had no execute; applied fallback form', {
         preview: text.slice(0, 120),

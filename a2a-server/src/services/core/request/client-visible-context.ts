@@ -2,9 +2,9 @@
  * Client-visible context: drop server-internal workbench slots before persistence and poll responses.
  */
 
-import {GRAY_ROOM_SLOT_KEY} from '../../../transform/interrupt-trace-contract.js';
+import {SERVER_OWNED_WORKBENCH_SLOT_KEYS} from '../../../transform/interrupt-trace-contract.js';
 
-/** Remove server-only Gray Room slot (client / storage must not see internal control state). */
+/** Remove server-only workbench slots (gray room, interrupt trace, internal tool slots) — not for client API or disk. */
 export function clientSafeWorkbench(wb: unknown): unknown {
     if (!wb || typeof wb !== 'object' || Array.isArray(wb)) {
         return wb;
@@ -15,11 +15,17 @@ export function clientSafeWorkbench(wb: unknown): unknown {
         return wb;
     }
     const s = slots as Record<string, unknown>;
-    if (!(GRAY_ROOM_SLOT_KEY in s)) {
+    let removed = false;
+    const slotsOut = {...s};
+    for (const key of SERVER_OWNED_WORKBENCH_SLOT_KEYS) {
+        if (key in slotsOut) {
+            delete slotsOut[key];
+            removed = true;
+        }
+    }
+    if (!removed) {
         return wb;
     }
-    const slotsOut = {...s};
-    delete slotsOut[GRAY_ROOM_SLOT_KEY];
     return {...w, slots: slotsOut};
 }
 

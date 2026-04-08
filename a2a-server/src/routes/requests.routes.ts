@@ -12,8 +12,6 @@ import {clientSafeWorkbench} from '../services/core/request/client-visible-conte
 
 const router = Router();
 
-export {clientSafeWorkbench};
-
 /** Context fields preserved on GET /requests/:id/result (align with simulations/SCHEMA.md). */
 const POLL_CONTEXT_KEYS = [
     'session_id',

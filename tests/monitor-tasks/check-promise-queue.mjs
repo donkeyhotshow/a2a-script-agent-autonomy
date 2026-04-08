@@ -35,6 +35,19 @@ import {
   probeToJsonReport,
 } from './promise-queue-probe.mjs';
 
+/** Pipes closed early (e.g. `| head` on Windows) — avoid libuv / broken-pipe noise. */
+function swallowBrokenPipeOnStdio() {
+  for (const stream of [process.stdout, process.stderr]) {
+    if (stream && typeof stream.on === 'function') {
+      stream.on('error', (err) => {
+        const c = err && typeof err === 'object' ? err.code : '';
+        if (c === 'EPIPE' || c === 'ERR_STREAM_WRITE_AFTER_END') return;
+      });
+    }
+  }
+}
+swallowBrokenPipeOnStdio();
+
 const argv = process.argv.slice(2);
 const strict = argv.includes('--strict') || process.env.PROMISES_STRICT === '1';
 const checkErrors = !argv.includes('--no-errors') && process.env.PROMISES_CHECK_ERRORS !== '0';
@@ -85,11 +98,11 @@ try {
         `[strict] ${errorCount} ticket(s) in /promises/errors - retry or delete (see PROXY_API.md)`
       );
     }
-    process.exit(1);
+    setImmediate(() => process.exit(1));
+  } else {
+    setImmediate(() => process.exit(0));
   }
-
-  setImmediate(() => process.exit(0));
 } catch (e) {
   console.error(e.message || e);
-  process.exit(1);
+  setImmediate(() => process.exit(1));
 }

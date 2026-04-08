@@ -7,6 +7,23 @@ import {
     unwrapA2aResponse,
 } from './utils/builders.js';
 
+/**
+ * Appends a user message to session.messages if submitResult contains a message
+ * @param session - The session object
+ * @param submitResult - The submit result object that may contain a message
+ * @param nextStepNum - The step number to associate with the message
+ */
+function appendUserMessageIfExists(session, submitResult, nextStepNum) {
+    if (submitResult?.message) {
+        session.messages = session.messages || [];
+        session.messages.push({
+            role: 'user',
+            content: submitResult.message,
+            step: nextStepNum,
+        });
+    }
+}
+
 export function saveClientResult({ cwd, sessionId, nextStepNum, submitResult }) {
     stepHandlers.saveClientResult(cwd, sessionId, nextStepNum, { result: submitResult });
 }
@@ -52,14 +69,7 @@ export function updateSessionAfterResponse({ session, nextStepNum, submitResult,
     session.currentStep = nextStepNum;
     session.updatedAt = new Date().toISOString();
 
-    if (submitResult?.message) {
-        session.messages = session.messages || [];
-        session.messages.push({
-            role: 'user',
-            content: submitResult.message,
-            step: nextStepNum,
-        });
-    }
+    appendUserMessageIfExists(session, submitResult, nextStepNum);
 
     if (assistantMessage) {
         session.messages = session.messages || [];
@@ -83,14 +93,7 @@ export function updateSessionForPromise({ session, nextStepNum, submitResult, pr
     session.currentStep = nextStepNum;
     session.updatedAt = new Date().toISOString();
 
-    if (submitResult?.message) {
-        session.messages = session.messages || [];
-        session.messages.push({
-            role: 'user',
-            content: submitResult.message,
-            step: nextStepNum,
-        });
-    }
+    appendUserMessageIfExists(session, submitResult, nextStepNum);
 
     session.promiseId = promiseData.promiseId;
     session.context = mergedContext;
