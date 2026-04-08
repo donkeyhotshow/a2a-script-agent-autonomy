@@ -1,8 +1,10 @@
 # Agent-mode prompts (Task Monitor queue)
 
+> **Accompany the session.** Text in these files is **not** a one-shot HTTP body. On the live stack, one task = **one Client API `sessionId`** that you keep advancing until the dialog finishes: **`POST …/next`**, poll **`GET …/async`**, and when **`form.choices`** appear, the next **`/next`** must send the choice **`id`**. If you are not doing that loop yourself, run **`npm run monitor`** / **`monitor:once`** so the Task Monitor owns it. Creating a session and stopping is a common failure mode.
+
 **Scope:** Only `.md` files **in this directory** (no subfolders) are read by **`monitor-and-process-tasks.js`** by default. Each one should be a task the **live stack can drive** (Client API: `POST /api/a2a/sessions` with `mode: "agent"`, then `/next` + `/async`). **Docs, methodology, ADR, sim-authoring, and module-plan prompts** live under **[`../tasks/ide-prompts/`](../tasks/ide-prompts/README.md)** — use them in the IDE **before** or **without** session automation.
 
-**When to run this queue (policy):** Treat **`tasks/*.md`**, **`tasks/pending/`**, and **[`tasks/ide-prompts/`](../tasks/ide-prompts/README.md)** as **primary** work. Start **`npm run monitor`** / full-spectrum session prompts **after** those items are under control (or explicitly deprioritized). The monitor does not gate on that; it is documented operator order — see **[`tasks/README.md`](../tasks/README.md)** (*Self-Upgrade order*). **Before a large monitor pass or full index:** archive valuable **`a2a-client/storage/sessions/*`** trees (same doc, step 2; [`GLOSSARY.md`](../GLOSSARY.md) *Session archival*).
+**When to run this queue (policy):** Treat **`tasks/*.md`**, **`tasks/pending/`**, and **[`tasks/ide-prompts/`](../tasks/ide-prompts/README.md)** as **primary** engineering work in the IDE. **Execution on the live stack for this folder is only normative through the Task Monitor** — **`npm run monitor`** / **`monitor:once`** — so every prompt gets `/next` + `/async`, router handling, and a **`merged`** **`sessionId`** audit trail. Start the monitor **after** IDE queue is under control (or explicitly deprioritized); the binary does not enforce order — see **[`tasks/README.md`](../tasks/README.md)** (*Self-Upgrade order*). **Before a large monitor pass or full index:** archive valuable **`a2a-client/storage/sessions/*`** trees (same doc, step 2; [`GLOSSARY.md`](../GLOSSARY.md) *Session archival*).
 
 **If you run the live stack:** read **[STACK-RUN.md](STACK-RUN.md)** first.
 
@@ -13,6 +15,8 @@
 This folder's name means prompts aligned with **agent mode** in session **context**; it does **not** mean paste into `invoke` on port 3000 alone.
 
 ## Run through the script-agent stack (Client API)
+
+**Default for this queue:** drive **only** through the **Task Monitor** — [`npm run monitor`](../MONITOR-QUICK-START.md) / `monitor:once` — so finished prompts get a durable **`sessionId`** mapping. **Authoritative export:** [`npm run monitor:completed:json`](../MONITOR-QUICK-START.md) → JSON field **`merged`**. Ad-hoc curl / web UI uses the same Client API **shape** but does **not** auto-register in monitor state unless you run those turns via the monitor.
 
 | Wrong default | Correct |
 |---------------|---------|

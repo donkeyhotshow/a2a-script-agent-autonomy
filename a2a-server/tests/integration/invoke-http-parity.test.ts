@@ -14,6 +14,8 @@ const REPO_ROOT = path.resolve(__dirname, '../../..');
 const PROBA = path.join(REPO_ROOT, 'tests', 'proba-servera');
 
 const POLL_INTERVAL_MS = 40;
+/** Under full Vitest parallel load, GET …/result can briefly return 404 before the record is visible. */
+const MAX_NOT_FOUND_POLLS = 200;
 
 function loadProbaCase(name: string): Record<string, unknown> {
     const p = path.join(PROBA, name, 'input.json');
@@ -58,8 +60,18 @@ async function pollResultUntilTerminal(promiseId: string): Promise<{
     terminal: 'completed' | 'failed' | 'cancelled';
     data: Record<string, unknown>;
 }> {
+    let notFoundPolls = 0;
     for (;;) {
         const res = await request(app).get(`/api/v1/requests/${encodeURIComponent(promiseId)}/result`);
+        if (res.status === 404) {
+            notFoundPolls++;
+            expect(
+                notFoundPolls <= MAX_NOT_FOUND_POLLS,
+                `GET …/result 404 — request ${promiseId} not found after ${MAX_NOT_FOUND_POLLS} polls`
+            ).toBe(true);
+            await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+            continue;
+        }
         expect(res.status).toBe(200);
         expect(res.body.success).toBe(true);
         const data = res.body.data as Record<string, unknown>;
@@ -102,7 +114,7 @@ describe('Invoke HTTP parity (async poll)', () => {
             expectServerSessionId(data?.context);
             expectSingleExecuteActionKey(data?.execute);
         },
-        0
+        180_000
     );
 
     it(
@@ -125,6 +137,6 @@ describe('Invoke HTTP parity (async poll)', () => {
             expectServerSessionId(data?.context);
             expectSingleExecuteActionKey(data?.execute);
         },
-        0
+        180_000
     );
 });

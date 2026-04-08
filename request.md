@@ -167,7 +167,7 @@ On turns where you only need tools toward the client, omit `interrupt` and send 
   "context": {
   "execution": {
     "action": "agent",
-    "step": "request"
+    "step": "start"
   },
   "history": [
     {

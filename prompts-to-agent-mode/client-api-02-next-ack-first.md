@@ -11,4 +11,4 @@ Verify `POST /api/a2a/sessions/{id}/next` is ack-first (`accepted`, `step`, `asy
 
 ## Completion
 
-- [ ] Done
+[X] Completed

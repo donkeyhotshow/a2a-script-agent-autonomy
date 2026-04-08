@@ -32,7 +32,9 @@
     "type-check": "vue-tsc --noEmit",
     "cli": "tsx ./cli/index.ts",
     "cleanup:sessions": "node ./scripts/cleanup-sessions.js",
-    "cleanup:sessions:dry-run": "node ./scripts/cleanup-sessions.js --dry-run"
+    "cleanup:sessions:dry-run": "node ./scripts/cleanup-sessions.js --dry-run",
+    "repair:session-steps": "node ./scripts/repair-session-step-artifacts.mjs",
+    "repair:session-steps:dry-run": "node ./scripts/repair-session-step-artifacts.mjs --dry-run"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.0",

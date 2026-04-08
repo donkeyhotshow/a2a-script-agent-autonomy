@@ -226,14 +226,14 @@ def main():
         from werkzeug.serving import WSGIRequestHandler
         from proxy.config import LOCAL_LLM_SERVER_HEADER
         
-        class Local LLM upstreamRequestHandler(WSGIRequestHandler):
+        class LocalLlmUpstreamRequestHandler(WSGIRequestHandler):
             server_version = LOCAL_LLM_SERVER_HEADER
             sys_version = ""
             
             def version_string(self) -> str:
                 return LOCAL_LLM_SERVER_HEADER
         
-        app.run(host='0.0.0.0', port=PROXY_PORT, debug=False, request_handler=Local LLM upstreamRequestHandler)
+        app.run(host='0.0.0.0', port=PROXY_PORT, debug=False, request_handler=LocalLlmUpstreamRequestHandler)
     except Exception as e:
         logger.error("Failed to start server with custom request handler: %s", e, exc_info=True)
         app.run(host='0.0.0.0', port=PROXY_PORT, debug=False)

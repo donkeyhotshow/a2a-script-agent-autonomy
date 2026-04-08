@@ -13,6 +13,8 @@ This folder contains materials for:
 
 These resources are designed to be referenced directly in IDE workflows, not processed by the Task Monitor.
 
+**Contrast:** [`prompts-to-agent-mode/`](../prompts-to-agent-mode/README.md) files are **stack tasks** — each one is a **stateful Client API session** (full **`/next`**/**`/async`** loop, usually via **`npm run monitor`**). This folder is **not** that; no session accompaniment is implied.
+
 ## Contents
 
 Place documentation files here that support:

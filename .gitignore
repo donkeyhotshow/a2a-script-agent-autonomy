@@ -3,6 +3,9 @@ output/
 
 node_modules/
 
+# Vite / Vitest cache under node_modules (e.g. results.json)
+node_modules/.vite/
+
 dist/
 
 # Project-specific log folders

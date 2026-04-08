@@ -68,7 +68,7 @@ class ErrorClassifier {
 
       // Schema/validation errors
       { pattern: /action.key|action-key|invalid.*shape/i, type: 'schema', subtype: 'action-key',
-        hint: 'Action-Key Shape violation. Use { "execute": { "script": {...} } } format. See AGENTS.md#action-key-shape',
+        hint: 'Action-Key Shape violation. Use { "execute": { "script": {...} } } format. See AGENTS.md#3-action-key-shape-mandatory',
         severity: 'critical' },
       { pattern: /validation|schema|invalid.*json/i, type: 'schema', subtype: 'validation',
         hint: 'Schema validation failed. Run: npm run sim:lint -- --all',
@@ -359,7 +359,7 @@ class ErrorClassifier {
           'Check Action-Key Shape: { "execute": { "script": {...} } } format'
         ]);
         if (subtype === 'action-key') {
-          steps.push('  See AGENTS.md#action-key-shape for examples');
+          steps.push('  See AGENTS.md#3-action-key-shape-mandatory for examples');
           steps.push('  Ensure ONE action type per execute/result object');
         }
         break;

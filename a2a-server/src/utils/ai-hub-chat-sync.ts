@@ -1,4 +1,5 @@
 import {resolveAiHubBaseUrl} from './ai-hub-url.js';
+import {logger} from './logger.js';
 
 /** Standard headers for AI Integration hub JSON `POST` bodies. */
 export const AI_HUB_JSON_HEADERS: Record<string, string> = {
@@ -31,6 +32,38 @@ export type AiHubChatResponseJson = {
 export type FetchAiHubChatResult =
     | {ok: true; data: AiHubChatResponseJson}
     | {ok: false; status: number; bodyText: string};
+
+/**
+ * When `PROMISE_DAEMON_ONLY` is on, new hub tickets stay **pending** until something runs
+ * `POST /promise/:id/execute` (daemon or this nudge). Without it, `pollReadyThenFetch` can finish with an
+ * empty body (`hub_promise_empty`) while the ticket was never executed.
+ */
+async function requestHubPromiseExecute(
+    normalizedBase: string,
+    llmPromiseId: string,
+    signal?: AbortSignal
+): Promise<void> {
+    const url = `${normalizedBase}/promise/${encodeURIComponent(llmPromiseId)}/execute`;
+    try {
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {'Accept-Encoding': 'identity'},
+            signal,
+        });
+        if (res.ok || res.status === 409) {
+            return;
+        }
+        logger.debug('[ai-hub-chat-sync] POST /promise/.../execute unexpected status', {
+            llmPromiseId,
+            status: res.status,
+        });
+    } catch (e) {
+        logger.debug('[ai-hub-chat-sync] POST /promise/.../execute failed (poll may still succeed)', {
+            llmPromiseId,
+            error: e instanceof Error ? e.message : String(e),
+        });
+    }
+}
 
 /**
  * Call the hub via the same promise pipeline as dialog (`?promise=1`): init → optional inline cache **200** →
@@ -68,6 +101,7 @@ export async function fetchAiHubChatJson(
     if (initRes.inlineResponseBody !== undefined && initRes.inlineResponseBody !== '') {
         rawText = initRes.inlineResponseBody;
     } else {
+        await requestHubPromiseExecute(base, initRes.llmPromiseId, signal);
         let polled: string | null;
         try {
             polled = await hub.pollReadyThenFetch(base, initRes.llmPromiseId, {

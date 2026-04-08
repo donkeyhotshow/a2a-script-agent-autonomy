@@ -10,6 +10,9 @@
  * Env: A2A_SERVER_URL, CLIENT_API_URL
  * Optional: REQUIRE_ASYNC_PIPELINE=1 — fail if dialog /next does not go async or no in-flight /async seen
  *
+ * Resilience (transient 503 from Vite→A2A proxy): E2E_FETCH_RETRIES (default 6), E2E_FETCH_RETRY_BASE_MS (default 200),
+ * E2E_CASE_COOLDOWN_MS (default 75) between cases, E2E_RED_GRAY_ATTEMPTS (default 6) for redGrayRoom.
+ *
  * Fewer LLM round-trips / sessions (same assertions, merged runners):
  *   E2E_DIRECT_LOW_LLM=1 — enables both merges below
  *   E2E_DIRECT_MERGE_INVOKE=1 — one invoke+poll replaces invokeAsyncEnvelope + invokeHello + invokeSyncShape (3→1 LLM)
@@ -45,6 +48,13 @@ const SERVER_URL = process.env.A2A_SERVER_URL || 'http://localhost:3000';
 const CLIENT_API_URL = process.env.CLIENT_API_URL || 'http://localhost:5173';
 const REQUIRE_ASYNC_PIPELINE = process.env.REQUIRE_ASYNC_PIPELINE === '1';
 
+/** Transient proxy errors to A2A (:3000) — retry with backoff (503 often empty `message`). */
+const E2E_FETCH_RETRIES = Math.max(1, Number(process.env.E2E_FETCH_RETRIES) || 6);
+const E2E_FETCH_RETRY_BASE_MS = Math.max(50, Number(process.env.E2E_FETCH_RETRY_BASE_MS) || 200);
+/** Optional pause between E2E cases to avoid overloading the dev server connection pool. */
+const E2E_CASE_COOLDOWN_MS = Math.max(0, Number(process.env.E2E_CASE_COOLDOWN_MS) || 75);
+const E2E_RED_GRAY_ATTEMPTS = Math.max(1, Number(process.env.E2E_RED_GRAY_ATTEMPTS) || 6);
+
 function parseArgs(argv) {
   const list = argv.includes('--list');
   const onlyArg = argv.find((a) => a.startsWith('--only='));
@@ -58,8 +68,38 @@ async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Retry on transient Client API / proxy failures (502/503/429) and network errors.
+ * @param {string} url
+ * @param {RequestInit} [init]
+ */
+async function fetchWithRetry(url, init = {}) {
+  let lastErr;
+  for (let attempt = 0; attempt < E2E_FETCH_RETRIES; attempt++) {
+    try {
+      const response = await fetch(url, init);
+      if (response.ok) return response;
+      const status = response.status;
+      const retryable = status === 503 || status === 502 || status === 429;
+      if (retryable && attempt < E2E_FETCH_RETRIES - 1) {
+        await sleep(E2E_FETCH_RETRY_BASE_MS * (attempt + 1));
+        continue;
+      }
+      return response;
+    } catch (e) {
+      lastErr = e;
+      if (attempt < E2E_FETCH_RETRIES - 1) {
+        await sleep(E2E_FETCH_RETRY_BASE_MS * (attempt + 1));
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw lastErr ?? new Error('fetchWithRetry: exhausted retries');
+}
+
 async function createSession(body = {}) {
-  const response = await fetch(`${CLIENT_API_URL}/api/a2a/sessions`, {
+  const response = await fetchWithRetry(`${CLIENT_API_URL}/api/a2a/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -77,7 +117,7 @@ async function createSession(body = {}) {
 }
 
 async function sendNext(sessionId, body) {
-  const response = await fetch(
+  const response = await fetchWithRetry(
     `${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/next`,
     {
       method: 'POST',
@@ -98,7 +138,7 @@ async function sendNext(sessionId, body) {
 
 async function getSession(sessionId, opts = {}) {
   const q = opts.includeContext ? '?includeContext=1' : '';
-  const response = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}${q}`);
+  const response = await fetchWithRetry(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}${q}`);
   if (response.status === 403 && opts.includeContext) {
     return null;
   }
@@ -117,7 +157,7 @@ function unwrapPublicSession(body) {
 /** Poll GET …/sessions/:id/async until `asyncPending` is false (same contract as promiseId: no wall-clock cap). */
 async function pollAsyncSettled(sessionId, stepMs = 500) {
   for (;;) {
-    const r = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
+    const r = await fetchWithRetry(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
     if (!r.ok) break;
     const j = await r.json();
     if (!j.asyncPending) return j;
@@ -168,7 +208,7 @@ async function performRedRoomClientExecute(sessionId, executeBlock) {
 }
 
 async function fetchJson(url, init) {
-  const response = await fetch(url, init);
+  const response = await fetchWithRetry(url, init);
   if (!response.ok) {
     const text = await response.text();
     throw new Error(`${url}: ${response.status} ${text}`);
@@ -253,7 +293,7 @@ async function pollServerRequestResult(promiseId, stepMs = 500) {
 // --- cases ---
 
 async function caseClientProjects() {
-  const r = await fetch(`${CLIENT_API_URL}/api/a2a/projects`);
+  const r = await fetchWithRetry(`${CLIENT_API_URL}/api/a2a/projects`);
   assert(r.ok, `Client API projects: ${r.status}`);
 }
 
@@ -430,7 +470,7 @@ async function caseWaitingAsyncPipeline() {
 
   let promiseId = null;
   for (;;) {
-    const r = await fetch(
+    const r = await fetchWithRetry(
       `${CLIENT_API_URL}/api/a2a/sessions/${sessionId}?includeContext=1`
     );
     if (r.ok) {
@@ -447,7 +487,7 @@ async function caseWaitingAsyncPipeline() {
 
   let sawInFlight = false;
   for (;;) {
-    const r = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
+    const r = await fetchWithRetry(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
     assert(r.ok, `pipeline: /async ${r.status}`);
     const j = await r.json();
     if (j.asyncPending === true && j.status !== 'idle') {
@@ -945,10 +985,10 @@ async function caseRedAndGrayRoomCycle() {
   }
 
   const promptText =
-    'Please start a tool execution for a file operation. For example: execute {"read-file":{"path":"README.md"}}.';
+    'You must emit a client tool step. Prefer read-file: use action read-file with path README.md at repo root (relative path README.md).';
 
   let redExecute;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < E2E_RED_GRAY_ATTEMPTS; attempt++) {
     const ack = await sendNext(sessionId, { result: { message: promptText } });
     assert(ack?.accepted === true, 'red-gray room: /next accepted');
 
@@ -964,6 +1004,7 @@ async function caseRedAndGrayRoomCycle() {
       redExecute = executeObj;
       break;
     }
+    await sleep(400);
   }
 
   assert(redExecute, 'red-gray room: no tool execute observed after attempts');
@@ -1357,6 +1398,9 @@ async function main() {
       failed++;
       console.log('FAIL');
       console.error(e.message || e);
+    }
+    if (E2E_CASE_COOLDOWN_MS > 0) {
+      await sleep(E2E_CASE_COOLDOWN_MS);
     }
   }
 

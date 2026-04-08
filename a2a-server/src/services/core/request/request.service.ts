@@ -7,6 +7,7 @@ import * as path from 'path';
 import { randomUUID } from 'crypto';
 import {logger} from '../../../utils/logger.js';
 import {RequestFileStorage} from './request-file-storage.js';
+import {sanitizeRequestResultForStorage} from './client-visible-context.js';
 
 export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
@@ -194,7 +195,9 @@ export class RequestService {
         req.status = status;
         if (status === 'processing') req.startedAt = now;
         if (status === 'completed' || status === 'failed') req.completedAt = now;
-        if (result !== undefined) req.result = result;
+        if (result !== undefined) {
+            req.result = sanitizeRequestResultForStorage(result);
+        }
         if (error !== undefined) req.error = error;
         if ((status === 'completed' || status === 'failed') && result !== undefined) {
             const outCtx = result['context'] as Record<string, unknown> | undefined;

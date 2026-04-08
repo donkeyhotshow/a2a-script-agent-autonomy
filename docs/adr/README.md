@@ -105,7 +105,7 @@ These are **not** single numbered ADRs. Use them as **roadmap, audit, and featur
 
 To **stress the live stack** (not only sims/unit tests), an orchestrator can drive the same **Client API** as the UI (`POST /sessions`, `POST /sessions/{id}/next`, `GET /sessions/{id}/async`) with tasks like “align code with ADR-00xx.”
 
-Use a **separate state file** (curated ADR **queue**, current ADR, **per-ADR phase/progress**, completed set) keyed to **one target project** — do not rescan the whole ADR directory every run or rely on session JSON alone for long queues. Full contract: [`methodology/adr-compliance-orchestrator.md`](../../archive/methodology/adr-compliance-orchestrator.md).
+Use a **separate state file** (curated ADR **queue**, current ADR, **per-ADR phase/progress**, completed set) keyed to **one target project** — do not rescan the whole ADR directory every run or rely on session JSON alone for long queues. A longer “orchestrator contract” lived under removed `archive/methodology/` — see [`tasks/brown-alert/archive-methodology-missing.md`](../../tasks/brown-alert/archive-methodology-missing.md).
 
 ## Related (not ADRs)
 

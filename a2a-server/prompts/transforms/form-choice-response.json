@@ -90,18 +90,16 @@
             "outcome": "ai_action_ready",
             "message": "Agent mode selected",
             "context": {
-              "action": "agent",
               "execution": {
-                "step": "request",
-                "progress": 0
+                "action": "agent",
+                "step": "start"
+              },
+              "workbench": {
+                "sections": {}
               }
             },
             "execute": {
-              "form": {
-                "title": "Agent Mode",
-                "description": "Agent режим активовано. LLM адаптується до вашої задачі...",
-                "input": [{ "name": "task", "type": "text", "label": "Task", "required": true }]
-              }
+              "message": "Режим агента: модель обробляє `context.task` і agent prompt; окрема форма вводу не показується."
             },
             "aiActions": {
               "action": "agent",
@@ -133,18 +131,16 @@
             "outcome": "ai_action_ready",
             "message": "${choice_id} mode → agent",
             "context": {
-              "action": "agent",
               "execution": {
-                "step": "request",
-                "progress": 0
+                "action": "agent",
+                "step": "start"
+              },
+              "workbench": {
+                "sections": {}
               }
             },
             "execute": {
-              "form": {
-                "title": "Agent Mode",
-                "description": "Перенаправлення на Agent режим...",
-                "input": [{ "name": "task", "type": "text", "label": "Task", "required": true }]
-              }
+              "message": "Режим агента: модель обробляє `context.task` і agent prompt; окрема форма вводу не показується."
             },
             "aiActions": {
               "action": "agent",
@@ -161,18 +157,16 @@
             "outcome": "ai_action_ready",
             "message": "${choice_id} mode → agent",
             "context": {
-              "action": "agent",
               "execution": {
-                "step": "request",
-                "progress": 0
+                "action": "agent",
+                "step": "start"
+              },
+              "workbench": {
+                "sections": {}
               }
             },
             "execute": {
-              "form": {
-                "title": "Agent Mode",
-                "description": "Перенаправлення на Agent режим...",
-                "input": [{ "name": "task", "type": "text", "label": "Task", "required": true }]
-              }
+              "message": "Режим агента: модель обробляє `context.task` і agent prompt; окрема форма вводу не показується."
             },
             "aiActions": {
               "action": "agent",
@@ -189,18 +183,16 @@
             "outcome": "ai_action_ready",
             "message": "${choice_id} mode → agent",
             "context": {
-              "action": "agent",
               "execution": {
-                "step": "request",
-                "progress": 0
+                "action": "agent",
+                "step": "start"
+              },
+              "workbench": {
+                "sections": {}
               }
             },
             "execute": {
-              "form": {
-                "title": "Agent Mode",
-                "description": "Перенаправлення на Agent режим...",
-                "input": [{ "name": "task", "type": "text", "label": "Task", "required": true }]
-              }
+              "message": "Режим агента: модель обробляє `context.task` і agent prompt; окрема форма вводу не показується."
             },
             "aiActions": {
               "action": "agent",
@@ -217,18 +209,16 @@
             "outcome": "ai_action_ready",
             "message": "${choice_id} mode → agent",
             "context": {
-              "action": "agent",
               "execution": {
-                "step": "request",
-                "progress": 0
+                "action": "agent",
+                "step": "start"
+              },
+              "workbench": {
+                "sections": {}
               }
             },
             "execute": {
-              "form": {
-                "title": "Agent Mode",
-                "description": "Перенаправлення на Agent режим...",
-                "input": [{ "name": "task", "type": "text", "label": "Task", "required": true }]
-              }
+              "message": "Режим агента: модель обробляє `context.task` і agent prompt; окрема форма вводу не показується."
             },
             "aiActions": {
               "action": "agent",
@@ -245,18 +235,16 @@
             "outcome": "ai_action_ready",
             "message": "${choice_id} mode → agent",
             "context": {
-              "action": "agent",
               "execution": {
-                "step": "request",
-                "progress": 0
+                "action": "agent",
+                "step": "start"
+              },
+              "workbench": {
+                "sections": {}
               }
             },
             "execute": {
-              "form": {
-                "title": "Agent Mode",
-                "description": "Перенаправлення на Agent режим...",
-                "input": [{ "name": "task", "type": "text", "label": "Task", "required": true }]
-              }
+              "message": "Режим агента: модель обробляє `context.task` і agent prompt; окрема форма вводу не показується."
             },
             "aiActions": {
               "action": "agent",
@@ -273,18 +261,16 @@
             "outcome": "ai_action_ready",
             "message": "${choice_id} mode → agent",
             "context": {
-              "action": "agent",
               "execution": {
-                "step": "request",
-                "progress": 0
+                "action": "agent",
+                "step": "start"
+              },
+              "workbench": {
+                "sections": {}
               }
             },
             "execute": {
-              "form": {
-                "title": "Agent Mode",
-                "description": "Перенаправлення на Agent режим...",
-                "input": [{ "name": "task", "type": "text", "label": "Task", "required": true }]
-              }
+              "message": "Режим агента: модель обробляє `context.task` і agent prompt; окрема форма вводу не показується."
             },
             "aiActions": {
               "action": "agent",

@@ -8,8 +8,11 @@
 import {Router, Request, Response, NextFunction} from 'express';
 import {humanizeUpstreamErrorMessage, requestService} from '../services/core/request/request.service.js';
 import {registryAuth} from '../middleware/registry-auth.middleware.js';
+import {clientSafeWorkbench} from '../services/core/request/client-visible-context.js';
 
 const router = Router();
+
+export {clientSafeWorkbench};
 
 /** Context fields preserved on GET /requests/:id/result (align with simulations/SCHEMA.md). */
 const POLL_CONTEXT_KEYS = [
@@ -46,7 +49,8 @@ export function filterResponse(result: Record<string, unknown>): Record<string, 
 
         for (const key of POLL_CONTEXT_KEYS) {
             if (ctx[key] !== undefined) {
-                filteredContext[key] = ctx[key];
+                filteredContext[key] =
+                    key === 'workbench' ? clientSafeWorkbench(ctx[key]) : ctx[key];
             }
         }
 

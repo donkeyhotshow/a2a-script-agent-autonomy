@@ -12,6 +12,8 @@ npm run cross-system:validate
 
 **Shell:** On Windows PowerShell use `Set-Location <repo>` (not `cd /d`). The script only needs Node + npm; no live stack required if the optional folders are empty (steps are skipped).
 
+**One `promiseId` (not the bundle):** `npm run report:promise -- <promiseId> --out trace.md` — Markdown join of server storage, hub `proxy_logs`, client session refs, Gray Room fields — [`scripts/promise-artifacts-report.mjs`](../scripts/promise-artifacts-report.mjs).
+
 ## What runs (four blocks)
 
 | Block | Under the hood | Typical outcome |

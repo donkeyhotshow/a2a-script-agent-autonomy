@@ -38,8 +38,12 @@ curl http://localhost:11434/daemon/status
 **Solutions:**
 - Ensure daemon is running: `POST /daemon/start`
 - Manually execute: `POST /promise/{id}/execute`
-- Check error: `GET /promise/{id}` - look for `error` field
-- Retry failed promise: `POST /promise/{id}/retry`
+- Check error: `GET /promise/{id}` — short `error` by default; full text: `?detail=1`
+- List tickets in **error** (not in `/promises/pending`): `GET /promises/errors` (full text per row: `?detail=1`)
+- Retry after fixing upstream: `POST /promise/{id}/retry` then `POST /promise/{id}/execute` (or let the daemon pick up **pending** only)
+- Drop a stuck ticket: `DELETE /promise/{id}`
+
+Canonical API table: [`docs/api-reference/PROXY_API.md`](../api-reference/PROXY_API.md) § *Promise queue (hub tickets)*.
 
 ---
 

@@ -490,7 +490,7 @@ One **action key** per `execute` and per `result` ([`AGENTS.md`](../AGENTS.md)).
 | **Web DTO / received.json** | `buildWebExecute` strips client-only keys; pending script may surface as `attachments.pendingClientAction`. | Same sanitizer | Same |
 | **Session storage** | Steps under `a2a-client/storage/sessions/`; rebuild from highest step with `server-response.json`. | Same | Same |
 
-**E2E smoke:** `tests/direct-tests/e2e-dialog-test.js` (Client API: `/sessions` → `/next` → poll `/async`); optional driver `scripts/agent-dialog-runner.mjs`.
+**E2E smoke:** `tests/direct-tests/e2e-dialog-test.js` (Client API: `/sessions` → `/next` → poll `/async`); optional driver `tests/agent-dialog-runner.mjs`.
 
 ---
 

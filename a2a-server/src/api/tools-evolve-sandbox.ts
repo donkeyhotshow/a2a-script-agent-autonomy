@@ -1,6 +1,15 @@
 import * as ts from 'typescript';
 import { VM } from 'vm2';
 
+/** Thrown when submitted skill code fails static or VM validation (maps to HTTP 403). */
+export class SandboxViolationError extends Error {
+  override name = 'SandboxViolationError';
+  constructor(message: string) {
+    super(message);
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 /** Max source size to limit parse / VM DoS. */
 const MAX_TOOL_CODE_CHARS = 500_000;
 
@@ -28,15 +37,15 @@ const FORBIDDEN_IDENTIFIERS = new Set([
  */
 export function validateSkillToolCodeForDeploy(toolCode: string): void {
   if (typeof toolCode !== 'string') {
-    throw new Error('toolCode must be a string');
+    throw new SandboxViolationError('toolCode must be a string');
   }
   if (toolCode.length > MAX_TOOL_CODE_CHARS) {
-    throw new Error(`toolCode exceeds ${MAX_TOOL_CODE_CHARS} characters`);
+    throw new SandboxViolationError(`toolCode exceeds ${MAX_TOOL_CODE_CHARS} characters`);
   }
 
   for (const { re, msg } of STATIC_DENY_PATTERNS) {
     if (re.test(toolCode)) {
-      throw new Error(`Forbidden pattern: ${msg}`);
+      throw new SandboxViolationError(`Forbidden pattern: ${msg}`);
     }
   }
 
@@ -55,14 +64,28 @@ export function validateSkillToolCodeForDeploy(toolCode: string): void {
   runInRestrictedVm(js);
 }
 
+function isBindingOrPropertyName(node: ts.Identifier): boolean {
+  const p = node.parent;
+  if (!p) return false;
+  if (ts.isPropertyAssignment(p) && p.name === node) return true;
+  if (ts.isShorthandPropertyAssignment(p) && p.name === node) return true;
+  if (ts.isPropertyDeclaration(p) && p.name === node) return true;
+  if (ts.isPropertySignature(p) && p.name === node) return true;
+  if (ts.isEnumMember(p) && p.name === node) return true;
+  if (ts.isBindingElement(p) && p.propertyName === node) return true;
+  return false;
+}
+
 function assertNoForbiddenIdentifiers(sourceFile: ts.SourceFile): void {
   const visit = (node: ts.Node): void => {
     if (ts.isIdentifier(node) && FORBIDDEN_IDENTIFIERS.has(node.text)) {
-      throw new Error(`Forbidden identifier: ${node.text}`);
+      if (!isBindingOrPropertyName(node)) {
+        throw new SandboxViolationError(`Forbidden identifier: ${node.text}`);
+      }
     }
     if (ts.isPropertyAccessExpression(node) && ts.isIdentifier(node.name)) {
       if (FORBIDDEN_IDENTIFIERS.has(node.name.text)) {
-        throw new Error(`Forbidden property access: .${node.name.text}`);
+        throw new SandboxViolationError(`Forbidden property access: .${node.name.text}`);
       }
     }
     ts.forEachChild(node, visit);
@@ -85,7 +108,7 @@ function transpileSkillToCommonJs(toolCode: string): string {
   const diags = (result.diagnostics ?? []).filter((d) => d.category === ts.DiagnosticCategory.Error);
   if (diags.length > 0) {
     const msg = diags.map((d) => ts.flattenDiagnosticMessageText(d.messageText, '\n')).join('; ');
-    throw new Error(`TypeScript: ${msg}`);
+    throw new SandboxViolationError(`TypeScript: ${msg}`);
   }
 
   return result.outputText;
@@ -93,13 +116,13 @@ function transpileSkillToCommonJs(toolCode: string): string {
 
 function assertTranspiledSafe(js: string): void {
   if (/\brequire\s*\(/.test(js)) {
-    throw new Error('Skill code must not load modules (remove imports / require)');
+    throw new SandboxViolationError('Skill code must not load modules (remove imports / require)');
   }
   if (/\bimport\s*\(/.test(js)) {
-    throw new Error('Transpiled code must not use dynamic import');
+    throw new SandboxViolationError('Transpiled code must not use dynamic import');
   }
   if (/\beval\s*\(/.test(js) || /\bnew\s+Function\b/.test(js)) {
-    throw new Error('Transpiled code must not use eval/Function');
+    throw new SandboxViolationError('Transpiled code must not use eval/Function');
   }
 }
 
@@ -128,6 +151,6 @@ function runInRestrictedVm(javascript: string): void {
     vm.run(javascript);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    throw new Error(`Sandbox execution failed: ${msg}`);
+    throw new SandboxViolationError(`Sandbox execution failed: ${msg}`);
   }
 }

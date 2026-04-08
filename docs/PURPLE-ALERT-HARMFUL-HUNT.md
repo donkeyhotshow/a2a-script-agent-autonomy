@@ -65,8 +65,14 @@ Mechanical scan: repo root excluding `node_modules` / build dirs. Semantic spot-
 | Severity | File:line | Category | Summary | Next step |
 |----------|-----------|----------|---------|-----------|
 | **high** (mitigated) | `a2a-server/src/services/llm/bug-fixer.ts` | shell injection | `execSync` interpolated `filePath` into a shell string | **Fixed:** `spawnSync('git', ['diff','--no-color','--', filePath], …)` |
-| med | `a2a-server/src/sandbox/SkillLite.ts:17` | `execSync(command)` | Unused export today; if wired to LLM/user input without allowlist → RCE | Keep disabled or add strict allowlist + real sandbox before use |
-| low | `a2a-client/packages/web/js/client-action-runner.js:131` | `new Function` | Only `PREDEFINED_SCRIPTS[scriptId].code` — fixed catalog | Ensure `scriptId` never accepts arbitrary strings from network without validation |
+| med (mitigated) | `a2a-server/src/sandbox/SkillLite.ts` | `execSync` | Stub had shell-equivalent RCE if wired | **Fixed:** `execute()` throws; no subprocess |
+| low | `a2a-client/packages/web/js/client-action-runner.js` | `new Function` | Allowlisted scripts | **Hardened:** strict `scriptId` regex + `hasOwnProperty` |
+| low (mitigated) | `a2a-client/packages/web/js/template-loader.js` | `innerHTML` + `{{key}}` | Unescaped `data` values → XSS if ever server-driven | **Fixed:** `escapeHtml` on substitutions; regex-safe keys |
+| low | `tests/cross-system-validate.mjs` | `spawnSync` | Was `` `npm run ${script}` `` | **Fixed:** `spawnSync('npm',['run',script],{ shell: win32 })` |
+| low | `a2a-client/…/run-human-review.mjs` | `spawnSync` | `npx` / shell issues on Windows | **Fixed:** `node …/vitest.mjs` + argv |
+| low | `a2a-client/packages/execution` | `vm` fallback | Weaker than vm2 | **Dependency:** `vm2` in package `dependencies` |
+| low | `a2a-client/…/render-layout.js` | `innerHTML` | Some branches skipped `escapeHtml` on store errors | **Fixed:** `escapeHtml(storeResult.error)` |
+| low | `runbook-cli.js` | `execSync` / `netstat` | Interpolated port/PID | **Fixed:** `execFileSync` + validated port/PID |
 | low / test | `a2a-server/tests/unit/execute-security.service.test.ts` | `eval` / `child_process` strings | Fixture strings for security tests | None |
 | — | `SKIP_AUTH`, `innerHTML` | dev / UI | Documented dev bypass; task-flow uses `escapeHtml` on attachment paths and messages | Watch `innerHTML` assignments that mix unescaped server fields (none critical in sampled paths) |
 | — | Scripts (`runbook-cli`, `validate-system`, e2e) | `execSync` | Fixed commands / operator tooling | Acceptable for local CLI |

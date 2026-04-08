@@ -2,7 +2,7 @@
 
 ## Artifact
 
-- **Path:** [`COMPARISON-ALEON10-VS-DONKEYHOTSHOW.md`](../../COMPARISON-ALEON10-VS-DONKEYHOTSHOW.md) — fork / branch comparison snapshot (tables, stats).
+- **Path:** root `COMPARISON-ALEON10-VS-DONKEYHOTSHOW.md` — **removed** from the tree (recover from git history if needed). Was a fork / branch comparison snapshot (tables, stats).
 
 ## Why (Brown)
 

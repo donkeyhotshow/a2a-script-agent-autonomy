@@ -1,6 +1,37 @@
 import axios from 'axios';
+import { ServerUnavailableError } from './errors.js';
+import {
+  buildGetSessionValidateOptions,
+  isTaskMonitorSessionValidationDisabled,
+  validateClientSession,
+  validatePartialSessionEnvelope,
+} from './task-monitor-validation.js';
 
 class TaskMonitorApi {
+  _warnSessionShape(message) {
+    if (typeof this.log === 'function') {
+      this.log('warn', message);
+    } else {
+      console.warn(message);
+    }
+  }
+
+  _validateGetSessionBody(sessionId, data, includeContext) {
+    if (isTaskMonitorSessionValidationDisabled() || !data) return;
+    const v = validateClientSession(data, buildGetSessionValidateOptions(data, includeContext));
+    if (!v.valid) {
+      this._warnSessionShape(`[session-shape] GET /sessions/${sessionId}: ${v.errors.join('; ')}`);
+    }
+  }
+
+  _validateEnvelope(label, data) {
+    if (isTaskMonitorSessionValidationDisabled() || !data) return;
+    const v = validatePartialSessionEnvelope(data);
+    if (!v.valid) {
+      this._warnSessionShape(`[session-shape] ${label}: ${v.errors.join('; ')}`);
+    }
+  }
+
   async getProjects() {
     try {
       const response = await axios.get(`${this.baseUrl}/projects`);
@@ -32,7 +63,19 @@ class TaskMonitorApi {
         task: taskText
       });
       // The response format is { success: true, session: { ... } }
-      return response.data.session || response.data;
+      const sess = response.data.session || response.data;
+      if (sess && !isTaskMonitorSessionValidationDisabled()) {
+        const v = validateClientSession(sess, {
+          requireId: true,
+          checkContextResult: false,
+          checkMessages: false,
+          checkAsyncPending: 'asyncPending' in sess,
+        });
+        if (!v.valid) {
+          this._warnSessionShape(`[session-shape] POST /sessions: ${v.errors.join('; ')}`);
+        }
+      }
+      return sess;
     } catch (error) {
       this.logError('createSession', error);
       return null;
@@ -42,6 +85,7 @@ class TaskMonitorApi {
   async sendNext(sessionId, payload = {}) {
     try {
       const response = await axios.post(`${this.baseUrl}/sessions/${sessionId}/next`, payload);
+      this._validateEnvelope(`POST /next (${sessionId})`, response.data);
       // Handle different response formats
       if (response.data && response.data.execute) {
         return response.data;
@@ -62,6 +106,7 @@ class TaskMonitorApi {
       const response = await axios.get(`${this.baseUrl}/sessions/${sessionId}/async`, {
         params: { includeContext: '1' },
       });
+      this._validateEnvelope(`GET /async (${sessionId})`, response.data);
       return response.data;
     } catch (error) {
       if (this.isServerUnavailableError(error)) {
@@ -100,6 +145,7 @@ class TaskMonitorApi {
         this.log('warn', `Session ${sessionId} returned no data`);
         return null;
       }
+      this._validateGetSessionBody(sessionId, response.data, options.includeContext);
       return response.data;
     } catch (error) {
       if (error.response?.status === 404) {

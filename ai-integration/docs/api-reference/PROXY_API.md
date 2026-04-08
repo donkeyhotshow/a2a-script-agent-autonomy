@@ -107,63 +107,87 @@ Restart Local LLM upstream instance.
   The promise is marked done on disk; clients can use the inline `responseBody` and skip polling.
 - **Miss / async:** **HTTP 202** with `{ "promiseId", "status": "pending" }`, then poll `GET /promise/{id}` / `GET /promise/{id}/response` as before.
 
-### Promise Management
+### Promise queue (hub tickets)
+
+LLM `POST` traffic creates a **hub `promiseId`** on disk under `proxy_logs/promises/<id>/`. The **builtin daemon** and **`scripts/promise_queue_daemon.py`** only dequeue **pending** work — **`error` is never auto-retried**. Operators must **retry** or **delete** explicitly.
+
+| Concern | Behavior |
+|--------|----------|
+| **Pending queue** | `GET /promises/pending` → JSON **array** of `{ promiseId, status, created_at, method, path, target_url, log_folder }` — **`status` is always `pending`**. |
+| **Failed tickets** | `GET /promises/errors` → tickets in **`error`**, sorted by `created_at`. Each row includes a short **`error`** string (400 chars max); **`error_truncated: true`** when shortened. Full text: **`?detail=1`**. |
+| **Resume** | `POST /promise/{id}/retry` — clears failure metadata and sets **`pending`** so `POST /promise/{id}/execute` (or the daemon) can run again. |
+| **Remove** | `DELETE /promise/{id}` — deletes the ticket folder and in-memory cache entry. |
+| **Error text on single-ticket GET** | `GET /promise/{id}`, `/response`, `/body_raw` when status is **error**: JSON includes short **`error`**; **`?detail=1`** returns the full message; **`error_truncated`** when applicable. |
+
+**Probe from repo root:** `npm run check:promise-queue` or `node tests/monitor-tasks/check-promise-queue.mjs` — **`GET /health`**, **`/promises/pending`**, and by default **`/promises/errors`** (human lines include **`created_at` / `updated_at`**, **`path`**, **`log_folder`**, error text up to hub limits; use **`--detail`** or **`PROMISES_ERRORS_DETAIL=1`** for hub **`?detail=1`** full errors). **`--json`** prints a structured report for CI. **`--compact`** or **`PROMISES_COMPACT_LOG=1`** = id-only lines. Skip errors: **`PROMISES_CHECK_ERRORS=0`** or **`--no-errors`**. Fail CI if errors queue non-empty: **`--strict`** or **`PROMISES_STRICT=1`**. With **`WEB_BASE=http://127.0.0.1:5173`**, also probes **`GET …/api/a2a/hub/promises/pending`** and **`…/errors`** (non-fatal if Vite is down).
+
+**Correlate with A2A server + client + Gray Room (Markdown report):** from repo root, `npm run report:promise -- <promiseId> --out trace.md` — [`scripts/promise-artifacts-report.mjs`](../../../scripts/promise-artifacts-report.mjs) pulls `proxy_logs/promises/<id>/` together with `a2a-server/storage/requests/{id}.json` and client session steps.
+
+**Same paths via Client API (same origin as Vite or standalone SDK):** `GET /api/a2a/hub/promises/pending`, `GET /api/a2a/hub/promises/errors`, `POST /api/a2a/hub/promise/{id}/retry`, `POST …/execute`, `DELETE /api/a2a/hub/promise/{id}` — proxies to **`AI_HUB_URL`** with an allowlist (`/promises/*`, `/promise/*`).
 
 #### GET /promises/pending
-Get list of pending promises (sorted by created_at, oldest first).
 
-**Response:**
+Oldest first. **Only** `pending` — not `error`.
+
+**Response:** JSON array, e.g.:
+
 ```json
-{
-  "promises": [
-    {
-      "promise_id": "prom_abc123",
-      "method": "POST",
-      "path": "/api/chat",
-      "target_url": "http://localhost:11435/api/chat",
-      "status": "pending",
-      "created_at": "2026-03-20T10:00:00Z",
-      "updated_at": "2026-03-20T10:00:00Z"
-    }
-  ]
-}
+[
+  {
+    "promiseId": "abc123…",
+    "status": "pending",
+    "created_at": "2026-03-20T10:00:00+00:00",
+    "created_at_unix": 1710928800,
+    "method": "POST",
+    "path": "/api/chat",
+    "target_url": "http://localhost:11435/api/chat",
+    "log_folder": "/path/to/proxy_logs/promises/abc123…"
+  }
+]
 ```
+
+#### GET /promises/errors
+
+Tickets in **`error`** (manual handling). Query **`detail=1`** (same values as on `GET /promise/{id}`) for full `error` text per row.
 
 #### GET /promises/ready
-Get list of completed promises (sorted by updated_at, oldest first).
+
+Completed `done` promises (sorted by `updated_at`, oldest first).
 
 #### GET /promises/status
-Unified status endpoint - returns ready promises only.
+
+Unified `{ "ready": [ ... ] }` — same rows as `/promises/ready`, wrapped under **`ready`**.
 
 #### GET /promise/{promise_id}
-Get promise status by ID.
 
-**Response:**
-```json
-{
-  "promise_id": "prom_abc123",
-  "method": "POST",
-  "path": "/api/chat",
-  "status": "pending|processing|done|error",
-  "created_at": "2026-03-20T10:00:00Z",
-  "updated_at": "2026-03-20T10:00:00Z",
-  "error": null
-}
-```
+**202** + `{ "promiseId", "status": "pending" }` while queued.
+
+**500** + `{ "promiseId", "status": "error", "error": "<short>", "error_truncated"?: true }` on failure.
+
+**200** when `done`: `{ "promiseId", "status": "done", "result_status_code", "result_content_type" }`.
+
+#### DELETE /promise/{promise_id}
+
+**200** `{ "promiseId", "deleted": true }` when removed; **404** if unknown.
 
 #### GET /promise/{promise_id}/request
-Get original request body (method, path, headers, body).
+
+Original request snapshot (method, path, headers, body).
 
 #### GET /promise/{promise_id}/response
-Get final response (stored assistant-oriented body — see `body.md` pipeline).
+
+**200** raw body when `done`; **202** pending; **500** JSON error envelope (short **`error`**, optional **`?detail=1`**).
 
 #### GET /promise/{promise_id}/body_raw
+
 When the hub persisted `body_raw.json` on success, returns that **full provider JSON** (OpenAI/Local LLM upstream-style envelope). Used by `a2a-server` `fetchAiHubChatJson` / `pollReadyThenFetch` with `responseMode: raw_json`. **404** if no raw file (older promises or non-JSON upstream).
 
 #### POST /promise/{promise_id}/execute
-Execute promise against Local LLM upstream (non-blocking, returns 202).
+
+Execute **pending** promise against Local LLM upstream (non-blocking, **202**). **409** if not `pending` (e.g. still **`error`** — call **`/retry`** first).
 
 #### POST /promise/{promise_id}/answer
+
 Manually set answer for promise.
 
 **Request Body:**
@@ -176,7 +200,8 @@ Manually set answer for promise.
 ```
 
 #### POST /promise/{promise_id}/retry
-Reset error promise to pending for daemon retry.
+
+Reset **`error`** or **`done`** to **`pending`** so **`/execute`** can run again. Idempotent if already **`pending`**.
 
 ---
 

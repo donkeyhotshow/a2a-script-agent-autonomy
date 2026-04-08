@@ -10,6 +10,7 @@ import {resolveAiHubBaseUrl} from '../../../utils/ai-hub-url.js';
 import {mkdtempOsTmp} from '../../../utils/mkdtemp-os-tmp.js';
 import {runPromptsTransform} from '../../../transform/index.js';
 import {
+    extractLlmTextFromHubResponseBody,
     initAiHubChatPromise,
     pollReadyThenFetch,
     resolveLlmPromiseRecovery,
@@ -196,14 +197,25 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
         logger.info('[DialogRequestProcessor] Polling promise', {llmPromiseId});
 
         // 5. Poll for response (or use hub inline body on disk-cache hit)
-        const responseMd =
+        const rawResponseMd =
             initResult.inlineResponseBody ??
             (await pollReadyThenFetch(normalizedBase, llmPromiseId, {
                 a2aPromiseId: promiseId,
             }));
-        if (!responseMd) {
+        if (!rawResponseMd?.trim()) {
             await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
             // Return request transform execute as fallback (allows form display even without LLM)
+            return {
+                success: false,
+                error: 'LLM response fetch failed',
+                requestTransformExecute,
+                requestTransformContext,
+            };
+        }
+        // Disk-cache 200 returns full provider JSON; unwrap choices[0].message.content before response transforms.
+        const responseMd = extractLlmTextFromHubResponseBody(rawResponseMd);
+        if (!responseMd?.trim()) {
+            await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
             return {
                 success: false,
                 error: 'LLM response fetch failed',

@@ -19,29 +19,27 @@
 | **Self-Upgrade** | Самоапгрейд: процесс самоулучшения системы через API-диалог (не прямое исполнение). Ключевое различие: агент не выполняет задачи самостоятельно, а направляет их через Client API (`/api/a2a/sessions`, `/next`, `/async`), управляя системой извне. Это создает контролируемый цикл: (1) агент анализирует кодовую базу, (2) формулирует задачи, (3) отправляет через API, (4) получает ответы, (5) корректирует. В dev-режиме проект целится сам на себя (a2a-client → a2a-script-agent), но архитектура позволяет работать с любым проектом. Граница: API-вызовы разделяют "анализирующий" и "исполняющий" контексты. **Порядок (политика):** сначала основные спеки/задачи в `tasks/` и при необходимости `tasks/ide-prompts/`; **перед большим объёмом сессионной работы** — **Session archival**; очередь сессионных промптов `prompts-to-agent-mode/` и Task Monitor — **после**, когда стек и контракты готовы к прогону (см. `tasks/README.md` → *Self-Upgrade order*; автоматической блокировки в коде нет) |
 | **Router** | Keyword-based routing (dialog/agent/task-decomposition) |
 | **Sync golden (`simulations/sync/`)** | Offline fixture layout: invoke-shaped step bundles per [`simulations/SCHEMA.md`](simulations/SCHEMA.md). **Not** HTTP “sync invoke”: A2A **`POST /api/v1/invoke` is async-only** (`promiseId` + poll) — see **Orange alert**. |
-| **Task Monitor** | `monitor-and-process-tasks.js` — автоматизированный скрипт обработки очереди задач. Должен отправлять запросы в сессии через Client API (`POST /api/a2a/sessions/{id}/next` + `GET /api/a2a/sessions/{id}/async`) для ведения многошагового диалога в режиме агента. Требует правильной обработки router-диалога (Beat A/B): определение `form.choices` и отправка либо `message`, либо `choice` в зависимости от ответа сервера. Задачи выполняются итеративно через цикл next+poll до завершения |
+| **Task Monitor** | `monitor-and-process-tasks.js` — **default executor** for the live-stack workflow on `prompts-to-agent-mode/`: full Client API loop (`POST …/next` + `GET …/async`), router Beat A/B, one session per prompt until done. **Common misread:** the `.md` file looks like one instruction; runtime is **many turns** on one **`sessionId`** — use the monitor or drive the loop manually. Batch runs **should** use this, not hand curl. **Hooks:** failures/timeouts → `hooks/task_monitor_issue.json`; success → `hooks/task_completion_report.json` (overwritten each success). **Audit:** `npm run monitor:completed:json` → **`merged`** — [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md) |
 | **MONITOR-QUICK-START** | Root operator doc `MONITOR-QUICK-START.md`: run commands, `TASK_MONITOR_*` env, session-dialog contract (same as web UI), state/hooks, failures → `tests/direct-tests` via ErrorClassifier |
 | **Web DTO** | Client-sanitized execute (form only, not raw tool calls) |
-| **Session archival (Self-Upgrade)** | Before a **large** monitor run, full-spectrum index over `prompts-to-agent-mode/`, or long manual Client API campaign: **copy or zip** important trees under `a2a-client/storage/sessions/{sessionId}/` to an operator archive (e.g. `logs/archive/sessions-<date>/`). Preserves step JSON for forensics; avoids losing history if storage is pruned or sessions 404. **Not** the same as **Session Cleanup** (destructive). Policy only — see [`tasks/README.md`](tasks/README.md) (*Self-Upgrade order*, step 2). |
-| **Session Cleanup** | Удаление всех файлов в `C:\workspace\org-carrier\a2a-script-agent\a2a-client\storage\sessions` и `C:\workspace\org-carrier\a2a-script-agent\ai-integration\proxy_logs\**\*` для полной очистки состояния системы |
+| **Session archival (Self-Upgrade)** | Before a **large** monitor run, full-spectrum index over `prompts-to-agent-mode/`, or long manual Client API campaign: **copy or zip** important trees under `a2a-client/storage/sessions/{sessionId}/` to an operator archive (e.g. `logs/archive/sessions-<date>/`). Preserves step JSON for forensics; avoids losing history if you run an explicit **Session Cleanup** or sessions 404. **Not** the same as **Session Cleanup** (destructive). Policy only — see [`tasks/README.md`](tasks/README.md) (*Self-Upgrade order*, step 2). |
+| **Session Cleanup** | Explicit **full wipe** of client session trees (`a2a-client/storage/sessions/*`); broader “fresh” wipes also clear hub `proxy_logs`, server `storage/requests`, etc. (`cleanup:fresh` — see [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md)). **No** age-based pruning in shipped scripts. After cleanup, Task Monitor binds **one** Client API session per prompt (`taskSessions`) until completion. |
 | **ErrorClassifier** | Система классификации ошибок в `tests/monitor-tasks/errors.js`. Распознает 30+ типов ошибок (connection, http, schema, llm, session, router, task, gray-room, filesystem, network, parse, async). Для каждой ошибки: severity (critical/high/medium/low), hint, quick fix, direct test command, diagnostic steps, environment diagnostic. Поддерживает генерацию PowerShell скриптов для диагностики |
 | **Direct Tests** | Набор скриптов в `tests/direct-tests/` для диагностики проблем без запуска полного стека: `run-checks.ps1`, `test-dialog-flow.ps1`, `dialog/run-dialog-direct-local-hub.ps1`. Task Monitor автоматически предлагает релевантные direct tests при ошибках |
-| **Schema validation** | Проверка форм контрактов (execute/result, сессии, симуляции). **Первый слой:** скрипты в [`tests/direct-tests/validators/`](tests/direct-tests/validators/README.md) — из корня репозитория `npm run scan-promise-bodies`, `scan-session-responses`, `verify:gray-room`, `audit:sim-choice-descriptions` и др. **Дальше:** золотые симуляции `npm run sim:lint` / `sim:validate`, зеркала MD/JSON `sim:check-md`, общие гварды (`tests/direct-tests/lib/a2a-schema-guards.mjs` и связанные тесты). См. [`AGENTS.md`](AGENTS.md) → Offline validators |
+| **Schema validation** | Проверка форм контрактов (execute/result, сессии, симуляции). **Первый слой:** скрипты в [`tests/direct-tests/validators/`](tests/direct-tests/validators/README.md) — из корня репозитория `npm run scan-promise-bodies`, `scan-session-responses`, `verify:gray-room`, `audit:sim-choice-descriptions` и др. **Один `promiseId` (отчёт по сторам + Gray Room):** `npm run report:promise -- <id> [--out file.md]`. **Дальше:** золотые симуляции `npm run sim:lint` / `sim:validate`, зеркала MD/JSON `sim:check-md`, общие гварды (`tests/direct-tests/lib/a2a-schema-guards.mjs` и связанные тесты). См. [`AGENTS.md`](AGENTS.md) → Offline validators |
 | **Yellow alert (scan)** | Команда для ИИ: скан кода на недочёты/костыли/недорешения — [`docs/YELLOW-ALERT-SCAN.md`](docs/YELLOW-ALERT-SCAN.md); в глоссарии: [Yellow alert (scan)](#yellow-alert-scan--жёлтая-тревога-скан) vs [operator](#yellow-alert-operator--жёлтая-тревога-оператор) |
 | **Task Monitor Modules** | Модульная архитектура: `task-monitor-core.js` (конфигурация, состояние, логирование), `task-monitor-api.js` (Client API вызовы), `task-monitor-processing.js` (обработка задач), `task-monitor-daemon.js` (daemon режим), `task-monitor-utils.js` (утилиты), `task-monitor-validation.js` (валидация), `errors.js` (классификация ошибок) |
 
 ## Alerts (тревоги)
 
-Operational **alert levels**: scope tags for triage (**which subsystem you touch** or **what kind of change** you are making). **Not** the same as **Rooms** (runtime pipeline phases — see [Rooms vs alerts](#rooms-vs-alerts) below).
+**Alerts** are **triage labels**: they answer *where to look first* or *what kind of work this is*. They are **not** runtime flags unless you add your own. **Do not confuse** them with **Rooms** (Gray / Red / Black **Room** = pipeline phases — see [Rooms vs alerts](#rooms-vs-alerts)).
 
 ### How alerts are used
 
-**Two ways to set an alert (documentation / process — not a built-in runtime flag unless you add one):**
+1. **Human-declared** — You name the alert when you choose focus (e.g. “**Gray alert**: assume server until proven otherwise”).
+2. **Assistant-declared** — The IDE/agent **suggests** a label when it sees a **pattern** (e.g. wrong router beat twice). You **confirm or change** it; do not drop an alert without **evidence** of mitigation.
 
-1. **Human-declared** — The operator states the alert (e.g. “**Gray alert**: we’re treating this as server-side until proven otherwise”). Use when you choose triage focus or change type.
-2. **Assistant-declared** — The IDE/agent **proposes** an alert when it sees **patterns** (same failure class in two places, wrong router beat, duplicate sync path, etc.). The human **confirms or edits** the label; the assistant should not silently “clear” an alert without evidence.
-
-**Duration:** Keep an alert **active** until the **situation is mitigated** — evidence that the **class** of issue is addressed (tests, second surface checked, or explicit rollback of the assumption). One fix in one file is often **not** enough: the same defect class often shows up elsewhere, so treat the alert as **sticky** until you verify or explicitly accept residual risk.
+**Until when:** Keep the label **until the risk class is actually addressed** — second surface checked, test added, or you **explicitly** accept leftover risk. A single-file fix often is **not** enough for the same failure **class**.
 
 ### Red alert — **Красная тревога**
 
@@ -65,7 +63,23 @@ Operational **alert levels**: scope tags for triage (**which subsystem you touch
 
 ### Orange alert — **Оранжевая тревога**
 
-**Async-first** — remove or narrow **sync** paths; prefer async (`promiseId`, poll `/result` or Client API `/async`) end-to-end. **Hard rule:** never **switch** the stack to synchronous invoke or **disable** the ai-integration promise queue (`PROMISE_DAEMON_ONLY`) as an operator shortcut — use the daemon or manual `POST /promise/<id>/execute` ([`AGENTS.md`](AGENTS.md) → *Async-only transport*).
+**Scope:** **Async transport** — the whole stack is **`promiseId` + poll**, not “return full `execute` on POST.”
+
+**Permanent policy — оранжевая тревога навсегда:** This is **not** a temporary triage label you “clear” by switching to sync. Async-only end-to-end is the **only** supported operating mode ([`AGENTS.md`](AGENTS.md) → *Async-only transport*).
+
+**Hard rules**
+
+- Do **not** add a **sync** invoke path, **not** document “disable the queue” as a fix, **not** turn off **`PROMISE_DAEMON_ONLY`** to unstick work — drain with the **daemon** or **`POST /promise/<id>/execute`** ([`AGENTS.md`](AGENTS.md) → *Async-only transport*).
+
+**What “good” looks like (Client API)**
+
+1. `POST /api/a2a/sessions` → note **`sessionId`**.
+2. After **every** `POST …/next`: poll **`GET …/async`** until **not** busy → **`GET …/sessions/{id}`** and read **`execute.form`** (**choices** → next body is **choice** `id`; else **message**).
+3. Only then send the **next** `/next`. **Never** skip a router beat, **never** treat the `/next` ack alone as a finished turn, **never** send overlapping `/next` while async is still pending.
+
+**Disk** (`a2a-client/storage/sessions/{sessionId}/…`) is **evidence** for debugging — not a substitute for fixing the driver loop. If steps break, fix **seed `mode`**, **body shape**, and **poll order**; do not hand-edit JSON to “look correct.”
+
+**Goal:** each settled step exposes a form the **next** turn can answer, so **tools and agent actions stay runnable.**
 
 ### Green alert — **Зелёная тревога**
 

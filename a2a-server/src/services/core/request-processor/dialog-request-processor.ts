@@ -22,6 +22,7 @@ import {
 import {
     isDialogToolExecutePayload
 } from './gray-room-utils.js';
+import {normalizeAgentSpuriousRequestAfterPipeline} from './agent-spurious-request-normalize.js';
 import {
     readDialogHubLlmResubmitMax,
     readGrayRoomInterruptBudget,
@@ -82,6 +83,31 @@ function isDialogExecuteMissingOrEmpty(execute: ProcessResult['execute']): boole
 
 function isAgentSchemaName(schemaName: string): boolean {
     return schemaName === 'agent' || schemaName.startsWith('agent-');
+}
+
+/**
+ * When the LLM hub fails but the session must stay usable (router follow-up, hub outage),
+ * provide the same shapes as agent-request.json / dialog-request.json when transforms did not yield execute.
+ */
+function defaultExecuteWhenLlmUnavailable(schemaName: string): Record<string, unknown> | null {
+    if (isAgentSchemaName(schemaName)) {
+        return {
+            message:
+                'Agent: model uses context.task and the agent prompt (no input form when the hub is unavailable).',
+        };
+    }
+    if (schemaName === 'dialog') {
+        return {
+            form: {
+                title: 'AI Assistant',
+                description: 'Enter your message',
+                input: [
+                    {name: 'message', type: 'text', label: 'Message', required: true},
+                ],
+            },
+        };
+    }
+    return null;
 }
 
 /**
@@ -280,17 +306,8 @@ function ensureAgentExecuteWhenMissing(
 
     result.context = baseCtx as RequestContextBlock;
     result.execute = {
-        form: {
-            title: 'Agent',
-            input: [
-                {
-                    name: 'task',
-                    type: 'text',
-                    label: 'Enter your task',
-                    required: true,
-                },
-            ],
-        },
+        message:
+            'Agent: model uses context.task and the agent prompt (no input form in this fallback path).',
     };
 
     logger.warn('[DialogRequestProcessor] Agent gray-room result had no execute; applied fallback form', {
@@ -303,6 +320,7 @@ function finalizeDialogGrayRoomResult(
     schemaName: string,
     responseMd: string
 ): void {
+    normalizeAgentSpuriousRequestAfterPipeline(grayRoomResult, schemaName);
     ensureDialogExecuteWhenMissing(grayRoomResult, schemaName, responseMd);
     ensureAgentExecuteWhenMissing(grayRoomResult, schemaName, responseMd);
     const ctx = grayRoomResult.context as Record<string, unknown> | undefined;
@@ -468,20 +486,34 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                 });
 
                 if (!llmResult.success || !llmResult.responseMd) {
-                    // For initial dialog (no history), use request transform execute as fallback (initial form)
-                    // For follow-up (has history), do NOT return form - return error or async pending
-                    const hasHistoryForFallback = Array.isArray(ctx['history']) && ctx['history'].length > 0;
-                    if (
-                        !hasHistoryForFallback &&
+                    const execFromTransform =
                         llmResult.requestTransformExecute &&
-                        Object.keys(llmResult.requestTransformExecute).length > 0
-                    ) {
+                        Object.keys(llmResult.requestTransformExecute).length > 0;
+                    // Request transforms produced a form (e.g. Agent Mode): use it even when history exists
+                    // (router → agent was previously hard-failing with llm_error while the form was already valid).
+                    if (execFromTransform) {
+                        await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_form_fallback'});
                         return {
                             outcome: 'success',
                             execute: llmResult.requestTransformExecute,
                             context: {
                                 ...ctx,
                                 ...((llmResult.requestTransformContext as Record<string, unknown>) ?? {}),
+                                // Final updateStatus merges this onto stored context; transforms must not
+                                // overwrite patched requestPhase with a stale llm_error.
+                                requestPhase: 'llm_form_fallback',
+                            } as unknown as RequestContextBlock,
+                        };
+                    }
+                    const fallbackExecute = defaultExecuteWhenLlmUnavailable(schemaName);
+                    if (fallbackExecute) {
+                        await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_form_fallback'});
+                        return {
+                            outcome: 'success',
+                            execute: fallbackExecute,
+                            context: {
+                                ...(ctx as Record<string, unknown>),
+                                requestPhase: 'llm_form_fallback',
                             } as unknown as RequestContextBlock,
                         };
                     }

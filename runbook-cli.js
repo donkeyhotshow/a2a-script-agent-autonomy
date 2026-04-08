@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const { spawn, execSync } = require('child_process');
+const { spawn, execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -51,9 +51,11 @@ function log(message) {
 }
 
 function isPortOpen(port) {
+  const p = Number(port);
+  if (!Number.isInteger(p) || p < 1 || p > 65535) return false;
   try {
-    const output = execSync(`netstat -ano | findstr :${port}`, { encoding: 'utf8' });
-    return output.includes(`:${port}`);
+    const output = execFileSync('netstat', ['-ano'], { encoding: 'utf8' });
+    return output.includes(`:${p}`);
   } catch (e) {
     return false;
   }
@@ -98,11 +100,13 @@ function savePid(serviceName, pid) {
 }
 
 function killProcess(pid) {
+  const n = Number(pid);
+  if (!Number.isInteger(n) || n <= 0) return;
   try {
     if (os.platform() === 'win32') {
-      execSync(`taskkill /F /PID ${pid}`);
+      execFileSync('taskkill', ['/F', '/PID', String(n)], { stdio: 'ignore' });
     } else {
-      process.kill(pid, 'SIGTERM');
+      process.kill(n, 'SIGTERM');
     }
   } catch (e) {
     // Process might already be dead

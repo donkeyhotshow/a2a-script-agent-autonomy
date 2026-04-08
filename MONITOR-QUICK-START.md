@@ -2,6 +2,12 @@
 
 This document is the **operator entry point** for the Task Monitor: the same **Client API session dialog** the web UI uses (`sessions` → `next` → poll `async`), driven automatically from indexed markdown under `prompts-to-agent-mode/`.
 
+> **Why use the monitor:** Markdown tasks *read* like a single instruction, but runtime is a **multi-step session**. Operators often create a session or paste a prompt and stop; the work then hangs in **pending** or an unfinished router beat. The monitor exists so **every** indexed prompt gets the full **`/next` + `/async`** loop (and **`sessionId`** in **`merged`**) without manual babysitting.
+
+**Normative:** the **entire** indexed stack workflow (run prompts → execute agent dialog → collect evidence) sits on **`npm run monitor`** / **`monitor:once`** — not ad-hoc `invoke`, not file-by-file curl. **Task Monitor is the system of record** for prompt ↔ **`sessionId`** (`merged` export). Manual Client API is for **single-step debug** only when the monitor is not the right tool.
+
+**Completed tasks → `sessionId` (for scripts):** **`npm run monitor:completed:json`** — use the top-level **`merged`** array (one object per prompt filename: `taskName`, `sessionId`, `projectId`, `completedAt`, `updatedAt`, `sources`). Raw slices remain as **`fromState`** (`processedTasks`) and **`fromLedger`**. Human table: **`npm run monitor:completed`**.
+
 | If you need… | Read first |
 |--------------|------------|
 | **Why** not `invoke` alone, router beats, curl shape | [`AGENTS.md`](AGENTS.md) → *Unified manual path*, *Router dialog* |
@@ -100,11 +106,12 @@ Minimal bureaucracy for a **solo developer**, with guardrails against self-decep
 
 ## What the instrument does
 
+0. **One prompt at a time (default daemon):** picks the **first incomplete** file and runs **`processTask` to completion** (success, fail, or timeout) before touching the next. No concurrent prompts, no parallel `processTask` calls from the main loop.
 1. Builds the prompt queue: optional **`TASK_MONITOR_TASK_LIST`** (one filename per line, in that order); otherwise every `*.md` under `TASK_MONITOR_TASKS_DIR`, sorted **A–Z** for stable sequencing. Skips `README.md`, `ONE-PIPELINE.md`, `STACK-RUN.md`, and files already marked completed in the markdown body.
 2. **`POST /api/a2a/sessions`** with **`mode: "agent"`** and task text from the file.
 3. **`POST /api/a2a/sessions/{id}/next`** and **`GET /api/a2a/sessions/{id}/async`** in a loop until the step settles.
 4. When the hydrated session shows **`form.choices`**, sends a **choice** (same contract as the UI: `result.choice` or top-level `task` as choice `id`).
-5. Writes **`task-monitor-state.json`** (`TASK_MONITOR_STATE_FILE`): on **success** clears **`sessionId`** / **`currentTask`**. On **failure** (timeout, abort, etc.) those fields are **cleared** too so the next run does **not** resume a dead session (`TASK_MONITOR_RESUME` only applies to an in-flight state you hand-edited or interrupted mid-poll). Failures may also emit **`hooks/`** payloads.
+5. Writes **`task-monitor-state.json`** (`TASK_MONITOR_STATE_FILE`): on **success** clears **`sessionId`** / **`currentTask`**. On **failure**, those top-level fields are cleared, but **`taskSessions[filename]`** keeps **`sessionId`**, optional **`lastKnownStep`**, and after a rewind **`resumeFromStep`** / **`rewindRemovedStep`** / **`lastRewindAt`** so the next run can **resume the same Client API session** when **`TASK_MONITOR_RESUME`** is on. To **retry the last step** (delete the highest step folder — request/response/promise/client snapshot — under `a2a-client/storage/sessions/<id>/`, same session id) use **`npm run monitor:rewind-session -- <sessionId>`**, or **`node monitor-and-process-tasks.js --once --retry-step`**, or set **`TASK_MONITOR_RESUME_REWIND_LAST_STEP=1`** (aliases: **`TASK_MONITOR_REWIND_LAST_STEP`**, **`TASK_MONITOR_RETRY_LAST_STEP`**) so the monitor runs **`rewindSessionLastStep`** once before **`GET /sessions`** on resume. Failures may also emit **`hooks/`** payloads.
 
 The monitor is **not** a substitute for understanding the router: if the server asks an unexpected question, inspect **`GET /api/a2a/sessions/{id}`** (`includeContext=1` when debugging) and continue manually or adjust automation — see [`AGENTS.md`](AGENTS.md) *Router dialog* and [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 
@@ -125,8 +132,9 @@ Enforced by [`tests/infrastructure/monitor-and-process-tasks.test.js`](tests/inf
 
 - **Signals:** **`SIGINT`** / **`SIGTERM`** → **`gracefulShutdown()`** (finish in-flight work where possible).
 - **Status:** ~**30s** `[daemon status]` lines (completed / failed counts).
-- **Hooks:** on failure or timeout, JSON under **`hooks/`** (type **`task_monitor_issue`**, stage metadata when available).
-- **Batch:** **`processNewTasks`**, **`monitorActiveTasks`**, **`cleanupCompletedTasks`**; **`activeTasks`** map in memory + state file.
+- **Hooks:** on failure or timeout, JSON under **`hooks/`** (type **`task_monitor_issue`**, stage metadata when available). On **success**, sequential **`processTask`** writes **`hooks/task_completion_report.json`** (latest terminal `context.result` / `result` when present).
+- **Single-task loop:** each cycle takes the **next incomplete** prompt and **`await`s `processTask`** until it finishes — only then continues. **`run()`** (`--once`) also runs **`processTask` sequentially** (one after another), capped by **`TASK_MONITOR_MAX_TASKS_PER_RUN`** when set.
+- **Legacy (unused by default entry):** **`processing/parallel-monitor.js`** exposes **`processNewTasks`** / **`monitorActiveTasks`** / **`activeTasks`** for alternate wiring — not what **`npm run monitor`** uses.
 
 ## Key features
 
@@ -145,16 +153,18 @@ Enforced by [`tests/infrastructure/monitor-and-process-tasks.test.js`](tests/inf
 |---------|----------------|
 | Hang after Ctrl+C | Shutdown waits on in-flight session; up to ~30s |
 | Tasks never start | **`start-all.bat`**, curls in root [`DEV_STATE.md`](DEV_STATE.md) *Health checks* |
-| No **`hooks/`** files | Hooks are written for **failed** or **timed-out** tasks only |
+| No **`task_monitor_issue.json`** | Issue hooks are for **failed** or **timed-out** tasks only; **`task_completion_report.json`** appears after **successful** runs (overwritten each success) |
 | **Session not found** in logs | Note **`sessionId`** from create step; inspect storage under **`a2a-client/storage/sessions/`** |
 | **~10m timeout** | Wall clock **`TASK_MONITOR_POLL_TIMEOUT_MS`** (default ~10m) wins; iteration cap auto-scales with timeout + interval so low **`TASK_MONITOR_MAX_POLL_ATTEMPTS`** alone cannot cut a long run short (~302s bug fixed). |
 | **`promise_daemon_only`** gate | Set **`TASK_MONITOR_SKIP_PROMISE_GATE=1`** when daemon drains the queue (CI / scripts) |
+| **Finish one session before the next prompt** | **Off by default** (`monitor-and-process-tasks.js` sets **`TASK_MONITOR_STRICT_AGENT_COMPLETION=0`** if unset): the monitor **polls** **`/async`** and **`GET …/sessions`** only — **no** automatic continuation **`/next`**; the agent drives **Red Room** (tool **`execute`**) and the client completes tools; the task completes on terminal session shape (e.g. **`context.result`**, **`step=completed`**, or loose first substantive **`step=request`** reply — see `process-task.js`). **Opt in:** **`TASK_MONITOR_STRICT_AGENT_COMPLETION=1`** plus **`TASK_MONITOR_AGENT_CONTINUE_MAX`** (default **20**) to nudge with **`TASK_MONITOR_AGENT_CONTINUE_PROMPT`** until **`step=completed`** / **`context.result`**. **`TASK_MONITOR_AGENT_CONTINUE_MAX=0`** with strict **1** fails fast (use **`>= 1`** for nudges). |
+| Debug one stuck **`promiseId`** | **`npm run report:promise -- <promiseId> --out report.md`** — [scripts/promise-artifacts-report.mjs](scripts/promise-artifacts-report.mjs): server JSON + Gray Room trace + client steps + `proxy_logs`; add **`--logs`** for server log lines |
 
 ## Prerequisites
 
 - Stack up: **`start-all.bat`** from repo root (not ad-hoc `npm run dev` per package) — [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md).
 - Client API reachable at your configured base (default **`http://localhost:5173/api/a2a`**).
-- **Before a large or full-index run:** archive session folders you need from **`a2a-client/storage/sessions/`** (Self-Upgrade policy — [`tasks/README.md`](tasks/README.md) step 2, [`GLOSSARY.md`](GLOSSARY.md) *Session archival*). Reduces risk when many new sessions are created or storage is pruned later.
+- **Before a large or full-index run:** archive session folders you need from **`a2a-client/storage/sessions/`** (Self-Upgrade policy — [`tasks/README.md`](tasks/README.md) step 2, [`GLOSSARY.md`](GLOSSARY.md) *Session archival*). Shipped scripts do **not** age-prune sessions; only an explicit **`cleanup:*`** wipes that tree.
 
 ## Run commands
 
@@ -164,8 +174,26 @@ From repo root:
 npm run monitor              # daemon: continuous watch loop
 npm run monitor:daemon       # same (explicit)
 npm run monitor:once         # by default: one non-skipped prompt per run, then exit (see TASK_MONITOR_MAX_TASKS_PER_RUN)
-npm run monitor:reset        # remove task-monitor-state.json (Windows-friendly)
+npm run monitor:reset        # remove Task Monitor state + completed-session ledger only (see TASK_MONITOR_STATE_FILE)
+npm run monitor:completed    # list completed prompts ↔ sessionId
+npm run monitor:completed:json   # same as JSON (for scripts)
+npm run cleanup:state        # empty client sessions dir, hub proxy_logs, server requests (no monitor JSON)
+npm run cleanup:fresh        # monitor:reset-equivalent JSON + same dirs as cleanup:state (full local wipe for new run)
+npm run cleanup:sessions-only   # only a2a-client/storage/sessions (keep server/hub snapshots)
+npm run monitor:rewind-session -- <sessionId>   # delete highest step dir on disk (retry last /next without new session)
+npm run report:promise -- <promiseId> [--out trace.md] [--logs]   # MD report: storages + Gray Room steps for one server promise
 ```
+
+### Fresh start (wipe sessions + monitor cursor)
+
+1. Stop stack: **`kill-all.bat`** (or **`kill-all.sh`**) from repo root.  
+2. **`npm run cleanup:fresh`** — removes Task Monitor state / ledger and empties client **`storage/sessions`**, hub **`proxy_logs`**, hub promise snapshots, server **`storage/requests`**. Does **not** delete LLM disk cache under **`ai-integration/storage/cache`**.  
+3. Start again: **`start-all.bat`** / **`start-all.sh`**, then **`npm run monitor`** as usual.
+
+To drop **only** monitor bindings without touching disk sessions: **`npm run monitor:reset`**.  
+To drop **only** Client API session trees: **`npm run cleanup:sessions-only`** (removes **all** `a2a-client/storage/sessions/*`; same idea as **`npm run cleanup:sessions --prefix a2a-client`**).
+
+**Session retention:** No **age-based** pruning — only explicit wipes above. After a wipe, Task Monitor keeps **one** Client API `sessionId` per markdown prompt (`taskSessions`) until that prompt completes; avoid wiping mid-run unless you intend to abandon those sessions.
 
 Equivalent:
 
@@ -173,6 +201,7 @@ Equivalent:
 node monitor-and-process-tasks.js              # daemon
 node monitor-and-process-tasks.js --daemon
 node monitor-and-process-tasks.js --once
+node monitor-and-process-tasks.js --once --retry-step   # resume + rewind last disk step (same sessionId)
 ```
 
 ## Environment (`TASK_MONITOR_*`)
@@ -196,7 +225,11 @@ Defined in [`.env.example`](.env.example). Common overrides:
 | `TASK_MONITOR_AI_HUB_URL` | AI Integration proxy base (default `http://localhost:11434`) — used to read `GET …/health` |
 | `TASK_MONITOR_SKIP_PROMISE_GATE` | `1` / `true` — skip the interactive **OK** prompt when `promise_daemon_only` is on (CI / scripts) |
 | `TASK_MONITOR_STATE_FILE` | Path to JSON cursor (`sessionId`, `currentTask`, `processedTasks`, …); default `task-monitor-state.json` |
-| `TASK_MONITOR_RESUME` | `1` (default) — reuse `sessionId` when state still has `currentTask` matching the prompt (e.g. interrupted run); `0` / `false` / `no` — always `POST /sessions`. Failed runs clear state so the next invocation starts fresh. |
+| `TASK_MONITOR_RESUME` | `1` (default) — reuse session: **`taskSessions[<prompt>.md].sessionId`** first, else `sessionId` when `currentTask` matches; `0` — always `POST /sessions` for a new id. |
+| `TASK_MONITOR_REWIND_LAST_STEP` | `1` — on resume, delete the **last step folder** on disk (`rewindSessionLastStep`) before continuing (same session id; use after a bad server step). |
+| `TASK_MONITOR_RESUME_REWIND_LAST_STEP` | Same as above (alias); also set by CLI **`--retry-step`**. |
+| `TASK_MONITOR_RETRY_LAST_STEP` | Same as **`TASK_MONITOR_REWIND_LAST_STEP`** (alias). |
+| `A2A_CLIENT_STORAGE_DIR` | Client session storage root (default resolves under repo); required for rewind if not `…/a2a-client/storage`. |
 
 `LOCAL_LLM_UPSTREAM_URL` and `AI_HUB_URL` are used for health checks when set.
 
@@ -224,7 +257,7 @@ See [`tests/direct-tests/README.md`](tests/direct-tests/README.md) for scopes an
 ## State and hooks
 
 - **`task-monitor-state.json`** — current task, session id, processed entries, active tasks.
-- **`hooks/`** — machine-readable issue documents when the monitor needs human or IDE follow-up.
+- **`hooks/`** — **`task_monitor_issue.json`** for failures/timeouts; **`task_completion_report.json`** after a successful prompt (sequential daemon / `--once`).
 
 ## Tests
 
@@ -236,7 +269,7 @@ npm run test:monitor
 npx vitest run tests/infrastructure/monitor-and-process-tasks.test.js
 ```
 
-Expect **19 passed** — static checks over [`monitor-and-process-tasks.js`](monitor-and-process-tasks.js) plus [`tests/monitor-tasks/*.js`](tests/monitor-tasks/). The same suite runs at the end of **`npm run test:before-start`** (after indirect tests and server unit script).
+Expect **34 passed** — static checks over [`monitor-and-process-tasks.js`](monitor-and-process-tasks.js) plus [`tests/monitor-tasks/*.js`](tests/monitor-tasks/). The same suite runs at the end of **`npm run test:before-start`** (after indirect tests and server unit script).
 
 ## Implementation map
 
@@ -248,4 +281,4 @@ Expect **19 passed** — static checks over [`monitor-and-process-tasks.js`](mon
 | Errors + direct-test hints | [`tests/monitor-tasks/errors.js`](tests/monitor-tasks/errors.js) |
 | Config + `logError` | [`tests/monitor-tasks/task-monitor-core.js`](tests/monitor-tasks/task-monitor-core.js) |
 
-For a short index + git pointers, see [`COMPLETION-REPORT.md`](COMPLETION-REPORT.md).
+There is **no** root `COMPLETION-REPORT.md` in this repo; operator narrative is this file and [`DEV_STATE.md`](DEV_STATE.md). Optional follow-up: [`tasks/brown-alert/monitor-docs-duplicate-surfaces.md`](tasks/brown-alert/monitor-docs-duplicate-surfaces.md).

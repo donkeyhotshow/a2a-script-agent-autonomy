@@ -27,7 +27,9 @@
   ],
   "author": "",
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "vm2": "^3.10.5"
+  },
   "devDependencies": {
     "typescript": "^5.3.3"
   },

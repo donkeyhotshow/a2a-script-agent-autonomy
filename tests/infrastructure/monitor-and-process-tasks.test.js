@@ -15,13 +15,22 @@ vi.mock('axios');
 
 const MONITOR_SOURCE_FILES = [
   'monitor-and-process-tasks.js',
+  'tests/monitor-tasks/monitor-mixin.js',
+  'tests/monitor-tasks/monitor-modules.js',
   'tests/monitor-tasks/task-monitor-core.js',
+  'tests/monitor-tasks/promise-queue-probe.mjs',
   'tests/monitor-tasks/task-monitor-api.js',
   'tests/monitor-tasks/task-monitor-processing.js',
+  'tests/monitor-tasks/processing/rewind-disk.js',
+  'tests/monitor-tasks/processing/router-gate.js',
+  'tests/monitor-tasks/processing/task-files.js',
+  'tests/monitor-tasks/processing/process-task.js',
+  'tests/monitor-tasks/processing/parallel-monitor.js',
   'tests/monitor-tasks/task-monitor-utils.js',
   'tests/monitor-tasks/task-monitor-validation.js',
   'tests/monitor-tasks/task-monitor-log-scan.js',
   'tests/monitor-tasks/task-monitor-daemon.js',
+  'tests/monitor-tasks/task-monitor-session-helpers.js',
   'tests/monitor-tasks/errors.js',
 ];
 
@@ -58,9 +67,17 @@ describe('monitor-and-process-tasks.js', () => {
   describe('Bug Fix 2: Double Task Submission', () => {
     it('should handle task submission with proper fallback', () => {
       const source = readMonitorSources(testDir);
-      expect(source).toContain('{ task: taskDescription }');
-      expect(source).toContain('{ result: { message: taskDescription } }');
+      expect(source).toMatch(/\{\s*task:\s*routerTask\s*\}/);
+      expect(source).toMatch(/\{\s*result:\s*\{\s*message:\s*routerTask\s*\}\s*\}/);
       expect(source).toContain('retrying with result.message');
+    });
+  });
+
+  describe('Router gate: agent handoff without form', () => {
+    it('accepts message-only execute after router→agent (two-phase spec inject)', () => {
+      const source = readMonitorSources(testDir);
+      expect(source).toContain("i.name === 'message'");
+      expect(source).toContain('submitAgentSpecOnce');
     });
   });
 
@@ -97,6 +114,16 @@ describe('monitor-and-process-tasks.js', () => {
     });
   });
 
+  describe('Completed session export', () => {
+    it('exposes --list-completed and ledger helpers for finished prompts', () => {
+      const entry = fs.readFileSync(path.join(testDir, 'monitor-and-process-tasks.js'), 'utf8');
+      expect(entry).toContain('--list-completed');
+      const core = fs.readFileSync(path.join(testDir, 'tests/monitor-tasks/task-monitor-core.js'), 'utf8');
+      expect(core).toContain('printCompletedSessionsExport');
+      expect(core).toContain('readCompletedSessionsLedger');
+    });
+  });
+
   describe('Daemon System Features', () => {
     it('should have graceful shutdown handler', () => {
       const source = readMonitorSources(testDir);
@@ -119,12 +146,12 @@ describe('monitor-and-process-tasks.js', () => {
       expect(source).toContain('suggestedActions');
     });
 
-    it('should have active task monitoring', () => {
+    it('should run daemon sequential loop (processTask + status)', () => {
       const source = readMonitorSources(testDir);
-      expect(source).toContain('monitorActiveTasks');
-      expect(source).toContain('processNewTasks');
-      expect(source).toContain('cleanupCompletedTasks');
+      expect(source).toContain('processTask');
+      expect(source).toContain('runDaemon');
       expect(source).toContain('activeTasks');
+      expect(source).toContain('[daemon status]');
     });
 
     it('should support daemon mode via command line', () => {
@@ -137,6 +164,12 @@ describe('monitor-and-process-tasks.js', () => {
       const entry = fs.readFileSync(path.join(testDir, 'monitor-and-process-tasks.js'), 'utf8');
       expect(entry).toContain('TASK_MONITOR_MAX_TASKS_PER_RUN');
       expect(entry).toContain("process.env.TASK_MONITOR_MAX_TASKS_PER_RUN = '1'");
+    });
+
+    it('should default TASK_MONITOR_STRICT_AGENT_COMPLETION when unset', () => {
+      const entry = fs.readFileSync(path.join(testDir, 'monitor-and-process-tasks.js'), 'utf8');
+      expect(entry).toContain('TASK_MONITOR_STRICT_AGENT_COMPLETION');
+      expect(entry).toContain("process.env.TASK_MONITOR_STRICT_AGENT_COMPLETION = '0'");
     });
 
     it('should support optional TASK_MONITOR_TASK_LIST ordering', () => {
@@ -152,11 +185,54 @@ describe('monitor-and-process-tasks.js', () => {
       expect(source).toContain('session-resume');
     });
 
+    it('should persist per-task session mapping and optional disk rewind', () => {
+      const source = readMonitorSources(testDir);
+      expect(source).toContain('taskSessions');
+      expect(source).toContain('recordTaskSessionSnapshot');
+      expect(source).toContain('TASK_MONITOR_REWIND_LAST_STEP');
+      expect(source).toContain('TASK_MONITOR_RESUME_REWIND_LAST_STEP');
+      expect(source).toContain('resumeFromStep');
+      expect(source).toContain('rewindSessionLastStep');
+      const newSessions = fs.readFileSync(
+        path.join(testDir, 'a2a-client/packages/vite-plugin/storage/newSessions.js'),
+        'utf8'
+      );
+      expect(newSessions).toMatch(/rewindSessionLastStep/);
+      expect(newSessions).toMatch(/rewindSessionAfterStep/);
+    });
+
+    it('should map --retry-step to TASK_MONITOR_RESUME_REWIND_LAST_STEP in entry script', () => {
+      const entry = fs.readFileSync(path.join(testDir, 'monitor-and-process-tasks.js'), 'utf8');
+      expect(entry).toContain('--retry-step');
+      expect(entry).toContain('TASK_MONITOR_RESUME_REWIND_LAST_STEP');
+      expect(entry).toContain('--resume-from-step=');
+    });
+
+    it('should expose disk rewind via processing/rewind-disk and central mixins in entry', () => {
+      const source = readMonitorSources(testDir);
+      expect(source).toContain('tryRewindSessionDiskStep');
+      expect(source).toContain('applyTaskMonitorRewindDisk');
+      const entry = fs.readFileSync(path.join(testDir, 'monitor-and-process-tasks.js'), 'utf8');
+      expect(entry).toContain('applyMonitorMixins');
+      expect(entry).toContain('TASK_MONITOR_MIXINS');
+    });
+
     it('should treat status=pending as async busy and support agent tool stall + phase key', () => {
       const source = readMonitorSources(testDir);
       expect(source).toContain("asyncResult.status === 'pending'");
       expect(source).toContain('TASK_MONITOR_AGENT_TOOL_STALL_MS');
       expect(source).toContain('agent_tool_phase');
+    });
+
+    it('should support strict agent completion until step=completed via continuation /next', () => {
+      const pt = fs.readFileSync(
+        path.join(testDir, 'tests/monitor-tasks/processing/process-task.js'),
+        'utf8'
+      );
+      expect(pt).toContain('TASK_MONITOR_STRICT_AGENT_COMPLETION');
+      expect(pt).toContain('TASK_MONITOR_AGENT_CONTINUE_MAX');
+      expect(pt).toContain('TASK_MONITOR_AGENT_CONTINUE_PROMPT');
+      expect(pt).toContain('strict-agent-continue');
     });
   });
 
@@ -198,14 +274,79 @@ describe('monitor-and-process-tasks.js', () => {
       expect(source).toContain('stageDetail');
       expect(source).toContain('stage=');
     });
+
+    it('should wire Client API traffic through session shape validation', () => {
+      const source = readMonitorSources(testDir);
+      expect(source).toContain('_validateGetSessionBody');
+      expect(source).toContain('validatePartialSessionEnvelope');
+      expect(source).toContain('isTaskMonitorSessionValidationDisabled');
+    });
+
+    it('should share hub promise-queue probe between CLI and monitor snapshot', () => {
+      const source = readMonitorSources(testDir);
+      expect(source).toContain('probePromiseQueues');
+      expect(source).toContain('emitProbeLogLines');
+      expect(source).toContain('probeToJsonReport');
+      expect(source).toContain('formatErrorRowLine');
+      expect(source).toContain('/promises/errors');
+      expect(source).toContain('logHubPromiseQueueSnapshot');
+    });
+
+    it('should enforce one prompt at a time until processTask completes (daemon invariant)', () => {
+      const daemon = fs.readFileSync(
+        path.join(testDir, 'tests/monitor-tasks/task-monitor-daemon.js'),
+        'utf8'
+      );
+      const entry = fs.readFileSync(path.join(testDir, 'monitor-and-process-tasks.js'), 'utf8');
+      expect(daemon).toContain('INVARIANT: one incomplete prompt per iteration');
+      expect(entry).toContain('one prompt at a time');
+    });
+
+    it('should support check-promise-queue --json and --detail', () => {
+      const cli = fs.readFileSync(
+        path.join(testDir, 'tests/monitor-tasks/check-promise-queue.mjs'),
+        'utf8'
+      );
+      expect(cli).toContain("'--json'");
+      expect(cli).toContain("'--detail'");
+      expect(cli).toContain('probeToJsonReport');
+    });
+
+    it('should optionally probe hub queue on daemon status tick', () => {
+      const daemon = fs.readFileSync(
+        path.join(testDir, 'tests/monitor-tasks/task-monitor-daemon.js'),
+        'utf8'
+      );
+      expect(daemon).toContain('TASK_MONITOR_HUB_PROBE_DAEMON_STATUS');
+      expect(daemon).toContain('logHubPromiseQueueSnapshot');
+    });
+
+    it('should bind completed monitor tasks to Client API sessionId for downstream use', () => {
+      const source = readMonitorSources(testDir);
+      expect(source).toContain('getCompletedTasksWithSessions');
+      expect(source).toContain('mergeCompletedSessionsForExport');
+      expect(source).toContain('appendCompletedSessionsLedger');
+      expect(source).toContain('Recorded completion');
+    });
+
+    it('should write completion hook from sequential processTask on success', () => {
+      const pt = fs.readFileSync(
+        path.join(testDir, 'tests/monitor-tasks/processing/process-task.js'),
+        'utf8'
+      );
+      expect(pt).toContain('createCompletionReport');
+      expect(pt).toContain('success && session?.id');
+    });
   });
 
   describe('Code Quality Checks', () => {
     it('should have proper async method definitions', () => {
       const source = readMonitorSources(testDir);
+      expect(source).toContain('TASK_MONITOR_REQUIRE_TERMINAL_AGENT');
       const methods = [
         'processTask',
         'extractTaskDescription',
+        'buildMonitorCreateSessionTaskInput',
         'createSession',
         'sendNext',
         'pollAsync',

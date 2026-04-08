@@ -4,7 +4,7 @@
 
 **Why use them:** Faster than stepping through the UI; same rules as shared helpers where noted (e.g. [`lib/check-llm-execute-shape.mjs`](lib/check-llm-execute-shape.mjs) for assistant-line vs tool keys).
 
-**Quickstart:** From repo root, see root `package.json` scripts: `scan-promise-bodies`, `scan-session-responses`, `verify:gray-room`, `audit:sim-choice-descriptions`, `sim:check-md`.
+**Quickstart:** From repo root, see root `package.json` scripts: `scan-promise-bodies`, `scan-session-responses`, `verify:gray-room`, `audit:sim-choice-descriptions`, `sim:check-md`, **`report:promise`** (full artifact + Gray Room step report for one server `promiseId` — not a linter; see [Related](#related-repo-root-scripts) below).
 
 ## Scripts in this folder
 
@@ -15,6 +15,12 @@
 | [scan-session-responses.mjs](scan-session-responses.mjs) | `scan-session-responses` | `a2a-client/storage/sessions/**/server-response.json` — execute/message rules + `context.task` + non-empty `history` must include `role:user` (see `simulations/sync/dialog/description.md`) |
 | [verify-gray-room-state.mjs](verify-gray-room-state.mjs) | `verify:gray-room` | Session/context snapshot JSON — `workbench.sections.sequence`, predictions, `history` / `operationHistory` consistency |
 | [audit-sim-choice-descriptions.mjs](audit-sim-choice-descriptions.mjs) | `audit:sim-choice-descriptions` | All `simulations/**/*.json` — router `choices[]` rows must have non-empty `description` |
+
+## Related (repo-root scripts)
+
+| npm run | Role |
+|---------|------|
+| `report:promise` | [`scripts/promise-artifacts-report.mjs`](../../../scripts/promise-artifacts-report.mjs) — given one **`promiseId`**, writes a **Markdown** inventory: `a2a-server/storage/requests/{id}.json` (Gray Room `interruptTrace` / slots / `operationHistory`), client session refs, `ai-integration/proxy_logs/promises/<id>/`; optional `--logs` |
 
 ## Related (stay in package modules)
 

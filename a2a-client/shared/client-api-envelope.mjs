@@ -83,12 +83,21 @@ export function normalizePromisePollStatus(promiseStatus) {
     );
     const failed =
         (status === 'failed' || status === 'error') && !isRecoverableAsyncSnapshot(promiseStatus);
+    let requestPhase = promiseStatus?.requestPhase ?? null;
+    if (
+        (status === 'completed' || status === 'done') &&
+        promiseStatus?.execute &&
+        typeof promiseStatus.execute === 'object' &&
+        requestPhase === 'llm_error'
+    ) {
+        requestPhase = null;
+    }
     return {
         status: status || (completed ? 'completed' : 'pending'),
         completed,
         failed,
         asyncPending: !(completed || failed),
-        requestPhase: promiseStatus?.requestPhase ?? null,
+        requestPhase,
         retryAfter: promiseStatus?.retryAfter ?? null,
     };
 }

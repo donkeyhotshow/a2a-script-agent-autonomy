@@ -9,7 +9,7 @@
     {
       "op": "set",
       "path": "$out.context.execution.step",
-      "value": "request"
+      "value": "start"
     },
     {
       "op": "set",
@@ -22,18 +22,7 @@
       "op": "set",
       "path": "$out.execute",
       "value": {
-        "form": {
-          "title": "Agent Mode",
-          "description": "Enter your task for the agent",
-          "input": [
-            {
-              "name": "task",
-              "type": "text",
-              "label": "Task",
-              "required": true
-            }
-          ]
-        }
+        "message": "Pending LLM (request template; no fixed input form)."
       }
     },
     {

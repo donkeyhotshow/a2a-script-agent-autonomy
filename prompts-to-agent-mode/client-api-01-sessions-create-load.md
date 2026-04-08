@@ -11,4 +11,4 @@ With stack up (`start-all`), verify `POST /api/a2a/sessions` returns `session.id
 
 ## Completion
 
-- [ ] Done
+[X] Completed

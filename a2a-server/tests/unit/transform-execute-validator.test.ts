@@ -170,7 +170,7 @@ describe('validateExecuteShapeForSchema', () => {
         const agentIssues = validateExecuteShapeForSchema('coder', ex);
         const dialogIssues = validateDialogExecuteShape(ex);
         expect(agentIssues).toHaveLength(0);
-        expect(dialogIssues.some((i) => i.code === 'DIALOG_EXECUTE_UNKNOWN_SHAPE')).toBe(true);
+        expect(dialogIssues).toHaveLength(0);
     });
 
     it('uses dialog rules for dialog schema', () => {

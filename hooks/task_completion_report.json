@@ -1,0 +1,12 @@
+{
+  "reportId": "task_completion_report",
+  "type": "task_completion_report",
+  "taskName": "doc-adr-0035-open-followups.md",
+  "status": "completed",
+  "result": null,
+  "context": {
+    "sessionId": "sess_1775605500906",
+    "completedAt": "2026-04-07T23:45:26.229Z"
+  },
+  "createdAt": "2026-04-07T23:45:26.229Z"
+}

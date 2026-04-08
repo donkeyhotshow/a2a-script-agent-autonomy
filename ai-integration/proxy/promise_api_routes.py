@@ -400,7 +400,7 @@ def promise_execute(promise_id: str):
 
 @app.route('/promise/<promise_id>/retry', methods=['POST'])
 def promise_retry(promise_id: str):
-    """Reset promise to pending for daemon to retry (clears error)."""
+    """Reset error/done promise to ``pending`` so ``POST …/execute`` or the daemon can run it again."""
     rec = get_promise(promise_id)
     if rec is None:
         return Response(

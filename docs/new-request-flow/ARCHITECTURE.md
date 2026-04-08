@@ -153,11 +153,11 @@ doc:
 
 ## Порты
 
-Сводная таблица: [DATA-FLOW.md → компоненты и порты](DATA-FLOW.md#component-ports); краткий перечень: [AGENTS.md → Default Ports](../../AGENTS.md#default-ports).
+Сводная таблица: [DATA-FLOW.md → компоненты и порты](DATA-FLOW.md#component-ports); краткий перечень: [AGENTS-REFERENCE.md → Ports](../AGENTS-REFERENCE.md#ports).
 
 ## Переменные окружения
 
-Сервер, клиент, ключи, AI: [AGENTS.md → Environment Variables](../../AGENTS.md#environment-variables).
+Сервер, клиент, ключи, AI: [AGENTS-REFERENCE.md → Environment Variables](../AGENTS-REFERENCE.md#environment-variables).
 
 ## Следующие шаги
 

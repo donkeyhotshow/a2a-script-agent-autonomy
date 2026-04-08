@@ -88,6 +88,10 @@ User Request → Promise Creation → Queue → Worker Processing → Result Sto
 - ✅ Resource limit configuration
 - ✅ Integration with existing request flow
 
+### Hub tickets (ai-integration, port 11434)
+
+LLM traffic via the hub uses **disk-backed** `promiseId` under `proxy_logs/promises/`. The **daemon** only dequeues **`pending`** rows. **`error`** is **not** auto-retried: operators use **`GET /promises/errors`**, **`POST /promise/{id}/retry`**, **`POST /promise/{id}/execute`**, or **`DELETE /promise/{id}`** (see [`ai-integration/docs/api-reference/PROXY_API.md`](../../ai-integration/docs/api-reference/PROXY_API.md) § *Promise queue*). The **Client API** (Vite dev and standalone SDK) exposes the same paths under **`/api/a2a/hub/*`** (proxy to `AI_HUB_URL`).
+
 ### Future Enhancements
 - Add priority queues for different task types
 - Implement distributed queue for horizontal scaling

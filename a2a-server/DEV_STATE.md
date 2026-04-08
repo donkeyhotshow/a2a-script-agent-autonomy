@@ -1,4 +1,4 @@
-# DEV_STATE — a2a-server (2026-04-07)
+# DEV_STATE — a2a-server (2026-04-08)
 
 **Rules Q&A:** [`../docs/PROJECT-RULES-QA.md`](../docs/PROJECT-RULES-QA.md) · [`../AGENTS.md`](../AGENTS.md)
 
@@ -30,6 +30,10 @@ Session storage is **not** here — see [a2a-client/DEV_STATE.md](../a2a-client/
 
 `request-processor` → dialog / agent / router / form / gray-room paths. For monitor-driven agent work, failures often show up as **stuck `processing`** or bad `execute` shape — start with [`tests/direct-tests/README.md`](../tests/direct-tests/README.md) if contracts break.
 
+**Agent `step=request` loop (2026-04-08):** If the LLM re-emits the initial **Agent Mode** form after **≥2** assistant history lines, [`agent-spurious-request-normalize.ts`](src/services/core/request-processor/agent-spurious-request-normalize.ts) coerces **`processing` + `execute.message`** before `finalizeDialogGrayRoomResult` — avoids Task Monitor strict `/next` spam. Tests: [`tests/unit/agent-spurious-request-normalize.test.ts`](tests/unit/agent-spurious-request-normalize.test.ts).
+
+**Hub disk-cache / `inlineResponseBody` (2026-04-08):** `POST /api/chat?promise=1` **200** returns full provider JSON in `responseBody`. Dialog + Gray Room + Black Room + AgentSwing now run [`extractLlmTextFromHubResponseBody`](src/daemon/llm-hub-poll.ts) on that string before `response.md` / JSON parses — avoids `context.history` assistant lines containing raw `{"choices":[...]}` envelopes. Tests: [`tests/unit/llm-hub-poll.test.ts`](tests/unit/llm-hub-poll.test.ts).
+
 ---
 
 ## AI-Integration lock
@@ -40,9 +44,13 @@ UNBLOCKED.
 
 ## Security hygiene
 
+**2026-04-08:** [`ai-hub-chat-sync.ts`](src/utils/ai-hub-chat-sync.ts) — after hub **`POST /api/chat?promise=1`** returns **202**, call **`POST /promise/:id/execute`** before polling so **`PROMISE_DAEMON_ONLY`** tickets actually run (fixes **`hub_promise_empty`** / Gray Room internal debate `AI hub error: 0 hub_promise_empty`). Tests: `npx vitest run tests/unit/ai-hub-chat-sync.test.ts` · `tests/integration/invoke-http-parity.test.ts`.
+
 **2026-04-07:** [`bug-fixer.ts`](src/services/llm/bug-fixer.ts) `getGitDiff` — `spawnSync('git', ['diff','--no-color','--', filePath])` instead of shell-interpolated `execSync`. Purple hunt log: [`docs/PURPLE-ALERT-HARMFUL-HUNT.md`](../docs/PURPLE-ALERT-HARMFUL-HUNT.md).
 
 **Magenta:** [`package.json`](package.json) `overrides.tar` → `^7.5.13` so production `npm audit --omit=dev` is clean (transitive `tar` from `bcrypt` / `node-pre-gyp`).
+
+**Tools evolve:** [`src/api/tools-evolve-sandbox.ts`](src/api/tools-evolve-sandbox.ts) validates `toolCode` (TS + vm2 `VM`) before deploy; [`tests/unit/tools-evolve-sandbox.test.ts`](tests/unit/tools-evolve-sandbox.test.ts). Task: [`tasks/completed/improve-tools-evolve-sandboxing.md`](../tasks/completed/improve-tools-evolve-sandboxing.md).
 
 ---
 

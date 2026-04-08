@@ -7,7 +7,11 @@
 
 import {logger} from '../../../utils/logger.js';
 import {resolveAiHubBaseUrlWithModuleEnv} from '../../../utils/ai-hub-url.js';
-import {initAiHubChatPromise, pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
+import {
+    extractLlmTextFromHubResponseBody,
+    initAiHubChatPromise,
+    pollReadyThenFetch,
+} from '../../../daemon/llm-hub-poll.js';
 import {BLACK_ROOM_DEFAULT_LLM_MODEL} from './black-room-defaults.js';
 import {tryParseJsonFromLlmText} from '../../../utils/strip-markdown-json-fence.js';
 import {AlgorithmDefinition, AlgorithmContext, AlgorithmData, AlgorithmResult, BlackRoomExecutionOptions} from './types.js';
@@ -200,9 +204,10 @@ Return findings as JSON.`;
             throw new Error('No promiseId in AI hub response');
         }
 
-        const response =
+        const responseRaw =
             chatInit.inlineResponseBody ?? (await pollReadyThenFetch(this.aiHubUrl, chatInit.llmPromiseId));
-        if (!response) {
+        const response = responseRaw ? extractLlmTextFromHubResponseBody(responseRaw) : null;
+        if (!response?.trim()) {
             throw new Error('AI hub response fetch failed');
         }
 

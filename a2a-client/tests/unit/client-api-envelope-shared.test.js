@@ -60,6 +60,18 @@ describe('shared client-api-envelope helpers', () => {
             requestPhase: 'llm_error',
             retryAfter: '2099-01-01T00:00:00.000Z',
         });
+
+        expect(
+            normalizePromisePollStatus({
+                status: 'completed',
+                requestPhase: 'llm_error',
+                execute: { form: { title: 'x' } },
+            })
+        ).toMatchObject({
+            status: 'completed',
+            requestPhase: null,
+            completed: true,
+        });
     });
 
     it('unwrapEnvelope: data then session; null data + session fallback', () => {

@@ -11,4 +11,4 @@ Drive an **agent** session until server returns a tool-shaped `execute`; complet
 
 ## Completion
 
-- [ ] Done
+[X] Completed

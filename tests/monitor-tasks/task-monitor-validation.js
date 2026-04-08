@@ -1,36 +1,165 @@
 import axios from 'axios';
 
+/**
+ * Action-key shape for Client API session payloads (projected execute / result).
+ * @param {object} obj
+ * @param {'execute'|'result'} type
+ */
+export function validateActionKeyShape(obj, type) {
+  if (!obj || typeof obj !== 'object') return false;
+  const keys = Object.keys(obj);
+  if (type === 'execute') {
+    const aux = new Set(['message', 'completed', 'llmMessage', 'attachments', 'form']);
+    const actionKeys = keys.filter((k) => !aux.has(k));
+    if (actionKeys.length === 0) {
+      return keys.length > 0;
+    }
+    if (actionKeys.length !== 1) return false;
+    return actionKeys[0] !== 'result';
+  }
+  const auxResult = new Set(['message', 'completed', 'llmMessage']);
+  const actionKeys = keys.filter((k) => !auxResult.has(k));
+  if (actionKeys.length === 0) return keys.length > 0;
+  if (actionKeys.length !== 1) return false;
+  return actionKeys[0] !== 'execute';
+}
+
+/**
+ * Validate a GET /api/a2a/sessions/:id body (Vite storage-mode: top-level session DTO).
+ * @param {object|null|undefined} sessionData
+ * @param {{ requireId?: boolean, checkMessages?: boolean, checkAsyncPending?: boolean, checkContextResult?: boolean }} [options]
+ * @returns {{ valid: boolean, error?: string, errors: string[] }}
+ */
+/** Default: validation on. Set `TASK_MONITOR_VALIDATE_SESSION=0` to skip shape warnings on Client API traffic. */
+export function isTaskMonitorSessionValidationDisabled() {
+  const v = process.env.TASK_MONITOR_VALIDATE_SESSION;
+  if (v == null || String(v).trim() === '') return false;
+  return /^(0|false|no)$/i.test(String(v).trim());
+}
+
+/**
+ * Options for {@link validateClientSession} after GET /sessions/:id.
+ * @param {object} data
+ * @param {boolean} includeContext
+ */
+export function buildGetSessionValidateOptions(data, includeContext) {
+  return {
+    requireId: true,
+    checkContextResult: includeContext === true,
+    checkMessages:
+      includeContext === true &&
+      data &&
+      typeof data === 'object' &&
+      !Array.isArray(data) &&
+      'messages' in data &&
+      data.messages != null,
+    checkAsyncPending: !!(data && typeof data === 'object' && !Array.isArray(data) && 'asyncPending' in data),
+  };
+}
+
+/**
+ * Validate top-level `execute` / `result` only (e.g. /next ack, /async envelope).
+ * @param {object|null|undefined} data
+ * @returns {{ valid: boolean, errors: string[] }}
+ */
+export function validatePartialSessionEnvelope(data) {
+  const errors = [];
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { valid: true, errors: [] };
+  }
+  if (data.execute != null) {
+    if (typeof data.execute !== 'object' || Array.isArray(data.execute)) {
+      errors.push('execute must be a plain object when present');
+    } else if (!validateActionKeyShape(data.execute, 'execute')) {
+      errors.push('Invalid execute action-key shape');
+    }
+  }
+  if (data.result != null) {
+    if (typeof data.result !== 'object' || Array.isArray(data.result)) {
+      errors.push('result must be a plain object when present');
+    } else if (!validateActionKeyShape(data.result, 'result')) {
+      errors.push('Invalid result action-key shape');
+    }
+  }
+  return errors.length ? { valid: false, errors } : { valid: true, errors: [] };
+}
+
+export function validateClientSession(sessionData, options = {}) {
+  const errors = [];
+  const requireId = options.requireId !== false;
+  const checkMessages = options.checkMessages === true;
+  const checkAsyncPending = options.checkAsyncPending === true;
+  const checkContextResult = options.checkContextResult !== false;
+
+  if (!sessionData || typeof sessionData !== 'object' || Array.isArray(sessionData)) {
+    const msg = 'Session must be a non-null plain object';
+    return { valid: false, error: msg, errors: [msg] };
+  }
+
+  const sid = sessionData.id ?? sessionData.sessionId;
+  if (requireId && (typeof sid !== 'string' || !sid.trim())) {
+    errors.push('Missing session id (expected string id or sessionId)');
+  }
+
+  if (sessionData.execute != null) {
+    if (typeof sessionData.execute !== 'object' || Array.isArray(sessionData.execute)) {
+      errors.push('execute must be a plain object when present');
+    } else if (!validateActionKeyShape(sessionData.execute, 'execute')) {
+      errors.push('Invalid execute action-key shape');
+    }
+  }
+
+  if (sessionData.result != null) {
+    if (typeof sessionData.result !== 'object' || Array.isArray(sessionData.result)) {
+      errors.push('result must be a plain object when present');
+    } else if (!validateActionKeyShape(sessionData.result, 'result')) {
+      errors.push('Invalid result action-key shape');
+    }
+  }
+
+  if (checkContextResult && sessionData.context != null && typeof sessionData.context === 'object') {
+    const ctxRes = sessionData.context.result;
+    if (ctxRes != null && typeof ctxRes === 'object' && !Array.isArray(ctxRes)) {
+      if (!validateActionKeyShape(ctxRes, 'result')) {
+        errors.push('Invalid context.result action-key shape');
+      }
+    }
+  }
+
+  if (checkMessages && 'messages' in sessionData && sessionData.messages != null) {
+    if (!Array.isArray(sessionData.messages)) {
+      errors.push('messages must be an array when present');
+    }
+  }
+
+  if (checkAsyncPending && 'asyncPending' in sessionData && typeof sessionData.asyncPending !== 'boolean') {
+    errors.push('asyncPending must be boolean when present');
+  }
+
+  if (errors.length === 0) {
+    return { valid: true, errors: [] };
+  }
+  return { valid: false, error: errors[0], errors };
+}
+
 class TaskMonitorValidation {
   validateActionKeyShape(obj, type) {
-    if (!obj || typeof obj !== 'object') return false;
-    const keys = Object.keys(obj);
-    if (type === 'execute') {
-      // Align with web DTO / server: message, form, attachments are not a second tool key.
-      const aux = new Set(['message', 'completed', 'llmMessage', 'attachments', 'form']);
-      const actionKeys = keys.filter((k) => !aux.has(k));
-      if (actionKeys.length === 0) {
-        // e.g. natural-language completion: { message } only — valid surface
-        return keys.length > 0;
-      }
-      if (actionKeys.length !== 1) return false;
-      return actionKeys[0] !== 'result';
-    }
-    const auxResult = new Set(['message', 'completed', 'llmMessage']);
-    const actionKeys = keys.filter((k) => !auxResult.has(k));
-    if (actionKeys.length === 0) return keys.length > 0;
-    if (actionKeys.length !== 1) return false;
-    return actionKeys[0] !== 'execute';
+    return validateActionKeyShape(obj, type);
   }
 
   validateSessionResponse(response) {
     if (!response) return { valid: false, error: 'No response' };
-    if (response.execute && !this.validateActionKeyShape(response.execute, 'execute')) {
-      return { valid: false, error: 'Invalid execute action-key shape' };
-    }
-    if (response.result && !this.validateActionKeyShape(response.result, 'result')) {
-      return { valid: false, error: 'Invalid result action-key shape' };
-    }
+    const r = validatePartialSessionEnvelope(response);
+    if (!r.valid) return { valid: false, error: r.errors[0] };
     return { valid: true };
+  }
+
+  /**
+   * Full client session DTO check (id, execute/result, optional context.result).
+   * Same as exported {@link validateClientSession}.
+   */
+  validateClientSession(sessionData, options) {
+    return validateClientSession(sessionData, options);
   }
 
   validateReportState() {

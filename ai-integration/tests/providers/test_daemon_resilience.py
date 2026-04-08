@@ -13,7 +13,7 @@ from typing import Optional
 
 # Import the modules we're testing
 from proxy.providers.compat_llm_provider import (
-    Local LLM upstreamProvider,
+    CompatLlmProvider,
     ProviderConnectionState,
     ProviderConfig,
 )
@@ -40,8 +40,8 @@ def compat_llm_config():
 
 @pytest.fixture
 def compat_llm_provider(compat_llm_config):
-    """Create an Local LLM upstreamProvider instance for testing."""
-    provider = Local LLM upstreamProvider(compat_llm_config)
+    """Create a CompatLlmProvider instance for testing."""
+    provider = CompatLlmProvider(compat_llm_config)
     yield provider
     # Note: We're not doing async cleanup here to avoid fixture issues
     # In a real test scenario with proper event loop handling, we would await provider.close()
@@ -157,7 +157,7 @@ def test_backoff_delay_calculation():
         retry_delay=1.0,
         max_retries=5,
     )
-    provider = Local LLM upstreamProvider(config)
+    provider = CompatLlmProvider(config)
     
     # Verify backoff formula: delay * (2 ** attempt)
     for attempt in range(5):
@@ -302,7 +302,7 @@ async def test_health_check_recovery_after_disconnect():
         retry_delay=1.0,
         models=["llama2", "codellama"],
     )
-    provider = Local LLM upstreamProvider(config)
+    provider = CompatLlmProvider(config)
     
     # Start in failed state
     provider._connection_state = ProviderConnectionState.FAILED
@@ -338,7 +338,7 @@ async def test_health_check_recovery_successful():
         retry_delay=1.0,
         models=["llama2", "codellama"],
     )
-    provider = Local LLM upstreamProvider(config)
+    provider = CompatLlmProvider(config)
     
     # Mock _make_request to return a response that will trigger HEALTHY
     # The response needs to support async context manager (async with)

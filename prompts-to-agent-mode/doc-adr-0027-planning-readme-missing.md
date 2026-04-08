@@ -11,4 +11,4 @@ Add `a2a-server/docs/planning/README.md` (non-normative roadmap index) with link
 
 ## Completion
 
-- [ ] Done
+[X] Completed

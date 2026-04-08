@@ -8,6 +8,8 @@
 
 **Manual operator (curl / script):** same HTTP contour as the monitor — you are the driver; the monitor is a scripted driver. Both are **not** `POST /api/v1/invoke` alone.
 
+> **Task-from-doc trap:** pasting prompt text into **`POST /sessions`** without further **`/next`**/**`/async`** leaves work **pending**. One document ≠ one completed HTTP exchange.
+
 ## Sub-agent framing
 
 Treat the **running A2A stack** as a **sub-agent**: a headless agent you call over **HTTP** (Client API). The **primary agent** is whoever sits in the **IDE** (e.g. Cursor): they reason, run the **Task Monitor** or **`curl`**, edit code. The sub-agent does **not** share the IDE’s context—it only sees what you send in the request body and returns structured **execute/result/context** (after polling async if needed).
@@ -42,6 +44,8 @@ Escalation order:
 2. Client API session flow (`/sessions` -> `/next` -> `/async`)
 3. Simulations (`sim:lint`, `sim:validate`)
 4. Full stack/e2e
+
+**Have a server `promiseId`?** `npm run report:promise -- <promiseId> --out trace.md` — [scripts/promise-artifacts-report.mjs](../scripts/promise-artifacts-report.mjs) aggregates storages + Gray Room steps into one Markdown file.
 
 Full endpoint table: root **`AGENTS.md`** (Client API section).
 
@@ -99,7 +103,7 @@ Implementation (shared Vite + SDK): [`a2a-client/shared/a2a-invoke-builders.mjs`
 
 Use this as a **literal** loop for curl or scripts so a low-context prompt does not become a single-shot HTTP trace.
 
-**Orange alert (default for this doc):** A2A **`POST /api/v1/invoke` is async-only** (`promiseId` + poll); Client API drivers always **`/next` + poll `GET …/async`**. Full wording: [`docs/AGENT-DIALOG-API-STATE.md`](AGENT-DIALOG-API-STATE.md) § *Orange alert*.
+**Orange alert (default for this doc):** **`promiseId` on invoke**, then poll **`/requests/:id/result`**; Client API: **`/next` → `GET …/async` until idle → `GET …/sessions/{id}`** before the next `/next`. Details: [`docs/AGENT-DIALOG-API-STATE.md`](AGENT-DIALOG-API-STATE.md) (*Orange alert*), [`GLOSSARY.md`](GLOSSARY.md) (*Orange alert*).
 
 1. **`POST /api/a2a/sessions`** — optional: `task`, `mode` (`"agent"` / `"dialog"` / `"task-decomposition"`), or **`execution`**: `{ "action": "…", "step": "…" }`, plus `projectId` / `projectRoot`, `llmModel` (see **`GET http://localhost:11434/api/tags`**), `title`, `id` (full table above; root **`AGENTS.md`**).
 2. **`GET /api/a2a/sessions/{id}`** — if `execute.form.choices` → next body uses **`result.choice`** (or `{ "task": "<id>" }`); else **`result.message`** / `{ "task": "<free text>" }`.
@@ -116,6 +120,8 @@ When **`GET …/async`** keeps `asyncPending` (or **`GET …/api/v1/requests/{pr
 2. **After** that, **stop disruptive actions** until the call finishes: no **`kill-all` / `start-all`**, no extra heavy parallel sessions on the **same** Local LLM upstream, no extra `/next` spam on the same session unless you mean to replace or cancel work.
 
 If Local LLM upstream is **idle** but status stays `processing`, treat it as a **stuck** pipeline — debug per root **`AGENTS.md`** → *Common Issues* and *Debugging*.
+
+**Hub ticket stuck in `error` (ai-integration, port 11434):** `GET /promises/pending` only lists **pending** work. List failures with **`GET /promises/errors`**, then **`POST /promise/{id}/retry`** and **`POST /promise/{id}/execute`**, or **`DELETE /promise/{id}`** to drop the ticket — [`ai-integration/docs/api-reference/PROXY_API.md`](../ai-integration/docs/api-reference/PROXY_API.md) § *Promise queue (hub tickets)*. From the Client API origin (default **`http://localhost:5173`**): same paths under **`/api/a2a/hub/...`** (proxy to `AI_HUB_URL`).
 
 Narrative table of common “why iteration stopped” traps and mitigations (IDE vs driver): root **`AGENTS.md`** → *Why iteration stops (misreads and mitigations)*.
 

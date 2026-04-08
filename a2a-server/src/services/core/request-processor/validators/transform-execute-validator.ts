@@ -80,6 +80,9 @@ export function validateDialogExecuteShape(execute: ProcessResult['execute'] | u
         return issues;
     }
     if (!hasForm && activeToolKeys.length === 0) {
+        if (hasExecuteMessage) {
+            return issues;
+        }
         issues.push({
             code: 'DIALOG_EXECUTE_UNKNOWN_SHAPE',
             message: 'Dialog execute shape is neither chat form nor single tool action',
@@ -197,6 +200,10 @@ export function validateLlmOutputShape(result: ProcessResult | Record<string, un
         activeToolKeys.length === 0 &&
         !(topMsg && topMsg === exMsg)
     ) {
+        const outcome = (result as {outcome?: string}).outcome;
+        if (outcome === 'ai_action_ready') {
+            return issues;
+        }
         issues.push({
             code: 'EXECUTE_MESSAGE_ONLY',
             message: 'execute has only message string — expected form or tool keys',

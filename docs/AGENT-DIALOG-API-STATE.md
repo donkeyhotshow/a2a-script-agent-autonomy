@@ -17,14 +17,25 @@
 
 ## Orange alert — async-only stack (оранжевая тревога)
 
-**Product rule:** **`POST /api/v1/invoke` has no sync path** — only **`promiseId`** on the POST ack; terminal **`execute` / `context`** via **`GET …/requests/:id/result`**. The Client API mirrors this with **`/next` + `GET …/async`**.
+**Rule:** Server **`POST /api/v1/invoke`** returns **`promiseId`** only; terminal **`execute` / `context`** come from **`GET …/requests/:id/result`**. On the Client API the same contour is **`POST …/next`** + **`GET …/async`** until idle, then **`GET …/sessions/{id}`** before the next turn.
+
+**Permanent:** **Оранжевая тревога навсегда** — there is no “later we go sync”; drivers and operators stay on this loop. See [`GLOSSARY.md`](../GLOSSARY.md) *Orange alert*.
+
+**Driver sequence (repeat every turn)**
+
+1. `POST …/next` (correct **`message`** vs **`choice`** — see [`GLOSSARY.md`](../GLOSSARY.md) *Orange alert*).
+2. `GET …/async` until not pending.
+3. `GET …/sessions/{id}` — inspect **`execute.form`** for the next decision.
+
+Skipping step 2–3 breaks router beats and **stops later actions from running**. Disk under **`a2a-client/storage/sessions/{sessionId}/`** is for **debugging** only; **do not** patch JSON instead of fixing the HTTP loop.
 
 | Do | Do not |
 |----|--------|
-| **`POST …/next`** then **`GET …/async`** until settled | Expect inline **`execute`** on the POST **`/invoke`** body (except test stubs) |
-| Poll server **`/requests/:id/result`** when driving **:3000** directly | Send a **`sync`** field on invoke JSON (schema rejects it as an extra property) |
-| Use the driver loop in [`OPERATOR-CURL.md`](OPERATOR-CURL.md) | Treat a single `/next` ack as a finished turn without `/async` |
-| After agent **client tool** chains: if **`POST /invoke` returns `promiseId`**, resume via normal **poll** (Vite `chainSyncInvokesForAgentTools` stops there) | Assume chained tool **`POST /invoke`** always returns terminal **`data`** without polling |
+| **`POST …/next`** then **`GET …/async`** until settled | Expect full **`execute`** on the **`/invoke`** POST body (except test stubs) |
+| Poll **`GET …/requests/:id/result`** when calling **:3000** directly | Add a **`sync`** flag on invoke (rejected) |
+| Follow [`OPERATOR-CURL.md`](OPERATOR-CURL.md) driver checklist | Treat **`/next` ack** alone as a completed turn |
+| **Optional:** compare disk step folders to the same **`sessionId`** | Send another **`/next`** while **`/async`** is still busy |
+| After **client tool** chains: if **`invoke`** returns **`promiseId`**, **poll** until terminal | Assume tool **`invoke`** always returns final **`data`** without polling |
 
 ---
 
@@ -86,6 +97,7 @@ Content-Type: application/json
 
 | Date | Note |
 |------|------|
+| 2026-04-07 | **Orange alert:** triage = correct driver loop (**`/next` → `/async` → GET session**, **`message` vs `choice`**); storage folder = evidence; operability = runnable **`execute`** chain, not file edits. |
 | 2026-02-09 | Doc/code follow-up to **async-only** invoke: [`SESSION-SYSTEMS-OVERVIEW.md`](SESSION-SYSTEMS-OVERVIEW.md) diagram + E2E pointers; agent RAG/tool chain comments (stop on **`promiseId`**); e2e-dialog JSDoc. |
 | 2026-04-06 | **Removed `sync`** from protocol: A2A **`POST /invoke`** async-only; Client **`/next`** no longer sends `sync`; schema + tests + proba updated. |
 | 2026-04-06 | **Orange alert:** documented — **`sync` forbidden** for Client API agent/dialog drivers; async + `/async` poll only ([`OPERATOR-CURL.md`](OPERATOR-CURL.md) cross-link). |

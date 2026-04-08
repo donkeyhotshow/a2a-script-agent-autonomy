@@ -10,7 +10,7 @@ Each `*.md` file here is **one** suspicious artifact or cluster: extract signal 
 | [`greedy-dump-references.md`](greedy-dump-references.md) | Prompts/docs pointing at missing `greedy-dump/` tree |
 | [`free-llm-keys-secret-file.md`](free-llm-keys-secret-file.md) | Root secrets file removed; template [`ai-integration/FREE_LLM_KEYS.md`](../../ai-integration/FREE_LLM_KEYS.md) |
 | [`root-debug-log.md`](root-debug-log.md) | `debug.log` at repo root |
-| [`comparison-fork-aleon10-donkeyhotshow.md`](comparison-fork-aleon10-donkeyhotshow.md) | `COMPARISON-ALEON10-VS-DONKEYHOTSHOW.md` |
+| [`comparison-fork-aleon10-donkeyhotshow.md`](comparison-fork-aleon10-donkeyhotshow.md) | Removed root `COMPARISON-ALEON10-VS-DONKEYHOTSHOW.md` (git history) |
 | [`prompts-greedy-dump-integration-link.md`](prompts-greedy-dump-integration-link.md) | Missing `tasks/pending/greedy-dump-integration.md` |
 | [`plans-ai-chat-import-dumps.md`](plans-ai-chat-import-dumps.md) | `plans/cursor-answers/`, `plans/codex-answers/` |
 | [`a2a-prototype-next-app.md`](a2a-prototype-next-app.md) | `a2a-prototype/` vs main client |

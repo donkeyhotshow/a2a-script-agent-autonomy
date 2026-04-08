@@ -1,5 +1,8 @@
 import { logger } from '../../utils/logger.js';
-import { initAiHubChatPromise } from '../../daemon/llm-hub-poll.js';
+import {
+  extractLlmTextFromHubResponseBody,
+  initAiHubChatPromise,
+} from '../../daemon/llm-hub-poll.js';
 import { BLACK_ROOM_DEFAULT_LLM_MODEL } from './black-room/black-room-defaults.js';
 import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
 
@@ -48,8 +51,11 @@ ${historyJson}`;
           stream: false,
         });
         if (init.ok) {
-          const compressedStr =
+          const compressedRaw =
             init.inlineResponseBody ?? (await pollReadyThenFetch(aiHubUrl, init.llmPromiseId));
+          const compressedStr = compressedRaw
+            ? extractLlmTextFromHubResponseBody(compressedRaw)
+            : null;
           if (compressedStr) {
             const parsed = tryParseJsonFromLlmText<unknown>(compressedStr);
             if (Array.isArray(parsed)) {

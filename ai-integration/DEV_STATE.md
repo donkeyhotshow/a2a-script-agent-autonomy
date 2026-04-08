@@ -6,7 +6,7 @@
 
 ## Role for the north star
 
-**Hub on 11434** sits between a2a-server and providers (e.g. Local LLM upstream **11435**). LLM traffic uses the **promise pipeline** (async); clients must poll — if the hub or **promise-queue daemon** is misconfigured, Task Monitor will see **`pending` / `processing`** until timeout. Repo root **`start-all.bat`** starts **`scripts/start-promise-queue-daemon.bat`**, which runs **`python scripts/promise_queue_daemon.py`** against the hub (**default base URL `http://localhost:11434`**, not :11435). That script now calls **`POST /promise/<id>/retry`** before **`/execute`** when `/promises/pending` returns **`status: error`** (same as the in-process proxy daemon), so **`409 promise_not_pending`** spam stops. Upstream **401** (e.g. missing Qwen/DashScope auth) still requires correct **`providers.json` / `.env`** keys.
+**Hub on 11434** sits between a2a-server and providers (e.g. Local LLM upstream **11435**). LLM traffic uses the **promise pipeline** (async); clients must poll — if the hub or **promise-queue daemon** is misconfigured, Task Monitor will see **`pending` / `processing`** until timeout. Repo root **`start-all.bat`** starts **`scripts/start-promise-queue-daemon.bat`** (`python scripts/promise_queue_daemon.py` → **`http://localhost:11434`**). **`GET /promises/pending`** lists **pending** only; **error** tickets are **not** auto-retried — use **`GET /promises/errors`**, then **`POST /promise/<id>/retry`** + **`POST /promise/<id>/execute`**, or **`DELETE /promise/<id>`** to remove. See [`docs/api-reference/PROXY_API.md`](docs/api-reference/PROXY_API.md) § *Promise queue*. Upstream **401** still needs correct **`providers.json` / `.env`** keys.
 
 **Triangle vertex C** — [`docs/TRIANGLE-WORKFLOW.md`](../docs/TRIANGLE-WORKFLOW.md). **Black alert (proxy)** ([`GLOSSARY.md`](../GLOSSARY.md) *Alerts*).
 
@@ -43,3 +43,5 @@ curl http://localhost:11435/api/tags
 ```bash
 cd ai-integration && pytest
 ```
+
+**Promise queue:** `tests/conftest.py` stops the in-process hub daemon between tests; `pytest tests/test_promise_queue_semantics.py` covers pending vs error + `/promises/errors`.

@@ -4,11 +4,12 @@
 
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )/.." && pwd )"
 
-# Cleanup client sessions (14 days)
-echo "Cleaning up client sessions..."
+# Client API session trees: full wipe under storage/sessions (no age-based pruning).
+# Intentional for scheduled resets; do not use if you need existing session bindings.
+echo "Wiping all client session trees..."
 cd "$DIR/a2a-client" && npm run cleanup:sessions
 
-# Cleanup server requests (14 days)  
+# Server request snapshots (retention by days — see a2a-server request cleanup)
 echo "Cleaning up server requests..."
 cd "$DIR/a2a-server" && npx tsx scripts/cleanup-requests.ts 14
 

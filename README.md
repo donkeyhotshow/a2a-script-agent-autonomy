@@ -32,7 +32,7 @@ At the repo root on Windows, `npm run dev` is an alias for `start-all.bat` — t
 
 ## Full-spectrum agent run (master prompt)
 
-Open **[`START-FULL-SPECTRUM.md`](START-FULL-SPECTRUM.md)** and copy the **Agent prompt** block into Cursor **or** into `POST /api/a2a/sessions` (`mode: "agent"`, field `task`). That file indexes the full `prompts-to-agent-mode/` surface plus methodology and Client API checks. Linear spine: [`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md). Curl detail: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
+Open **[`START-FULL-SPECTRUM.md`](START-FULL-SPECTRUM.md)** and copy the **Agent prompt** block into Cursor **or** seed `task` on `POST /api/a2a/sessions` (`mode: "agent"`). Either way, **stack execution** is not one request: keep **one `sessionId`** and run **`/next` + poll `/async`** (router beats) until terminal — or run **`npm run monitor`** so the Task Monitor owns that loop ([`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md) top note). That file indexes the full `prompts-to-agent-mode/` surface plus methodology and Client API checks. Linear spine: [`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md). Curl detail: [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 
 ## Quick Start
 
@@ -159,6 +159,7 @@ See [System Startup Documentation](docs/SYSTEM_STARTUP.md) for details.
 **Schema debugging order (mandatory):** start with **[tests/direct-tests/README.md](tests/direct-tests/README.md#schema-debugging--start-here)** — reproduce and isolate payload-shape issues there first; escalate to session flow, then simulations, then full e2e.
 
 - **Validators** (recommended offline checks — they **point at specific contract errors**): [tests/direct-tests/validators/README.md](tests/direct-tests/validators/README.md). Examples: `npm run scan-promise-bodies` (proxy LLM `body.md`), `npm run scan-session-responses` (`storage/sessions/**/server-response.json`), `npm run verify:gray-room`, `npm run audit:sim-choice-descriptions`, `npm run sim:check-md` (sim MD vs JSON drift). Same rules for execute/message shape are shared in `validators/lib/check-llm-execute-shape.mjs`.
+- **One-promise trace (Markdown):** `npm run report:promise -- <promiseId> [--out path.md] [--logs]` — [scripts/promise-artifacts-report.mjs](scripts/promise-artifacts-report.mjs) joins server request file, client session steps, hub `proxy_logs/promises/<id>/`, and Gray Room steps when stored in context.
 
 - **Health checks by stack part** (no service startup): [tests/direct-tests/run-checks.ps1](tests/direct-tests/run-checks.ps1) — `.\tests\direct-tests\run-checks.ps1 -Scope LLM | ServerLLM | ClientServer | ClientServerLLM | WebClient | WebClientServer | Full`. Full index: [tests/direct-tests/README.md](tests/direct-tests/README.md).
 - **Level 1–3 suite**: `.\scripts\tests\run-all.ps1` — see [scripts/tests/README.md](scripts/tests/README.md).

@@ -1,7 +1,212 @@
 import fs from 'fs';
 import path from 'path';
+import { pathToFileURL } from 'url';
+
+/** Align with `shared/router-static-choices.json` `staticTailChoices[].id` (router user line = choice id). */
+const ROUTER_STATIC_CHOICE_IDS = new Set([
+  'dialog',
+  'agent',
+  'task-decomposition',
+  'fix-vue-imports',
+  'fix-laravel-namespaces-and-uses',
+]);
+
+export function _userMessageIsRouterChoiceId(content) {
+  const s = String(content ?? '').trim();
+  if (!s) return false;
+  return ROUTER_STATIC_CHOICE_IDS.has(s);
+}
 
 class TaskMonitorUtils {
+  /**
+   * Two-phase flow (default when file-driven spec is on): short text for router/RAG, then after **agent**
+   * is chosen the monitor sends {@link buildMonitorAgentSpecTaskInput} once via `tryAdvanceMonitorGate`.
+   * Set `TASK_MONITOR_TWO_PHASE=0` to send one combined string for both beats.
+   */
+  isMonitorTwoPhaseRouterThenSpec(taskFile) {
+    const ex = String(process.env.TASK_MONITOR_TWO_PHASE ?? '').trim();
+    if (/^(0|false|no|off)$/i.test(ex)) {
+      return false;
+    }
+    if (/^(1|true|yes|on)$/i.test(ex)) {
+      return true;
+    }
+    const fromFile = !/^(0|false|no|off)$/i.test(
+      String(process.env.TASK_MONITOR_TASK_FROM_FILE ?? '1').trim()
+    );
+    return fromFile;
+  }
+
+  /**
+   * @param {{ name: string, path: string, content: string }} taskFile
+   * @returns {{ name: string, hint: string, file: string, rel: string, fileUrl: string }}
+   */
+  getMonitorTaskFileMeta(taskFile) {
+    const hint = this.extractTaskDescription(taskFile.content) || taskFile.name || 'Untitled task';
+    const abs = path.resolve(taskFile.path);
+    const rel = path.relative(process.cwd(), abs).split(path.sep).join('/');
+    let fileUrl = '';
+    try {
+      fileUrl = pathToFileURL(abs).href;
+    } catch {
+      /* ignore */
+    }
+    return {
+      name: taskFile.name,
+      hint,
+      file: path.basename(taskFile.path),
+      rel,
+      fileUrl,
+    };
+  }
+
+  applyMonitorTaskPlaceholders(template, meta) {
+    return String(template)
+      .replace(/\{name\}/g, meta.name)
+      .replace(/\{hint\}/g, meta.hint)
+      .replace(/\{file\}/g, meta.file)
+      .replace(/\{rel\}/g, meta.rel)
+      .replace(/\{fileUrl\}/g, meta.fileUrl);
+  }
+
+  /**
+   * Body for `POST /sessions` `{ task }`. Defaults to `routerTask` (same as first `/next` router hint).
+   * `TASK_MONITOR_FILE_LINK_WORKFLOW` — `1`/`0` forces on/off; when **unset** and `twoPhase` is true, preset is **on** (bootstrap ≠ router hint).
+   * `TASK_MONITOR_CREATE_SESSION_TASK` — custom template (placeholders `{name}` `{hint}` `{file}` `{rel}` `{fileUrl}`) wins over preset.
+   */
+  buildMonitorCreateSessionTaskInput(taskFile, routerTask, twoPhase = false) {
+    const custom = String(process.env.TASK_MONITOR_CREATE_SESSION_TASK ?? '').trim();
+    const meta = this.getMonitorTaskFileMeta(taskFile);
+    if (custom) {
+      return this.applyMonitorTaskPlaceholders(custom, meta);
+    }
+    const ex = String(process.env.TASK_MONITOR_FILE_LINK_WORKFLOW ?? '').trim();
+    let fileLinkWorkflow = false;
+    if (/^(1|true|yes|on)$/i.test(ex)) {
+      fileLinkWorkflow = true;
+    } else if (/^(0|false|no|off)$/i.test(ex)) {
+      fileLinkWorkflow = false;
+    } else {
+      fileLinkWorkflow = Boolean(twoPhase);
+    }
+    if (fileLinkWorkflow) {
+      return (
+        'Task Monitor session: when the router appears, choose **agent**. ' +
+        'The assignment lives only in the repo markdown task file — immediately after agent mode starts you receive ' +
+        'repo path, file:// URL, and summary; read that file and work iteratively (tools + async) until done.'
+      );
+    }
+    return typeof routerTask === 'string' ? routerTask : '';
+  }
+
+  /**
+   * Short line for the **first** user turn (router search / routing). Not the full file spec.
+   * Override with `TASK_MONITOR_ROUTER_SEARCH_TASK` — placeholders `{name}`, `{hint}`, `{file}`, `{rel}`, `{fileUrl}`.
+   */
+  buildMonitorRouterSearchTaskInput(taskFile) {
+    const meta = this.getMonitorTaskFileMeta(taskFile);
+    const custom = String(process.env.TASK_MONITOR_ROUTER_SEARCH_TASK ?? '').trim();
+    if (custom) {
+      return this.applyMonitorTaskPlaceholders(custom, meta);
+    }
+    const oneLine = String(meta.hint).replace(/\s+/g, ' ').trim().slice(0, 320);
+    return oneLine ? `${oneLine} — [prompt: ${taskFile.name}]` : taskFile.name;
+  }
+
+  /**
+   * Full agent brief: repo path, file URL, instructions (after router chose **agent**).
+   * When `TASK_MONITOR_TASK_FROM_FILE=0`, returns the same inline extract as legacy single-phase.
+   */
+  buildMonitorAgentSpecTaskInput(taskFile) {
+    const fromFile = !/^(0|false|no|off)$/i.test(
+      String(process.env.TASK_MONITOR_TASK_FROM_FILE ?? '1').trim()
+    );
+    const meta = this.getMonitorTaskFileMeta(taskFile);
+    if (!fromFile) {
+      return String(meta.hint || '').trim() || 'Untitled task';
+    }
+    const lines = [
+      'Task specification is in the markdown file below. Read it with read-file (path is relative to the repository root), then work iteratively until the file’s goals are satisfied; use tools as needed and report progress each turn.',
+      '',
+      `Repo path: ${meta.rel}`,
+    ];
+    if (meta.fileUrl) {
+      lines.push(`File URL: ${meta.fileUrl}`);
+    }
+    if (process.env.TASK_MONITOR_TASK_SPEC_URL_TEMPLATE) {
+      const tpl = String(process.env.TASK_MONITOR_TASK_SPEC_URL_TEMPLATE).trim();
+      const filled = tpl
+        .replace(/\{path\}/g, encodeURIComponent(meta.rel))
+        .replace(/\{rel\}/g, meta.rel);
+      lines.push(`Spec link: ${filled}`);
+    }
+    lines.push('', `Summary: ${meta.hint}`);
+    return lines.join('\n');
+  }
+
+  /**
+   * Back-compat alias: same as {@link buildMonitorAgentSpecTaskInput}.
+   * @param {{ name: string, path: string, content: string }} taskFile
+   * @returns {string}
+   */
+  buildMonitorTaskInput(taskFile) {
+    return this.buildMonitorAgentSpecTaskInput(taskFile);
+  }
+
+  /** True if session history already recorded router picking **agent** (system line). */
+  sessionHistoryShowsAgentChoice(sessionData) {
+    const h = sessionData?.context?.history;
+    if (!Array.isArray(h)) {
+      return false;
+    }
+    return h.some((row) => {
+      if (!row || typeof row !== 'object') {
+        return false;
+      }
+      const role = String(row.role || '').toLowerCase();
+      const msg = String(row.message || '').toLowerCase();
+      return role === 'system' && msg.includes('agent') && msg.includes('choice');
+    });
+  }
+
+  /**
+   * Log session id, task file path, and Client API URL so operators can watch progress while the poll loop runs.
+   * @param {string} sessionId
+   * @param {{ path: string, name: string }} taskFile
+   * @param {{ resumed?: boolean, twoPhase?: boolean }} [opts]
+   */
+  logMonitorSessionObserveLinks(sessionId, taskFile, opts = {}) {
+    if (process.env.TASK_MONITOR_QUIET === '1' || process.env.TASK_MONITOR_SKIP_OBSERVE_BANNER === '1') {
+      return;
+    }
+    if (!sessionId || !taskFile?.path) return;
+    const rel = path.relative(process.cwd(), path.resolve(taskFile.path)).split(path.sep).join('/');
+    const apiBase = String(this.baseUrl || '').replace(/\/$/, '');
+    const sessionUrl = `${apiBase}/sessions/${encodeURIComponent(sessionId)}`;
+    const tag = opts.resumed ? 'Session resumed (observe progress)' : 'Session started (observe progress)';
+    console.log('');
+    console.log(`[task-monitor] --- ${tag} ---`);
+    console.log(`[task-monitor] sessionId:     ${sessionId}`);
+    console.log(`[task-monitor] task file:     ${rel}`);
+    try {
+      console.log(`[task-monitor] file URL:      ${pathToFileURL(path.resolve(taskFile.path)).href}`);
+    } catch {
+      /* ignore */
+    }
+    console.log(`[task-monitor] GET session:   ${sessionUrl}?includeContext=1`);
+    const web = typeof this._clientWebOrigin === 'function' ? this._clientWebOrigin() : '';
+    if (web) {
+      console.log(`[task-monitor] Web origin:    ${web}`);
+    }
+    if (opts.twoPhase) {
+      console.log(
+        '[task-monitor] Flow: POST /sessions (bootstrap task) → /next (short router hint) → **agent** → monitor posts file spec (Repo path + File URL + Summary) → iterative async + Red Room until terminal.'
+      );
+    }
+    console.log('[task-monitor] --- poll loop running; agent works iteratively (async + tools) ---');
+    console.log('');
+  }
+
   extractTaskDescription(content) {
     // Try to extract the task description from the markdown file
     // Look for common patterns
@@ -520,6 +725,20 @@ class TaskMonitorUtils {
     }
 
     console.log(`${'='.repeat(70)}\n`);
+  }
+}
+
+/**
+ * When unset, point `A2A_CLIENT_STORAGE_DIR` at `a2a-client/storage` (monitor cwd = repo root).
+ * Used before disk rewind helpers (`rewind-disk.js`).
+ */
+export function ensureA2aStorageEnvForDiskOps() {
+  if (process.env.A2A_CLIENT_STORAGE_DIR && String(process.env.A2A_CLIENT_STORAGE_DIR).trim()) {
+    return;
+  }
+  const candidate = path.resolve(process.cwd(), 'a2a-client/storage');
+  if (fs.existsSync(path.join(candidate, 'sessions')) || fs.existsSync(candidate)) {
+    process.env.A2A_CLIENT_STORAGE_DIR = candidate;
   }
 }
 

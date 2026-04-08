@@ -38,6 +38,25 @@ console.log('[smoke-client-api] WEB_BASE=', webBase);
 await check('Vite plugin projects', `${webBase}/api/a2a/projects`);
 await check('Vite plugin sessions list', `${webBase}/api/a2a/sessions`);
 
+/** Hub queue proxy (optional): 200 = hub OK; 502 = hub down but route exists */
+async function checkHubProxyOptional() {
+    const url = `${webBase}/api/a2a/hub/promises/pending`;
+    try {
+        const res = await fetch(url, { method: 'GET' });
+        const text = await res.text();
+        if (res.ok || res.status === 502) {
+            console.log(`OK   Vite hub proxy (${res.status})`, url, text.slice(0, 80));
+        } else {
+            console.error(`FAIL Vite hub proxy ${url} -> ${res.status} ${text.slice(0, 200)}`);
+            failed = true;
+        }
+    } catch (e) {
+        console.error(`FAIL Vite hub proxy ${url}`, e?.message || e);
+        failed = true;
+    }
+}
+await checkHubProxyOptional();
+
 if (!skipStandalone) {
     console.log('[smoke-client-api] CLIENT_API_URL=', clientApiBase, '(set SMOKE_SKIP_STANDALONE_API=1 to skip)');
     await check('Standalone Client API health', `${clientApiBase}/health`);

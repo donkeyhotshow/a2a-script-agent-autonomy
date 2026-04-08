@@ -11,9 +11,26 @@ import * as stepHandlers from './handlers/step-handlers.js';
 import { validateSessionId, resolveProjectStorage, loadSessionData, saveSessionData } from './session-manager.js';
 import { mergeContext, processTaskAndContext, prepareServerRequest } from './context-processor.js';
 import { sendHttpRequest } from './http-invoker.js';
-import { parseServerResponse, processResponseData, extractAssistantMessage, createResponseAck } from './response-handler.js';
+import { parseServerResponse, processResponseData, extractAssistantMessage } from './response-handler.js';
 import { saveClientResult, saveRequestToServer, ensureStepDirectory, saveServerPromise, saveStepData, updateSessionAfterResponse, updateSessionForPromise, finalizeSession } from './persistence-manager.js';
 import { unwrapA2aResponse } from './utils/builders.js';
+
+/**
+ * Helper function to create response acknowledgment objects consistently.
+ * @param {boolean} success - Whether the operation was successful
+ * @param {number} step - The step number
+ * @param {string|null} promiseId - The promise ID or null
+ * @param {string|null} error - Optional error message
+ * @returns {Object} Response acknowledgment object
+ */
+function createResponseAckObject(success, step, promiseId, error = null) {
+    return {
+        success: success,
+        step: step,
+        promiseId: promiseId,
+        error: error
+    };
+}
 
 export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' }) {
     const nextMatch = path.match(/^\/sessions\/([^/]+)\/next$/);
@@ -53,10 +70,23 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                 return;
             }
 
+            // Orange / async-only: no overlapping turns — duplicate /next races the pipeline and breaks router beats.
+            const activeAsync = stepHandlers.getActiveAsyncWork(cwd, sessionId);
+            if (session.asyncPending === true || activeAsync) {
+                res.writeHead(409).setHeader('Content-Type', 'application/json').end(JSON.stringify({
+                    error: 'async_pending',
+                    message: 'Poll GET /api/a2a/sessions/{id}/async until idle before sending another /next.',
+                }));
+                return;
+            }
+
             const currentStep = Number(session.currentStep) || 1;
             let prevStepData = stepHandlers.loadServerResponse(cwd, sessionId, currentStep);
-            if (!prevStepData && projectPath && currentStep === 1) {
+            if (!prevStepData && currentStep === 1) {
                 prevStepData = { context: session.context, execute: session.execute };
+            }
+            if (!prevStepData && currentStep > 1) {
+                prevStepData = stepHandlers.loadServerResponse(cwd, sessionId, currentStep - 1);
             }
             const hasChoices = routerFormHasChoices(prevStepData);
 
@@ -69,6 +99,7 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
             }
 
             const nextStepNum = currentStep + 1;
+            ensureStepDirectory({ cwd, sessionId, nextStepNum });
             saveClientResult({ cwd, sessionId, nextStepNum, submitResult });
 
             let mergedContext = mergeContext({
@@ -92,7 +123,6 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
             });
 
             saveRequestToServer({ cwd, sessionId, nextStepNum, requestToServer });
-            ensureStepDirectory({ cwd, sessionId, nextStepNum });
 
             sendHttpRequest({
                 requestToServer,
@@ -109,12 +139,8 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                             saveSessionData({ projectPath, session });
                             saveServerPromise({ cwd, sessionId, nextStepNum, promiseData });
 
-                            res.setHeader('Content-Type', 'application/json');
-                            res.end(JSON.stringify(createResponseAck({
-                                success: true,
-                                step: nextStepNum,
-                                promiseId: promiseData.promiseId,
-                            })));
+res.setHeader('Content-Type', 'application/json');
+                             res.end(JSON.stringify(createResponseAckObject(true, nextStepNum, promiseData.promiseId)));
                             return;
                         }
 
@@ -175,22 +201,13 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
 
                         res.setHeader('Content-Type', 'application/json');
                         if (!hasServer) {
-                            const errBody = createResponseAck({
-                                success: false,
-                                step: nextStepNum,
-                                promiseId: null,
-                                error: 'A2A invoke failed',
-                            });
+const errBody = createResponseAckObject(false, nextStepNum, null, 'A2A invoke failed');
                             res.writeHead(xhrRes.statusCode >= 400 ? xhrRes.statusCode : 502);
                             res.end(JSON.stringify(errBody));
                             return;
                         }
 
-                        res.end(JSON.stringify(createResponseAck({
-                            success: true,
-                            step: finalStepNum,
-                            promiseId: null,
-                        })));
+res.end(JSON.stringify(createResponseAckObject(true, finalStepNum, null)));
                     } catch (e) {
                         console.error('[vite-plugin-a2a] Error in A2A response handler:', e?.stack || e?.message || e);
                         const detail =
@@ -204,19 +221,18 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                 },
                 onError: (e) => {
                     try {
-                        console.error('[vite-plugin-a2a] A2A Server request failed:', e.message);
+                        const detail =
+                            (e && (e.message || e.code)) ||
+                            (typeof e === 'string' ? e : '') ||
+                            String(e);
+                        console.error('[vite-plugin-a2a] A2A Server request failed:', detail);
                         session.currentStep = nextStepNum;
                         session.updatedAt = new Date().toISOString();
                         saveSessionData({ projectPath, session });
 
                         res.setHeader('Content-Type', 'application/json');
                         res.writeHead(503);
-                        res.end(JSON.stringify(createResponseAck({
-                            success: false,
-                            step: nextStepNum,
-                            promiseId: null,
-                            error: 'A2A server unavailable: ' + e.message,
-                        })));
+res.end(JSON.stringify(createResponseAckObject(false, nextStepNum, null, 'A2A server unavailable: ' + detail)));
                     } catch (err) {
                         console.error('[vite-plugin-a2a] Error in A2A error handler:', err.message);
                         res.writeHead(500).end(JSON.stringify({ error: 'Internal server error' }));

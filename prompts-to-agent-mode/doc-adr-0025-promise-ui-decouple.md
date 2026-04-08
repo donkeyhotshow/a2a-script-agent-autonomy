@@ -12,4 +12,4 @@ Either drive ADR-0025 to **accepted + phased implementation** (prefer `/async`-o
 
 ## Completion
 
-- [ ] Done
+[X] Completed

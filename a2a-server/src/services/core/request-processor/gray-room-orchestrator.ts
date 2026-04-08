@@ -5,7 +5,11 @@ import type {GrayRoomControlEnvelope, InterruptDirective, ServerInterruptTraceEv
 import {mergeGrayRoomSlotIntoContext, mergeInterruptTraceIntoContext} from '../../../transform/interrupt-trace-contract.js';
 import {executeReadFile} from '../../../actions/handlers/file-operations.js';
 import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
-import {initAiHubChatPromise, pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
+import {
+    extractLlmTextFromHubResponseBody,
+    initAiHubChatPromise,
+    pollReadyThenFetch,
+} from '../../../daemon/llm-hub-poll.js';
 import {BlackRoomOrchestrator} from '../black-room/black-room-orchestrator.js';
 import type {AlgorithmContext, AlgorithmData} from '../black-room/types.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
@@ -572,9 +576,10 @@ export class GrayRoomOrchestrator {
             }
 
             const subLlmId = chatInit.llmPromiseId;
-            const nextMd =
+            const nextMdRaw =
                 chatInit.inlineResponseBody ?? (await pollReadyThenFetch(this.aiHubUrl, subLlmId));
-            if (!nextMd) {
+            const nextMd = nextMdRaw ? extractLlmTextFromHubResponseBody(nextMdRaw) : null;
+            if (!nextMd?.trim()) {
                 resolve({outcome: 'failed', error: 'LLM response fetch failed (gray room)'} as ProcessResult);
                 return;
             }

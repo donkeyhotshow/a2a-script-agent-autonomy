@@ -57,3 +57,18 @@ Static findings from repo scans (TODO/FIXME, `@ts-ignore`, weak typing hotspots)
 | `vm2-deprecated-sandbox.md` | `vm2` unmaintained |
 | `web-client-action-runner-eval.md` | `eval` / `new Function` |
 | `web-packages-duplicate-js-trees.md` | duplicate `web/js` trees |
+| `duplicate-isAgentSchemaName.md` | duplicated `isAgentSchemaName` function |
+| `duplicate-lastAssistantMessageFromContext.md` | duplicated `lastAssistantMessageFromContext` function |
+| `duplicate-MeilisearchClient-class.md` | duplicated MeilisearchClient class |
+| `duplicate-getActiveAsyncWork.md` | duplicated `getActiveAsyncWork` function |
+| `duplicate-step-record-builders.md` | duplicated step record building functions |
+| `duplicate-get-session-method.md` | duplicated `_get_session` method |
+| `duplicate-health-check-method.md` | duplicated `health_check` method |
+| `duplicate-close-method.md` | duplicated `close` method |
+| `duplicate-request-execution-pattern.md` | duplicated request execution pattern |
+| `duplicate-env-cleanup.md` | duplicated environment variable cleanup |
+| `duplicate-repo-root-setup.md` | duplicated REPO_ROOT setup |
+| `duplicate-isPortFree-function.md` | duplicated `isPortFree` function |
+| `duplicate-router-form-choices.md` | duplicated router form choices |
+| `duplicate-llm-transform-pipeline.md` | duplicated LLM transform pipeline |
+| `duplicate-dialog-continuation-form.md` | duplicated dialog continuation form |

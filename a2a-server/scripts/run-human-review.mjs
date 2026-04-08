@@ -3,7 +3,7 @@
  * Overwrites tests/human-review/REPORT.md for operator review.
  */
 import { spawnSync } from 'node:child_process';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -15,28 +15,24 @@ const jsonPath = join(hrDir, '.last-vitest.json'); // keep in sync with --output
 
 mkdirSync(hrDir, { recursive: true });
 
-const args = [
-  'vitest',
+const vitestArgs = [
   'run',
   '--config',
   'vitest.human-review.config.ts',
   '--reporter=json',
   `--outputFile=tests/human-review/.last-vitest.json`,
 ];
-const useShell = process.platform === 'win32';
-const proc = useShell
-  ? spawnSync(`npx ${args.join(' ')}`, {
-      cwd: root,
-      encoding: 'utf-8',
-      shell: true,
-      env: { ...process.env, FORCE_COLOR: '0' },
-    })
-  : spawnSync('npx', args, {
-      cwd: root,
-      encoding: 'utf-8',
-      shell: false,
-      env: { ...process.env, FORCE_COLOR: '0' },
-    });
+const vitestMain = join(root, 'node_modules', 'vitest', 'vitest.mjs');
+if (!existsSync(vitestMain)) {
+  console.error(`[run-human-review] Missing ${vitestMain} — run npm install in ${root}`);
+  process.exit(1);
+}
+const proc = spawnSync(process.execPath, [vitestMain, ...vitestArgs], {
+  cwd: root,
+  encoding: 'utf-8',
+  shell: false,
+  env: { ...process.env, FORCE_COLOR: '0' },
+});
 
 let summary = '';
 try {

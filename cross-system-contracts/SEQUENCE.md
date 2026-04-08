@@ -20,7 +20,8 @@ Decide which handoff broke (one primary):
 ## 1 — Freeze identifiers and folders
 
 1. Note **`promiseId`** (async), **`sessionId`**, **step folder** (highest step with `server-response.json` if relevant).
-2. **Copy** the smallest set of files into `cross-system-contracts/scratch/<short-label>/` (gitignored) *before* running `cleanup-session-state.js` or wiping storage.
+2. Optional **single-file narrative:** `npm run report:promise -- <promiseId> --out scratch/trace-<id>.md` — [`scripts/promise-artifacts-report.mjs`](../scripts/promise-artifacts-report.mjs) (server request JSON + Gray Room fields + client refs + `proxy_logs` listing).
+3. **Copy** the smallest set of files into `cross-system-contracts/scratch/<short-label>/` (gitignored) *before* running `cleanup-session-state.js` or wiping storage.
 
 ---
 

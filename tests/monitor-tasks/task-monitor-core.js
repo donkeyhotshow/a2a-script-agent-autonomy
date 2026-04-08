@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import axios from 'axios';
+import { emitProbeLogLines, probePromiseQueues } from './promise-queue-probe.mjs';
 
 class TaskMonitorCore {
   constructor() {
@@ -42,18 +43,35 @@ class TaskMonitorCore {
     this.loadState();
   }
 
+  /** Client API web origin for `/api/a2a/hub/*` probes (from `TASK_MONITOR_WEB_BASE`, `WEB_BASE`, or `baseUrl`). */
+  _clientWebOrigin() {
+    const explicit = (process.env.TASK_MONITOR_WEB_BASE || process.env.WEB_BASE || '').replace(
+      /\/$/,
+      ''
+    );
+    if (explicit) return explicit;
+    const bu = String(this.baseUrl || '').replace(/\/$/, '');
+    if (/\/api\/a2a$/i.test(bu)) return bu.replace(/\/api\/a2a$/i, '');
+    return '';
+  }
+
   loadState() {
     try {
       if (fs.existsSync(this.stateFile)) {
         const data = fs.readFileSync(this.stateFile, 'utf8');
         this.state = JSON.parse(data);
+        if (!this.state.taskSessions || typeof this.state.taskSessions !== 'object') {
+          this.state.taskSessions = {};
+        }
 
         // Restore active tasks if in daemon mode
         if (this.state.activeTasks) {
           this.activeTasks = new Map(Object.entries(this.state.activeTasks));
         }
 
-        console.log(`Loaded state: ${JSON.stringify(this.state)}`);
+        if (process.env.TASK_MONITOR_QUIET !== '1') {
+          console.log(`Loaded state: ${JSON.stringify(this.state)}`);
+        }
       } else {
         this.state = this.buildInitialState();
         this.saveState();
@@ -73,8 +91,32 @@ class TaskMonitorCore {
       currentTask: null,
       sessionId: null,
       status: 'idle',
-      activeTasks: {}
+      activeTasks: {},
+      /** One Client API session id per prompts-to-agent-mode markdown task (monitor self-check loop). */
+      taskSessions: {}
     };
+  }
+
+  /**
+   * Bind `taskName` -> `sessionId` so each monitor task uses at most one session until done or explicit reset.
+   * @param {string} taskName
+   * @param {{ id: string }} sessionData
+   */
+  recordTaskSessionSnapshot(taskName, sessionData) {
+    if (!taskName || !sessionData?.id) return;
+    this.state.taskSessions = this.state.taskSessions && typeof this.state.taskSessions === 'object' ? this.state.taskSessions : {};
+    this.state.taskSessions[taskName] = {
+      sessionId: sessionData.id,
+      updatedAt: new Date().toISOString()
+    };
+    this.saveState();
+  }
+
+  /** Drop binding after the task is marked completed (prompt file updated). */
+  clearTaskSessionBinding(taskName) {
+    if (!taskName || !this.state.taskSessions?.[taskName]) return;
+    delete this.state.taskSessions[taskName];
+    this.saveState();
   }
 
   resetStateForFreshRun() {
@@ -100,15 +142,240 @@ class TaskMonitorCore {
     }
   }
 
-  recordProcessedTask(taskName, status, detail) {
+  /**
+   * @param {string} taskName
+   * @param {'completed'|'failed'} status
+   * @param {string|null} detail
+   * @param {{ sessionId?: string|null, projectId?: string|null }} [meta]
+   */
+  recordProcessedTask(taskName, status, detail, meta = {}) {
     this.state.processedTasks = this.state.processedTasks || [];
-    this.state.processedTasks = this.state.processedTasks.filter(entry => entry.name !== taskName);
-    this.state.processedTasks.push({
+    this.state.processedTasks = this.state.processedTasks.filter((entry) => entry.name !== taskName);
+    const sessionId =
+      meta.sessionId != null && String(meta.sessionId).trim() !== ''
+        ? String(meta.sessionId).trim()
+        : null;
+    const projectId =
+      meta.projectId != null && String(meta.projectId).trim() !== ''
+        ? String(meta.projectId).trim()
+        : null;
+    const row = {
       name: taskName,
       status,
       detail: detail || null,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
+    };
+    if (sessionId) row.sessionId = sessionId;
+    if (projectId) row.projectId = projectId;
+    this.state.processedTasks.push(row);
+    if (status === 'completed' && sessionId) {
+      this.appendCompletedSessionsLedger(taskName, sessionId, projectId);
+    }
+  }
+
+  /** Entries with a Client API session that finished the monitor prompt (for scripts / operators). */
+  getCompletedTasksWithSessions() {
+    return (this.state.processedTasks || [])
+      .filter((t) => t.status === 'completed' && t.sessionId)
+      .map((t) => ({
+        taskName: t.name,
+        sessionId: t.sessionId,
+        projectId: t.projectId || null,
+        updatedAt: t.updatedAt,
+      }));
+  }
+
+  /**
+   * One row per prompt file for downstream scripts: `processedTasks` wins for `sessionId` / `projectId` /
+   * `updatedAt`; ledger supplies `completedAt` when present. Ledger-only rows survive a partial state reset.
+   * @param {Array<{taskName: string, sessionId: string, projectId?: string|null, updatedAt?: string}>} fromState
+   * @param {Array<{taskName: string, sessionId: string, projectId?: string|null, completedAt?: string}>} fromLedger
+   */
+  mergeCompletedSessionsForExport(fromState, fromLedger) {
+    const map = new Map();
+    for (const i of fromLedger) {
+      if (!i?.taskName || !i?.sessionId) continue;
+      map.set(i.taskName, {
+        taskName: i.taskName,
+        sessionId: String(i.sessionId),
+        projectId: i.projectId ?? null,
+        completedAt: i.completedAt || null,
+        updatedAt: null,
+        sources: ['ledger'],
+      });
+    }
+    for (const r of fromState) {
+      if (!r?.taskName || !r?.sessionId) continue;
+      const prev = map.get(r.taskName);
+      if (!prev) {
+        map.set(r.taskName, {
+          taskName: r.taskName,
+          sessionId: String(r.sessionId),
+          projectId: r.projectId ?? null,
+          completedAt: null,
+          updatedAt: r.updatedAt || null,
+          sources: ['state'],
+        });
+      } else {
+        prev.sessionId = String(r.sessionId);
+        if (r.projectId != null && String(r.projectId).trim() !== '') prev.projectId = String(r.projectId).trim();
+        if (r.updatedAt) prev.updatedAt = r.updatedAt;
+        if (!prev.sources.includes('state')) prev.sources.push('state');
+      }
+    }
+    return [...map.values()]
+      .filter((row) => row.sessionId)
+      .sort((a, b) =>
+        String(b.completedAt || b.updatedAt || '').localeCompare(String(a.completedAt || a.updatedAt || ''))
+      );
+  }
+
+  /** @returns {{ file: string|null, items: Array<{taskName: string, sessionId: string, projectId?: string|null, completedAt?: string}> }} */
+  readCompletedSessionsLedger() {
+    if (process.env.TASK_MONITOR_COMPLETED_SESSIONS_FILE === '0') {
+      return { file: null, items: [] };
+    }
+    const file = path.resolve(
+      process.env.TASK_MONITOR_COMPLETED_SESSIONS_FILE ||
+        path.join(path.dirname(this.stateFile), 'task-monitor-completed-sessions.json')
+    );
+    if (!fs.existsSync(file)) {
+      return { file, items: [] };
+    }
+    try {
+      const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+      const items = Array.isArray(parsed?.items) ? parsed.items : [];
+      return { file, items };
+    } catch {
+      return { file, items: [] };
+    }
+  }
+
+  /**
+   * Operator / CI: map finished prompts → Client API `sessionId` (disk under `a2a-client/storage/sessions/{id}/`).
+   * @param {string[]} argv
+   */
+  printCompletedSessionsExport(argv = []) {
+    const asJson = argv.includes('--json');
+    const fromState = this.getCompletedTasksWithSessions();
+    const { file: ledgerFile, items: fromLedger } = this.readCompletedSessionsLedger();
+    if (asJson) {
+      const merged = this.mergeCompletedSessionsForExport(fromState, fromLedger);
+      console.log(
+        JSON.stringify(
+          {
+            stateFile: this.stateFile,
+            ledgerFile,
+            merged,
+            fromState,
+            fromLedger,
+          },
+          null,
+          2
+        )
+      );
+      return;
+    }
+    console.log('Task Monitor — completed prompts ↔ Client API sessions\n');
+    console.log(`stateFile: ${this.stateFile}`);
+    if (fromState.length === 0) {
+      console.log('fromState: (no completed rows with sessionId)');
+    } else {
+      console.log(`fromState (${fromState.length}):`);
+      for (const r of fromState) {
+        const p = r.projectId ? ` projectId=${r.projectId}` : '';
+        console.log(`  • ${r.taskName}  sessionId=${r.sessionId}${p}  updatedAt=${r.updatedAt}`);
+      }
+    }
+    if (ledgerFile) {
+      console.log(`\nledgerFile: ${ledgerFile} (${fromLedger.length} row(s), newest first)`);
+      const tail = fromLedger.slice(0, 25);
+      for (const i of tail) {
+        const p = i.projectId ? ` projectId=${i.projectId}` : '';
+        console.log(
+          `  • ${i.taskName}  sessionId=${i.sessionId}${p}  completedAt=${i.completedAt || ''}`
+        );
+      }
+      if (fromLedger.length > tail.length) {
+        console.log(`  … +${fromLedger.length - tail.length} more`);
+      }
+    }
+    const merged = this.mergeCompletedSessionsForExport(fromState, fromLedger);
+    console.log(`\nmerged (${merged.length}): one row per prompt — use \`--json\` → \`merged\` for scripts`);
+    const mtail = merged.slice(0, 15);
+    for (const r of mtail) {
+      const p = r.projectId ? ` projectId=${r.projectId}` : '';
+      const ca = r.completedAt ? ` completedAt=${r.completedAt}` : '';
+      const ua = r.updatedAt ? ` updatedAt=${r.updatedAt}` : '';
+      console.log(`  • ${r.taskName}  sessionId=${r.sessionId}${p}${ca}${ua}  [${r.sources.join('+')}]`);
+    }
+    if (merged.length > mtail.length) console.log(`  … +${merged.length - mtail.length} more`);
+    console.log(
+      '\nTip: `node monitor-and-process-tasks.js --list-completed --json` → field `merged` (canonical for automation).'
+    );
+  }
+
+  logCompletedSessionsSummary() {
+    const rows = this.getCompletedTasksWithSessions();
+    if (rows.length === 0) {
+      console.log('[task-monitor] No completed monitor tasks with sessionId on record yet.');
+      return;
+    }
+    const tail = rows.slice(-20);
+    console.log(
+      `[task-monitor] Completed prompts ↔ Client API sessions (${rows.length} on record, showing last ${tail.length}):`
+    );
+    for (const r of tail) {
+      const p = r.projectId ? ` projectId=${r.projectId}` : '';
+      console.log(`  • ${r.taskName}  sessionId=${r.sessionId}${p}`);
+    }
+    const exportHint =
+      process.env.TASK_MONITOR_COMPLETED_SESSIONS_FILE === '0'
+        ? '(ledger export disabled)'
+        : `ledger: ${path.join(path.dirname(this.stateFile), 'task-monitor-completed-sessions.json')}`;
+    console.log(
+      `[task-monitor] Canonical: ${path.basename(this.stateFile)} → processedTasks[]  ${exportHint}`
+    );
+  }
+
+  /**
+   * Append-only friendly file (same dir as state unless TASK_MONITOR_COMPLETED_SESSIONS_FILE is set).
+   * Set TASK_MONITOR_COMPLETED_SESSIONS_FILE=0 to disable.
+   */
+  appendCompletedSessionsLedger(taskName, sessionId, projectId) {
+    if (process.env.TASK_MONITOR_COMPLETED_SESSIONS_FILE === '0') {
+      return;
+    }
+    const file = path.resolve(
+      process.env.TASK_MONITOR_COMPLETED_SESSIONS_FILE ||
+        path.join(path.dirname(this.stateFile), 'task-monitor-completed-sessions.json')
+    );
+    let data = { version: 1, items: [] };
+    try {
+      if (fs.existsSync(file)) {
+        const parsed = JSON.parse(fs.readFileSync(file, 'utf8'));
+        if (parsed && Array.isArray(parsed.items)) {
+          data = { version: 1, items: parsed.items };
+        }
+      }
+    } catch {
+      /* reset */
+    }
+    data.items = data.items.filter((i) => i && i.taskName !== taskName);
+    data.items.unshift({
+      taskName,
+      sessionId,
+      projectId: projectId || null,
+      completedAt: new Date().toISOString(),
     });
+    data.items = data.items.slice(0, 250);
+    data.updatedAt = new Date().toISOString();
+    try {
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      fs.writeFileSync(file, JSON.stringify(data, null, 2));
+    } catch (e) {
+      this.log('warn', `[task-monitor] Could not write completed-sessions ledger: ${e.message}`);
+    }
   }
 
   log(level, message, ...args) {
@@ -255,7 +522,8 @@ class TaskMonitorCore {
     console.log('   Sim validate: npm run sim:validate -- --all');
     console.log('   Health:       curl http://localhost:3000/health');
     console.log('   Local LLM upstream:       curl http://localhost:11435/api/tags');
-    console.log('   Reset state:  npm run monitor:reset');
+    console.log('   Reset monitor JSON:  npm run monitor:reset');
+    console.log('   Full local wipe:     npm run cleanup:fresh  (then start-all.bat)');
     console.log(`${'='.repeat(70)}\n`);
   }
 
@@ -377,39 +645,40 @@ class TaskMonitorCore {
   }
 
   /**
-   * GET hub /promises/pending — surfaces backlog when PROMISE_DAEMON_ONLY is on (daemon must drain).
+   * Hub `/promises/pending` + `/promises/errors` (with error text previews) + optional Client API hub proxy.
+   * Same probes as `npm run check:promise-queue` (shared `probePromiseQueues` in `promise-queue-probe.mjs`).
    */
   async logHubPromiseQueueSnapshot() {
     if (process.env.TASK_MONITOR_SKIP_HUB_PENDING_PROBE === '1') {
       return;
     }
+    const checkErrors = process.env.PROMISES_CHECK_ERRORS !== '0';
+    const checkHealth = process.env.TASK_MONITOR_HUB_PROBE_HEALTH === '1';
+    const probeMs = parseInt(process.env.TASK_MONITOR_HUB_PENDING_TIMEOUT_MS || '20000', 10);
     try {
-      const probeMs = parseInt(process.env.TASK_MONITOR_HUB_PENDING_TIMEOUT_MS || '20000', 10);
-      const response = await axios.get(`${this.aiHubUrl}/promises/pending`, {
-        timeout: probeMs,
-        validateStatus: (s) => s === 200,
+      const result = await probePromiseQueues({
+        hubBase: this.aiHubUrl,
+        webBase: this._clientWebOrigin(),
+        timeoutMs: probeMs,
+        checkHealth,
+        checkErrors,
+        pendingNonOkIsError: false,
       });
-      const list = Array.isArray(response.data) ? response.data : [];
-      const n = list.length;
-      const ids = list
-        .slice(0, 5)
-        .map((row) =>
-          row && typeof row === 'object' && (row.promiseId != null || row.id != null)
-            ? String(row.promiseId != null ? row.promiseId : row.id)
-            : '?'
-        )
-        .filter((x) => x !== '?');
-      console.log(
-        `[task-monitor] Hub promise queue: ${n} pending` +
-          (ids.length ? ` (sample: ${ids.join(', ')})` : '')
-      );
-      if (n > 0) {
-        console.warn(
-          `[task-monitor] If async stays pending/processing, ensure promise-queue-daemon hits ${this.aiHubUrl} (repo: scripts/start-promise-queue-daemon.bat, start-all.bat step 4b).`
+      emitProbeLogLines(result, (level, text) => this.log(level, text));
+      if (result.errors.count > 0) {
+        this.log(
+          'warn',
+          `[task-monitor] Hub /promises/errors: ${result.errors.count} ticket(s) (see lines above). Fix: POST .../promise/<id>/retry + /execute or DELETE — PROXY_API.md`
+        );
+      }
+      if (result.pending.count > 0) {
+        this.log(
+          'warn',
+          `[task-monitor] If async stays pending/processing, ensure promise-queue-daemon hits ${this.aiHubUrl} (start-all.bat step 4b).`
         );
       }
     } catch (err) {
-      this.log('warn', `[task-monitor] Could not GET ${this.aiHubUrl}/promises/pending: ${err.message}`);
+      this.log('warn', `[task-monitor] Promise queue probe failed: ${err.message}`);
     }
   }
 

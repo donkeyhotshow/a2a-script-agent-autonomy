@@ -4,7 +4,10 @@ import path from 'path';
 import { logger } from '../utils/logger.js';
 import { SkillRegistry } from '../skills/SkillRegistry.js';
 import { config } from '../config/index.js';
-import { validateSkillToolCodeForDeploy } from './tools-evolve-sandbox.js';
+import {
+  SandboxViolationError,
+  validateSkillToolCodeForDeploy,
+} from './tools-evolve-sandbox.js';
 
 const router = express.Router();
 const registry = new SkillRegistry(path.join(process.cwd(), 'a2a-server/src/skills/custom'));
@@ -27,13 +30,7 @@ router.post('/evolve', async (req, res) => {
   logger.info('[Self-Evolve] Received new tool candidate', { toolName });
 
   try {
-    // 1. Sandbox validation (Placeholder for real sandboxing)
-    // TODO: Implement proper sandboxing with isolated VM (e.g., vm2 replacement or Node vm with restrictions)
-    const isSafe = !toolCode.includes('process.exit'); // primitive check
-
-    if (!isSafe) {
-      return res.status(403).json({ error: 'Sandbox violation detected' });
-    }
+    validateSkillToolCodeForDeploy(toolCode);
 
     // 2. Write to custom tools directory
     const targetPath = path.join(process.cwd(), 'a2a-server/src/skills/custom', `${toolName}.skill.ts`);
@@ -43,10 +40,15 @@ router.post('/evolve', async (req, res) => {
     // 3. Hot reload registry
     await registry.init(); 
 
-    res.json({ status: 'deployed', path: targetPath });
+    return res.json({ status: 'deployed', path: targetPath });
   } catch (err) {
+    if (err instanceof SandboxViolationError) {
+      logger.warn('[Self-Evolve] Sandbox rejected', { msg: err.message });
+      return res.status(403).json({ error: 'Sandbox violation', detail: err.message });
+    }
+    const msg = err instanceof Error ? err.message : String(err);
     logger.error('[Self-Evolve] Deployment failed', err);
-    res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: msg });
   }
 });
 

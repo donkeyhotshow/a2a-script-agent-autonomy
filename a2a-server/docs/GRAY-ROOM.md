@@ -117,7 +117,7 @@ Adding **`prompts/transforms/<your-name>/`** (with `server-transforms-*.json` an
 
 ### Hub promise recovery (`recovered: true`)
 
-When `runLoop` is entered from **recovery** (hub `llmPromiseId` already finished; `responseMd` is the stored hub body), **ADR-0093 Internal Debate** (`llmService.debate`, three synchronous hub/Local LLM upstream calls) is **skipped** (`!isRecovered`). Otherwise debate **replaces** `md` before the first response transform and can fail with long Local LLM upstream timeouts while the main hub promise was already done — see [`BREAK_STATE.md`](../../BREAK_STATE.md) *inc-2026-04-06-b*.
+When `runLoop` is entered from **recovery** (hub `llmPromiseId` already finished; `responseMd` is the stored hub body), **ADR-0093 Internal Debate** (`llmService.debate`, three synchronous hub/Local LLM upstream calls) is **skipped** (`!isRecovered`). Otherwise debate **replaces** `md` before the first response transform and can fail with long Local LLM upstream timeouts while the main hub promise was already done — **2026-04-06:** recovery must skip debate so a finished hub body is not re-driven through three sync hub calls (former incident note lived in removed root `BREAK_STATE.md`).
 
 ### Error paths (sidecar / sub-LLM)
 

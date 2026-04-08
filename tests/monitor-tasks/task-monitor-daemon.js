@@ -137,6 +137,8 @@ class TaskMonitorDaemon {
 
     console.log(`Task processing complete (${successCount} succeeded, ${failureCount} failed, ${skipCount} skipped).`);
 
+    this.logCompletedSessionsSummary();
+
     // Print diagnostic summary if there were errors
     if (this.errorLog.length > 0) {
       this.printDiagnosticSummary();
@@ -195,7 +197,8 @@ class TaskMonitorDaemon {
     process.on('SIGTERM', shutdownHandler);
 
     let cycleCount = 0;
-    // One session at a time: full /next + GET /async poll loop inside processTask (async-only stack).
+    // INVARIANT: one incomplete prompt per iteration — await processTask until it returns; no second prompt in parallel.
+    // Inside processTask: one Client API session for that file until terminal completion (async-only /next + /async).
     while (true) {
       try {
         cycleCount++;
@@ -208,6 +211,9 @@ class TaskMonitorDaemon {
           if (typeof this.scanApplicationLogs === 'function' && typeof this.reportLogScanHits === 'function') {
             const logScan = this.scanApplicationLogs();
             if (logScan.hitCount > 0) this.reportLogScanHits(logScan.hits);
+          }
+          if (process.env.TASK_MONITOR_HUB_PROBE_DAEMON_STATUS === '1') {
+            await this.logHubPromiseQueueSnapshot();
           }
         }
 

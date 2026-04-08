@@ -20,6 +20,7 @@
 - **Bundle:** `npm run cross-system:validate` (validators in fixed order; see [`SEQUENCE.md`](SEQUENCE.md)).
 - **Sims:** `npm run sim:lint`, `npm run sim:validate` (delegates to `a2a-server`).
 - **Individual validators:** `scan-promise-bodies`, `scan-session-responses`, `verify:gray-room`, `audit:sim-choice-descriptions` — details: [`tests/direct-tests/validators/README.md`](../tests/direct-tests/validators/README.md).
+- **One promise, full picture (Markdown):** `npm run report:promise -- <promiseId> [--out path.md]` — [`scripts/promise-artifacts-report.mjs`](../scripts/promise-artifacts-report.mjs) (server request + client steps + `proxy_logs` + Gray Room fields when present).
 - **New fixture scaffold:** `npm run cross-system:new-fixture -- <slug>`
 
 ## This folder layout

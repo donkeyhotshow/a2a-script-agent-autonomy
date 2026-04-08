@@ -32,6 +32,8 @@ node tests/direct-tests/e2e-dialog-test.js --only=routerAgentNoLoop,routerAgentN
 node tests/direct-tests/e2e-dialog-test.js --only=clientProjects,serverHealth,serverHealthJson
 ```
 
+If Vite returns **`503` / `A2A server unavailable`** on `/next` under load, the harness **retries** Client API fetches (`E2E_FETCH_RETRIES`, `E2E_FETCH_RETRY_BASE_MS`, optional `E2E_CASE_COOLDOWN_MS` between cases) — see the header comment in `e2e-dialog-test.js`.
+
 **Manual full direct suite (Papa):** [`run-post-start-all.ps1`](run-post-start-all.ps1) — hub (`run-checks.ps1` with Client **3001** / Web **5173**), Vitest, `router-choice-transition.test.mjs`, full `e2e-dialog-test.js`, `gray-room-test.js`, `test-dialog-flow.ps1`, `test-agent-flow.ps1`, `server-invoke-agent.ps1`. Set **`A2A_POST_START_SKIP_HEAVY=1`** to skip LLM-heavy steps (hub + Vitest + router + short e2e subset only). **`start-all.bat` does not run this** — see [PAPA-MAMA.md](../../PAPA-MAMA.md).
 
 ---
@@ -43,6 +45,7 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 | Entry | Purpose |
 |-------|---------|
 | [validators/](validators/) | Standalone validators (not Vitest); see [validators/README.md](validators/README.md) |
+| [`scripts/promise-artifacts-report.mjs`](../../scripts/promise-artifacts-report.mjs) (repo root) | `npm run report:promise -- <promiseId> [--out report.md] [--logs]` — one **Markdown** report: server `storage/requests/{id}.json`, Gray Room (`interruptTrace`, `grayRoom`, `operationHistory`), client `sessions/**/server-promise.json`, `ai-integration/proxy_logs/promises/<id>/` |
 | [validators/scan-promise-bodies.mjs](validators/scan-promise-bodies.mjs) | `npm run scan-promise-bodies` — proxy promise `body.md` LLM JSON |
 | [validators/scan-session-responses.mjs](validators/scan-session-responses.mjs) | `npm run scan-session-responses` — `storage/sessions/**/server-response.json` (same shape rules; noisy) |
 | [validators/verify-gray-room-state.mjs](validators/verify-gray-room-state.mjs) | `npm run verify:gray-room -- <snapshot.json>` — sequence / workbench snapshot |
@@ -95,6 +98,8 @@ ai-integration uses FORWARD_TIMEOUT_SECONDS=180 (set in start-ai-integration.bat
 ## Artifact tracking and cleanup
 
 Direct Node-based tests (`e2e-dialog-test.js`, `gray-room-test.js`) append client sessions and server `promiseId`s to **`artifacts-registry.json`** (gitignored; shape: [`artifacts-registry.json.example`](artifacts-registry.json.example)). If the file is missing, the registry starts empty and is created on first write.
+
+**Trace one `promiseId` across storages (Markdown):** from repo root, `npm run report:promise -- <promiseId> --out docs/tmp/promise-trace.md` (optional `--logs` for server log lines). See [`scripts/promise-artifacts-report.mjs`](../../scripts/promise-artifacts-report.mjs).
 
 To remove those artifacts and run ai-integration cleanup after a batch of direct tests:
 

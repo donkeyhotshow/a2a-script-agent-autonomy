@@ -12,4 +12,4 @@ Reconcile the plan with shipped code: close or rewrite items that are done; impl
 
 ## Completion
 
-- [ ] Done
+[X] Completed

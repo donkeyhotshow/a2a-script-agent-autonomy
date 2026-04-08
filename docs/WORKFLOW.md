@@ -4,7 +4,7 @@ This document defines the base linear flow and operational terms used in the pro
 
 **Operator control plane:** the live stack is used as a **sub-agent**—driven by **HTTP** on the Client API: **`Task Monitor`** ([`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)) for indexed tasks through session dialog, or **`curl`** for manual turns. See [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md).
 
-**Empty task queue:** **not** “nothing to do.” Prune root/module [`DEV_STATE.md`](../DEV_STATE.md), discover work (code, sims, risks), write tasks into `DEV_STATE` / `tasks/pending/`. See [`AGENTS.md`](../AGENTS.md) — **“Empty queue — mandatory”** (under Quick Reference) + DEV_STATE Protocol — and [`methodology/tasks.md`](../archive/methodology/tasks.md).
+**Empty task queue:** **not** “nothing to do.” Prune root/module [`DEV_STATE.md`](../DEV_STATE.md), discover work (code, sims, risks), write tasks into `DEV_STATE` / `tasks/pending/`. See [`AGENTS.md`](../AGENTS.md) — **“Empty queue — mandatory”** (under Quick Reference) + DEV_STATE Protocol. (Removed `archive/methodology/tasks.md` — tracked in [`tasks/brown-alert/archive-methodology-missing.md`](../tasks/brown-alert/archive-methodology-missing.md).)
 
 ## Flow Diagram
 

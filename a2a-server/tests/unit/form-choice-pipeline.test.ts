@@ -6,7 +6,12 @@ describe('form-choice pipeline', () => {
         const res = await runFormChoicePipeline({ choice_id: 'agent', form_id: 'default' });
         expect(res?.outcome).toBe('ai_action_ready');
         expect(res?.message).toMatch(/Agent/i);
-        expect((res?.execute as { form?: { title?: string } })?.form?.title).toMatch(/Agent/i);
+        const ex = res?.execute as { message?: string; form?: unknown } | undefined;
+        expect(typeof ex?.message).toBe('string');
+        expect(ex?.form).toBeUndefined();
+        const exec = res?.context?.execution as { action?: string; step?: string } | undefined;
+        expect(exec?.action).toBe('agent');
+        expect(exec?.step).toBe('start');
         expect(res?.aiActions?.action).toBe('agent');
     });
 

@@ -1,22 +1,21 @@
 # Cursor / IDE agent signal
 
-**Tick:** `2026-04-04T03:00:02.957Z`  
-**hookId:** `cursor_agent_signal_1775271602959`
+**Example timestamp (manual):** `2026-04-04T03:00:02.957Z`  
+**Example hookId:** `cursor_agent_signal_1775271602959`
 
-Scheduled IDE agent wake: reconcile DEV_STATE (root + modules), tasks/pending/, AGENTS empty-queue protocol; optional npm run gang:orient-session when stack is up.
+Optional IDE nudge: reconcile DEV_STATE (root + modules), tasks/pending/, AGENTS empty-queue protocol; when unsure, run `npm run test:gang` or `npm run test:before-start` from repo root.
 
 ## Suggested actions
 
 - Read this file + hooks/CURSOR_AGENT_SIGNAL.md
 - Prune/discover/write per AGENTS.md if queue looks empty
-- Run npm run test:gang before deep changes when unsure; npm run test:recon:mama (offline) or test:recon (stack up) for stricter recon
+- Run `npm run test:gang` before deep changes when unsure; `npm run test:before-start` for a broader pre-change gate when the stack and env allow it
 
 ## References
 
 - `AGENTS.md`
 - `PAPA-MAMA.md`
-- `tests/gang-orient-session.mjs`
 - `START-FULL-SPECTRUM.md`
 
 ---
-*Written by `scripts/cursor-hook-ticker.mjs` — not Task Monitor.*
+*Sample hook — maintain manually or with your own automation; not written by Task Monitor.*

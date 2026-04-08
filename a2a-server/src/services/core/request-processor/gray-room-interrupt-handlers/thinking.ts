@@ -1,6 +1,10 @@
 import {resolveGrayRoomLlmModelFromContext} from '../llm-model-resolver.js';
 import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../../transform/types.js';
-import {initAiHubChatPromise, pollReadyThenFetch} from '../../../../daemon/llm-hub-poll.js';
+import {
+    extractLlmTextFromHubResponseBody,
+    initAiHubChatPromise,
+    pollReadyThenFetch,
+} from '../../../../daemon/llm-hub-poll.js';
 import {logger} from '../../../../utils/logger.js';
 import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils.js';
 import {tryParseJsonFromLlmText} from '../../../../utils/strip-markdown-json-fence.js';
@@ -34,8 +38,9 @@ export async function handleThinking(
             stream: false,
         });
         if (chatInit.ok) {
-            const thinkMd =
+            const thinkRaw =
                 chatInit.inlineResponseBody ?? (await pollReadyThenFetch(aiHubUrl, chatInit.llmPromiseId));
+            const thinkMd = thinkRaw ? extractLlmTextFromHubResponseBody(thinkRaw) : null;
             if (thinkMd) {
                 const parsed = tryParseJsonFromLlmText(thinkMd);
                 if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {

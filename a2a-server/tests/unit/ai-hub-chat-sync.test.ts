@@ -64,6 +64,9 @@ describe('fetchAiHubChatJson', () => {
                 if (u.includes('/api/chat?promise=1')) {
                     return new Response(JSON.stringify({promiseId: 'p-async'}), {status: 202});
                 }
+                if (u.includes('/promise/p-async/execute')) {
+                    return new Response('', {status: 202});
+                }
                 // pollReadyThenFetch uses GET /promise/:id until status done (not /promises/status)
                 if (u.includes('/promise/p-async') && !u.includes('/body_raw') && !u.includes('/response')) {
                     return new Response(JSON.stringify({status: 'done'}), {
