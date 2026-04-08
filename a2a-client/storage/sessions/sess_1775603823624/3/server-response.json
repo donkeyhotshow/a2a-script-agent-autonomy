@@ -1,0 +1,41 @@
+{
+  "step": 3,
+  "timestamp": "2026-04-07T23:17:23.830Z",
+  "execute": {
+    "form": {
+      "title": "Agent Mode",
+      "description": "Enter your task for the agent",
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Task",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "agent",
+      "step": "request"
+    },
+    "task": "Add `a2a-server/docs/planning/README.md` (non-normative roadmap index) with links to specs only—no duplicate tables per ADR-0027—or change ADR-0027 to the real path if planning lives elsewhere.",
+    "projectId": "p_1771576028988",
+    "history": [
+      {
+        "role": "user",
+        "message": "Add `a2a-server/docs/planning/README.md` (non-normative roadmap index) with links to specs only—no duplicate tables per ADR-0027—or change ADR-0027 to the real path if planning lives elsewhere."
+      },
+      {
+        "role": "system",
+        "message": "choice: agent"
+      }
+    ],
+    "session_id": "srv_sess_stateless",
+    "workbench": {
+      "sections": {},
+      "slots": {}
+    }
+  }
+}

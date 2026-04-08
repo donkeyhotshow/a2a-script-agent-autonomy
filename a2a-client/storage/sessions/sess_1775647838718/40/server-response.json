@@ -1,0 +1,77 @@
+{
+  "step": 40,
+  "timestamp": "2026-04-08T12:34:10.075Z",
+  "execute": {
+    "form": {
+      "title": "Agent",
+      "description": "Pending LLM request. You can still provide your next instruction.",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Message",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "agent",
+      "step": "start"
+    },
+    "task": "Assign reviewers or mark as exploratory; split Phase 1 into `tasks/*` specs with testable slices, or fold into existing gray-room / ADR-0035 work. Do not leave **Proposed** + **[TBD]** indefinitely without a decision record in the ADR header. — [prompt: doc-adr-0036-master-orchestration-memory-proposed.md]",
+    "projectId": "p_1771576028988",
+    "history": [
+      {
+        "role": "user",
+        "message": "Assign reviewers or mark as exploratory; split Phase 1 into `tasks/*` specs with testable slices, or fold into existing gray-room / ADR-0035 work. Do not leave **Proposed** + **[TBD]** indefinitely without a decision record in the ADR header. — [prompt: doc-adr-0036-master-orchestration-memory-proposed.md]"
+      },
+      {
+        "role": "system",
+        "message": "choice: agent"
+      },
+      {
+        "role": "assistant",
+        "message": "I need to locate the ADR-0036 document to review the current status of Phase 1 and resolve the pending decisions regarding reviewers and task splitting."
+      },
+      {
+        "role": "assistant",
+        "message": "I will search for the ADR-0036 document to review the status of Phase 1 and resolve the pending decisions regarding reviewers and task splitting."
+      },
+      {
+        "role": "system",
+        "message": "RAG (0 files, page 1, hasMore false)"
+      },
+      {
+        "role": "user",
+        "message": "Task specification is in the markdown file below. Read it with read-file (path is relative to the repository root), then work iteratively until the file’s goals are satisfied; use tools as needed and report progress each turn.\n\nRepo path: prompts-to-agent-mode/doc-adr-0036-master-orchestration-memory-proposed.md\nFile URL: file:///C:/workspace/org-carrier/a2a-script-agent/prompts-to-agent-mode/doc-adr-0036-master-orchestration-memory-proposed.md\n\nSummary: Assign reviewers or mark as exploratory; split Phase 1 into `tasks/*` specs with testable slices, or fold into existing gray-room / ADR-0035 work. Do not leave **Proposed** + **[TBD]** indefinitely without a decision record in the ADR header."
+      },
+      {
+        "role": "assistant",
+        "message": "I will read the ADR-0036 document to understand the current status of Phase 1 and the pending decisions regarding reviewers and task splitting."
+      },
+      {
+        "role": "system",
+        "message": "Read doc-adr-0036-master-orchestration-memory-proposed.md (0 lines)"
+      },
+      {
+        "role": "assistant",
+        "message": "I will read the ADR-0036 document to understand the current status of Phase 1 and the pending decisions regarding reviewers and task splitting."
+      },
+      {
+        "role": "assistant",
+        "message": "The previous read attempt returned 0 lines. I will check the directory structure to verify the file location before proceeding."
+      },
+      {
+        "role": "system",
+        "message": "Listed prompts-to-agent-mode: ONE-PIPELINE.md, README.md, STACK-RUN.md, ai-integration-configuration-system-plan.md, ai-integration-promise-queue-plan.md, ai-integration-ui-improvements-plan.md, client-api-01-sessions-create-load.md, client-api-02-next-ack-first.md, client-api-03-async-resolves-pending.md, client-api-04-session-rebuild-highest-step.md, client-api-05-red-room-artifacts.md, dev-state-align-with-work-state.md, dev-state-client-test-failures.md, dev-state-orchestrator-metrics.md, dev-state-router-drift-optional.md, doc-adr-0012-session-store-enhancements.md, doc-adr-0021-cross-browser-matrix.md, doc-adr-0025-promise-ui-decouple.md, doc-adr-0027-planning-readme-missing.md, doc-adr-0035-open-followups.md, doc-adr-0036-master-orchestration-memory-proposed.md, doc-adr-reference-not-implemented-v2.md, doc-adr-reference-partial-adrs.md, doc-golden-simulations-web-dto-checklist.md, doc-protocol-validation-examples.md, doc-protocols-actions-roadmap-checklists.md, doc-protocols-index-truth-vs-server.md, doc-protocols-message-loading-state.md, doc-readme-broken-troubleshooting-link.md, doc-server-elements-hierarchy-roadmap.md, doc-simulation-template-authoring.md, greedy-dump-integration-and-slices.md, greedy-dump-task-tree-open-nodes.md, methodology-adr-compliance-orchestrator.md, methodology-improvements-automation.md, methodology-proposals-folder-missing.md, methodology-task-export-debug-state.md, methodology-task-organize-dialog-test.md, repo-task-specs-missing-restore.md, repo-tasks-pending-archive-layout.md, scripts-tests-hierarchical-suite.md, sim-async-expand-coverage.md, sim-sync-agent-coder-smart-description-stubs.md, sim-sync-task-decomposition-description-stubs.md, task-monitor-quick-start.md, work-state-01-concept-end-to-end.md, work-state-02-unified-data-language.md, work-state-03-agent-modes-gray-room.md, work-state-04-gray-room-concept.md, work-state-stale-links-and-s13.md, work-task-a2a-dev-state-improvements.md, work-task-analyze-test-failures.md, work-task-orchestrator-metrics-tracking.md, work-task-rag-package-tests.md, work-task-s14-script-dialog-agent-response-parity.md, work-task-sync-documentation-router-drift.md, work-task-sync-form-choices-description.md, work-task-sync-llm-snapshot-coverage.md, work-task-sync-readme-and-cli-gap.md, work-task-sync-step-contract-warnings.md, work-task-sync-substeps-not-discovered.md, work-task-sync-workspace-tools-golden-map.md, work-task-system-improvement-priorities-missing.md"
+      }
+    ],
+    "session_id": "srv_sess_stateless",
+    "workbench": {
+      "slots": {},
+      "sections": {}
+    }
+  }
+}

@@ -1,0 +1,122 @@
+{
+  "sessionId": "sess_1775604739617",
+  "steps": [
+    {
+      "step": 1,
+      "hasServerResponse": true,
+      "hasClientResult": false
+    },
+    {
+      "step": 2,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 3,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 4,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 5,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 6,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 7,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 8,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 9,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 10,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 11,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 12,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 13,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 14,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 15,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 16,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 17,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 18,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 19,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 20,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 21,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 22,
+      "hasServerResponse": false,
+      "hasClientResult": true
+    }
+  ],
+  "updatedAt": "2026-04-08T15:51:28.245Z",
+  "createdAt": "2026-04-07T23:32:19.620Z",
+  "currentStep": 22,
+  "mode": "agent",
+  "promiseId": null,
+  "promiseStatus": null,
+  "status": "active"
+}

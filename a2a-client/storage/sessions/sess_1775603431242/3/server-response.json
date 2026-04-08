@@ -1,0 +1,41 @@
+{
+  "step": 3,
+  "timestamp": "2026-04-07T23:10:46.439Z",
+  "execute": {
+    "form": {
+      "title": "Agent Mode",
+      "description": "Enter your task for the agent",
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Task",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "agent",
+      "step": "request"
+    },
+    "task": "Define and document (or automate) the full cross-browser matrix; align with existing Playwright setup. Update REFERENCE / ADR status from Partial to complete or document scope cut.",
+    "projectId": "p_1771576028988",
+    "history": [
+      {
+        "role": "user",
+        "message": "Define and document (or automate) the full cross-browser matrix; align with existing Playwright setup. Update REFERENCE / ADR status from Partial to complete or document scope cut."
+      },
+      {
+        "role": "system",
+        "message": "choice: agent"
+      }
+    ],
+    "session_id": "srv_sess_stateless",
+    "workbench": {
+      "sections": {},
+      "slots": {}
+    }
+  }
+}

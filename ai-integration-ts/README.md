@@ -6,6 +6,12 @@ TypeScript Fastify clone of `ai-integration` for drop-in runtime on port `11436`
 
 Provide endpoint-compatible AI hub behavior (`/api/*`, `/promise*`, `/promises*`, health, ops helpers) with async `promiseId` transport.
 
+## Non-Goals
+
+- Web interface from the original `ai-integration` is not copied into `ai-integration-ts`.
+- The original web UI is outdated, so that copy function is no longer needed.
+- Black Room behavior is not migrated to `ai-integration-ts`.
+
 ## Quickstart
 
 - `npm install`

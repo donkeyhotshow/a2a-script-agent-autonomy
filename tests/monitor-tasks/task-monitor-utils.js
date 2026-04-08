@@ -614,7 +614,7 @@ class TaskMonitorUtils {
               severity: 'medium',
               message: `Promise ${promiseId} processing for extended time with ${history.length} history entries`
             });
-            inspection.recommendations.push('Check if Local LLM upstream is actually generating: curl http://localhost:11435/api/ps');
+            inspection.recommendations.push('Check if proxy-backed generation is active: curl http://localhost:11434/api/ps');
           }
         } catch (e) {
           inspection.issues.push({

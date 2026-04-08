@@ -1,0 +1,23 @@
+{
+  "version": 1,
+  "files": {
+    "tasks/pending/session-storage-sess_1775603431242-structure-audit.md": "a1bca084d95aa5885d53e3491ca4faa4",
+    "tasks/pending/session-storage-sess_1775603572213-structure-audit.md": "eca277233128a93abb27851d95bd9544",
+    "tasks/pending/session-storage-sess_1775603823624-structure-audit.md": "0a3792ab33efe291db76f1ba4c9d3456",
+    "tasks/pending/session-storage-sess_1775604739617-structure-audit.md": "d55de472b6b938f61d8c6b7d618ecfeb",
+    "tasks/pending/session-storage-sess_1775605500906-structure-audit.md": "d04e6d3774437399d0a2c6f5efcbdeea",
+    "tasks/pending/session-storage-sess_1775606238362-structure-audit.md": "11da4205f5e06c8258d6b6ae0045681d",
+    "tasks/pending/session-storage-sess_1775607267280-structure-audit.md": "25968b9906b059987068bb81e5b30bb1",
+    "tasks/pending/session-storage-sess_1775608866619-structure-audit.md": "d6a9b56dcbe1e6dca5bb4c44a66ab47a",
+    "tasks/pending/session-storage-sess_1775611280997-structure-audit.md": "ac97237973cd9a0bed693ac722d30e0d",
+    "tasks/pending/session-storage-sess_1775647490825-structure-audit.md": "5a778ac3f295fb600fd319a884847b3a",
+    "tasks/pending/session-storage-sess_1775647838718-structure-audit.md": "6c2e081e4f0e5d741d3f27baac09443d",
+    "tasks/pending/session-storage-sess_1775661165158-structure-audit.md": "771bdc76650d264e59411c3bc04c2667",
+    "tasks/pending/session-storage-audit-summary.md": "df3c0185042ef5becfb96a99da078b06",
+    "tasks/pending/session-storage-cluster-internal-session-id-leak.md": "81e6473d80233148c0e22a613b52921b",
+    "tasks/pending/session-storage-cluster-other-structure-issues.md": "1ae261b8398ad81acf033c5a1753928c",
+    "tasks/pending/session-storage-cluster-router-choice-shape-drift.md": "3fd1bb9f3b2488724f9c5a1f7bccc9fd",
+    "tasks/pending/session-storage-cluster-session-index-step-drift.md": "e0b3ddfa57cdb2eb99e1459aed01a33b",
+    "tasks/pending/session-storage-clusters-summary.md": "114231acfaf52266418f8e5616c3f59d"
+  }
+}

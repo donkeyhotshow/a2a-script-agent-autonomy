@@ -1,0 +1,101 @@
+{
+  "step": 2,
+  "timestamp": "2026-04-07T23:45:06.009Z",
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "CLI Hub Action",
+          "label": "*ID:** `cli-hub`",
+          "description": "*Description:** Dispatch CLI commands to the Laravel agent system core. Acts as a hub for routing commands to appropriate handlers. **Source:** `laravel-agent-workspace-tools/scripts/cli-hub.js`"
+        },
+        {
+          "id": "Test System Action",
+          "label": "*ID:** `test-system`",
+          "description": "*Description:** Run system tests using the Laravel agent system core modules. Wrapper for `runSystemTests()`. **Source:** `laravel-agent-workspace-tools/scripts/test-system.js`"
+        },
+        {
+          "id": "Validate Migration Scenarios Action",
+          "label": "*ID:** `validate-migration-scenarios`",
+          "description": "*Description:** Validate Tailwind migration scenario JSON files. Checks for required fields, execution_sequence structure, and step format. **Source:** `laravel-agent-workspace-tools/scripts/validate-migration-scenarios.js`"
+        },
+        {
+          "id": "web-dev-skill",
+          "label": "Agent Skill for Web Development: Scaffolding projects, managing frontend dependencies, and generating premium UI components.",
+          "description": "*Priority:** 5 **Context:** Contains standard handlers for scaffolding and editing frontend layers."
+        },
+        {
+          "id": "batch-generate-patches",
+          "label": "Generates patches for Vue components based on migration inventory (mirrors the `batch-generate-patches.js` script).",
+          "description": "*Priority:** 7"
+        },
+        {
+          "id": "Migrate Registry Action",
+          "label": "*ID:** `migrate-registry`",
+          "description": "*Description:** Migrate scenario-registry.json from v2 format (nested statuses) to v3 format (flat steps with tournament support). Creates backup before migration. **Source:** `laravel-agent-workspace-tools/scripts/migrate-registry.js`"
+        },
+        {
+          "id": "fix-laravel-namespaces-and-uses",
+          "label": "Align Laravel / PHP `namespace` with PSR-4 paths and fix invalid `use` imports (mirrors websitestore `scripts/detect/*` and `fix_use_statements.php`).",
+          "description": "*Priority:** 9"
+        },
+        {
+          "id": "Process Response Patches Action",
+          "label": "*ID:** `process-response-patches`",
+          "description": "*Description:** Extract patches from AI response, store them using PatchStorage, and return modified response with patch file paths. **Source:** `laravel-agent-workspace-tools/scripts/process-response-patches.js`"
+        },
+        {
+          "id": "List Tickets Action",
+          "label": "*ID:** `list-tickets`",
+          "description": "*Description:** List all tickets from the AI agent system ticket directory. Shows pending, approved, and completed tickets. **Source:** `laravel-agent-workspace-tools/scripts/list-tickets.js`"
+        },
+        {
+          "id": "Migrate PHP Components Action",
+          "label": "*ID:** `migrate-php-components`",
+          "description": "*Description:** Migrate PHP business logic components (Services, Models, Controllers, Validators, DTOs) through the AI agent ticket system. Validates PHP syntax, creates backups, and categorizes files. **Source:** `laravel-agent-workspace-tools/scripts/migrate-php-components.js`"
+        },
+        {
+          "id": "Migrate Tests Action",
+          "label": "*ID:** `migrate-tests`",
+          "description": "*Description:** Migrate test files (PHP, JavaScript, TypeScript) through the AI agent system. Handles PHPUnit, Pest, Vitest, Jest, Playwright tests with validation and categorization. **Source:** `laravel-agent-workspace-tools/scripts/migrate-tests.js`"
+        },
+        {
+          "id": "Migrate Vue Components Action",
+          "label": "*ID:** `migrate-vue-components`",
+          "description": "*Description:** Migrate Vue.js components and TypeScript files. Handles Vue components, TypeScript, composables, stores, services with validation and categorization. **Source:** `laravel-agent-workspace-tools/scripts/migrate-vue-components.js`"
+        },
+        {
+          "id": "dialog",
+          "label": "AI діалог з користувачем",
+          "description": "Вільний текстовий діалог з моделлю без інструментів коду."
+        },
+        {
+          "id": "agent",
+          "label": "Agent (універсальний режим)",
+          "description": "Агент з інструментами: пошук по коду, файли, команди."
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Декомпозиція задачі",
+          "description": "Розбиття задачі на підзадачі та план виконання."
+        },
+        {
+          "id": "fix-vue-imports",
+          "label": "Виправлення Vue imports",
+          "description": "Скриптований сценарій для виправлення імпортів у Vue."
+        }
+      ]
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "task",
+      "step": "router"
+    },
+    "task": "Implement or explicitly defer each ⏳ row: client modal behavior for waiting/approval states; session/create or persistence path for `conversation_id` if still required. Update ADR-0035 table (✅/deferred) and `DEV_STATE` for touched modules.",
+    "projectId": "p_1771576028988",
+    "history": [],
+    "session_id": "srv_sess_stateless"
+  }
+}

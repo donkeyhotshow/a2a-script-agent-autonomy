@@ -657,7 +657,7 @@ class TaskMonitorCore {
     console.log('   Sim lint:     npm run sim:lint -- --all');
     console.log('   Sim validate: npm run sim:validate -- --all');
     console.log('   Health:       curl http://localhost:3000/health');
-    console.log('   Local LLM upstream:       curl http://localhost:11435/api/tags');
+    console.log('   Proxy model tags:         curl http://localhost:11434/api/tags');
     console.log('   Reset monitor JSON:  npm run monitor:reset');
     console.log('   Full local wipe:     npm run cleanup:fresh  (then start-all.bat)');
     console.log(`${'='.repeat(70)}\n`);

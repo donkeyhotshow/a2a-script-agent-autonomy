@@ -19,8 +19,6 @@ dist/
 # Session/storage in project folder (legacy - now uses ~/.a2a-client)
 
 .pids.txt
-a2a-client/storage/
-
 # Sim invoke capture (merge into response.json for goldens; see simulations/SCHEMA.md)
 simulations/**/invoke-capture.json
 .env*
@@ -32,8 +30,6 @@ simulations/**/invoke-capture.json
 **/tests/human-review/.last-vitest.json
 tests/proba-servera/**/output.json
 
-# Cross-system hub: raw dumps before promoting to fixtures/ (see cross-system-contracts/README.md)
-cross-system-contracts/scratch/
 
 # Direct-tests: runtime session/promise IDs for cleanup-artifacts (copy from artifacts-registry.json.example)
 tests/direct-tests/artifacts-registry.json

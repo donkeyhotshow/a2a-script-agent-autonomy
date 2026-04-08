@@ -1,0 +1,25 @@
+{
+  "step": 1,
+  "title": "New Session",
+  "execute": {
+    "message": "What would you like me to do?",
+    "form": {
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Enter your task",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "agent",
+      "step": "new"
+    },
+    "task": "Define and document (or automate) the full cross-browser matrix; align with existing Playwright setup. Update REFERENCE / ADR status from Partial to complete or document scope cut.",
+    "projectId": "p_1771576028988"
+  }
+}

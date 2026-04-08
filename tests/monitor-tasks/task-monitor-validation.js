@@ -189,9 +189,9 @@ class TaskMonitorValidation {
 
     };
 
-    // Use environment variables for service URLs or fall back to defaults
-    const compat_llmUrl = process.env.LOCAL_LLM_UPSTREAM_URL || 'http://localhost:11435';
+    // Proxy-first stack: compat check uses proxy tags endpoint unless explicitly overridden.
     const aiHubUrl = process.env.AI_HUB_URL || 'http://localhost:11434';
+    const compat_llmUrl = process.env.LOCAL_LLM_UPSTREAM_URL || aiHubUrl;
 
     const healthTimeout = parseInt(process.env.TASK_MONITOR_HEALTH_TIMEOUT_MS || '15000', 10);
 

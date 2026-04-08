@@ -1,0 +1,32 @@
+{
+  "sessionId": "sess_1775608866619",
+  "steps": [
+    {
+      "step": 1,
+      "hasServerResponse": true,
+      "hasClientResult": false
+    },
+    {
+      "step": 2,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 3,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 4,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    }
+  ],
+  "updatedAt": "2026-04-08T15:51:28.269Z",
+  "createdAt": "2026-04-08T00:41:06.622Z",
+  "currentStep": 4,
+  "mode": "agent",
+  "promiseId": null,
+  "promiseStatus": null,
+  "status": "active"
+}

@@ -1,6 +1,14 @@
 # A2A Script Agent
 
-**Status: 2026-03-27 (Production Readiness Phase)**
+**Status: 2026-04-08 — autonomous AI operator workstation; production-grade session completion validation**
+
+## Project positioning
+
+This repository is an **autonomous operator workstation** for AI-assisted development: a coordinated stack (Client API, server, hub, Web UI) where work proceeds through **long-lived async sessions** (`/next` + `/async`), not one-shot HTTP to an LLM.
+
+**Completion bar (production level):** tasks in **`tasks/`** and **`prompts-to-agent-mode/`** carry explicit acceptance criteria; the **Task Monitor** (`npm run monitor` / `monitor:once`) is the normative driver for multi-turn completion. **Validators** (`tests/direct-tests/validators/`, `npm run test:before-start`, sim lint/validate, `npm run cross-system:validate`) enforce contracts, **edge cases**, and cross-layer shape — not “it looked fine in the UI once.”
+
+**Session quality:** operator and CI treat **terminal session state** (router beats, action-key shapes, async terminality, stored artifacts) as evidence — see [`AGENTS.md`](AGENTS.md), [`docs/AGENTS-REFERENCE.md`](docs/AGENTS-REFERENCE.md), [`GLOSSARY.md`](GLOSSARY.md). Optional hygiene: `npm run audit:session-storage` for client session storage drift → tracked tasks.
 
 ## Live stack: start and restart
 
@@ -18,7 +26,7 @@ At the repo root on Windows, `npm run dev` is an alias for `start-all.bat` — t
 | Change | Impact |
 |--------|--------|
 | Stateless A2A Server | No server-side session storage |
-| Keyword-based routing | Replaces LLM router |
+| Config-driven / keyword router | Static choices + keyword matching (see [`a2a-server/docs/Router.md`](a2a-server/docs/Router.md)); not an open-ended LLM-only router |
 | Action-key shape | Mandatory for execute/result |
 | Context fields | execution, history, workbench |
 | Step-based storage | Numbered folders in Client API |
@@ -107,7 +115,7 @@ These scripts follow the port-kill / verify / PID cleanup pattern documented in 
 │  5173* │ Web UI + Client API │ Vite + Vue; **session HTTP API** lives here as `/api/a2a/*` |
 │  5432* │ PostgreSQL        │ pgvector extension (5432-5442)│
 │  6379* │ Redis             │ Caching & queues (6379-6389)  │
-│ 11434* │ AI Hub Proxy        │ Python Flask (11434-11444)   │
+│ 11434* │ AI Hub (ai-integration) │ uvicorn ASGI proxy (11434-11444); see [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md) │
 │ 11435* │ Local LLM upstream              │ LLM inference (11435-11445)    │
 └─────────────────────────────────────────────────────────────┘
 * Actual ports may differ if defaults are busy. Check `.env.local` after start.
@@ -158,7 +166,7 @@ See [System Startup Documentation](docs/SYSTEM_STARTUP.md) for details.
 
 **Schema debugging order (mandatory):** start with **[tests/direct-tests/README.md](tests/direct-tests/README.md#schema-debugging--start-here)** — reproduce and isolate payload-shape issues there first; escalate to session flow, then simulations, then full e2e.
 
-- **Validators** (recommended offline checks — they **point at specific contract errors**): [tests/direct-tests/validators/README.md](tests/direct-tests/validators/README.md). Examples: `npm run scan-promise-bodies` (proxy LLM `body.md`), `npm run scan-session-responses` (`storage/sessions/**/server-response.json`), `npm run verify:gray-room`, `npm run audit:sim-choice-descriptions`, `npm run sim:check-md` (sim MD vs JSON drift). Same rules for execute/message shape are shared in `validators/lib/check-llm-execute-shape.mjs`.
+- **Validators** (recommended offline checks — they **point at specific contract errors**): [tests/direct-tests/validators/README.md](tests/direct-tests/validators/README.md). Examples: `npm run scan-promise-bodies` (proxy LLM `body.md`), `npm run scan-session-responses` (`storage/sessions/**/server-response.json`), `npm run verify:gray-room`, `npm run audit:sim-choice-descriptions`, `npm run sim:check-md` (sim MD vs JSON drift), `npm run audit:session-storage` (client session JSON drift → `tasks/pending/session-storage-*.md`). Same rules for execute/message shape are shared in `validators/lib/check-llm-execute-shape.mjs`.
 - **One-promise trace (Markdown):** `npm run report:promise -- <promiseId> [--out path.md] [--logs]` — [scripts/promise-artifacts-report.mjs](scripts/promise-artifacts-report.mjs) joins server request file, client session steps, hub `proxy_logs/promises/<id>/`, and Gray Room steps when stored in context.
 
 - **Health checks by stack part** (no service startup): [tests/direct-tests/run-checks.ps1](tests/direct-tests/run-checks.ps1) — `.\tests\direct-tests\run-checks.ps1 -Scope LLM | ServerLLM | ClientServer | ClientServerLLM | WebClient | WebClientServer | Full`. Full index: [tests/direct-tests/README.md](tests/direct-tests/README.md).

@@ -43,6 +43,7 @@
         "scan-session-responses": "node tests/direct-tests/validators/scan-session-responses.mjs",
         "verify:gray-room": "node tests/direct-tests/validators/verify-gray-room-state.mjs",
         "audit:sim-choice-descriptions": "node tests/direct-tests/validators/audit-sim-choice-descriptions.mjs",
+        "audit:session-storage": "node scripts/audit-session-storage-to-tasks.mjs",
         "cross-system:validate": "node tests/cross-system-validate.mjs",
         "cross-system:new-fixture": "node scripts/new-cross-system-fixture.mjs",
         "validate:proba-servera": "tsx tests/proba-servera/validate.mts",

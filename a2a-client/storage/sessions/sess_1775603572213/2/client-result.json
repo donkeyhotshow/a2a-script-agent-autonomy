@@ -1,0 +1,5 @@
+{
+  "result": {
+    "message": "Either drive ADR-0025 to **accepted + phased implementation** (prefer `/async`-only client contour per current Client API), or mark **superseded/rejected** with pointer to what shipped (`GET …/async`, ack-first). Update ADR status line and `docs/adr/README.md` index if conventions require."
+  }
+}
