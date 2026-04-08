@@ -30,10 +30,12 @@ This repository **is** that stack: services run, and **work is driven by HTTP** 
 
 ## What the operator *does* do
 
-1. **Run services** from repo root: **`start-all.bat`** / **`start-all.sh`** — [`docs/SYSTEM_STARTUP.md`](SYSTEM_STARTUP.md).
+1. **Run services** from repo root: **`start-all.bat`** / **`start-all.sh`** for bootstrap/full reset — [`docs/SYSTEM_STARTUP.md`](SYSTEM_STARTUP.md).
 2. **Launch indexed tasks through dialog:** **`npm run monitor`** or **`npm run monitor:once`** — [`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md).
 3. **Or talk to the Client API** directly (default **`http://localhost:5173`**) — same API the UI and monitor use, via **`curl`** or scripts.
 4. **Wait for completion** on async work: poll **`GET /api/a2a/sessions/{id}/async`** until the response is final — same loop the Task Monitor implements.
+
+**Hot-reload policy:** after normal code changes, do **not** ask for full-stack restart by default. Restart stack only for process/env/port-level faults (dead Vite/Client API process, stuck ports, changed env that requires process restart). Canonical policy: [`docs/SYSTEM_STARTUP.md`](SYSTEM_STARTUP.md).
 
 ## Schema debugging first step (mandatory)
 

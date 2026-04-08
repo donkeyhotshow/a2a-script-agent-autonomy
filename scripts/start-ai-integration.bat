@@ -23,7 +23,10 @@ if errorlevel 1 (
     cd ..
     exit /b 1
 )
-start "ai-integration" cmd /c "set FORWARD_TIMEOUT_SECONDS=180 && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port %PROXY_PORT%"
+if not defined AI_INTEGRATION_RELOAD set AI_INTEGRATION_RELOAD=1
+set UVICORN_RELOAD_FLAG=
+if "%AI_INTEGRATION_RELOAD%"=="1" set UVICORN_RELOAD_FLAG=--reload --reload-dir .
+start "ai-integration" cmd /c "set FORWARD_TIMEOUT_SECONDS=180 && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port %PROXY_PORT% %UVICORN_RELOAD_FLAG%"
 cd ..
 
 REM Uvicorn can take longer than 5s on cold start; poll up to about 40 seconds

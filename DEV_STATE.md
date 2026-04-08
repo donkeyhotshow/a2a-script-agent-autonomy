@@ -8,6 +8,8 @@
 
 **Execute indexed stack work through the Task Monitor** — **`npm run monitor`** / **`monitor:once`** ([`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md)) driving [`prompts-to-agent-mode/`](prompts-to-agent-mode/README.md) via Client API sessions. Success means: automated create → `/next` → poll `/async` until terminal; router beats respected; agent can apply repo changes; evidence in **`merged`**. Manual curl is debug-only for that queue. **Not** raw `invoke` alone. **Operator trap:** a markdown task reads like one step, but runtime is **one session + many turns** — see [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md) (top), [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md), [`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md), root [`README.md`](README.md) (*Full-spectrum*), [`AGENTS.md`](AGENTS.md) (*Markdown task ≠ one HTTP call*), [`docs/AGENTS-REFERENCE.md`](docs/AGENTS-REFERENCE.md) (*Unified manual path*), [`tasks/README.md`](tasks/README.md) (stack queue row), [`GLOSSARY.md`](GLOSSARY.md) (*Task Monitor*), [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 
+**Last monitor run (2026-04-08T14:11:22+03:00):** Processed 1 task from queue (`doc-adr-0036-master-orchestration-memory-proposed.md`), which timed out after 302s at `status=idle`. Hub had 79 error promises (401 auth errors). 17 tasks skipped as already completed. Evidence: task monitor logs showing timeout and promise queue state.
+
 | Step | Reference |
 |------|-----------|
 | Live stack (Windows) | Repo root **`start-all.bat`** — [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md) |
@@ -17,7 +19,7 @@
 
 **Default team habit:** for **`prompts-to-agent-mode/`**, run **`npm run monitor`** or **`monitor:once`** — not file-by-file curl. Web UI uses the same Client API shape. IDE closes the loop on **`tasks/`** + **`DEV_STATE`**, then returns to the monitor for the stack queue.
 
-**Cross-system shapes (wrong returns between layers):** hub [`cross-system-contracts/README.md`](cross-system-contracts/README.md), sequence [`cross-system-contracts/SEQUENCE.md`](cross-system-contracts/SEQUENCE.md), operator notes [`cross-system-contracts/PRACTICE.md`](cross-system-contracts/PRACTICE.md), **`npm run cross-system:validate`**, backlog [`tasks/pending/cross-system-parameter-hunt.md`](tasks/pending/cross-system-parameter-hunt.md). **Client API / proxy boundary:** [`tasks/pending/client-api-dedup-no-proxy-in-dto.md`](tasks/pending/client-api-dedup-no-proxy-in-dto.md) — dedup Vite vs SDK hub pass-through **without** putting proxy/hub metadata into client-visible session DTOs. **Repo cleanup (no Vite–SDK parity):** [`tasks/pending/repo-redundancy-and-hygiene.md`](tasks/pending/repo-redundancy-and-hygiene.md).
+**Cross-system shapes (wrong returns between layers):** hub [`cross-system-contracts/README.md`](cross-system-contracts/README.md), sequence [`cross-system-contracts/SEQUENCE.md`](cross-system-contracts/SEQUENCE.md), operator notes [`cross-system-contracts/PRACTICE.md`](cross-system-contracts/PRACTICE.md), **`npm run cross-system:validate`**, backlog [`tasks/pending/cross-system-parameter-hunt.md`](tasks/pending/cross-system-parameter-hunt.md). 
 
 ---
 

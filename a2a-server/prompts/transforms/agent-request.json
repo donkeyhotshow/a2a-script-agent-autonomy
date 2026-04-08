@@ -22,7 +22,18 @@
       "op": "set",
       "path": "$out.execute",
       "value": {
-        "message": "Pending LLM (request template; no fixed input form)."
+        "form": {
+          "title": "Agent",
+          "description": "Pending LLM request. You can still provide your next instruction.",
+          "input": [
+            {
+              "name": "message",
+              "type": "text",
+              "label": "Message",
+              "required": true
+            }
+          ]
+        }
       }
     },
     {

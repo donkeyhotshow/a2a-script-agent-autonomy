@@ -162,7 +162,8 @@ Enforced by [`tests/infrastructure/monitor-and-process-tasks.test.js`](tests/inf
 
 ## Prerequisites
 
-- Stack up: **`start-all.bat`** from repo root (not ad-hoc `npm run dev` per package) — [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md).
+- Stack up: **`start-all.bat`** from repo root for initial bootstrap/full reset — [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md).
+- **Do not request full-stack restart after normal code edits.** Dev services are hot-reload by default; restart only for process/env/port faults (dead window, stuck port, changed env, broken process tree).
 - Client API reachable at your configured base (default **`http://localhost:5173/api/a2a`**).
 - **Before a large or full-index run:** archive session folders you need from **`a2a-client/storage/sessions/`** (Self-Upgrade policy — [`tasks/README.md`](tasks/README.md) step 2, [`GLOSSARY.md`](GLOSSARY.md) *Session archival*). Shipped scripts do **not** age-prune sessions; only an explicit **`cleanup:*`** wipes that tree.
 

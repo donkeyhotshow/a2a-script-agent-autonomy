@@ -10,7 +10,8 @@ Guidance for agents working in this repository.
 
 | Topic | Reference |
 |-------|-----------|
-| **Windows live stack restart** | **`start-all.bat`** from repo root only — not per-service `npm run dev` ([`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md)) |
+| **Windows live stack bootstrap/restart** | **`start-all.bat`** from repo root when you need full bootstrap or full reset — not per-service `npm run dev` ([`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md)) |
+| **Hot-reload policy (default)** | After code edits, **do not request full-stack restart by default**: `a2a-server` (`tsx watch`), Client API (`tsx watch`), Web UI (`vite`), `ai-integration` (`uvicorn --reload`), and promise daemon dev-watch auto-reload. Restart stack only for env/port/process-level faults. See [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md). |
 | **Unified manual path** | **Client API only:** create session → **`mode: "agent"`** (or `execution.action`) → **`task`** → `next` + poll `async` — [`docs/AGENTS-REFERENCE.md` § Unified manual path](docs/AGENTS-REFERENCE.md#unified-manual-path-client-api) |
 | **Markdown task ≠ one HTTP call** | Task text seeds **`task`**; **finishing** needs **many turns** on the **same `sessionId`** or **`npm run monitor`** — [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md) (top), [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md) |
 | **Backlog prompts (live stack)** | **[`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md)** + **[`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md)** — **run via Task Monitor** (`npm run monitor` / `monitor:once`); same Client API contour (`sessions`, `next`, poll `async`, `mode: "agent"`). Manual curl only for targeted debug, not batch queue |
