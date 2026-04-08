@@ -1,9 +1,8 @@
 /**
  * @a2a/json - Validation schemas using Zod
  */
-import {z} from 'zod';
-import type {ValidationResult, ResponseType} from './types.js';
-
+import { z } from 'zod';
+import type { ValidationResult, ResponseType } from './types.js';
 /**
  * Base response schema
  */
@@ -30,14 +29,14 @@ export declare const taskSchema: z.ZodObject<{
     status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
     type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
     id: string;
-    target?: string | undefined;
     progress?: number | undefined;
+    target?: string | undefined;
 }, {
     status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
     type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
     id: string;
-    target?: string | undefined;
     progress?: number | undefined;
+    target?: string | undefined;
 }>;
 /**
  * Protocol error schema
@@ -77,14 +76,14 @@ export declare const contextBlockSchema: z.ZodObject<{
         status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
         type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
         id: string;
-        target?: string | undefined;
         progress?: number | undefined;
+        target?: string | undefined;
     }, {
         status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
         type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
         id: string;
-        target?: string | undefined;
         progress?: number | undefined;
+        target?: string | undefined;
     }>, "many">>;
     request_files: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
     confirm: z.ZodOptional<z.ZodBoolean>;
@@ -114,8 +113,8 @@ export declare const contextBlockSchema: z.ZodObject<{
         status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
         type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
         id: string;
-        target?: string | undefined;
         progress?: number | undefined;
+        target?: string | undefined;
     }[] | undefined;
     request_files?: string[] | undefined;
     confirm?: boolean | undefined;
@@ -135,8 +134,8 @@ export declare const contextBlockSchema: z.ZodObject<{
         status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
         type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
         id: string;
-        target?: string | undefined;
         progress?: number | undefined;
+        target?: string | undefined;
     }[] | undefined;
     request_files?: string[] | undefined;
     confirm?: boolean | undefined;
@@ -193,6 +192,7 @@ export declare const fallbackActionSchema: z.ZodObject<{
 }>;
 /**
  * Action proposal result schema
+ * @deprecated Use canonical format with execute.form.choices
  */
 export declare const actionProposalResultSchema: z.ZodObject<{
     context: z.ZodObject<{
@@ -211,14 +211,14 @@ export declare const actionProposalResultSchema: z.ZodObject<{
             status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
             type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
             id: string;
-            target?: string | undefined;
             progress?: number | undefined;
+            target?: string | undefined;
         }, {
             status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
             type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
             id: string;
-            target?: string | undefined;
             progress?: number | undefined;
+            target?: string | undefined;
         }>, "many">>;
         request_files: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
         confirm: z.ZodOptional<z.ZodBoolean>;
@@ -248,8 +248,8 @@ export declare const actionProposalResultSchema: z.ZodObject<{
             status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
             type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
             id: string;
-            target?: string | undefined;
             progress?: number | undefined;
+            target?: string | undefined;
         }[] | undefined;
         request_files?: string[] | undefined;
         confirm?: boolean | undefined;
@@ -269,8 +269,8 @@ export declare const actionProposalResultSchema: z.ZodObject<{
             status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
             type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
             id: string;
-            target?: string | undefined;
             progress?: number | undefined;
+            target?: string | undefined;
         }[] | undefined;
         request_files?: string[] | undefined;
         confirm?: boolean | undefined;
@@ -281,7 +281,7 @@ export declare const actionProposalResultSchema: z.ZodObject<{
             line?: number | undefined;
         }[] | undefined;
     }>;
-    proposedActions: z.ZodArray<z.ZodObject<{
+    proposedActions: z.ZodOptional<z.ZodArray<z.ZodObject<{
         id: z.ZodString;
         name: z.ZodString;
         description: z.ZodOptional<z.ZodString>;
@@ -302,7 +302,7 @@ export declare const actionProposalResultSchema: z.ZodObject<{
         priority?: number | undefined;
         dsl?: Record<string, unknown> | undefined;
         dslScript?: string | undefined;
-    }>, "many">;
+    }>, "many">>;
     fallbackActions: z.ZodOptional<z.ZodArray<z.ZodObject<{
         id: z.ZodString;
         name: z.ZodString;
@@ -330,8 +330,8 @@ export declare const actionProposalResultSchema: z.ZodObject<{
             status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
             type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
             id: string;
-            target?: string | undefined;
             progress?: number | undefined;
+            target?: string | undefined;
         }[] | undefined;
         request_files?: string[] | undefined;
         confirm?: boolean | undefined;
@@ -342,14 +342,14 @@ export declare const actionProposalResultSchema: z.ZodObject<{
             line?: number | undefined;
         }[] | undefined;
     };
-    proposedActions: {
+    proposedActions?: {
         id: string;
         name: string;
         description?: string | undefined;
         priority?: number | undefined;
         dsl?: Record<string, unknown> | undefined;
         dslScript?: string | undefined;
-    }[];
+    }[] | undefined;
     fallbackActions?: {
         id: string;
         name: string;
@@ -367,8 +367,8 @@ export declare const actionProposalResultSchema: z.ZodObject<{
             status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
             type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
             id: string;
-            target?: string | undefined;
             progress?: number | undefined;
+            target?: string | undefined;
         }[] | undefined;
         request_files?: string[] | undefined;
         confirm?: boolean | undefined;
@@ -379,14 +379,14 @@ export declare const actionProposalResultSchema: z.ZodObject<{
             line?: number | undefined;
         }[] | undefined;
     };
-    proposedActions: {
+    proposedActions?: {
         id: string;
         name: string;
         description?: string | undefined;
         priority?: number | undefined;
         dsl?: Record<string, unknown> | undefined;
         dslScript?: string | undefined;
-    }[];
+    }[] | undefined;
     fallbackActions?: {
         id: string;
         name: string;
@@ -400,6 +400,7 @@ export declare const actionProposalResultSchema: z.ZodObject<{
 export declare const actionProposalResponseSchema: z.ZodObject<{
     success: z.ZodBoolean;
     timestamp: z.ZodString;
+} & {
     type: z.ZodLiteral<"action_proposal">;
     result: z.ZodObject<{
         context: z.ZodObject<{
@@ -418,14 +419,14 @@ export declare const actionProposalResponseSchema: z.ZodObject<{
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }, {
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }>, "many">>;
             request_files: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
             confirm: z.ZodOptional<z.ZodBoolean>;
@@ -455,8 +456,8 @@ export declare const actionProposalResponseSchema: z.ZodObject<{
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }[] | undefined;
             request_files?: string[] | undefined;
             confirm?: boolean | undefined;
@@ -476,8 +477,8 @@ export declare const actionProposalResponseSchema: z.ZodObject<{
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }[] | undefined;
             request_files?: string[] | undefined;
             confirm?: boolean | undefined;
@@ -488,7 +489,7 @@ export declare const actionProposalResponseSchema: z.ZodObject<{
                 line?: number | undefined;
             }[] | undefined;
         }>;
-        proposedActions: z.ZodArray<z.ZodObject<{
+        proposedActions: z.ZodOptional<z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             name: z.ZodString;
             description: z.ZodOptional<z.ZodString>;
@@ -509,7 +510,7 @@ export declare const actionProposalResponseSchema: z.ZodObject<{
             priority?: number | undefined;
             dsl?: Record<string, unknown> | undefined;
             dslScript?: string | undefined;
-        }>, "many">;
+        }>, "many">>;
         fallbackActions: z.ZodOptional<z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             name: z.ZodString;
@@ -537,8 +538,8 @@ export declare const actionProposalResponseSchema: z.ZodObject<{
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }[] | undefined;
             request_files?: string[] | undefined;
             confirm?: boolean | undefined;
@@ -549,14 +550,14 @@ export declare const actionProposalResponseSchema: z.ZodObject<{
                 line?: number | undefined;
             }[] | undefined;
         };
-        proposedActions: {
+        proposedActions?: {
             id: string;
             name: string;
             description?: string | undefined;
             priority?: number | undefined;
             dsl?: Record<string, unknown> | undefined;
             dslScript?: string | undefined;
-        }[];
+        }[] | undefined;
         fallbackActions?: {
             id: string;
             name: string;
@@ -574,8 +575,8 @@ export declare const actionProposalResponseSchema: z.ZodObject<{
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }[] | undefined;
             request_files?: string[] | undefined;
             confirm?: boolean | undefined;
@@ -586,14 +587,14 @@ export declare const actionProposalResponseSchema: z.ZodObject<{
                 line?: number | undefined;
             }[] | undefined;
         };
-        proposedActions: {
+        proposedActions?: {
             id: string;
             name: string;
             description?: string | undefined;
             priority?: number | undefined;
             dsl?: Record<string, unknown> | undefined;
             dslScript?: string | undefined;
-        }[];
+        }[] | undefined;
         fallbackActions?: {
             id: string;
             name: string;
@@ -616,8 +617,8 @@ export declare const actionProposalResponseSchema: z.ZodObject<{
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }[] | undefined;
             request_files?: string[] | undefined;
             confirm?: boolean | undefined;
@@ -628,14 +629,14 @@ export declare const actionProposalResponseSchema: z.ZodObject<{
                 line?: number | undefined;
             }[] | undefined;
         };
-        proposedActions: {
+        proposedActions?: {
             id: string;
             name: string;
             description?: string | undefined;
             priority?: number | undefined;
             dsl?: Record<string, unknown> | undefined;
             dslScript?: string | undefined;
-        }[];
+        }[] | undefined;
         fallbackActions?: {
             id: string;
             name: string;
@@ -658,8 +659,8 @@ export declare const actionProposalResponseSchema: z.ZodObject<{
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }[] | undefined;
             request_files?: string[] | undefined;
             confirm?: boolean | undefined;
@@ -670,14 +671,14 @@ export declare const actionProposalResponseSchema: z.ZodObject<{
                 line?: number | undefined;
             }[] | undefined;
         };
-        proposedActions: {
+        proposedActions?: {
             id: string;
             name: string;
             description?: string | undefined;
             priority?: number | undefined;
             dsl?: Record<string, unknown> | undefined;
             dslScript?: string | undefined;
-        }[];
+        }[] | undefined;
         fallbackActions?: {
             id: string;
             name: string;
@@ -788,6 +789,7 @@ export declare const actionExecutingResultSchema: z.ZodObject<{
 export declare const actionExecutingResponseSchema: z.ZodObject<{
     success: z.ZodBoolean;
     timestamp: z.ZodString;
+} & {
     type: z.ZodLiteral<"action_executing">;
     result: z.ZodObject<{
         executingAction: z.ZodObject<{
@@ -986,6 +988,7 @@ export declare const actionProgressResultSchema: z.ZodObject<{
 export declare const actionProgressResponseSchema: z.ZodObject<{
     success: z.ZodBoolean;
     timestamp: z.ZodString;
+} & {
     type: z.ZodLiteral<"action_progress">;
     result: z.ZodObject<{
         actionId: z.ZodString;
@@ -1092,6 +1095,7 @@ export declare const actionCompletedResultSchema: z.ZodObject<{
 export declare const actionCompletedResponseSchema: z.ZodObject<{
     success: z.ZodBoolean;
     timestamp: z.ZodString;
+} & {
     type: z.ZodLiteral<"action_completed">;
     result: z.ZodObject<{
         actionId: z.ZodString;
@@ -1204,6 +1208,7 @@ export declare const actionErrorResultSchema: z.ZodObject<{
 export declare const actionErrorResponseSchema: z.ZodObject<{
     success: z.ZodBoolean;
     timestamp: z.ZodString;
+} & {
     type: z.ZodLiteral<"action_error">;
     result: z.ZodObject<{
         actionId: z.ZodString;
@@ -1283,6 +1288,7 @@ export declare const actionErrorResponseSchema: z.ZodObject<{
 export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
     success: z.ZodBoolean;
     timestamp: z.ZodString;
+} & {
     type: z.ZodLiteral<"action_proposal">;
     result: z.ZodObject<{
         context: z.ZodObject<{
@@ -1301,14 +1307,14 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }, {
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }>, "many">>;
             request_files: z.ZodOptional<z.ZodArray<z.ZodString, "many">>;
             confirm: z.ZodOptional<z.ZodBoolean>;
@@ -1338,8 +1344,8 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }[] | undefined;
             request_files?: string[] | undefined;
             confirm?: boolean | undefined;
@@ -1359,8 +1365,8 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }[] | undefined;
             request_files?: string[] | undefined;
             confirm?: boolean | undefined;
@@ -1371,7 +1377,7 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
                 line?: number | undefined;
             }[] | undefined;
         }>;
-        proposedActions: z.ZodArray<z.ZodObject<{
+        proposedActions: z.ZodOptional<z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             name: z.ZodString;
             description: z.ZodOptional<z.ZodString>;
@@ -1392,7 +1398,7 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
             priority?: number | undefined;
             dsl?: Record<string, unknown> | undefined;
             dslScript?: string | undefined;
-        }>, "many">;
+        }>, "many">>;
         fallbackActions: z.ZodOptional<z.ZodArray<z.ZodObject<{
             id: z.ZodString;
             name: z.ZodString;
@@ -1420,8 +1426,8 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }[] | undefined;
             request_files?: string[] | undefined;
             confirm?: boolean | undefined;
@@ -1432,14 +1438,14 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
                 line?: number | undefined;
             }[] | undefined;
         };
-        proposedActions: {
+        proposedActions?: {
             id: string;
             name: string;
             description?: string | undefined;
             priority?: number | undefined;
             dsl?: Record<string, unknown> | undefined;
             dslScript?: string | undefined;
-        }[];
+        }[] | undefined;
         fallbackActions?: {
             id: string;
             name: string;
@@ -1457,8 +1463,8 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }[] | undefined;
             request_files?: string[] | undefined;
             confirm?: boolean | undefined;
@@ -1469,14 +1475,14 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
                 line?: number | undefined;
             }[] | undefined;
         };
-        proposedActions: {
+        proposedActions?: {
             id: string;
             name: string;
             description?: string | undefined;
             priority?: number | undefined;
             dsl?: Record<string, unknown> | undefined;
             dslScript?: string | undefined;
-        }[];
+        }[] | undefined;
         fallbackActions?: {
             id: string;
             name: string;
@@ -1499,8 +1505,8 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }[] | undefined;
             request_files?: string[] | undefined;
             confirm?: boolean | undefined;
@@ -1511,14 +1517,14 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
                 line?: number | undefined;
             }[] | undefined;
         };
-        proposedActions: {
+        proposedActions?: {
             id: string;
             name: string;
             description?: string | undefined;
             priority?: number | undefined;
             dsl?: Record<string, unknown> | undefined;
             dslScript?: string | undefined;
-        }[];
+        }[] | undefined;
         fallbackActions?: {
             id: string;
             name: string;
@@ -1541,8 +1547,8 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
                 status: "pending" | "in_progress" | "completed" | "failed" | "cancelled";
                 type: "analyze" | "refactor" | "test" | "document" | "fix" | "create" | "delete";
                 id: string;
-                target?: string | undefined;
                 progress?: number | undefined;
+                target?: string | undefined;
             }[] | undefined;
             request_files?: string[] | undefined;
             confirm?: boolean | undefined;
@@ -1553,14 +1559,14 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
                 line?: number | undefined;
             }[] | undefined;
         };
-        proposedActions: {
+        proposedActions?: {
             id: string;
             name: string;
             description?: string | undefined;
             priority?: number | undefined;
             dsl?: Record<string, unknown> | undefined;
             dslScript?: string | undefined;
-        }[];
+        }[] | undefined;
         fallbackActions?: {
             id: string;
             name: string;
@@ -1571,6 +1577,7 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
 }>, z.ZodObject<{
     success: z.ZodBoolean;
     timestamp: z.ZodString;
+} & {
     type: z.ZodLiteral<"action_executing">;
     result: z.ZodObject<{
         executingAction: z.ZodObject<{
@@ -1699,6 +1706,7 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
 }>, z.ZodObject<{
     success: z.ZodBoolean;
     timestamp: z.ZodString;
+} & {
     type: z.ZodLiteral<"action_progress">;
     result: z.ZodObject<{
         actionId: z.ZodString;
@@ -1779,6 +1787,7 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
 }>, z.ZodObject<{
     success: z.ZodBoolean;
     timestamp: z.ZodString;
+} & {
     type: z.ZodLiteral<"action_completed">;
     result: z.ZodObject<{
         actionId: z.ZodString;
@@ -1824,6 +1833,7 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
 }>, z.ZodObject<{
     success: z.ZodBoolean;
     timestamp: z.ZodString;
+} & {
     type: z.ZodLiteral<"action_error">;
     result: z.ZodObject<{
         actionId: z.ZodString;
@@ -1897,28 +1907,24 @@ export declare const unifiedResponseSchema: z.ZodUnion<[z.ZodObject<{
         failedStep?: string | undefined;
     };
 }>]>;
-
 /**
  * Validate raw JSON data against unified response schema
  * @param data - Raw JSON data to validate
  * @returns ValidationResult with validation status and parsed data
  */
 export declare function validateResponse(data: unknown): ValidationResult;
-
 /**
  * Validate and extract response type from data
  * @param data - Raw JSON data
  * @returns Response type if valid, undefined otherwise
  */
 export declare function getResponseType(data: unknown): ResponseType | undefined;
-
 /**
  * Check if data is a valid unified response
  * @param data - Data to check
  * @returns True if valid unified response
  */
 export declare function isUnifiedResponse(data: unknown): boolean;
-
 /**
  * Validate specific response type
  * @param data - Data to validate
@@ -1926,5 +1932,4 @@ export declare function isUnifiedResponse(data: unknown): boolean;
  * @returns ValidationResult
  */
 export declare function validateResponseType(data: unknown, type: ResponseType): ValidationResult;
-
 //# sourceMappingURL=validator.d.ts.map

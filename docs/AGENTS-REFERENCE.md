@@ -358,6 +358,17 @@ Confirm previous phase passed and is stable.
 5. If there was **no** pending work: did you **prune → discover → write** (see **AGENTS.md** *Empty queue*), not stop idle?
 6. Before edits, did you record **goal/files/risks** and keep changes minimal (see **AGENTS.md** *Agent-over-Agent Safety Protocol*)?
 
+### Import Policy Validation Commands
+
+Run from repo root:
+
+1. NodeNext must not import `.ts` relatives:
+`rg -n "from ['\\\"]\\./[^'\\\"]+\\.ts['\\\"]|from ['\\\"]\\.\\./[^'\\\"]+\\.ts['\\\"]" a2a-server a2a-client/packages/{execution,embedding,history,json,rag,sdk,shared,storage,types,vite-plugin,web} ai-integration-ts`
+2. NodeNext must not use `@/` alias by default:
+`rg -n "from ['\\\"]@/" a2a-server a2a-client/packages/{execution,embedding,history,json,rag,sdk,shared,storage,types,vite-plugin,web} ai-integration-ts`
+3. Bundled UI may use `@/` alias:
+`rg -n "from ['\\\"]@/" a2a-client/packages/premium-ui a2a-prototype`
+
 ### Agent-over-Agent Change Guardrails
 
 Use this guardrail when the project itself is an agent orchestration surface:

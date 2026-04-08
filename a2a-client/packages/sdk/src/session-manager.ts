@@ -21,6 +21,7 @@ import {
     DEFAULT_POLL_INTERVAL,
     DEFAULT_POLL_TIMEOUT,
 } from '../../../shared/api-helpers.js';
+import {ApiError} from './utils/api-error.js';
 
 /**
  * Lightweight EventEmitter implementation for browser/Node compatibility
@@ -91,18 +92,6 @@ export interface RetryConfig {
 export interface RequestTransformer {
     transformRequest?: (data: Record<string, unknown>) => Record<string, unknown>;
     transformResponse?: (data: Record<string, unknown>) => Record<string, unknown>;
-}
-
-export class ApiError extends Error {
-    status: number;
-    data: Record<string, unknown>;
-
-    constructor(message: string, status: number, data: Record<string, unknown> = {}) {
-        super(message);
-        this.name = 'ApiError';
-        this.status = status;
-        this.data = data;
-    }
 }
 
 export type SessionGetQueryOptions = { unwrap?: boolean; includeContext?: boolean };

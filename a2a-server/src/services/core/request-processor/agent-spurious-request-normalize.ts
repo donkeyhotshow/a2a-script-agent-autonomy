@@ -22,31 +22,6 @@ function countAssistantTurns(history: unknown): number {
             (row as Record<string, unknown>)['role'] === 'assistant'
     ).length;
 }
-    for (let i = h.length - 1; i >= 0; i--) {
-        const row = h[i];
-        if (!row || typeof row !== 'object' || Array.isArray(row)) {
-            continue;
-        }
-        const r = row as Record<string, unknown>;
-        if (r['role'] === 'assistant' && typeof r['message'] === 'string' && r['message'].trim()) {
-            return r['message'].trim();
-        }
-    }
-    return undefined;
-}
-
-function countAssistantTurns(history: unknown): number {
-    if (!Array.isArray(history)) {
-        return 0;
-    }
-    return history.filter(
-        (row) =>
-            row &&
-            typeof row === 'object' &&
-            !Array.isArray(row) &&
-            (row as Record<string, unknown>)['role'] === 'assistant'
-    ).length;
-}
 
 /**
  * @returns true if `result` was mutated

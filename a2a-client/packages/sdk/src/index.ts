@@ -14,6 +14,7 @@ import {AsyncApiClient} from './async-api-client.js';
 import {PromisePoller} from './polling.js';
 import {handleActionResponse, handleExecuteAction, createExecuteScript, extractExecuteAction} from './action-handler.js';
 import {unwrapEnvelope} from './client-api-envelope.js';
+import {ApiError} from './utils/api-error.js';
 
 export interface ApiClientConfig {
     serverUrl?: string;
@@ -22,17 +23,7 @@ export interface ApiClientConfig {
     timeout?: number;
 }
 
-export class ApiError extends Error {
-    status: number;
-    data: Record<string, unknown>;
 
-    constructor(message: string, status: number, data: Record<string, unknown> = {}) {
-        super(message);
-        this.name = 'ApiError';
-        this.status = status;
-        this.data = data;
-    }
-}
 
 export class ApiClient {
     serverUrl: string;

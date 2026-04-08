@@ -178,7 +178,7 @@ export function isActionErrorResponse(response: UnifiedResponse): response is Ac
 export function extractActionId(response: UnifiedResponse): string | undefined {
     switch (response.type) {
         case 'action_proposal':
-            return response.result.proposedActions[0]?.id;
+            return response.result.proposedActions?.[0]?.id;
         case 'action_executing':
             return response.result.executingAction.id;
         case 'action_progress':
@@ -200,7 +200,7 @@ export function extractActionId(response: UnifiedResponse): string | undefined {
 export function extractSummary(response: UnifiedResponse): string {
     switch (response.type) {
         case 'action_proposal':
-            return `${response.result.proposedActions.length} action(s) proposed`;
+            return `${response.result.proposedActions?.length ?? 0} action(s) proposed`;
         case 'action_executing':
             return `Executing: ${response.result.executingAction.name}`;
         case 'action_progress':

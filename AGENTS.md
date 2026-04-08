@@ -77,7 +77,9 @@ For schema-level debugging, start with **[`tests/direct-tests/README.md`](tests/
 
 ### 1. Imports with Path Aliases
 
-Use `.js` extension: `import x from '@/services/x.js'` (NodeNext module resolution)
+- NodeNext modules (`a2a-server`, NodeNext packages): use `.js` extension on **relative** imports, for example `import x from './services/x.js'`.
+- Bundled UI modules (`a2a-client/packages/premium-ui`, `a2a-prototype`): `@/` alias imports are allowed by bundler config.
+- Do not mix UI alias style into NodeNext runtime modules.
 
 ### 2. Testing
 
