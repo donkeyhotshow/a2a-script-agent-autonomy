@@ -9,6 +9,7 @@
 **If you run the live stack:** read **[STACK-RUN.md](STACK-RUN.md)** first.
 
 **Task Monitor:** **[`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** — `npm run monitor` / `npm run monitor:once`, `TASK_MONITOR_*`, router beats. Code: [`../tests/monitor-and-process-tasks.js`](../tests/monitor-and-process-tasks.js), [`../tests/monitor-tasks/`](../tests/monitor-tasks/). Static regression: **`npm run test:monitor`** (runs inside **`npm run test:before-start`** before the final **`verify:audit-session-storage`** step).
+Acceptance and manual QA closure criteria are canonical in [`../docs/OPERATOR-MONITOR-MANUAL-QA.md`](../docs/OPERATOR-MONITOR-MANUAL-QA.md).
 
 **Linear pipeline:** **[ONE-PIPELINE.md](ONE-PIPELINE.md)**. **Master prompt (daemon + hooks):** **[`../START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md)**.
 

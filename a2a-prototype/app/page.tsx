@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import AgentConsole from "@/components/AgentConsole";
+import InterfaceSwitch from "@/components/InterfaceSwitch";
 
 export default function Home() {
   return (
@@ -8,6 +9,7 @@ export default function Home() {
         <p className="text-zinc-500 font-mono text-sm">Loading…</p>
       </div>
     }>
+      <InterfaceSwitch />
       <AgentConsole />
     </Suspense>
   );

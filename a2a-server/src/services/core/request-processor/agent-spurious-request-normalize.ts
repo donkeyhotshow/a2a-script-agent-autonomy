@@ -7,16 +7,21 @@
 import {logger} from '../../../utils/logger.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
 import type {RequestContextBlock} from '../../../types/index.js';
+import {isAgentSchemaName, lastAssistantMessageFromContext} from '../../../utils/agent-utils.js';
 
-function isAgentSchemaName(schemaName: string): boolean {
-    return schemaName === 'agent' || schemaName.startsWith('agent-');
-}
 
-function lastAssistantMessageFromContext(context: Record<string, unknown> | undefined): string | undefined {
-    const h = context?.['history'];
-    if (!Array.isArray(h)) {
-        return undefined;
+function countAssistantTurns(history: unknown): number {
+    if (!Array.isArray(history)) {
+        return 0;
     }
+    return history.filter(
+        (row) =>
+            row &&
+            typeof row === 'object' &&
+            !Array.isArray(row) &&
+            (row as Record<string, unknown>)['role'] === 'assistant'
+    ).length;
+}
     for (let i = h.length - 1; i >= 0; i--) {
         const row = h[i];
         if (!row || typeof row !== 'object' || Array.isArray(row)) {

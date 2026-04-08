@@ -2,12 +2,52 @@
 from __future__ import annotations
 
 from unittest.mock import Mock
+import pytest
 
 
-def test_cache_key_same_when_only_volatile_fields_differ(monkeypatch, tmp_path):
+@pytest.fixture
+def cache_dir(monkeypatch, tmp_path):
+    """Fixture to set up CACHE_DIR for proxy.caching module."""
+    import proxy.caching as c
+    cache_path = str(tmp_path / "cache")
+    monkeypatch.setattr(c, "CACHE_DIR", cache_path)
+    return cache_path
+
+
+def test_cache_key_same_when_only_volatile_fields_differ(monkeypatch, tmp_path, cache_dir):
     import proxy.caching as c
 
-    monkeypatch.setattr(c, "CACHE_DIR", str(tmp_path / "cache"))
+    pc = c.ProxyCache()
+    base = dict(
+        path="api/chat",
+        method="POST",
+        target_url="http://example/v1/chat",
+        forward_args={},
+    )
+    p1 = c.build_llm_cache_payload(
+        **base,
+        body_json={
+            "model": "glm",
+            "messages": [{"role": "user", "content": "hi"}],
+            "timestamp": 1,
+            "request_id": "a",
+        },
+    )
+    p2 = c.build_llm_cache_payload(
+        **base,
+        body_json={
+            "model": "glm",
+            "messages": [{"role": "user", "content": "hi"}],
+            "timestamp": 999999,
+            "request_id": "b",
+        },
+    )
+    assert c.build_llm_cache_key(pc, p1) == c.build_llm_cache_key(pc, p2)
+
+
+def test_cache_key_ignores_at_suffix_and_user(monkeypatch, tmp_path, cache_dir):
+    import proxy.caching as c
+
     pc = c.ProxyCache()
     base = dict(
         path="api/chat",
@@ -66,10 +106,9 @@ def test_cache_key_ignores_at_suffix_and_user(monkeypatch, tmp_path):
     assert c.build_llm_cache_key(pc, p1) == c.build_llm_cache_key(pc, p2)
 
 
-def test_cache_key_same_when_message_id_noise_differs(monkeypatch, tmp_path):
+def test_cache_key_same_when_message_id_noise_differs(monkeypatch, tmp_path, cache_dir):
     import proxy.caching as c
 
-    monkeypatch.setattr(c, "CACHE_DIR", str(tmp_path / "cache"))
     pc = c.ProxyCache()
     base = dict(
         path="api/chat",
@@ -100,10 +139,9 @@ def test_cache_key_same_when_message_id_noise_differs(monkeypatch, tmp_path):
     assert c.build_llm_cache_key(pc, p1) == c.build_llm_cache_key(pc, p2)
 
 
-def test_cache_key_same_when_tools_list_order_differs(monkeypatch, tmp_path):
+def test_cache_key_same_when_tools_list_order_differs(monkeypatch, tmp_path, cache_dir):
     import proxy.caching as c
 
-    monkeypatch.setattr(c, "CACHE_DIR", str(tmp_path / "cache"))
     pc = c.ProxyCache()
     base = dict(
         path="api/chat",
@@ -132,10 +170,9 @@ def test_cache_key_same_when_tools_list_order_differs(monkeypatch, tmp_path):
     assert c.build_llm_cache_key(pc, p1) == c.build_llm_cache_key(pc, p2)
 
 
-def test_cache_key_differs_when_prompt_differs(monkeypatch, tmp_path):
+def test_cache_key_differs_when_prompt_differs(monkeypatch, tmp_path, cache_dir):
     import proxy.caching as c
 
-    monkeypatch.setattr(c, "CACHE_DIR", str(tmp_path / "cache"))
     pc = c.ProxyCache()
     base = dict(
         path="api/chat",
@@ -154,11 +191,10 @@ def test_cache_key_differs_when_prompt_differs(monkeypatch, tmp_path):
     assert c.build_llm_cache_key(pc, p1) != c.build_llm_cache_key(pc, p2)
 
 
-def test_sync_save_and_check_use_same_key_volatile_ignored(monkeypatch, tmp_path):
+def test_sync_save_and_check_use_same_key_volatile_ignored(monkeypatch, tmp_path, cache_dir):
     import proxy.caching as c
     import proxy.upstream_client as uc
 
-    monkeypatch.setattr(c, "CACHE_DIR", str(tmp_path / "cache"))
     isolated = c.ProxyCache()
     monkeypatch.setattr(uc, "get_cache", lambda: isolated)
 
@@ -188,10 +224,9 @@ def test_sync_save_and_check_use_same_key_volatile_ignored(monkeypatch, tmp_path
     assert "ok" in hit.get("body", "")
 
 
-def test_v1_generate_embed_cache_keys_ignore_volatile_fields(monkeypatch, tmp_path):
+def test_v1_generate_embed_cache_keys_ignore_volatile_fields(monkeypatch, tmp_path, cache_dir):
     import proxy.caching as c
 
-    monkeypatch.setattr(c, "CACHE_DIR", str(tmp_path / "cache"))
     pc = c.ProxyCache()
 
     def _fixed_route(up_path: str, pl: dict) -> dict:
@@ -220,10 +255,9 @@ def test_v1_generate_embed_cache_keys_ignore_volatile_fields(monkeypatch, tmp_pa
         assert k1 == k2
 
 
-def test_v1_cache_key_splits_on_route_fingerprint(monkeypatch, tmp_path):
+def test_v1_cache_key_splits_on_route_fingerprint(monkeypatch, tmp_path, cache_dir):
     import proxy.caching as c
 
-    monkeypatch.setattr(c, "CACHE_DIR", str(tmp_path / "cache"))
     pc = c.ProxyCache()
     bodies = {"model": "m", "prompt": "x"}
 
@@ -240,10 +274,9 @@ def test_v1_cache_key_splits_on_route_fingerprint(monkeypatch, tmp_path):
     assert ka != kb
 
 
-def test_raw_body_string_parsed_like_json_for_key(monkeypatch, tmp_path):
+def test_raw_body_string_parsed_like_json_for_key(monkeypatch, tmp_path, cache_dir):
     import proxy.caching as c
 
-    monkeypatch.setattr(c, "CACHE_DIR", str(tmp_path / "cache"))
     pc = c.ProxyCache()
     import json
 

@@ -6,7 +6,7 @@
 
 This repository is an **autonomous operator workstation** for AI-assisted development: a coordinated stack (Client API, server, hub, Web UI) where work proceeds through **long-lived async sessions** (`/next` + `/async`), not one-shot HTTP to an LLM.
 
-**Completion bar (production level):** tasks in **`tasks/`** and **`prompts-to-agent-mode/`** carry explicit acceptance criteria; the **Task Monitor** (`npm run monitor` / `monitor:once`) is the normative driver for multi-turn completion. **Validators** (`tests/direct-tests/validators/`, `npm run test:before-start`, sim lint/validate, `npm run cross-system:validate`) enforce contracts, **edge cases**, and cross-layer shape — not “it looked fine in the UI once.”
+**Completion bar (production level):** canonical acceptance and closure criteria are defined in [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](docs/OPERATOR-MONITOR-MANUAL-QA.md). The **Task Monitor** (`npm run monitor` / `monitor:once`) is the normative driver for multi-turn completion; validators enforce contracts, edge cases, and cross-layer shape.
 
 **Central orchestrator (parameterless):** `npm run central` runs the full offline gate (`test:before-start`, cross-system, sim checks) then one **`monitor:once`** pass — see [`docs/CENTRAL-ORCHESTRATOR.md`](docs/CENTRAL-ORCHESTRATOR.md). The final monitor step needs the **live stack**; use **`CENTRAL_SKIP_OFFLINE=1`** when offline steps already passed and you only need **`monitor:once`**. **`npm run central:offline`** runs the same offline sequence **without** `monitor:once` (no Client API).
 

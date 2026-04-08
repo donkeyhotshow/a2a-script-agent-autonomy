@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import time
+import pytest
 
 
 def _write_promise_meta(base: str, pid: str, **fields) -> None:
@@ -26,17 +27,21 @@ def _write_promise_meta(base: str, pid: str, **fields) -> None:
         json.dump(meta, f)
 
 
-def test_collect_pending_excludes_error(monkeypatch, tmp_path):
-    import proxy.promise_collection as pc
-    import proxy.promise_storage as ps
-
+@pytest.fixture
+def promises_dir(monkeypatch, tmp_path):
+    """Fixture to set up PROMISES_DIR for promise_collection and promise_storage modules."""
     base = str(tmp_path / "promises")
     os.makedirs(base, exist_ok=True)
+    import proxy.promise_collection as pc
+    import proxy.promise_storage as ps
     monkeypatch.setattr(pc, "PROMISES_DIR", base)
     monkeypatch.setattr(ps, "PROMISES_DIR", base)
+    return base
 
-    _write_promise_meta(base, "p_ok", status="pending")
-    _write_promise_meta(base, "e_bad", status="error", error="upstream failed")
+
+def test_collect_pending_excludes_error(promises_dir):
+    _write_promise_meta(promises_dir, "p_ok", status="pending")
+    _write_promise_meta(promises_dir, "e_bad", status="error", error="upstream failed")
 
     from proxy.promise_collection import _collect_error_promises, _collect_pending_promises
 
@@ -44,17 +49,9 @@ def test_collect_pending_excludes_error(monkeypatch, tmp_path):
     assert [r.promise_id for r in _collect_error_promises()] == ["e_bad"]
 
 
-def test_promises_errors_route_truncates_and_detail(monkeypatch, tmp_path):
-    import proxy.promise_collection as pc
-    import proxy.promise_storage as ps
-
-    base = str(tmp_path / "promises")
-    os.makedirs(base, exist_ok=True)
-    monkeypatch.setattr(pc, "PROMISES_DIR", base)
-    monkeypatch.setattr(ps, "PROMISES_DIR", base)
-
+def test_promises_errors_route_truncates_and_detail(promises_dir):
     long_err = "E" * 500
-    _write_promise_meta(base, "e_long", status="error", error=long_err)
+    _write_promise_meta(promises_dir, "e_long", status="error", error=long_err)
 
     from proxy import app as flask_app
 

@@ -40,6 +40,7 @@ import {requestService} from '../request/request.service.js';
 import {CognitionBase} from '../cognition-base.js';
 import {EpisodicMemory} from '../../memory/episodic-memory.js';
 import {globalDesignReasoner} from '../hierarchical-design-reasoner.js';
+import {isAgentSchemaName, lastAssistantMessageFromContext} from '../../../utils/agent-utils.js';
 
 export {isDialogToolExecutePayload};
 export {resolveTransformSchema, normalizeContext, extractSchemaName};
@@ -81,9 +82,7 @@ function isDialogExecuteMissingOrEmpty(execute: ProcessResult['execute']): boole
     return Object.keys(ex).filter((k) => ex[k] != null).length === 0;
 }
 
-function isAgentSchemaName(schemaName: string): boolean {
-    return schemaName === 'agent' || schemaName.startsWith('agent-');
-}
+
 
 /**
  * Agent golden request shape (simulations/sync/agent steps 2 / 15): form + message input when execute is missing.

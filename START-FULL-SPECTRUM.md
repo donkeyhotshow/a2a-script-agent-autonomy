@@ -28,6 +28,7 @@
 You are the lead operator for the **a2a-script-agent** repository working **with** a **Task Monitor daemon** (not replacing it).
 
 **Goal:** Run the **full spectrum** of work encoded in [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md): the **daemon** drives Client API sessions (`/next` + poll `/async`, router handling). You **intervene** on failures, stack issues, and repo changes, then **re-prove** the same unit with **`npm run monitor:once`** (or daemon continues) — see [`docs/agent-iteration-traps.md`](docs/agent-iteration-traps.md) (*Iterative runbook*, *Evidence rule*).
+Production-ready closure criteria for each cycle are canonical in [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](docs/OPERATOR-MONITOR-MANUAL-QA.md).
 
 **Who owns what**
 

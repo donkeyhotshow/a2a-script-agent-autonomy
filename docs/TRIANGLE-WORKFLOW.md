@@ -18,6 +18,24 @@
 
 ---
 
+## Incident playbook (wrong agent or triangle behavior)
+
+Use this when output is clearly wrong, routing is unstable, or the stack stalls across A/B/C.
+
+1. Declare alert label first (Blue/Orange/Gray/Black/Teal/Red) and record why.
+2. Capture one reproducible unit: `sessionId`, latest step number, current `status` from `/async`.
+3. Run loop `1 -> 2 -> 1` once without sending extra `/next` spam.
+4. If router choices exist, send only `result.choice` id; if no choices, send only message text.
+5. If pending persists: classify “upstream generating” vs “pipeline stuck” using `OPERATOR-CURL` rules.
+6. If stuck remains, run one offline contract check (`test:monitor` or direct validator) before code edits.
+7. If mismatch is scenario-specific, compare against sync/proba golden and classify the broken vertex.
+8. Write evidence and next action into `DEV_STATE.md`; open/refresh a testable task when not fixed.
+9. Re-run one verification unit (`monitor:once` or targeted test) and close only on evidence.
+
+Reminder: production closure criteria are canonical in [docs/OPERATOR-MONITOR-MANUAL-QA.md](./OPERATOR-MONITOR-MANUAL-QA.md) and test entrypoints are in [docs/OPERATOR-TESTING-MATRIX.md](./OPERATOR-TESTING-MATRIX.md).
+
+---
+
 ## Living queue — current tasks & problems
 
 **Purpose:** Track **open** triangle-relevant issues (layers **A / B / C**, session projection, loader/async, proba vs live mismatch). **Not** a full project backlog — that stays in [`work/STATE.md`](../work/STATE.md) and [`tasks/`](../tasks/README.md).

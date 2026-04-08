@@ -1,6 +1,8 @@
 # Agent reference (extended)
 
 Operator and stack detail split from [`AGENTS.md`](../AGENTS.md) so the always-loaded file stays short. **Normative must-follow rules** live in **AGENTS.md** (Critical Rules, empty queue, evidence).
+Production closure gate and manual QA acceptance criteria are canonical in [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](OPERATOR-MONITOR-MANUAL-QA.md).
+Operator test command map is canonical in [`docs/OPERATOR-TESTING-MATRIX.md`](OPERATOR-TESTING-MATRIX.md).
 
 ---
 
@@ -81,7 +83,7 @@ Two surfaces: **IDE / Cursor agent** (edits repo, runs tools) vs **Client API se
 | Stack / promise pending | Diagnose ports ([Debugging](#debugging)), retry with backoff; log env (Local LLM upstream, AI hub). If Local LLM upstream is **actively generating**, do **not** restart the stack — [`OPERATOR-CURL.md`](OPERATOR-CURL.md) → *Local LLM upstream is generating — pause other work*. If Local LLM upstream is **idle** but status stays `processing`, treat as **stuck**. | Same; do not declare failure on first `pending`. After you confirm the model is working on the request, avoid parallel load / restarts until `async` settles. If Local LLM upstream is **idle** but status stays `processing`, treat as **stuck** — same section. |
 | 401 / 400 (auth, `ENCRYPTION_KEY`) | Fix `.env` (32-char key, `JWT_SECRET`); retry. | Same. |
 | “Need more context” loop-killer | State assumptions, proceed, verify; don’t halt on questions unless the user must decide. | Seed **`mode: "agent"`** + concrete **`task`** on create when allowed. |
-| No definition of done | Add tests, checklist, or sim run before declaring complete. | Use [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md) for manual Client API depth. |
+| No definition of done | Use canonical acceptance criteria from [`OPERATOR-MONITOR-MANUAL-QA.md`](OPERATOR-MONITOR-MANUAL-QA.md) before declaring complete. | Use [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md) for manual Client API depth. |
 | `DEV_STATE` stale | Update before/after work so the next pass sees real queue state. | When fixing stack behavior, record in `DEV_STATE` / tasks for follow-up agents. |
 | Golden sim / action-key failures | Fix shape (one action key per `execute`/`result`); re-run `sim:lint` / `sim:validate`. | N/A unless authoring sims. |
 

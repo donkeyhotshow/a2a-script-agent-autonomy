@@ -5,6 +5,7 @@
 ## Instrument: launch tasks through session dialog
 
 **Normative automation for indexed backlog tasks:** use the **Task Monitor** — same **Client API session dialog** as the web UI (`POST /sessions` → `/next` → poll `/async`, router beats). Operator doc: **[`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** (`npm run monitor`, `npm run monitor:once`, `TASK_MONITOR_*`, `ErrorClassifier` + direct-tests on failure). Full IDE + daemon loop narrative: **[`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md)**.
+Testing command map for operators: [`OPERATOR-TESTING-MATRIX.md`](OPERATOR-TESTING-MATRIX.md).
 
 **Manual operator (curl / script):** same HTTP contour as the monitor — you are the driver; the monitor is a scripted driver. Both are **not** `POST /api/v1/invoke` alone.
 
@@ -104,6 +105,7 @@ Implementation (shared Vite + SDK): [`a2a-client/shared/a2a-invoke-builders.mjs`
 ## Driver checklist (anti-stop)
 
 Use this as a **literal** loop for curl or scripts so a low-context prompt does not become a single-shot HTTP trace.
+For production closure criteria and manual QA acceptance gates, use the canonical protocol: [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](OPERATOR-MONITOR-MANUAL-QA.md).
 
 **Orange alert (default for this doc):** **`promiseId` on invoke**, then poll **`/requests/:id/result`**; Client API: **`/next` → `GET …/async` until idle → `GET …/sessions/{id}`** before the next `/next`. Details: [`docs/AGENT-DIALOG-API-STATE.md`](AGENT-DIALOG-API-STATE.md) (*Orange alert*), [`GLOSSARY.md`](GLOSSARY.md) (*Orange alert*).
 
@@ -157,6 +159,7 @@ Flaky or vague agent behavior is addressed mainly **inside the system**, not by 
 - **Server prompts and transforms** — `a2a-server/prompts/` (e.g. `dialog-request.md`, `agent-request.md`, `router-request.md`), plus pipelines under `a2a-server/prompts/transforms/`.
 - **Gray Room / interrupt behavior** — `a2a-server/docs/GRAY-ROOM.md`, orchestration code under `a2a-server/src/`.
 - **Operator** uses the **Task Monitor** or **curl** to **verify** end-to-end behavior. **Not sufficient:** health + a single happy-path `sessions` → `next` → `async`. **Normative checklist:** [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md) (session artifacts, ack/async, **Red Room** tool cycle when the task calls for it). **Indexed prompts + live stack:** [`prompts-to-agent-mode/README.md`](../prompts-to-agent-mode/README.md) and [`prompts-to-agent-mode/STACK-RUN.md`](../prompts-to-agent-mode/STACK-RUN.md). **Automated dialog driver:** [`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md). **Full-spectrum loop (daemon + hooks):** [`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md).
+- **Operator** uses the **Task Monitor** or **curl** to **verify** end-to-end behavior. **Not sufficient:** health + a single happy-path `sessions` → `next` → `async`. Acceptance/closure gate source of truth: [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](OPERATOR-MONITOR-MANUAL-QA.md). Deep API verification details stay in [`a2a-client/docs/api-testing-plan.md`](../a2a-client/docs/api-testing-plan.md). Indexed prompts + live stack: [`prompts-to-agent-mode/README.md`](../prompts-to-agent-mode/README.md), [`prompts-to-agent-mode/STACK-RUN.md`](../prompts-to-agent-mode/STACK-RUN.md), [`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md), [`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md).
 
 ## Relation to `docs/WORKFLOW.md`
 
