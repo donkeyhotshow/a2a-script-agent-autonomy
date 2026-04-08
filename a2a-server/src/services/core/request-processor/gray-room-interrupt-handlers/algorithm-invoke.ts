@@ -1,20 +1,22 @@
 import type {AlgorithmContext, AlgorithmData} from '../../black-room/types.js';
-import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../../transform/types.js';
+import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../../transform/types.js';
 import {BlackRoomOrchestrator} from '../../black-room/black-room-orchestrator.js';
-import {mergeSlotIntoWorkbenchContext, type GrayRoomContext} from '../gray-room-utils.js';
+import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils.js';
+import {BaseGrayRoomHandler} from './base-handler.js';
 
 /**
  * Handle algorithm_invoke interrupt
  * Executes algorithms via Black Room orchestrator
  */
-export async function handleAlgorithmInvoke(
+export class HandleAlgorithmInvoke extends BaseGrayRoomHandler {
+  protected async handleInterrupt(
     interrupt: InterruptDirective,
-    ctx: Record<string, unknown>,
+    ctx: GrayRoomContext,
     promiseId: string,
     aiHubUrl: string,
     model: string,
     trace: ServerInterruptTraceEvent[]
-): Promise<{ nextCtx: Record<string, unknown>; continueLoop: boolean }> {
+  ): Promise<{ nextCtx: GrayRoomContext; continueLoop: boolean }> {
     let nextCtx: GrayRoomContext = { ...ctx };
     const algorithmId = interrupt.algorithmId;
     
@@ -27,7 +29,7 @@ export async function handleAlgorithmInvoke(
             durationMs: 0,
             error: 'Missing algorithmId'
         });
-        return { nextCtx, continueLoop: false };
+        return { nextCtx: ctx, continueLoop: false };
     }
 
     const startTime = Date.now();
@@ -40,11 +42,11 @@ export async function handleAlgorithmInvoke(
         });
 
         const algorithmContext: AlgorithmContext = {
-            sessionId: (nextCtx.context?.session_id as string) || 'unknown',
-            workbench: nextCtx.context?.workbench,
-            history: nextCtx.history || [],
-            files: nextCtx.context?.files,
-            ...nextCtx
+            sessionId: (ctx.context?.session_id as string) || 'unknown',
+            workbench: ctx.context?.workbench,
+            history: ctx.history || [],
+            files: ctx.context?.files,
+            ...ctx
         };
 
         const algorithmData: AlgorithmData = interrupt.data || {};
@@ -61,11 +63,11 @@ export async function handleAlgorithmInvoke(
         });
 
         if (result.status === 'completed' && result.output) {
-            const innerCtx = nextCtx.context ?? {};
+            const innerCtx = ctx.context ?? {};
             const wb = (innerCtx.workbench as Record<string, unknown>) ?? {};
             const slots = (wb.slots as Record<string, unknown>) ?? {};
             const blackRoomSlots = (slots.blackRoomContext as Record<string, unknown>) ?? {};
-            nextCtx = mergeSlotIntoWorkbenchContext(nextCtx, 'blackRoomContext', {
+            nextCtx = mergeSlotIntoWorkbenchContext(ctx, 'blackRoomContext', {
                 ...blackRoomSlots,
                 [algorithmId]: result.output,
             });
@@ -81,6 +83,20 @@ export async function handleAlgorithmInvoke(
             durationMs: Date.now() - startTime,
             error: errorMsg
         });
-        return { nextCtx, continueLoop: false };
+        return { nextCtx: ctx, continueLoop: false };
     }
+  }
+}
+
+// Export a function for backward compatibility
+export async function handleAlgorithmInvoke(
+  interrupt: InterruptDirective,
+  ctx: Record<string, unknown>,
+  promiseId: string,
+  aiHubUrl: string,
+  model: string,
+  trace: ServerInterruptTraceEvent[]
+): Promise<{ nextCtx: Record<string, unknown>; continueLoop: boolean }> {
+  const handler = new HandleAlgorithmInvoke();
+  return handler.handle(interrupt, ctx, promiseId, aiHubUrl, model, trace);
 }

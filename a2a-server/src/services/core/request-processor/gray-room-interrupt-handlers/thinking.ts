@@ -1,5 +1,4 @@
 import {resolveGrayRoomLlmModelFromContext} from '../llm-model-resolver.js';
-import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../../transform/types.js';
 import {
     extractLlmTextFromHubResponseBody,
     initAiHubChatPromise,
@@ -8,20 +7,23 @@ import {
 import {logger} from '../../../../utils/logger.js';
 import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils.js';
 import {tryParseJsonFromLlmText} from '../../../../utils/strip-markdown-json-fence.js';
+import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../../transform/types.js';
+import {BaseGrayRoomHandler} from './base-handler.js';
 
 /**
  * Handle thinking interrupt
  * Performs step-by-step reasoning about current task state
  */
-export async function handleThinking(
+export class HandleThinking extends BaseGrayRoomHandler {
+  protected async handleInterrupt(
     interrupt: InterruptDirective,
-    ctx: Record<string, unknown>,
+    ctx: GrayRoomContext,
     promiseId: string,
     aiHubUrl: string,
     model: string,
     trace: ServerInterruptTraceEvent[]
-): Promise<{ nextCtx: Record<string, unknown>; continueLoop: boolean }> {
-    let nextCtx: Record<string, unknown> = { ...ctx };
+  ): Promise<{ nextCtx: GrayRoomContext; continueLoop: boolean }> {
+    let nextCtx: GrayRoomContext = { ...ctx };
     const thinkingPrompt = [
         'Think step by step about the current task state. Be concise.',
         'Return JSON: {"thinking": "your reasoning", "next_action": "what to do next"}',
@@ -57,4 +59,18 @@ export async function handleThinking(
     }
     
     return { nextCtx, continueLoop: true };
+  }
+}
+
+// Export a function for backward compatibility
+export async function handleThinking(
+  interrupt: InterruptDirective,
+  ctx: Record<string, unknown>,
+  promiseId: string,
+  aiHubUrl: string,
+  model: string,
+  trace: ServerInterruptTraceEvent[]
+): Promise<{ nextCtx: Record<string, unknown>; continueLoop: boolean }> {
+  const handler = new HandleThinking();
+  return handler.handle(interrupt, ctx, promiseId, aiHubUrl, model, trace);
 }

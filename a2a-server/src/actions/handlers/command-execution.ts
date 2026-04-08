@@ -7,6 +7,7 @@
 import {logger} from '../../utils/logger.js';
 import {spawn} from 'node:child_process';
 import {validatePath} from './file-operations/security.js';
+import {executeAction, ValidationResult} from '../utils.js';
 
 export interface ExecuteCommandInput {
     command: string;
@@ -113,72 +114,61 @@ export async function executeCommand(
     input: ExecuteCommandInput
 ): Promise<ExecuteCommandOutput> {
     const startTime = Date.now();
-    
-    logger.info('[execute-command] Executing', {
-        command: input.command,
-        args: input.args,
-        cwd: input.cwd,
-    });
 
-    try {
-        // Validate command
-        const validation = validateCommand(input);
-        if (!validation.valid) {
+    return executeAction(
+        'execute-command',
+        input,
+        (input): ValidationResult => {
+            // Validate command
+            const cmdValidation = validateCommand(input);
+            if (!cmdValidation.valid) {
+                return cmdValidation;
+            }
+
+            // Validate working directory
+            if (input.cwd) {
+                const cwdValidation = validatePath(input.cwd);
+                if (!cwdValidation.valid) {
+                    return { valid: false, error: `Invalid working directory: ${cwdValidation.error}` };
+                }
+            }
+
+            return { valid: true };
+        },
+        async (input) => {
+            // Execute command with timeout
+            const timeout = input.timeout || 60000; // 1 minute default
+            const maxOutput = input.maxOutput || 1024 * 1024; // 1MB default
+
+            const result = await runCommand({
+                command: input.command,
+                args: input.args,
+                cwd: input.cwd,
+                env: input.env,
+                timeout,
+                maxOutput,
+                shell: input.shell,
+            });
+
+            const executionTime = Date.now() - startTime;
+
+            logger.info('[execute-command] Command executed', {
+                command: input.command,
+                exitCode: result.exitCode,
+                executionTime,
+                timedOut: result.timedOut,
+            });
+
             return {
-                success: false,
-                error: validation.error,
+                success: result.exitCode === 0,
+                stdout: result.stdout,
+                stderr: result.stderr,
+                exitCode: result.exitCode,
+                executionTime,
+                timedOut: result.timedOut,
             };
         }
-
-        // Validate working directory
-        if (input.cwd) {
-            const cwdValidation = validatePath(input.cwd);
-            if (!cwdValidation.valid) {
-                return {
-                    success: false,
-                    error: `Invalid working directory: ${cwdValidation.error}`,
-                };
-            }
-        }
-
-        // Execute command with timeout
-        const timeout = input.timeout || 60000; // 1 minute default
-        const maxOutput = input.maxOutput || 1024 * 1024; // 1MB default
-
-        const result = await runCommand({
-            command: input.command,
-            args: input.args,
-            cwd: input.cwd,
-            env: input.env,
-            timeout,
-            maxOutput,
-            shell: input.shell,
-        });
-
-        const executionTime = Date.now() - startTime;
-
-        logger.info('[execute-command] Command executed', {
-            command: input.command,
-            exitCode: result.exitCode,
-            executionTime,
-            timedOut: result.timedOut,
-        });
-
-        return {
-            success: result.exitCode === 0,
-            stdout: result.stdout,
-            stderr: result.stderr,
-            exitCode: result.exitCode,
-            executionTime,
-            timedOut: result.timedOut,
-        };
-    } catch (error) {
-        logger.error('[execute-command] Execution failed', {error: String(error)});
-        return {
-            success: false,
-            error: String(error),
-        };
-    }
+    );
 }
 
 /**

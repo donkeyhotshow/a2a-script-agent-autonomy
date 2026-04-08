@@ -1,9 +1,14 @@
 # Session storage cluster: router-choice-shape-drift
 
+## Task handling (generated)
+- **Before execution:** Analyze this file and cited evidence; confirm scope, risks, and acceptance criteria.
+- **After execution:** Delete this Markdown file when the work is done. Run `npm run audit:session-storage` to confirm the audit does not recreate it (or that any remaining findings are intentional).
+
+
 ## Why
 This task groups the same storage defect class across multiple sessions to fix root cause once.
 
-## Sessions (11)
+## Sessions (13)
 - `sess_1775603431242`
 - `sess_1775603572213`
 - `sess_1775603823624`
@@ -15,6 +20,8 @@ This task groups the same storage defect class across multiple sessions to fix r
 - `sess_1775647490825`
 - `sess_1775647838718`
 - `sess_1775661165158`
+- `sess_1775664018972`
+- `sess_1775664891888`
 
 ## Representative findings
 - [ ] step 2: choice[0] description contains markdown noise: "*Description:** Dispatch CLI commands to the Laravel agent system core. Acts as a hub for routing commands to appropriate handlers. **Source:** `laravel-agent-workspace-tools/scripts/cli-hub.js`"
@@ -61,4 +68,4 @@ This task groups the same storage defect class across multiple sessions to fix r
 ## Acceptance
 - [ ] Identify root cause in write/projection pipeline.
 - [ ] Add/adjust sanitizer/normalizer/tests for this defect class.
-- [ ] Re-run `npm run audit:session-storage` until this file is removed automatically.
+- [ ] Re-run `npm run audit:session-storage` until this file is removed automatically when storage is clean.

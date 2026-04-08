@@ -20,6 +20,10 @@
 
 | npm run | Role |
 |---------|------|
+| `audit:session-storage` | [`scripts/audit-session-storage-to-tasks.mjs`](../../../scripts/audit-session-storage-to-tasks.mjs) — structural drift in `a2a-client/storage/sessions/**` → `tasks/pending/session-storage-*.md` (same **Task handling (generated)** block as other generated tasks: analyze before execution; delete the task file after completion). |
+| `verify:audit-session-storage-generator` | [`verify-audit-session-storage-generator.mjs`](verify-audit-session-storage-generator.mjs) — asserts the audit script stays free of MD5 skip logic and keeps the workflow block. |
+| `verify:audit-session-storage-accuracy` | [`verify-audit-session-storage-accuracy.mjs`](verify-audit-session-storage-accuracy.mjs) — after `audit:session-storage`, checks `tasks/pending/session-storage-*.md` **Findings** / **Evidence paths** match [`scripts/lib/session-storage-audit-analyze.mjs`](../../../scripts/lib/session-storage-audit-analyze.mjs) (same analysis as the generator). |
+| `verify:audit-session-storage` | **One-shot:** `verify:audit-session-storage-generator` → `audit:session-storage` → `verify:audit-session-storage-accuracy` (rewrites `tasks/pending/session-storage-*.md` then validates). |
 | `report:promise` | [`scripts/promise-artifacts-report.mjs`](../../../scripts/promise-artifacts-report.mjs) — given one **`promiseId`**, writes a **Markdown** inventory: `a2a-server/storage/requests/{id}.json` (Gray Room `interruptTrace` / slots / `operationHistory`), client session refs, `ai-integration/proxy_logs/promises/<id>/`; optional `--logs` |
 
 ## Related (stay in package modules)

@@ -5,97 +5,87 @@ import * as path from 'node:path';
 import type {WriteFileActionInput, WriteFileActionOutput} from './types.js';
 import {validatePath} from './security.js';
 import {SWEVerifier} from '../../../services/core/swe-verifier.js';
+import {executeAction} from '../../utils.js';
 
 export async function executeWriteFile(
     input: WriteFileActionInput
 ): Promise<WriteFileActionOutput> {
-    logger.info('[write-file] Executing', {filePath: input.filePath});
+    return executeAction(
+        'write-file',
+        input,
+        (input) => validatePath(input.filePath),
+        async (input) => {
+            const fullPath = path.resolve(input.filePath);
+            const dir = path.dirname(fullPath);
+            const encoding = input.encoding || 'utf8';
 
-    try {
-        const validation = validatePath(input.filePath);
-        if (!validation.valid) {
-            return {
-                success: false,
-                error: validation.error,
-            };
-        }
+            const fileExists = await pathIsAccessible(fullPath, (m) =>
+                logger.warn('[write-file] access check failed', {
+                    fullPath: m.filePath,
+                    code: m.code,
+                    error: m.error,
+                })
+            );
 
-        const fullPath = path.resolve(input.filePath);
-        const dir = path.dirname(fullPath);
-        const encoding = input.encoding || 'utf8';
-
-        const fileExists = await pathIsAccessible(fullPath, (m) =>
-            logger.warn('[write-file] access check failed', {
-                fullPath: m.filePath,
-                code: m.code,
-                error: m.error,
-            })
-        );
-
-        if (fileExists && !input.overwrite) {
-            return {
-                success: false,
-                error: 'File already exists and overwrite is false',
-            };
-        }
-
-        let backupPath: string | undefined;
-        if (fileExists && input.createBackup) {
-            backupPath = timestampedBackupPath(fullPath);
-            await fs.copyFile(fullPath, backupPath);
-            logger.info('[write-file] Backup created', {backupPath});
-        }
-
-        await fs.mkdir(dir, {recursive: true});
-
-        await fs.writeFile(fullPath, input.content, encoding);
-        const bytesWritten = Buffer.byteLength(input.content, encoding);
-
-        // -- SWEVerifier Integration (ADR-0066) --
-        let verificationPassed = true;
-        let verificationErrors: string[] | undefined;
-        try {
-            const verifier = new SWEVerifier();
-            const verification = await verifier.verify(fullPath, input.content);
-            if (!verification.passed) {
-                verificationPassed = false;
-                verificationErrors = verification.errors || [];
-                logger.warn('[write-file] SWEVerifier validation failed', { 
-                    filePath: input.filePath, 
-                    errors: verificationErrors 
-                });
-            } else {
-                logger.info('[write-file] SWEVerifier pass', { 
-                    filePath: input.filePath, stage: verification.stage 
-                });
+            if (fileExists && !input.overwrite) {
+                return {
+                    success: false,
+                    error: 'File already exists and overwrite is false',
+                };
             }
-        } catch (e) {
-            logger.error('[write-file] SWEVerifier internal error', { error: String(e) });
+
+            let backupPath: string | undefined;
+            if (fileExists && input.createBackup) {
+                backupPath = timestampedBackupPath(fullPath);
+                await fs.copyFile(fullPath, backupPath);
+                logger.info('[write-file] Backup created', {backupPath});
+            }
+
+            await fs.mkdir(dir, {recursive: true});
+
+            await fs.writeFile(fullPath, input.content, encoding);
+            const bytesWritten = Buffer.byteLength(input.content, encoding);
+
+            // -- SWEVerifier Integration (ADR-0066) --
+            let verificationPassed = true;
+            let verificationErrors: string[] | undefined;
+            try {
+                const verifier = new SWEVerifier();
+                const verification = await verifier.verify(fullPath, input.content);
+                if (!verification.passed) {
+                    verificationPassed = false;
+                    verificationErrors = verification.errors || [];
+                    logger.warn('[write-file] SWEVerifier validation failed', {
+                        filePath: input.filePath,
+                        errors: verificationErrors
+                    });
+                } else {
+                    logger.info('[write-file] SWEVerifier pass', {
+                        filePath: input.filePath, stage: verification.stage
+                    });
+                }
+            } catch (e) {
+                logger.error('[write-file] SWEVerifier internal error', { error: String(e) });
+            }
+            // ----------------------------------------
+
+            logger.info('[write-file] File written successfully', {
+                filePath: input.filePath,
+                bytesWritten,
+            });
+
+            const output: any = {
+                success: verificationPassed,
+                filePath: input.filePath,
+                bytesWritten,
+                backupPath,
+            };
+
+            if (!verificationPassed) {
+                output.error = `Verification Failed: ${verificationErrors?.join(', ')}`;
+            }
+
+            return output;
         }
-        // ----------------------------------------
-
-        logger.info('[write-file] File written successfully', {
-            filePath: input.filePath,
-            bytesWritten,
-        });
-
-        const output: any = {
-            success: verificationPassed,
-            filePath: input.filePath,
-            bytesWritten,
-            backupPath,
-        };
-        
-        if (!verificationPassed) {
-            output.error = `Verification Failed: ${verificationErrors?.join(', ')}`;
-        }
-
-        return output;
-    } catch (error) {
-        logger.error('[write-file] Execution failed', {error: String(error)});
-        return {
-            success: false,
-            error: String(error),
-        };
-    }
+    );
 }

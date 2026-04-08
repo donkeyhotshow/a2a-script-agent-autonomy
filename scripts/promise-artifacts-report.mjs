@@ -17,9 +17,10 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { listFilesRecursive } from '../../a2a-server/src/fs-utils/recursive-directory-walker.js';
+import { getRepoRoot } from '../../a2a-server/src/fs-utils/repo-root.js';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.resolve(__dirname, '..');
+const REPO_ROOT = getRepoRoot();
 
 function parseArgs(argv) {
   const args = { out: null, logs: false, id: null };
@@ -35,12 +36,10 @@ function parseArgs(argv) {
   return args;
 }
 
-function exists(p) {
-  try {
-    return fs.existsSync(p);
-  } catch {
-    return false;
-  }
+// Replaced with direct fs.existsSync call
+// function exists(p) {
+//   return fs.existsSync(p);
+// }
 }
 
 function safeReadJson(filePath) {
@@ -57,25 +56,8 @@ function normalizePromiseId(raw) {
   return raw.trim();
 }
 
-function listFilesRecursive(dir, base = dir) {
-  const out = [];
-  if (!exists(dir)) return out;
-  const entries = fs.readdirSync(dir, { withFileTypes: true });
-  for (const e of entries) {
-    const full = path.join(dir, e.name);
-    if (e.isDirectory()) {
-      out.push(...listFilesRecursive(full, base));
-    } else {
-      const rel = path.relative(base, full);
-      let size = 0;
-      try {
-        size = fs.statSync(full).size;
-      } catch (_) {}
-      out.push({ rel, full, size });
-    }
-  }
-  return out;
-}
+// Using utility function from @/fs-utils/recursive-directory-walker.js
+
 
 function findClientSessionRefs(storageRoot, promiseId) {
   const sessionsDir = path.join(storageRoot, 'sessions');

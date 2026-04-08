@@ -8,6 +8,8 @@ This repository is an **autonomous operator workstation** for AI-assisted develo
 
 **Completion bar (production level):** tasks in **`tasks/`** and **`prompts-to-agent-mode/`** carry explicit acceptance criteria; the **Task Monitor** (`npm run monitor` / `monitor:once`) is the normative driver for multi-turn completion. **Validators** (`tests/direct-tests/validators/`, `npm run test:before-start`, sim lint/validate, `npm run cross-system:validate`) enforce contracts, **edge cases**, and cross-layer shape — not “it looked fine in the UI once.”
 
+**Central orchestrator (parameterless):** `npm run central` runs the full offline gate (`test:before-start`, cross-system, sim checks) then one **`monitor:once`** pass — see [`docs/CENTRAL-ORCHESTRATOR.md`](docs/CENTRAL-ORCHESTRATOR.md). The final monitor step needs the **live stack**; use **`CENTRAL_SKIP_OFFLINE=1`** when offline steps already passed and you only need **`monitor:once`**. **`npm run central:offline`** runs the same offline sequence **without** `monitor:once` (no Client API).
+
 **Session quality:** operator and CI treat **terminal session state** (router beats, action-key shapes, async terminality, stored artifacts) as evidence — see [`AGENTS.md`](AGENTS.md), [`docs/AGENTS-REFERENCE.md`](docs/AGENTS-REFERENCE.md), [`GLOSSARY.md`](GLOSSARY.md). Optional hygiene: `npm run audit:session-storage` for client session storage drift → tracked tasks.
 
 ## Live stack: start and restart

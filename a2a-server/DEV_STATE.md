@@ -62,6 +62,6 @@ cd a2a-server && npm run sim:lint -- --all --json
 cd a2a-server && npm run sim:validate -- --all --json
 ```
 
-Repo-root **`npm run test:before-start`** runs indirect (Mama) checks, then **`tests/indirect-tests/run-server-unit-tests.ps1`** (full `a2a-server` Vitest), then **`npm run test:monitor`**.
+Repo-root **`npm run test:before-start`** runs indirect (Mama) checks, then **`tests/indirect-tests/run-server-unit-tests.ps1`** (full `a2a-server` Vitest), then **`npm run test:monitor`**, then **`npm run verify:audit-session-storage`** (session-storage task regen + accuracy).
 
 Docs: [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) · [`simulations/SERVER-CONTRACT.md`](../simulations/SERVER-CONTRACT.md)

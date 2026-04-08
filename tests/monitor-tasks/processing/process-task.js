@@ -186,10 +186,12 @@ export function applyTaskMonitorProcessTask(Ctor) {
           await this.logAgentExecution(session.id, 'after-initial-monitor-gate');
         }
 
-        const basePollInterval = Math.max(1, this.pollIntervalMs);
+        // Async-pending polls use ~800ms+ (see computePollDelayMs); using pollIntervalMs here
+        // under-counted iterations and cut long runs at ~220×~1.2s ≈ 270s despite POLL_TIMEOUT_MS=600000.
+        const minEffectivePollMs = 800;
         const attemptCeiling = Math.max(
           this.maxPollAttempts,
-          Math.ceil(this.pollTimeoutMs / basePollInterval) + 100
+          Math.ceil(this.pollTimeoutMs / minEffectivePollMs) + 100
         );
         const startTime = Date.now();
         attempts = 0;

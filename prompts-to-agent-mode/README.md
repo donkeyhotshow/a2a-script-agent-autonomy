@@ -2,13 +2,13 @@
 
 > **Accompany the session.** Text in these files is **not** a one-shot HTTP body. On the live stack, one task = **one Client API `sessionId`** that you keep advancing until the dialog finishes: **`POST …/next`**, poll **`GET …/async`**, and when **`form.choices`** appear, the next **`/next`** must send the choice **`id`**. If you are not doing that loop yourself, run **`npm run monitor`** / **`monitor:once`** so the Task Monitor owns it. Creating a session and stopping is a common failure mode.
 
-**Scope:** Only `.md` files **in this directory** (no subfolders) are read by **`monitor-and-process-tasks.js`** by default. Each one should be a task the **live stack can drive** (Client API: `POST /api/a2a/sessions` with `mode: "agent"`, then `/next` + `/async`). **Docs, methodology, ADR, sim-authoring, and module-plan prompts** live under **[`../tasks/ide-prompts/`](../tasks/ide-prompts/README.md)** — use them in the IDE **before** or **without** session automation.
+**Scope:** Only `.md` files **in this directory** (no subfolders) are read by **`tests/monitor-and-process-tasks.js`** by default. Each one should be a task the **live stack can drive** (Client API: `POST /api/a2a/sessions` with `mode: "agent"`, then `/next` + `/async`). **Docs, methodology, ADR, sim-authoring, and module-plan prompts** live under **[`../tasks/ide-prompts/`](../tasks/ide-prompts/README.md)** — use them in the IDE **before** or **without** session automation.
 
 **When to run this queue (policy):** Treat **`tasks/*.md`**, **`tasks/pending/`**, and **[`tasks/ide-prompts/`](../tasks/ide-prompts/README.md)** as **primary** engineering work in the IDE. **Execution on the live stack for this folder is only normative through the Task Monitor** — **`npm run monitor`** / **`monitor:once`** — so every prompt gets `/next` + `/async`, router handling, and a **`merged`** **`sessionId`** audit trail. Start the monitor **after** IDE queue is under control (or explicitly deprioritized); the binary does not enforce order — see **[`tasks/README.md`](../tasks/README.md)** (*Self-Upgrade order*). **Before a large monitor pass or full index:** archive valuable **`a2a-client/storage/sessions/*`** trees (same doc, step 2; [`GLOSSARY.md`](../GLOSSARY.md) *Session archival*).
 
 **If you run the live stack:** read **[STACK-RUN.md](STACK-RUN.md)** first.
 
-**Task Monitor:** **[`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** — `npm run monitor` / `npm run monitor:once`, `TASK_MONITOR_*`, router beats. Code: [`../monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`../tests/monitor-tasks/`](../tests/monitor-tasks/). Static regression: **`npm run test:monitor`** (also runs at end of **`npm run test:before-start`**).
+**Task Monitor:** **[`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)** — `npm run monitor` / `npm run monitor:once`, `TASK_MONITOR_*`, router beats. Code: [`../tests/monitor-and-process-tasks.js`](../tests/monitor-and-process-tasks.js), [`../tests/monitor-tasks/`](../tests/monitor-tasks/). Static regression: **`npm run test:monitor`** (runs inside **`npm run test:before-start`** before the final **`verify:audit-session-storage`** step).
 
 **Linear pipeline:** **[ONE-PIPELINE.md](ONE-PIPELINE.md)**. **Master prompt (daemon + hooks):** **[`../START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md)**.
 
@@ -94,7 +94,7 @@ One file per task. Each file lists **sources** and a **copy-paste prompt**. Chec
 
 | Prompt file | Source |
 |-------------|--------|
-| [task-monitor-quick-start.md](task-monitor-quick-start.md) | [`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md); [`../monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`../tests/monitor-tasks/`](../tests/monitor-tasks/), [`../tests/infrastructure/monitor-and-process-tasks.test.js`](../tests/infrastructure/monitor-and-process-tasks.test.js); **`npm run test:monitor`** |
+| [task-monitor-quick-start.md](task-monitor-quick-start.md) | [`../MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md); [`../tests/monitor-and-process-tasks.js`](../tests/monitor-and-process-tasks.js), [`../tests/monitor-tasks/`](../tests/monitor-tasks/), [`../tests/infrastructure/monitor-and-process-tasks.test.js`](../tests/infrastructure/monitor-and-process-tasks.test.js); **`npm run test:monitor`** |
 
 ## IDE-only prompts (docs / methodology / sims)
 

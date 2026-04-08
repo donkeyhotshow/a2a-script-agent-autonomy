@@ -46,7 +46,7 @@ Use this short loop on every cycle so work does not stall on vague prompts or pe
 
 | # | Trap | Mitigation |
 |---|------|------------|
-| 15 | **Router idle / “no result”** | `monitor-and-process-tasks.js` auto-submits router **choice** in order **`agent` → `task-decomposition` → `dialog` → first** when needed; re-sends task text on idle task forms; completion path retries the same gate. |
+| 15 | **Router idle / “no result”** | `tests/monitor-and-process-tasks.js` auto-submits router **choice** in order **`agent` → `task-decomposition` → `dialog` → first** when needed; re-sends task text on idle task forms; completion path retries the same gate. |
 | 16 | **Stale session id** | After storage prune, `GET /api/a2a/sessions/{id}` may return **404** — create a new session or re-run the monitor; old `promiseId` values are stale unless still valid on `:3000`. |
 | 17 | **DELETE while async** | `DELETE /api/a2a/sessions/:id` returns **409** when flat or project storage has an in-flight promise (`getProjectModeInflightPromise`). |
 

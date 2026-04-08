@@ -1,6 +1,6 @@
 # Master prompt — full-spectrum run (repo + live stack)
 
-**Self-Upgrade process:** This represents the Self-Upgrade mechanism: tasks are **launched through the Client API session dialog** — automated by **`monitor-and-process-tasks.js`** (Task Monitor) or driven manually with the same `sessions` / `next` / `async` contour. See [GLOSSARY.md](GLOSSARY.md) (*Self-Upgrade*, *Task Monitor*). **Before a full-index or heavy run:** archive valuable session trees under `a2a-client/storage/sessions/` — [tasks/README.md](tasks/README.md) (*Self-Upgrade order*, step 2).
+**Self-Upgrade process:** This represents the Self-Upgrade mechanism: tasks are **launched through the Client API session dialog** — automated by **`tests/monitor-and-process-tasks.js`** (Task Monitor) or driven manually with the same `sessions` / `next` / `async` contour. See [GLOSSARY.md](GLOSSARY.md) (*Self-Upgrade*, *Task Monitor*). **Before a full-index or heavy run:** archive valuable session trees under `a2a-client/storage/sessions/` — [tasks/README.md](tasks/README.md) (*Self-Upgrade order*, step 2).
 
 > **Do not confuse “paste this file” with “the stack ran the task.”** Indexed prompts need **one `sessionId` + many `/next`/`/async` turns** (or a running **`npm run monitor`**). Pasting the Agent block into Cursor without the daemon still means **you** must start the monitor or accept that **no** Client API dialog is advancing — see [prompts-to-agent-mode/README.md](prompts-to-agent-mode/README.md) (top callout).
 
@@ -10,12 +10,12 @@
 
 | You drive… | What to do |
 |------------|------------|
-| **Cursor / IDE agent** | Paste the **Agent prompt** block below. Run **`npm run monitor`** (or `node monitor-and-process-tasks.js`); react to **`hooks/`** when the instrument surfaces failures or timeouts. |
+| **Cursor / IDE agent** | Paste the **Agent prompt** block below. Run **`npm run monitor`** (or `node tests/monitor-and-process-tasks.js`); react to **`hooks/`** when the instrument surfaces failures or timeouts. |
 | **Live stack only** | Same: start the Task Monitor; use **`MONITOR-QUICK-START.md`** for commands and env; intervene via Client API only when hooks or errors require it. |
 
 **Client API base URL:** default dev is `http://localhost:5173`; other deployments — [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md).
 
-**Operator guide (instrument + dialog contour):** [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md). **Entry script:** [`monitor-and-process-tasks.js`](monitor-and-process-tasks.js). **Hook system:** JSON under `hooks/` — **Task Monitor** writes **`hooks/task_monitor_issue.json`** (see **errors[]** below) and **`hooks/task_completion_report.json`** on completion. **`hooks/CURSOR_AGENT_SIGNAL.md`** / **`.json`** are optional **sample / hand-maintained** IDE nudge files (this repo has **no** scheduled writer for them — not Task Monitor). **Task catalog:** [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md). **Normative spine:** [`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md). **Indexed stack rules:** [`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md). **Iteration traps + runbook:** [`docs/agent-iteration-traps.md`](docs/agent-iteration-traps.md).
+**Operator guide (instrument + dialog contour):** [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md). **Entry script:** [`tests/monitor-and-process-tasks.js`](tests/monitor-and-process-tasks.js). **Hook system:** JSON under `hooks/` — **Task Monitor** writes **`hooks/task_monitor_issue.json`** (see **errors[]** below) and **`hooks/task_completion_report.json`** on completion. **`hooks/CURSOR_AGENT_SIGNAL.md`** / **`.json`** are optional **sample / hand-maintained** IDE nudge files (this repo has **no** scheduled writer for them — not Task Monitor). **Task catalog:** [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md). **Normative spine:** [`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md). **Indexed stack rules:** [`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md). **Iteration traps + runbook:** [`docs/agent-iteration-traps.md`](docs/agent-iteration-traps.md).
 
 **Completed prompts → Client API `sessionId`:** after runs, use **`npm run monitor:completed`** (human) or **`npm run monitor:completed:json`** (scripts — consume **`merged`**, one row per prompt). Under the hood: `task-monitor-state.json` + `task-monitor-completed-sessions.json`. Step trees: `a2a-client/storage/sessions/{sessionId}/`.
 
@@ -41,7 +41,7 @@ Each cycle: **one** concrete unit (one **`errors[]`** item, one `CURSOR_AGENT_SI
 
 **Event-driven process**
 
-1. **Start daemon:** `npm run monitor` or `node monitor-and-process-tasks.js` (daemon by default). State: `task-monitor-state.json`.
+1. **Start daemon:** `npm run monitor` or `node tests/monitor-and-process-tasks.js` (daemon by default). State: `task-monitor-state.json`.
 2. **Poll signals:** Check **`hooks/task_monitor_issue.json`** (new or latest **`errors[]`** entries), **`hooks/task_completion_report.json`**, and optionally **`hooks/CURSOR_AGENT_SIGNAL.md`** if you use that sample nudge (not written by Task Monitor).
 3. **React:** For each triage item, follow [`docs/agent-iteration-traps.md`](docs/agent-iteration-traps.md): classify layer A/B/C, apply **one** focused change, **re-run the same unit** to prove behavior changed.
 4. **Finished prompts → `sessionId`:** **`npm run monitor:completed`** or **`npm run monitor:completed:json`** (use top-level **`merged`** for scripts).

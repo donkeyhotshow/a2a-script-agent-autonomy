@@ -1,6 +1,6 @@
 # Task Monitor modules
 
-Runtime code for [`monitor-and-process-tasks.js`](../../monitor-and-process-tasks.js): `TaskMonitorCore` + mixins from [`monitor-modules.js`](monitor-modules.js).
+Runtime code for [`tests/monitor-and-process-tasks.js`](../../tests/monitor-and-process-tasks.js): `TaskMonitorCore` + mixins from [`monitor-modules.js`](monitor-modules.js).
 
 **Invariant:** default daemon runs **one incomplete prompt at a time** (`await processTask` until done); the next file starts only after that. `parallel-monitor.js` is legacy / alternate wiring, not the default loop.
 

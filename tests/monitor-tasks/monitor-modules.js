@@ -6,7 +6,7 @@ import { TaskMonitorValidation } from './task-monitor-validation.js';
 import { TaskMonitorDaemon } from './task-monitor-daemon.js';
 
 /**
- * Mixin order for `TaskMonitor` (see `monitor-and-process-tasks.js`).
+ * Mixin order for `TaskMonitor` (see `tests/monitor-and-process-tasks.js`).
  * Later entries override same-named methods on the instance.
  */
 export const TASK_MONITOR_MIXINS = [

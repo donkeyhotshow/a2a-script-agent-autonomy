@@ -6,7 +6,8 @@
  */
 
 import {Router, Request, Response, NextFunction} from 'express';
-import {humanizeUpstreamErrorMessage, requestService} from '../services/core/request/request.service.js';
+import {sanitizeErrorMessage} from '../utils/errors.js';
+import {requestService} from '../services/core/request/request.service.js';
 import {registryAuth} from '../middleware/registry-auth.middleware.js';
 import {clientSafeWorkbench} from '../services/core/request/client-visible-context.js';
 
@@ -32,7 +33,7 @@ function clientSafeErrorField(err: Record<string, unknown> | null | undefined): 
     if (!err || typeof err !== 'object') return undefined;
     const msg = err['message'];
     if (typeof msg !== 'string') return err;
-    return {...err, message: humanizeUpstreamErrorMessage(msg)};
+    return {...err, message: sanitizeErrorMessage(msg)};
 }
 
 export function filterResponse(result: Record<string, unknown>): Record<string, unknown> {
@@ -172,7 +173,7 @@ router.get('/:promiseId/result', async (req: Request, res: Response, next: NextF
             const msg = r?.error ?? r?.message;
             if (msg !== undefined) {
                 responseData.error =
-                    typeof msg === 'string' ? {message: humanizeUpstreamErrorMessage(msg)} : msg;
+                    typeof msg === 'string' ? {message: sanitizeErrorMessage(msg)} : msg;
             }
         }
 

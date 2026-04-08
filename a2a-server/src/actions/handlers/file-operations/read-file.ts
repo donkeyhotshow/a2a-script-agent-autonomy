@@ -3,33 +3,46 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 import type {ReadFileActionInput, ReadFileActionOutput} from './types.js';
 import {validatePath} from './security.js';
+import {executeAction} from '../../utils.js';
 
 export async function executeReadFile(
     input: ReadFileActionInput
 ): Promise<ReadFileActionOutput> {
-    logger.info('[read-file] Executing', {filePath: input.filePath});
+    return executeAction(
+        'read-file',
+        input,
+        (input) => validatePath(input.filePath),
+        async (input) => {
+            const fullPath = path.resolve(input.filePath);
+            const encoding = input.encoding || 'utf8';
+            const maxSize = input.maxSize || 1024 * 1024;
 
-    try {
-        const validation = validatePath(input.filePath);
-        if (!validation.valid) {
-            return {
-                success: false,
-                error: validation.error,
-            };
-        }
+            const stats = await fs.stat(fullPath);
+            if (stats.size > maxSize) {
+                const buffer = Buffer.alloc(maxSize);
+                const fd = await fs.open(fullPath, 'r');
+                await fd.read(buffer, 0, maxSize, 0);
+                await fd.close();
 
-        const fullPath = path.resolve(input.filePath);
-        const encoding = input.encoding || 'utf8';
-        const maxSize = input.maxSize || 1024 * 1024;
+                let content = buffer.toString(encoding);
 
-        const stats = await fs.stat(fullPath);
-        if (stats.size > maxSize) {
-            const buffer = Buffer.alloc(maxSize);
-            const fd = await fs.open(fullPath, 'r');
-            await fd.read(buffer, 0, maxSize, 0);
-            await fd.close();
+                if (input.lineRange) {
+                    const lines = content.split('\n');
+                    const [start, end] = input.lineRange;
+                    content = lines.slice(start - 1, end).join('\n');
+                }
 
-            let content = buffer.toString(encoding);
+                return {
+                    success: true,
+                    content,
+                    filePath: input.filePath,
+                    size: stats.size,
+                    encoding,
+                    truncated: true,
+                };
+            }
+
+            let content = await fs.readFile(fullPath, encoding);
 
             if (input.lineRange) {
                 const lines = content.split('\n');
@@ -37,42 +50,19 @@ export async function executeReadFile(
                 content = lines.slice(start - 1, end).join('\n');
             }
 
+            logger.info('[read-file] File read successfully', {
+                filePath: input.filePath,
+                size: stats.size,
+            });
+
             return {
                 success: true,
                 content,
                 filePath: input.filePath,
                 size: stats.size,
                 encoding,
-                truncated: true,
+                truncated: false,
             };
         }
-
-        let content = await fs.readFile(fullPath, encoding);
-
-        if (input.lineRange) {
-            const lines = content.split('\n');
-            const [start, end] = input.lineRange;
-            content = lines.slice(start - 1, end).join('\n');
-        }
-
-        logger.info('[read-file] File read successfully', {
-            filePath: input.filePath,
-            size: stats.size,
-        });
-
-        return {
-            success: true,
-            content,
-            filePath: input.filePath,
-            size: stats.size,
-            encoding,
-            truncated: false,
-        };
-    } catch (error) {
-        logger.error('[read-file] Execution failed', {error: String(error)});
-        return {
-            success: false,
-            error: String(error),
-        };
-    }
+    );
 }

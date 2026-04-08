@@ -1,7 +1,9 @@
 # Session storage audit summary
 
-Scanned sessions: 12
-Problematic sessions: 12
+Scanned sessions: 14
+Problematic sessions: 14
+
+Per-session and cluster task files under `tasks/pending/` include **Task handling (generated)** (analyze before work; delete the file after).
 
 ## Tasks
 - [ ] `sess_1775603431242` — 33 issue(s), task: `session-storage-sess_1775603431242-structure-audit.md`
@@ -14,5 +16,7 @@ Problematic sessions: 12
 - [ ] `sess_1775608866619` — 31 issue(s), task: `session-storage-sess_1775608866619-structure-audit.md`
 - [ ] `sess_1775611280997` — 6 issue(s), task: `session-storage-sess_1775611280997-structure-audit.md`
 - [ ] `sess_1775647490825` — 33 issue(s), task: `session-storage-sess_1775647490825-structure-audit.md`
-- [ ] `sess_1775647838718` — 104 issue(s), task: `session-storage-sess_1775647838718-structure-audit.md`
+- [ ] `sess_1775647838718` — 105 issue(s), task: `session-storage-sess_1775647838718-structure-audit.md`
 - [ ] `sess_1775661165158` — 48 issue(s), task: `session-storage-sess_1775661165158-structure-audit.md`
+- [ ] `sess_1775664018972` — 28 issue(s), task: `session-storage-sess_1775664018972-structure-audit.md`
+- [ ] `sess_1775664891888` — 32 issue(s), task: `session-storage-sess_1775664891888-structure-audit.md`

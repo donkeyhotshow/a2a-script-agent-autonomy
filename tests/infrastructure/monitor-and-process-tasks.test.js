@@ -1,5 +1,5 @@
 /**
- * Test suite for Task Monitor (entry: monitor-and-process-tasks.js + tests/monitor-tasks/*)
+ * Test suite for Task Monitor (entry: tests/monitor-and-process-tasks.js + tests/monitor-tasks/*)
  */
 
 import fs from 'fs';
@@ -14,7 +14,7 @@ const REPO_ROOT = path.resolve(__dirname, '../..');
 vi.mock('axios');
 
 const MONITOR_SOURCE_FILES = [
-  'monitor-and-process-tasks.js',
+  'tests/monitor-and-process-tasks.js',
   'tests/monitor-tasks/monitor-mixin.js',
   'tests/monitor-tasks/monitor-modules.js',
   'tests/monitor-tasks/task-monitor-core.js',
@@ -40,7 +40,7 @@ function readMonitorSources(testDir) {
   ).join('\n');
 }
 
-describe('monitor-and-process-tasks.js', () => {
+describe('tests/monitor-and-process-tasks.js', () => {
   const testDir = REPO_ROOT;
   const stateFile = path.join(testDir, 'task-monitor-state.json');
 
@@ -116,7 +116,7 @@ describe('monitor-and-process-tasks.js', () => {
 
   describe('Completed session export', () => {
     it('exposes --list-completed and ledger helpers for finished prompts', () => {
-      const entry = fs.readFileSync(path.join(testDir, 'monitor-and-process-tasks.js'), 'utf8');
+      const entry = fs.readFileSync(path.join(testDir, 'tests/monitor-and-process-tasks.js'), 'utf8');
       expect(entry).toContain('--list-completed');
       const core = fs.readFileSync(path.join(testDir, 'tests/monitor-tasks/task-monitor-core.js'), 'utf8');
       expect(core).toContain('printCompletedSessionsExport');
@@ -161,13 +161,13 @@ describe('monitor-and-process-tasks.js', () => {
     });
 
     it('should default --once to one task when TASK_MONITOR_MAX_TASKS_PER_RUN is unset', () => {
-      const entry = fs.readFileSync(path.join(testDir, 'monitor-and-process-tasks.js'), 'utf8');
+      const entry = fs.readFileSync(path.join(testDir, 'tests/monitor-and-process-tasks.js'), 'utf8');
       expect(entry).toContain('TASK_MONITOR_MAX_TASKS_PER_RUN');
       expect(entry).toContain("process.env.TASK_MONITOR_MAX_TASKS_PER_RUN = '1'");
     });
 
     it('should default TASK_MONITOR_STRICT_AGENT_COMPLETION when unset', () => {
-      const entry = fs.readFileSync(path.join(testDir, 'monitor-and-process-tasks.js'), 'utf8');
+      const entry = fs.readFileSync(path.join(testDir, 'tests/monitor-and-process-tasks.js'), 'utf8');
       expect(entry).toContain('TASK_MONITOR_STRICT_AGENT_COMPLETION');
       expect(entry).toContain("process.env.TASK_MONITOR_STRICT_AGENT_COMPLETION = '0'");
     });
@@ -202,7 +202,7 @@ describe('monitor-and-process-tasks.js', () => {
     });
 
     it('should map --retry-step to TASK_MONITOR_RESUME_REWIND_LAST_STEP in entry script', () => {
-      const entry = fs.readFileSync(path.join(testDir, 'monitor-and-process-tasks.js'), 'utf8');
+      const entry = fs.readFileSync(path.join(testDir, 'tests/monitor-and-process-tasks.js'), 'utf8');
       expect(entry).toContain('--retry-step');
       expect(entry).toContain('TASK_MONITOR_RESUME_REWIND_LAST_STEP');
       expect(entry).toContain('--resume-from-step=');
@@ -212,7 +212,7 @@ describe('monitor-and-process-tasks.js', () => {
       const source = readMonitorSources(testDir);
       expect(source).toContain('tryRewindSessionDiskStep');
       expect(source).toContain('applyTaskMonitorRewindDisk');
-      const entry = fs.readFileSync(path.join(testDir, 'monitor-and-process-tasks.js'), 'utf8');
+      const entry = fs.readFileSync(path.join(testDir, 'tests/monitor-and-process-tasks.js'), 'utf8');
       expect(entry).toContain('applyMonitorMixins');
       expect(entry).toContain('TASK_MONITOR_MIXINS');
     });
@@ -297,7 +297,7 @@ describe('monitor-and-process-tasks.js', () => {
         path.join(testDir, 'tests/monitor-tasks/task-monitor-daemon.js'),
         'utf8'
       );
-      const entry = fs.readFileSync(path.join(testDir, 'monitor-and-process-tasks.js'), 'utf8');
+      const entry = fs.readFileSync(path.join(testDir, 'tests/monitor-and-process-tasks.js'), 'utf8');
       expect(daemon).toContain('INVARIANT: one incomplete prompt per iteration');
       expect(entry).toContain('one prompt at a time');
     });

@@ -14,7 +14,7 @@
 
 Treat the **running A2A stack** as a **sub-agent**: a headless agent you call over **HTTP** (Client API). The **primary agent** is whoever sits in the **IDE** (e.g. Cursor): they reason, run the **Task Monitor** or **`curl`**, edit code. The sub-agent does **not** share the IDE’s context—it only sees what you send in the request body and returns structured **execute/result/context** (after polling async if needed).
 
-Same mental model as “user types, waits for answer”—except the “user” may be the IDE agent with **`curl`**, or **`monitor-and-process-tasks.js`** driving the same endpoints.
+Same mental model as “user types, waits for answer”—except the “user” may be the IDE agent with **`curl`**, or **`tests/monitor-and-process-tasks.js`** driving the same endpoints.
 
 ---
 

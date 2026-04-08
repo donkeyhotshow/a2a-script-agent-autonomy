@@ -1,5 +1,10 @@
 # Session storage audit: sess_1775647838718
 
+## Task handling (generated)
+- **Before execution:** Analyze this file and cited evidence; confirm scope, risks, and acceptance criteria.
+- **After execution:** Delete this Markdown file when the work is done. Run `npm run audit:session-storage` to confirm the audit does not recreate it (or that any remaining findings are intentional).
+
+
 ## Why
 Session JSON structure has contract violations or suspicious shape drift; needs normalization and root-cause fix in client storage pipeline.
 
@@ -96,6 +101,7 @@ Session JSON structure has contract violations or suspicious shape drift; needs 
 - [ ] step 40: contains internal context.session_id in request-to-server.json
 - [ ] step 40: contains internal context.session_id in server-response.json
 - [ ] step 41: contains internal context.session_id in request-to-server.json
+- [ ] step 41: contains internal context.session_id in server-response.json
 - [ ] step 4: contains internal context.session_id in request-to-server.json
 - [ ] step 4: contains internal context.session_id in server-response.json
 - [ ] step 5: contains internal context.session_id in request-to-server.json
@@ -130,6 +136,7 @@ Session JSON structure has contract violations or suspicious shape drift; needs 
 - `a2a-client/storage/sessions/sess_1775647838718/18/server-response.json`
 - `a2a-client/storage/sessions/sess_1775647838718/19/request-to-server.json`
 - `a2a-client/storage/sessions/sess_1775647838718/19/server-response.json`
+- `a2a-client/storage/sessions/sess_1775647838718/2/server-response.json`
 - `a2a-client/storage/sessions/sess_1775647838718/20/request-to-server.json`
 - `a2a-client/storage/sessions/sess_1775647838718/20/server-response.json`
 - `a2a-client/storage/sessions/sess_1775647838718/21/request-to-server.json`
@@ -150,7 +157,8 @@ Session JSON structure has contract violations or suspicious shape drift; needs 
 - `a2a-client/storage/sessions/sess_1775647838718/28/server-response.json`
 - `a2a-client/storage/sessions/sess_1775647838718/29/request-to-server.json`
 - `a2a-client/storage/sessions/sess_1775647838718/29/server-response.json`
-- `a2a-client/storage/sessions/sess_1775647838718/2/server-response.json`
+- `a2a-client/storage/sessions/sess_1775647838718/3/request-to-server.json`
+- `a2a-client/storage/sessions/sess_1775647838718/3/server-response.json`
 - `a2a-client/storage/sessions/sess_1775647838718/30/request-to-server.json`
 - `a2a-client/storage/sessions/sess_1775647838718/30/server-response.json`
 - `a2a-client/storage/sessions/sess_1775647838718/31/request-to-server.json`
@@ -171,13 +179,12 @@ Session JSON structure has contract violations or suspicious shape drift; needs 
 - `a2a-client/storage/sessions/sess_1775647838718/38/server-response.json`
 - `a2a-client/storage/sessions/sess_1775647838718/39/request-to-server.json`
 - `a2a-client/storage/sessions/sess_1775647838718/39/server-response.json`
-- `a2a-client/storage/sessions/sess_1775647838718/3/request-to-server.json`
-- `a2a-client/storage/sessions/sess_1775647838718/3/server-response.json`
+- `a2a-client/storage/sessions/sess_1775647838718/4/request-to-server.json`
+- `a2a-client/storage/sessions/sess_1775647838718/4/server-response.json`
 - `a2a-client/storage/sessions/sess_1775647838718/40/request-to-server.json`
 - `a2a-client/storage/sessions/sess_1775647838718/40/server-response.json`
 - `a2a-client/storage/sessions/sess_1775647838718/41/request-to-server.json`
-- `a2a-client/storage/sessions/sess_1775647838718/4/request-to-server.json`
-- `a2a-client/storage/sessions/sess_1775647838718/4/server-response.json`
+- `a2a-client/storage/sessions/sess_1775647838718/41/server-response.json`
 - `a2a-client/storage/sessions/sess_1775647838718/5/request-to-server.json`
 - `a2a-client/storage/sessions/sess_1775647838718/5/server-response.json`
 - `a2a-client/storage/sessions/sess_1775647838718/6/request-to-server.json`
@@ -192,4 +199,4 @@ Session JSON structure has contract violations or suspicious shape drift; needs 
 ## Acceptance
 - [ ] Reproduce each issue from live step artifacts.
 - [ ] Fix write/projection path so new sessions do not produce the same issue.
-- [ ] Validate by running `npm run audit:session-storage` until this file is removed automatically.
+- [ ] Validate by running `npm run audit:session-storage` until this file is removed automatically when storage is clean.

@@ -1,5 +1,10 @@
 # Session storage cluster: other-structure-issues
 
+## Task handling (generated)
+- **Before execution:** Analyze this file and cited evidence; confirm scope, risks, and acceptance criteria.
+- **After execution:** Delete this Markdown file when the work is done. Run `npm run audit:session-storage` to confirm the audit does not recreate it (or that any remaining findings are intentional).
+
+
 ## Why
 This task groups the same storage defect class across multiple sessions to fix root cause once.
 
@@ -13,4 +18,4 @@ This task groups the same storage defect class across multiple sessions to fix r
 ## Acceptance
 - [ ] Identify root cause in write/projection pipeline.
 - [ ] Add/adjust sanitizer/normalizer/tests for this defect class.
-- [ ] Re-run `npm run audit:session-storage` until this file is removed automatically.
+- [ ] Re-run `npm run audit:session-storage` until this file is removed automatically when storage is clean.

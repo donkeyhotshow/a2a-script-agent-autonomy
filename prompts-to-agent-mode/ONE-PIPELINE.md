@@ -36,6 +36,6 @@ This document is the **single linear spine** for: run stack → **`npm run monit
 
 ## Automation note
 
-The repo **Task Monitor** ([`monitor-and-process-tasks.js`](../monitor-and-process-tasks.js), [`tests/monitor-tasks/`](../tests/monitor-tasks/)) is the **only** supported automation for this indexed queue: it creates sessions, POSTs `/next`, polls `/async`, branches on **`form.choices`**, writes **`merged`**-ready completion data, and surfaces errors with **direct-tests** hints. Other drivers may follow the same HTTP contour, but they are **not** the audit trail for `prompts-to-agent-mode/` unless you adopt that code path. The linear order above is the **spec** for any driver (human, CI, or bot).
+The repo **Task Monitor** ([`tests/monitor-and-process-tasks.js`](../tests/monitor-and-process-tasks.js), [`tests/monitor-tasks/`](../tests/monitor-tasks/)) is the **only** supported automation for this indexed queue: it creates sessions, POSTs `/next`, polls `/async`, branches on **`form.choices`**, writes **`merged`**-ready completion data, and surfaces errors with **direct-tests** hints. Other drivers may follow the same HTTP contour, but they are **not** the audit trail for `prompts-to-agent-mode/` unless you adopt that code path. The linear order above is the **spec** for any driver (human, CI, or bot).
 
 See also: [`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md), parent index [`README.md`](README.md), stack contour [`STACK-RUN.md`](STACK-RUN.md), master run [`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md).

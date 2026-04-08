@@ -1,5 +1,10 @@
 # Session storage audit: sess_1775604739617
 
+## Task handling (generated)
+- **Before execution:** Analyze this file and cited evidence; confirm scope, risks, and acceptance criteria.
+- **After execution:** Delete this Markdown file when the work is done. Run `npm run audit:session-storage` to confirm the audit does not recreate it (or that any remaining findings are intentional).
+
+
 ## Why
 Session JSON structure has contract violations or suspicious shape drift; needs normalization and root-cause fix in client storage pipeline.
 
@@ -89,12 +94,12 @@ Session JSON structure has contract violations or suspicious shape drift; needs 
 - `a2a-client/storage/sessions/sess_1775604739617/18/server-response.json`
 - `a2a-client/storage/sessions/sess_1775604739617/19/request-to-server.json`
 - `a2a-client/storage/sessions/sess_1775604739617/19/server-response.json`
+- `a2a-client/storage/sessions/sess_1775604739617/2/server-response.json`
 - `a2a-client/storage/sessions/sess_1775604739617/20/request-to-server.json`
 - `a2a-client/storage/sessions/sess_1775604739617/20/server-response.json`
 - `a2a-client/storage/sessions/sess_1775604739617/21/request-to-server.json`
 - `a2a-client/storage/sessions/sess_1775604739617/21/server-response.json`
 - `a2a-client/storage/sessions/sess_1775604739617/22/request-to-server.json`
-- `a2a-client/storage/sessions/sess_1775604739617/2/server-response.json`
 - `a2a-client/storage/sessions/sess_1775604739617/3/request-to-server.json`
 - `a2a-client/storage/sessions/sess_1775604739617/3/server-response.json`
 - `a2a-client/storage/sessions/sess_1775604739617/4/request-to-server.json`
@@ -113,4 +118,4 @@ Session JSON structure has contract violations or suspicious shape drift; needs 
 ## Acceptance
 - [ ] Reproduce each issue from live step artifacts.
 - [ ] Fix write/projection path so new sessions do not produce the same issue.
-- [ ] Validate by running `npm run audit:session-storage` until this file is removed automatically.
+- [ ] Validate by running `npm run audit:session-storage` until this file is removed automatically when storage is clean.

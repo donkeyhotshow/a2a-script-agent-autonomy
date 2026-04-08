@@ -126,7 +126,7 @@ Algorithm execution mode for deterministic operations on **local Local LLM upstr
 
 ## Task Monitor metrics
 
-`monitor-and-process-tasks.js` emits logs that `scripts/orchestrator-metrics.js` aggregates into [`runtime/metrics.json`](../runtime/metrics.json) (per-day totals, provider mix). Refresh on demand: `node scripts/orchestrator-metrics.js --record`. See root [`DEV_STATE.md`](../DEV_STATE.md) / `work/STATE.md` when tracking orchestrator health.
+`tests/monitor-and-process-tasks.js` emits logs that `scripts/orchestrator-metrics.js` aggregates into [`runtime/metrics.json`](../runtime/metrics.json) (per-day totals, provider mix). Refresh on demand: `node scripts/orchestrator-metrics.js --record`. See root [`DEV_STATE.md`](../DEV_STATE.md) / `work/STATE.md` when tracking orchestrator health.
 
 ## Related Documentation
 - [`a2a-server/docs/GRAY-ROOM.md`](../../a2a-server/docs/GRAY-ROOM.md) - Подробная документация (242 строки)

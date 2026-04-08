@@ -111,7 +111,7 @@ Minimal bureaucracy for a **solo developer**, with guardrails against self-decep
 2. **`POST /api/a2a/sessions`** with **`mode: "agent"`** and task text from the file.
 3. **`POST /api/a2a/sessions/{id}/next`** and **`GET /api/a2a/sessions/{id}/async`** in a loop until the step settles.
 4. When the hydrated session shows **`form.choices`**, sends a **choice** (same contract as the UI: `result.choice` or top-level `task` as choice `id`).
-5. Writes **`task-monitor-state.json`** (`TASK_MONITOR_STATE_FILE`): on **success** clears **`sessionId`** / **`currentTask`**. On **failure**, those top-level fields are cleared, but **`taskSessions[filename]`** keeps **`sessionId`**, optional **`lastKnownStep`**, and after a rewind **`resumeFromStep`** / **`rewindRemovedStep`** / **`lastRewindAt`** so the next run can **resume the same Client API session** when **`TASK_MONITOR_RESUME`** is on. To **retry the last step** (delete the highest step folder — request/response/promise/client snapshot — under `a2a-client/storage/sessions/<id>/`, same session id) use **`npm run monitor:rewind-session -- <sessionId>`**, or **`node monitor-and-process-tasks.js --once --retry-step`**, or set **`TASK_MONITOR_RESUME_REWIND_LAST_STEP=1`** (aliases: **`TASK_MONITOR_REWIND_LAST_STEP`**, **`TASK_MONITOR_RETRY_LAST_STEP`**) so the monitor runs **`rewindSessionLastStep`** once before **`GET /sessions`** on resume. Failures may also emit **`hooks/`** payloads.
+5. Writes **`task-monitor-state.json`** (`TASK_MONITOR_STATE_FILE`): on **success** clears **`sessionId`** / **`currentTask`**. On **failure**, those top-level fields are cleared, but **`taskSessions[filename]`** keeps **`sessionId`**, optional **`lastKnownStep`**, and after a rewind **`resumeFromStep`** / **`rewindRemovedStep`** / **`lastRewindAt`** so the next run can **resume the same Client API session** when **`TASK_MONITOR_RESUME`** is on. To **retry the last step** (delete the highest step folder — request/response/promise/client snapshot — under `a2a-client/storage/sessions/<id>/`, same session id) use **`npm run monitor:rewind-session -- <sessionId>`**, or **`node tests/monitor-and-process-tasks.js --once --retry-step`**, or set **`TASK_MONITOR_RESUME_REWIND_LAST_STEP=1`** (aliases: **`TASK_MONITOR_REWIND_LAST_STEP`**, **`TASK_MONITOR_RETRY_LAST_STEP`**) so the monitor runs **`rewindSessionLastStep`** once before **`GET /sessions`** on resume. Failures may also emit **`hooks/`** payloads.
 
 The monitor is **not** a substitute for understanding the router: if the server asks an unexpected question, inspect **`GET /api/a2a/sessions/{id}`** (`includeContext=1` when debugging) and continue manually or adjust automation — see [`AGENTS.md`](AGENTS.md) *Router dialog* and [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
 
@@ -155,9 +155,9 @@ Enforced by [`tests/infrastructure/monitor-and-process-tasks.test.js`](tests/inf
 | Tasks never start | **`start-all.bat`**, curls in root [`DEV_STATE.md`](DEV_STATE.md) *Health checks* |
 | No **`task_monitor_issue.json`** | Issue hooks are for **failed** or **timed-out** tasks only; **`task_completion_report.json`** appears after **successful** runs (overwritten each success) |
 | **Session not found** in logs | Note **`sessionId`** from create step; inspect storage under **`a2a-client/storage/sessions/`** |
-| **~10m timeout** | Wall clock **`TASK_MONITOR_POLL_TIMEOUT_MS`** (default ~10m) wins; iteration cap auto-scales with timeout + interval so low **`TASK_MONITOR_MAX_POLL_ATTEMPTS`** alone cannot cut a long run short (~302s bug fixed). |
+| **~10m timeout** | Wall clock **`TASK_MONITOR_POLL_TIMEOUT_MS`** (default ~10m) wins; iteration ceiling scales with **`ceil(POLL_TIMEOUT_MS / 800ms)+100`** so fast async polls do not stop the loop at ~270s while the wall cap is still higher. |
 | **`promise_daemon_only`** gate | Set **`TASK_MONITOR_SKIP_PROMISE_GATE=1`** when daemon drains the queue (CI / scripts) |
-| **Finish one session before the next prompt** | **Off by default** (`monitor-and-process-tasks.js` sets **`TASK_MONITOR_STRICT_AGENT_COMPLETION=0`** if unset): the monitor **polls** **`/async`** and **`GET …/sessions`** only — **no** automatic continuation **`/next`**; the agent drives **Red Room** (tool **`execute`**) and the client completes tools; the task completes on terminal session shape (e.g. **`context.result`**, **`step=completed`**, or loose first substantive **`step=request`** reply — see `process-task.js`). **Opt in:** **`TASK_MONITOR_STRICT_AGENT_COMPLETION=1`** plus **`TASK_MONITOR_AGENT_CONTINUE_MAX`** (default **20**) to nudge with **`TASK_MONITOR_AGENT_CONTINUE_PROMPT`** until **`step=completed`** / **`context.result`**. **`TASK_MONITOR_AGENT_CONTINUE_MAX=0`** with strict **1** fails fast (use **`>= 1`** for nudges). |
+| **Finish one session before the next prompt** | **Off by default** (`tests/monitor-and-process-tasks.js` sets **`TASK_MONITOR_STRICT_AGENT_COMPLETION=0`** if unset): the monitor **polls** **`/async`** and **`GET …/sessions`** only — **no** automatic continuation **`/next`**; the agent drives **Red Room** (tool **`execute`**) and the client completes tools; the task completes on terminal session shape (e.g. **`context.result`**, **`step=completed`**, or loose first substantive **`step=request`** reply — see `process-task.js`). **Opt in:** **`TASK_MONITOR_STRICT_AGENT_COMPLETION=1`** plus **`TASK_MONITOR_AGENT_CONTINUE_MAX`** (default **20**) to nudge with **`TASK_MONITOR_AGENT_CONTINUE_PROMPT`** until **`step=completed`** / **`context.result`**. **`TASK_MONITOR_AGENT_CONTINUE_MAX=0`** with strict **1** fails fast (use **`>= 1`** for nudges). |
 | Debug one stuck **`promiseId`** | **`npm run report:promise -- <promiseId> --out report.md`** — [scripts/promise-artifacts-report.mjs](scripts/promise-artifacts-report.mjs): server JSON + Gray Room trace + client steps + `proxy_logs`; add **`--logs`** for server log lines |
 
 ## Prerequisites
@@ -199,10 +199,10 @@ To drop **only** Client API session trees: **`npm run cleanup:sessions-only`** (
 Equivalent:
 
 ```bash
-node monitor-and-process-tasks.js              # daemon
-node monitor-and-process-tasks.js --daemon
-node monitor-and-process-tasks.js --once
-node monitor-and-process-tasks.js --once --retry-step   # resume + rewind last disk step (same sessionId)
+node tests/monitor-and-process-tasks.js              # daemon
+node tests/monitor-and-process-tasks.js --daemon
+node tests/monitor-and-process-tasks.js --once
+node tests/monitor-and-process-tasks.js --once --retry-step   # resume + rewind last disk step (same sessionId)
 ```
 
 ## Environment (`TASK_MONITOR_*`)
@@ -215,10 +215,10 @@ Defined in [`.env.example`](.env.example). Common overrides:
 | `TASK_MONITOR_SERVER_API_URL` | Server API for health (default `http://localhost:3000/api/v1`) |
 | `TASK_MONITOR_PROJECT_ID` | Project for new sessions; if empty, first project from `GET /projects` |
 | `TASK_MONITOR_POLL_INTERVAL_MS` | Delay between async polls (default `5000`) |
-| `TASK_MONITOR_MAX_POLL_ATTEMPTS` | Minimum iteration ceiling per task phase (default `120`); effective ceiling is at least `ceil(POLL_TIMEOUT_MS / POLL_INTERVAL_MS) + 100` |
+| `TASK_MONITOR_MAX_POLL_ATTEMPTS` | Minimum iteration floor (default `120`); effective ceiling is `max(this, ceil(POLL_TIMEOUT_MS / 800ms) + 100)` so fast ~800ms async polls do not exhaust before wall timeout |
 | `TASK_MONITOR_POLL_TIMEOUT_MS` | Wall-clock cap for polling (default `600000`, ~10m) |
-| `TASK_MONITOR_STALL_POLLS` | Fail-fast guard for stagnant async loops: repeated busy polls with the same stall key (per-step, or `agent_tool_phase` for all `agent` `tool_*` steps — default `40`); set `0` to disable |
-| `TASK_MONITOR_AGENT_TOOL_STALL_MS` | Wall-clock cap (default `180000`) while `action=agent` stays in any `tool_*` step with async busy; `0` disables |
+| `TASK_MONITOR_STALL_POLLS` | Fail-fast guard for stagnant async loops: repeated busy polls with the same stall key (per-step, or `agent_tool_phase` for all `agent` `tool_*` steps — default `80`); set `0` to disable |
+| `TASK_MONITOR_AGENT_TOOL_STALL_MS` | Wall-clock cap (default `600000`) while `action=agent` stays in any `tool_*` step with async busy; `0` disables |
 | `TASK_MONITOR_TASKS_DIR` | Directory of task markdown files |
 | `TASK_MONITOR_TASK_LIST` | Optional path to a line-based list of `.md` filenames (order preserved); overrides directory scan |
 | `TASK_MONITOR_MAX_TASKS_PER_RUN` | Cap on executed (non-skipped) prompts per `--once` run; `0` = no limit. If **unset**, `--once` defaults to **1** in the entry script |
@@ -270,13 +270,13 @@ npm run test:monitor
 npx vitest run tests/infrastructure/monitor-and-process-tasks.test.js
 ```
 
-Expect **34 passed** — static checks over [`monitor-and-process-tasks.js`](monitor-and-process-tasks.js) plus [`tests/monitor-tasks/*.js`](tests/monitor-tasks/). The same suite runs at the end of **`npm run test:before-start`** (after indirect tests and server unit script).
+Expect **38 passed** — [`tests/infrastructure/monitor-and-process-tasks.test.js`](tests/infrastructure/monitor-and-process-tasks.test.js) plus [`tests/infrastructure/central-orchestrator.test.js`](tests/infrastructure/central-orchestrator.test.js) (static checks over [`tests/monitor-and-process-tasks.js`](tests/monitor-and-process-tasks.js) and [`tests/monitor-tasks/*.js`](tests/monitor-tasks/), plus orchestrator argv contract). The same **`npm run test:monitor`** suite runs inside **`npm run test:before-start`** after indirect tests and the server unit script, **before** the final **`verify:audit-session-storage`** step.
 
 ## Implementation map
 
 | Area | File |
 |------|------|
-| Entry + wiring | [`monitor-and-process-tasks.js`](monitor-and-process-tasks.js) |
+| Entry + wiring | [`tests/monitor-and-process-tasks.js`](tests/monitor-and-process-tasks.js) |
 | API + polling + session | [`tests/monitor-tasks/task-monitor-api.js`](tests/monitor-tasks/task-monitor-api.js), [`tests/monitor-tasks/task-monitor-processing.js`](tests/monitor-tasks/task-monitor-processing.js) |
 | Daemon / batch loop | [`tests/monitor-tasks/task-monitor-daemon.js`](tests/monitor-tasks/task-monitor-daemon.js) |
 | Errors + direct-test hints | [`tests/monitor-tasks/errors.js`](tests/monitor-tasks/errors.js) |

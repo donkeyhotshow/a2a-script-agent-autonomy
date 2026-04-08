@@ -253,4 +253,8 @@ For each turn, decide:
 - Respond with **valid JSON** only; no prose outside the JSON block.
 - **`execute`:** one primary action (tool, `form`, or `message` alone), **or** **`message` + one tool key** — not top-level `message` when a tool or `form` is present.
 - Advance logically toward the task; **validate mentally against `simulations/`** — especially **`simulations/sync/agent-tool-loop/`** for multi-tool flows.
+- Treat this as a potentially recursive agent system: avoid logic loops, uncontrolled self-modification, and loss of entry point.
+- Prefer declarative/configuration-based controls over imperative self-management when both satisfy the task.
+- Any self-management, self-invocation, or self-update mechanism must be marked **`EXPERIMENTAL`** in emitted notes/messages when proposed.
+- If an action can plausibly degrade agent stability, stop execution and return a risk description plus safer alternative instead of performing the action.
 

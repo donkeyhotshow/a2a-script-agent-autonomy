@@ -1,0 +1,15 @@
+{
+  "generatedAt": "2026-04-08T16:05:36.884Z",
+  "mode": "once",
+  "finalStage": "processing",
+  "sessionId": "sess_1775664018972",
+  "rootCauseClass": "http",
+  "nextAction": "inspect monitor artifact and retry task with deterministic resume policy",
+  "promiseErrors": {
+    "newThisRun": 0,
+    "fresh": 0,
+    "old401": 39,
+    "staleCandidates": 0,
+    "staleHandled": 0
+  }
+}

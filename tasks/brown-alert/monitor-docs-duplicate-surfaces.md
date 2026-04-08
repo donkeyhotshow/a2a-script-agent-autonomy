@@ -4,7 +4,7 @@
 
 - [`MONITOR-QUICK-START.md`](../../MONITOR-QUICK-START.md) — operator entry (monitor + Client API).
 - [`prompts-to-agent-mode/task-monitor-quick-start.md`](../../prompts-to-agent-mode/task-monitor-quick-start.md) — **agent prompt** to refresh docs; **`COMPLETION-REPORT.md`** references removed (2026-04-08).
-- [`monitor-and-process-tasks.js`](../../monitor-and-process-tasks.js) — source of truth for behavior.
+- [`tests/monitor-and-process-tasks.js`](../../tests/monitor-and-process-tasks.js) — source of truth for behavior.
 
 ## Why (Brown)
 

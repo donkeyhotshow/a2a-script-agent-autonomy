@@ -34,13 +34,13 @@ class TaskMonitorCore {
       process.env.TASK_MONITOR_IDLE_EARLY_STALL_POLLS || '12',
       10
     );
-    // Defaults: 120 × 5s ≈ 10m wall time (local LLM agent turns often exceed 5m; old 60×5s ≈ 301s false timeouts)
+    // Minimum iteration floor; process-task also scales ceiling from POLL_TIMEOUT_MS / ~800ms effective poll.
     this.maxPollAttempts = parseInt(process.env.TASK_MONITOR_MAX_POLL_ATTEMPTS || '120', 10);
     this.pollTimeoutMs = parseInt(process.env.TASK_MONITOR_POLL_TIMEOUT_MS || '600000', 10);
     // Fail faster when async status/step does not change for too many polls (0 disables).
-    this.stallPolls = parseInt(process.env.TASK_MONITOR_STALL_POLLS || '40', 10);
-    /** Wall clock while agent stays in tool_* steps (async busy); 0 disables. Default 3m — faster than full poll timeout when tools keep rotating. */
-    const _ats = parseInt(process.env.TASK_MONITOR_AGENT_TOOL_STALL_MS || '180000', 10);
+    this.stallPolls = parseInt(process.env.TASK_MONITOR_STALL_POLLS || '80', 10);
+    /** Wall clock while agent stays in tool_* steps (async busy); 0 disables. Default matches long agent turns vs POLL_TIMEOUT_MS. */
+    const _ats = parseInt(process.env.TASK_MONITOR_AGENT_TOOL_STALL_MS || '600000', 10);
     this.agentToolStallMs = Number.isFinite(_ats) && _ats >= 0 ? _ats : 0;
     /** 0 = no limit. With `node … --once`, entry defaults env to 1 unless TASK_MONITOR_MAX_TASKS_PER_RUN is set. */
     const _maxTasks = parseInt(process.env.TASK_MONITOR_MAX_TASKS_PER_RUN || '0', 10);
@@ -447,7 +447,7 @@ class TaskMonitorCore {
     }
     if (merged.length > mtail.length) console.log(`  … +${merged.length - mtail.length} more`);
     console.log(
-      '\nTip: `node monitor-and-process-tasks.js --list-completed --json` → field `merged` (canonical for automation).'
+      '\nTip: `node tests/monitor-and-process-tasks.js --list-completed --json` → field `merged` (canonical for automation).'
     );
   }
 
