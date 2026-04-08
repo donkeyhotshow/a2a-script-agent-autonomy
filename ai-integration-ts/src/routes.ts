@@ -56,7 +56,6 @@ async function executePromiseById(promiseId: string): Promise<void> {
 
 export async function registerRoutes(app: FastifyInstance): Promise<void> {
   app.get('/', async () => ({ status: 'running', proxy_port: config.port, local_llm_upstream_host: config.upstreamUrl }));
-  app.head('/', async (_req, reply) => reply.code(200).send());
   app.get('/health', async () => ({ status: 'running', proxy_port: config.port, local_llm_upstream_host: config.upstreamUrl, local_llm_upstream_available: true }));
   app.get('/health/ready', async () => ({ status: 'ready', local_llm_upstream_available: true, cache_status: 'active' }));
   app.get('/health/compat_llm', async () => ({ status: 'healthy', local_llm_upstream_available: true, local_llm_upstream_url: config.upstreamUrl }));

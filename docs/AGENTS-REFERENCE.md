@@ -8,6 +8,8 @@ Operator and stack detail split from [`AGENTS.md`](../AGENTS.md) so the always-l
 
 This repo’s **one integration contour** for driving the stack after a **manual** start (`start-all.bat` / `start-all.sh`) is the **Client API**, not raw `POST /api/v1/invoke`. Treat every operator, IDE agent, and curl script the same way the web UI is treated: **sessions live here**; the server is reached **inside** the client layer.
 
+**Hot-reload default:** after normal code edits, keep the stack running; do not request full-stack restart by default. Use `start-all` again only for bootstrap/full reset or process/env/port faults. Canonical startup policy: [`docs/SYSTEM_STARTUP.md`](SYSTEM_STARTUP.md).
+
 > **Indexed prompts / markdown tasks:** the **text** of a task is not the whole protocol. After **`POST /sessions`**, you must **continue the same `sessionId`** with **`/next`** and **`/async`** (and router **`choices`**) until the dialog completes — or use **`npm run monitor`** for `prompts-to-agent-mode/`. See [`prompts-to-agent-mode/README.md`](../prompts-to-agent-mode/README.md) and [`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md).
 
 ### Steps (normative)
@@ -352,6 +354,26 @@ Confirm previous phase passed and is stable.
 3. Current action "simple" or skipping phases?
 4. Imports follow `.js` rule (NodeNext)?
 5. If there was **no** pending work: did you **prune → discover → write** (see **AGENTS.md** *Empty queue*), not stop idle?
+6. Before edits, did you record **goal/files/risks** and keep changes minimal (see **AGENTS.md** *Agent-over-Agent Safety Protocol*)?
+
+### Agent-over-Agent Change Guardrails
+
+Use this guardrail when the project itself is an agent orchestration surface:
+
+1. Keep architecture intact by default (no global rewiring without explicit request).
+2. Make changes in small, reviewable increments.
+3. Before editing, record: **goal**, **target files**, **risks**.
+4. Avoid deleting existing code unless non-usage is proven.
+5. Prefer local verification per step instead of late, large validation.
+
+### Recursive-Agent Safety Guardrails
+
+Use this when a change can affect agent control flow or self-management:
+
+1. Validate that changes do not create recursive logic loops or remove the system entry point.
+2. Avoid uncontrolled self-modification; choose declarative/configuration-based controls whenever feasible.
+3. Label any self-management, self-invocation, or self-update mechanism as **EXPERIMENTAL**.
+4. If degradation risk is plausible, stop and document the risk instead of executing the change.
 
 ---
 

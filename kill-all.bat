@@ -98,6 +98,13 @@ set ATTEMPTS=0
 set "PORT_BUSY="
 for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%~2" ^| findstr "LISTENING"') do set PORT_BUSY=1 && set PORT_PID=%%p
 if defined PORT_BUSY (
+    if /I "%~1"=="ai-integration" (
+        powershell -Command "try { $r = Invoke-WebRequest -Uri 'http://localhost:%~2/' -UseBasicParsing -TimeoutSec 2; if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500) { exit 0 } else { exit 1 } } catch { exit 1 }"
+        if !errorlevel! equ 0 (
+            echo   [WARN] %~1 port %~2 is reachable; keeping it running
+            goto :eof
+        )
+    )
     set /a ATTEMPTS+=1
     if !ATTEMPTS! geq 10 (
         echo   [ERROR] %~1 port %~2 still occupied after 10 attempts
@@ -137,6 +144,13 @@ goto :eof
 set "STILL="
 for /f "tokens=5" %%p in ('netstat -ano ^| findstr ":%~2" ^| findstr "LISTENING"') do set STILL=1
 if defined STILL (
+    if /I "%~1"=="ai-integration" (
+        powershell -Command "try { $r = Invoke-WebRequest -Uri 'http://localhost:%~2/' -UseBasicParsing -TimeoutSec 2; if ($r.StatusCode -ge 200 -and $r.StatusCode -lt 500) { exit 0 } else { exit 1 } } catch { exit 1 }"
+        if !errorlevel! equ 0 (
+            echo   [WARN] %~1 still on port %~2 but endpoint responds; continuing
+            goto :eof
+        )
+    )
     echo   [ERROR] %~1 still on port %~2
     set EXIT_CODE=1
     set "FAILED_SVC=!FAILED_SVC!,%~1-port"

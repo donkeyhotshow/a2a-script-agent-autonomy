@@ -9,6 +9,8 @@
 3. `POST /api/a2a/sessions/{id}/next` — body: **`result.message`** / **`result.choice`**, or shorthand **`task`** (send **strings** for ids/text; the Client API coerces numeric JSON `task` to string, but operators should still prefer strings).
 4. `GET /api/a2a/sessions/{id}/async` — poll until terminal; re-**GET session** when ambiguous.
 
+**Hot-reload default:** do not ask for full-stack restart after normal code edits; restart only for process/env/port-level faults. Canonical policy: [`docs/SYSTEM_STARTUP.md`](SYSTEM_STARTUP.md).
+
 **Canonical references:** [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md) (driver checklist, create body, sanitization), root [`AGENTS.md`](../AGENTS.md) (*Unified manual path*, *Router dialog*), [`a2a-client/docs/WEB_UI_PROTOCOL.md`](../a2a-client/docs/WEB_UI_PROTOCOL.md) (async / messages).
 
 **SDK / alternate host:** same contract; `GET …/sessions/:id?unwrap=1` matches Vite top-level session shape — [`docs/adr/ADR-0028-client-api-deployment-modes.md`](adr/ADR-0028-client-api-deployment-modes.md).
@@ -97,6 +99,7 @@ Content-Type: application/json
 
 | Date | Note |
 |------|------|
+| 2026-04-08 | **Practical run (doc-adr-0036):** agent fallbacks were aligned to golden request shape — missing/empty agent execute now returns **`execute.form`** (dialog processor fallback + `prompts/transforms/agent-request.json`), not placeholder message-only text. Monitor progressed past the old *"no fixed input form"* dead-end, but completion still blocked by runtime instability: intermittent **`:5173`** unavailability in dev auto-restart windows and persistent hub failures (**`hub_promise_empty`**, growing `/promises/errors` with legacy **401** tickets). |
 | 2026-04-07 | **Orange alert:** triage = correct driver loop (**`/next` → `/async` → GET session**, **`message` vs `choice`**); storage folder = evidence; operability = runnable **`execute`** chain, not file edits. |
 | 2026-02-09 | Doc/code follow-up to **async-only** invoke: [`SESSION-SYSTEMS-OVERVIEW.md`](SESSION-SYSTEMS-OVERVIEW.md) diagram + E2E pointers; agent RAG/tool chain comments (stop on **`promiseId`**); e2e-dialog JSDoc. |
 | 2026-04-06 | **Removed `sync`** from protocol: A2A **`POST /invoke`** async-only; Client **`/next`** no longer sends `sync`; schema + tests + proba updated. |

@@ -36,6 +36,8 @@ Guidance for agents working in this repository.
 | **No actionable work** | **Not** “done”: empty queue **triggers** maintenance — prune `DEV_STATE` (root + modules), discover work, write tasks — see [Empty queue](#empty-queue--mandatory-not-optional) and [`docs/AGENTS-REFERENCE.md` § DEV_STATE](docs/AGENTS-REFERENCE.md#dev_state-protocol) |
 | **Why iteration stops** | Misreads vs mitigations — [`docs/AGENTS-REFERENCE.md`](docs/AGENTS-REFERENCE.md#why-iteration-stops-misreads-and-mitigations) |
 | **Rules Q&A log (yes/no)** | **[`docs/PROJECT-RULES-QA.md`](docs/PROJECT-RULES-QA.md)** — interview answers only; normative text remains here + **DEV_STATE** |
+| **Agent-over-agent safety** | Before edits: state goal/files/risks; keep minimal diffs; avoid unproven deletions — [Critical Rules §7](#7-agent-over-agent-safety-protocol-mandatory) |
+| **Recursive-agent safety** | Guard against loops, uncontrolled self-modification, and entry-point loss; mark self-management as **EXPERIMENTAL** — [Critical Rules §9](#9-recursive-agent-safety-protocol-mandatory) |
 
 ### Empty queue — mandatory (not optional)
 
@@ -109,6 +111,46 @@ Strict separation between a2a-client and a2a-server must be maintained to preven
 - Client must not send internal data (sessionIds, project metadata) to server.
 - Server must not send internal data (gray room processing, secrets, internal LLM chains like compress_history, thinking, auto_rag_page, auto_read_file, clarify) to client.
 - Server responses should only include sanitized execute/context for client consumption. Internal server-side operations (e.g., gray room) must not appear in responses, as they could expose sensitive processing details or secrets if leaked.
+
+### 7. Agent-over-Agent Safety Protocol (MANDATORY)
+
+When editing this repository as an autonomous coding agent (agent operating on agent infrastructure):
+
+- Treat architectural stability as default: preserve current module boundaries and async flow unless task scope explicitly requires change.
+- Apply minimal, stepwise diffs. Avoid broad refactors unless explicitly requested.
+- Before each edit batch, state: (a) change goal, (b) files to touch, (c) primary risks.
+- Do not delete code unless you have concrete evidence it is unused and safe to remove.
+- Prefer incremental verification after each step (tests, lint, or targeted runtime check) over large unverified change sets.
+
+### 8. AI-only Documentation and Comments (MANDATORY)
+
+Assume documentation and inline comments are consumed by an automated agent service, not a human reader.
+
+Required style for README/docs/comments:
+
+- Use unambiguous statements; avoid figurative language and metaphor.
+- Explicitly define assumptions and constraints.
+- For behavior descriptions, always state: **inputs**, **outputs**, and **side effects**.
+- When multiple interpretations exist, list interpretations, choose one, and state the selection reason.
+- Prefer deterministic wording (`must`, `must not`, `if/then`) over conversational wording.
+
+Minimum contract block (for new/updated procedural docs):
+
+1. **Inputs** — required fields, optional fields, accepted formats.
+2. **Outputs** — returned artifacts, statuses, and terminal conditions.
+3. **Side effects** — storage mutations, network calls, process changes.
+4. **Assumptions** — preconditions expected to be true.
+5. **Constraints** — hard limits, forbidden paths, non-goals.
+6. **Ambiguities** — possible interpretations and chosen interpretation.
+
+### 9. Recursive-Agent Safety Protocol (MANDATORY)
+
+Assume this repository can run in a recursive agent environment where mistakes can impact the agent itself.
+
+- Before and after each significant change, verify the change does not introduce logic loops, uncontrolled self-modification, or loss of a valid entry point.
+- Prefer configuration/declarative controls over imperative self-management logic when both can solve the task.
+- Any self-management, self-invocation, or self-update mechanism must be explicitly labeled **EXPERIMENTAL** in code comments/docs.
+- If a requested change may degrade or destabilize agent behavior, stop implementation and report the risk and safer alternative.
 
 ---
 

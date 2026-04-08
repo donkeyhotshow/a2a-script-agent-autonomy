@@ -29,8 +29,8 @@ REM Cold tsx watch + compile often exceeds 10s; poll until LISTENING (~60s max)
 set /a _tries=0
 :wait_listen
 if !_tries! geq 30 goto wait_fail
-REM Use System32 timeout — Git/MSYS usr\bin\timeout shadows Windows TIMEOUT.EXE
-"%SystemRoot%\System32\timeout.exe" /t 2 /nobreak >nul
+REM timeout.exe can fail in redirected/non-interactive shells; use PowerShell sleep for reliability
+powershell -Command "Start-Sleep -Seconds 2"
 set /a _tries+=1
 for /f "tokens=5" %%A in ('netstat -ano ^| findstr ":%SERVER_PORT%" ^| findstr "LISTENING"') do (
     (echo A2A_SERVER_PID=%%A)>>"%PID_FILE%"

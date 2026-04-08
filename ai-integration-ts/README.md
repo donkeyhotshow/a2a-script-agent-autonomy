@@ -1,6 +1,6 @@
 # ai-integration-ts
 
-TypeScript Fastify clone of `ai-integration` for drop-in runtime on port `11434`.
+TypeScript Fastify clone of `ai-integration` for drop-in runtime on port `11436` (to avoid conflict with existing Python version on 11434).
 
 ## Purpose
 
@@ -11,7 +11,7 @@ Provide endpoint-compatible AI hub behavior (`/api/*`, `/promise*`, `/promises*`
 - `npm install`
 - `npm run dev`
 
-Default port is `11434`.
+Default port is `11436`.
 
 ## Key Files
 

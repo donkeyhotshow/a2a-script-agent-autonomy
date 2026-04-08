@@ -1,5 +1,45 @@
 # System Startup Guide
 
+## Machine-Read Contract
+
+### Inputs
+
+- OS: Windows for `.bat` commands; Linux/macOS for `.sh` commands.
+- Required binaries: `node`, `npm`, `python`, `curl`.
+- Required repositories/files: repo root, `start-all.bat` or `start-all.sh`.
+- Required runtime config for server calls: `a2a-server/.env` with valid `ENCRYPTION_KEY` (32 chars), `JWT_SECRET` (>=32 chars), and upstream model config.
+
+### Outputs
+
+- Running services on configured ports.
+- Valid health responses from `a2a-server`, `ai-integration`, and Client API.
+- Client API session flow accepts `POST /api/a2a/sessions`, `POST /next`, and `GET /async`.
+
+### Side Effects
+
+- Starts or stops local processes.
+- Binds service ports (`5173`, `3001`, `3000`, `11434` by default).
+- Writes logs and runtime artifacts under module directories.
+- Mutates local dependency state when running install commands.
+
+### Assumptions
+
+- Ports are available or can be released by operator action.
+- Local model/upstream service is reachable for AI requests.
+- Commands are executed from repository root unless explicitly stated otherwise.
+
+### Constraints
+
+- Default path for restart is `start-all.bat` (Windows) or `start-all.sh` (Linux/macOS).
+- Per-service manual startup is debug-only and not default operation.
+- Async session flow must be polled; do not treat `POST /next` ack as terminal result.
+
+### Ambiguities and Chosen Interpretation
+
+- Interpretation A: "manual startup" is daily operational path.
+- Interpretation B: "manual startup" is exception path for debugging/isolation.
+- Chosen: **B**, because repository policy defines `start-all` as canonical restart path and manual steps as exception flow.
+
 ## Architecture
 
 | Component | Port | Role |
@@ -19,14 +59,14 @@ start-all.bat    # Start all services
 kill-all.ps1     # Stop all services
 ```
 
-**Hot-reload default (important):** after normal code changes, **do not restart the whole stack**. In this repo, live services already reload in dev mode:
+**Hot-reload default (normative):** after normal code changes, **do not restart the whole stack**. Services reload automatically in dev mode:
 - `a2a-server` → `tsx watch`
 - Client API (`a2a-client/packages/sdk`) → `tsx watch`
 - Web UI (`a2a-client`) → `vite` HMR
 - `ai-integration` → `uvicorn --reload`
 - promise queue daemon → dev watch wrapper (`scripts/promise_queue_daemon_watch.py`)
 
-**When to use `start-all.bat` again:** only for full bootstrap/reset or process-level issues (ports stuck, broken process tree, env/config changes requiring process restart, dead Vite/Client API window, stale `.pids.txt`). `start-all.bat` still remains the canonical full reset path (calls `kill-all.bat`, verifies ports, starts all services, and starts promise queue daemon). See also [`AGENTS.md`](../AGENTS.md).
+**When to use `start-all.bat` again:** only for full bootstrap/reset or process-level faults (stuck ports, broken process tree, env/config changes requiring restart, dead Vite/Client API process, stale `.pids.txt`). `start-all.bat` is the canonical full reset path (calls `kill-all.bat`, verifies ports, starts services, starts promise queue daemon). See [`AGENTS.md`](../AGENTS.md).
 
 **LLM / hub busy:** If a Client API session is waiting on the LLM (`asyncPending` / server `processing`), **confirm** your configured upstream (per `ai-integration` / `providers.json`) is actually working **before** killing or restarting the stack. Normative wording: [`OPERATOR-CURL.md`](OPERATOR-CURL.md).
 
@@ -39,7 +79,7 @@ bash start-all.sh    # Start all services
 
 ## Manual Startup (Sequential)
 
-For **day-to-day restarts** on Windows, use **`start-all.bat`** only. The steps below are for **exceptional** debugging or when you intentionally run one component in isolation.
+For day-to-day restarts on Windows, use `start-all.bat` only. Steps below are exception-only for debugging or intentional single-component isolation.
 
 ### 1. ai-integration (AI Proxy)
 

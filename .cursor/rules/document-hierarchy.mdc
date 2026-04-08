@@ -71,3 +71,24 @@ Every README must have:
 - Purpose statement (1 sentence)
 - Quickstart or link to one
 - Key files/patterns section
+
+## AI-Only Documentation Style (Mandatory)
+
+Assume docs and inline comments are interpreted by AI agents.
+
+Required writing policy:
+
+- Maximum semantic unambiguity; avoid metaphor and narrative filler.
+- State assumptions and constraints explicitly.
+- For procedures/behaviors, define inputs, outputs, and side effects.
+- If text admits multiple interpretations, enumerate interpretations, select one, and explain selection reason.
+- Prefer deterministic language (`must`, `must not`, `if/then`) over human-oriented prose.
+
+Required sections for new/updated procedural docs:
+
+1. Inputs
+2. Outputs
+3. Side effects
+4. Assumptions
+5. Constraints
+6. Ambiguities and chosen interpretation

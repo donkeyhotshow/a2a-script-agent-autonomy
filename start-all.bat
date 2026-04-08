@@ -139,7 +139,13 @@ REM ==========================================
 echo.
 echo [Step 2/8] Verifying all ports are free...
 set PORTS_OK=1
-for %%p in (%PROXY_PORT% %SERVER_PORT% %CLIENT_API_PORT% %WEB_PORT%) do (
+call :verify_port_free %PROXY_PORT% 10
+if errorlevel 1 (
+    echo   [WARN] Port %PROXY_PORT% occupied; continuing ^(ai-integration start handles already-running instance^)
+) else (
+    echo   [OK] Port %PROXY_PORT% verified free
+)
+for %%p in (%SERVER_PORT% %CLIENT_API_PORT% %WEB_PORT%) do (
     call :verify_port_free %%p 10
     if errorlevel 1 (
         echo   [ERROR] Port %%p still occupied

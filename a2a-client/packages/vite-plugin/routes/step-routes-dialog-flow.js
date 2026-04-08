@@ -16,12 +16,18 @@ import { saveClientResult, saveRequestToServer, ensureStepDirectory, saveServerP
 import { unwrapA2aResponse } from './utils/builders.js';
 
 /**
- * Helper function to create response acknowledgment objects consistently.
- * @param {boolean} success - Whether the operation was successful
- * @param {number} step - The step number
- * @param {string|null} promiseId - The promise ID or null
- * @param {string|null} error - Optional error message
- * @returns {Object} Response acknowledgment object
+ * Contract: build transport ack payload for /sessions/{id}/next.
+ * Inputs:
+ * - success: boolean execution status for this transport call.
+ * - step: number current persisted step index.
+ * - promiseId: string|null async request id when server returned deferred execution.
+ * - error: string|null terminal transport error detail.
+ * Output:
+ * - JSON-serializable object { success, step, promiseId, error }.
+ * Side effects:
+ * - None (pure function).
+ * Assumption:
+ * - Caller owns HTTP status code; this object is body-only.
  */
 function createResponseAckObject(success, step, promiseId, error = null) {
     return {
@@ -32,6 +38,13 @@ function createResponseAckObject(success, step, promiseId, error = null) {
     };
 }
 
+function respondJsonOnce(res, statusCode, payload) {
+    if (res.writableEnded || res.headersSent) return;
+    res.statusCode = statusCode;
+    res.setHeader('Content-Type', 'application/json');
+    res.end(JSON.stringify(payload));
+}
+
 export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' }) {
     const nextMatch = path.match(/^\/sessions\/([^/]+)\/next$/);
     if (!(req.method === 'POST' && nextMatch)) {
@@ -40,7 +53,7 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
 
     const sessionId = nextMatch[1];
     if (!validateSessionId(sessionId)) {
-        res.writeHead(400).end(JSON.stringify({ error: 'Invalid session ID' }));
+        respondJsonOnce(res, 400, { error: 'Invalid session ID' });
         return true;
     }
 
@@ -60,23 +73,23 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
             const projectPath = projectStorage?.projectPath;
 
             if (storageMode === 'project' && !projectPath) {
-                res.writeHead(404).end(JSON.stringify({ error: 'Session not found (unknown project)' }));
+                respondJsonOnce(res, 404, { error: 'Session not found (unknown project)' });
                 return;
             }
 
             const session = loadSessionData({ cwd, sessionId, projectPath });
             if (!session) {
-                res.writeHead(404).end(JSON.stringify({ error: 'Session not found' }));
+                respondJsonOnce(res, 404, { error: 'Session not found' });
                 return;
             }
 
-            // Orange / async-only: no overlapping turns — duplicate /next races the pipeline and breaks router beats.
+            // Constraint: async-only single-flight. Reject overlapping /next calls to avoid router-state race conditions.
             const activeAsync = stepHandlers.getActiveAsyncWork(cwd, sessionId);
             if (session.asyncPending === true || activeAsync) {
-                res.writeHead(409).setHeader('Content-Type', 'application/json').end(JSON.stringify({
+                respondJsonOnce(res, 409, {
                     error: 'async_pending',
                     message: 'Poll GET /api/a2a/sessions/{id}/async until idle before sending another /next.',
-                }));
+                });
                 return;
             }
 
@@ -94,7 +107,7 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
             submitResult = normalizeRouterStepSubmit(submitResult, prevStepData);
             const submitResultError = validateSubmitResult(submitResult);
             if (submitResultError) {
-                res.writeHead(400).end(JSON.stringify({ error: submitResultError }));
+                respondJsonOnce(res, 400, { error: submitResultError });
                 return;
             }
 
@@ -139,8 +152,11 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                             saveSessionData({ projectPath, session });
                             saveServerPromise({ cwd, sessionId, nextStepNum, promiseData });
 
-res.setHeader('Content-Type', 'application/json');
-                             res.end(JSON.stringify(createResponseAckObject(true, nextStepNum, promiseData.promiseId)));
+                            respondJsonOnce(
+                                res,
+                                200,
+                                createResponseAckObject(true, nextStepNum, promiseData.promiseId)
+                            );
                             return;
                         }
 
@@ -199,23 +215,21 @@ res.setHeader('Content-Type', 'application/json');
                         finalizeSession({ session, finalStepNum, finalSavedContext, finalServerResponse });
                         saveSessionData({ projectPath, session });
 
-                        res.setHeader('Content-Type', 'application/json');
                         if (!hasServer) {
-const errBody = createResponseAckObject(false, nextStepNum, null, 'A2A invoke failed');
-                            res.writeHead(xhrRes.statusCode >= 400 ? xhrRes.statusCode : 502);
-                            res.end(JSON.stringify(errBody));
+                            const errBody = createResponseAckObject(false, nextStepNum, null, 'A2A invoke failed');
+                            respondJsonOnce(res, xhrRes.statusCode >= 400 ? xhrRes.statusCode : 502, errBody);
                             return;
                         }
 
-res.end(JSON.stringify(createResponseAckObject(true, finalStepNum, null)));
+                        respondJsonOnce(res, 200, createResponseAckObject(true, finalStepNum, null));
                     } catch (e) {
                         console.error('[vite-plugin-a2a] Error in A2A response handler:', e?.stack || e?.message || e);
                         const detail =
                             process.env.NODE_ENV !== 'production' ? String(e?.message || e) : undefined;
-                        res.writeHead(500).end(
-                            JSON.stringify(
-                                detail ? { error: 'Internal server error', detail } : { error: 'Internal server error' }
-                            )
+                        respondJsonOnce(
+                            res,
+                            500,
+                            detail ? { error: 'Internal server error', detail } : { error: 'Internal server error' }
                         );
                     }
                 },
@@ -230,17 +244,19 @@ res.end(JSON.stringify(createResponseAckObject(true, finalStepNum, null)));
                         session.updatedAt = new Date().toISOString();
                         saveSessionData({ projectPath, session });
 
-                        res.setHeader('Content-Type', 'application/json');
-                        res.writeHead(503);
-res.end(JSON.stringify(createResponseAckObject(false, nextStepNum, null, 'A2A server unavailable: ' + detail)));
+                        respondJsonOnce(
+                            res,
+                            503,
+                            createResponseAckObject(false, nextStepNum, null, 'A2A server unavailable: ' + detail)
+                        );
                     } catch (err) {
                         console.error('[vite-plugin-a2a] Error in A2A error handler:', err.message);
-                        res.writeHead(500).end(JSON.stringify({ error: 'Internal server error' }));
+                        respondJsonOnce(res, 500, { error: 'Internal server error' });
                     }
                 },
             });
         } catch (e) {
-            res.writeHead(400).end(JSON.stringify({ error: String(e?.message || e) }));
+            respondJsonOnce(res, 400, { error: String(e?.message || e) });
         }
     });
 

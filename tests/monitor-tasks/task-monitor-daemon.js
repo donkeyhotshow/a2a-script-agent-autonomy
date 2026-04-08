@@ -14,6 +14,13 @@ class TaskMonitorDaemon {
       console.error('Initial health check failed:', initialHealth.details);
       this.state.status = 'health-check-failed';
       this.saveState();
+      this.writeRunArtifact({
+        mode: 'once',
+        finalStage: this.state.status,
+        sessionId: this.state.sessionId || null,
+        rootCauseClass: 'health-check',
+        nextAction: 'fix service health and rerun monitor:once',
+      });
       return;
     }
     console.log('Initial health check passed');
@@ -155,6 +162,24 @@ class TaskMonitorDaemon {
     }
     // sessionId / currentTask: leave as set by processTask (kept on failure for resume via state file)
     this.saveState();
+    const failed = (this.state.processedTasks || []).find((t) => t.status === 'failed');
+    const rootCauseClass =
+      this.errorLog[0]?.type ||
+      (failed?.detail ? String(failed.detail).split(':')[0].slice(0, 80) : null) ||
+      (this.state.status === 'completed' ? 'none' : 'monitor-failure');
+    const nextAction =
+      this.state.status === 'completed'
+        ? 'none'
+        : this.state.status === 'server-unavailable'
+          ? 'restore server availability and rerun with resume'
+          : 'inspect monitor artifact and retry task with deterministic resume policy';
+    this.writeRunArtifact({
+      mode: 'once',
+      finalStage: this.state.status,
+      sessionId: this.state.sessionId || null,
+      rootCauseClass,
+      nextAction,
+    });
   }
 
   async runDaemon() {

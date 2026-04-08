@@ -61,8 +61,18 @@ export function applyTaskMonitorProcessTask(Ctor) {
         const sidFromState =
           resumeOn && this.state.currentTask === taskFile.name ? this.state.sessionId : null;
         const resumeSid = forceNewSession ? sidFromState || null : sidFromMap || sidFromState;
+        const resumePolicy = this.decideResumePolicy(taskFile.name, resumeSid);
+        const forcedByFingerprint = !forceNewSession && resumePolicy?.shouldForceNew === true;
+        if (forcedByFingerprint && this.state.taskSessions?.[taskFile.name]) {
+          this.log(
+            'warn',
+            `[task-monitor] Deterministic resume policy: known-dead session for ${taskFile.name}; creating new session`
+          );
+          delete this.state.taskSessions[taskFile.name];
+          this.saveState();
+        }
 
-        if (resumeSid) {
+        if (resumeSid && !forcedByFingerprint) {
           if (sidFromMap && resumeSid === sidFromMap) {
             this.log(
               'info',
@@ -176,16 +186,17 @@ export function applyTaskMonitorProcessTask(Ctor) {
           await this.logAgentExecution(session.id, 'after-initial-monitor-gate');
         }
 
-        const pollInterval = Math.max(1, this.pollIntervalMs);
+        const basePollInterval = Math.max(1, this.pollIntervalMs);
         const attemptCeiling = Math.max(
           this.maxPollAttempts,
-          Math.ceil(this.pollTimeoutMs / pollInterval) + 100
+          Math.ceil(this.pollTimeoutMs / basePollInterval) + 100
         );
         const startTime = Date.now();
         attempts = 0;
         let idleToolLoopHits = 0;
         let lastStallKey = null;
         let stallHits = 0;
+        let idleStablePolls = 0;
         let agentToolPhaseStart = null;
 
         const strictAgentCompletion = /^(1|true|yes)$/i.test(
@@ -216,7 +227,11 @@ export function applyTaskMonitorProcessTask(Ctor) {
           lastAsyncResult = asyncResult;
           if (!asyncResult) {
             attempts++;
-            await new Promise((resolve) => setTimeout(resolve, pollInterval));
+            const delayMs = this.computePollDelayMs({
+              isAsyncPending: false,
+              idleStablePolls: Math.min(idleStablePolls + 1, 8),
+            });
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
             continue;
           }
           const isCompleted =
@@ -280,10 +295,16 @@ export function applyTaskMonitorProcessTask(Ctor) {
           }
 
           if (!isAsyncPending) {
+            idleStablePolls += 1;
+            if (this.idleEarlyStallPolls > 0 && idleStablePolls >= this.idleEarlyStallPolls) {
+              failureReason = `Early idle stall: ${idleStablePolls} stable idle polls without terminal result`;
+              break;
+            }
             const sd = await this.getSession(session.id, { includeContext: true });
             this.recordTaskSessionSnapshot(taskFile.name, sd);
             const progressed = await this.tryAdvanceMonitorGate(session.id, routerTask, sd, gateOpts);
             if (progressed) {
+              idleStablePolls = 0;
               monitorGateAdvanceCount += 1;
               this.logHardBit({
                 phase: 'monitor-gate',
@@ -292,7 +313,8 @@ export function applyTaskMonitorProcessTask(Ctor) {
               });
               await this.logAgentExecution(session.id, 'after-monitor-gate');
               attempts++;
-              await new Promise((resolve) => setTimeout(resolve, pollInterval));
+              const delayMs = this.computePollDelayMs({ isAsyncPending: true, idleStablePolls: 0 });
+              await new Promise((resolve) => setTimeout(resolve, delayMs));
               continue;
             }
             const gateForm = sd?.context?.execution?.form || sd?.execute?.form;
@@ -309,15 +331,21 @@ export function applyTaskMonitorProcessTask(Ctor) {
           }
 
           if (isAsyncPending) {
+            idleStablePolls = 0;
             attempts++;
-            await new Promise((resolve) => setTimeout(resolve, pollInterval));
+            const delayMs = this.computePollDelayMs({ isAsyncPending: true, idleStablePolls: 0 });
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
             continue;
           }
 
           if (hasPromiseId && !isCompleted) {
             console.log(`Waiting on promise ${hasPromiseId} to complete...`);
             attempts++;
-            await new Promise((resolve) => setTimeout(resolve, pollInterval));
+            const delayMs = this.computePollDelayMs({
+              isAsyncPending: false,
+              idleStablePolls: Math.min(idleStablePolls + 1, 8),
+            });
+            await new Promise((resolve) => setTimeout(resolve, delayMs));
             continue;
           }
 
@@ -393,7 +421,8 @@ export function applyTaskMonitorProcessTask(Ctor) {
                       serverBusy: true,
                     });
                     attempts++;
-                    await new Promise((resolve) => setTimeout(resolve, pollInterval));
+                    const delayMs = this.computePollDelayMs({ isAsyncPending: true, idleStablePolls: 0 });
+                    await new Promise((resolve) => setTimeout(resolve, delayMs));
                     continue;
                   }
                   failureReason =
@@ -439,7 +468,11 @@ export function applyTaskMonitorProcessTask(Ctor) {
           }
 
           attempts++;
-          await new Promise((resolve) => setTimeout(resolve, pollInterval));
+          const delayMs = this.computePollDelayMs({
+            isAsyncPending,
+            idleStablePolls: Math.min(idleStablePolls, 8),
+          });
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
 
         if (routerStuckExit) {
@@ -510,6 +543,11 @@ export function applyTaskMonitorProcessTask(Ctor) {
         return false;
       } finally {
         if (!abortDueToServer) {
+          if (success) {
+            this.noteTaskSuccess(taskFile.name);
+          } else {
+            this.noteTaskFailure(taskFile.name, session?.id || null, failureReason || 'unknown failure');
+          }
           this.recordProcessedTask(
             taskFile.name,
             success ? 'completed' : 'failed',
