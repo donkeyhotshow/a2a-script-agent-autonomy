@@ -5,33 +5,14 @@
 import fs from 'fs';
 import path from 'path';
 import { listStepDirs } from '../../a2a-server/src/fs-utils/recursive-directory-walker.js';
+import { safeReadJsonWithError } from '../../a2a-server/src/fs-utils/safe-json.js';
 
 /** Repo-relative evidence paths must use `/` so sort order matches rendered Markdown on all OS. */
 function normRel(p) {
   return p.replace(/\\/g, '/');
 }
 
-export function safeReadJson(filePath) {
-  try {
-    const raw = fs.readFileSync(filePath, 'utf8');
-    return { ok: true, value: JSON.parse(raw) };
-  } catch (error) {
-    return { ok: false, error: String(error?.message || error) };
-  }
-}
 
-// Using utility function from @/fs-utils/recursive-directory-walker.js
-// export function listStepDirs(sessionDir) {
-//   try {
-//     return fs
-//       .readdirSync(sessionDir, { withFileTypes: true })
-//       .filter((d) => d.isDirectory() && /^\d+$/.test(d.name))
-//       .map((d) => Number(d.name))
-//       .sort((a, b) => a - b);
-//   } catch {
-//     return [];
-//   }
-// }
 
 export function checkChoiceShape(choice, idx) {
   const issues = [];
@@ -77,12 +58,12 @@ export function analyzeSession(repoRoot, sessionId) {
     return { sessionId, issues, evidence };
   }
 
-  const idx = safeReadJson(indexPath);
-  if (!idx.ok) {
-    issues.push(`invalid session-index.json: ${idx.error}`);
-    return { sessionId, issues, evidence };
-  }
-  const index = idx.value;
+   const idx = safeReadJsonWithError(indexPath);
+   if (!idx.ok) {
+     issues.push(`invalid session-index.json: ${idx.error}`);
+     return { sessionId, issues, evidence };
+   }
+   const index = idx.value;
 
   if (!Array.isArray(index.steps)) {
     issues.push('session-index.steps is not array');
@@ -122,14 +103,14 @@ export function analyzeSession(repoRoot, sessionId) {
       issues.push(`step ${stepNum}: hasServerResponse=false but server-response.json exists`);
     }
 
-    for (const f of [clientFile, serverFile, reqFile]) {
-      if (!fs.existsSync(f)) continue;
-      const parsed = safeReadJson(f);
-      if (!parsed.ok) {
-        issues.push(`step ${stepNum}: invalid JSON in ${path.basename(f)} (${parsed.error})`);
-        continue;
-      }
-      const doc = parsed.value;
+     for (const f of [clientFile, serverFile, reqFile]) {
+       if (!fs.existsSync(f)) continue;
+       const parsed = safeReadJsonWithError(f);
+       if (!parsed.ok) {
+         issues.push(`step ${stepNum}: invalid JSON in ${path.basename(f)} (${parsed.error})`);
+         continue;
+       }
+       const doc = parsed.value;
       if (doc?.context && Object.prototype.hasOwnProperty.call(doc.context, 'session_id')) {
         issues.push(`step ${stepNum}: contains internal context.session_id in ${path.basename(f)}`);
         evidence.push(

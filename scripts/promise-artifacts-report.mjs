@@ -19,6 +19,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import { listFilesRecursive } from '../../a2a-server/src/fs-utils/recursive-directory-walker.js';
 import { getRepoRoot } from '../../a2a-server/src/fs-utils/repo-root.js';
+import { safeReadJson } from '../../a2a-server/src/fs-utils/safe-json.js';
 
 const REPO_ROOT = getRepoRoot();
 
@@ -42,14 +43,15 @@ function parseArgs(argv) {
 // }
 }
 
-function safeReadJson(filePath) {
-  try {
-    const t = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(t);
-  } catch {
-    return null;
-  }
-}
+// Using utility function from @/fs-utils/safe-json.js
+// function safeReadJson(filePath) {
+//   try {
+//     const t = fs.readFileSync(filePath, 'utf8');
+//     return JSON.parse(t);
+//   } catch {
+//     return null;
+//   }
+// }
 
 function normalizePromiseId(raw) {
   if (!raw || typeof raw !== 'string') return '';

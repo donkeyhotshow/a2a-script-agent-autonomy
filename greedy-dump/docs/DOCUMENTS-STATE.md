@@ -9,6 +9,7 @@
 | Sequence | `greedy-dump/STATE.md` | active | Bump after each merge |
 | Task tree | `greedy-dump/TASK-TREE.md` | active | Add node when new subfolder appears |
 | This ledger | `greedy-dump/docs/DOCUMENTS-STATE.md` | active | Row per new `TASK.md` |
+| Plans extract (Laravel/Inertia) | `greedy-dump/docs/PLANS-LARAVEL-INERTIA-SCRIPT-EXTRACT.md` | active | Use as migration shortlist for server action backlog |
 | Per-slice tasks | `greedy-dump/mirror/**/TASK.md` | active | Link PR / ADR when coded |
 | Repo queue entry | `tasks/pending/greedy-dump-integration.md` | active | Close when import strategy is fully executed or superseded |
 | admin-app | `greedy-dump/mirror/priority-3/admin-app/TASK.md` | deferred | Scripts are environment-specific sync utilities; not suitable for generic A2A actions |

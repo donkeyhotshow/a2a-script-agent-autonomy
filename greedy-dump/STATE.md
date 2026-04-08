@@ -36,6 +36,9 @@
   - adapter-laravel-workspace-tools.md (16 scripts, Laravel)
   - analyze-services-carrier-scripts.md (81 scripts)
   - analyze-ai-survey-platform-scripts.md (80+ scripts, Laravel)
+- 2026-04-08 — Imported `plans/` payload into `greedy-dump/mirror/plans/` and created Laravel/Inertia script shortlist:
+  - `greedy-dump/docs/PLANS-LARAVEL-INERTIA-SCRIPT-EXTRACT.md`
+  - Source mirrors: `greedy-dump/mirror/plans/LARAVEL-11-ACTIONS-TABLE.md`, `ACTIONS-TABLE.md`, `PROJECT-CONTEXT-DETECTOR.md`
 
 ---
 
