@@ -1,0 +1,43 @@
+{
+  "context": {
+    "session_id": "srv_sess_stateless",
+    "task": "диалог",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "result": {
+      "choice": "dialog",
+      "message": "диалог"
+    },
+    "choice_id": "dialog",
+    "transformSchema": "dialog",
+    "history": [
+      {
+        "role": "user",
+        "message": "диалог"
+      },
+      {
+        "role": "system",
+        "message": "choice: dialog"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "AI Assistant",
+      "description": "Enter your message",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Message",
+          "required": true
+        }
+      ]
+    }
+  }
+}

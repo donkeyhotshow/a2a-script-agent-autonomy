@@ -4,25 +4,22 @@
   "private": true,
   "description": "Vite middleware: Client API /api/a2a/* in dev (dev/proxy split). See README.md.",
   "type": "module",
-  "main": "./index.js",
+  "main": "./src/index.js",
   "files": [
-    "index.js",
-    "README.md",
-    "routes",
-    "utils",
-    "daemon"
+    "src/",
+    "README.md"
   ],
   "exports": {
-    ".": "./index.js"
+    ".": "./src/index.js"
   },
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint . --ext .js --fix"
   },
-"dependencies": {
-     "@a2a/core": "file:../core",
-     "@a2a/storage": "file:../storage",
-     "@a2a/execution": "file:../execution"
-   }
+  "dependencies": {
+    "@a2a/core": "file:../core",
+    "@a2a/storage": "file:../storage",
+    "@a2a/execution": "file:../execution"
+  }
 }

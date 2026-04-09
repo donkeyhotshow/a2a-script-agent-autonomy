@@ -1,0 +1,23 @@
+{
+  "name": "@a2a/server-features",
+  "version": "1.0.0",
+  "description": "Event-driven features for A2A Server",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@a2a/server-utils": "workspace:*",
+    "@a2a/server-protocol": "workspace:*",
+    "@a2a/server-core": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "gitHead": "abc123"
+}

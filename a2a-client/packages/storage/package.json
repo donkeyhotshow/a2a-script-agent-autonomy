@@ -8,7 +8,7 @@
     "./session-paths.mjs": "./src/session-paths.mjs",
     "./session-sort.mjs": "./src/session-sort.mjs",
     "./session-stage-derive.mjs": "./src/session-stage-derive.mjs",
-    "./session-id.js": "./session-id.js",
+    "./session-id.js": "./src/session-id.js",
     "./adrComplianceState.ts": "./src/adrComplianceState.ts",
     "./kv.ts": "./src/kv.ts",
     "./newSessions.ts": "./src/newSessions.ts",

@@ -1,4 +1,4 @@
-import HistoryManager from '../history-manager';
+import HistoryManager from '../history-manager.js';
 import fs from 'fs/promises';
 import path from 'path';
 

@@ -17,7 +17,7 @@ import { parseA2aInvokeResponse } from '../../client-api-envelope.js';
 import {
     getMaxRagChainDepth,
     DEFAULT_RAG_SEARCH_MAX_RESULTS,
-} from '../../../../../shared/agent-rag-chain-depth.mjs';
+} from '@a2a/shared/agent-rag-chain-depth.mjs';
 
 export { extractA2aExecute as extractExecuteFromEnvelope };
 

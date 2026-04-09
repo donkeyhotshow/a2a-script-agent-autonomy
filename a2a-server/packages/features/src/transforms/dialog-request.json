@@ -1,0 +1,46 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$out.context.execution.step",
+      "value": "request"
+    },
+    {
+      "op": "set",
+      "path": "$out.context.workbench",
+      "value": {
+        "sections": {}
+      }
+    },
+    {
+      "op": "set",
+      "path": "$out.execute",
+      "value": {
+        "form": {
+          "title": "AI Assistant",
+          "description": "Enter your message",
+          "input": [
+            {
+              "name": "message",
+              "type": "text",
+              "label": "Message",
+              "required": true
+            }
+          ]
+        }
+      }
+    },
+    {
+      "op": "render-markdown",
+      "templateRef": "a2a-server/prompts/dialog-request.md",
+      "data": "$out",
+      "outputFile": "request.md"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "name": "@a2a/server-request",
+  "version": "1.0.0",
+  "description": "Request handling and processing for A2A Server",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "prepare": "npm run build"
+  },
+  "dependencies": {
+    "@a2a/server-utils": "workspace:*",
+    "@a2a/server-protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "gitHead": "abc123"
+}

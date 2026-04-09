@@ -1,1 +1,0 @@
-priority-3 is huge; do not bulk copy. Use SOURCE path + SUBTREE.md rows.

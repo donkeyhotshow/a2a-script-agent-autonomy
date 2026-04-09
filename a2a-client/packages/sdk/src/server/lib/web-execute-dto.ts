@@ -1,7 +1,7 @@
 import {
     buildWebExecute as buildWebExecuteImpl,
     sanitizeApiRecordExecuteFields as sanitizeApiRecordExecuteFieldsImpl,
-} from '../../../../../shared/web-execute-dto.mjs';
+} from '../../../../../shared/web-execute-dto.js';
 
 export type BuildWebExecuteOptions = { context?: unknown };
 

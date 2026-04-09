@@ -1,6 +1,0 @@
-Stub manifest (replace with dir /s from SOURCE if needed):
-  !Cursor story\  (large; images, txt, xlsx)
-  ai-prompts-saver\
-  aleon\
-  cursor_agent-main\
-  start-session\
