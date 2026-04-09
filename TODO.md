@@ -1,1 +1,9 @@
-# A2A Script Agent - Module Migration TODO\n\nApproved plan: Migrate misnamed/misplaced modules.\n\n## Steps\n1. [ ] Move ai-integration-ts/ → archive/ai-integration-ts/ (redundant TS proxy)\n2. [ ] Move a2a-prototype/ → archive/a2a-prototype/ (obsolete Next.js boilerplate)\n3. [ ] Rename infrastucture/ → monitor/ (fix typo, align with task-monitor content)\n4. [ ] Verify no broken refs (grep old paths)\n5. [ ] Test stack: npm run dev && npm run test:monitor\n6. [ ] Commit & complete\n\nOwner: BLACKBOXAI\nStatus: In progress
+# Module Migration TODO (Approved 2024)
+
+## Pending
+- [ ] Step 1: Delete remnant dirs (`rmdir /s a2a-client\a2a-client`, `rmdir /s work`)
+- [ ] Step 2: Archive misplaced prototype (`git mv a2a-client\packages\premium-ui archive\a2a-client-premium-ui-prototype`)
+- [ ] Step 3: Validate (`git status`, `npm test`, `npm run test:monitor`, `start-all.bat`)
+- [ ] Step 4: Mark complete & attempt_completion
+
+Owner: BLACKBOXAI | Progress: 0/4

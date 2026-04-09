@@ -36,7 +36,7 @@ infrastucture
 runbook
 tests
 work
-- **last-file**: a2a-prototype/components/Composer.tsx
+- **last-file**: a2a-prototype/components/InterfaceSwitch.tsx
 
 ## Scope Logic
 Scope represents the entire project to avoid scanning unrelated directories. From the `last-file`, calculate the next directory or subdirectory to scan by:
