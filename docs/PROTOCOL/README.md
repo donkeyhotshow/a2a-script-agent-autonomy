@@ -12,7 +12,7 @@ This index provides quick access to all protocol documentation files. Each docum
 ### Messages
 - **[message-types.md](message-types.md)** - ClientMessage and ServerMessage structures
 - **[execute-commands.md](execute-commands.md)** - Execute command types and formats
-- **[execute.md](execute.md)** - Execute command specifications (duplicate - consider consolidation)
+- **[execute-commands.md](execute-commands.md)** - Execute command specifications
 
 ### Data Structures
 - **[file-block.md](file-block.md)** - FileBlock and FileBlockRequest interfaces

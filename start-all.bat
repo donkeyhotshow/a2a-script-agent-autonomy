@@ -173,7 +173,7 @@ REM Step 4: Start ai-integration
 REM ==========================================
 echo.
 echo [Step 4/8] Starting ai-integration on port %PROXY_PORT%...
-call scripts\start-ai-integration.bat
+call runbook\scripts\start-ai-integration.bat
 if errorlevel 1 set EXIT_CODE=1
 :ai_done
 
@@ -182,7 +182,7 @@ REM Step 4b: Promise queue daemon (PROMISE_DAEMON_ONLY default on — drains ?pr
 REM ==========================================
 echo.
 echo [Step 4b/8] Starting promise-queue-daemon (ai-integration hub)...
-call scripts\start-promise-queue-daemon.bat
+call runbook\scripts\start-promise-queue-daemon.bat
 if errorlevel 1 set EXIT_CODE=1
 
 REM ==========================================
@@ -190,7 +190,7 @@ REM Step 5: Start a2a-server
 REM ==========================================
 echo.
 echo [Step 5/8] Starting a2a-server on port %SERVER_PORT%...
-call scripts\start-a2a-server.bat
+call runbook\scripts\start-a2a-server.bat
 if errorlevel 1 set EXIT_CODE=1
 :server_done
 
@@ -199,7 +199,7 @@ REM Step 6: Start client-api
 REM ==========================================
 echo.
 echo [Step 6/8] Starting client-api on port %CLIENT_API_PORT%...
-call scripts\start-client-api.bat
+call runbook\scripts\start-client-api.bat
 if errorlevel 1 set EXIT_CODE=1
 :client_api_done
 
@@ -208,7 +208,7 @@ REM Step 7: Start web-ui
 REM ==========================================
 echo.
 echo [Step 7/8] Starting web-ui on port %WEB_PORT%...
-call scripts\start-web-ui.bat
+call runbook\scripts\start-web-ui.bat
 if errorlevel 1 set EXIT_CODE=1
 :web_ui_done
 
