@@ -24,7 +24,7 @@
 | ✅ | GLOSSARY.md | root → docs/GLOSSARY.md | docs/GLOSSARY.md | moved | Слить alerts/rooms, no subs dups | High | - |
 | ✅ | tests/simulations/README.md + sync/README.md | tests/simulations/ | docs/SIMULATIONS-STRUCTURE.md | merge | Sim layout + rules | High | read tests/simulations/README.md |
 | ✅ | request/response templates | a2a-server/docs/*.md | docs/PROTOCOL.md | merge | Один шаблон from dups | High | read a2a-server/docs/server-elements* |
-| ✅ | API-SERVER.md | a2a-client/docs/ | docs/API-SERVER.md | move | Cross-module protocol | High | confirm content |
+
 | ✅ | All index.md | subs/docs/index.md | subs/docs/index.md | update links | → root/docs/DOC-STATE.md | Med | - |
 | ✅ | DEV_STATE.md | root → docs/DEV_STATE.md | docs/DEV_STATE.md | summarized root | Subs keep full | Med | - |
 

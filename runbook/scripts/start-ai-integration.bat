@@ -16,7 +16,7 @@ for /f "tokens=5" %%A in ('netstat -ano ^| findstr ":%PROXY_PORT%" ^| findstr "L
 )
 
 REM Start ai-integration
-cd ai-integration
+cd a2a-ai-hub
 python scripts\ensure-providers-config.py
 if errorlevel 1 (
     echo [AI-Integration] Missing config/providers.example.json - cannot bootstrap providers.json

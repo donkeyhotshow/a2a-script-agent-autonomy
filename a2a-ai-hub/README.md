@@ -1,4 +1,4 @@
-# AI Integration Proxy (Z.AI first, Local LLM upstream optional)
+# A2A AI Hub Proxy (Z.AI first, Local LLM upstream optional)
 
 **Live stack:** Start or restart the **whole** coordinated stack from the repo root: **`.\start-all.bat`** (Windows) or **`./start-all.sh`** (Linux/macOS). The proxy routes requests to the configured providers (Z.AI by default, with Local LLM upstream/Groq/OpenRouter fallbacks) and logs every call with optional simulation hooks.
 

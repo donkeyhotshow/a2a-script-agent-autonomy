@@ -1,0 +1,22 @@
+{
+  "name": "@a2a/agents",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Unified A2A Agents: actions, orchestrators, skills from server src",
+  "main": "src/index.ts",
+  "exports": {
+    "./runbook/central-orchestrator": "./src/runbook/central-orchestrator.mjs"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0",
+    "vitest": "^2.1.9"
+  },
+  "dependencies": {
+    "zod": "^3.22.4"
+  }
+}

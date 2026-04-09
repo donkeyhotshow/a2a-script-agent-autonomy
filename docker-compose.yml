@@ -1,8 +1,8 @@
 services:
   # AI Proxy Service
-  ai-proxy:
+  a2a-ai-hub:
     build:
-      context: ./ai-integration
+      context: ./a2a-ai-hub
       dockerfile: Dockerfile
     container_name: a2a-ai-proxy
     ports:

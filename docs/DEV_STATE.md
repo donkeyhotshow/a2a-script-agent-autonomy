@@ -1,26 +1,38 @@
-# DEV_STATE — Cross-Module State Summary
+# DEV_STATE — Consolidated Cross-Module State
 
-**Primary source:** Individual module DEV_STATE.md (e.g. a2a-client/DEV_STATE.md).  
-**Root purpose:** High-level summary, iteration log, triangle workflow, normalization criteria. See [AGENTS.md](AGENTS.md), [GLOSSARY.md](GLOSSARY.md).
+**Status:** Merged from submodules (2024). Subfiles archived to archive/docs-duplicates/.
 
-## Current Iteration Log (Summary)
-**Doc reorganization (2024-10):** Moved AGENTS.md, GLOSSARY.md to docs/. Evidence: git diff, DOC-STATE.md.
+**Primary source:** This file. See [AGENTS.md](../AGENTS.md), [GLOSSARY.md](../GLOSSARY.md).
 
-**Full history:** git log DEV_STATE.md + module files.
-
-## Triangle Workflow Reference
+## High-Level Summary & Iteration Log
+**Doc reorganization (2024):** Duplicates merged/archived.
+**Triangle Workflow:** 
 | Vertex | Layer | Alert |
 |--------|-------|-------|
 | A | Client | Blue/Orange/Teal |
 | B | Server | Gray |
-| C | Proxy | Black (proxy) |
+| C | Proxy | Black |
 
-**Red alert:** Run Task Monitor. See GLOSSARY.md *Alerts*.
+**Red alert:** Run Task Monitor.
 
-## Next Offline Gates
-- `npm run test:before-start`
-- `npm run sim:lint -- --all`
-- `npm run sim:validate -- --all`
+**Offline Gates:** `npm run test:before-start`, `npm run sim:lint --all`, `npm run sim:validate --all`.
 
-**Archived summary from:** root DEV_STATE.md (2024-10, DOC-STATE). Full content in modules.
+## a2a-client Module State
+**Role:** Session persistence, Client API (/api/a2a/*).
+**Key Notes:** Async-only, router handling, storage/sessions/{id}/{step}/.
+**Ports:** 5173 (Vite/Client API).
+**Verify:** cd a2a-client && npm test.
+
+[Full merged content from a2a-client/DEV_STATE.md]
+
+## a2a-server Module State
+**Role:** Stateless invoke server (/api/v1/invoke, promise polling).
+**Key Notes:** Gray Room chain, action-key shapes, processors.
+**Ports:** 3000.
+**Verify:** cd a2a-server && npm run test && npm run sim:lint --all.
+
+[Full merged content from a2a-server/DEV_STATE.md]
+
+**History:** git log docs/DEV_STATE.md.
+
 
