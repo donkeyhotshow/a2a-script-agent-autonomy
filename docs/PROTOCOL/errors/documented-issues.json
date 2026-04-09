@@ -1,0 +1,141 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A2A Protocol Documented Issues",
+  "description": "Documented inconsistencies, violations, and known issues in the protocol implementation",
+  "version": "1.0",
+  "last_updated": "2026-04-09T15:08:26+03:00",
+  "source_file": "docs/PROTOCOL/errors-found.md",
+  "documented_issues": {
+    "syntax_errors": [
+      {
+        "id": "type_mismatches",
+        "category": "Type Safety Violations",
+        "location": "ai-integration/tests/test_llm_cache.py",
+        "description": "build_llm_cache_payload function parameters expect str but receive str | dict[Any, Any]",
+        "affected_fields": ["path", "method", "target_url", "forward_args", "raw_body"],
+        "impact": "Type safety violations in LLM cache payload construction",
+        "resolution": "Update function signature to handle union types or add type guards",
+        "status": "confirmed",
+        "evidence": "LSP error diagnostics confirm type mismatches",
+        "source": "docs/PROTOCOL/errors-found.md:8-12"
+      },
+      {
+        "id": "execute_message_only",
+        "category": "Protocol Violations",
+        "description": "Execute commands contain only message strings instead of expected form or tool action keys",
+        "affected_files": [
+          "a2a-client/storage/sessions/sess_1775608866619/3/server-response.json",
+          "a2a-client/storage/sessions/sess_1775608866619/4/server-response.json",
+          "a2a-client/storage/sessions/sess_1775647490825/4/server-response.json",
+          "a2a-client/storage/sessions/sess_1775647490825/5/server-response.json"
+        ],
+        "expected": "{ execute: { 'read-file': {...} } } or { form: {...} }",
+        "actual": "Execute contains only string messages",
+        "impact": "Protocol violation - clients expect structured execute commands, not plain messages",
+        "resolution": "Update server responses to use proper execute command format or move messages to ServerMessage.message field",
+        "status": "confirmed",
+        "source": "docs/PROTOCOL/errors-found.md:14-25"
+      },
+      {
+        "id": "missing_module_import",
+        "category": "Build Errors",
+        "location": "scripts/audit-session-storage-to-tasks.mjs",
+        "description": "Import statement references non-existent module",
+        "missing_module": "a2a-server/src/fs-utils/recursive-directory-walker.js",
+        "impact": "Audit script cannot run, preventing session storage validation",
+        "resolution": "Either create the missing module or update import to use existing utility",
+        "status": "confirmed",
+        "source": "docs/PROTOCOL/errors-found.md:27-32"
+      }
+    ],
+    "field_confusion_errors": [
+      {
+        "id": "message_execute_confusion",
+        "category": "Field Usage Confusion",
+        "description": "Server using ServerMessage.message for executable content instead of ServerMessage.execute",
+        "server_component": "Using ServerMessage.message for executable content",
+        "client_component": "Expects ServerMessage.execute for commands",
+        "impact": "Client may not execute intended server commands",
+        "resolution": "Reserve ServerMessage.message for user display, ServerMessage.execute for client actions",
+        "status": "documented",
+        "source": "docs/PROTOCOL/errors-found.md:91-96"
+      }
+    ],
+    "missing_documentation": [
+      {
+        "id": "undocumented_complex_fields",
+        "category": "Documentation Gaps",
+        "location": "RequestContextBlock, RequestApiResult interfaces",
+        "undocumented_fields": ["graph", "frameworks", "graph_stats", "activated_neuron_ids", "injected_content"],
+        "impact": "Implementation uncertainty, integration issues",
+        "resolution": "Add comprehensive field documentation with usage examples",
+        "status": "addressed",
+        "source": "docs/PROTOCOL/errors-found.md:59-66"
+      }
+    ],
+    "redundancy_issues": [
+      {
+        "id": "duplicate_field_definitions",
+        "category": "Code Duplication",
+        "location": "Multiple type files (index.ts, unified.ts, protocol.generated.ts)",
+        "description": "Similar fields defined across different interfaces (e.g., action field in ContextBlock vs ExecutionContext)",
+        "affected_fields": ["action", "status", "result"],
+        "impact": "Maintenance overhead, potential for inconsistencies",
+        "resolution": "Consolidate common fields into shared base interfaces",
+        "status": "documented",
+        "source": "docs/PROTOCOL/errors-found.md:43-50"
+      }
+    ]
+  },
+  "severity_levels": {
+    "critical": ["type_mismatches", "execute_message_only"],
+    "high": ["message_execute_confusion", "missing_module_import"],
+    "medium": ["undocumented_complex_fields", "duplicate_field_definitions"],
+    "low": []
+  },
+  "resolution_status": {
+    "confirmed": ["type_mismatches", "execute_message_only", "missing_module_import"],
+    "documented": ["message_execute_confusion", "duplicate_field_definitions"],
+    "addressed": ["undocumented_complex_fields"]
+  },
+  "recommended_actions": [
+    {
+      "priority": "high",
+      "action": "Fix type mismatches in LLM cache functions",
+      "assignee": "Backend team",
+      "timeline": "Immediate"
+    },
+    {
+      "priority": "high",
+      "action": "Update session response files to use proper execute command format",
+      "assignee": "Protocol team",
+      "timeline": "Next release"
+    },
+    {
+      "priority": "medium",
+      "action": "Create missing recursive-directory-walker module or update imports",
+      "assignee": "DevOps team",
+      "timeline": "Backlog"
+    },
+    {
+      "priority": "medium",
+      "action": "Clarify ServerMessage.message vs ServerMessage.execute usage",
+      "assignee": "Protocol team",
+      "timeline": "Documentation update"
+    }
+  ],
+  "testing_gaps": [
+    {
+      "issue": "Missing comprehensive protocol message validation",
+      "impact": "Invalid data may pass through system undetected",
+      "resolution": "Implement and test protocol validators for all message types",
+      "source": "docs/PROTOCOL/errors-found.md:101-105"
+    },
+    {
+      "issue": "Simulation directory issues",
+      "description": "Scripts expect non-existent simulations/ directory",
+      "resolution": "Update script paths or create expected directory structure",
+      "source": "docs/PROTOCOL/errors-found.md:108-113"
+    }
+  ]
+}

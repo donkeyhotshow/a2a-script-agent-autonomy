@@ -1,202 +1,171 @@
 {
-  "protocol": {
-    "version": "1.0",
-    "description": "A2A Protocol Field Definitions",
-    "source": "docs/PROTOCOL/README.md",
-    "last_updated": "2026-04-09"
-  },
-  "core_fields": {
-    "session_id": {
-      "type": "string",
-      "optional": true,
-      "description": "Client session identifiers (confidential, client-only)",
-      "privacy": "confidential",
-      "transmission": "never over network",
-      "source": "docs/PROTOCOL/context-block.md:7-11"
-    },
-    "action": {
-      "type": "string",
-      "optional": true,
-      "description": "Action type from client (e.g., 'dialog', 'auto-ai', 'task-decomposition')",
-      "examples": ["dialog", "auto-ai", "task-decomposition", "fix-vue-imports", "coder"],
-      "source": "docs/PROTOCOL/context-block.md:12-16"
-    },
-    "new_task": {
-      "type": "string[]",
-      "optional": true,
-      "description": "Array of task descriptions from client for processing",
-      "source": "docs/PROTOCOL/context-block.md:17-20"
-    },
-    "architectural_features": {
-      "type": "string[]",
-      "optional": true,
-      "description": "List of architectural features detected in the project",
-      "source": "docs/PROTOCOL/context-block.md:21-24"
-    },
-    "continue": {
-      "type": "boolean",
-      "optional": true,
-      "description": "Flag indicating whether to continue with the current task processing",
-      "source": "docs/PROTOCOL/context-block.md:25-28"
-    },
-    "tasks": {
-      "type": "Task[]",
-      "optional": true,
-      "description": "Array of task objects to be processed",
-      "nested_reference": "docs/PROTOCOL/nested/tasks.json",
-      "source": "docs/PROTOCOL/context-block.md:29-32"
-    },
-    "request_files": {
-      "type": "string[]",
-      "optional": true,
-      "description": "List of file paths that the client should provide in the next request",
-      "source": "docs/PROTOCOL/context-block.md:33-36"
-    },
-    "confirm": {
-      "type": "boolean",
-      "optional": true,
-      "description": "Flag for confirmation requirements",
-      "source": "docs/PROTOCOL/context-block.md:37-40"
-    },
-    "errors": {
-      "type": "ProtocolError[]",
-      "optional": true,
-      "description": "Array of protocol errors encountered during processing",
-      "nested_reference": "docs/PROTOCOL/errors/protocol-errors.json",
-      "source": "docs/PROTOCOL/context-block.md:41-44"
-    },
-    "task": {
-      "type": "string",
-      "optional": true,
-      "description": "Task from client (for action processing)",
-      "source": "docs/PROTOCOL/context-block.md:45-48"
-    },
-    "llmModel": {
-      "type": "string",
-      "optional": true,
-      "description": "LLM model id for AI Hub proxy (e.g. 'glm-4.7-flash', 'qwen3:8b')",
-      "source": "docs/PROTOCOL/context-block.md:49-52"
-    },
-    "grayRoomLlmModel": {
-      "type": "string",
-      "optional": true,
-      "description": "Optional override for gray-room sub-calls only",
-      "source": "docs/PROTOCOL/context-block.md:53-56"
-    },
-    "execution": {
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A2A Protocol Core Fields",
+  "description": "Core field definitions for the A2A protocol system",
+  "version": "1.0",
+  "last_updated": "2026-04-09T15:02:51+03:00",
+  "source_files": [
+    "docs/PROTOCOL/context-block.md",
+    "docs/PROTOCOL/task.md",
+    "docs/PROTOCOL/file-block.md",
+    "docs/PROTOCOL/protocol-error.md"
+  ],
+  "definitions": {
+    "ContextBlock": {
       "type": "object",
-      "optional": true,
-      "description": "Execution state for actions (new protocol format)",
+      "description": "The Context Block is a core data structure used throughout the A2A protocol to pass contextual information between client and server",
       "properties": {
-        "action": "string - Action ID",
-        "step": "string - Current step ID",
-        "status": "'completed' (optional)",
-        "history": "Array<{ step: string; result?: unknown }>"
+        "session_id": {
+          "type": "string",
+          "description": "Client session identifiers (confidential, client-only, must not appear in HTTP payloads)",
+          "privacy": "confidential"
+        },
+        "action": {
+          "type": "string",
+          "description": "Action type from client (e.g., 'dialog', 'auto-ai', 'task-decomposition')"
+        },
+        "new_task": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Array of task descriptions from client for processing"
+        },
+        "architectural_features": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "List of architectural features detected in the project"
+        },
+        "continue": {
+          "type": "boolean",
+          "description": "Flag indicating whether to continue with the current task processing"
+        },
+        "tasks": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/Task"},
+          "description": "Array of task objects to be processed"
+        },
+        "request_files": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "List of file paths that the client should provide in the next request"
+        },
+        "confirm": {
+          "type": "boolean",
+          "description": "Flag for confirmation requirements"
+        },
+        "errors": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/ProtocolError"},
+          "description": "Array of protocol errors encountered during processing"
+        },
+        "task": {
+          "type": "string",
+          "description": "Task from client (for action processing)"
+        },
+        "llmModel": {
+          "type": "string",
+          "description": "LLM model id for AI Hub proxy (e.g. 'glm-4.7-flash', 'qwen3:8b')"
+        },
+        "grayRoomLlmModel": {
+          "type": "string",
+          "description": "Optional override for gray-room sub-calls only"
+        },
+        "execution": {
+          "type": "object",
+          "description": "Execution state for actions (new protocol format)",
+          "properties": {
+            "action": {"type": "string"},
+            "step": {"type": "string"},
+            "status": {"type": "string", "enum": ["completed"]},
+            "history": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "step": {"type": "string"},
+                  "result": {}
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Task": {
+      "type": "object",
+      "description": "The Task object represents a unit of work to be processed in the A2A protocol system",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the task"
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of operation to be performed",
+          "enum": ["analyze", "refactor", "test", "document", "fix", "create", "delete"]
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the task",
+          "enum": ["pending", "in_progress", "completed", "failed", "cancelled"]
+        },
+        "target": {
+          "type": "string",
+          "description": "Target identifier for the task (e.g., file path, function name, component identifier)"
+        },
+        "progress": {
+          "type": "number",
+          "description": "Progress percentage of the task (0-100)",
+          "minimum": 0,
+          "maximum": 100
+        }
       },
-      "source": "docs/PROTOCOL/context-block.md:57-65"
+      "required": ["id", "type", "status"]
     },
-    "path": {
-      "type": "string",
-      "description": "File path (absolute or relative to project root)",
-      "source": "docs/PROTOCOL/file-block.md:7-11"
+    "FileBlock": {
+      "type": "object",
+      "description": "The FileBlock object represents a file with its content and optional line range information",
+      "properties": {
+        "path": {
+          "type": "string",
+          "description": "File path (absolute or relative to project root)"
+        },
+        "content": {
+          "type": "string",
+          "description": "File content as a string"
+        },
+        "startLine": {
+          "type": "integer",
+          "description": "Starting line number (1-indexed) if representing a portion of the file"
+        },
+        "endLine": {
+          "type": "integer",
+          "description": "Ending line number (1-indexed, inclusive) if representing a portion of the file"
+        }
+      },
+      "required": ["path", "content"]
     },
-    "content": {
-      "type": "string",
-      "description": "File content as a string",
-      "source": "docs/PROTOCOL/file-block.md:12-15"
-    },
-    "startLine": {
-      "type": "number",
-      "optional": true,
-      "description": "Starting line number (1-indexed) if representing a portion of the file",
-      "source": "docs/PROTOCOL/file-block.md:17-21"
-    },
-    "endLine": {
-      "type": "number",
-      "optional": true,
-      "description": "Ending line number (1-indexed, inclusive) if representing a portion of the file",
-      "source": "docs/PROTOCOL/file-block.md:22-26"
-    },
-    "id": {
-      "type": "string",
-      "description": "Unique identifier",
-      "source": "docs/PROTOCOL/task.md:7-11"
-    },
-    "type": {
-      "type": "TaskType",
-      "description": "The type of operation to be performed",
-      "values": ["analyze", "refactor", "test", "document", "fix", "create", "delete"],
-      "source": "docs/PROTOCOL/task.md:12-23"
-    },
-    "status": {
-      "type": "TaskStatus",
-      "description": "Current status of the task",
-      "values": ["pending", "in_progress", "completed", "failed", "cancelled"],
-      "source": "docs/PROTOCOL/task.md:24-33"
-    },
-    "target": {
-      "type": "string",
-      "optional": true,
-      "description": "Target identifier for the task",
-      "source": "docs/PROTOCOL/task.md:34-37"
-    },
-    "progress": {
-      "type": "number",
-      "optional": true,
-      "description": "Progress percentage of the task (0-100)",
-      "source": "docs/PROTOCOL/task.md:38-42"
-    },
-    "code": {
-      "type": "string",
-      "description": "Error code identifier for categorizing the error",
-      "source": "docs/PROTOCOL/protocol-error.md:7-10"
-    },
-    "message": {
-      "type": "string",
-      "description": "Human-readable error message",
-      "source": "docs/PROTOCOL/protocol-error.md:11-15"
-    },
-    "file": {
-      "type": "string",
-      "optional": true,
-      "description": "File path where the error occurred",
-      "source": "docs/PROTOCOL/protocol-error.md:16-20"
-    },
-    "line": {
-      "type": "number",
-      "optional": true,
-      "description": "Line number where the error occurred",
-      "source": "docs/PROTOCOL/protocol-error.md:21-25"
+    "ProtocolError": {
+      "type": "object",
+      "description": "The ProtocolError object represents an error encountered during protocol processing",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Error code identifier for categorizing the error"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error message describing what went wrong"
+        },
+        "file": {
+          "type": "string",
+          "description": "File path where the error occurred (if applicable)"
+        },
+        "line": {
+          "type": "integer",
+          "description": "Line number where the error occurred (if applicable)"
+        }
+      },
+      "required": ["code", "message"]
     }
-  },
-  "incorrect_information_found": [
-    {
-      "issue": "Execute Message Only Violations",
-      "description": "Some session server-response.json files contain execute commands with only string messages instead of proper action-key shapes",
-      "affected_files": [
-        "a2a-client/storage/sessions/sess_1775608866619/3/server-response.json",
-        "a2a-client/storage/sessions/sess_1775608866619/4/server-response.json",
-        "a2a-client/storage/sessions/sess_1775647490825/4/server-response.json",
-        "a2a-client/storage/sessions/sess_1775647490825/5/server-response.json"
-      ],
-      "expected": "Execute should use action-key shape: { 'read-file': {...} } or { form: {...} }",
-      "actual": "Execute contains only string messages",
-      "impact": "Protocol violation - clients expect structured execute commands, not plain messages",
-      "source": "docs/PROTOCOL/errors-found.md:14-25"
-    },
-    {
-      "issue": "Message vs Execute Field Confusion",
-      "description": "Server using ServerMessage.message for executable content instead of ServerMessage.execute",
-      "impact": "Client may not execute intended server commands",
-      "resolution": "Reserve ServerMessage.message for user display, ServerMessage.execute for client actions",
-      "source": "docs/PROTOCOL/errors-found.md:91-96"
-    },
-    {
-      "issue": "Field Type Mismatches",
-      "description": "Function parameters expect str but receive str | dict[Any, Any]",
-      "location": "ai-integration/tests/test_llm_cache.py",
-      "affected_fields": ["path", "method", "target_url", "forward_args", "raw_body"],
-      "source": "docs/PROTOCOL/errors-found.md:8-12"
-    }
-  ]
+  }
 }

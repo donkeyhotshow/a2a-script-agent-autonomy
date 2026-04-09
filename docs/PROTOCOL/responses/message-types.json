@@ -1,0 +1,171 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A2A Protocol Message Types",
+  "description": "ClientMessage and ServerMessage structures for protocol communication",
+  "version": "1.0",
+  "last_updated": "2026-04-09T15:08:26+03:00",
+  "source_file": "docs/PROTOCOL/message-types.md",
+  "definitions": {
+    "ClientMessage": {
+      "type": "object",
+      "description": "Sent from client to server containing contextual information and optional file blocks and results",
+      "properties": {
+        "context": {
+          "type": "object",
+          "description": "Context block containing session information, action types, task data, and execution state",
+          "$ref": "#/definitions/ContextBlock"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "File blocks being sent to the server",
+            "$ref": "#/definitions/FileBlock"
+          },
+          "description": "Array of file blocks being sent to the server"
+        },
+        "result": {
+          "type": "object",
+          "description": "Result from client using action-key shape (new protocol format)",
+          "additionalProperties": true
+        }
+      },
+      "required": ["context"]
+    },
+    "ServerMessage": {
+      "type": "object",
+      "description": "Sent from server to client containing contextual information, optional file blocks, messages, and execute commands",
+      "properties": {
+        "context": {
+          "type": "object",
+          "description": "Context block containing session information, action types, task data, and execution state",
+          "$ref": "#/definitions/ContextBlock"
+        },
+        "files": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "description": "File blocks being sent to the client",
+            "$ref": "#/definitions/FileBlock"
+          },
+          "description": "Array of file blocks being sent to the client"
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable message for the client"
+        },
+        "execute": {
+          "type": "object",
+          "description": "Execute commands for client using action-key shape (new protocol format)",
+          "$ref": "#/definitions/ExecuteCommand"
+        }
+      },
+      "required": ["context"]
+    },
+    "ContextBlock": {
+      "type": "object",
+      "description": "Core context block structure",
+      "properties": {
+        "session_id": {"type": "string"},
+        "action": {"type": "string"},
+        "new_task": {"type": "array", "items": {"type": "string"}},
+        "architectural_features": {"type": "array", "items": {"type": "string"}},
+        "continue": {"type": "boolean"},
+        "tasks": {"type": "array", "items": {"$ref": "#/definitions/Task"}},
+        "request_files": {"type": "array", "items": {"type": "string"}},
+        "confirm": {"type": "boolean"},
+        "errors": {"type": "array", "items": {"$ref": "#/definitions/ProtocolError"}},
+        "task": {"type": "string"},
+        "llmModel": {"type": "string"},
+        "grayRoomLlmModel": {"type": "string"},
+        "execution": {"type": "object"}
+      }
+    },
+    "FileBlock": {
+      "type": "object",
+      "description": "File content block",
+      "properties": {
+        "path": {"type": "string"},
+        "content": {"type": "string"},
+        "startLine": {"type": "integer"},
+        "endLine": {"type": "integer"}
+      },
+      "required": ["path", "content"]
+    },
+    "Task": {
+      "type": "object",
+      "description": "Task unit",
+      "properties": {
+        "id": {"type": "string"},
+        "type": {"type": "string", "enum": ["analyze", "refactor", "test", "document", "fix", "create", "delete"]},
+        "status": {"type": "string", "enum": ["pending", "in_progress", "completed", "failed", "cancelled"]},
+        "target": {"type": "string"},
+        "progress": {"type": "number", "minimum": 0, "maximum": 100}
+      },
+      "required": ["id", "type", "status"]
+    },
+    "ProtocolError": {
+      "type": "object",
+      "description": "Error structure",
+      "properties": {
+        "code": {"type": "string"},
+        "message": {"type": "string"},
+        "file": {"type": "string"},
+        "line": {"type": "integer"}
+      },
+      "required": ["code", "message"]
+    },
+    "ExecuteCommand": {
+      "type": "object",
+      "description": "Execute command structure",
+      "additionalProperties": true
+    }
+  },
+  "communication_flow": {
+    "description": "Bidirectional message flow between client and server",
+    "steps": [
+      "Client sends ClientMessage to server with context and any files/results",
+      "Server processes the message and returns ServerMessage with updated context, files, message, and execute commands",
+      "Client executes the commands and sends another ClientMessage with results",
+      "Cycle continues until task completion"
+    ]
+  },
+  "usage_examples": [
+    {
+      "description": "Client to Server message",
+      "data": {
+        "context": {
+          "action": "dialog",
+          "new_task": ["Implement user authentication"]
+        },
+        "files": [
+          {
+            "path": "src/auth/login.ts",
+            "content": "// Login implementation"
+          }
+        ]
+      }
+    },
+    {
+      "description": "Server to Client message",
+      "data": {
+        "context": {
+          "tasks": [
+            {
+              "id": "auth-implementation",
+              "type": "create",
+              "status": "pending",
+              "target": "src/auth/"
+            }
+          ]
+        },
+        "message": "Starting authentication implementation",
+        "execute": {
+          "read-file": {
+            "path": "src/auth/login.ts"
+          }
+        }
+      }
+    }
+  ]
+}

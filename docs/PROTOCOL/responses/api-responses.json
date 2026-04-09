@@ -1,0 +1,337 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A2A Protocol API Response Types",
+  "description": "Standardized API response structures for consistent error handling and data structure",
+  "version": "1.0",
+  "last_updated": "2026-04-09T15:08:26+03:00",
+  "source_files": [
+    "docs/PROTOCOL/api-response-types.md",
+    "docs/PROTOCOL/unified-response-types.md"
+  ],
+  "definitions": {
+    "ApiResponse": {
+      "type": "object",
+      "description": "Generic wrapper for all API responses",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Indicates whether the API call was successful"
+        },
+        "data": {
+          "description": "The response payload when success is true"
+        },
+        "error": {
+          "type": "object",
+          "description": "Error details when success is false",
+          "$ref": "#/definitions/ApiError"
+        }
+      },
+      "required": ["success"]
+    },
+    "ApiError": {
+      "type": "object",
+      "description": "Structured error information for API failures",
+      "properties": {
+        "code": {
+          "type": "string",
+          "description": "Machine-readable error code",
+          "examples": ["VALIDATION_ERROR", "NOT_FOUND", "PERMISSION_DENIED", "INTERNAL_ERROR"]
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable error message",
+          "examples": ["Invalid request parameters", "Resource not found", "Access denied"]
+        },
+        "details": {
+          "type": "object",
+          "description": "Additional error context and debugging information",
+          "additionalProperties": true
+        }
+      },
+      "required": ["code", "message"]
+    },
+    "PaginatedResponse": {
+      "type": "object",
+      "description": "Response wrapper for paginated list endpoints",
+      "properties": {
+        "items": {
+          "type": "array",
+          "description": "Array of items for the current page"
+        },
+        "total": {
+          "type": "integer",
+          "description": "Total number of items across all pages"
+        },
+        "page": {
+          "type": "integer",
+          "description": "Current page number (1-indexed)"
+        },
+        "per_page": {
+          "type": "integer",
+          "description": "Number of items per page"
+        }
+      },
+      "required": ["items", "total", "page", "per_page"]
+    },
+    "UnifiedResponseType": {
+      "type": "string",
+      "description": "Enumeration of all possible unified response types",
+      "enum": [
+        "action_proposal",
+        "action_executing",
+        "action_progress",
+        "action_completed",
+        "action_error"
+      ]
+    },
+    "BaseResponse": {
+      "type": "object",
+      "description": "Common fields shared by all unified responses",
+      "properties": {
+        "success": {
+          "type": "boolean",
+          "description": "Overall success status of the operation"
+        },
+        "timestamp": {
+          "type": "string",
+          "description": "ISO timestamp when response was generated"
+        }
+      },
+      "required": ["success", "timestamp"]
+    },
+    "ActionProposalResponse": {
+      "type": "object",
+      "description": "Response sent when server proposes actions to the client",
+      "allOf": [
+        {"$ref": "#/definitions/BaseResponse"},
+        {
+          "properties": {
+            "type": {"const": "action_proposal"},
+            "result": {"$ref": "#/definitions/ActionProposalResult"}
+          },
+          "required": ["type", "result"]
+        }
+      ]
+    },
+    "ActionProposalResult": {
+      "type": "object",
+      "description": "Data structure for action proposals",
+      "properties": {
+        "context": {
+          "type": "object",
+          "description": "Updated context block for the next iteration",
+          "$ref": "#/definitions/ContextBlock"
+        },
+        "fallbackActions": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/FallbackAction"},
+          "description": "Alternative actions if primary proposals fail"
+        }
+      },
+      "required": ["context"]
+    },
+    "ActionExecutingResponse": {
+      "type": "object",
+      "description": "Response sent when server begins executing an action",
+      "allOf": [
+        {"$ref": "#/definitions/BaseResponse"},
+        {
+          "properties": {
+            "type": {"const": "action_executing"},
+            "result": {"$ref": "#/definitions/ActionExecutingResult"}
+          },
+          "required": ["type", "result"]
+        }
+      ]
+    },
+    "ActionExecutingResult": {
+      "type": "object",
+      "description": "Data structure for action execution state",
+      "properties": {
+        "executingAction": {"$ref": "#/definitions/Action"},
+        "nextSteps": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/Action"},
+          "description": "Upcoming actions in the execution pipeline"
+        }
+      },
+      "required": ["executingAction", "nextSteps"]
+    },
+    "ActionProgressResponse": {
+      "type": "object",
+      "description": "Response sent during action execution to report progress",
+      "allOf": [
+        {"$ref": "#/definitions/BaseResponse"},
+        {
+          "properties": {
+            "type": {"const": "action_progress"},
+            "result": {"$ref": "#/definitions/ActionProgressResult"}
+          },
+          "required": ["type", "result"]
+        }
+      ]
+    },
+    "ActionProgressResult": {
+      "type": "object",
+      "description": "Detailed progress update structure",
+      "properties": {
+        "actionId": {"type": "string"},
+        "currentStep": {
+          "type": "object",
+          "properties": {
+            "id": {"type": "string"},
+            "title": {"type": "string"},
+            "code": {"type": "string"},
+            "progress": {"type": "number", "minimum": 0, "maximum": 100}
+          },
+          "required": ["id", "progress"]
+        },
+        "completedSteps": {"type": "array", "items": {"type": "string"}},
+        "remainingSteps": {"type": "array", "items": {"type": "string"}},
+        "message": {"type": "string"}
+      },
+      "required": ["actionId", "currentStep", "completedSteps", "remainingSteps"]
+    },
+    "ActionCompletedResponse": {
+      "type": "object",
+      "description": "Response sent when action execution completes successfully",
+      "allOf": [
+        {"$ref": "#/definitions/BaseResponse"},
+        {
+          "properties": {
+            "type": {"const": "action_completed"},
+            "result": {"$ref": "#/definitions/ActionCompletedResult"}
+          },
+          "required": ["type", "result"]
+        }
+      ]
+    },
+    "ActionCompletedResult": {
+      "type": "object",
+      "description": "Successful completion result structure",
+      "properties": {
+        "actionId": {"type": "string"},
+        "summary": {"type": "string"},
+        "output": {},
+        "filesModified": {"type": "array", "items": {"type": "string"}},
+        "executionTimeMs": {"type": "integer"}
+      },
+      "required": ["actionId", "summary"]
+    },
+    "ActionErrorResponse": {
+      "type": "object",
+      "description": "Response sent when action execution fails",
+      "allOf": [
+        {"$ref": "#/definitions/BaseResponse"},
+        {
+          "properties": {
+            "type": {"const": "action_error"},
+            "result": {"$ref": "#/definitions/ActionErrorResult"}
+          },
+          "required": ["type", "result"]
+        }
+      ]
+    },
+    "ActionErrorResult": {
+      "type": "object",
+      "description": "Error result structure with recovery options",
+      "properties": {
+        "actionId": {"type": "string"},
+        "error": {"$ref": "#/definitions/ActionError"},
+        "failedStep": {"type": "string"},
+        "canRetry": {"type": "boolean"}
+      },
+      "required": ["actionId", "error", "canRetry"]
+    },
+    "Action": {
+      "type": "object",
+      "description": "Common action structure used across response types",
+      "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "description": {"type": "string"},
+        "priority": {"type": "number"}
+      },
+      "required": ["id", "name"]
+    },
+    "ActionError": {
+      "type": "object",
+      "description": "Structured error information for action failures",
+      "properties": {
+        "code": {"type": "string"},
+        "message": {"type": "string"},
+        "details": {"type": "object"},
+        "stack": {"type": "string"}
+      },
+      "required": ["code", "message"]
+    },
+    "FallbackAction": {
+      "type": "object",
+      "description": "Alternative action for error recovery scenarios",
+      "properties": {
+        "id": {"type": "string"},
+        "name": {"type": "string"},
+        "description": {"type": "string"},
+        "reason": {"type": "string"}
+      },
+      "required": ["id", "name"]
+    },
+    "ContextBlock": {
+      "type": "object",
+      "description": "Context block reference",
+      "additionalProperties": true
+    }
+  },
+  "error_codes": {
+    "VALIDATION_ERROR": "Input validation failures",
+    "NOT_FOUND": "Requested resource doesn't exist",
+    "PERMISSION_DENIED": "Authentication/authorization failures",
+    "RATE_LIMITED": "Too many requests",
+    "INTERNAL_ERROR": "Unexpected server errors",
+    "SERVICE_UNAVAILABLE": "External service failures",
+    "BAD_REQUEST": "Malformed request data"
+  },
+  "usage_examples": [
+    {
+      "description": "Successful API response",
+      "data": {
+        "success": true,
+        "data": {
+          "id": "123",
+          "name": "Example Resource",
+          "createdAt": "2024-01-01T00:00:00Z"
+        }
+      }
+    },
+    {
+      "description": "Error response",
+      "data": {
+        "success": false,
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "Invalid input parameters",
+          "details": {
+            "field": "email",
+            "reason": "Invalid format",
+            "value": "invalid-email"
+          }
+        }
+      }
+    },
+    {
+      "description": "Paginated response",
+      "data": {
+        "success": true,
+        "data": {
+          "items": [
+            {"id": "1", "name": "Item 1"},
+            {"id": "2", "name": "Item 2"}
+          ],
+          "total": 25,
+          "page": 1,
+          "per_page": 10
+        }
+      }
+    }
+  ]
+}

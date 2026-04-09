@@ -1,0 +1,121 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A2A Protocol Request Context Block",
+  "description": "Detailed RequestContextBlock structure with nested data",
+  "version": "1.0",
+  "last_updated": "2026-04-09T15:08:26+03:00",
+  "source_file": "docs/PROTOCOL/request-context-block.md",
+  "definitions": {
+    "RequestContextBlock": {
+      "type": "object",
+      "description": "Specialized context block returned in Request API responses",
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/Task"},
+          "description": "Tasks to be performed, derived from new_task and neuron activation"
+        },
+        "request_files": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "List of file paths that the client should provide in the next request"
+        },
+        "architectural_features": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Architectural features detected in the project during analysis"
+        },
+        "graph": {
+          "type": "object",
+          "description": "Current graph state containing entities and relations",
+          "properties": {
+            "entities": {
+              "type": "array",
+              "items": {"type": "object"},
+              "description": "Graph entities (nodes)"
+            },
+            "relations": {
+              "type": "array",
+              "items": {"type": "object"},
+              "description": "Graph relationships (edges)"
+            }
+          }
+        },
+        "frameworks": {
+          "type": "object",
+          "description": "Frameworks detected in the project with flexible structure",
+          "additionalProperties": true
+        },
+        "new_task": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Original task from client (preserved for reference)"
+        },
+        "projectId": {
+          "type": "string",
+          "description": "Project ID from client for multi-project support"
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Client session ID for tracking user sessions"
+        }
+      },
+      "data_separation": {
+        "client_data": ["sessionId", "projectId"],
+        "server_data": ["tasks", "architectural_features", "graph", "frameworks"],
+        "shared_data": ["request_files", "new_task"]
+      }
+    },
+    "Task": {
+      "type": "object",
+      "description": "Task object with detailed structure",
+      "properties": {
+        "id": {"type": "string"},
+        "type": {
+          "type": "string",
+          "enum": ["analyze", "refactor", "test", "document", "fix", "create", "delete"]
+        },
+        "status": {
+          "type": "string",
+          "enum": ["pending", "in_progress", "completed", "failed", "cancelled"]
+        },
+        "target": {"type": "string"},
+        "progress": {"type": "number", "minimum": 0, "maximum": 100}
+      },
+      "required": ["id", "type", "status"]
+    }
+  },
+  "usage_examples": [
+    {
+      "description": "Complete RequestContextBlock example",
+      "data": {
+        "tasks": [
+          {
+            "id": "analyze-codebase",
+            "type": "analyze",
+            "status": "pending",
+            "target": "src/",
+            "progress": 0
+          }
+        ],
+        "request_files": ["src/main.ts", "package.json"],
+        "architectural_features": ["typescript", "react", "node"],
+        "graph": {
+          "entities": [{"id": "user", "type": "actor"}],
+          "relations": [{"from": "user", "to": "system", "type": "uses"}]
+        },
+        "frameworks": {
+          "react": {"version": "18.0.0"},
+          "typescript": {"version": "5.0.0"}
+        },
+        "new_task": ["Implement user authentication"],
+        "projectId": "project-123",
+        "sessionId": "session-456"
+      }
+    }
+  ],
+  "nested_relationships": {
+    "depends_on": ["core/fields.json - Task definition"],
+    "referenced_by": ["responses/request-api-result.json"]
+  }
+}

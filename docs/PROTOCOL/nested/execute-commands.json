@@ -1,0 +1,213 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A2A Protocol Execute Commands",
+  "description": "Detailed ExecuteCommand structures and action-key shapes",
+  "version": "1.0",
+  "last_updated": "2026-04-09T15:08:26+03:00",
+  "source_files": [
+    "docs/PROTOCOL/execute-commands.md",
+    "docs/PROTOCOL/execute.md"
+  ],
+  "definitions": {
+    "ExecuteCommand": {
+      "type": "object",
+      "description": "Execute commands use action-key shape: { execute: { 'action-type': { ...params } } }",
+      "patternProperties": {
+        "^(form|script|read-file|write-file|rag-search|execute-command|list-directory|grep-search)$": {
+          "type": "object",
+          "description": "Command parameters for the specific action type"
+        }
+      },
+      "additionalProperties": false,
+      "examples": [
+        {
+          "execute": {
+            "read-file": {
+              "path": "src/components/Button.tsx",
+              "startLine": 1,
+              "endLine": 10
+            }
+          }
+        },
+        {
+          "execute": {
+            "form": {
+              "title": "Project Setup",
+              "description": "Configure your project settings",
+              "choices": [
+                {"id": "typescript", "label": "TypeScript"},
+                {"id": "javascript", "label": "JavaScript"}
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "ExecuteCommandTypes": {
+      "form": {
+        "description": "Interactive form with choices and/or input fields",
+        "type": "object",
+        "properties": {
+          "title": {"type": "string"},
+          "description": {"type": "string"},
+          "choices": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string"},
+                "label": {"type": "string"}
+              },
+              "required": ["id", "label"]
+            }
+          },
+          "input": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {"type": "string"},
+                "label": {"type": "string"},
+                "type": {
+                  "type": "string",
+                  "enum": ["text", "textarea", "number", "select", "checkbox", "radio"]
+                },
+                "required": {"type": "boolean"},
+                "placeholder": {"type": "string"},
+                "options": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "label": {"type": "string"},
+                      "value": {"type": "string"}
+                    },
+                    "required": ["label", "value"]
+                  }
+                }
+              },
+              "required": ["id", "label", "type"]
+            }
+          }
+        }
+      },
+      "script": {
+        "description": "Execute DSL code on the client",
+        "type": "object",
+        "properties": {
+          "input": {
+            "type": "object",
+            "description": "Input data for the script"
+          },
+          "output": {
+            "type": "string",
+            "description": "Name of the output variable to return"
+          },
+          "code": {
+            "type": "string",
+            "description": "The script code to execute"
+          }
+        },
+        "required": ["input", "output", "code"]
+      },
+      "read-file": {
+        "description": "Read contents of a file",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "File path to read"
+          },
+          "startLine": {
+            "type": "integer",
+            "description": "Starting line number (1-indexed)"
+          },
+          "endLine": {
+            "type": "integer",
+            "description": "Ending line number (1-indexed, inclusive)"
+          }
+        },
+        "required": ["path"]
+      },
+      "write-file": {
+        "description": "Write content to a file",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "File path to write"
+          },
+          "content": {
+            "type": "string",
+            "description": "Content to write to the file"
+          }
+        },
+        "required": ["path", "content"]
+      },
+      "rag-search": {
+        "description": "Perform a RAG search",
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "description": "Search query"
+          },
+          "limit": {
+            "type": "integer",
+            "description": "Maximum number of results to return"
+          }
+        },
+        "required": ["query"]
+      },
+      "execute-command": {
+        "description": "Execute a shell command",
+        "type": "object",
+        "properties": {
+          "command": {
+            "type": "string",
+            "description": "Command to execute"
+          },
+          "cwd": {
+            "type": "string",
+            "description": "Working directory for command execution"
+          },
+          "timeout": {
+            "type": "integer",
+            "description": "Timeout in milliseconds"
+          }
+        },
+        "required": ["command"]
+      },
+      "list-directory": {
+        "description": "List contents of a directory",
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Directory path to list"
+          }
+        },
+        "required": ["path"]
+      },
+      "grep-search": {
+        "description": "Search for a pattern in files",
+        "type": "object",
+        "properties": {
+          "pattern": {
+            "type": "string",
+            "description": "Regex pattern to search for"
+          },
+          "path": {
+            "type": "string",
+            "description": "Directory or file path to search in"
+          },
+          "glob": {
+            "type": "string",
+            "description": "Glob pattern for file matching"
+          }
+        },
+        "required": ["pattern"]
+      }
+    }
+  }
+}

@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A2A Protocol Task Definitions",
+  "description": "Detailed Task object structure and related types",
+  "version": "1.0",
+  "last_updated": "2026-04-09T15:02:51+03:00",
+  "source_file": "docs/PROTOCOL/task.md",
+  "definitions": {
+    "Task": {
+      "type": "object",
+      "description": "The Task object represents a unit of work to be processed in the A2A protocol system",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique identifier for the task",
+          "examples": ["task-123", "analyze-codebase-456"]
+        },
+        "type": {
+          "type": "string",
+          "description": "The type of operation to be performed",
+          "enum": [
+            {
+              "value": "analyze",
+              "description": "Analysis tasks (code review, architecture analysis, etc.)",
+              "examples": ["Code quality assessment", "Dependency analysis", "Security scanning"]
+            },
+            {
+              "value": "refactor",
+              "description": "Code refactoring tasks",
+              "examples": ["Extract method", "Rename variable", "Simplify conditional logic"]
+            },
+            {
+              "value": "test",
+              "description": "Test creation and execution tasks",
+              "examples": ["Generate unit tests", "Run integration tests", "Performance benchmarking"]
+            },
+            {
+              "value": "document",
+              "description": "Documentation generation tasks",
+              "examples": ["Generate API docs", "Create README", "Write code comments"]
+            },
+            {
+              "value": "fix",
+              "description": "Bug fixing tasks",
+              "examples": ["Fix null pointer exception", "Resolve memory leak", "Correct validation logic"]
+            },
+            {
+              "value": "create",
+              "description": "Creating new files or features",
+              "examples": ["Create new component", "Add API endpoint", "Generate boilerplate code"]
+            },
+            {
+              "value": "delete",
+              "description": "Removing files or code",
+              "examples": ["Remove deprecated code", "Delete unused files", "Clean up temporary artifacts"]
+            }
+          ]
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the task",
+          "enum": [
+            {
+              "value": "pending",
+              "description": "Task is waiting to be processed"
+            },
+            {
+              "value": "in_progress",
+              "description": "Task is currently being worked on"
+            },
+            {
+              "value": "completed",
+              "description": "Task has been successfully finished"
+            },
+            {
+              "value": "failed",
+              "description": "Task encountered an error and did not complete"
+            },
+            {
+              "value": "cancelled",
+              "description": "Task was cancelled before completion"
+            }
+          ]
+        },
+        "target": {
+          "type": "string",
+          "description": "Target identifier for the task (e.g., file path, function name, component identifier)",
+          "examples": ["src/components/Button.tsx", "utils/helpers.js", "src/services/auth.service.ts"]
+        },
+        "progress": {
+          "type": "number",
+          "description": "Progress percentage of the task (0-100)",
+          "minimum": 0,
+          "maximum": 100,
+          "examples": [0, 25, 50, 75, 100]
+        }
+      },
+      "required": ["id", "type", "status"],
+      "examples": [
+        {
+          "id": "analyze-codebase",
+          "type": "analyze",
+          "status": "pending",
+          "target": "src/",
+          "progress": 0
+        },
+        {
+          "id": "fix-button-click",
+          "type": "fix",
+          "status": "in_progress",
+          "target": "src/components/Button.tsx",
+          "progress": 75
+        }
+      ]
+    },
+    "TaskArray": {
+      "type": "array",
+      "items": {"$ref": "#/definitions/Task"},
+      "description": "Array of Task objects used in context blocks",
+      "examples": [
+        [
+          {
+            "id": "task-1",
+            "type": "analyze",
+            "status": "pending",
+            "target": "src/",
+            "progress": 0
+          },
+          {
+            "id": "task-2",
+            "type": "fix",
+            "status": "in_progress",
+            "target": "src/components/Button.tsx",
+            "progress": 50
+          }
+        ]
+      ]
+    }
+  }
+}

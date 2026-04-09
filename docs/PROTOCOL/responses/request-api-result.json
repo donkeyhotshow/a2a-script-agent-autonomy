@@ -1,0 +1,180 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A2A Protocol Request API Result",
+  "description": "Full result structure returned by the Request API",
+  "version": "1.0",
+  "last_updated": "2026-04-09T15:08:26+03:00",
+  "source_file": "docs/PROTOCOL/request-api-result.md",
+  "definitions": {
+    "RequestApiResult": {
+      "type": "object",
+      "description": "The RequestApiResult is the full result structure returned by the Request API",
+      "properties": {
+        "outcome": {
+          "type": "string",
+          "description": "The outcome status of the request processing",
+          "enum": ["completed", "graph_incomplete", "failed"],
+          "enumDescriptions": {
+            "completed": "Request processing finished successfully",
+            "graph_incomplete": "Graph analysis incomplete, more information needed from client",
+            "failed": "Request processing failed with errors"
+          }
+        },
+        "message": {
+          "type": "string",
+          "description": "Human-readable message describing the outcome or providing instructions"
+        },
+        "context": {
+          "type": "object",
+          "description": "Context block containing all data needed for next iteration",
+          "$ref": "#/definitions/RequestContextBlock"
+        },
+        "questions": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Questions for client when graph_incomplete"
+        },
+        "missing": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Missing elements identified during processing"
+        },
+        "graph_stats": {
+          "type": "object",
+          "description": "Graph statistics for monitoring and debugging",
+          "properties": {
+            "entityCount": {"type": "integer"},
+            "relationCount": {"type": "integer"},
+            "entityTypes": {
+              "type": "object",
+              "additionalProperties": {"type": "integer"}
+            }
+          }
+        },
+        "activated_neuron_ids": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "IDs of neurons that were activated during processing"
+        },
+        "injected_content": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Content injected by activated neurons"
+        },
+        "error": {
+          "type": "object",
+          "description": "Error details when outcome is 'failed'",
+          "properties": {
+            "code": {"type": "string"},
+            "message": {"type": "string"}
+          },
+          "required": ["code", "message"]
+        }
+      },
+      "required": ["outcome"]
+    },
+    "RequestContextBlock": {
+      "type": "object",
+      "description": "Specialized context block returned in Request API responses",
+      "properties": {
+        "tasks": {
+          "type": "array",
+          "items": {"$ref": "#/definitions/Task"},
+          "description": "Tasks to be performed, derived from new_task and neuron activation"
+        },
+        "request_files": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "List of file paths that the client should provide in the next request"
+        },
+        "architectural_features": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Architectural features detected in the project during analysis"
+        },
+        "graph": {
+          "type": "object",
+          "description": "Current graph state containing entities and relations",
+          "properties": {
+            "entities": {"type": "array", "items": {"type": "object"}},
+            "relations": {"type": "array", "items": {"type": "object"}}
+          }
+        },
+        "frameworks": {
+          "type": "object",
+          "description": "Frameworks detected in the project with flexible structure",
+          "additionalProperties": true
+        },
+        "new_task": {
+          "type": "array",
+          "items": {"type": "string"},
+          "description": "Original task from client (preserved for reference)"
+        },
+        "projectId": {"type": "string"},
+        "sessionId": {"type": "string"}
+      }
+    },
+    "Task": {
+      "type": "object",
+      "description": "Task unit",
+      "properties": {
+        "id": {"type": "string"},
+        "type": {"type": "string", "enum": ["analyze", "refactor", "test", "document", "fix", "create", "delete"]},
+        "status": {"type": "string", "enum": ["pending", "in_progress", "completed", "failed", "cancelled"]},
+        "target": {"type": "string"},
+        "progress": {"type": "number", "minimum": 0, "maximum": 100}
+      },
+      "required": ["id", "type", "status"]
+    }
+  },
+  "client_response_logic": {
+    "completed": "Process final results, may start new tasks",
+    "graph_incomplete": "Ask user the questions, gather request_files, send new request",
+    "failed": "Handle error, possibly retry or inform user"
+  },
+  "usage_examples": [
+    {
+      "description": "Successful completion",
+      "data": {
+        "outcome": "completed",
+        "message": "Task completed successfully",
+        "context": {
+          "tasks": [],
+          "architectural_features": ["typescript", "react"]
+        }
+      }
+    },
+    {
+      "description": "Graph incomplete - need more info",
+      "data": {
+        "outcome": "graph_incomplete",
+        "message": "Additional information required",
+        "questions": [
+          "What is the main purpose of this application?",
+          "Are there any external APIs to integrate with?"
+        ],
+        "context": {
+          "request_files": ["requirements.txt", "api-spec.yaml"]
+        }
+      }
+    },
+    {
+      "description": "Processing failed",
+      "data": {
+        "outcome": "failed",
+        "message": "Unable to process request",
+        "error": {
+          "code": "VALIDATION_ERROR",
+          "message": "Invalid file format provided"
+        }
+      }
+    }
+  ],
+  "service_responsibilities": {
+    "request_processor": ["Sets outcome, message, assembles context"],
+    "graph_services": ["Provides graph_stats, detects incompleteness, generates questions"],
+    "neuron_system": ["Supplies activated_neuron_ids, injected_content"],
+    "validation_services": ["Identifies missing elements"],
+    "error_handlers": ["Populates error when failures occur"]
+  }
+}
