@@ -10,6 +10,7 @@ AI hub, proxy, configuration, testing for integrations.
 - [WORKFLOWS.md](WORKFLOWS.md) - Workflows
 - [TROUBLESHOOTING.md](troubleshooting/TROUBLESHOOTING.md) - Troubleshooting
 - [CONTRACT-FREEZE.md](CONTRACT-FREEZE.md) - Contract freeze (merged from ai-integration-ts)
+- [INTEGRATION.md](INTEGRATION.md) - Component integration diagrams
 
 ## Related
 - [Root docs/](../docs/) - Project-wide

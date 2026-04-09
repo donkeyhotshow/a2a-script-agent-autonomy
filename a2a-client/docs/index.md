@@ -3,9 +3,9 @@
 ## Overview
 Client-side documentation. Currently minimal; references root for web/client projection.
 
-## Key Topics (see root docs/)
-- [CLIENT-DIALOG-WEB-PROJECTION.md](../docs/CLIENT-DIALOG-WEB-PROJECTION.md)
-- [REMOTE-CLIENT-WEB.md](../docs/REMOTE-CLIENT-WEB.md)
+## Key Documents
+- [CLIENT-DIALOG-WEB-PROJECTION.md](CLIENT-DIALOG-WEB-PROJECTION.md) - Dialog web projection
+- [REMOTE-CLIENT-WEB.md](REMOTE-CLIENT-WEB.md) - Remote web viewer workflow
 
 Future: Add SDK usage, web UI guides.
 
