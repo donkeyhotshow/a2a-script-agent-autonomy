@@ -9,7 +9,6 @@
     "index.js",
     "README.md",
     "routes",
-    "storage",
     "utils",
     "daemon"
   ],
@@ -23,6 +22,7 @@
   },
   "dependencies": {
     "@a2a-client/core": "file:../core",
+    "@a2a-client/storage": "file:../storage",
     "@a2a/execution": "file:../execution"
   }
 }

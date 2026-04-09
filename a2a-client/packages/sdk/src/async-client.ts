@@ -9,7 +9,7 @@ import {
     DEFAULT_POLL_TIMEOUT,
     isPromiseResolved,
     isPromiseFailed
-} from '../core/api-helpers.js';
+} from '@a2a-client/shared/api-helpers.js';
 
 /**
  * Async client for handling long-running operations

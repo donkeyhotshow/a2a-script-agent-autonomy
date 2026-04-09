@@ -20,7 +20,7 @@ import {
     isPromiseFailed,
     DEFAULT_POLL_INTERVAL,
     DEFAULT_POLL_TIMEOUT,
-} from '../core/api-helpers.js';
+} from '@a2a-client/shared/api-helpers.js';
 import {ApiError} from './utils/api-error.js';
 
 /**

@@ -1,0 +1,20 @@
+{
+  "features": {
+    "rag": true,
+    "embedding": false,
+    "execution": true,
+    "web": false,
+    "storage": true
+  },
+  "api": {
+    "timeout": 15000,
+    "maxRetries": 3,
+    "baseDelay": 2000
+  },
+  "polling": {
+    "interval": 5000
+  },
+  "logger": {
+    "level": "info"
+  }
+}

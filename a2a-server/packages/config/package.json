@@ -1,0 +1,15 @@
+{
+  "name": "@a2a/config",
+  "version": "1.0.0",
+  "description": "Configuration package for A2A server",
+  "main": "index.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^1.0.0"
+  }
+}

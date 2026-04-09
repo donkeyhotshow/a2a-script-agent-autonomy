@@ -5,7 +5,7 @@ import {
     parseA2aInvokeResponse,
     validateClientResultPayload,
     normalizePromisePollStatus,
-from '../../packages/core/client-api-envelope.mjs';
+} from '../../packages/shared/client-api-envelope.mjs';
 
 describe('shared client-api-envelope helpers', () => {
     it('validates next payload shape', () => {

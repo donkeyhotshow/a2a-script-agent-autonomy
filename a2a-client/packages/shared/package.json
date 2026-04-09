@@ -1,0 +1,18 @@
+{
+  "name": "@a2a-client/shared",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cross-module contracts and API utilities (api-helpers, envelopes)",
+  "exports": {
+    "./api-helpers.js": "./api-helpers.js",
+    "./api-helpers.d.ts": "./api-helpers.d.ts",
+    "./client-api-envelope.mjs": "./client-api-envelope.mjs",
+    "./internal-client-action-keys.mjs": "./internal-client-action-keys.mjs"
+  },
+  "typesVersions": {
+    ">=4.0": {
+      "./api-helpers.js": ["api-helpers.d.ts"]
+    }
+  }
+}

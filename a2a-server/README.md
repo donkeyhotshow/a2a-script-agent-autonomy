@@ -12,6 +12,36 @@ Stateless A2A backend for invoke processing, routing, transforms, and async prom
 - Async polling: `/api/v1/requests/:promiseId/status` and `/api/v1/requests/:promiseId/result`
 - Session bridge route for client API: `POST /api/a2a/sessions/:sessionId/next`
 
+## Package Structure (Migration In Progress)
+
+The server is currently migrating from a monolithic `src/` structure to independent packages:
+
+```
+a2a-server/
+├── packages/         # Target structure (migration in progress)
+│   ├── config/       # @a2a/server-config - Configuration management
+│   ├── utils/        # @a2a/server-utils - Pure utilities
+│   ├── protocol/     # @a2a/server-protocol - Type definitions
+│   ├── core/         # @a2a/server-core - Core orchestration
+│   ├── transform/    # @a2a/server-transform - Transform pipeline
+│   ├── llm/          # @a2a/server-llm - LLM integration
+│   ├── p2p/          # @a2a/server-p2p - P2P networking
+│   ├── daemon/       # @a2a/server-daemon - Background services
+│   ├── actions/      # @a2a/server-actions - Action handlers
+│   └── server/       # @a2a/server - Main application
+├── src/              # Source structure (migration source)
+│   ├── core/         # → packages/core/
+│   ├── services/     # → packages/{llm,p2p,daemon,actions}/
+│   ├── protocol/     # → packages/protocol/
+│   ├── lib/          # → packages/utils/
+│   ├── actions/      # → packages/actions/ + packages/server/
+│   ├── app.ts        # → packages/server/
+│   ├── index.ts      # → packages/server/
+│   └── routes/       # → packages/server/
+├── package.json      # Root workspace configuration
+└── tsconfig.json     # Root TypeScript configuration
+```
+
 ## Quick Start
 
 ```bash
@@ -73,6 +103,8 @@ Key vars used most often:
 - `docs/TRANSFORM-OPS.md`
 - `docs/GRAY-ROOM.md`
 - `docs/Router.md`
+- `a2a-server/PACKAGING_PLAN.md` - Packaging migration plan
+- `a2a-server/DETAILED_PACKAGING_PLAN.md` - Detailed packaging implementation
 
 ## Removed Legacy Systems
 

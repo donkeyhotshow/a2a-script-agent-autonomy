@@ -39,6 +39,16 @@
     "sim:contract-report": "tsx scripts/sim-contract-report.ts",
     "gate:cleanup": "tsx scripts/cleanup-gate.ts"
   },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "build:deps": "npm run build --workspace=@a2a/server-config && npm run build --workspace=@a2a/server-utils && npm run build --workspace=@a2a/server-protocol && npm run build --workspace=@a2a/server-transform && npm run build --workspace=@a2a/server-core",
+    "build:services": "npm run build --workspace=@a2a/server-llm && npm run build --workspace=@a2a/server-p2p && npm run build --workspace=@a2a/server-daemon && npm run build --workspace=@a2a/server-actions",
+    "build:app": "npm run build --workspace=@a2a/server",
+    "clean": "npm run clean --workspaces --if-present && rm -rf dist/"
+  },
   "keywords": [
     "a2a",
     "agent-to-agent",

@@ -1,0 +1,14 @@
+{
+  "name": "@a2a-client/protocol",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A2A invoke builders, pipelines, router logic",
+  "exports": {
+    "./a2a-invoke-builders.mjs": "./src/a2a-invoke-builders.mjs",
+    "./context-invoke-patch.mjs": "./src/context-invoke-patch.mjs",
+    "./dialog-invoke-history.mjs": "./src/dialog-invoke-history.mjs",
+    "./next-invoke-pipeline.mjs": "./src/next-invoke-pipeline.mjs",
+    "./router-submit.mjs": "./src/router-submit.mjs"
+  }
+}

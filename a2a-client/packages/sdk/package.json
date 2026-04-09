@@ -23,22 +23,16 @@
   ],
   "author": "",
   "license": "MIT",
-  "dependencies": {
-    "@a2a-client/core": "file:../core",
-    "@a2a/rag": "*",
-    "cors": "^2.8.6",
-    "express": "^4.19.2",
-    "multer": "^1.4.5-lts.1",
-    "node-fetch": "^3.3.2",
-    "ws": "^8.18.0"
-  },
-  "devDependencies": {
-    "esbuild": "^0.24.0",
-    "typescript": "^5.3.3",
-    "tsx": "^4.19.0",
-    "vitest": "^2.0.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
-  }
+"dependencies": {
+     "@a2a-client/core": "file:../core",
+     "@a2a-client/shared": "file:../shared",
+     "@a2a-client/protocol": "file:../protocol",
+     "@a2a-client/storage": "file:../storage",
+     "@a2a/rag": "*",
+     "cors": "^2.8.6",
+     "express": "^4.19.2",
+     "multer": "^1.4.5-lts.1",
+     "node-fetch": "^3.3.2",
+     "ws": "^8.18.0"
+   }
 }
