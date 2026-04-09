@@ -1,6 +1,6 @@
 # DEV_STATE — a2a-server (2026-04-08)
 
-**Rules Q&A:** [`../docs/PROJECT-RULES-QA.md`](../docs/PROJECT-RULES-QA.md) · [`../AGENTS.md`](../AGENTS.md)
+**Rules:** [../../AGENTS.md](../../AGENTS.md), [../../GLOSSARY.md](../../GLOSSARY.md)\n**Rules Q&A:** [`../docs/PROJECT-RULES-QA.md`](../docs/PROJECT-RULES-QA.md)
 
 ---
 

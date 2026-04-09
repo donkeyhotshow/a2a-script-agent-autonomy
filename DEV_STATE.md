@@ -24,21 +24,7 @@
 
 ---
 
-## Triangle workflow + colored alerts (whole-stack lens)
-
-**Normative loop:** [`docs/TRIANGLE-WORKFLOW.md`](docs/TRIANGLE-WORKFLOW.md) — gates **C1 / A1 / B1**, then per turn **observe session (1)** → **poll `/async` (2)** → **optional `/next` (3)** → compare to goldens **(4)**.
-
-| Vertex | Layer | Typical triage alert (see [`GLOSSARY.md`](GLOSSARY.md) *Alerts*) | Note |
-|--------|--------|------------------------------------------------------------------|------|
-| **A** | Client API + `a2a-client/storage/sessions/` | **Blue** (router / `message` vs `choice`, step storage), **Orange** (async / promise polling), **Teal** (Client ↔ server DTO) | Not the same as **Red Room** (client tool phase after server decision) |
-| **B** | `a2a-server` (`/api/v1/invoke`, transforms) | **Gray alert** = *assume server bug first* | **Gray Room** = server LLM chain (runtime); different from Gray **alert** |
-| **C** | `ai-integration` hub (`11434`) + upstream (`11435` if used) | **Black alert (proxy)** | Hub health = gate **C1** |
-
-**Full monitor / queue burn:** **Red alert** = run Task Monitor through Client API ([`GLOSSARY.md`](GLOSSARY.md) *Red alert*).
-
-**Rooms (runtime phases)** — Gray Room / Red Room / Black Room — vs **alerts (labels)** — spelled out in [`GLOSSARY.md`](GLOSSARY.md) *Rooms vs alerts*.
-
-**Orange alert:** documented as **permanent** async-only policy (“оранжевая тревога навсегда”) — [`GLOSSARY.md`](GLOSSARY.md), [`docs/AGENT-DIALOG-API-STATE.md`](docs/AGENT-DIALOG-API-STATE.md).
+**Triangle workflow + alerts:** See [`docs/TRIANGLE-WORKFLOW.md`](docs/TRIANGLE-WORKFLOW.md) and root [`GLOSSARY.md`](GLOSSARY.md) *Alerts* / *Rooms vs alerts*.
 
 ---
 
@@ -71,6 +57,7 @@ If any probe fails: start with **`start-all.bat`**, then re-run the curls in *He
 
 ---
 
+**Task Monitor runbook:** Canonical workflow/QA/closure in [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](docs/OPERATOR-MONITOR-MANUAL-QA.md). Quick start: [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md). Current status/logs: **`npm run test:monitor`** → **38 passed**; state: `task-monitor-state.json`.
 ## Task Monitor signal
 
 **Quick start:** See [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md) for complete Task Monitor usage guide.

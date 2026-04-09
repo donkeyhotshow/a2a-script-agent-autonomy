@@ -12,6 +12,7 @@ Server-specific documentation: actions, architecture, LLM hub, proxy.
 
 ## Related
 - [Root docs/](../docs/) - Project-wide
+- **Documentation reorganization:** [Root DOC-STATE.md](../docs/DOC-STATE.md) - Project-wide
 
 All rights reserved.
 

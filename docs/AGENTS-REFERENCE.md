@@ -1,6 +1,6 @@
 # Agent reference (extended)
 
-Operator and stack detail split from [`AGENTS.md`](../AGENTS.md) so the always-loaded file stays short. **Normative must-follow rules** live in **AGENTS.md** (Critical Rules, empty queue, evidence).
+Operator and stack detail split from [`AGENTS.md`](../AGENTS.md) so the always-loaded file stays short. **Glossary:** [GLOSSARY.md](../GLOSSARY.md) (root master). **Normative must-follow rules** live in **AGENTS.md** (Critical Rules, empty queue, evidence).
 Production closure gate and manual QA acceptance criteria are canonical in [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](OPERATOR-MONITOR-MANUAL-QA.md).
 Operator test command map is canonical in [`docs/OPERATOR-TESTING-MATRIX.md`](OPERATOR-TESTING-MATRIX.md).
 

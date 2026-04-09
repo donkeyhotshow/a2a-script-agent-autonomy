@@ -10,7 +10,8 @@ Client-side documentation. Currently minimal; references root for web/client pro
 Future: Add SDK usage, web UI guides.
 
 ## Related
-- [Root docs/](../docs/)
+- [Root docs/](../docs/) - Project-wide
+- **Documentation reorganization:** [Root DOC-STATE.md](../docs/DOC-STATE.md)
 
 All rights reserved.
 

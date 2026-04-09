@@ -1,5 +1,7 @@
 # Project Documentation Index
 
+**Live State & TODO:** [DOC-STATE.md](DOC-STATE.md) | [TODO.md](TODO.md)
+
 ## Overview
 High-level project-wide documentation covering architecture, protocols, simulations, operators, and workflows.
 
@@ -9,6 +11,7 @@ High-level project-wide documentation covering architecture, protocols, simulati
 - [WORKFLOW.md](WORKFLOW.md) - Workflows and processes
 - [OPERATOR-CURL.md](OPERATOR-CURL.md) - Operator manual (CURL)
 - [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md) - Simulation guidelines
+- [DOC-STATE.md](DOC-STATE.md) - **Documentation reorganization state (iterative)**
 
 ## Subdirectories
 - [adr/](adr/) - Architecture Decision Records
