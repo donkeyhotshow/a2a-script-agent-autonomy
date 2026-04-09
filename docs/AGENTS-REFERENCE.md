@@ -12,12 +12,12 @@ This repo’s **one integration contour** for driving the stack after a **manual
 
 **Hot-reload default:** after normal code edits, keep the stack running; do not request full-stack restart by default. Use `start-all` again only for bootstrap/full reset or process/env/port faults. Canonical startup policy: [`docs/SYSTEM_STARTUP.md`](SYSTEM_STARTUP.md).
 
-> **Indexed prompts / markdown tasks:** the **text** of a task is not the whole protocol. After **`POST /sessions`**, you must **continue the same `sessionId`** with **`/next`** and **`/async`** (and router **`choices`**) until the dialog completes — or use **`npm run monitor`** for `prompts-to-agent-mode/`. See [`prompts-to-agent-mode/README.md`](../prompts-to-agent-mode/README.md) and [`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md).
-
 ### Steps (normative)
 
 1. **Create a new session** — `POST /api/a2a/sessions` on the Client API base URL (default dev: `http://localhost:5173`). Standalone SDK uses the **same path contract** on its own origin/port; see [ADR-0028](adr/ADR-0028-client-api-deployment-modes.md). Optional on the same request: **`projectId`** / **`projectRoot`** (project storage), **`task`** (seed `context.task`), **`mode`** or **`execution`** (seed `context.execution` — see [`session-create-initial.js`](../a2a-client/packages/vite-plugin/routes/utils/session-create-initial.js)).
 2. **Drive turns with `POST /api/a2a/sessions/{id}/next`**, then poll **`GET /api/a2a/sessions/{id}/async`** (and/or **`GET …/sessions/{id}`** to hydrate `execute`) until the step settles — same contract as the web UI.
+
+> **Indexed prompts / markdown tasks:** the **text** of a task is not the whole protocol. After **`POST /sessions`**, you must **continue the same `sessionId`** with **`/next`** and **`/async`** (and router **`choices`**) until the dialog completes — or use **`npm run monitor`** for `prompts-to-agent-mode/`. See [`prompts-to-agent-mode/README.md`](../prompts-to-agent-mode/README.md) and [`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md).
 
 ### Router dialog (two beats — read this)
 
@@ -199,30 +199,7 @@ Operator curl walkthrough: [`OPERATOR-CURL.md`](OPERATOR-CURL.md).
 
 ---
 
-## API Endpoints
 
-### Client API (Vite Plugin) - Port 5173
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/a2a/projects` | List projects |
-| GET | `/api/a2a/sessions` | List sessions |
-| POST | `/api/a2a/sessions` | Create session (body: `task`, optional **`mode`** or **`execution`**, `projectId` / `projectRoot`) |
-| GET | `/api/a2a/sessions/{id}` | Get session (`?includeContext=1` debug; **403** in production) |
-| GET | `/api/a2a/sessions/{id}/messages` | Message delta (`afterSeq`, `limit`, `withExecute`) — [`WEB_UI_PROTOCOL.md`](../a2a-client/docs/WEB_UI_PROTOCOL.md) § *GET `/messages`* |
-| PUT | `/api/a2a/sessions/{id}` | Update session |
-| POST | `/api/a2a/sessions/{id}/next` | Send message (ack only) |
-| GET | `/api/a2a/sessions/{id}/async` | Poll async (preferred) |
-| GET | `/api/a2a/sessions/{id}/promise/{promiseId}` | Poll promise (legacy) |
-
-### A2A Server - Port 3000
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/health` | Health check |
-| POST | `/api/v1/invoke` | Invoke request |
-| GET | `/api/v1/requests/{id}` | Get status |
-| GET | `/api/v1/requests/{id}/result` | Get result |
 
 ---
 
@@ -277,23 +254,10 @@ cd a2a-client && npm test
 
 | Problem | Solution |
 |---------|----------|
-| 404 on `/invoke` | Use `/api/v1/invoke` |
-| 400 on `/steps` | Check execute/messages/context fields |
 | 401 Unauthorized | Set JWT_SECRET (32+ chars); use SKIP_AUTH=1 (dev) |
-| Promise stays "pending" | Check Local LLM upstream, AI Hub, LLM response time (2 min). If status is `processing`, **first** confirm Local LLM upstream (or proxy) is **actively generating**; **then** pause other work (no stack restart, no parallel load on the same Local LLM upstream, no extra `/next` spam) until the call completes — [`OPERATOR-CURL.md`](OPERATOR-CURL.md) → *Local LLM upstream is generating — pause other work*. If Local LLM upstream is **idle** but status stays `processing`, treat as **stuck**. |
-| Session not found | Verify ID format `sess_{timestamp}_{random}` |
-| LLM not responding | Check Local LLM upstream models: `curl http://localhost:11435/api/tags` |
-
----
-
-## Architecture Decisions (ADRs)
-
-See [docs/adr/README.md](adr/README.md) for full index. (Historical “methodology” ADR-orchestration doc lived under removed `archive/methodology/` — [tasks/brown-alert/archive-methodology-missing.md](../tasks/brown-alert/archive-methodology-missing.md).)
-
-- **ADR-0026** — Server LLM request prep (result → history)
-- **ADR-0027** — Canonical docs map
-- **ADR-0028** — Vite `/api/a2a` vs SDK Client API
-- **ADR-0029** — Server interrupt loop (gray room)
+| Promise stays pending | Check Local LLM upstream status; confirm active generation |
+| Session not found | Verify session ID format |
+| LLM not responding | Check Local LLM upstream: `curl http://localhost:11435/api/tags` |
 
 ---
 
@@ -304,10 +268,11 @@ See [docs/adr/README.md](adr/README.md) for full index. (Historical “methodolo
 | **Action-Key Shape** | Single action type per execute/result object |
 | **Workbench** | Structured state in `context.workbench.sections` |
 | **Promise** | Async request ID for polling long-running work |
-| **Gray Room** | Серверная цепочка LLM-вызовов (compress_history, thinking, auto_rag_page, auto_read_file, clarify) перед возвратом клиенту; не должна передаваться в ответе сервера — только внутренний процесс; без `interrupt` у agent-class **`result.completed`** (из JSON модели) может открыть syndicate / SIEGE — [`a2a-server/docs/GRAY-ROOM.md`](../a2a-server/docs/GRAY-ROOM.md) |
+| **Gray Room** | Server-side LLM processing chain; internal only, not exposed to client |
 | **Router** | Keyword-based routing (dialog/agent/task-decomposition) |
-| **Sync golden (`simulations/sync/`)** | Simulation folder style (invoke-shaped goldens). Server transport is always **`promiseId` + poll** — not inline execute on POST; see **Purple alert** in [`GLOSSARY.md`](../GLOSSARY.md). |
 | **Web DTO** | Client-sanitized execute (only form, not tool calls) |
+
+See [docs/adr/README.md](adr/README.md) for architecture decisions.
 | **operationHistory** | Легковесный трек операций (llm_call, transform, interrupt) для debug/audit |
 
 ---
@@ -335,58 +300,15 @@ See [DEV_STATE.md](../DEV_STATE.md) and [DOCUMENTATION-MACHINE-READABLE.md](DOCU
 
 ---
 
-## Operational Protocol
-
-### Phases (Simple to Complex)
-
-1. **Environment** — Ports, Local LLM upstream, env vars
-2. **Component Validation** — Unit tests, linting
-3. **Integration (Simulations)** — sim:lint, sim:validate
-4. **End-to-End** — Full system startup
-5. **Production Readiness** — Logging, error handling, final tests
-
-### Before Each Phase
-
-Confirm previous phase passed and is stable.
-
-### Mandatory Checklist
+## Operational Checklist
 
 1. Action-Key Shape used? (JSON must have ONE action type)
-2. DEV_STATE updated?
-3. Current action "simple" or skipping phases?
-4. Imports follow `.js` rule (NodeNext)?
-5. If there was **no** pending work: did you **prune → discover → write** (see **AGENTS.md** *Empty queue*), not stop idle?
-6. Before edits, did you record **goal/files/risks** and keep changes minimal (see **AGENTS.md** *Agent-over-Agent Safety Protocol*)?
+2. DEV_STATE updated before/after work?
+3. Empty queue handled? (prune → discover → write tasks)
+4. Agent safety: goal/files/risks stated, minimal diffs applied?
+5. Imports follow `.js` rule for NodeNext modules?
 
-### Import Policy Validation Commands
-
-Run from repo root:
-
-1. NodeNext must not import `.ts` relatives:
-`rg -n "from ['\\\"]\\./[^'\\\"]+\\.ts['\\\"]|from ['\\\"]\\.\\./[^'\\\"]+\\.ts['\\\"]" a2a-server a2a-client/packages/{execution,embedding,history,json,rag,sdk,shared,storage,types,vite-plugin,web} ai-integration-ts`
-2. NodeNext must not use `@/` alias by default:
-`rg -n "from ['\\\"]@/" a2a-server a2a-client/packages/{execution,embedding,history,json,rag,sdk,shared,storage,types,vite-plugin,web} ai-integration-ts`
-3. Bundled UI may use `@/` alias:
-`rg -n "from ['\\\"]@/" a2a-client/packages/premium-ui a2a-prototype`
-
-### Agent-over-Agent Change Guardrails
-
-Use this guardrail when the project itself is an agent orchestration surface:
-
-1. Keep architecture intact by default (no global rewiring without explicit request).
-2. Make changes in small, reviewable increments.
-3. Before editing, record: **goal**, **target files**, **risks**.
-4. Avoid deleting existing code unless non-usage is proven.
-5. Prefer local verification per step instead of late, large validation.
-
-### Recursive-Agent Safety Guardrails
-
-Use this when a change can affect agent control flow or self-management:
-
-1. Validate that changes do not create recursive logic loops or remove the system entry point.
-2. Avoid uncontrolled self-modification; choose declarative/configuration-based controls whenever feasible.
-3. Label any self-management, self-invocation, or self-update mechanism as **EXPERIMENTAL**.
-4. If degradation risk is plausible, stop and document the risk instead of executing the change.
+**Phases:** Environment → Component Validation → Integration → End-to-End → Production Readiness
 
 ---
 

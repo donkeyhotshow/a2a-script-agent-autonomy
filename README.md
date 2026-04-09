@@ -99,29 +99,7 @@ These scripts follow the port-kill / verify / PID cleanup pattern documented in 
 
 ### Service Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     PORT MANAGEMENT                          │
-├─────────────────────────────────────────────────────────────┤
-│  Dynamic allocation with fallback ranges                    │
-│  Automatic conflict detection & resolution                  │
-│  Health gating with exponential backoff                     │
-└─────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│                        PORTS                                 │
-├─────────────────────────────────────────────────────────────┤
-│  3000* │ A2A Server API    │ Node.js + Express (3000-3010) │
-│  3001* │ SDK Client API (optional) │ Standalone session server if used; default dev uses **5173** + `/api/a2a` |
-│  5173* │ Web UI + Client API │ Vite + Vue; **session HTTP API** lives here as `/api/a2a/*` |
-│  5432* │ PostgreSQL        │ pgvector extension (5432-5442)│
-│  6379* │ Redis             │ Caching & queues (6379-6389)  │
-│ 11434* │ AI Hub (ai-integration) │ uvicorn ASGI proxy (11434-11444); see [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md) │
-│ 11435* │ Local LLM upstream              │ LLM inference (11435-11445)    │
-└─────────────────────────────────────────────────────────────┘
-* Actual ports may differ if defaults are busy. Check `.env.local` after start.
-```
+See [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md) for detailed port management and service configuration.
 
 ### Health Gating with Exponential Backoff
 
@@ -131,63 +109,31 @@ Services start in dependency order with automatic retry:
 3. **Client**: Client API → Web UI (waits for Server)
 4. **AI**: Proxy (waits for Local LLM upstream)
 
-Each service waits for healthy dependencies before starting, with exponential backoff retry (500ms → 750ms → 1.1s → ... up to 10s).
+Each service waits for healthy dependencies before starting, with exponential backoff retry.
 
 ### Port Management
 
-```bash
-# Check if a port is free
-node scripts/port-manager.js check <port>
-
-# Allocate a port for a specific service
-node scripts/port-manager.js allocate <service>
-
-# Release a specific port
-node scripts/port-manager.js release <port>
-
-# Kill cached PIDs for a specific port
-node scripts/port-manager.js kill-batch <port>
-
-# Kill all cached PIDs across all ports
-node scripts/port-manager.js kill-all
-
-# Check port status
-node scripts/port-manager.js check
-
-# Allocate a port
-node scripts/port-manager.js allocate
-```
-
-The orchestrator also runs the `kill-all` cleanup automatically every time it initializes ports, so leftover PID packs from previous sessions are removed before allocation.
+The orchestrator handles dynamic port allocation with conflict detection and automatic cleanup.
 
 See [System Startup Documentation](docs/SYSTEM_STARTUP.md) for details.
 
 ### Testing
 
-**Sessions and E2E / operator flows:** Exercises that create a **session**, send turns, or poll **async** should target the **Client API** — default dev base `http://localhost:5173` and paths `/api/a2a/*` (same as the web UI). The A2A Server on `:3000` is **`/api/v1/invoke`** only (stateless). **Agent mode** is reflected in **session `context`** (e.g. `execution.action`), not a separate HTTP route. **Indexed operator prompts:** [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md); **how to run them on the live stack** (Client API vs `invoke`): [`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md). Seed `mode: "agent"` on create. Details: root [`AGENTS.md`](AGENTS.md) (“Sessions, tests, and agent mode”), [ADR-0028](docs/adr/ADR-0028-client-api-deployment-modes.md), [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md).
+**Sessions and E2E flows:** Target the **Client API** (`http://localhost:5173/api/a2a/*`) for session operations. See [`AGENTS.md`](AGENTS.md) for agent mode and testing details.
 
-**Schema debugging order (mandatory):** start with **[tests/direct-tests/README.md](tests/direct-tests/README.md#schema-debugging--start-here)** — reproduce and isolate payload-shape issues there first; escalate to session flow, then simulations, then full e2e.
+**Schema debugging:** Start with [`tests/direct-tests/README.md`](tests/direct-tests/README.md#schema-debugging--start-here).
 
-- **Validators** (recommended offline checks — they **point at specific contract errors**): [tests/direct-tests/validators/README.md](tests/direct-tests/validators/README.md). Examples: `npm run scan-promise-bodies` (proxy LLM `body.md`), `npm run scan-session-responses` (`storage/sessions/**/server-response.json`), `npm run verify:gray-room`, `npm run audit:sim-choice-descriptions`, `npm run sim:check-md` (sim MD vs JSON drift), `npm run audit:session-storage` (client session JSON drift → `tasks/pending/session-storage-*.md`). Same rules for execute/message shape are shared in `validators/lib/check-llm-execute-shape.mjs`.
-- **One-promise trace (Markdown):** `npm run report:promise -- <promiseId> [--out path.md] [--logs]` — [scripts/promise-artifacts-report.mjs](scripts/promise-artifacts-report.mjs) joins server request file, client session steps, hub `proxy_logs/promises/<id>/`, and Gray Room steps when stored in context.
+- **Validators:** [tests/direct-tests/validators/README.md](tests/direct-tests/validators/README.md)
+- **One-promise trace:** `npm run report:promise -- <promiseId>`
+- **Health checks:** [tests/direct-tests/run-checks.ps1](tests/direct-tests/run-checks.ps1)
+- **Web UI smoke test:** `.\scripts\tests\test-web-ui.ps1`
 
-- **Health checks by stack part** (no service startup): [tests/direct-tests/run-checks.ps1](tests/direct-tests/run-checks.ps1) — `.\tests\direct-tests\run-checks.ps1 -Scope LLM | ServerLLM | ClientServer | ClientServerLLM | WebClient | WebClientServer | Full`. Full index: [tests/direct-tests/README.md](tests/direct-tests/README.md).
-- **Level 1–3 suite**: `.\scripts\tests\run-all.ps1` — see [scripts/tests/README.md](scripts/tests/README.md).
-
-#### Web UI Smoke Test
-
-For comprehensive Web UI testing including browser interaction and SSE connectivity:
-
-```powershell
-# Full smoke test with browser launch (requires Docker + browser)
-.\scripts\tests\test-web-ui.ps1
-
-# Headless mode (no browser, for CI)
-.\scripts\tests\test-web-ui.ps1 -SkipBrowser
-
-# Firefox instead of Chromium
-.\scripts\tests\test-web-ui.ps1 -Browser firefox
-```
+**Test Commands:**
+- Unit: `npm test`
+- Monitor: `npm run test:monitor`
+- Offline gate: `npm run test:before-start`
+- Integration: `SKIP_AUTH=1 npm run test:integration`
+- Simulations: `npm run test:sim`
 
 **Requirements:**
 - Docker (for PostgreSQL + Redis)

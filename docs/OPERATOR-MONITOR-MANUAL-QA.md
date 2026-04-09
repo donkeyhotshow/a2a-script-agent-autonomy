@@ -14,6 +14,7 @@ Define a deterministic workflow for autonomous queue driving via Task Monitor pl
 - Evidence discipline: [docs/agent-iteration-traps.md](./agent-iteration-traps.md)
 - Offline validators: [tests/direct-tests/validators/README.md](../tests/direct-tests/validators/README.md)
 - Test commands and gate mapping: [docs/OPERATOR-TESTING-MATRIX.md](./OPERATOR-TESTING-MATRIX.md)
+- Operator hint catalog: [docs/OPERATOR-HINTS.md](./OPERATOR-HINTS.md)
 - Task lifecycle: [tasks/README.md](../tasks/README.md)
 - State log: [DEV_STATE.md](../DEV_STATE.md)
 
@@ -84,6 +85,8 @@ Canonical alert definitions: [GLOSSARY.md](../GLOSSARY.md). Triangle usage: [doc
 1. Execute loop `Monitor -> Manual QA -> DEV_STATE update` on each run.
 
 2. Use `npm run monitor` (continuous) or `npm run monitor:once` (single pass) as default queue driver.
+
+Recommended cadence: run in small manual-QA batches (`1-3` prompts), verify evidence, then continue.
 
 3. After each pass, export completion artifacts:
 - `npm run monitor:completed:json`

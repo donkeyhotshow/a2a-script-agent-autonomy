@@ -48,15 +48,15 @@
     },
     {
       "step": 10,
-      "hasServerResponse": false,
+      "hasServerResponse": true,
       "hasClientResult": true
     }
   ],
-  "updatedAt": "2026-04-08T16:29:38.091Z",
+  "updatedAt": "2026-04-09T10:30:04.747Z",
   "createdAt": "2026-04-08T16:25:04.986Z",
   "currentStep": 10,
   "mode": "agent",
-  "promiseId": "prom_3a31be4b-05dd-4f78-83d6-42c970a90ada",
-  "promiseStatus": "processing",
+  "promiseId": null,
+  "promiseStatus": null,
   "status": "active"
 }

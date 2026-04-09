@@ -1,381 +1,126 @@
-DR Implementation Audit Report
-This report tracks the implementation status of Architectural Decision Records (ADRs) defined in docs/adr/.
-> **WARNING: V2.0 ARCHITECTURE UPDATE**  
-> The orchestrator's core state machine, artifact authority, real-time contracts, and schema registry have been updated to **Architecture Blueprint v2.0**. Please refer to the **"SECTION: Architecture Blueprint v2.0"** at the very bottom of this document for the complete, canonical implementation models.
+# A2A Autonomous Agents Orchestrator with Memory — Master Specification
 
+**Project Goal:** Reduce failed or user-aborted session runs by 30% within 30 days after release.
 
-
-ADR	Title	Status	Evidence / Notes
-ADR-0001	Simulations as Golden Standard	✅ Implemented	simulations/ directory exists with json/md files.
-ADR-0012	Session State Unification	✅ Implemented	Sessions stored in a2a-client/storage/sessions/.
-ADR-0013	Unified Transport Layer	✅ Implemented	Client API on 5173 proxies to server.
-ADR-0014	Transport Fallback Mechanisms	✅ Implemented	Handled in a2a-proxy.js (client-side proxy persistence).
-ADR-0015	Message Ordering Guarantees	✅ Implemented	Step numbering in session storage.
-ADR-0016	Promise Queue Architecture	✅ Implemented	Server returns promiseId for async tasks.
-ADR-0017	Promise Daemon Deployment	✅ Implemented	start-all.bat manages processes.
-ADR-0018	Promise State Synchronization	✅ Implemented	Shared storage between client/server.
-ADR-0019	Multi-level Testing Pipeline	✅ Implemented	Unit, Integration (sims), and E2E scripts.
-ADR-0020	Simulation Golden Standard	✅ Implemented	npm run sim:validate works.
-ADR-0021	Cross-browser Testing Matrix	✅ Implemented	Playwright integrated with multi-browser support.
-ADR-0022	Error Recovery Patterns	✅ Implemented	Handled via Gray Room self-correction loop.
-ADR-0023	Connection Resilience	✅ Implemented	30s timeout + retries.
-ADR-0024	Graceful Degradation	✅ Implemented	LLM and tool fallbacks fully functional.
-ADR-0025	Decouple Promise from UI	✅ Implemented	/async polling endpoint on Client API.
-ADR-0026	Server LLM Request Prep	✅ Implemented	Logic in gray-room-orchestrator.ts.
-ADR-0027	Documentation Canonical Sources	✅ Implemented	Structure in docs/ and AGENTS.md.
-ADR-0028	Client API Deployment Modes	✅ Implemented	Vite plugin vs standalone SDK.
-ADR-0029	Server Interrupt Loop	✅ Implemented	GrayRoomOrchestrator implements loop.
-ADR-0030	Unified Agent Mode	✅ Implemented	Default action is agent.
-ADR-0031	Action-Key Shape	✅ Implemented	Strictly enforced in AGENTS.md and server.
-ADR-0032	Port Management Execution	✅ Implemented	scripts/port-manager.js exists and used.
-ADR-0033	Standard Extensions Structure	✅ Implemented	a2a-server/src/actions/handlers/.
-ADR-0034	Protocol Consolidation	✅ Implemented	Unified protocol in a2a-server/src/protocol.
-ADR-0035	Agentic Reasoning Safety Layer	✅ Implemented	LoopDetector and ContextValidator functional.
-ADR-0036	Memory Orchestration (Master Spec)	✅ Implemented	CognitionBase and ExperienceBank integrated.
-ADR-0037	Living Specs for Task Synthesis	✅ Implemented	SpecSynthesizer generates gap tickets.
-ADR-0038	Multi-Agent Orchestrator	✅ Implemented	Dynamic Delegation (Arch/Coder/Rev) implemented.
-ADR-0039	A2A Registry Layer	✅ Implemented	AgentRoleRegistry supports scaling roles.
-ADR-0040	Writer/Reviewer Pattern	✅ Implemented	Adversarial Reviewer prevents hallucinations.
-Summary
-Implemented (✅): 33
-Partial/Progress (⚠️): 0
-Not Implemented (❌): 0
-Audit date: 2026-04-04# A2A Autonomous Agents Orchestrator with Memory — Master Specification
-
-> **Consolidated master document** — Architecture + User Journey + Runtime + 38 Feature Contracts + Artifact Index.  
-> **Единый чистый файл** (дедуплицирован из 4 raw источников).  
-> **Project Goal:** Reduce failed or user-aborted session runs by **30% within 30 days** after release.
-
----
-
-## Table of Contents
-
-1. [Overview & Objective](#overview--objective)
-2. [User Journey](#user-journey)
-3. [Autonomous Agent Runtime](#autonomous-agent-runtime)
-4. [Continuous Loop](#continuous-loop)
-5. [Durable Waiting and Async Resume](#durable-waiting-and-async-resume)
-6. [Confidence & Safety Gating](#confidence--safety-gating)
-7. [Dry-Run Deviation Tracking](#dry-run-deviation-tracking)
-8. [Donecriteria Validation Gate](#donecriteria-validation-gate)
-9. [Branch-Isolated Delivery](#branch-isolated-delivery)
-10. [Memory-Enriched Planning](#memory-enriched-planning)
-11. [Canonical Artifacts Index](#canonical-artifacts-index)
-12. [Session Quality & Safety Metrics](#session-quality--safety-metrics)
-13. [Feature Contracts: Features 1–20](#feature-contracts-features-120)
-14. [Feature Contracts: Features 21–38](#feature-contracts-features-2138)
-15. [Feature Contracts: Features 39–53 (Production UI & Reasoning Phase)](#feature-contracts-features-3953-production-ui--reasoning-phase)
-16. [Features: In/Out of Scope](#features-inout-of-scope)
-17. [Architectural Glossary](#architectural-glossary)
-18. [Implementation Roadmap (Gantt)](#implementation-roadmap-gantt)
+> **Architecture v2.0 Update:** Core state machine, artifact authority, real-time contracts, and schema registry updated. See "Architecture Blueprint v2.0" section.
 
 ---
 
 ## Overview & Objective
 
-Enable operators and developers to run an autonomy-first, session-driven agent that continuously improves a repository with:
-
-| Capability | Description |
-|---|---|
-| Deterministic safety gating | Confidence-gated transitions with bounded retry logic |
-| Durable async waiting/resume | Checkpoint-backed Waiting steps with expiry + resume |
-| Loop-safe autonomy downgrades | Loop detection triggers predictable downgrade paths |
-| Memory-enriched planning | Episodic recall + PatternStore + LessonStore injection |
-| Dry-run deviation control | Material deviation tracking with severity and required actions |
-| Donecriteria validation gate | Machine-verifiable donecriteria blocks merge even if tests pass |
-| Branch-isolated delivery | No direct push to main; all delivery via isolated branches |
+Autonomy-first, session-driven agent with:
+- Confidence-gated safety transitions with bounded retries
+- Checkpoint-backed async waiting/resume with expiry
+- Loop detection with predictable autonomy downgrades
+- Memory-enriched planning (episodic recall, patterns, lessons)
+- Dry-run deviation tracking and blocking
+- Donecriteria validation gate (blocks merge even if tests pass)
+- Branch-isolated delivery (no direct pushes to main)
 
 ---
 
 ## User Journey
 
-### Operator / Developer (Web UI via root orchestrator)
+### Web UI Workflow
+1. **Start Stack:** `npm run dev` or `start-all.*` (port manager handles allocation)
+2. **Project/Session Setup:** Select project → session window with task input
+3. **Execution Panels:** Session Window, Task Flow, Terminal, Storage, Notifications, Resume & Steering
 
-#### 1. Starting the Stack
+### Autonomy-First Mode
+Continuous `scan → generate → execute → reflect` loop with interruptions only for:
+- Task clarification (one question max)
+- Low confidence after 3 self-correction attempts
+- Blocked/blacklisted actions
+- Self-correction exhaustion
 
-```
-npm run dev  /  start-all.*
-```
+### Key Artifacts
+- `CONFIDENCE_TRACE`: Score history and gate outcomes
+- `WAITING_STATE`: Async expiry and resume targets
+- `DRYRUN_DELTA`: Plan vs execution deviations
+- `MEMORY_INFLUENCE`: Recall and pattern injection
 
-Port allocation/cleanup handled by the repo's **port manager**.  
-Opens the Web UI using repo-standard ports/env defined in `.env.example` and `docs/ENV-MATRIX.md`.
-
-#### 2. Project & Session Setup
-
-Creates/selects a **Project** and **Session** in the Projects Panel → lands in the **Session Window** with the task input focused.
-
-#### 3. Live Execution Panels
-
-| Panel | Purpose |
-|---|---|
-| **Session Window** | Task input, status, pause/resume, cancel/stop |
-| **Task Flow Panel** | Step-by-step flow cards, Waiting steps, gating outcomes |
-| **Terminal Panel** | Execution logs |
-| **Storage Panel** | StepStorage / ArtifactStore / CheckpointStore artifacts, download/browse |
-| **Notification Center + Modal Dialogs** | Errors, confirmations, critical approvals |
-| **Resume & Steering Panel** | Operator control for steering, stopping, or resuming the agent run |
-
-#### 4. Autonomy-First (Default) Mode
-
-Operator watches the **continuous loop** `scan → generate → execute → reflect` without prompting each cycle.  
-Gets interrupted **only** at deterministic trigger points:
-- Ambiguous task classification — agent asks exactly **one** clarification question
-- Confidence below gate after bounded Self-Correction (≤ 3 attempts)
-- Irreversible failure / blacklisted action blocked by policy
-- SelfFix exhausted (all 3 attempts fail with no convergence)
-
-#### 5. Structured Evidence in Storage / Task Flow
-
-| Artifact | Description |
-|---|---|
-| `CONFIDENCE_TRACE` | Confidence score history and gate outcomes |
-| `EXECUTION_DECISION` | Routing and action decisions |
-| `WAITING_STATE` | Expiry + resume target for async waits |
-| `LOOP_SIGNAL` | Loop detection signals and downgrade events |
-| `TRACE_RISK` | Risk signals from InternalTrace |
-| `DRYRUN_DELTA` | Material deviations: step-type change, approval-type change, unverifiable tool, or confidence band shift ≥ 0.15 |
-| `ROLLBACK_LESSON` | Post-rollback lessons for future planning |
-| `MEMORY_INFLUENCE` | Episodic recall and PatternStore context injected into planning |
-
-#### 6. Operator-Submitted Tasks (Pre-Flight UX)
-
-```
-Operator submits task
-        │
-        ▼
-Task Improvement Analyzer (suggestions surfaced)
-        │
-        ▼
-Dry Run PlanGraph Preview
-   - Predicted confidence pauses
-   - Predicted approval gates
-   - Predicted unverifiable tools
-   - Predicted critical blockers
-        │
-        ▼
-Operator clicks "Approve Plan → Start Live Run"
-        │
-        ├─► preflightskip = true  →  Skip improvement + dry run
-        └─► preflightskip = false →  Full pre-flight (default)
-```
-
-> **Note:** "Approve Plan → Start Live Run" is a **start signal only**. HumanLayer is never bypassed by this action.
-
-#### 7. Hybrid HITL (Exception Path)
-
-- Escalations create a first-class **Waiting step** for the blocked run
-- Modal dialogs appear **only** for critical approval types (per HumanLayer policy)
-- Non-critical approvals surface via non-blocking UI
-- Resolution resumes from a durable checkpoint or deterministically stops/escalates
+### Task Submission
+Task → Improvement Analyzer → Dry Run Preview → Operator Approval → Live Execution
 
 ---
 
 ## Autonomous Agent Runtime
 
-### Architecture: Single-Entry Orchestration Authority
+### Architecture Pipeline
+ProjectScanner → OpportunityDetector → TaskSynthesizer → TaskEnricher → SelfCorrectionLoop → AutonomyGates → Execution
 
-```
-ProjectScanner
-    └─► OpportunityDetector
-            └─► TaskSynthesizer
-                    └─► TaskEnricher
-                            └─► SelfCorrectionLoop
-                                    └─► AutonomyGates
-                                            └─► Execution
-```
-
-### Component Responsibilities
-
-| Component | Responsibility |
-|---|---|
-| **ProjectScanner** | Emits typed repo signals: git diff, tests, TODO/FIXME, metrics, error logs |
-| **OpportunityDetector** | Classifies, prioritizes, and deduplicates opportunities |
-| **TaskSynthesizer** | Generates goal/context plus machine-verifiable donecriteria (2 retries; suppressed on fail) |
-| **TaskEnricher** | Injects top-3 episodic recall + PatternStore + LessonStore context + InternalTrace risk signals |
-| **SelfCorrectionLoop** | Attempts `BACKTRACK → SWITCH → REFINE` before HumanLayer involvement (≤ 3 attempts) |
-| **AutonomyGates** | Routes decisions based on confidence thresholds, loop risk, InternalTrace blockers, waiting state, tool trust routing, and branch-safe delivery feasibility |
+### Core Components
+- **ProjectScanner:** Emits repo signals (git diff, tests, TODOs, metrics, errors)
+- **OpportunityDetector:** Classifies, prioritizes, deduplicates opportunities
+- **TaskSynthesizer:** Generates goals + verifiable donecriteria (2 retries max)
+- **TaskEnricher:** Injects recall, patterns, lessons, risk signals
+- **SelfCorrectionLoop:** BACKTRACK→SWITCH→REFINE (≤3 attempts)
+- **AutonomyGates:** Routes based on confidence, loops, risks, tool trust, branch safety
 
 ---
 
 ## Continuous Loop
 
-```
-┌─────────────────────────────────────────────┐
-│         CONTINUOUS AUTONOMY LOOP            │
-│                                             │
-│  SCAN ──► GENERATE ──► EXECUTE ──► REFLECT  │
-│   ▲                                   │     │
-│   └───────────────────────────────────┘     │
-│                                             │
-│  Interrupted ONLY at deterministic gates    │
-└─────────────────────────────────────────────┘
-```
+SCAN → GENERATE → EXECUTE → REFLECT (interrupted only at deterministic gates)
 
-### Single State Enum (ORCHESTRATOR_CYCLE)
-The orchestrator avoids "boolean soup" (`is_waiting`, `is_running`) by using a strict single state enum:
-`state: 'IDLE' | 'SCANNING' | 'SYNTHESIZING' | 'ENRICHING' | 'EXECUTING' | 'WAITING_ON_HUMAN' | 'VALIDATING' | 'STOPPED'`
+### State Enum
+`IDLE | SCANNING | SYNTHESIZING | ENRICHING | EXECUTING | WAITING_ON_HUMAN | VALIDATING | STOPPED`
 
-### Loop Downgrade Path
-
-1. **Full Autonomy** — normal operation
-2. **Bounded Autonomy** — Self-Correction engaged (≤ 3 attempts)
-3. **Human-in-the-Loop** — Waiting step created, HumanLayer invoked
-4. **Stopped** — deterministic stop with `LOOP_SIGNAL` + `ROLLBACK_LESSON`
+### Downgrade Path
+1. Full Autonomy (normal)
+2. Bounded Autonomy (≤3 self-corrections)
+3. Human-in-the-Loop (waiting step)
+4. Stopped (deterministic halt)
 
 ---
 
 ## Durable Waiting and Async Resume
 
-**Waiting is a first-class step**, not a blocking pause.
+Waiting is a first-class checkpoint-backed step (not blocking pause).
 
-### Properties
-- Checkpoint-backed — survives process restarts
-- Resumable — deterministic resume from checkpoint with integrity checks
-- Non-blocking — does not stall unrelated queued work
-- Expiry-aware — every Waiting has an expiry time
+**Properties:** Survives restarts, resumable with integrity checks, non-blocking, expiry-aware.
 
-### Expiry Policy (Deterministic)
+**Expiry Actions:** escalate (HumanLayer), reroute (alternative path), stop (deterministic halt).
 
-| Expiry Outcome | Action |
-|---|---|
-| `escalate` | Promote to HumanLayer critical approval |
-| `reroute` | Route to alternative resolution path |
-| `stop` | Deterministic stop with `WAITING_STATE` + `EXECUTION_DECISION` emitted |
-
-### Resume Integrity Checks
-
-On resume from checkpoint:
-1. **Checkpoint schema validity** — schema version matches current runtime
-2. **Referenced artifacts existence** — all artifact references resolvable in ArtifactStore
+**Resume Checks:** Schema validity, artifact existence.
 3. **Confidence gating re-applies** — confidence threshold check re-runs before execution continues
 
 ---
 
 ## Confidence & Safety Gating
 
-```
-Task arrives
-    │
-    ├─► Confidence ≥ threshold?
-    │       YES → Execute
-    │       NO  → SelfCorrectionLoop (attempt 1)
-    │                   │
-    │                   ├─► BACKTRACK → re-evaluate
-    │                   ├─► SWITCH    → alternative approach
-    │                   └─► REFINE    → narrow scope
-    │
-    ├─► After ≤3 attempts, confidence still below gate?
-    │       YES → HumanLayer Waiting step
-    │       NO  → Execute
-    │
-    └─► Irreversible / blacklisted action?
-            YES → Hard stop + TRACE_RISK emitted
-```
+Task → Confidence Check → ≥ threshold: Execute | < threshold: Self-Correction (≤3 attempts) → Still low: HumanLayer Wait | High risk/blacklisted: Hard stop.
 
-### Confidence Boundary Rule
+**Rules:** Equal-to-threshold treated as below. Multiple signals use lower-wins. Approval priority: CRITICAL_PATH > EXTERNAL_CALL > DATA_ACCESS > ESCALATION > DELEGATION > ACTION_APPROVAL > TEXT_APPROVAL.
 
-> Score **equal** to threshold is treated as **below** threshold. `EXECUTION_DECISION` records `reason_code=confidence_at_boundary`.
-
-### Multiple Signals: Lower-Wins Rule
-
-`CONFIDENCE_TRACE.confidence` = minimum of all signal values. All signals listed in `CONFIDENCE_TRACE.signals[]`.
-
-### HumanLayer Approval Type Priority (strict)
-
-```
-CRITICAL_PATH > EXTERNAL_CALL > DATA_ACCESS > ESCALATION > DELEGATION > ACTION_APPROVAL > TEXT_APPROVAL
-```
-
-Modal shown only for: `DATA_ACCESS`, `EXTERNAL_CALL`, `CRITICAL_PATH`.
+**Modal dialogs:** Only for DATA_ACCESS, EXTERNAL_CALL, CRITICAL_PATH.
 
 ---
 
 ## Dry-Run Deviation Tracking
 
-### Material Deviations (DRYRUN_DELTA)
+**Material Deviations (DRYRUN_DELTA):**
+- Moderate: Step-type change, approval-type change, confidence shift ≥0.15, 3 consecutive minors
+- Critical: Unverifiable tool, HumanLayer bypass, unverifiable donecriteria, branch violation
+- Minor: Structural drift (escalates to moderate after 3 consecutive)
 
-| Deviation Type | Severity | Required Action |
-|---|---|---|
-| Step-type change | `moderate` | `re-evaluate` |
-| Approval-type change | `moderate` | `re-evaluate` |
-| Confidence band shift ≥ 0.15 | `moderate` | `re-evaluate` |
-| Unverifiable tool introduced | `critical` | `stop + HumanLayer` |
-| HumanLayer bypass attempt | `critical` | `stop + HumanLayer` |
-| Donecriteria unverifiability | `critical` | `stop + HumanLayer` |
-| Branch-safety violation | `critical` | `stop + HumanLayer` |
-| Minor structural drift | `minor` | `continue` |
-
-> **Escalation rule:** 3 consecutive `minor` deviations within same task run → auto-escalated to `moderate`.
+**Actions:** Moderate=re-evaluate, Critical=stop + HumanLayer, Minor=continue.
 
 ---
 
 ## Donecriteria Validation Gate
 
-```
-Execution Complete
-    │
-    └─► ValidationPipeline
-            │
-            ├─► Unit tests
-            ├─► Integration tests
-            ├─► Simulation checks
-            ├─► Regression checks
-            └─► Donecriteria verification ← REQUIRED
-                        │
-                        ├─► PASS → Proceed to delivery
-                        └─► FAIL → Block merge/delivery
-                                    (even if all tests pass)
-```
-
-> **Critical rule**: Merge and delivery are **blocked** if donecriteria fails, even when all unit/integration/simulation/regression tests pass.
-
----
+Execution → Validation Pipeline (unit/integration/simulation/regression/donecriteria) → PASS: Deliver | FAIL: Block merge (even if all tests pass).
 
 ## Branch-Isolated Delivery
 
-- No direct push to `main`
-- Work is performed on isolated feature/agent branches
-- Delivery feasibility checked by AutonomyGates before execution begins
-- Branch-safety violations trigger critical `DRYRUN_DELTA` and hard stop
-
----
+No direct pushes to main. Work on isolated branches. Branch safety checked pre-execution. Violations trigger critical DRYRUN_DELTA + hard stop.
 
 ## Memory-Enriched Planning
 
-### Memory Sources Injected via TaskEnricher
+**Sources Injected:** Top-3 episodic recall, patterns, lessons, risk signals, artifacts.
 
-| Source | Content | Quantity Injected |
-|---|---|---|
-| **Episodic memory** | Past task runs, outcomes, and timings | Top-3 most relevant |
-| **PatternStore** | Recurring code and task patterns | Relevant patterns |
-| **LessonStore** | Post-rollback lessons and failure learnings | Relevant lessons |
-| **InternalTrace risk signals** | Live risk assessments from current session | All active signals |
-| **Storage artifacts** | Relevant existing artifacts from ArtifactStore | Referenced artifacts |
-
-### MEMORY_INFLUENCE Artifact Shape
-
-```json
-{
-  "session_id": "...",
-  "task_id": "...",
-  "retrieval": {
-    "episodic": [{"episode_id":"...","score":0.9,"recency":"...","reason":"...","snippet":"..."}],
-    "episodic_top_k": 3,
-    "pattern_hits": ["pat_id_1"],
-    "lesson_hits": ["lesson_id_1"]
-  },
-  "applied": {
-    "plan_changes": [{"ref":"pat_id_1","description":"..."}],
-    "risk_mitigations": [{"ref":"lesson_id_1","description":"..."}],
-    "suppressed_opportunities": []
-  },
-  "integrity": {
-    "source_available": true,
-    "fallback_used": false,
-    "context_truncated": false
-  }
-}
-```
+**MEMORY_INFLUENCE Shape:** session_id, task_id, retrieval (episodic/pattern/lesson hits), applied changes, integrity flags.
 
 ---
 
@@ -456,46 +201,21 @@ Execution Complete
 
 ---
 
-## Feature Contracts: Features 1–20
+## Feature Contracts Summary
 
-### 1. HumanLayer Confidence Handoff
+53 features implemented across safety, memory, execution, and UI layers:
 
-**User Story:** As an operator, I want low-confidence or blocked outcomes to trigger a HumanLayer-governed handoff so the task run pauses safely for clarification or approval and can resume without losing context.
+**Safety & Control (1-10):** HumanLayer handoffs, loop detection, confidence gating, blockers, dry-run validation.
 
-**Dependencies:** Safety Layer (Phase 1), Storage API.
+**Memory & Learning (11-20):** Episodic storage/recall, pattern mining, lesson application, risk injection.
 
-**Acceptance Criteria:**
-- At every routing point: write `CONFIDENCE_TRACE` + `EXECUTION_DECISION`.
-- Below-gate → `WAITING_STATE`: reason, created_at, expires_at, resume_target, required_inputs, humanlayer_approval_type.
-- `triggered_criteria`: deterministic JSON array `{code, source_artifact, details, severity}`.
-- Priority order (strict): `CRITICAL_PATH > EXTERNAL_CALL > DATA_ACCESS > ESCALATION > DELEGATION > ACTION_APPROVAL > TEXT_APPROVAL`.
-- Modal only for: `DATA_ACCESS`, `EXTERNAL_CALL`, `CRITICAL_PATH`.
-- Resume → new `EXECUTION_DECISION` with post-resume routing.
+**Execution & Delivery (21-30):** Tool safety, branch isolation, validation gates, rollback protection.
 
-**Edge Cases:** HumanLayer reject → `decision=stop`; modal close without resolution → Waiting remains; expiry → `WAITING_STATE_EVENT` state=expired.
+**Orchestration & UI (31-38):** Autonomy limits, multi-agent delegation, observability, session management.
 
----
+**Production Features (39-53):** Living specs, dynamic delegation, session UI, metrics dashboard.
 
-### 2. Loop Detection and Interrupt
-
-**User Story:** As an operator, I want the system to detect repeated action patterns and interrupt the task run so infinite loops surface early.
-
-**Dependencies:** Safety Layer (Phase 1).
-
-**Acceptance Criteria:**
-- Loop detected: identical triple **3×** consecutively: `[tool_or_action] + [outcome_class] + [context_segment]`.
-- Emit `LOOP_SIGNAL`: triple, repeat_count=3, loop_type=in_run, severity.
-- Severity moderate/critical → `EXECUTION_DECISION decision=wait` + `WAITING_STATE humanlayer_approval_type=ESCALATION`.
-
-**Edge Cases:** Normalization for equivalent triples; repeat after resolve → new `LOOP_SIGNAL`, severity escalates to critical.
-
----
-
-### 3. Index Episodic MEM_STORE
-
-**User Story:** As an operator, I want episodic memory entries stored as artifacts and indexed into the memory backend so past outcomes are searchable with provenance.
-
-**Acceptance Criteria:**
+See individual ADRs and implementation for detailed acceptance criteria.
 - Per completed run: `EPISODIC_ENTRY {observation, outcome, reflection, task_run_id, timestamp}`.
 - Index → `MEMORY_INDEX_RESULT`.
 - Backend unavailable → status=failed, reason_code=backend_unavailable.

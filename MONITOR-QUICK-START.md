@@ -12,6 +12,7 @@ This document is the **operator entry point** for the Task Monitor: the same **C
 |--------------|------------|
 | Production-ready acceptance and manual QA closure gate | [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](docs/OPERATOR-MONITOR-MANUAL-QA.md) |
 | Operator test command matrix (root/client/server/hub) | [`docs/OPERATOR-TESTING-MATRIX.md`](docs/OPERATOR-TESTING-MATRIX.md) |
+| Fast operator nudges by incident type (router/async/schema/queue) | [`docs/OPERATOR-HINTS.md`](docs/OPERATOR-HINTS.md) |
 | **Why** not `invoke` alone, router beats, curl shape | [`AGENTS.md`](AGENTS.md) → *Unified manual path*, *Router dialog* |
 | **Indexed prompts** and stack rules | [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md), [`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md) |
 | **Env / ports** | [`.env.example`](.env.example) (`TASK_MONITOR_*`, `WEB_PORT`, `LOCAL_LLM_UPSTREAM_URL`, `AI_HUB_URL`) |
