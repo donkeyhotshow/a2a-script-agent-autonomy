@@ -1,0 +1,11 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Searching in files…",
+    "attachments": {
+      "grepPattern": "sim:validate",
+      "grepPath": "simulations/sync/agent"
+    }
+  }
+}

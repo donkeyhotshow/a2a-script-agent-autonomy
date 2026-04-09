@@ -1,0 +1,61 @@
+{
+  "step": "sequence",
+  "message": "Step step-1 completed successfully.",
+  "workbench": {
+    "sections": {
+      "sequence": {
+        "steps": [
+          {
+            "id": "step-1",
+            "title": "Initialize project setup",
+            "goal": "Set up initial project structure and dependencies",
+            "status": "complete",
+            "completedAt": "2026-04-03T10:41:43+03:00"
+          },
+          {
+            "id": "step-2",
+            "title": "Configure development environment",
+            "goal": "Set up local development environment with required tools",
+            "status": "pending"
+          },
+          {
+            "id": "step-3",
+            "title": "Implement core functionality",
+            "goal": "Build core features according to specifications",
+            "status": "pending"
+          },
+          {
+            "id": "step-4",
+            "title": "Write and run tests",
+            "goal": "Create comprehensive test suite and validate functionality",
+            "status": "pending"
+          },
+          {
+            "id": "step-5",
+            "title": "Prepare for deployment",
+            "goal": "Finalize documentation and prepare release artifacts",
+            "status": "pending"
+          }
+        ],
+        "headIndex": 1
+      }
+    }
+  },
+  "history": [
+    {
+      "type": "step_complete",
+      "stepId": "step-1",
+      "title": "Initialize project setup",
+      "status": "complete",
+      "completedAt": "2026-04-03T10:41:43+03:00",
+      "summary": "Completed step: Initialize project setup"
+    }
+  ],
+  "operationHistory": [
+    {
+      "op": "sequence_step_complete",
+      "stepId": "step-1",
+      "at": "2026-04-03T10:41:43+03:00"
+    }
+  ]
+}

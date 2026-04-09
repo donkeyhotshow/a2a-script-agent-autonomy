@@ -1,0 +1,12 @@
+{
+  "context": {
+    "task": "створи задачу і виконай",
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  },
+  "result": {
+    "message": "створи задачу і виконай"
+  }
+}

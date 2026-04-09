@@ -1,0 +1,20 @@
+{
+  "context": {
+    "task": "створи задачу і виконай",
+    "execution": {
+      "action": "agent",
+      "step": "rag-clarify"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "додати логінування в API та оновити тести"
+      }
+    ]
+  },
+  "execute": {
+    "rag-search": {
+      "query": "логінування API автентифікація тести"
+    }
+  }
+}

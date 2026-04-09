@@ -1,0 +1,11 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "run-script": {
+      "scriptId": "lint-fix",
+      "success": true,
+      "output": "ok"
+    }
+  }
+}

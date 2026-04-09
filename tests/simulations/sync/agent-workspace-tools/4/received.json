@@ -1,0 +1,11 @@
+{
+  "projectId": "golden-wt",
+  "sessionId": "sess-wt-1",
+  "execute": {
+    "message": "Running script…",
+    "attachments": {
+      "runScriptId": "lint-fix",
+      "pendingClientAction": "run-script"
+    }
+  }
+}

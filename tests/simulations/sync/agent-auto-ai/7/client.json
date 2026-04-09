@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "write-file": {
+      "path": "src/routes/health.js",
+      "ok": true
+    }
+  }
+}

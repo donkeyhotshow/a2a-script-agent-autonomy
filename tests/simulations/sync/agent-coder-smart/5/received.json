@@ -1,0 +1,15 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "choices": [
+        {
+          "id": "proceed",
+          "label": "Продовжити",
+          "description": "Перейти к выполнению задач из чеклиста"
+        }
+      ]
+    }
+  }
+}

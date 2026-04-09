@@ -1,0 +1,12 @@
+{
+  "context": {
+    "task": "Повний контракт agent у a2a-script-agent: золота simulations/sync/agent і всі типи execute, які бачить web-клієнт.",
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  },
+  "result": {
+    "message": "Повний контракт agent у a2a-script-agent: золота simulations/sync/agent і всі типи execute, які бачить web-клієнт."
+  }
+}

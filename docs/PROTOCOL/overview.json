@@ -1,0 +1,128 @@
+{
+  "protocol_restructure_overview": {
+    "description": "A2A Protocol Documentation Restructure - JSON Format with Source Links",
+    "restructure_date": "2026-04-09",
+    "original_request": "Find all fields with incorrect information in docs/PROTOCOL, restructure so main folder has field bases and subfolders have nested data descriptions, convert to JSON format with links to originals/sources",
+    "folder_structure": {
+      "docs/PROTOCOL/": {
+        "purpose": "Main folder with core field definitions and basic structures",
+        "files": [
+          {
+            "name": "fields.json",
+            "description": "All core field definitions with types, descriptions, and source references",
+            "includes_incorrect_info": true
+          },
+          {
+            "name": "README.md",
+            "description": "Original index file (preserved for reference)",
+            "status": "original"
+          }
+        ]
+      },
+      "docs/PROTOCOL/nested/": {
+        "purpose": "Documents describing nested data structures with complex schemas",
+        "files": [
+          {
+            "name": "tasks.json",
+            "description": "Detailed Task object structure with enum values and examples",
+            "source": "docs/PROTOCOL/task.md"
+          }
+        ]
+      },
+      "docs/PROTOCOL/errors/": {
+        "purpose": "Protocol error structures and documented inconsistencies",
+        "files": [
+          {
+            "name": "protocol-errors.json",
+            "description": "ProtocolError structure and documented protocol errors",
+            "source": "docs/PROTOCOL/protocol-error.md + docs/PROTOCOL/errors-found.md"
+          }
+        ]
+      },
+      "docs/PROTOCOL/responses/": {
+        "purpose": "Complex response types and API structures",
+        "files": [
+          {
+            "name": "response-types.json",
+            "description": "Message types, API responses, and RequestApiResult structures",
+            "sources": [
+              "docs/PROTOCOL/message-types.md",
+              "docs/PROTOCOL/api-response-types.md",
+              "docs/PROTOCOL/unified-response-types.md",
+              "docs/PROTOCOL/request-api-result.md"
+            ]
+          },
+          {
+            "name": "api-error-details.json",
+            "description": "Detailed ApiError structure with examples",
+            "source": "docs/PROTOCOL/api-response-types.md"
+          },
+          {
+            "name": "request-context-details.json",
+            "description": "RequestContextBlock and ExecuteCommand detailed structures",
+            "sources": [
+              "docs/PROTOCOL/request-context-block.md",
+              "docs/PROTOCOL/execute-commands.md"
+            ]
+          }
+        ]
+      }
+    },
+    "incorrect_information_identified": [
+      {
+        "category": "Type Safety Violations",
+        "location": "ai-integration/tests/test_llm_cache.py",
+        "issue": "build_llm_cache_payload function expects str but receives str | dict[Any, Any]",
+        "affected_fields": ["path", "method", "target_url", "forward_args", "raw_body"],
+        "evidence": "LSP errors confirm type mismatches",
+        "impact": "Runtime type errors possible",
+        "resolution_needed": "Update function signature to handle union types"
+      },
+      {
+        "category": "Protocol Violations",
+        "location": "Session server-response.json files",
+        "issue": "Execute commands contain only string messages instead of action-key shapes",
+        "affected_files": [
+          "a2a-client/storage/sessions/sess_1775608866619/3/server-response.json",
+          "a2a-client/storage/sessions/sess_1775608866619/4/server-response.json",
+          "a2a-client/storage/sessions/sess_1775647490825/4/server-response.json",
+          "a2a-client/storage/sessions/sess_1775647490825/5/server-response.json"
+        ],
+        "expected": "{ execute: { 'read-file': {...} } }",
+        "actual": "Execute contains only string messages",
+        "impact": "Clients cannot execute intended server commands",
+        "resolution_needed": "Use proper execute command format or move messages to ServerMessage.message"
+      },
+      {
+        "category": "Field Confusion",
+        "issue": "Server using ServerMessage.message for executable content instead of ServerMessage.execute",
+        "impact": "Client may not execute intended server commands",
+        "resolution_needed": "Reserve ServerMessage.message for user display, ServerMessage.execute for client actions"
+      },
+      {
+        "category": "Missing Documentation",
+        "issue": "Fields like graph, frameworks, graph_stats, activated_neuron_ids, injected_content lack detailed specifications",
+        "impact": "Implementation uncertainty and integration issues",
+        "resolution_needed": "Add comprehensive field documentation with usage examples"
+      }
+    ],
+    "navigation_guide": {
+      "start_here": "docs/PROTOCOL/fields.json - Core field definitions",
+      "find_nested_structures": "Check 'nested_reference' fields in main fields.json",
+      "api_responses": "docs/PROTOCOL/responses/response-types.json",
+      "error_details": "docs/PROTOCOL/errors/protocol-errors.json",
+      "original_sources": "All files include 'source' fields linking to original markdown files"
+    },
+    "data_separation_implemented": {
+      "main_folder": "Basic field types, descriptions, and simple structures",
+      "subfolders": "Complex nested objects, detailed schemas, and multi-property structures",
+      "cross_references": "All files include links to related structures and original sources"
+    },
+    "json_format_benefits": {
+      "machine_readable": "Easier parsing and validation",
+      "structured_errors": "Clear identification of incorrect information",
+      "source_traceability": "Every field links to its original documentation",
+      "nested_references": "Easy navigation between related structures"
+    }
+  }
+}

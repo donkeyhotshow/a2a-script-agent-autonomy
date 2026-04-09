@@ -1,0 +1,14 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Reading files…",
+    "attachments": {
+      "readFiles": [
+        {
+          "path": "simulations/sync/agent/description.md"
+        }
+      ]
+    }
+  }
+}

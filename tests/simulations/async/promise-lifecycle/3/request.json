@@ -1,0 +1,9 @@
+{
+  "context": {
+    "task": "Golden: async promise lifecycle (failed terminal).",
+    "execution": {
+      "action": "task",
+      "step": "processing"
+    }
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "context": {
+    "task": "зчитати файл і знайти функцію",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    }
+  }
+}

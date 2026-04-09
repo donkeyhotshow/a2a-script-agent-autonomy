@@ -1,0 +1,31 @@
+{
+  "context": {
+    "task": "зчитати файл і знайти функцію",
+    "execution": {
+      "action": "agent",
+      "step": "tool_list_directory"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Знайди функцію calculateTotal в utils/helpers.js"
+      },
+      {
+        "role": "assistant",
+        "step": "tool_rag",
+        "message": "rag-search: simulations sync agent SCHEMA received.json — 2 top hits"
+      }
+    ],
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "list-directory": {
+      "path": "."
+    }
+  },
+  "result": {
+    "completed": false
+  }
+}

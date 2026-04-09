@@ -1,0 +1,37 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Продовжити або зберегти звіт",
+      "description": "Уточніть запит для пошуку або закріпіть усі поточні факти у звіті.",
+      "choices": [
+        {
+          "id": "continue_search",
+          "label": "Продовжити пошук",
+          "description": "Додати нові ключові слова або уточнення, щоб знайти додаткові згадки."
+        },
+        {
+          "id": "save_report",
+          "label": "Зберегти звіт у .carrier/reports/",
+          "description": "Завершити аналіз і записати підтверджені факти у файл звіту."
+        }
+      ],
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Запит для пошуку (якщо продовжуєте)",
+          "required": false
+        },
+        {
+          "name": "path",
+          "type": "text",
+          "label": "Шлях (за замовч. .carrier/reports/architecture-report.md)",
+          "required": false,
+          "placeholder": ".carrier/reports/architecture-report.md"
+        }
+      ]
+    }
+  }
+}

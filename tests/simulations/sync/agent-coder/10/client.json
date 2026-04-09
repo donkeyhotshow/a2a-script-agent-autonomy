@@ -1,0 +1,33 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "rag-search": {
+      "query": "authorization login JWT token auth",
+      "results": [
+        {
+          "file": "src/auth.js",
+          "score": 0.95,
+          "snippet": "const jwt = require('jsonwebtoken');\n\nfunction authenticate(req, res, next) {\n  const token = req.headers.authorization;\n  ..."
+        },
+        {
+          "file": "src/middleware/auth.js",
+          "score": 0.87,
+          "snippet": "module.exports = { authMiddleware: function(req, res, next) {\n  const token = req.headers['x-auth-token'];\n  ..."
+        },
+        {
+          "file": "src/utils/jwt.js",
+          "score": 0.82,
+          "snippet": "export function verifyToken(token) {\n  return jwt.verify(token, process.env.JWT_SECRET);\n}"
+        }
+      ],
+      "files": [
+        "src/auth.js",
+        "src/middleware/auth.js",
+        "src/utils/jwt.js"
+      ],
+      "page": 1,
+      "hasMore": false
+    }
+  }
+}

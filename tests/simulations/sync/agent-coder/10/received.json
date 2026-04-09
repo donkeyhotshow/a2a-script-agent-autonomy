@@ -1,0 +1,19 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Аналіз коду авторизації",
+      "description": "Код авторизації використовує JWT та bcrypt для безпечної аутентифікації. Які аспекти проаналізувати?",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "placeholder": "Наступне питання або команда",
+          "required": true
+        }
+      ]
+    }
+  }
+}

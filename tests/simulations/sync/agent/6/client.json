@@ -1,0 +1,23 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "list-directory": {
+      "path": "simulations/sync/agent",
+      "entries": [
+        {
+          "name": "1",
+          "type": "dir"
+        },
+        {
+          "name": "2",
+          "type": "dir"
+        },
+        {
+          "name": "description.md",
+          "type": "file"
+        }
+      ]
+    }
+  }
+}

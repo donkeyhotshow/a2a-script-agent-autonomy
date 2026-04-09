@@ -1,0 +1,20 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "summarize-files",
+      "maxLines": 60
+    },
+    {
+      "op": "render-markdown",
+      "templateRef": "a2a-server/prompts/auto-ai-request.md",
+      "data": "$out",
+      "outputFile": "request.md"
+    }
+  ]
+}
