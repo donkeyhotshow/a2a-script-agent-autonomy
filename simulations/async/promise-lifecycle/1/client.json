@@ -1,7 +1,0 @@
-{
-  "projectId": "golden-async-pl",
-  "sessionId": "sess-async-pl-1",
-  "result": {
-    "message": "Golden: async promise lifecycle (poll then finalize)."
-  }
-}

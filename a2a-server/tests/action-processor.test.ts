@@ -17,8 +17,8 @@ describe('ActionProcessor', () => {
         it('returns execute.script and context.execution when action matched', async () => {
             const sessionId = `test-unit-2-${Date.now()}`;
             const result = await actionProcessor.processTaskRequest(sessionId, 'vue import fix');
-            expect(result.message?.context?.execution?.step).toBeDefined();
-            const ex = result.message?.execute;
+            expect(result.context?.execution?.step).toBeDefined();
+            const ex = result.execute;
             expect(ex && 'script' in ex && ex.script?.code).toBeDefined();
         });
     });
@@ -27,9 +27,9 @@ describe('ActionProcessor', () => {
         it('accepts stepId and stepResult and returns result', async () => {
             const sessionId = `test-unit-3-${Date.now()}`;
             const first = await actionProcessor.processTaskRequest(sessionId, 'fix vue imports');
-            const stepId = first.message?.context?.execution?.step;
+            const stepId = first.context?.execution?.step;
             if (!stepId) {
-                expect(first.message?.context?.execution).toBeDefined();
+                expect(first.context?.execution).toBeDefined();
                 return;
             }
             const result = await actionProcessor.processStepResult(sessionId, stepId, {

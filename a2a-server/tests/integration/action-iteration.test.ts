@@ -20,8 +20,8 @@ describe('Action Iteration Flow', () => {
         expect(result.continue).toBe(true);
         expect(result.actionId).toBe('fix-vue-imports');
         expect(result.message).toBeDefined();
-        expect(result.message.context?.execution?.step).toBe('vue-import-detect');
-        const ex0 = result.message.execute;
+        expect(result.context?.execution?.step).toBe('vue-import-detect');
+        const ex0 = result.execute;
         expect(ex0 && 'script' in ex0 && ex0.script?.code).toBeDefined();
         expect(String(ex0 && 'script' in ex0 ? ex0.script?.code : '')).toContain(
             'export default async function'
@@ -38,7 +38,7 @@ describe('Action Iteration Flow', () => {
         );
 
         expect(startResult.continue).toBe(true);
-        expect(startResult.message.context?.execution?.step).toBe('vue-import-detect');
+        expect(startResult.context?.execution?.step).toBe('vue-import-detect');
 
         const stepResult = {rootDir: '.'};
 
@@ -49,8 +49,8 @@ describe('Action Iteration Flow', () => {
         );
 
         expect(nextResult.continue).toBe(true);
-        expect(nextResult.message.context?.execution?.step).toBe('vue-import-resolve');
-        const ex1 = nextResult.message.execute;
+        expect(nextResult.context?.execution?.step).toBe('vue-import-resolve');
+        const ex1 = nextResult.execute;
         expect(ex1 && 'script' in ex1 && ex1.script?.code).toBeDefined();
     });
 
@@ -62,14 +62,14 @@ describe('Action Iteration Flow', () => {
 
         let guard = 0;
         while (result.continue) {
-            const sid = result.message.context?.execution?.step;
-            expect(sid).toBeDefined();
-            result = await actionProcessor.processStepResult(sessionId, sid!, {step: sid});
+            const step = result.context?.execution?.step;
+            expect(step).toBeDefined();
+            result = await actionProcessor.processStepResult(sessionId, step!, {step});
             guard += 1;
             if (guard > 20) throw new Error('too many steps');
         }
 
-        expect(result.message.context?.tasks?.[0]?.status).toBe('completed');
+        expect(result.context?.tasks?.[0]?.status).toBe('completed');
     });
 
     it('should return no action for unknown task', async () => {
@@ -93,7 +93,7 @@ describe('Action Iteration Flow', () => {
             'исправить импорты'
         );
 
-        const ex2 = result.message.execute;
+        const ex2 = result.execute;
         expect(ex2 && 'script' in ex2 && ex2.script?.code).toBeDefined();
 
         // Code should be valid TypeScript
@@ -108,15 +108,15 @@ describe('Action Iteration Flow', () => {
         // Start
         const start = await actionProcessor.processTaskRequest(sessionId, 'vue imports');
         // action_proposal message doesn't include tasks (see buildActionProposalMessage)
-        expect(start.message.context?.tasks).toBeUndefined();
+        expect(start.context?.tasks).toBeUndefined();
 
         // After step 1
-        const firstStep = start.message.context?.execution?.step;
+        const firstStep = start.context?.execution?.step;
         expect(firstStep).toBeDefined();
         const after1 = await actionProcessor.processStepResult(sessionId, firstStep!, {
             files: [],
         });
-        expect(after1.message.context?.tasks?.[0]?.progress).toBeGreaterThan(0);
+        expect(after1.context?.tasks?.[0]?.progress).toBeGreaterThan(0);
     });
 });
 
@@ -132,19 +132,17 @@ describe('Action Message Format', () => {
         );
 
         // Check message structure
-        expect(result.message).toHaveProperty('context');
-        expect(result.message).toHaveProperty('message');
-        expect(result.message.execute).toBeDefined();
+        expect(typeof result.message).toBe('string');
+        expect(result.context).toBeDefined();
+        expect(result.execute).toBeDefined();
 
         // Check context structure
-        expect(result.message.context).toHaveProperty('version');
-        expect(result.message.context).toHaveProperty('session_id');
         // action_proposal message doesn't include tasks (see buildActionProposalMessage)
-        expect(result.message.context).not.toHaveProperty('tasks');
+        expect(result.context).not.toHaveProperty('tasks');
 
-        expect(result.message.context?.execution?.action).toBe('fix-vue-imports');
-        expect(result.message.context?.execution?.step).toBe('vue-import-detect');
-        const ex = result.message.execute;
+        expect(result.context?.execution?.action).toBe('fix-vue-imports');
+        expect(result.context?.execution?.step).toBe('vue-import-detect');
+        const ex = result.execute;
         expect(ex && 'script' in ex && ex.script?.code).toBeDefined();
     });
 });

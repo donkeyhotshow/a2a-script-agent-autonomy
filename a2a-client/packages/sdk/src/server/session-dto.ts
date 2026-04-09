@@ -80,7 +80,6 @@ export interface SessionDetail {
     exchangeLog: unknown[];
     messageCount: number;
     // New protocol fields
-    version?: string;
     execution?: ExecutionState;
     formChoices?: FormData;
     execute?: Record<string, unknown>;
@@ -174,7 +173,6 @@ export function toSessionDetail(session: any): SessionDetail {
         exchangeLog: Array.isArray(session.context?.exchangeLog) ? session.context.exchangeLog : [],
         messageCount: Array.isArray(session.messages) ? session.messages.length : 0,
         // New protocol fields
-        version: session.version,
         execution: session.execution,
         formChoices: formChoices,
         currentExecute: session.context?.execute,

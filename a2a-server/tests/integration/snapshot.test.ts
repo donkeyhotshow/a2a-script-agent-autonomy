@@ -37,9 +37,7 @@ describe('Snapshot Integration Tests', () => {
                 result: {
                     promiseId: 'promise-abc-456',
                     status: 'pending',
-                    context: {
-                        version: '1.0'
-                    },
+                    context: {},
                     data: {}
                 }
             };
@@ -62,9 +60,7 @@ describe('Snapshot Integration Tests', () => {
                 result: {
                     promiseId: 'promise-xyz-789',
                     status: 'form',
-                    context: {
-                        version: '1.0'
-                    },
+                    context: {},
                     data: {
                         form: {
                             id: 'confirm_action',
@@ -100,9 +96,7 @@ describe('Snapshot Integration Tests', () => {
                 result: {
                     promiseId: 'promise-completed-123',
                     status: 'completed',
-                    context: {
-                        version: '1.0'
-                    },
+                    context: {},
                     data: {
                         result: {
                             'read-file': {
@@ -153,7 +147,7 @@ describe('Snapshot Integration Tests', () => {
                 result: {
                     promiseId: 'promise-exec-1',
                     status: 'executing',
-                    context: { version: '1.0' },
+                    context: {},
                     execute: {
                         script: {
                             input: { command: 'ls -la' },
@@ -178,7 +172,7 @@ describe('Snapshot Integration Tests', () => {
                 result: {
                     promiseId: 'promise-exec-2',
                     status: 'executing',
-                    context: { version: '1.0' },
+                    context: {},
                     execute: {
                         'read-file': {
                             path: '/test/file.ts',
@@ -202,7 +196,7 @@ describe('Snapshot Integration Tests', () => {
                 result: {
                     promiseId: 'promise-exec-3',
                     status: 'executing',
-                    context: { version: '1.0' },
+                    context: {},
                     execute: {
                         'write-file': {
                             path: '/test/output.txt',
@@ -225,7 +219,7 @@ describe('Snapshot Integration Tests', () => {
                 result: {
                     promiseId: 'promise-exec-4',
                     status: 'form',
-                    context: { version: '1.0' },
+                    context: {},
                     execute: {
                         form: {
                             id: 'choose_option',
@@ -254,8 +248,7 @@ describe('Snapshot Integration Tests', () => {
                 method: 'invoke',
                 params: {
                     context: {
-                        version: '1.0',
-                        sessionId: 'session-123'
+                        // client-only identifiers/versions must not be sent
                     },
                     message: 'Create a file called test.txt with hello world'
                 }

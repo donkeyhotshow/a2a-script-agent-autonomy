@@ -42,8 +42,6 @@ export const protocolErrorSchema = z.object({
  * Context block schema
  */
 export const contextBlockSchema = z.object({
-    version: z.literal('1.0'),
-    session_id: z.string(),
     new_task: z.array(z.string()).optional(),
     architectural_features: z.array(z.string()).optional(),
     continue: z.boolean().optional(),

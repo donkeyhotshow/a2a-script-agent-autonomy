@@ -33,6 +33,71 @@ function isNonEmptyString(x) {
     return typeof x === 'string' && x.trim().length > 0;
 }
 
+function tryParseJson(s) {
+    try {
+        return JSON.parse(s);
+    } catch {
+        return null;
+    }
+}
+
+function extractSessionIdFromUiFilename(name) {
+    if (typeof name !== 'string' || !name) return null;
+    // Common patterns:
+    // - window_state_sess_123.json
+    // - window_state_sess_123_1536x864_125.json
+    const m = name.match(/\b((?:sess|test|session)_[A-Za-z0-9_-]+)\b/);
+    return m ? m[1] : null;
+}
+
+function pruneUiWindowStateFiles({ cwd, existingSessionIds }) {
+    const root = typeof cwd === 'string' && cwd.trim() ? cwd : process.cwd();
+    const uiDir = path.join(root, 'storage', 'kv', 'ui');
+    if (!fs.existsSync(uiDir)) return;
+
+    // 1) Delete per-session window state files for sessions that no longer exist.
+    const files = fs.readdirSync(uiDir).filter((f) => f.endsWith('.json'));
+    for (const f of files) {
+        if (!f.startsWith('window_state_')) continue;
+        const sid = extractSessionIdFromUiFilename(f);
+        if (!sid) continue;
+        if (existingSessionIds.has(sid)) continue;
+        try {
+            fs.unlinkSync(path.join(uiDir, f));
+        } catch (e) {
+            console.error('[sessionRoutes] Failed to delete stale ui window state:', f, e?.message || e);
+        }
+    }
+
+    // 2) Prune the registry key so UI doesn't try to restore windows for missing sessions.
+    const registryPath = path.join(uiDir, 'a2a_session_windows.json');
+    if (!fs.existsSync(registryPath)) return;
+    try {
+        const raw = fs.readFileSync(registryPath, 'utf8');
+        const outer = tryParseJson(raw);
+        if (!outer || typeof outer !== 'object') return;
+        const innerRaw = outer.value;
+        const inner =
+            typeof innerRaw === 'string'
+                ? tryParseJson(innerRaw)
+                : innerRaw && typeof innerRaw === 'object'
+                  ? innerRaw
+                  : null;
+        if (!inner || typeof inner !== 'object') return;
+
+        const windowsIn = Array.isArray(inner.windows) ? inner.windows.map(String) : [];
+        const windowsOut = windowsIn.filter((id) => existingSessionIds.has(String(id)));
+        const activeIn = inner.active != null ? String(inner.active) : null;
+        const activeOut = activeIn && existingSessionIds.has(activeIn) ? activeIn : windowsOut[0] ?? null;
+
+        const innerOut = { ...inner, windows: windowsOut, active: activeOut, timestamp: Date.now() };
+        const outerOut = { ...outer, value: JSON.stringify(innerOut), timestamp: new Date().toISOString() };
+        fs.writeFileSync(registryPath, JSON.stringify(outerOut, null, 2));
+    } catch (e) {
+        console.error('[sessionRoutes] Failed to prune a2a_session_windows:', e?.message || e);
+    }
+}
+
 function parseJsonBody(req, res, onJson) {
     let body = '';
     req.on('data', (c) => (body += c));
@@ -164,6 +229,17 @@ export function createSessionRoutes({ cwd }) {
             const sessions = storageMode === 'project'
                 ? listSessions(getProjectPathForSessions(cwd))
                 : listNewSessions(cwd);
+            try {
+                const existingSessionIds = new Set(
+                    (Array.isArray(sessions) ? sessions : [])
+                        .map((s) => (s && typeof s === 'object' ? s.id : null))
+                        .filter(Boolean)
+                        .map(String)
+                );
+                pruneUiWindowStateFiles({ cwd, existingSessionIds });
+            } catch (e) {
+                console.error('[sessionRoutes] UI window-state prune failed:', e?.message || e);
+            }
             res.setHeader('Content-Type', 'application/json');
             res.end(JSON.stringify({ success: true, sessions, count: sessions.length }));
             return;

@@ -85,7 +85,7 @@ describe('Requests API', () => {
             const res = await request(app)
                 .post('/api/v1/requests')
                 .send({
-                    context: {version: '1.0', session_id: 'sess-123'},
+                    context: {},
                     message: 'Test message'
                 });
 
@@ -126,7 +126,7 @@ describe('Invoke API', () => {
             const res = await request(app)
                 .post('/api/v1/invoke')
                 .send({
-                    context: {version: '1.0', session_id: 'sess-123'},
+                    context: {},
                     message: 'Test message'
                 });
 
@@ -137,7 +137,7 @@ describe('Invoke API', () => {
             const res = await request(app)
                 .post('/api/v1/invoke')
                 .send({
-                    context: {version: '1.0', session_id: 'sess-123'},
+                    context: {},
                     message: 'Test message'
                 });
 
@@ -167,7 +167,7 @@ describe('Message API', () => {
             const res = await request(app)
                 .post('/api/v1/message')
                 .send({
-                    context: {version: '1.0'},
+                    context: {},
                     message: 'Test'
                 });
 

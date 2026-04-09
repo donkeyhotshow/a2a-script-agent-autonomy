@@ -41,11 +41,10 @@ function toAsyncHttpBody(input: Record<string, unknown>): Record<string, unknown
     return out;
 }
 
-function expectServerSessionId(ctx: unknown): void {
+function expectNoSessionIdInClientContext(ctx: unknown): void {
     expect(ctx && typeof ctx === 'object', 'context must be object').toBe(true);
     const sid = (ctx as Record<string, unknown>)['session_id'];
-    expect(typeof sid, 'context.session_id must be assigned').toBe('string');
-    expect(sid as string).toMatch(/^srv_sess_/);
+    expect(sid, 'context.session_id must be hidden from API clients').toBeUndefined();
 }
 
 /** A2A: one top-level key under `execute` when present (form, script, message, …). */
@@ -111,7 +110,7 @@ describe('Invoke HTTP parity (async poll)', () => {
             expect(typeof first?.id).toBe('string');
             expect(typeof first?.label).toBe('string');
             expect(data?.context?.execution?.step).toBeDefined();
-            expectServerSessionId(data?.context);
+            expectNoSessionIdInClientContext(data?.context);
             expectSingleExecuteActionKey(data?.execute);
         },
         180_000
@@ -134,7 +133,7 @@ describe('Invoke HTTP parity (async poll)', () => {
             const form = data?.execute?.form;
             expect(form?.title ?? form?.description ?? form?.input, 'execute.form must be present').toBeTruthy();
             expect(Array.isArray(form?.input)).toBe(true);
-            expectServerSessionId(data?.context);
+            expectNoSessionIdInClientContext(data?.context);
             expectSingleExecuteActionKey(data?.execute);
         },
         180_000

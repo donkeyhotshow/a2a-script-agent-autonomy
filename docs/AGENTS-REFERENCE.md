@@ -8,66 +8,7 @@ Operator test command map is canonical in [`docs/OPERATOR-TESTING-MATRIX.md`](OP
 
 ## Unified manual path (Client API)
 
-This repo’s **one integration contour** for driving the stack after a **manual** start (`start-all.bat` / `start-all.sh`) is the **Client API**, not raw `POST /api/v1/invoke`. Treat every operator, IDE agent, and curl script the same way the web UI is treated: **sessions live here**; the server is reached **inside** the client layer.
-
-**Hot-reload default:** after normal code edits, keep the stack running; do not request full-stack restart by default. Use `start-all` again only for bootstrap/full reset or process/env/port faults. Canonical startup policy: [`docs/SYSTEM_STARTUP.md`](SYSTEM_STARTUP.md).
-
-### Steps (normative)
-
-1. **Create a new session** — `POST /api/a2a/sessions` on the Client API base URL (default dev: `http://localhost:5173`). Standalone SDK uses the **same path contract** on its own origin/port; see [ADR-0028](adr/ADR-0028-client-api-deployment-modes.md). Optional on the same request: **`projectId`** / **`projectRoot`** (project storage), **`task`** (seed `context.task`), **`mode`** or **`execution`** (seed `context.execution` — see [`session-create-initial.js`](../a2a-client/packages/vite-plugin/routes/utils/session-create-initial.js)).
-2. **Drive turns with `POST /api/a2a/sessions/{id}/next`**, then poll **`GET /api/a2a/sessions/{id}/async`** (and/or **`GET …/sessions/{id}`** to hydrate `execute`) until the step settles — same contract as the web UI.
-
-> **Indexed prompts / markdown tasks:** the **text** of a task is not the whole protocol. After **`POST /sessions`**, you must **continue the same `sessionId`** with **`/next`** and **`/async`** (and router **`choices`**) until the dialog completes — or use **`npm run monitor`** for `prompts-to-agent-mode/`. See [`prompts-to-agent-mode/README.md`](../prompts-to-agent-mode/README.md) and [`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md).
-
-### Router dialog (two beats — read this)
-
-The flow is **not** a single “send everything once” form. It mirrors the **task-flow UI**: first you give **what to work on**, then you often pick **how** (e.g. **Agent** vs dialog vs decomposition) from a **router** list.
-
-1. **Beat A — direction of work** — Right after create, the session usually exposes `execute.form` with a **text task field** (“Enter your task”). The first `POST …/next` must carry that text as **`result.message`** (or use the shorthand **`task`** field in the JSON body; the plugin maps it to `message` when the prior step had **no** `form.choices`). The server then classifies the request and may return a **router** screen.
-2. **Beat B — pick a pipeline (e.g. Agent)** — When the latest server-backed `execute.form` includes **`choices`** (each with stable **`id`**, `label`, optional `description`, `type` such as `agent` / `dialog`), the UI shows **buttons** instead of free text. The next `POST …/next` must send **`result.choice`** set to the chosen row’s **`id`**. Shorthand: put that id in the top-level **`task`** field — if the previous step had choices, the same `task` key is interpreted as **`choice`**, not free text:
-
-```46:51:a2a-client/packages/vite-plugin/routes/step-routes-router-flow.js
-export function buildSubmitResult({ body, hasChoices }) {
-    const { result, task } = body || {};
-    if (result) return result;
-    if (!task) return undefined;
-    return { [hasChoices ? 'choice' : 'message']: task };
-}
-```
-
-The coarse UI stage for that router screen is **`routing`** (choices or `execution.action === 'router'` / step `routing`):
-
-```41:47:a2a-client/packages/vite-plugin/routes/utils/session-stage-machine.js
-    const hasChoices = !!(form && Array.isArray(form.choices) && form.choices.length > 0);
-
-    // Router stage: explicit routing form with choices.
-    if (hasChoices || action === 'router' || step === 'routing') {
-        return 'routing';
-    }
-```
-
-**Operator shortcut:** seed **`mode: "agent"`** (or `execution.action: "agent"`) on `POST /sessions` so `context.execution` starts in the agent pipeline; the server may still emit intermediate forms depending on prompts — always **inspect `GET …/sessions/{id}`** (`includeContext=1` when debugging) before composing the next body.
-
-**Stable choice `id` values (fallback router, no keyword match):** `dialog`, `agent`, `task-decomposition` — canonical labels/descriptions/registered examples in **[`shared/router-static-choices.json`](../shared/router-static-choices.json)** (`staticTailChoices`); server implementation: [`a2a-server/src/services/core/request-processor/action-request-processor.ts`](../a2a-server/src/services/core/request-processor/action-request-processor.ts). With keyword matches, choices use **action registry** ids (same file lists examples such as `fix-vue-imports`, `fix-laravel-namespaces-and-uses`).
-
-### Minimal example (seed agent + task on create)
-
-```http
-POST /api/a2a/sessions
-Content-Type: application/json
-
-{
-  "projectId": "default",
-  "mode": "agent",
-  "task": "Verify ADR-0028 examples match this repo’s ports."
-}
-```
-
-You still run **`/next`** + poll **`/async`** afterward; the two-beat router may or may not appear depending on the server response.
-
-Implementation: [`session-create-initial.js`](../a2a-client/packages/vite-plugin/routes/utils/session-create-initial.js) (also `POST .../sessions/task-add` and `.../task-execute`).
-
-Operator narrative, **`POST /api/a2a/sessions` body** (`mode` vs `execution`, fallbacks, legacy aliases), and curl: [`OPERATOR-CURL.md`](OPERATOR-CURL.md).
+See the [AGENTS.md](../AGENTS.md) *Unified manual path* section for the complete Client API integration details.
 
 ### Why iteration stops (misreads and mitigations)
 

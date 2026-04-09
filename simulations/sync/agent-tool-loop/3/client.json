@@ -1,8 +1,0 @@
-{
-  "sessionId": "456",
-  "result": {
-    "input": {
-      "message": "Знайди функцію calculateTotal в utils/helpers.js"
-    }
-  }
-}

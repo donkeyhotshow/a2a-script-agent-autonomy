@@ -30,10 +30,15 @@ export function clientSafeWorkbench(wb: unknown): unknown {
 }
 
 export function stripServerInternalWorkbenchFromContext(ctx: Record<string, unknown>): Record<string, unknown> {
-    if (!('workbench' in ctx)) {
-        return ctx;
+    const out: Record<string, unknown> = {...ctx};
+    // Never expose server-internal correlation id to clients or disk snapshots.
+    delete out['session_id'];
+    // Protocol versioning is not part of the client-visible contract.
+    delete out['version'];
+    if ('workbench' in out) {
+        out['workbench'] = clientSafeWorkbench(out['workbench']);
     }
-    return {...ctx, workbench: clientSafeWorkbench(ctx['workbench'])};
+    return out;
 }
 
 /** Apply before writing `RequestResult.result` to disk so storage matches GET /requests/:id/result filtering. */

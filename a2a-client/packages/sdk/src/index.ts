@@ -100,9 +100,9 @@ export class ApiClient {
         userRequest: string | string[],
         architecturalFeatures?: string[]
     ): Promise<unknown> {
-        const session = (await this.createSession(projectId)) as { session_id?: string };
-        const sid = session.session_id;
-        if (!sid) throw new ApiError('No session_id in response', 500);
+        const session = (await this.createSession(projectId)) as { id?: string; session_id?: string };
+        const sid = session.id ?? session.session_id;
+        if (!sid) throw new ApiError('No session id in response', 500);
         const task = Array.isArray(userRequest) ? userRequest : [String(userRequest ?? '')];
         const msg = (await this.sendMessage(sid, task, architecturalFeatures)) as { tasks?: unknown[] };
         const status = msg.tasks?.length ? 'task_created' : 'processing';

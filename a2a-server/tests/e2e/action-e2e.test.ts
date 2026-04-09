@@ -44,7 +44,6 @@ describe('Action E2E', () => {
                 .set('Authorization', 'Bearer test-token')
                 .send({
                     context: {
-                        version: '1.0',
                         new_task: 'исправить импорты в vue',
                     },
                 });
@@ -65,7 +64,6 @@ describe('Action E2E', () => {
                 .set('Authorization', 'Bearer test-token')
                 .send({
                     context: {
-                        version: '1.0',
                         new_task: 'vue imports fix',
                     },
                 });
@@ -96,7 +94,6 @@ describe('Action E2E', () => {
                 .set('Authorization', 'Bearer test-token')
                 .send({
                     context: {
-                        version: '1.0',
                         new_task: 'исправить импорты',
                     },
                 });
@@ -146,8 +143,8 @@ describe('Action E2E', () => {
 
             expect(result).toBeDefined();
             expect(result.message).toBeDefined();
-            expect(result.message.context?.execution?.step).toBeDefined();
-            const ex = result.message.execute;
+            expect(result.context?.execution?.step).toBeDefined();
+            const ex = result.execute;
             expect(ex && 'script' in ex && ex.script?.code).toBeDefined();
             expect(String(ex && 'script' in ex ? ex.script?.code : '')).toContain(
                 'export default async function'
@@ -164,13 +161,13 @@ describe('Action E2E', () => {
             );
 
             expect(result.continue).toBe(true);
-            expect(result.message.context?.execution?.step).toBeDefined();
+            expect(result.context?.execution?.step).toBeDefined();
 
             const executedSteps: string[] = [];
 
             // Iterate through steps
-            while (result.continue && result.message.context?.execution?.step) {
-                const stepId = result.message.context.execution.step;
+            while (result.continue && result.context?.execution?.step) {
+                const stepId = result.context.execution.step;
                 executedSteps.push(stepId);
 
                 // Simulate step execution result
@@ -218,15 +215,15 @@ describe('Action E2E', () => {
             // Start
             const start = await actionProcessor.processTaskRequest(sessionId, 'vue imports');
             // action_proposal message doesn't include tasks (see buildActionProposalMessage)
-            expect(start.message.context?.tasks).toBeUndefined();
+            expect(start.context?.tasks).toBeUndefined();
 
             // After step 1
-            const fs0 = start.message.context?.execution?.step;
+            const fs0 = start.context?.execution?.step;
             expect(fs0).toBeDefined();
             const after1 = await actionProcessor.processStepResult(sessionId, fs0!, {
                 files: [],
             });
-            expect(after1.message.context?.tasks?.[0]?.progress).toBeGreaterThan(0);
+            expect(after1.context?.tasks?.[0]?.progress).toBeGreaterThan(0);
         });
     });
 
@@ -239,14 +236,14 @@ describe('Action E2E', () => {
 
             let guard = 0;
             while (result.continue) {
-                const sid = result.message.context?.execution?.step;
+                const sid = result.context?.execution?.step;
                 expect(sid).toBeDefined();
                 result = await actionProcessor.processStepResult(sessionId, sid!, {step: sid});
                 guard += 1;
                 if (guard > 20) throw new Error('too many steps');
             }
 
-            expect(result.message.context?.tasks?.[0]?.status).toBe('completed');
+            expect(result.context?.tasks?.[0]?.status).toBe('completed');
         });
     });
 });
@@ -267,7 +264,6 @@ describe('Action E2E with Real Server', () => {
             },
             body: JSON.stringify({
                 context: {
-                    version: '1.0',
                     new_task: 'исправить импорты в vue',
                 },
             }),
@@ -290,13 +286,12 @@ describe('ApiClient Mock Test', () => {
     interface MockActionResult {
         continue: boolean;
         actionId?: string;
-        message: {
-            context?: {
-                tasks?: Array<{ progress: number; status?: string }>;
-                execution?: { action: string; step: string };
-            };
-            execute?: { script: { code: string } };
+        message: string;
+        context?: {
+            tasks?: Array<{ progress: number; status?: string }>;
+            execution?: { action: string; step: string };
         };
+        execute?: { script: { code: string } };
     }
 
     /**
@@ -324,19 +319,19 @@ describe('ApiClient Mock Test', () => {
                 return {
                     continue: true,
                     actionId: 'fix-vue-imports',
-                    message: {
-                        context: {
-                            tasks: [{progress: 0}],
-                            execution: {action: 'fix-vue-imports', step: this.steps[0].id},
-                        },
-                        execute: {script: {code: this.steps[0].code}},
+                    message: 'Action started',
+                    context: {
+                        tasks: [{progress: 0}],
+                        execution: {action: 'fix-vue-imports', step: this.steps[0].id},
                     },
+                    execute: {script: {code: this.steps[0].code}},
                 };
             }
 
             return {
                 continue: false,
-                message: {context: {tasks: []}},
+                message: 'No action',
+                context: {tasks: []},
             };
         }
 
@@ -354,22 +349,20 @@ describe('ApiClient Mock Test', () => {
                 // Все шаги выполнены
                 return {
                     continue: false,
-                    message: {
-                        context: {tasks: [{progress: 100, status: 'completed'}]},
-                    },
+                    message: 'Completed',
+                    context: {tasks: [{progress: 100, status: 'completed'}]},
                 };
             }
 
             const cur = this.steps[this.stepIndex];
             return {
                 continue: true,
-                message: {
-                    context: {
-                        tasks: [{progress}],
-                        execution: {action: 'fix-vue-imports', step: cur.id},
-                    },
-                    execute: {script: {code: cur.code}},
+                message: 'In progress',
+                context: {
+                    tasks: [{progress}],
+                    execution: {action: 'fix-vue-imports', step: cur.id},
                 },
+                execute: {script: {code: cur.code}},
             };
         }
     }
@@ -380,16 +373,16 @@ describe('ApiClient Mock Test', () => {
         // Start
         let result = await client.processTaskRequest('fix vue imports');
         expect(result.continue).toBe(true);
-        expect(result.message.context?.execution?.step).toBe('vue-import-detect');
+        expect(result.context?.execution?.step).toBe('vue-import-detect');
 
         const executedSteps: string[] = [];
 
         // Iterate
-        while (result.continue && result.message.context?.execution?.step) {
-            const sid = result.message.context.execution.step;
-            executedSteps.push(sid);
+        while (result.continue && result.context?.execution?.step) {
+            const stepId = result.context.execution.step;
+            executedSteps.push(stepId);
 
-            result = await client.processStepResult(sid, {test: true});
+            result = await client.processStepResult(stepId, {test: true});
         }
 
         // Verify
@@ -400,7 +393,7 @@ describe('ApiClient Mock Test', () => {
             'vue-import-cleanup',
         ]);
         expect(result.continue).toBe(false);
-        expect(result.message.context?.tasks?.[0]?.status).toBe('completed');
+        expect(result.context?.tasks?.[0]?.status).toBe('completed');
     });
 
     it('should handle unknown task in mock', async () => {

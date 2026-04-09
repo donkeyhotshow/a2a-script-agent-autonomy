@@ -116,7 +116,9 @@ export class ActionRequestProcessor extends BaseRequestProcessor {
         }
 
         const actionType = this.getActionType(ctx);
-        const sessionId = ctx['session_id'] as string || promiseId;
+        // Client session ids are confidential and must not participate in server routing.
+        // We correlate request execution strictly by promiseId.
+        const sessionId = promiseId;
 
         logger.info('[ActionRequestProcessor] Processing request', {
             actionType,

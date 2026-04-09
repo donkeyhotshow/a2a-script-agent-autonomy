@@ -45,7 +45,7 @@ describe('Invoke async-only (no sync)', () => {
         expect(data.sync).toBeUndefined();
     });
 
-    it('poll after task yields router choices + srv_sess_ id', async () => {
+    it('poll after task yields router choices (no session_id leak)', async () => {
         const inv = await request(app).post('/api/v1/invoke').send({task: 'dialog'});
         expect(inv.status).toBe(200);
         const pid = (inv.body.data as {promiseId?: string}).promiseId;
@@ -58,8 +58,8 @@ describe('Invoke async-only (no sync)', () => {
             | undefined;
         expect(Array.isArray(choices?.choices)).toBe(true);
         const ctx = data.context as Record<string, unknown> | undefined;
-        expect(typeof ctx?.session_id).toBe('string');
-        expect(String(ctx?.session_id)).toMatch(/^srv_sess_/);
+        expect((ctx as Record<string, unknown> | undefined)?.session_id).toBeUndefined();
+        expect((ctx as Record<string, unknown> | undefined)?.sessionId).toBeUndefined();
     }, 0);
 
     it('rejects unknown property sync (schema additionalProperties)', async () => {

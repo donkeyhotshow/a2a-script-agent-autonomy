@@ -5,9 +5,7 @@ exports[`Snapshot Integration Tests > Execute Response Validation > should valid
   "id": "exec-4",
   "jsonrpc": "2.0",
   "result": {
-    "context": {
-      "version": "1.0",
-    },
+    "context": {},
     "execute": {
       "form": {
         "choices": [
@@ -35,9 +33,7 @@ exports[`Snapshot Integration Tests > Execute Response Validation > should valid
   "id": "exec-2",
   "jsonrpc": "2.0",
   "result": {
-    "context": {
-      "version": "1.0",
-    },
+    "context": {},
     "execute": {
       "read-file": {
         "content": "export function test() { return true; }",
@@ -55,9 +51,7 @@ exports[`Snapshot Integration Tests > Execute Response Validation > should valid
   "id": "exec-1",
   "jsonrpc": "2.0",
   "result": {
-    "context": {
-      "version": "1.0",
-    },
+    "context": {},
     "execute": {
       "script": {
         "code": "const fs = require("fs");
@@ -80,9 +74,7 @@ exports[`Snapshot Integration Tests > Execute Response Validation > should valid
   "id": "exec-3",
   "jsonrpc": "2.0",
   "result": {
-    "context": {
-      "version": "1.0",
-    },
+    "context": {},
     "execute": {
       "write-file": {
         "content": "Written content",
@@ -116,10 +108,7 @@ exports[`Snapshot Integration Tests > Request Schema Validation > should validat
   "jsonrpc": "2.0",
   "method": "invoke",
   "params": {
-    "context": {
-      "sessionId": "session-123",
-      "version": "1.0",
-    },
+    "context": {},
     "message": "Create a file called test.txt with hello world",
   },
 }
@@ -130,9 +119,7 @@ exports[`Snapshot Integration Tests > Response Schema Validation > should valida
   "id": "test-789",
   "jsonrpc": "2.0",
   "result": {
-    "context": {
-      "version": "1.0",
-    },
+    "context": {},
     "data": {
       "result": {
         "read-file": {
@@ -166,9 +153,7 @@ exports[`Snapshot Integration Tests > Response Schema Validation > should valida
   "id": "test-456",
   "jsonrpc": "2.0",
   "result": {
-    "context": {
-      "version": "1.0",
-    },
+    "context": {},
     "data": {
       "form": {
         "choices": [
@@ -204,9 +189,7 @@ exports[`Snapshot Integration Tests > Response Schema Validation > should valida
   "id": "test-123",
   "jsonrpc": "2.0",
   "result": {
-    "context": {
-      "version": "1.0",
-    },
+    "context": {},
     "data": {},
     "promiseId": "promise-abc-456",
     "status": "pending",

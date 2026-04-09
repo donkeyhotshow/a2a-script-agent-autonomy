@@ -33,13 +33,8 @@ export async function handleStepResult(
     const result = await actionProcessor.processStepResult(sessionId, stepId, stepResult);
 
     if (result.continue) {
-        const fromMessage = result.message.execute;
-        const resultContext = { ...result.message.context };
-        // Include sessionId in context if it exists in input
-        const sessionIdValue = ctx['session_id'];
-        if (sessionIdValue && typeof sessionIdValue === 'string') {
-            (resultContext as Record<string, unknown>)['session_id'] = sessionIdValue;
-        }
+        const fromMessage = result.execute;
+        const resultContext = { ...(result.context ?? {}) } as Record<string, unknown>;
         return {
             outcome: 'completed',
             context: resultContext,
@@ -47,19 +42,15 @@ export async function handleStepResult(
             execute: fromMessage,
         };
     }
-    const resultContext = { ...result.message.context };
-    const sessionIdValue = ctx['session_id'];
-    if (sessionIdValue && typeof sessionIdValue === 'string') {
-        (resultContext as Record<string, unknown>)['session_id'] = sessionIdValue;
-    }
+    const resultContext = { ...(result.context ?? {}) } as Record<string, unknown>;
     return {
         outcome: 'completed',
         context: resultContext,
         activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
-        execute: result.message.execute ?? {
+        execute: result.execute ?? {
             form: {
                 title: 'Action Completed',
-                description: result.message.message || 'Action completed',
+                description: result.message || 'Action completed',
                 input: [{ name: 'message', type: 'text', label: 'Message', required: true }],
             },
         },

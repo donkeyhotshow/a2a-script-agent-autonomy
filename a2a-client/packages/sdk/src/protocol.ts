@@ -4,9 +4,6 @@
  * @see docs/new-request-flow/PROTOCOL.md
  */
 
-const VERSION = '1.0';
-const NEW_VERSION = '2.0';
-
 export interface FileBlockLike {
     path: string;
     content: string;
@@ -19,25 +16,22 @@ export function buildNewTaskContext(
     newTask: string[],
     architecturalFeatures?: string[]
 ): Record<string, unknown> {
-    // session_id is a technical field, not part of protocol
-    const ctx: Record<string, unknown> = {version: VERSION, new_task: newTask};
+    // session_id and version are not part of the wire protocol
+    const ctx: Record<string, unknown> = {new_task: newTask};
     if (architecturalFeatures?.length) ctx.architectural_features = architecturalFeatures;
     return ctx;
 }
 
 export function buildContinueContext(sessionId: string): Record<string, unknown> {
-    // session_id is a technical field, not part of protocol
-    return {version: VERSION, continue: true};
+    return {continue: true};
 }
 
 export function buildConfirmContext(sessionId: string): Record<string, unknown> {
-    // session_id is a technical field, not part of protocol
-    return {version: VERSION, confirm: true};
+    return {confirm: true};
 }
 
 export function buildFileResponseContext(sessionId: string): Record<string, unknown> {
-    // session_id is a technical field, not part of protocol
-    return {version: VERSION};
+    return {};
 }
 
 // ============================================
@@ -64,11 +58,8 @@ export function buildProtocolContext(
         errors?: unknown[];
     }
 ): Record<string, unknown> {
-    const NEW_VERSION = '2.0';
-    // session_id is a technical field, not part of protocol
-    const ctx: Record<string, unknown> = {
-        version: NEW_VERSION,
-    };
+    // session_id and version are not part of the wire protocol
+    const ctx: Record<string, unknown> = {};
     
     if (options?.execution) ctx.execution = options.execution;
     if (options?.history) ctx.history = options.history;
@@ -193,7 +184,8 @@ export function isErrorResponse(response: { error?: Record<string, unknown> }): 
  * Check if context is new protocol (v2.0)
  */
 export function isNewProtocol(context: Record<string, unknown>): boolean {
-    return context?.version === '2.0';
+    // Versions are removed from the wire contract; treat presence of execution/workbench/history as "new".
+    return !!(context && typeof context === 'object' && ('execution' in context || 'workbench' in context || 'history' in context));
 }
 
 export function serializeFileBlock(
@@ -266,4 +258,4 @@ export function parseMessage(text: string): { context: Record<string, unknown>; 
     return {context, files};
 }
 
-export {VERSION};
+export {};

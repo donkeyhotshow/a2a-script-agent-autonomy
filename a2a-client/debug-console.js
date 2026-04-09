@@ -76,7 +76,6 @@ function formatContext(context) {
             ops: context.workbench?.ops || []
         },
         history: context.history || [],
-        sessionId: context.session_id || null
     };
 }
 
@@ -185,8 +184,7 @@ function createDevToolsPanelHtml() {
                     return {
                         execution: ctx.execution,
                         workbench: ctx.workbench,
-                        history: ctx.history,
-                        sessionId: ctx.session_id
+                        history: ctx.history
                     };
                 },
                 

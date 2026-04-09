@@ -1,7 +1,0 @@
-{
-  "projectId": "golden-async-pl",
-  "sessionId": "sess-async-pl-1",
-  "execute": {
-    "message": "Pending: LLM/async work in flight. Poll GET /api/v1/requests/{promiseId}/result until status is completed (golden step 1)."
-  }
-}

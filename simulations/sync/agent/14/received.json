@@ -1,7 +1,0 @@
-{
-  "projectId": "123",
-  "sessionId": "456",
-  "execute": {
-    "message": "Повний ланцюжок пройдено у фікстурі: form (router, input, choices), rag-search, list-directory, read-file, grep-search, file-exists, edit-patch, write-file, execute-command, run-script, script. Перевірка репо: npm run sim:quality."
-  }
-}

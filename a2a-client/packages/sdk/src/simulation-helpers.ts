@@ -231,16 +231,15 @@ export async function invokeFirstTask(
     });
     
     const sessionData = (sessionResponse as { data?: unknown }).data ?? sessionResponse;
-    const sessionId = (sessionData as { session_id?: string }).session_id;
+    const sessionId = (sessionData as { id?: string; session_id?: string }).id ?? (sessionData as { session_id?: string }).session_id;
     
     if (!sessionId) {
-        throw new Error('Failed to create session: no session_id returned');
+        throw new Error('Failed to create session: no id returned');
     }
     
     // Send the task message using canonical protocol (v2.0)
     const messageResponse = await client.request('POST', `/sessions/${sessionId}/message`, {
         context: {
-            version: '2.0',
             // session_id is a technical field, not part of protocol
             // session_id: sessionId,
             new_task: [task]

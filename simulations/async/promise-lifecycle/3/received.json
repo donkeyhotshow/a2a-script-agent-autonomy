@@ -1,7 +1,0 @@
-{
-  "projectId": "golden-async-pl",
-  "sessionId": "sess-async-pl-fail",
-  "execute": {
-    "message": "Async work ended in failure (golden step 3). Real poll payloads may expose top-level `status: failed` and `error` from GET /api/v1/requests/{id}/result; this fixture is the invoke-shaped snapshot merged into session."
-  }
-}

@@ -85,7 +85,7 @@ describe('Session Storage - Numbered Folders', () => {
                 timestamp: new Date().toISOString(),
                 execute: { form: { input: { name: 'task', label: 'Test Task' } } },
                 messages: [{ role: 'assistant', content: 'Hello' }],
-                context: { session_id: 'sess_test' }
+                context: {}
             };
             await fs.writeFile(
                 path.join(sessionDir, '1', 'server-response.json'),

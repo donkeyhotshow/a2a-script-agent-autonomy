@@ -78,7 +78,6 @@ export class ExpressAppManager {
         this.app.get(['/api', '/api/v1'], (req, res) => {
             res.json({
                 service: 'a2a-client-api',
-                version: '1.0.0',
                 endpoints: {
                     config: '/api/config',
                     projects: '/api/projects',

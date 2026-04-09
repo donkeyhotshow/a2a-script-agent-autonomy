@@ -10,8 +10,12 @@ export * from './unified.js';
 // ============================================
 
 export interface ContextBlock {
-    session_id: string;
-    version?: string;
+    /**
+     * Client session identifiers are confidential (client-only) and must not appear in
+     * client/server HTTP request/response payloads. Legacy/internal code may still pass this
+     * around in-process, but it must be stripped before persistence and API responses.
+     */
+    session_id?: string;
     /** Action type from client (e.g., 'dialog', 'auto-ai', 'task-decomposition') */
     action?: string;
     new_task?: string[];
@@ -38,10 +42,6 @@ export interface ContextBlock {
         /** History of executed steps */
         history?: Array<{ step: string; result?: unknown }>;
     };
-    /** Project ID from client */
-    projectId?: string;
-    /** Client session ID */
-    sessionId?: string;
 }
 
 export interface Task {

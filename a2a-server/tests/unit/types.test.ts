@@ -22,8 +22,6 @@ describe('Types', () => {
     describe('ContextBlock', () => {
         it('should create valid context block', () => {
             const context: ContextBlock = {
-                version: '1.0',
-                session_id: 'session-123',
                 new_task: ['task1', 'task2'],
                 architectural_features: ['laravel', 'vue'],
                 continue: true,
@@ -37,15 +35,12 @@ describe('Types', () => {
                 confirm: false,
             };
 
-            expect(context.version).toBe('1.0');
-            expect(context.session_id).toBe('session-123');
             expect(context.tasks).toHaveLength(1);
         });
 
         it('should allow optional fields', () => {
             const context: ContextBlock = {
-                version: '1.0',
-                session_id: 'session-123',
+                // empty is allowed; context is client-owned and may be minimal
             };
 
             expect(context.new_task).toBeUndefined();
@@ -114,8 +109,7 @@ describe('Types', () => {
         it('should create valid client message', () => {
             const message: ClientMessage = {
                 context: {
-                    version: '1.0',
-                    session_id: 'session-123',
+                    task: 'do something',
                 },
                 files: [
                     {
@@ -132,8 +126,7 @@ describe('Types', () => {
         it('should create valid server message', () => {
             const message: ServerMessage = {
                 context: {
-                    version: '1.0',
-                    session_id: 'session-123',
+                    tasks: [],
                 },
                 message: 'Processing complete',
             };

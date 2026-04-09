@@ -34,6 +34,6 @@ describe('first-invoke-payload (T003)', () => {
         expect(body.context.sessionId).toBeUndefined();
         expect(body.context.projectId).toBeUndefined();
         expect(body.context.projectRoot).toBeUndefined();
-        expect(body.context.version).toBe('2.0');
+        expect(body.context.version).toBeUndefined();
     });
 });

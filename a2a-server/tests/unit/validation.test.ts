@@ -31,10 +31,6 @@ const validators = {
         return input.replace(/[<>]/g, '');
     },
 
-    isValidContextVersion: (version: string): boolean => {
-        return /^1\.\d+$/.test(version);
-    },
-
     isValidTaskType: (type: string): boolean => {
         const validTypes = ['analyze', 'refactor', 'test', 'document', 'fix', 'create', 'delete'];
         return validTypes.includes(type);
@@ -124,20 +120,6 @@ describe('Validation Utilities', () => {
         it('should preserve safe characters', () => {
             expect(validators.sanitizeInput('hello world')).toBe('hello world');
             expect(validators.sanitizeInput('test@domain.com')).toBe('test@domain.com');
-        });
-    });
-
-    describe('Context Version Validation', () => {
-        it('should validate correct versions', () => {
-            expect(validators.isValidContextVersion('1.0')).toBe(true);
-            expect(validators.isValidContextVersion('1.1')).toBe(true);
-            expect(validators.isValidContextVersion('1.10')).toBe(true);
-        });
-
-        it('should reject invalid versions', () => {
-            expect(validators.isValidContextVersion('2.0')).toBe(false);
-            expect(validators.isValidContextVersion('1.0.0')).toBe(false);
-            expect(validators.isValidContextVersion('invalid')).toBe(false);
         });
     });
 

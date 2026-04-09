@@ -1,8 +1,0 @@
-{
-  "projectId": "123",
-  "sessionId": "456",
-  "result": {
-    "choice": "continue_search",
-    "message": "пошукай ще про клієнтський API та web UI"
-  }
-}

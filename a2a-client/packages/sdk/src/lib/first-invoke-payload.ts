@@ -18,7 +18,6 @@ export function buildInitialInvokeRequestBody(opts: {
     result: { message: string };
 } {
     const rawContext: Record<string, unknown> = {
-        version: '2.0',
         execution: { ...ROUTER_NEW_TASK_EXECUTION },
         ...(opts.extraContext || {}),
     };

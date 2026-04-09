@@ -67,34 +67,30 @@ export function mergeResponseContext(fallbackContext = {}, serverResponse = null
     return base;
 }
 
-/** Client storage session ids (`sess_*`) must not be sent as `session_id` — only `srv_sess_*` from server is valid for correlation. */
-function stripClientStorageSessionIdField(obj) {
-    const sid = obj.session_id;
-    if (typeof sid === 'string' && sid.startsWith('sess_')) {
-        delete obj.session_id;
-    }
-}
-
 export function sanitizeContextForServer(context) {
     if (!context || typeof context !== 'object' || Array.isArray(context)) {
         return {};
     }
     const safe = {...context};
+    // Protocol versioning is not part of the wire contract.
+    delete safe.version;
+    // Client session identifiers are confidential client-only data and never sent to A2A server.
+    delete safe.session_id;
     delete safe.clientSessionId;
     // Client API storage id + project scope — required on session.context locally, never sent to stateless server.
     delete safe.sessionId;
     delete safe.projectId;
     delete safe.projectRoot;
-    stripClientStorageSessionIdField(safe);
 
     const nested = safe.context;
     if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
         const nc = {...nested};
+        delete nc.version;
+        delete nc.session_id;
         delete nc.clientSessionId;
         delete nc.sessionId;
         delete nc.projectId;
         delete nc.projectRoot;
-        stripClientStorageSessionIdField(nc);
         safe.context = nc;
     }
 

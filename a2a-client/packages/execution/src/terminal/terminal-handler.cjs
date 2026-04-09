@@ -277,7 +277,6 @@ class TerminalHandler {
                     duration: record.duration || '0',
                     cwd: record.cwd || getCurrentDirSync(),
                     platform: process.platform,
-                    session_id: getCurrentSessionId()
                 });
                 this._incrementHistoryCount();
             }

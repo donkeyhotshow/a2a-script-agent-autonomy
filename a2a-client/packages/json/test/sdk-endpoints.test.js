@@ -115,8 +115,6 @@ describe('SDK Server - Result Endpoint Format Conversion', () => {
         const buildFormChoiceRequest = (sessionId, result, session) => {
             return {
                 context: {
-                    version: session.version || '2.0',
-                    session_id: sessionId,
                     task: session.task,
                     execution: session.execution,
                     history: session.context?.history || [],
@@ -136,8 +134,6 @@ describe('SDK Server - Result Endpoint Format Conversion', () => {
             
             expect(request).toEqual({
                 context: {
-                    version: '2.0',
-                    session_id: 'session-123',
                     task: 'Test task',
                     execution: {},
                     history: [],
@@ -161,14 +157,14 @@ describe('SDK Server - Result Endpoint Format Conversion', () => {
             });
         });
 
-        it('должен использовать версию по умолчанию 2.0', () => {
+        it('не должен включать version в wire context', () => {
             const request = buildFormChoiceRequest(
                 'session-789',
                 { choice: 'skip' },
                 { task: 'Task', execution: {}, context: {} }
             );
             
-            expect(request.context.version).toBe('2.0');
+            expect(request.context.version).toBeUndefined();
         });
 
         it('должен сохранять историю из контекста', () => {

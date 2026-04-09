@@ -89,7 +89,6 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
         const nextStep = stepNum + 1;
         const requestBody = {
             context: {
-                version: '2.0',
                 execution: { action: 'action', step: body.choice },
                 ...session.context,
             },

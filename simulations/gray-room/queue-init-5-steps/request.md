@@ -1,1 +1,0 @@
-Initialize a sequence with 5 steps for gray room processing

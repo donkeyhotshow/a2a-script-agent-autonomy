@@ -55,11 +55,6 @@ export async function updateSessionWithServerResponse(
 ): Promise<Session> {
     const updatedSession: Session = { ...session };
     
-    // Update version if provided
-    if (serverResponse?.context?.version) {
-        updatedSession.version = serverResponse.context.version;
-    }
-    
     // Update context from server response
     if (serverResponse?.context) {
         // Preserve canonical fields that must persist: files, scratchpad, scratchpad_ops

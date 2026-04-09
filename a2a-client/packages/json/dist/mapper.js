@@ -14,6 +14,7 @@ const parser_js_1 = require("./parser.js");
  * Node position counter for auto-layout
  */
 let nodeCounter = 0;
+const CONTEXT_NODE_ID = 'context';
 /**
  * Reset node counter (useful for testing)
  */
@@ -40,12 +41,11 @@ function convertToVueFlowNodes(response) {
         const result = response.result;
         // Context node
         nodes.push({
-            id: `context_${result.context.session_id}`,
+            id: CONTEXT_NODE_ID,
             type: 'context',
             position: calculatePosition(index++),
             data: {
                 label: 'Context',
-                sessionId: result.context.session_id,
                 tasks: result.context.tasks?.length || 0,
                 status: 'loaded',
             },
@@ -187,7 +187,7 @@ function convertToVueFlowNodes(response) {
         const edges = [];
         if ((0, parser_js_1.isActionProposalResponse)(response)) {
             const result = response.result;
-            const contextId = `context_${result.context.session_id}`;
+            const contextId = CONTEXT_NODE_ID;
             // Edges from context to each proposed action
             if (result.proposedActions) {
                 result.proposedActions.forEach((action) => {

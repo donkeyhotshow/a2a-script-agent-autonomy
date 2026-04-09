@@ -5,6 +5,7 @@ import {
   isActivePromiseStatus,
   isRecoverableAsyncSnapshot,
 } from './promise-status.js';
+import { getStorageKvRoot } from './root.js';
 import {
   deriveSessionMode,
   loadSessionIndex,
@@ -19,6 +20,48 @@ import {
   listNewSteps,
   normalizeSessionIdForDir,
 } from './session-paths.js';
+
+function pruneUiStateForMissingSessions(existingSessionIds) {
+  if (!existingSessionIds || typeof existingSessionIds.has !== 'function') return;
+  const uiDir = path.join(getStorageKvRoot(), 'ui');
+  if (!fs.existsSync(uiDir)) return;
+
+  // 1) Delete per-window state files for non-existent sessions.
+  // Current filename shape: window_state_sess_1234567890_1536x864_125.json
+  const windowStateRe = /^window_state_(sess_\d+)_\d+x\d+_\d+\.json$/;
+  for (const f of fs.readdirSync(uiDir)) {
+    const m = f.match(windowStateRe);
+    if (!m) continue;
+    const sid = m[1];
+    if (!existingSessionIds.has(sid)) {
+      try {
+        fs.unlinkSync(path.join(uiDir, f));
+      } catch (e) {
+        // Non-fatal: keep listing sessions even if one stale file cannot be removed.
+        console.error('[ui-prune] Failed to delete UI window state', f, e?.message || e);
+      }
+    }
+  }
+
+  // 2) Prune UI window index (`a2a_session_windows.json`) so it doesn't reference removed sessions.
+  const idxFile = path.join(uiDir, 'a2a_session_windows.json');
+  if (!fs.existsSync(idxFile)) return;
+  try {
+    const raw = fs.readFileSync(idxFile, 'utf8');
+    const wrapper = JSON.parse(raw);
+    const valueRaw = wrapper?.value;
+    if (typeof valueRaw !== 'string') return;
+    const state = JSON.parse(valueRaw);
+    const windows = Array.isArray(state?.windows) ? state.windows.filter((id) => existingSessionIds.has(String(id))) : [];
+    const active = typeof state?.active === 'string' && existingSessionIds.has(state.active) ? state.active : (windows[0] || null);
+    const next = { ...state, windows, active };
+    if (JSON.stringify(next) === JSON.stringify(state)) return;
+    const out = { ...wrapper, value: JSON.stringify(next), timestamp: new Date().toISOString() };
+    fs.writeFileSync(idxFile, JSON.stringify(out, null, 2));
+  } catch (e) {
+    console.error('[ui-prune] Failed to prune a2a_session_windows.json', e?.message || e);
+  }
+}
 
 /**
  * Save session (legacy compatibility) - wraps step-based storage.
@@ -225,8 +268,14 @@ export function loadNewSession(cwd, sessionId) {
 export function listNewSessions(cwd) {
   const sessionsDir = getNewSessionsDir(cwd);
   if (!fs.existsSync(sessionsDir)) return [];
-  return fs.readdirSync(sessionsDir, { withFileTypes: true })
-    .filter(e => e.isDirectory())
+  const entries = fs.readdirSync(sessionsDir, { withFileTypes: true })
+    .filter(e => e.isDirectory());
+
+  // Keep UI kv clean when sessions are deleted manually from disk.
+  const ids = new Set(entries.map(e => normalizeSessionIdForDir(e.name)).filter(Boolean));
+  pruneUiStateForMissingSessions(ids);
+
+  return entries
     .map(e => {
       const session = loadNewSession(cwd, e.name);
       if (!session) return null;

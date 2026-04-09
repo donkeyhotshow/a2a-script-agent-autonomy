@@ -57,10 +57,6 @@ export async function handleRouterChoice(
             execution: { action: choiceId, step: 'start' },
             result: { ...(ctx['result'] as Record<string, unknown> ?? {}), choice: choiceId },
         };
-        // Include sessionId in context if it exists in input
-        if (ctx['session_id']) {
-            patchedContext['session_id'] = ctx['session_id'];
-        }
         const patchedRequest: RequestContext = {
             ...request,
             context: patchedContext,
@@ -85,20 +81,14 @@ export async function handleRouterChoice(
 
         if (actionResult.continue) {
             // Action is executing, return the execute command
-            const resultContext = { 
-                ...(actionResult.message.context || {}) 
-            };
-            // Include sessionId in context if it exists in input
-            if (ctx['session_id'] && typeof ctx['session_id'] === 'string') {
-                resultContext['session_id'] = ctx['session_id'];
-            }
+            const resultContext = { ...(actionResult.context ?? {}) } as Record<string, unknown>;
             return {
                 outcome: 'completed',
                 context: resultContext,
-                execute: actionResult.message.execute ?? {
+                execute: actionResult.execute ?? {
                     form: {
                         title: 'Action Started',
-                        description: actionResult.message.message || 'Action started',
+                        description: actionResult.message || 'Action started',
                         input: [{ name: 'message', type: 'text', label: 'Message', required: true }],
                     },
                 },
@@ -106,20 +96,14 @@ export async function handleRouterChoice(
             };
         } else {
             // Action completed immediately
-            const resultContext = { 
-                ...(actionResult.message.context || {}) 
-            };
-            // Include sessionId in context if it exists in input
-            if (ctx['session_id'] && typeof ctx['session_id'] === 'string') {
-                resultContext['session_id'] = ctx['session_id'];
-            }
+            const resultContext = { ...(actionResult.context ?? {}) } as Record<string, unknown>;
             return {
                 outcome: 'completed',
                 context: resultContext,
-                execute: actionResult.message.execute ?? {
+                execute: actionResult.execute ?? {
                     form: {
                         title: 'Action Completed',
-                        description: actionResult.message.message || 'Action completed',
+                        description: actionResult.message || 'Action completed',
                         input: [{ name: 'message', type: 'text', label: 'Message', required: true }],
                     },
                 },
@@ -129,10 +113,6 @@ export async function handleRouterChoice(
     } catch (error) {
         logger.error('[RouterChoiceHandler] Error executing router choice', { error, choiceId });
         const errorContext: Record<string, unknown> = {};
-        // Include sessionId in context if it exists in input
-        if (ctx['session_id'] && typeof ctx['session_id'] === 'string') {
-            errorContext['session_id'] = ctx['session_id'];
-        }
         return {
             outcome: 'failed' as ProcessOutcome,
             context: errorContext,

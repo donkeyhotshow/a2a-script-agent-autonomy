@@ -3,6 +3,7 @@ import {actionProcessor} from '../actions/action-processor.js';
 import type {ActionProcessorResult} from '../actions/action-processor.js';
 import {actionRegistry} from '../actions/action-registry.js';
 import {logger} from '../utils/logger.js';
+import {stripServerInternalWorkbenchFromContext} from '../services/core/request/client-visible-context.js';
 
 const router = Router({mergeParams: true});
 
@@ -48,12 +49,19 @@ router.post('/:sessionId/next', async (req: Request, res: Response, next: NextFu
             result
         );
 
+        const safeContext =
+            processorResult.context && typeof processorResult.context === 'object'
+                ? stripServerInternalWorkbenchFromContext(processorResult.context as Record<string, unknown>)
+                : undefined;
+
         if (!processorResult.continue) {
             res.json({
                 success: true,
                 data: {
                     completed: true,
                     message: processorResult.message,
+                    ...(safeContext ? { context: safeContext } : {}),
+                    ...(processorResult.execute ? { execute: processorResult.execute } : {}),
                 }
             });
             return;
@@ -64,6 +72,8 @@ router.post('/:sessionId/next', async (req: Request, res: Response, next: NextFu
             data: {
                 completed: false,
                 message: processorResult.message,
+                ...(safeContext ? { context: safeContext } : {}),
+                ...(processorResult.execute ? { execute: processorResult.execute } : {}),
                 actionId: processorResult.actionId,
                 currentStep: processorResult.currentStep,
                 code: processorResult.code,

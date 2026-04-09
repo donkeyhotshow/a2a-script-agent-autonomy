@@ -15,7 +15,6 @@ const router = Router();
 
 /** Context fields preserved on GET /requests/:id/result (align with simulations/SCHEMA.md). */
 const POLL_CONTEXT_KEYS = [
-    'session_id',
     'task',
     'execution',
     'history',

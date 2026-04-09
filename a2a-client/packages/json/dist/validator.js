@@ -43,7 +43,6 @@ exports.protocolErrorSchema = zod_1.z.object({
  */
 exports.contextBlockSchema = zod_1.z.object({
     version: zod_1.z.literal('1.0'),
-    session_id: zod_1.z.string(),
     new_task: zod_1.z.array(zod_1.z.string()).optional(),
     architectural_features: zod_1.z.array(zod_1.z.string()).optional(),
     continue: zod_1.z.boolean().optional(),

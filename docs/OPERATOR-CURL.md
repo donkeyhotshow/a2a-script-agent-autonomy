@@ -101,13 +101,6 @@ For production closure criteria and manual QA acceptance gates, use the canonica
 
 See the [AGENTS.md](../AGENTS.md) *Why iteration stops* section for detailed anti-stop patterns and driver checklist.
 
-1. **`POST /api/a2a/sessions`** — optional: `task`, `mode` (`"agent"` / `"dialog"` / `"task-decomposition"`), or **`execution`**: `{ "action": "…", "step": "…" }`, plus `projectId` / `projectRoot`, `llmModel` (see **`GET http://localhost:11434/api/tags`**), `title`, `id` (full table above; root **`AGENTS.md`**).
-2. **`GET /api/a2a/sessions/{id}`** — if `execute.form.choices` → next body uses **`result.choice`** (or `{ "task": "<id>" }`); else **`result.message`** / `{ "task": "<free text>" }`.
-3. **`POST /api/a2a/sessions/{id}/next`** with the body from step 2.
-4. **`GET /api/a2a/sessions/{id}/async`** — repeat until not pending / you have a settled `execute` (re-**GET session** if ambiguous).
-5. If still stuck, re-run step 2; if **`GET …/sessions/{id}`** shows **`asyncPending`** but thin **`execute`**, keep polling **`/async`** then re-GET session. For **direct** A2A polling you need a server **`prom_*` id** (from step `server-promise.json` or server logs), not from the Client API `/next` ack — see *Direct A2A Server invoke* below.
-6. Do **not** treat “I sent one `/next`” as done; parity with the web UI is **next + poll until settled**.
-
 ### Local LLM upstream is generating — pause other work
 
 See the [AGENTS.md](../AGENTS.md) *Common Issues* section for Local LLM upstream handling and debugging stuck pipelines.

@@ -1,1 +1,0 @@
-Complete step-1 in sequence queue, advancing headIndex to step-2

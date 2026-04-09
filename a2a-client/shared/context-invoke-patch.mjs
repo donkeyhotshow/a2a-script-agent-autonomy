@@ -30,12 +30,6 @@ export function pickInvokeContextPatch(src) {
     if (o.ragResults !== undefined) {
         out.ragResults = o.ragResults;
     }
-    if (typeof o.version === 'string') {
-        out.version = o.version;
-    }
-    if (typeof o.session_id === 'string' && o.session_id.startsWith('srv_sess_')) {
-        out.session_id = o.session_id;
-    }
     if (typeof o.llmModel === 'string' && o.llmModel.length > 0) {
         out.llmModel = o.llmModel;
     }

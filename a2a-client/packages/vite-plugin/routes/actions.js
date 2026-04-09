@@ -152,7 +152,6 @@ export function createActionsRoutes({ cwd }) {
                                     id: parsed.id,
                                     title: parsed.title || parsed.id,
                                     description: parsed.description || '',
-                                    version: parsed.version || '1.0',
                                     type: 'yaml',
                                     triggers: parsed.triggers || [],
                                     context: parsed.context || {},
@@ -191,7 +190,6 @@ export function createActionsRoutes({ cwd }) {
                             id,
                             title,
                             description: description.substring(0, 200),
-                            version: '1.0',
                             type: 'md',
                             steps
                         });
@@ -216,7 +214,6 @@ export function createActionsRoutes({ cwd }) {
                                 id,
                                 title,
                                 description: 'Auto-AI placeholder action',
-                                version: '1.0',
                                 type: 'auto-ai',
                                 steps: []
                             });

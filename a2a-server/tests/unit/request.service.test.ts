@@ -55,7 +55,7 @@ describe('Request Service', () => {
         it('should validate required fields', () => {
             const validData = {
                 clientId: 'client-123',
-                context: {version: '1.0', session_id: 'session-1'},
+                context: {task: 'do something'},
             };
 
             expect(validData.clientId).toBeDefined();
@@ -65,7 +65,7 @@ describe('Request Service', () => {
         it('should allow optional fields', () => {
             const dataWithOptional = {
                 clientId: 'client-123',
-                context: {version: '1.0'},
+                context: {},
                 message: 'Hello',
                 priority: 5,
             };
@@ -194,16 +194,15 @@ describe('Request Service', () => {
 
     describe('Context Serialization', () => {
         it('should serialize context to JSON', () => {
-            const context = {version: '1.0', session_id: 'session-1'};
+            const context = {task: 't'};
             const serialized = JSON.stringify(context);
             const deserialized = JSON.parse(serialized);
 
-            expect(deserialized.version).toBe('1.0');
+            expect(deserialized.task).toBe('t');
         });
 
         it('should handle nested context objects', () => {
             const context = {
-                version: '1.0',
                 tasks: [{id: 'task-1', type: 'ANALYZE'}],
             };
             const serialized = JSON.stringify(context);

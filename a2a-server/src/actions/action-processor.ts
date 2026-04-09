@@ -17,8 +17,6 @@ import {ActionService, ActionResponseSimulation} from './action-service.js';
 import {ActionDefinition, SubAction} from './types.js';
 import type {ContextBlock, ServerMessage, Task, TaskStatus, TaskType} from '../types/index.js';
 
-const PROTOCOL_VERSION = '1.0.0';
-
 /**
  * Результат обработки action
  */
@@ -26,7 +24,9 @@ export interface ActionProcessorResult {
     /** Нужно ли продолжать обработку */
     continue: boolean;
     /** Сообщение для клиента */
-    message: ServerMessage;
+    message: string;
+    context?: ContextBlock;
+    execute?: ServerMessage['execute'];
     /** Action ID если найден */
     actionId?: string;
     /** Текущий шаг */
@@ -71,7 +71,7 @@ export class ActionProcessor {
         if (matches.length === 0 || !matches[0]) {
             return {
                 continue: false,
-                message: this.buildMessage(sessionId, 'completed', 100, `No suitable action found for task: ${taskDescription}`, {
+                ...this.buildMessage(sessionId, 'completed', 100, `No suitable action found for task: ${taskDescription}`, {
                     taskId: 'action-search',
                 }),
             };
@@ -88,7 +88,7 @@ export class ActionProcessor {
 
         return {
             continue: true,
-            message: this.buildActionProposalMessage(sessionId, bestMatch, response),
+            ...this.buildActionProposalMessage(sessionId, bestMatch, response),
             actionId: action.id,
             ...(firstStep ? {currentStep: firstStep} : {}),
             ...(firstStep?.code ? {code: firstStep.code} : {}),
@@ -111,14 +111,14 @@ export class ActionProcessor {
         if (!response || response.outcome === 'completed') {
             return {
                 continue: false,
-                message: this.buildMessage(sessionId, 'completed', 100, response?.message || 'Action completed'),
+                ...this.buildMessage(sessionId, 'completed', 100, response?.message || 'Action completed'),
             };
         }
 
         if (response.outcome === 'failed') {
             return {
                 continue: false,
-                message: this.buildMessage(sessionId, 'failed', 0, response.error || 'Step failed'),
+                ...this.buildMessage(sessionId, 'failed', 0, response.error || 'Step failed'),
             };
         }
 
@@ -139,7 +139,7 @@ export class ActionProcessor {
 
         return {
             continue: true,
-            message: this.buildMessage(sessionId, 'in_progress', progress, response.message ?? 'Step in progress', {
+            ...this.buildMessage(sessionId, 'in_progress', progress, response.message ?? 'Step in progress', {
                 taskId: execAction,
                 execution: {
                     action: execAction,
@@ -167,7 +167,7 @@ export class ActionProcessor {
         if (!response || response.outcome === 'failed') {
             return {
                 continue: false,
-                message: this.buildMessage(sessionId, 'failed', 0, response?.error || `Failed to start action: ${actionId}`),
+                ...this.buildMessage(sessionId, 'failed', 0, response?.error || `Failed to start action: ${actionId}`),
             };
         }
 
@@ -183,7 +183,7 @@ export class ActionProcessor {
 
         return {
             continue: true,
-            message: this.buildActionExecutingMessage(sessionId, actionId, response, executingAction, nextSteps),
+            ...this.buildActionExecutingMessage(sessionId, actionId, response, executingAction),
             actionId,
             ...(executingAction ? {currentStep: executingAction} : {}),
         };
@@ -196,33 +196,25 @@ export class ActionProcessor {
         response: ActionResponseSimulation,
         executingAction: SubAction | undefined,
         _nextSteps: Array<{ actionId: string; title: string }>
-    ): ServerMessage {
+    ): Pick<ActionProcessorResult, 'message' | 'context' | 'execute'> {
         const stepId = executingAction?.id ?? 'start';
-        const context: ContextBlock = {
-            version: PROTOCOL_VERSION,
-            session_id: sessionId,
-            execution: {
-                action: actionId,
-                step: stepId,
-            },
-        };
+        // NOTE: client-visible protocol must not include client session ids or version fields.
+        // ActionProcessor still uses `sessionId` internally as an in-memory key.
+        const context: ContextBlock = { execution: { action: actionId, step: stepId } };
 
-        const out: ServerMessage = {
-            context,
+        return {
             message: response.message,
+            context,
+            execute: executingAction?.code
+                ? {
+                      script: {
+                          input: {},
+                          output: 'step_result',
+                          code: executingAction.code,
+                      },
+                  }
+                : undefined,
         };
-
-        if (executingAction?.code) {
-            out.execute = {
-                script: {
-                    input: {},
-                    output: 'step_result',
-                    code: executingAction.code,
-                },
-            };
-        }
-
-        return out;
     }
 
     /**
@@ -241,16 +233,15 @@ export class ActionProcessor {
         sessionId: string,
         match: { action: ActionDefinition; matchScore: number },
         response: ActionResponseSimulation
-    ): ServerMessage {
+    ): Pick<ActionProcessorResult, 'message' | 'context' | 'execute'> {
         // Для action_proposal НЕ добавляем tasks с in_progress - это соответствует Gold Standard
-        const context: ContextBlock = {
-            version: PROTOCOL_VERSION,
-            session_id: sessionId,
-        };
+        // NOTE: do not leak client session identifiers.
+        const context: ContextBlock = {};
 
         const firstStep = match.action.subActions[0];
 
-        const out: ServerMessage = {
+        return {
+            message: response.message,
             context: {
                 ...context,
                 execution: {
@@ -258,20 +249,16 @@ export class ActionProcessor {
                     step: firstStep?.id ?? 'start',
                 },
             },
-            message: response.message,
+            execute: firstStep?.code
+                ? {
+                      script: {
+                          input: {},
+                          output: 'step_result',
+                          code: firstStep.code,
+                      },
+                  }
+                : undefined,
         };
-
-        if (firstStep?.code) {
-            out.execute = {
-                script: {
-                    input: {},
-                    output: 'step_result',
-                    code: firstStep.code,
-                },
-            };
-        }
-
-        return out;
     }
 
     private buildMessage(
@@ -286,7 +273,7 @@ export class ActionProcessor {
             execute?: ServerMessage['execute'];
             tasks?: Task[];
         }
-    ): ServerMessage {
+    ): Pick<ActionProcessorResult, 'message' | 'context' | 'execute'> {
         const tasks = extra?.tasks ?? [
             {
                 id: extra?.taskId ?? 'action',
@@ -296,23 +283,17 @@ export class ActionProcessor {
             },
         ];
 
+        // NOTE: `sessionId` is internal-only. Client correlates steps via promiseId, not sessionId.
         const context: ContextBlock = {
-            version: PROTOCOL_VERSION,
-            session_id: sessionId,
             tasks,
             ...(extra?.execution ? {execution: extra.execution} : {}),
         };
 
-        const out: ServerMessage = {
-            context,
+        return {
             message,
+            context,
+            execute: extra?.execute,
         };
-
-        if (extra?.execute) {
-            out.execute = extra.execute;
-        }
-
-        return out;
     }
 }
 

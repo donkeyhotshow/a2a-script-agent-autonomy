@@ -10,14 +10,11 @@
  * ASYNC-only: POST /api/v1/invoke always returns promiseId; clients poll GET …/requests/:id/result.
  */
 
-import {parseContextBlock} from '../../protocol/context-parser.js';
-import type {ContextBlock, FileBlock} from '../../types/index.js';
-import {CURRENT_PROTOCOL_VERSION} from '../../protocol/versioning/protocol-versions.js';
+import type {FileBlock} from '../../types/index.js';
 import {requestService} from '../core/request/request.service.js';
 import {resolveExecution, resolveResultObject} from '../core/request-processor/normalization.js';
 import {ACTION_TO_SCHEMA} from '../../config/router-static.js';
 import {trackRequestStart} from './pipeline-observability.service.js';
-import {randomUUID} from 'node:crypto';
 
 /**
  * Router beat + `result.choice` → dialog|agent|task-decomposition: set `transformSchema` on the
@@ -55,34 +52,20 @@ export interface InvokeResult {
     promiseId?: string;
 }
 
-/**
- * Stateless server: only **server-issued** `srv_sess_*` ids are sticky across invokes.
- * Client / storage ids (`sess_*`, bare UUIDs, etc.) must not be echoed — replace with a new `srv_sess_*`.
- */
-function ensureContextSessionId(ctx: Record<string, unknown>): string {
-    const current = typeof ctx['session_id'] === 'string' ? ctx['session_id'].trim() : '';
-    if (current.startsWith('srv_sess_') && current.length > 'srv_sess_'.length) {
-        ctx['session_id'] = current;
-        return current;
-    }
-    // Anonymous / missing session: stable id so prompts (and ai-integration L3 keys) match across runs.
-    if (current === '' || current.toLowerCase() === 'stateless') {
-        ctx['session_id'] = 'srv_sess_stateless';
-        return 'srv_sess_stateless';
-    }
-    const generated = `srv_sess_${randomUUID()}`;
-    ctx['session_id'] = generated;
-    return generated;
-}
-
 /** Client API / storage identifiers — not part of LLM or stateless invoke contract; strip so prompts never see them. */
 function stripClientStorageIdsFromContext(ctx: Record<string, unknown>): void {
+    // session_id is server-internal and must be ignored from client input.
+    delete ctx['session_id'];
+    // Protocol versioning is not part of the wire contract.
+    delete ctx['version'];
     delete ctx['projectId'];
     delete ctx['projectRoot'];
     delete ctx['sessionId'];
     const nested = ctx['context'];
     if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
         const n = nested as Record<string, unknown>;
+        delete n['session_id'];
+        delete n['version'];
         delete n['projectId'];
         delete n['projectRoot'];
         delete n['sessionId'];
@@ -90,30 +73,10 @@ function stripClientStorageIdsFromContext(ctx: Record<string, unknown>): void {
 }
 
 export async function invoke(clientId: string, input: InvokeInput): Promise<InvokeResult> {
-    let context: ContextBlock;
-    if (input.context) {
-        // `server-invoke-request.schema.json` does not require `context.session_id` from clients/tests,
-        // but our internal `parseContextBlock` requires it. Default to stateless when missing.
-        const raw = input.context as unknown;
-        if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
-            const r = raw as Record<string, unknown>;
-            if (typeof r['session_id'] !== 'string' || r['session_id'].trim().length === 0) {
-                context = parseContextBlock({...r, session_id: 'stateless'});
-            } else {
-                context = parseContextBlock(r);
-            }
-        } else {
-            context = parseContextBlock(input.context);
-        }
-    } else {
-        context = {
-            version: CURRENT_PROTOCOL_VERSION,
-            session_id: 'stateless',
-        };
-    }
-
-    // Используем промежуточный объект для избежания ошибок типизации
-    const ctx: Record<string, unknown> = context as unknown as Record<string, unknown>;
+    const ctx: Record<string, unknown> =
+        input.context && typeof input.context === 'object' && !Array.isArray(input.context)
+            ? {...(input.context as Record<string, unknown>)}
+            : {};
 
     // Add task to context if provided (top-level field for action_proposal)
     if (input.task) {
@@ -160,7 +123,6 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
     applyRouterTransformSchemaHint(ctx);
 
     stripClientStorageIdsFromContext(ctx);
-    ensureContextSessionId(ctx);
 
     const topLlm =
         typeof input.llmModel === 'string' && input.llmModel.trim()

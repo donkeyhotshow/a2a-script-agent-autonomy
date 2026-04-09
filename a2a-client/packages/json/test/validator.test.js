@@ -12,8 +12,6 @@ describe('validateResponse', () => {
       type: 'action_proposal',
       result: {
         context: {
-          version: '1.0',
-          session_id: 'test-session-123'
         },
         proposedActions: [
           {
@@ -65,7 +63,7 @@ describe('getResponseType', () => {
       timestamp: '2026-02-25T10:00:00Z',
       type: 'action_proposal',
       result: {
-        context: { version: '1.0', session_id: 'test' },
+        context: {},
         proposedActions: []
       }
     };
@@ -112,7 +110,7 @@ describe('validateResponseType', () => {
       timestamp: '2026-02-25T10:00:00Z',
       type: 'action_proposal',
       result: {
-        context: { version: '1.0', session_id: 'test' },
+        context: {},
         proposedActions: []
       }
     };
@@ -128,7 +126,7 @@ describe('validateResponseType', () => {
       timestamp: '2026-02-25T10:00:00Z',
       type: 'action_proposal',
       result: {
-        context: { version: '1.0', session_id: 'test' },
+        context: {},
         proposedActions: []
       }
     };
