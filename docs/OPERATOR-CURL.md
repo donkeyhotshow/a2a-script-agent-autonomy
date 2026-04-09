@@ -66,14 +66,7 @@ See also: [`a2a-client/docs/WEB_UI_PROTOCOL.md`](../a2a-client/docs/WEB_UI_PROTO
 
 ## Minimal mental model
 
-| Step | Meaning |
-|------|--------|
-| Create session | `POST /api/a2a/sessions` — body fields below |
-| First user turn | Usually **free text** — direction of work: `POST …/next` with `result.message` **or** shorthand `{ "task": "<natural language>" }` when the session is **not** showing router **choices** |
-| Router turn | When the latest step shows router choices (`execute.form.choices` **or** `execute.form.meta.routerChoices`), next `POST …/next` must send **`result.choice`** = a choice **`id`** (shorthand: `{ "task": "<choice id>" }`). On `execution.step === 'router'`, the Client API may map localized free text to **`dialog`** / **`agent`** / **`task-decomposition`** — [`a2a-client/docs/WEB_UI_PROTOCOL.md`](../a2a-client/docs/WEB_UI_PROTOCOL.md) § *Router dialog*. |
-| Wait / fetch result | `GET .../async` (repeat until done); body uses **`asyncPending`** + **`status`** (and optional projected `execute`, `result`, deferral fields) — not session `promiseStatus`; see [`a2a-client/docs/WEB_UI_PROTOCOL.md`](../a2a-client/docs/WEB_UI_PROTOCOL.md) § *GET `/async` response shape*. Hydrate with **`GET …/sessions/{id}`** between turns if unsure. |
-
-Exact shapes: root **`AGENTS.md`** → *Unified manual path* → *Router dialog (two beats)*; fallback router **`id`** values: **`dialog`**, **`agent`**, **`task-decomposition`** — [`shared/router-static-choices.json`](../shared/router-static-choices.json). Or copy a capture under `a2a-client/storage/sessions/`.
+See the [AGENTS.md](../AGENTS.md) *Unified manual path* section for the complete session dialog flow and router dialog patterns.
 
 ### `POST /api/a2a/sessions` body (create)
 
@@ -104,10 +97,9 @@ Implementation (shared Vite + SDK): [`a2a-client/shared/a2a-invoke-builders.mjs`
 
 ## Driver checklist (anti-stop)
 
-Use this as a **literal** loop for curl or scripts so a low-context prompt does not become a single-shot HTTP trace.
 For production closure criteria and manual QA acceptance gates, use the canonical protocol: [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](OPERATOR-MONITOR-MANUAL-QA.md).
 
-**Orange alert (default for this doc):** **`promiseId` on invoke**, then poll **`/requests/:id/result`**; Client API: **`/next` → `GET …/async` until idle → `GET …/sessions/{id}`** before the next `/next`. Details: [`docs/AGENT-DIALOG-API-STATE.md`](AGENT-DIALOG-API-STATE.md) (*Orange alert*), [`GLOSSARY.md`](GLOSSARY.md) (*Orange alert*).
+See the [AGENTS.md](../AGENTS.md) *Why iteration stops* section for detailed anti-stop patterns and driver checklist.
 
 1. **`POST /api/a2a/sessions`** — optional: `task`, `mode` (`"agent"` / `"dialog"` / `"task-decomposition"`), or **`execution`**: `{ "action": "…", "step": "…" }`, plus `projectId` / `projectRoot`, `llmModel` (see **`GET http://localhost:11434/api/tags`**), `title`, `id` (full table above; root **`AGENTS.md`**).
 2. **`GET /api/a2a/sessions/{id}`** — if `execute.form.choices` → next body uses **`result.choice`** (or `{ "task": "<id>" }`); else **`result.message`** / `{ "task": "<free text>" }`.
@@ -118,12 +110,7 @@ For production closure criteria and manual QA acceptance gates, use the canonica
 
 ### Local LLM upstream is generating — pause other work
 
-When **`GET …/async`** keeps `asyncPending` (or **`GET …/api/v1/requests/{promiseId}/result`** returns `"status":"processing"`), the chain is often **waiting on Local LLM upstream** (via ai-integration). **Do not** immediately restart the stack or assume a bug.
-
-1. **Confirm** a run is in progress: Local LLM upstream logs, **`GET http://localhost:11435/api/ps`** (running models when supported), host CPU/GPU activity, ai-integration / proxy logs (e.g. under `ai-integration/proxy_logs/` when enabled).
-2. **After** that, **stop disruptive actions** until the call finishes: no **`kill-all` / `start-all`**, no extra heavy parallel sessions on the **same** Local LLM upstream, no extra `/next` spam on the same session unless you mean to replace or cancel work.
-
-If Local LLM upstream is **idle** but status stays `processing`, treat it as a **stuck** pipeline — debug per root **`AGENTS.md`** → *Common Issues* and *Debugging*.
+See the [AGENTS.md](../AGENTS.md) *Common Issues* section for Local LLM upstream handling and debugging stuck pipelines.
 
 **Hub ticket stuck in `error` (ai-integration, port 11434):** `GET /promises/pending` only lists **pending** work. List failures with **`GET /promises/errors`**, then **`POST /promise/{id}/retry`** and **`POST /promise/{id}/execute`**, or **`DELETE /promise/{id}`** to drop the ticket — [`ai-integration/docs/api-reference/PROXY_API.md`](../ai-integration/docs/api-reference/PROXY_API.md) § *Promise queue (hub tickets)*. From the Client API origin (default **`http://localhost:5173`**): same paths under **`/api/a2a/hub/...`** (proxy to `AI_HUB_URL`).
 

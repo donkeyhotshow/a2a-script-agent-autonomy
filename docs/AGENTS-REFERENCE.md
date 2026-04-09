@@ -93,35 +93,7 @@ Driver-oriented step list: [`OPERATOR-CURL.md`](OPERATOR-CURL.md) → *Driver ch
 
 ## A2A Protocol
 
-### Overview
-
-`POST /api/v1/invoke` returns **`promiseId`**; terminal **`execute` / `context`** come from **`GET /api/v1/requests/{id}/result`** (poll until `completed` / `failed`). The Client API uses the same contour via **`/next` + `GET …/async`**.
-
-### PromiseId polling (normative)
-
-Do **not** apply wall-clock timeouts or max-attempt caps to **polling `GET /api/v1/requests/{promiseId}/result`**, **`GET /api/a2a/sessions/{id}/async`** until idle/settled, or Client API layers that mirror those. Wait until `status` is terminal (`completed` / `failed` / `cancelled`) or async is no longer pending; only **interval/backoff** between polls is allowed. Optional **per-request** HTTP timeouts on unrelated calls (health checks, stack probes) are fine. Implementation: [`a2a-client/packages/vite-plugin/daemon/a2a-result-poll.js`](../a2a-client/packages/vite-plugin/daemon/a2a-result-poll.js), [`shared/api-helpers.js`](../shared/api-helpers.js) (`DEFAULT_POLL_TIMEOUT` is unbounded for session-async helpers).
-
-### Action-Key Shape (Mandatory)
-
-All `execute` and `result` objects use single action-type key:
-
-```json
-{ "execute": { "script": {...} } }
-{ "result": { "read-file": {...} } }
-```
-
-### AI-Action Transform
-
-LLM controls `context.execution.step` → server persists via transforms.
-
-### Request Flows
-
-| Step | Response |
-|------|----------|
-| `POST /api/v1/invoke` | `{ data: { promiseId, status: "pending", pollUrl } }` |
-| Poll `GET /api/v1/requests/{promiseId}/result` | `status` → `completed` / `failed`; body includes `execute`, `context` when done |
-
-**Dialog/LLM deferral:** For the dialog transform pipeline, many hub/transform/LLM failures **do not** finalize `promiseId` as `failed` immediately; the server re-queues the same id (`pending` + `retryAfter`) until success or max retries. Normative detail: **[`PROMISE-RETRY-DIALOG.md`](PROMISE-RETRY-DIALOG.md)**.
+See [`docs/new-request-flow/PROTOCOL.md`](new-request-flow/PROTOCOL.md) for the complete A2A protocol specification, including promise polling, action-key shapes, and request flows.
 
 ### Context Fields (System-Managed)
 
@@ -175,12 +147,7 @@ Web UI (5173) → Client API (5173/api/a2a) → A2A Server (3000) → AI Hub (11
 
 ### Ports
 
-| Port | Service | Role |
-|------|---------|------|
-| 11435 | Local LLM upstream | LLM |
-| 11434 | AI Integration | Proxy |
-| 3000 | a2a-server | API (stateless) |
-| 5173 | Vite | Web UI + Client API |
+See [System Startup Documentation](SYSTEM_STARTUP.md#портовая-схема) for complete port mapping.
 
 ### Live stack restart (Windows)
 
@@ -205,34 +172,13 @@ Operator curl walkthrough: [`OPERATOR-CURL.md`](OPERATOR-CURL.md).
 
 ## Session Storage Format
 
-```
-a2a-client/storage/sessions/{sessionId}/
-├── {stepNum}/
-│   ├── client-result.json       (user input/choice)
-│   ├── request-to-server.json   (payload sent)
-│   ├── server-response.json     (execute/context/result)
-│   ├── server-promise.json      (optional, async pending)
-│   └── messages.json            (conversation slice)
-```
-
-**Rebuild from highest step with server-response.json.**
+See [`docs/SESSION-READ-MODEL.md`](SESSION-READ-MODEL.md) for complete session storage format and reconstruction guidelines.
 
 ---
 
 ## Debugging
 
-```bash
-# Health checks
-curl http://localhost:3000/health              # A2A Server
-curl http://localhost:11434/health             # AI Integration
-curl http://localhost:11435/api/tags           # Local LLM upstream
-curl http://localhost:5173/api/a2a/projects    # Client API
-
-# Test async (2-minute timeout typical)
-curl http://localhost:3000/api/v1/requests/{promiseId}/result
-# Check status, wait, retry if "processing"
-# While "processing": confirm Local LLM upstream is actually generating (e.g. curl http://localhost:11435/api/ps) before restarts; see docs/OPERATOR-CURL.md → "Local LLM upstream is generating — pause other work"
-```
+See [System Startup Documentation](SYSTEM_STARTUP.md#health-checks) for health check procedures and [Operator CURL Guide](OPERATOR-CURL.md) for detailed debugging workflows.
 
 ---
 
@@ -279,36 +225,13 @@ See [docs/adr/README.md](adr/README.md) for architecture decisions.
 
 ## DEV_STATE Protocol
 
-**Always update:**
-
-- Before starting a task
-- After completing a task
-- On any risk/status change
-
-**Rules:**
-
-- Root: cross-module facts only
-- Each module: own implementation details
-- No abstract statements; all tasks testable
-- Remove completed; no dead roadmap items
-- Tasks >14 days old → backlog with blocker reason
-- **Idle queue (explicit):** **If** there is no actionable work — empty `tasks/pending/`, nothing to execute, checklists done — **then** do **not** treat that as “done for the day”. **First** prune root and module `DEV_STATE.md` (remove done items, duplicates, noise). **Then** discover new work (code, sims, risks, backlog) and **write** concrete testable tasks into the same files and `tasks/` as needed. **Then** resume the normal task cycle.
-
-**Why this must be spelled out:** An empty backlog **feels** like closure (“nothing left to run”), but here it is a **state transition** into prune → discover → write. Without that rule, agents default to stopping; the protocol overrides that default.
-
-See [DEV_STATE.md](../DEV_STATE.md) and [DOCUMENTATION-MACHINE-READABLE.md](DOCUMENTATION-MACHINE-READABLE.md).
+See [`.cursor/rules/document-hierarchy.mdc`](.cursor/rules/document-hierarchy.mdc#dev_state-protocol) for the complete DEV_STATE protocol definition. Also see [DEV_STATE.md](../DEV_STATE.md) for current system state.
 
 ---
 
 ## Operational Checklist
 
-1. Action-Key Shape used? (JSON must have ONE action type)
-2. DEV_STATE updated before/after work?
-3. Empty queue handled? (prune → discover → write tasks)
-4. Agent safety: goal/files/risks stated, minimal diffs applied?
-5. Imports follow `.js` rule for NodeNext modules?
-
-**Phases:** Environment → Component Validation → Integration → End-to-End → Production Readiness
+See the [AGENTS.md](../AGENTS.md) for the complete operational checklist and agent safety rules.
 
 ---
 
