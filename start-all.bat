@@ -147,7 +147,7 @@ echo [Step 2/8] Verifying all ports are free...
 set PORTS_OK=1
 call :verify_port_free %PROXY_PORT% 10
 if errorlevel 1 (
-    echo   [WARN] Port %PROXY_PORT% occupied; continuing ^(ai-integration start handles already-running instance^)
+    echo   [WARN] Port %PROXY_PORT% occupied; continuing ^(a2a-ai-hub start handles already-running instance^)
 ) else (
     echo   [OK] Port %PROXY_PORT% verified free
 )
@@ -178,16 +178,16 @@ REM ==========================================
 REM Step 4: Start ai-integration
 REM ==========================================
 echo.
-echo [Step 4/8] Starting ai-integration on port %PROXY_PORT%...
-call runbook\scripts\start-ai-integration.bat
+echo [Step 4/8] Starting a2a-ai-hub on port %PROXY_PORT%...
+call runbook\scripts\start-a2a-ai-hub.bat
 if errorlevel 1 set EXIT_CODE=1
-:ai_done
+:a2a_ai_hub_done
 
 REM ==========================================
 REM Step 4b: Promise queue daemon (PROMISE_DAEMON_ONLY default on — drains ?promise=1 on hub)
 REM ==========================================
 echo.
-echo [Step 4b/8] Starting promise-queue-daemon (ai-integration hub)...
+echo [Step 4b/8] Starting promise-queue-daemon (a2a-ai-hub)...
 call runbook\scripts\start-promise-queue-daemon.bat
 if errorlevel 1 set EXIT_CODE=1
 
@@ -224,7 +224,7 @@ REM ==========================================
 echo.
 echo [Final Check] Verifying all PIDs captured...
 set VERIFY_FAIL=0
-call :verify_and_capture_pid %PROXY_PORT% AI_INTEGRATION_PID "ai-integration"
+call :verify_and_capture_pid %PROXY_PORT% A2A_AI_HUB_PID "a2a-ai-hub"
 if errorlevel 1 set VERIFY_FAIL=1
 call :verify_and_capture_pid %SERVER_PORT% A2A_SERVER_PID "a2a-server"
 if errorlevel 1 set VERIFY_FAIL=1
@@ -242,7 +242,7 @@ echo --- Log files (for services that redirect stdout^) ---
 echo   a2a-server:     %CD%\a2a-server\logs\server.log
 echo   web-ui:         %CD%\a2a-client\logs\web-ui.log
 echo   client-api:     %CD%\a2a-client\logs\client-api.log
-echo   ai-integration: console window titled "ai-integration" (no default file log^)
+echo   a2a-ai-hub: console window titled "a2a-ai-hub" (no default file log^)
 echo.
 
 if %EXIT_CODE% neq 0 (
@@ -259,7 +259,7 @@ if %EXIT_CODE% neq 0 (
 echo === All services started successfully ===
 echo.
 echo Services:
-echo   - ai-integration: http://localhost:%PROXY_PORT% (API proxy)
+echo   - a2a-ai-hub: http://localhost:%PROXY_PORT% (API proxy)
 echo   - promise-queue-daemon: separate window (drains hub promise queue when PROMISE_DAEMON_ONLY is on)
 echo   - a2a-server:   http://localhost:%SERVER_PORT%
 echo   - client-api:   http://localhost:%CLIENT_API_PORT%

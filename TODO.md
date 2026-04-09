@@ -1,29 +1,17 @@
-# Module Migration: Renames & Moves (Revised - Archive preserved)
+# Runbook CLI Port 3005 Status Server Implementation
 
-Status: 2/6 (2024)
+Status: In progress
 
-## 1. Update root package.json [COMPLETE]
-- Edit devRoots: \"ai-hub\" → \"a2a-ai-hub\".
+## Steps:
+- [x] 1. Create this TODO.md file
+- [x] 2. Update `tools/runbook/runbook-cli.js`:
+  - Add 'runbook-status' service config (port 3005)
+  - Integrate port-manager.js for reserving 3005
+  - Implement lightweight HTTP status server on 3005 in daemon mode
+  - Modify start logic to check 3005 status first (prevent duplicates)
+  - Add /status endpoint with services overview
+- [x] 3. Test daemon-start: verify binds 3005, curl localhost:3005/status shows status
+- [x] 4. Test duplicate prevention: run cli start multiple times, no restarts
+- [ ] 5. Update TODO.md with completion
+- [ ] 6. attempt_completion
 
-## 2. Standardize a2a-ai-hub packaging [COMPLETE]
-- setup.py removed.
-- List files; delete setup.py, package.json if present (pyproject.toml primary for Python).
-
-## 3. Rename root runbook/ → tools/runbook/ [PENDING]
-- mkdir tools if needed.
-- mv runbook tools/
-- Update refs: grep -r runbook/ ; fix bat/docker/scripts.
-
-## 4. Smoke test stack [PENDING]
-- .\start-all.bat
-- Check ports 3000,5173,11434
-- npm run central
-
-## 5. Update this TODO.md after each step
-
-## 6. Git commit & gh pr create --title \"refactor: module names/locations\" --body \"Per plan\"
-
-Notes:
-- Archive/ untouched.
-- No deletions except redundant packaging.
-- VSCode tabs outdated - ignore/reload.

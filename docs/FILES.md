@@ -14,7 +14,7 @@ c:/workspace/org-carrier/a2a-script-agent/
 │   ├── packages/        # npm пакети (sdk, rag, execution, embedding, history, json, types)
 │   └── web/             # Web UI (порт 5173)
 ├── a2a-server/          # Серверна частина (порт 3000)
-├── ai-integration/    # AI Hub proxy → Local LLM upstream (див. порти нижче)
+├── a2a-ai-hub/    # AI Hub proxy → Local LLM upstream (див. порти нижче)
 └── docs/new-request-flow/    # Документація та плани
 ```
 

@@ -24,7 +24,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@a2a-client/shared": "file:../../shared",
+    "@a2a-client/core": "file:../core",
     "@a2a/rag": "*",
     "cors": "^2.8.6",
     "express": "^4.19.2",

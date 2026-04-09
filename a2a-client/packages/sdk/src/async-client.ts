@@ -9,7 +9,7 @@ import {
     DEFAULT_POLL_TIMEOUT,
     isPromiseResolved,
     isPromiseFailed
-} from '../../../shared/api-helpers.js';
+} from '../core/api-helpers.js';
 
 /**
  * Async client for handling long-running operations
@@ -221,3 +221,4 @@ export class AsyncClient {
 export function createAsyncClient(options: AsyncClientOptions): AsyncClient {
     return new AsyncClient(options);
 }
+
