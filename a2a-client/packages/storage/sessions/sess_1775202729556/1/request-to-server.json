@@ -1,0 +1,14 @@
+{
+  "step": 1,
+  "context": {
+    "version": "2.0",
+    "session_id": "sess_1775202729556",
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  },
+  "result": {
+    "message": "List the top-level files in the repository root, then read START-FULL-SPECTRUM.md and return a 3-bullet summary."
+  }
+}

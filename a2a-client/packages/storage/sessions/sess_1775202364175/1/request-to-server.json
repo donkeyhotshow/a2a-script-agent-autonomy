@@ -1,0 +1,14 @@
+{
+  "step": 1,
+  "context": {
+    "version": "2.0",
+    "session_id": "sess_1775202364175",
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  },
+  "result": {
+    "message": "Тест українською: direct-tests router agent no-loop"
+  }
+}

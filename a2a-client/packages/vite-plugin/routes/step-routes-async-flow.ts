@@ -3,18 +3,18 @@ import pathMod from 'path';
 import http from 'http';
 
 import { buildExecuteProjection } from './utils/execute-projection-dto.ts';
-import { isPromisePollComplete } from '@a2a-client/storage/promise-status.ts';
+import { isPromisePollComplete } from '@a2a/storage/promise-status.ts';
 import * as stepHandlers from './handlers/step-handlers.ts';
-import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.ts';
+import { getA2aServerBaseUrl } from '@a2a/shared/a2a-server-base.ts';
 import { maybeChainAgentTools } from './step-routes-agent-flow.ts';
 import { finalizeSession } from './persistence-manager.ts';
 import { unwrapA2aResponse } from './utils/builders.ts';
 import {
-    normalizePromisePollStatus,
-    isRecoverableAsyncSnapshot,
-} from '@a2a-client/shared/client-api-envelope.mjs';
-import { resolveProjectPathForApi, loadSession, saveSession } from '@a2a-client/storage/projectSessions.ts';
-import { registerStepSessionsParent } from '@a2a-client/storage/newSessions.ts';
+     normalizePromisePollStatus,
+     isRecoverableAsyncSnapshot,
+   } from '@a2a/shared/client-api-envelope.mjs';
+import { resolveProjectPathForApi, loadSession, saveSession } from '@a2a/storage/projectSessions.ts';
+import { registerStepSessionsParent } from '@a2a/storage/newSessions.ts';
 import { getActiveAsyncWork } from './utils/session-projection-dto.ts';
 
 function projectSessionStepsParent(projectPath) {

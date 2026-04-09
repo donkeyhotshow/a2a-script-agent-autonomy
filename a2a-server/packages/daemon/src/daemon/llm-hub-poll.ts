@@ -79,12 +79,21 @@ export async function fetchLlmResponse(base: string, llmPromiseId: string): Prom
     const normalizedBase = resolveAiHubBaseUrl(base);
     let bodyRes: Response;
     try {
-        bodyRes = await fetch(`${normalizedBase}/promise/${llmPromiseId}/response`, {
+        // Try formatted response first (markdown format)
+        bodyRes = await fetch(`${normalizedBase}/promise/${llmPromiseId}/response_formatted`, {
             headers: {'Accept-Encoding': 'identity'},
         });
     } catch (e) {
-        logger.warn('[llm-hub-poll] fetchLlmResponse failed', {llmPromiseId, error: String(e)});
-        return null;
+        logger.warn('[llm-hub-poll] fetchLlmResponse formatted failed, trying raw', {llmPromiseId, error: String(e)});
+        // Fallback to raw response
+        try {
+            bodyRes = await fetch(`${normalizedBase}/promise/${llmPromiseId}/response`, {
+                headers: {'Accept-Encoding': 'identity'},
+            });
+        } catch (e2) {
+            logger.warn('[llm-hub-poll] fetchLlmResponse raw also failed', {llmPromiseId, error: String(e2)});
+            return null;
+        }
     }
     if (!bodyRes.ok) return null;
     let raw: string;
@@ -94,6 +103,12 @@ export async function fetchLlmResponse(base: string, llmPromiseId: string): Prom
         logger.warn('[llm-hub-poll] fetchLlmResponse body read failed', {llmPromiseId, error: String(e)});
         return null;
     }
+    // For formatted response, we already have markdown, so return as-is
+    const responseFormat = bodyRes.headers.get('x-response-format');
+    if (responseFormat === 'formatted') {
+        return raw;
+    }
+    // For raw response, extract text as before
     return extractLlmTextFromHubResponseBody(raw);
 }
 

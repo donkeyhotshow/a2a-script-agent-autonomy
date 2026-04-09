@@ -168,6 +168,67 @@ def promise_response(promise_id: str):
     return resp
 
 
+@app.route('/promise/<promise_id>/response_formatted', methods=['GET'])
+def promise_response_formatted(promise_id: str):
+    """Получить отформатированный ответ по promiseId (markdown format)."""
+    rec = get_promise(promise_id)
+    if rec is None:
+        return Response(
+            _json_bytes({"error": "promise_not_found", "promiseId": promise_id}),
+            status=404,
+            mimetype='application/json',
+        )
+
+    if rec.status == 'pending':
+        return Response(
+            _json_bytes({"promiseId": promise_id, "status": "pending"}),
+            status=202,
+            mimetype='application/json',
+        )
+
+    if rec.status == 'error':
+        err_text, truncated = _short_error_text(rec.error)
+        err_obj = {"promiseId": promise_id, "status": "error", "error": err_text}
+        if truncated:
+            err_obj["error_truncated"] = True
+        return Response(
+            _json_bytes(err_obj),
+            status=500,
+            mimetype='application/json',
+        )
+
+    # Prefer formatted markdown response if available
+    formatted_body_path = rec.result_formatted_body_path
+    if formatted_body_path and os.path.isfile(formatted_body_path):
+        with open(formatted_body_path, 'rb') as f:
+            body = f.read()
+        resp = Response(body, status=rec.result_status_code or 200)
+        resp.headers['Content-Type'] = 'text/markdown; charset=utf-8'
+        resp.headers['X-Promise-Id'] = promise_id
+        resp.headers['X-Promise-Status'] = 'done'
+        resp.headers['X-Response-Format'] = 'formatted'
+        return resp
+
+    # Fallback to raw body if formatted version not available
+    body_path = rec.result_body_path
+    if not body_path or not os.path.isfile(body_path):
+        return Response(
+            _json_bytes({"promiseId": promise_id, "status": "error", "error": "missing_body"}),
+            status=500,
+            mimetype='application/json',
+        )
+
+    with open(body_path, 'rb') as f:
+        body = f.read()
+
+    resp = Response(body, status=rec.result_status_code or 200)
+    resp.headers['Content-Type'] = rec.result_content_type or 'application/octet-stream'
+    resp.headers['X-Promise-Id'] = promise_id
+    resp.headers['X-Promise-Status'] = 'done'
+    resp.headers['X-Response-Format'] = 'raw'
+    return resp
+
+
 @app.route('/promise/<promise_id>/body_raw', methods=['GET'])
 def promise_body_raw(promise_id: str):
     """Full provider JSON when `_promise_set_done` persisted `body_raw.json` (success path)."""

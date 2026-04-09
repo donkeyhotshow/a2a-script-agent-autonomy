@@ -36,6 +36,6 @@
     "experimentalDecorators": true,
     "downlevelIteration": true
   },
-  "include": ["packages/**/src/**/*", "packages/**/src/*"],
+  "include": ["packages/**/src/**/*", "packages/**/src/*", "features/gray-room/components/features/gray-room/components/memoryroom/memory", "features/gray-room/core", "features/gray-room/config.production.ts", "features/gray-room/config.ts", "features/gray-room/index.ts", "features/gray-room/logger.ts", "features/gray-room/manager.test.ts", "features/gray-room/manager.ts", "features/gray-room/orchestrator.ts", "features/gray-room/types.ts"],
   "exclude": ["node_modules", "dist", "tests"]
 }

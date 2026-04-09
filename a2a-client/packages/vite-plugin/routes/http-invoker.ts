@@ -1,5 +1,5 @@
 import http from 'http';
-import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.ts';
+import { getA2aServerBaseUrl } from '@a2a/shared/a2a-server-base.ts';
 
 export function sendHttpRequest({ requestToServer, onResponse, onError }) {
     const a2aServerUrl = getA2aServerBaseUrl();

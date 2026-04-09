@@ -1,5 +1,5 @@
 {
-  "name": "@a2a-client/vite-plugin",
+  "name": "@a2a/vite-plugin",
   "version": "1.0.0",
   "private": true,
   "description": "Vite middleware: Client API /api/a2a/* in dev (dev/proxy split). See README.md.",
@@ -20,9 +20,9 @@
     "test:watch": "vitest",
     "lint": "eslint . --ext .js --fix"
   },
-  "dependencies": {
-    "@a2a-client/core": "file:../core",
-    "@a2a-client/storage": "file:../storage",
-    "@a2a/execution": "file:../execution"
-  }
+"dependencies": {
+     "@a2a/core": "file:../core",
+     "@a2a/storage": "file:../storage",
+     "@a2a/execution": "file:../execution"
+   }
 }

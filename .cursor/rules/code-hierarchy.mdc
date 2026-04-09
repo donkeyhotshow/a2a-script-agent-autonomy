@@ -4,6 +4,11 @@ globs: **/*.{ts,js,json}
 alwaysApply: true
 ---
 
+core - основа проекта , связывающеезвено , общий код . 
+features - слушатели событий .
+packages - главные системы разбитые на пакеты  .
+
+
 # Code Hierarchy Rules
 
 ## File Organization

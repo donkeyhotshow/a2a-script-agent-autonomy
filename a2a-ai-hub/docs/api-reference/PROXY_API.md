@@ -178,6 +178,14 @@ Original request snapshot (method, path, headers, body).
 
 **200** raw body when `done`; **202** pending; **500** JSON error envelope (short **`error`**, optional **`?detail=1`**).
 
+#### GET /promise/{promise_id}/response_formatted
+
+**200** formatted markdown response when `done`; **202** pending; **500** JSON error envelope. Returns consistently formatted LLM responses in markdown format with proper code blocks, JSON formatting, and structured content detection. Falls back to raw response if formatting unavailable.
+
+**Response Headers:**
+- `Content-Type: text/markdown; charset=utf-8`
+- `X-Response-Format: formatted` (or `raw` for fallback)
+
 #### GET /promise/{promise_id}/body_raw
 
 When the hub persisted `body_raw.json` on success, returns that **full provider JSON** (OpenAI/Local LLM upstream-style envelope). Used by `a2a-server` `fetchAiHubChatJson` / `pollReadyThenFetch` with `responseMode: raw_json`. **404** if no raw file (older promises or non-JSON upstream).

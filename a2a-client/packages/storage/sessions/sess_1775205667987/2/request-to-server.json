@@ -1,0 +1,15 @@
+{
+  "step": 2,
+  "task": "async pipeline probe",
+  "context": {
+    "version": "2.0",
+    "session_id": "sess_1775205667987",
+    "execution": {
+      "action": "continue",
+      "step": "next"
+    }
+  },
+  "result": {
+    "message": "async pipeline probe"
+  }
+}

@@ -1,7 +1,0 @@
-[workspace]
-members = [
-    "runtime",
-    "parser",
-    "hasher",
-]
-resolver = "2"

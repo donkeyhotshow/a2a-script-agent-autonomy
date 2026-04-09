@@ -5,11 +5,11 @@
 import type { AsyncClientOptions, AsyncOperationResult, AsyncOperationStatus } from './types/async-client.js';
 import { AsyncClientError } from './types/async-client.js';
 import {
-    DEFAULT_POLL_INTERVAL,
-    DEFAULT_POLL_TIMEOUT,
-    isPromiseResolved,
-    isPromiseFailed
-} from '@a2a-client/shared/api-helpers.js';
+     DEFAULT_POLL_INTERVAL,
+     DEFAULT_POLL_TIMEOUT,
+     isPromiseResolved,
+     isPromiseFailed
+   } from '@a2a/shared/api-helpers.js';
 
 /**
  * Async client for handling long-running operations

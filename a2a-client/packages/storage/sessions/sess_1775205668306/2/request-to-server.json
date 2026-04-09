@@ -1,0 +1,15 @@
+{
+  "step": 2,
+  "task": "Start agent processing for Gray Room test",
+  "context": {
+    "version": "2.0",
+    "session_id": "sess_1775205668306",
+    "execution": {
+      "action": "continue",
+      "step": "next"
+    }
+  },
+  "result": {
+    "message": "Start agent processing for Gray Room test"
+  }
+}

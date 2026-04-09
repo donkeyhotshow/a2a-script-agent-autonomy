@@ -13,14 +13,14 @@ import type {
 } from './types/session.js';
 import {unwrapEnvelope} from './client-api-envelope.js';
 import {
-    buildFetchHeaders,
-    normalizeSessionResponse,
-    normalizeSessionsList,
-    isPromiseResolved,
-    isPromiseFailed,
-    DEFAULT_POLL_INTERVAL,
-    DEFAULT_POLL_TIMEOUT,
-} from '@a2a-client/shared/api-helpers.js';
+     buildFetchHeaders,
+     normalizeSessionResponse,
+     normalizeSessionsList,
+     isPromiseResolved,
+     isPromiseFailed,
+     DEFAULT_POLL_INTERVAL,
+     DEFAULT_POLL_TIMEOUT,
+   } from '@a2a/shared/api-helpers.js';
 import {ApiError} from './utils/api-error.js';
 
 /**

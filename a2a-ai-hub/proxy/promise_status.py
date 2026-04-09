@@ -12,6 +12,7 @@ from .promise_retrieval import get_promise
 from .promise_utils import _safe_json_loads, _write_json_file
 from .llm_response_processor import _llm_upstream_failure_message
 from .content_processor import _extract_llm_content_for_body_md
+from .llm_response_formatter import format_llm_response
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -116,6 +117,21 @@ def _promise_set_done(promise_id: str, *, status_code: int, headers: dict, body:
     if isinstance(parsed_json_for_debug, dict):
         raw_json_path = os.path.join(folder, 'body_raw.json')
         _write_json_file(raw_json_path, parsed_json_for_debug)
+
+    # Create formatted markdown version of the response
+    if body_to_store:
+        try:
+            raw_text = body_to_store.decode('utf-8', errors='replace')
+            if raw_text.strip():  # Only format non-empty responses
+                formatted_response = format_llm_response(raw_text)
+                if formatted_response:  # Only save if formatting produced content
+                    formatted_body_path = os.path.join(folder, 'body_formatted.md')
+                    with open(formatted_body_path, 'wb') as f:
+                        f.write(formatted_response.encode('utf-8'))
+                    rec.result_formatted_body_path = formatted_body_path
+        except Exception as e:
+            logger.warning(f"Failed to format LLM response for promise {promise_id}: {e}")
+            # Continue without formatted version - raw response will be used as fallback
 
     rec.status = 'done'
     rec.updated_at = time.time()

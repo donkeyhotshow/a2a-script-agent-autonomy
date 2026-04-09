@@ -4,7 +4,7 @@
  * Manages project data - loading, saving, and path validation.
  */
 
-import { projectsListFromDocument } from '@a2a-client/shared/projects-document.mjs';
+import { projectsListFromDocument } from '@a2a/shared/projects-document.mjs';
 import type { Project } from '../models/session.model.js';
 import { readJsonFile, writeJsonFile, PROJECTS_FILE } from './storage.js';
 
@@ -23,4 +23,4 @@ export async function saveProjects(projects: Project[]): Promise<void> {
     await writeJsonFile(PROJECTS_FILE, { projects });
 }
 
-export { safePath } from '@a2a-client/shared/safe-path.mjs';
+export { safePath } from '@a2a/shared/safe-path.mjs';

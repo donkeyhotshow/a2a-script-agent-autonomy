@@ -7,6 +7,11 @@ Client-side monorepo containing web UI, Vite plugin, and SDK packages.
 ```
 a2a-client/
 ├── packages/         # Client SDK packages
+│   ├── app/          # Main client application
+│   │   ├── src/
+│   │   │   ├── config.ts     # Configuration schema and loading
+│   │   │   └── index.ts      # Main application entry point
+│   │   └── package.json
 │   ├── core/         # Core client functionality
 │   ├── embedding/    # Embedding services
 │   ├── execution/    # Script execution
@@ -20,16 +25,13 @@ a2a-client/
 │   ├── types/        # Type definitions
 │   ├── vite-plugin/  # Vite plugin for client API routes
 │   └── web/          # Web UI components
-├── src/              # Client application source
-│   ├── config.ts     # Configuration schema and loading
-│   └── index.ts      # Main application entry point
 ├── package.json      # Client workspace root
 └── vitest.config.ts  # Test configuration
 ```
 
 ## Application Structure
 
-The client application is located in the `src/` directory and follows a modular architecture:
+The client application is located in the `packages/app/` package and follows a modular architecture:
 
 - **Configuration System**: The application reads configuration from JSON files or environment variables to determine which features to activate
 - **Feature Activation**: Based on configuration, specific features (RAG, embedding, execution, web, storage) are dynamically loaded and initialized

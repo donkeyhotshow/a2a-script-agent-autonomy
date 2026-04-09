@@ -46,8 +46,6 @@ UNBLOCKED.
 
 **2026-04-08:** [`ai-hub-chat-sync.ts`](src/utils/ai-hub-chat-sync.ts) — after hub **`POST /api/chat?promise=1`** returns **202**, call **`POST /promise/:id/execute`** before polling so **`PROMISE_DAEMON_ONLY`** tickets actually run (fixes **`hub_promise_empty`** / Gray Room internal debate `AI hub error: 0 hub_promise_empty`). Tests: `npx vitest run tests/unit/ai-hub-chat-sync.test.ts` · `tests/integration/invoke-http-parity.test.ts`.
 
-**2026-04-07:** [`bug-fixer.ts`](src/services/llm/bug-fixer.ts) `getGitDiff` — `spawnSync('git', ['diff','--no-color','--', filePath])` instead of shell-interpolated `execSync`. Purple hunt log: [`docs/PURPLE-ALERT-HARMFUL-HUNT.md`](../docs/PURPLE-ALERT-HARMFUL-HUNT.md).
-
 **Magenta:** [`package.json`](package.json) `overrides.tar` → `^7.5.13` so production `npm audit --omit=dev` is clean (transitive `tar` from `bcrypt` / `node-pre-gyp`).
 
 **Tools evolve:** [`src/api/tools-evolve-sandbox.ts`](src/api/tools-evolve-sandbox.ts) validates `toolCode` (TS + vm2 `VM`) before deploy; [`tests/unit/tools-evolve-sandbox.test.ts`](tests/unit/tools-evolve-sandbox.test.ts). Task: [`tasks/completed/improve-tools-evolve-sandboxing.md`](../tasks/completed/improve-tools-evolve-sandboxing.md).

@@ -32,6 +32,7 @@ class PromiseRecord:
     result_headers: Optional[dict] = None
     result_content_type: Optional[str] = None
     result_body_path: Optional[str] = None
+    result_formatted_body_path: Optional[str] = None  # Formatted markdown version of response
     error: Optional[str] = None
     next_attempt_at: Optional[float] = None  # Timestamp when next attempt can be made
 
@@ -129,6 +130,7 @@ def _load_promise_from_disk(promise_id: str) -> Optional[PromiseRecord]:
             result_headers=meta.get('result_headers'),
             result_content_type=meta.get('result_content_type'),
             result_body_path=meta.get('result_body_path'),
+            result_formatted_body_path=meta.get('result_formatted_body_path'),
             error=meta.get('error'),
             next_attempt_at=meta.get('next_attempt_at'),
         )
@@ -158,6 +160,7 @@ def create_promise(*, method: str, path: str, target_url: str, log_folder: str, 
         log_folder=log_folder,
         simulate=simulate,
         server_promise_id=server_promise_id,
+        result_formatted_body_path=None,
     )
     os.makedirs(_promise_folder(promise_id), exist_ok=True)
     _save_promise(rec)

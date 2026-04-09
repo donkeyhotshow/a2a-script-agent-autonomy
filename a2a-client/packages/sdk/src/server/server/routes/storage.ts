@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
-import { SAFE_SEGMENT } from '@a2a-client/shared/session-id.js';
+import { SAFE_SEGMENT } from '@a2a/shared/session-id.js';
 import { getKvRoot, isNodeEnoent } from '../../services/storage.js';
 
 const router = Router();

@@ -1,22 +1,22 @@
 import {
-    listSessions,
-    loadSession,
-    saveSession,
-    deleteSession,
-    getProjectPathForSessions,
-    resolveSessionProjectPath,
-    findSessionProjectPath,
-} from '@a2a-client/storage/projectSessions.ts';
+     listSessions,
+     loadSession,
+     saveSession,
+     deleteSession,
+     getProjectPathForSessions,
+     resolveSessionProjectPath,
+     findSessionProjectPath,
+ } from '@a2a/storage/projectSessions.ts';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
-    listNewSessions,
-    loadNewSession,
-    saveNewSession,
-    deleteNewSession,
-    saveNewStep,
-    getNewSessionDir,
-} from '@a2a-client/storage/newSessions.ts';
+     listNewSessions,
+     loadNewSession,
+     saveNewSession,
+     deleteNewSession,
+     saveNewStep,
+     getNewSessionDir,
+ } from '@a2a/storage/newSessions.ts';
 import { getStorageMode, isValidSessionId } from '../utils/server.ts';
 import {
     collectSessionMessagesFlat,
