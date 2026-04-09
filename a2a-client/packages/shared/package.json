@@ -1,0 +1,29 @@
+{
+  "name": "@a2a-client/shared",
+  "version": "1.0.0",
+  "description": "Shared utilities and types for A2A client packages",
+  "type": "module",
+  "main": "./src/index.js",
+  "exports": {
+    ".": "./src/index.js",
+    "./meilisearch-client": "./src/meilisearch-client.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "a2a",
+    "shared",
+    "utilities"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.3.3",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

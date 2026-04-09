@@ -111,6 +111,12 @@ REM ---------- main ----------
 
 :__MAIN__
 cd /d "%~dp0"
+REM Defensive check - services use subproject node_modules only
+if exist node_modules (
+    echo [WARN] Root node_modules found ^- deleting it ^(not used by any service^)
+    rmdir /s /q node_modules 2>nul
+    echo [OK] Root node_modules removed
+)
 echo === start-all.bat : Standardized service startup ===
 
 set PID_FILE=.pids.txt

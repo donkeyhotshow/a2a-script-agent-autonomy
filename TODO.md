@@ -1,10 +1,1 @@
-# Task Progress: STATE_EXPERIMENT.md Fix
-
-## Steps from Approved Plan
-- [x] Create TODO.md with steps (current)
-- [x] Edit STATE_EXPERIMENT.md:\n  | Update rules for `last-file` semantics (recursive analysis order)\n  | Revise Scope Logic for explicit depth-first alpha order\n  | Advance `last-file` to next in order (work/tasks/system-improvement-priorities.md)\n  | Preserve minimalism
-- [x] Verify edit
-- [x] Complete task
-
-Remaining: Complete task
-
+# A2A Script Agent - Module Migration TODO\n\nApproved plan: Migrate misnamed/misplaced modules.\n\n## Steps\n1. [ ] Move ai-integration-ts/ → archive/ai-integration-ts/ (redundant TS proxy)\n2. [ ] Move a2a-prototype/ → archive/a2a-prototype/ (obsolete Next.js boilerplate)\n3. [ ] Rename infrastucture/ → monitor/ (fix typo, align with task-monitor content)\n4. [ ] Verify no broken refs (grep old paths)\n5. [ ] Test stack: npm run dev && npm run test:monitor\n6. [ ] Commit & complete\n\nOwner: BLACKBOXAI\nStatus: In progress

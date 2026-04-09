@@ -1,19 +1,18 @@
 #!/usr/bin/env node
 
-const { spawn, execFileSync } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+import { spawn, execFileSync } from 'child_process';
+import net from 'net';
+import fs from 'fs';
+import * as path from 'path';
+import * as os from 'os';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
 
 // Configuration - hardcoded as requested
 const SERVICES = {
-  'compat_llm': {
-    port: 11435,
-    startCmd: 'compat_llm serve',
-    healthEndpoint: '/api/tags',
-    dependencies: [],
-    logfile: path.join(__dirname, '..', 'logs', 'compat_llm.log')
-  },
   'ai-integration': {
     port: 11434,
     startCmd: 'cd ai-integration && npm run dev',
@@ -46,8 +45,249 @@ const SERVICES = {
 
 const PID_FILE = path.join(__dirname, '..', '.pids.txt');
 
-function log(message) {
+// Daemon configs
+// Add restart policy to services
+SERVICES['ai-integration'].restartPolicy = {enabled: true, maxRestarts: 5, delayMs: 10000};
+SERVICES['a2a-server'].restartPolicy = {enabled: true, maxRestarts: 5, delayMs: 10000};
+SERVICES['client-api'].restartPolicy = {enabled: true, maxRestarts: 5, delayMs: 10000};
+SERVICES['web-ui'].restartPolicy = {enabled: true, maxRestarts: 5, delayMs: 10000};
+const DAEMON_PID_FILE = path.join(__dirname, '..', 'runbook-daemon.pid');
+const LOCK_FILE = path.join(__dirname, '..', 'runbook-daemon.lock');
+const STATE_FILE = path.join(__dirname, '..', 'runbook-state.json');
+const LOG_FILE = path.join(__dirname, '..', 'logs', 'runbook-daemon.log');
+const IPC_PORT = 9999;
+const MONITOR_INTERVAL = 30000; // 30s
+
+function daemonLog(message) {
+  const dir = path.dirname(LOG_FILE);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  const timestamp = new Date().toISOString();
+  fs.appendFileSync(LOG_FILE, `[${timestamp}] ${message}\n`);
+  console.log(`[DAEMON] [${timestamp}] ${message}`);
+}
+
+function cliLog(message) {
   console.log(`[${new Date().toISOString()}] ${message}`);
+}
+
+let currentLog = cliLog; // Default to CLI log
+
+function log(message) {
+  currentLog(message);
+}
+
+function isDaemonRunning() {
+  if (!fs.existsSync(DAEMON_PID_FILE)) return false;
+
+  const daemonPidStr = fs.readFileSync(DAEMON_PID_FILE, 'utf8').trim();
+  const daemonPid = parseInt(daemonPidStr);
+
+  if (!Number.isInteger(daemonPid) || daemonPid <= 0) {
+    fs.unlinkSync(DAEMON_PID_FILE);
+    if (fs.existsSync(LOCK_FILE)) fs.unlinkSync(LOCK_FILE);
+    return false;
+  }
+
+  try {
+    process.kill(daemonPid, 0);
+    return true;
+  } catch (e) {
+    fs.unlinkSync(DAEMON_PID_FILE);
+    if (fs.existsSync(LOCK_FILE)) fs.unlinkSync(LOCK_FILE);
+    return false;
+  }
+}
+
+function acquireLock() {
+  try {
+    const fd = fs.openSync(LOCK_FILE, 'wx');
+    fs.closeSync(fd);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+function releaseLock() {
+  if (fs.existsSync(LOCK_FILE)) fs.unlinkSync(LOCK_FILE);
+}
+
+function readState() {
+  if (!fs.existsSync(STATE_FILE)) return { services: {}, daemonPid: process.pid, lastMonitor: 0 };
+  try {
+    return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+  } catch (e) {
+    return { services: {}, daemonPid: process.pid, lastMonitor: 0 };
+  }
+}
+
+function writeState(state) {
+  state.daemonPid = process.pid;
+  const dir = path.dirname(STATE_FILE);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
+}
+
+function writeDaemonPid() {
+  fs.writeFileSync(DAEMON_PID_FILE, String(process.pid));
+}
+
+async function sendIPCCommand(req) {
+  return new Promise((resolve, reject) => {
+    const client = net.connect(IPC_PORT, '127.0.0.1', () => {
+      client.write(JSON.stringify(req) + '\n');
+    });
+
+    let buffer = '';
+    client.on('data', (data) => {
+      buffer += data.toString();
+      if (buffer.includes('\n')) {
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        try {
+          const res = JSON.parse(lines[0]);
+          client.end();
+          resolve(res);
+        } catch (e) {
+          reject(e);
+        }
+      }
+    });
+
+    client.on('error', reject);
+    client.on('end', () => {
+      if (buffer) resolve({error: 'Incomplete response'});
+    });
+
+    setTimeout(() => reject(new Error('IPC timeout')), 10000);
+  });
+}
+
+function handleIPC(socket) {
+  let buffer = '';
+  socket.on('data', (data) => {
+    buffer += data.toString();
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    for (const line of lines) {
+      if (line.trim()) {
+        try {
+          const req = JSON.parse(line);
+          const res = handleCommand(req.cmd, req.services || []);
+          socket.write(JSON.stringify(res) + '\n');
+        } catch (e) {
+          socket.write(JSON.stringify({error: e.message}) + '\n');
+        }
+      }
+    }
+  });
+  socket.on('end', () => socket.end());
+}
+
+async function handleCommand(cmd, services) {
+  try {
+    switch (cmd) {
+      case 'start':
+        await startCommand(services);
+        return {status: 'ok'};
+      case 'stop':
+        stopCommand(services);
+        return {status: 'ok'};
+      case 'restart':
+        stopCommand(services);
+        setTimeout(() => startCommand(services), 2000);
+        return {status: 'ok', note: 'async'};
+      case 'status':
+        // Capture output
+        const status = [];
+        const oldLog = currentLog;
+        currentLog = (msg) => status.push(msg);
+        showStatus();
+        log = oldLog;
+        return {status: 'ok', data: status};
+      case 'shutdown':
+        process.exit(0);
+      default:
+        return {error: 'Unknown cmd'};
+    }
+  } catch (e) {
+    return {error: e.message};
+  }
+}
+
+function monitorServices() {
+  const state = readState();
+  const now = Date.now();
+  if (now - state.lastMonitor < MONITOR_INTERVAL / 2) return state;
+  state.lastMonitor = now;
+  for (const serviceName of Object.keys(SERVICES)) {
+    const service = SERVICES[serviceName];
+    const serviceState = state.services[serviceName] || {restarts: 0, healthy: false};
+    if (!serviceState.healthy && service.restartPolicy?.enabled && serviceState.restarts < service.restartPolicy.maxRestarts) {
+      log(`Restarting ${serviceName} (attempt ${serviceState.restarts + 1})`);
+      serviceState.restarts++;
+      stopService(serviceName);
+      setTimeout(() => startService(serviceName).then(() => {
+        serviceState.healthy = true;
+      }).catch(() => {
+        serviceState.healthy = false;
+      }), service.restartPolicy.delayMs || 5000);
+    }
+    // TODO: Async health in monitor
+    serviceState.healthy = false; // Conservative
+    state.services[serviceName] = serviceState;
+  }
+  writeState(state);
+  return state;
+}
+
+function shutdown() {
+  log('Shutting down daemon...');
+  // Close server would be passed
+  const running = getRunningServices();
+  Object.keys(running).forEach(pid => killProcess(pid));
+  releaseLock();
+  if (fs.existsSync(DAEMON_PID_FILE)) fs.unlinkSync(DAEMON_PID_FILE);
+  process.exit(0);
+}
+
+let daemonServer = null;
+
+function runDaemon() {
+  if (!acquireLock()) {
+    log('Daemon already running or lock failed');
+    return false;
+  }
+
+  writeDaemonPid();
+  let state = readState();
+  writeState(state);
+
+  currentLog = daemonLog;
+  log('Daemon started, PID ' + process.pid);
+
+  daemonServer = net.createServer(handleIPC);
+  daemonServer.listen(IPC_PORT, '127.0.0.1', () => {
+    log(`Daemon IPC server listening on localhost:${IPC_PORT}`);
+  });
+
+  const monitorInterval = setInterval(monitorServices, MONITOR_INTERVAL);
+
+  process.on('SIGTERM', () => shutdown());
+  process.on('SIGINT', () => shutdown());
+  process.on('uncaughtException', (e) => {
+    log('Uncaught: ' + e.message);
+    shutdown();
+  });
+
+  return true;
+}
+
+async function proxyCommand(command, serviceArgs) {
+  if (!isDaemonRunning()) throw new Error('Daemon not running');
+  const res = await sendIPCCommand({cmd: command, services: serviceArgs});
+  if (res.error) throw new Error(res.error);
+  return res;
 }
 
 function isPortOpen(port) {
@@ -139,8 +379,8 @@ function startService(serviceName) {
     // Start the service
     const child = spawn(service.startCmd, {
       shell: true,
-      detached: false,
-      stdio: ['ignore', 'pipe', 'pipe']
+      detached: true,
+      stdio: ['ignore', 'pipe', 'ignore']
     });
 
     savePid(serviceName, child.pid);
@@ -283,23 +523,35 @@ const args = process.argv.slice(2);
 const command = args[0];
 const serviceArgs = args.slice(1);
 
-switch (command) {
-  case 'start':
-    startCommand(serviceArgs);
-    break;
-  case 'stop':
-    stopCommand(serviceArgs);
-    break;
-  case 'restart':
-    stopCommand(serviceArgs);
-    setTimeout(() => startCommand(serviceArgs), 2000);
-    break;
-  case 'status':
-    showStatus();
-    break;
-  default:
-    console.log('Usage: runbook-cli <command> [services...]');
-    console.log('Commands: start, stop, restart, status');
-    console.log('Services:', Object.keys(SERVICES).join(', '));
-}</content>
-<parameter name="filePath">bin/runbook-cli.js
+if (command === 'daemon-start') {
+  runDaemon();
+} else if (command === 'daemon-stop') {
+  if (isDaemonRunning()) {
+    proxyCommand('shutdown', []);
+  } else {
+    log('No daemon running');
+  }
+} else if (command && isDaemonRunning()) {
+  proxyCommand(command, serviceArgs).catch(e => cliLog('Proxy error: ' + e.message));
+} else {
+  // One-shot fallback
+  switch (command) {
+    case 'start':
+      startCommand(serviceArgs);
+      break;
+    case 'stop':
+      stopCommand(serviceArgs);
+      break;
+    case 'restart':
+      stopCommand(serviceArgs);
+      setTimeout(() => startCommand(serviceArgs), 2000);
+      break;
+    case 'status':
+      showStatus();
+      break;
+    default:
+      console.log('Usage: runbook-cli [daemon-start|daemon-stop|start|stop|restart|status] [services...]');
+      console.log('Services:', Object.keys(SERVICES).join(', '));
+      console.log('Daemon auto-proxies normal commands');
+  }
+}
