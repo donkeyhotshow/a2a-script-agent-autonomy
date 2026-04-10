@@ -13,7 +13,7 @@ export const proxyConfigSchema = z.object({
   promiseTtlSeconds: intSchema(60, 604800, 86400),
   promiseMaxWorkers: intSchema(1, 100, 8),
   aiHubConfig: z.string().optional(),
-  ollamaServerHeader: z.string().default('ollama'),
+  localLlmServerHeader: z.string().default('compat_llm'),
   simulationEnabled: booleanSchema.default(false),
   simulationDataPath: z.string().default('simulation_data'),
   healthCheckInterval: intSchema(1, 300, 5),

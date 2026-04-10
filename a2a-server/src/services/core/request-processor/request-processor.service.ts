@@ -9,8 +9,14 @@
  * ContextManager is reset per request (resetContextManager) — no cache of context/code between iterations.
  */
 
-import {requestService, isRetryableError, type RequestResult} from '../request/request.service.js';
+import {
+    requestService,
+    isRetryableError,
+    shouldDeferDialogProcessorFailure,
+    type RequestResult,
+} from '../request/request.service.js';
 import {logger} from '../../../utils/logger.js';
+import {resolveAiHubBaseUrl} from '../../../utils/ai-hub-url.js';
 import {requestProcessorLatencyHistogram} from '../../../utils/metrics.js';
 import type {RequestContext, ProcessResult, ProcessOutcome, Task, TaskAnalysis} from './request-processor.interfaces.js';
 import {
@@ -24,8 +30,34 @@ import {
 import type {RequestType} from './base-processor.js';
 import { LLM_PIPELINE_ACTIONS, type LlmPipelineAction } from '../../../config/router-static.js';
 import { resolveExecution, resolveResultObject } from './normalization.js';
+import { detectFrameworksFromCodeBlocks } from './framework-from-codeblocks.js';
+import { readDialogHubLlmResubmitMax } from './gray-room-trigger.js';
 
 export { LLM_PIPELINE_ACTIONS, type LlmPipelineAction };
+
+function mergeFrameworksIntoStatusPayload(
+    result: ProcessResult,
+    baseContext: Record<string, unknown>,
+    codeBlocks: RequestResult['codeBlocks']
+): Record<string, unknown> {
+    const resultObj =
+        typeof result === 'object' && result !== null ? (result as unknown as Record<string, unknown>) : {};
+    const frameworks = detectFrameworksFromCodeBlocks(codeBlocks);
+    const hadContext = typeof resultObj.context === 'object' && resultObj.context !== null;
+
+    if (frameworks === undefined && !hadContext) {
+        return resultObj;
+    }
+
+    const mergedContext: Record<string, unknown> = {
+        ...baseContext,
+        ...(hadContext ? (resultObj.context as Record<string, unknown>) : {}),
+    };
+    if (frameworks !== undefined) {
+        mergedContext.frameworks = frameworks;
+    }
+    return {...resultObj, context: mergedContext};
+}
 
 const DEFAULT_INTERVAL_MS = parseInt(process.env.REQUEST_PROCESSOR_INTERVAL_MS || '5000', 10);
 let timerId: ReturnType<typeof setInterval> | null = null;
@@ -152,6 +184,7 @@ async function executePendingRow(request: RequestResult): Promise<ProcessResult>
             message: message ?? undefined
         };
 
+        const requestType = determineRequestType(context);
         const result = await routeRequest(requestContext);
 
         // Handle AI-Actions continuation (form choice -> LLM processing)
@@ -234,10 +267,15 @@ async function executePendingRow(request: RequestResult): Promise<ProcessResult>
         // Update request status based on result
         if (result.outcome === 'failed') {
             const err = String(result.error ?? '');
-            if (isRetryableError(err)) {
+            const deferForDialog =
+                requestType === 'dialog' && shouldDeferDialogProcessorFailure(err);
+            if (isRetryableError(err) || deferForDialog) {
                 const ok = await requestService.scheduleRetry(promiseId);
                 if (ok) {
-                    logger.info('[RequestProcessor] Scheduled retry for transient error', {promiseId});
+                    logger.info('[RequestProcessor] Scheduled retry (transient or dialog pipeline)', {
+                        promiseId,
+                        deferForDialog,
+                    });
                     return result;
                 }
             }
@@ -246,14 +284,16 @@ async function executePendingRow(request: RequestResult): Promise<ProcessResult>
         await requestService.updateStatus(
             promiseId,
             result.outcome === 'failed' ? 'failed' : 'completed',
-            typeof result === 'object' && result !== null ? (result as unknown as Record<string, unknown>) : {}
+            mergeFrameworksIntoStatusPayload(result, context as Record<string, unknown>, codeBlocks)
         );
         return result;
 
     } catch (err) {
         const errStr = String(err);
         logger.error('[RequestProcessor] Error', {promiseId, error: errStr});
-        if (isRetryableError(errStr)) {
+        const reqType = determineRequestType(context);
+        const deferDialog = reqType === 'dialog' && shouldDeferDialogProcessorFailure(errStr);
+        if (isRetryableError(errStr) || deferDialog) {
             const ok = await requestService.scheduleRetry(promiseId);
             if (ok) {
                 logger.info('[RequestProcessor] Scheduled retry for caught error', {promiseId});
@@ -278,7 +318,7 @@ export async function processOneRequest(): Promise<ProcessResult | null> {
 }
 
 /**
- * Process a specific pending request by promiseId (sync /invoke).
+ * Process a specific pending request by promiseId (async invoke queue).
  */
 export async function processRequestByPromiseId(promiseId: string): Promise<ProcessResult | null> {
     const request = await requestService.claimPendingByPromiseId(promiseId);
@@ -330,7 +370,7 @@ async function tick(): Promise<void> {
  * Recover processing requests that have llmPromiseId (e.g. after server restart during polling)
  */
 async function recoverProcessingRequests(): Promise<void> {
-    const base = (process.env.AI_HUB_URL || 'http://localhost:11434').replace(/\/$/, '');
+    const base = resolveAiHubBaseUrl();
     const ids = await requestService.listProcessing();
     for (const promiseId of ids) {
         // Validate promiseId format (should be a non-empty string)
@@ -363,19 +403,46 @@ async function recoverProcessingRequests(): Promise<void> {
         }
         
         if (!llmPromiseId) continue;
-        const result = await recoverDialogFromLlmPromise(promiseId, req.context, llmPromiseId);
-        if (result) {
-            if (!result.success) {
-                const errMsg = result.error ?? 'Recovery failed';
-                await requestService.updateStatus(promiseId, 'failed', undefined, { message: errMsg });
-            } else {
-                 await requestService.updateStatus(promiseId, 'completed', 
-                 // Validate result structure before updating status
-                 typeof result === 'object' && result !== null ? result : {}
-             );
-            }
-            logger.info('[RequestProcessor] Recovered stuck request', {promiseId, success: result.success});
+        const outcome = await recoverDialogFromLlmPromise(promiseId, req.context, llmPromiseId);
+        if (outcome.tag === 'pending') {
+            continue;
         }
+        if (outcome.tag === 'resubmit') {
+            const cap = readDialogHubLlmResubmitMax();
+            const cnt = await requestService.incrementHubLlmResubmitCount(promiseId);
+            if (cnt > cap) {
+                await requestService.updateStatus(promiseId, 'failed', undefined, {
+                    message: `Hub LLM promise lost after ${cap} resubmit(s)`,
+                });
+                logger.warn('[RequestProcessor] Recovery resubmit cap exceeded', {promiseId});
+                continue;
+            }
+            await requestService.clearLlmPromiseId(promiseId);
+            logger.info('[RequestProcessor] Hub promise gone — cleared llmPromiseId for next dialog tick', {
+                promiseId,
+                reason: outcome.reason,
+            });
+            continue;
+        }
+        if (outcome.tag === 'failed') {
+            const errMsg = outcome.error ?? 'Recovery failed';
+            const ctx = req.context as Record<string, unknown>;
+            const isDialog = determineRequestType(ctx) === 'dialog';
+            if (isDialog && shouldDeferDialogProcessorFailure(errMsg)) {
+                const ok = await requestService.scheduleRetry(promiseId);
+                if (ok) {
+                    logger.info('[RequestProcessor] Recovery failed — scheduled dialog retry', {promiseId});
+                    continue;
+                }
+            }
+            await requestService.updateStatus(promiseId, 'failed', undefined, {message: errMsg});
+            logger.info('[RequestProcessor] Recovered stuck request', {promiseId, success: false});
+            continue;
+        }
+        const proc = outcome.result;
+        const resultPayload = {...proc} as Record<string, unknown>;
+        await requestService.updateStatus(promiseId, 'completed', resultPayload);
+        logger.info('[RequestProcessor] Recovered stuck request', {promiseId, success: true});
     }
 }
 

@@ -8,7 +8,7 @@ How to add or evolve **AI-actions**, **dialog** tools, **RAG** variants, and rel
 
 | Layer | What to change |
 |--------|----------------|
-| **LLM JSON** | `a2a-server/prompts/<action>-request.md` — allowed `step` values, `execute` keys, optional `workbench_ops` / `interrupt` / `completed`. |
+| **LLM JSON** | `a2a-server/prompts/<action>-request.md` — allowed `step` values, `execute` keys, optional `workbench_ops` / `interrupt` / **`completed`** (→ **`result.completed`** after response transform; on non-dialog Gray Room exit, **`true`** can trigger syndicate / SIEGE — see [`GRAY-ROOM.md`](./GRAY-ROOM.md)). |
 | **Single execute key** | Keep **one** key under `execute` per turn unless you document a deliberate exception (e.g. dialog pattern A: `message`+`form` inside `execute`). |
 | **Persistence** | State that must survive the next invoke goes through **response transforms** or existing materialization: `context.history`, `context.files`, `merge-workbench-sections`, `apply-workbench-section-ops`, `apply-scratchpad-ops` — not ad-hoc fields in processors unless you add an ADR. |
 

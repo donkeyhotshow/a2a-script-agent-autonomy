@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1",
+  "id": "catalog-mixed-example",
+  "title": "Example: doc-backed and open questions in one file",
+  "questions": [
+    {
+      "id": "router-stable-choice-ids",
+      "text": "What are the stable fallback router choice ids when keyword match does not apply?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "dialog, agent, task-decomposition (see shared/router-static-choices.json staticTailChoices).",
+        "sources": [
+          { "path": "AGENTS.md", "section": "Stable choice id values (fallback router)" }
+        ]
+      }
+    },
+    {
+      "id": "production-includeContext",
+      "text": "Should GET /api/a2a/sessions/{id}?includeContext=1 stay disabled in production for all roles?",
+      "status": "unanswered",
+      "options": [
+        { "id": "yes-all", "label": "Yes — 403 for everyone" },
+        { "id": "ops-only", "label": "Allow for a specific ops role only" },
+        { "id": "tbd", "label": "TBD — needs threat model" }
+      ]
+    }
+  ]
+}

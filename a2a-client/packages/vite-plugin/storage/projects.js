@@ -1,8 +1,14 @@
 import fs from 'fs';
 import path from 'path';
+import { isNodeEnoent } from '@a2a-client/shared/node-errors.mjs';
+import { projectsListFromDocument } from '@a2a-client/shared/projects-document.mjs';
 import { getStorageRoot, ensureDir } from './root.js';
 
 const PROJECTS_FILE = 'projects.json';
+
+function parseProjectsListFromRaw(raw) {
+  return projectsListFromDocument(JSON.parse(raw));
+}
 
 /**
  * Load projects from multiple sources.
@@ -14,14 +20,14 @@ export function loadProjects(cwd) {
   if (externalPath && fs.existsSync(externalPath)) {
     try {
       const raw = fs.readFileSync(externalPath, 'utf8');
-      const d = JSON.parse(raw);
-      const list = Array.isArray(d.projects) ? d.projects : [];
+      const list = parseProjectsListFromRaw(raw);
       if (list.length) {
         console.log('[projects] Loaded from external:', externalPath);
         return list;
       }
     } catch (err) {
-      console.warn('[projects] Failed to load external:', err.message);
+      console.error('[projects] Failed to load external:', err?.message || err);
+      // Fall back to storage or default
     }
   }
 
@@ -30,10 +36,14 @@ export function loadProjects(cwd) {
   const file = path.join(storageRoot, PROJECTS_FILE);
   try {
     const raw = fs.readFileSync(file, 'utf8');
-    const d = JSON.parse(raw);
-    const list = Array.isArray(d.projects) ? d.projects : [];
+    const list = parseProjectsListFromRaw(raw);
     return list.length ? list : [{id: 'default', name: 'Workspace', path: cwd}];
-  } catch {
+  } catch (e) {
+    if (isNodeEnoent(e)) {
+      return [{id: 'default', name: 'Workspace', path: cwd}];
+    }
+    console.error('[projects] Failed to read storage projects.json:', e?.message || e);
+    // Fall back to default
     return [{id: 'default', name: 'Workspace', path: cwd}];
   }
 }

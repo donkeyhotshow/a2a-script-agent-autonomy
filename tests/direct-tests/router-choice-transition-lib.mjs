@@ -45,6 +45,24 @@ export async function invokeRaw(payload) {
   return { status: res.status, envelope, data };
 }
 
+/** Poll GET …/requests/:id/result until terminal (async-only invoke). No wall-clock cap (promiseId contract). */
+export async function pollInvokeTerminal(promiseId, stepMs = 50) {
+  const url = `${A2A_SERVER_URL}/api/v1/requests/${encodeURIComponent(promiseId)}/result`;
+  for (;;) {
+    const r = await fetch(url);
+    if (!r.ok) {
+      await new Promise((res) => setTimeout(res, stepMs));
+      continue;
+    }
+    const wrap = await r.json();
+    const st = wrap?.data?.status;
+    if (st === 'completed' || st === 'failed' || st === 'cancelled') {
+      return { envelope: wrap, data: wrap.data };
+    }
+    await new Promise((res) => setTimeout(res, stepMs));
+  }
+}
+
 export async function pingA2AServerHealth(timeoutMs = 800) {
   const ctrl = new AbortController();
   const t = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -65,7 +83,7 @@ export async function pingA2AServerHealth(timeoutMs = 800) {
 export async function scriptedRouterChoiceNoStickyRouter() {
   const task = 'fix vue imports';
 
-  const initial = { task, sync: true };
+  const initial = { task };
   if (!validateServerInvokeRequest(initial)) {
     throw new Error(`Schema invalid (initial): ${ajv.errorsText(validateServerInvokeRequest.errors)}`);
   }
@@ -74,12 +92,17 @@ export async function scriptedRouterChoiceNoStickyRouter() {
   if (first.status !== 200 || first.envelope?.success === false) {
     throw new Error(`Initial invoke failed: ${JSON.stringify(first.envelope ?? first)}`);
   }
-  if (!isRouterForm(first.data?.execute)) {
+  const pid1 = first.data?.promiseId;
+  if (typeof pid1 !== 'string') {
+    throw new Error('Expected first invoke to return data.promiseId');
+  }
+  const t1 = await pollInvokeTerminal(pid1);
+  if (!t1?.data) throw new Error('First invoke poll did not return terminal data');
+  if (!isRouterForm(t1.data.execute)) {
     throw new Error('Expected first response to include a router form (execute.form.choices)');
   }
 
   const followUp = {
-    sync: true,
     context: {
       // `/api/v1/invoke` responses may omit `session_id` from the returned context; for follow-ups we can
       // bind the stateless contour explicitly (same as invoke.service default when missing).
@@ -98,8 +121,14 @@ export async function scriptedRouterChoiceNoStickyRouter() {
   if (second.status !== 200 || second.envelope?.success === false) {
     throw new Error(`Follow-up invoke failed: ${JSON.stringify(second.envelope ?? second)}`);
   }
+  const pid2 = second.data?.promiseId;
+  if (typeof pid2 !== 'string') {
+    throw new Error('Expected follow-up invoke to return data.promiseId');
+  }
+  const t2 = await pollInvokeTerminal(pid2);
+  if (!t2?.data) throw new Error('Follow-up invoke poll did not return terminal data');
 
-  if (isRouterForm(second.data?.execute)) {
+  if (isRouterForm(t2.data.execute)) {
     throw new Error('Sticky router: second response still has router form.choices');
   }
 }

@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """
-Verification script: Ensure all LLM requests go to Z.AI, not Ollama.
+Verification script: Ensure all LLM requests go to Z.AI, not Local LLM upstream.
 
 This script checks:
-1. Ollama provider is disabled in providers.json
+1. Local LLM upstream provider is disabled in providers.json
 2. Z.AI is the default provider
 3. Z.AI is first in the fallback chain
 4. Environment variables are properly configured
-5. No requests would route to Ollama
+5. No requests would route to Local LLM upstream
 """
 
 import json
@@ -42,12 +42,12 @@ def check_providers_config():
     with open(config_path, 'r') as f:
         config = json.load(f)
     
-    # Check Ollama is disabled
-    ollama_config = config['providers'].get('ollama', {})
-    is_ollama_disabled = ollama_config.get('enabled', True) == False
+    # Check Local LLM upstream is disabled
+    compat_llm_config = config['providers'].get('compat_llm', {})
+    is_compat_llm_disabled = compat_llm_config.get('enabled', True) == False
     
-    print(f"\nOllama Provider:")
-    print(f"  - Enabled: {ollama_config.get('enabled')} {'✅' if is_ollama_disabled else '❌'}")
+    print(f"\nLocal LLM upstream Provider:")
+    print(f"  - Enabled: {compat_llm_config.get('enabled')} {'✅' if is_compat_llm_disabled else '❌'}")
     
     # Check Z.AI is default
     default_provider = config.get('default_provider', '')
@@ -72,7 +72,7 @@ def check_providers_config():
     print(f"  - Enabled: {is_z_ai_enabled} {'✅' if is_z_ai_enabled else '❌'}")
     print(f"  - Models: {z_ai_config.get('models', [])}")
     
-    return is_ollama_disabled and is_z_ai_default and is_z_ai_first and is_z_ai_enabled
+    return is_compat_llm_disabled and is_z_ai_default and is_z_ai_first and is_z_ai_enabled
 
 
 def check_env_vars():
@@ -97,10 +97,10 @@ def check_env_vars():
         if not is_set:
             all_set = False
     
-    # Legacy Ollama variables (should be ignored now)
+    # Legacy Local LLM upstream variables (should be ignored now)
     print(f"\n  [Legacy, should be ignored]")
-    print(f"  OLLAMA_HOST: {os.getenv('OLLAMA_HOST')}")
-    print(f"  OLLAMA_MODEL: {os.getenv('OLLAMA_MODEL')}")
+    print(f"  LOCAL_LLM_UPSTREAM_URL: {os.getenv('LOCAL_LLM_UPSTREAM_URL')}")
+    print(f"  LOCAL_LLM_MODEL: {os.getenv('LOCAL_LLM_MODEL')}")
     
     return all_set
 
@@ -124,7 +124,7 @@ def check_router_logic():
                            if provider_config.enabled]
         
         print(f"\nEnabled Providers: {enabled_providers}")
-        print(f"  - Ollama in enabled: {'❌ YES (should be disabled)' if 'ollama' in enabled_providers else '✅ NO'}")
+        print(f"  - Local LLM upstream in enabled: {'❌ YES (should be disabled)' if 'compat_llm' in enabled_providers else '✅ NO'}")
         print(f"  - Z.AI in enabled: {'✅ YES' if 'z_ai' in enabled_providers else '❌ NO'}")
         
         # Test provider selection for default model
@@ -143,9 +143,9 @@ def check_router_logic():
                     if name == 'z_ai':
                         print(f"     └─ This is correct! Z.AI is being used.")
                         return True
-                # If we got here and ollama is in the chain before z_ai
-                if any(name == 'ollama' for name, _ in chain):
-                    print(f"  ❌ WARNING: Ollama is in the chain!")
+                # If we got here and compat_llm is in the chain before z_ai
+                if any(name == 'compat_llm' for name, _ in chain):
+                    print(f"  ❌ WARNING: Local LLM upstream is in the chain!")
                     return False
             else:
                 print(f"  ❌ Error: No provider chain returned!")
@@ -198,7 +198,7 @@ def main():
     
     print("\n" + "="*70)
     if all_pass:
-        print("✅ ALL CHECKS PASSED - Requests will go to Z.AI, not Ollama!")
+        print("✅ ALL CHECKS PASSED - Requests will go to Z.AI, not Local LLM upstream!")
     else:
         print("❌ SOME CHECKS FAILED - Please fix the issues above")
     print("="*70 + "\n")

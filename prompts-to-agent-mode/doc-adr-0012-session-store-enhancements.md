@@ -11,4 +11,4 @@ Pick zero or one enhancement with clear acceptance tests; implement or move item
 
 ## Completion
 
-- [ ] Done (picked + done, or explicitly deferred)
+[X] Completed

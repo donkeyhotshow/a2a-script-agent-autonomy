@@ -1,0 +1,14 @@
+{
+  "context": {
+    "execution": {
+      "action": "agent",
+      "step": "new"
+    },
+    "task": "Define and document (or automate) the full cross-browser matrix; align with existing Playwright setup. Update REFERENCE / ADR status from Partial to complete or document scope cut.",
+    "history": []
+  },
+  "result": {
+    "message": "Define and document (or automate) the full cross-browser matrix; align with existing Playwright setup. Update REFERENCE / ADR status from Partial to complete or document scope cut."
+  },
+  "task": "Define and document (or automate) the full cross-browser matrix; align with existing Playwright setup. Update REFERENCE / ADR status from Partial to complete or document scope cut."
+}

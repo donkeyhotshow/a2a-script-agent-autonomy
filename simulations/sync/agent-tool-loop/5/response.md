@@ -40,6 +40,9 @@ Mirror of `response.json` for prompt pipeline / `sim:check-md`.
       "pattern": "calculateTotal",
       "path": "."
     }
+  },
+  "result": {
+    "completed": false
   }
 }
 ```

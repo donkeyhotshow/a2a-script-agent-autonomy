@@ -164,6 +164,23 @@ class TestProviderRouter:
         assert len(result.embeddings) == 1
         assert result.embeddings[0] == [0.1, 0.2, 0.3]
     
+    def test_resolve_model_fallback_from_config_without_provider_instances(self, router):
+        """default_provider fallback_models applies even when initialize() never ran."""
+        router.config.default_provider = "mock2"
+        router.config.providers["mock2"].fallback_models = {"legacy-x": "model-b"}
+        router._providers = {}
+        router._initialized = False
+        assert router._resolve_model("legacy-x") == "model-b"
+
+    def test_resolve_model_keeps_shared_hub_alias_for_fallback_chain(self, router):
+        """If 2+ enabled providers map the same hub name, do not remap to default target."""
+        router.config.providers["mock1"].fallback_models = {"hub-alias": "model-a"}
+        router.config.providers["mock2"].fallback_models = {"hub-alias": "model-b"}
+        router.config.default_provider = "mock1"
+        router._providers = {}
+        router._initialized = False
+        assert router._resolve_model("hub-alias") == "hub-alias"
+
     def test_get_provider_chain(self, router):
         """Test getting provider chain"""
         router._providers = {
@@ -272,9 +289,9 @@ class TestGetRouter:
 class TestProviderRegistry:
     """Test provider type registry"""
     
-    def test_registry_has_ollama(self):
-        """Test registry includes ollama"""
-        assert "ollama" in PROVIDER_REGISTRY
+    def test_registry_has_compat_llm(self):
+        """Test registry includes compat_llm"""
+        assert "compat_llm" in PROVIDER_REGISTRY
     
     def test_registry_has_openai(self):
         """Test registry includes openai"""

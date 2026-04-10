@@ -11,4 +11,4 @@ After multi-step flow, confirm `GET /api/a2a/sessions/{id}` matches latest final
 
 ## Completion
 
-- [ ] Done
+[X] Completed

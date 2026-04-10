@@ -51,14 +51,14 @@ start() {
     log_info "Services started. Waiting for health checks..."
 
     # Wait for services to be healthy
-    log_info "Waiting for Ollama to be ready..."
-    docker-compose exec -T ollama sh -c 'until curl -f http://localhost:11435/api/tags > /dev/null 2>&1; do sleep 2; done'
+    log_info "Waiting for Local LLM upstream to be ready..."
+    docker-compose exec -T compat_llm sh -c 'until curl -f http://localhost:11435/api/tags > /dev/null 2>&1; do sleep 2; done'
 
     log_info "Waiting for ai-integration proxy to be ready..."
     docker-compose exec -T ai-integration sh -c 'until curl -f http://localhost:11434/health > /dev/null 2>&1; do sleep 2; done'
 
     log_info "All services are ready!"
-    log_info "  - Ollama: http://localhost:11435"
+    log_info "  - Local LLM upstream: http://localhost:11435"
     log_info "  - AI Integration Proxy: http://localhost:11434"
 }
 
@@ -80,7 +80,7 @@ status() {
     docker-compose ps
 
     log_info "Health checks:"
-    echo "Ollama health:"
+    echo "Local LLM upstream health:"
     curl -s http://localhost:11435/api/tags | head -5 || echo "  Not available"
 
     echo "AI Integration health:"
@@ -98,7 +98,7 @@ test() {
     fi
 
     if ! curl -f http://localhost:11435/api/tags > /dev/null 2>&1; then
-        log_error "Ollama is not healthy"
+        log_error "Local LLM upstream is not healthy"
         exit 1
     fi
 

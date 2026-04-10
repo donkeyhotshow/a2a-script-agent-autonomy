@@ -35,7 +35,8 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": false,
     "emitDecoratorMetadata": true,
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+    "downlevelIteration": true
   },
   "include": [
     "src/**/*"

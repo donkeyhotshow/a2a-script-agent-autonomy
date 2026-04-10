@@ -50,7 +50,7 @@ def _build_health_checks(proxy_url: str) -> Iterable[Tuple[str, str]]:
     return (
         (f"{base}/health", "Proxy health"),
         (f"{base}/health/ready", "Proxy readiness"),
-        (f"{base}/health/ollama", "Proxy → Ollama availability"),
+        (f"{base}/health/compat_llm", "Proxy → Local LLM upstream availability"),
     )
 
 

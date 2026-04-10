@@ -4,6 +4,8 @@ Checkpoint: agent mode in `a2a-client/web` against the Vite **storage-mode** Cli
 
 **Web HTTP surface:** the browser only sees **`/api/a2a/*`** on the app origin. **Execution** still runs on **a2a-server** (`/api/v1/invoke` and request polling); the Client API is the gateway and session layer. Operator doc: [`docs/OPERATOR-CURL.md`](../../docs/OPERATOR-CURL.md) → *Web access and a2a-server*.
 
+**AI hub promise queue (vertex C):** same-origin **`/api/a2a/hub/*`** proxies to **`AI_HUB_URL`** (pending/errors/retry/execute/delete). Web header **Hub queue**; normative hub API: [`ai-integration/docs/api-reference/PROXY_API.md`](../../ai-integration/docs/api-reference/PROXY_API.md) § *Promise queue*.
+
 ## Principles
 
 1. **Transport ids stay server-side** — The browser does not need A2A `promiseId` to poll. The Client API resolves the active in-flight step and calls A2A internally.
@@ -14,6 +16,10 @@ Checkpoint: agent mode in `a2a-client/web` against the Vite **storage-mode** Cli
 ## Router dialog (two beats)
 
 Task-flow is **not** one shot: (1) user submits **direction of work** (free text in `execute.form.input` / first `POST .../next` as `result.message` or shorthand `task`). (2) After `invoke`, the server often returns **`execute.form.choices`**; the UI renders **buttons** (`task-flow/render-form.js` — types such as `agent`, `dialog`, `decomposition`). The next submit sends **`result.choice`** = the chosen row’s **`id`** (same `task` field is overloaded as choice id when the prior step had choices — see `packages/vite-plugin/routes/step-routes-router-flow.js` `buildSubmitResult`). Coarse stage **`routing`** when choices exist: `packages/vite-plugin/routes/utils/session-stage-machine.js`. Default server fallback choice **`id`** values: **`dialog`**, **`agent`**, **`task-decomposition`** — see repo root [`shared/router-static-choices.json`](../../shared/router-static-choices.json). Operators and methodology: root [`AGENTS.md`](../../AGENTS.md) (*Router dialog (two beats)*), [`docs/OPERATOR-CURL.md`](../../docs/OPERATOR-CURL.md).
+
+**Choice detection (must match `/next`):** the Client API treats the prior step as “has choices” when **`execute.form.choices`** is a non-empty array **or** **`execute.form.meta.routerChoices`** is (same as [`routerFormHasChoices()`](../packages/vite-plugin/routes/step-routes-router-flow.js) and [`deriveSessionStage()`](../packages/vite-plugin/routes/utils/session-stage-machine.js)). Server goldens usually use `choices`; either form is valid for the web contour.
+
+**Router step normalization:** when `context.execution.step === 'router'`, [`normalizeRouterStepSubmit()`](../packages/vite-plugin/routes/step-routes-router-flow.js) maps free-text **`task`** / **`result.message`** (and some **`result.choice`** variants) to canonical ids — e.g. Ukrainian/Russian/English labels such as **діалог** / **диалог** → `dialog`, **агент** → `agent`, **декомпозиція** → `task-decomposition`, in addition to matching a real choice **`id`** from the form.
 
 ## Glossary (one term each)
 
@@ -51,12 +57,12 @@ The **server protocol** and simulation **`response.json`** still use a **single 
 | Method | Path | Role |
 |--------|------|------|
 | POST | `/api/a2a/sessions` | Create session |
-| GET | `/api/a2a/sessions/{id}` | Authoritative snapshot: messages, execute, context (no `promiseId` in JSON; `asyncPending` + `promiseStatus` when waiting) |
-| POST | `/api/a2a/sessions/{id}/next` | Submit user result; ack: `{ success, accepted, step, asyncPending, promiseId? }` (`promiseId` legacy; web uses `asyncPending`) |
-| GET | `/api/a2a/sessions/{id}/async` | **Preferred for web:** one poll step for current async work; body has no transport id |
+| GET | `/api/a2a/sessions/{id}` | Authoritative snapshot: **body is the session DTO** (not `{ success, session }`). Messages merged from steps in storage mode; `asyncPending` / `promiseStatus` / `stage` via projection. `?includeContext=1` **403 in production** (Vite). Standalone SDK default **`{ success, session }`**; **`?unwrap=1`** matches Vite top-level body — [ADR-0028](../../docs/adr/ADR-0028-client-api-deployment-modes.md). |
+| POST | `/api/a2a/sessions/{id}/next` | Submit user result; **ack JSON** (Vite + SDK): **`{ success, accepted, step, asyncPending }`** — transport **`promiseId` is not echoed**; use **`asyncPending: true`** then poll **`GET …/async`** ([ADR-0028](../../docs/adr/ADR-0028-client-api-deployment-modes.md)). |
+| GET | `/api/a2a/sessions/{id}/async` | **Preferred for web:** one poll step for current async work; body has **no** `promiseId` (transport id stays server-internal). Semantic fields: **`asyncPending`**, **`status`**, optional projected **`execute`**, **`result`**, **`completed`**, **`requestPhase`**, **`retryAfter`** — see § *GET `/async` response shape* below. (`GET /sessions/:id` still exposes **`promiseStatus`** on the session object; do not confuse with this poll’s **`status`** string.) |
 | GET | `/api/a2a/sessions/{id}/promise/{promiseId}` | Legacy/debug; same persistence side-effects as `/async` |
 | GET | `/api/a2a/sessions/{id}/latest` | Step summary; nested `session` uses same public DTO as GET session |
-| GET | `/api/a2a/sessions/{id}/messages` | Delta messages; includes `asyncPending` (not `promiseId`) |
+| GET | `/api/a2a/sessions/{id}/messages` | Message delta + session flags — see § *GET `/messages`* (default **flat** storage only; **404** in **project** storage mode) |
 
 ## Lifecycle diagrams (web + storage)
 
@@ -77,7 +83,7 @@ POST /sessions/{sid}/next
                          invoke A2A
                          async ? WRITE `{N}/server-promise.json`
                                : WRITE `{N}/server-response.json` + `{N}/messages.json`
-<---------------------  ack `{ accepted, step, asyncPending }`
+<---------------------  ack `{ success, accepted, step, asyncPending }` (no `promiseId` on Vite)
 
 while asyncPending=true
 GET /sessions/{sid}/async
@@ -85,7 +91,7 @@ GET /sessions/{sid}/async
                          READ `{N}/server-promise.json`
                          pending ? keep file
                                  : DELETE promise + WRITE response/messages
-<---------------------  `{ asyncPending, promiseStatus }`
+<---------------------  `{ asyncPending, status, result?, execute?, completed, requestPhase?, retryAfter? }` (no `promiseId`; see § below)
 
 hydrate UI
 GET /sessions/{sid} ---> sessionRoutes:get
@@ -112,7 +118,7 @@ resume poll ---------->  GET /sessions/{sid}/async
                            DELETE `{K+1}/server-promise.json`
                            WRITE  `{K+1}/server-response.json`
                            WRITE  `{K+1}/messages.json`
-<----------------------  async status update for UI
+<----------------------  same poll shape as happy path (`status` = server row status, not session `promiseStatus`)
 
 final restore -------->  GET /sessions/{sid}
 <----------------------  stable snapshot for renderer/session store
@@ -123,7 +129,7 @@ final restore -------->  GET /sessions/{sid}
 | Consumer | Base URL | Poll / status route | Full example URL | Notes |
 |----------|----------|---------------------|------------------|--------|
 | **A2A Server** (raw invoke result API) | `A2A_SERVER_URL` (e.g. `http://localhost:3000`) | `GET /api/v1/requests/:promiseId/result` | `http://localhost:3000/api/v1/requests/prom_123/result` | Canonical server async endpoint; promise-id based transport flow. |
-| **Vite Client API / Web UI** (storage mode) | Browser origin + `/api/a2a` (e.g. `http://localhost:5173/api/a2a`) | Preferred: `GET /sessions/:sessionId/async`; legacy: `GET /sessions/:sessionId/promise/:promiseId` | `http://localhost:5173/api/a2a/sessions/sess_123/async` | Session-centric web flow; UI should poll by session and read `asyncPending`/`promiseStatus` from DTO. |
+| **Vite Client API / Web UI** (storage mode) | Browser origin + `/api/a2a` (e.g. `http://localhost:5173/api/a2a`) | Preferred: `GET /sessions/:sessionId/async`; legacy: `GET /sessions/:sessionId/promise/:promiseId` | `http://localhost:5173/api/a2a/sessions/sess_123/async` | Session-centric web flow; poll body uses **`asyncPending`** + **`status`** (+ optional `execute`, `result`, deferral fields). Session snapshot **`promiseStatus`** is on **`GET /sessions/:id`**, not renamed on `/async`. |
 | **SDK `AsyncClient`** | `httpClient` base of SDK integration | `GET /async/status/:promiseId` (relative to SDK base) | `http://localhost:3001/async/status/prom_123` | SDK contract path is integration-defined and may differ from Vite route layout; adapters can map this to server `/api/v1/requests/:promiseId/result`. |
 
 #### Example snippets by consumer
@@ -151,6 +157,32 @@ GET http://localhost:5173/api/a2a/sessions/sess_123/promise/prom_123
 ```text
 GET http://localhost:3001/async/status/prom_123
 ```
+
+### GET `/async` response shape (storage mode)
+
+Implementation: [`step-routes-async-flow.js`](../packages/vite-plugin/routes/step-routes-async-flow.js) (`normalizePromisePollStatus` in [`client-api-envelope.mjs`](../shared/client-api-envelope.mjs)).
+
+| Situation | JSON shape |
+|-----------|------------|
+| **Idle** — no in-flight step / promise file | `{ "asyncPending": false, "completed": true, "status": "idle", "result": null }` |
+| **Polling** — work in progress or just finished this tick | `asyncPending`, **`status`** (A2A request status string: e.g. `pending`, `processing`, `completed`, `failed`), `completed`, `result` (without `context` unless `?includeContext=1`), **`execute`** (Web DTO projection via `buildExecuteProjection`), **`requestPhase`**, **`retryAfter`** (dialog deferral / backoff). |
+| **Legacy** `GET …/promise/:promiseId` | Same as polling row but body includes **`promiseId`** for debug. |
+
+`promiseStatus` on **`GET /sessions/:id`** is the session-index / UI aggregate flag; **`/async`** uses the **`status`** field name for the polled server request row.
+
+### GET `/sessions/{id}/messages` (delta)
+
+Implementation: [`sessionRoutes.js`](../packages/vite-plugin/routes/sessionRoutes.js) (`GET …/messages`). **SDK:** same delta JSON when query includes **`afterSeq`** ([`sessions-read.ts`](../packages/sdk/src/server/server/routes/sessions-read.ts)); default list envelope `{ success, data, count }` when `afterSeq` is omitted.
+
+| Query | Default | Role |
+|-------|---------|------|
+| `afterSeq` | `0` | Only messages with `seq > afterSeq` |
+| `limit` | `50` (max `200`) | Page size |
+| `withExecute` | off | Set `withExecute=1` to include projected **`execute`** on the payload |
+
+Response JSON includes **`sessionId`**, **`afterSeq`**, **`lastSeq`**, **`hasMore`**, **`messages`**, **`asyncPending`**, **`promiseStatus`**, **`currentStep`**, and optionally **`execute`**. No transport **`promiseId`** in the envelope.
+
+**Project storage mode:** route returns **404** (`messages delta not available in project storage mode`); use **`GET /sessions/{id}`** for full snapshot there.
 
 Compatibility rule:
 - Web UI + `SessionStore` use `/api/a2a/sessions/:id/async` as default polling route.

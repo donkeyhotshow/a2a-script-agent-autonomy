@@ -10,15 +10,19 @@ export const CHAINABLE_CLIENT_TOOLS = new Set([
     'edit-patch',
 ]);
 
+/** Allowed next to a single tool key (same object as `list-directory`, etc.) — see agent-request.md / dialog-request.md */
+const EXECUTE_AUX_KEYS = new Set(['message', 'completed']);
+
 export function getValidatedToolKey(ex) {
     if (!ex || typeof ex !== 'object' || Array.isArray(ex)) {
         return null;
     }
     const keys = Object.keys(ex);
-    if (keys.length !== 1) {
+    const toolKeys = keys.filter((k) => !EXECUTE_AUX_KEYS.has(k));
+    if (toolKeys.length !== 1) {
         return null;
     }
-    const toolKey = keys[0];
+    const toolKey = toolKeys[0];
     if (!CHAINABLE_CLIENT_TOOLS.has(toolKey)) {
         return null;
     }
@@ -39,7 +43,12 @@ export function getValidatedToolKey(ex) {
 
     if (toolKey === 'run-script') {
         const rs = ex['run-script'];
-        if (!rs || typeof rs.scriptId !== 'string' || !rs.scriptId.trim()) {
+        if (!rs || typeof rs !== 'object' || Array.isArray(rs)) {
+            return null;
+        }
+        const hasScriptId = typeof rs.scriptId === 'string' && rs.scriptId.trim().length > 0;
+        const hasCommand = typeof rs.command === 'string' && rs.command.trim().length > 0;
+        if (!hasScriptId && !hasCommand) {
             return null;
         }
     }

@@ -18,7 +18,7 @@ from .base import (
     ChatMessage,
     EmbeddingResult,
 )
-from .ollama_provider import OllamaProvider
+from .compat_llm_provider import CompatLlmProvider
 from .openai_compatible_provider import OpenAICompatibleProvider
 from .huggingface_provider import HuggingFaceProvider
 from .router import ProviderRouter, get_router
@@ -33,7 +33,7 @@ __all__ = [
     "ChatMessage",
     "EmbeddingResult",
     # Provider implementations
-    "OllamaProvider",
+    "CompatLlmProvider",
     "OpenAICompatibleProvider",
     "HuggingFaceProvider",
     # Router

@@ -29,7 +29,6 @@ Implement a unified TransportManager that consolidates multiple transport channe
 - Server returns `{ promiseId, status: "pending" }`
 - Client API polls `/requests/:promiseId/status` until `completed`
 - When completed, Client API returns `execute.*` to Web
-- SSE/WebSocket optional for realtime progress updates
 
 ### Connection States
 

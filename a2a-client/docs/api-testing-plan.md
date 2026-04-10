@@ -36,7 +36,7 @@ Checks:
 
 Checks:
 
-- Response is ack-first (`accepted`, `step`, `asyncPending`, optional `promiseId`)
+- Response is ack-first (`accepted`, `step`, `asyncPending` — no `promiseId` in ack body)
 - Do not treat this response as final state
 
 ## 3) Resolve Final State

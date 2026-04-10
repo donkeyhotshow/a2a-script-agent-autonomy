@@ -1,9 +1,9 @@
 {
   "$schema": "./ai-hub.config.schema.json",
   "model_aliases": {
-    "qwen3:8b": "qwen3:8b",
-    "big": "qwen3:8b",
-    "small": "qwen3:8b"
+    "qwen3:8b": "glm-4.7-flash",
+    "big": "glm-4.7-flash",
+    "small": "glm-4.7-flash"
   },
   "strict_model_aliases": false,
   "rules": [
@@ -33,7 +33,7 @@
       },
       "then": {
         "type": "simulate",
-        "builder": "ollama.generate",
+        "builder": "compat_llm.generate",
         "text": "SIMULATED: {prompt}",
         "delay_ms": 50
       }
@@ -53,7 +53,7 @@
         },
         {
           "type": "simulate",
-          "builder": "ollama.generate",
+          "builder": "compat_llm.generate",
           "text": "model={model}; prompt={prompt}"
         }
       ]
@@ -68,7 +68,7 @@
       },
       "then": {
         "type": "simulate",
-        "builder": "ollama.generate",
+        "builder": "compat_llm.generate",
         "text": "PENDING SIMULATED PROMISE: {prompt}",
         "delay_ms": 6000
       }

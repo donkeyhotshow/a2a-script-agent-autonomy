@@ -23,7 +23,7 @@ export const DEFAULT_PORTS = {
   clientApi: { port: 3001, range: [3001, 3011], priority: 2, envVar: 'CLIENT_API_PORT' },
   web: { port: 5173, range: [5173, 5183], priority: 3, envVar: 'WEB_PORT' },
   proxy: { port: 11434, range: [11434, 11444], priority: 4, envVar: 'PROXY_PORT' },
-  ollama: { port: 11435, range: [11435, 11445], priority: 5, envVar: 'OLLAMA_PORT' },
+  compat_llm: { port: 11435, range: [11435, 11445], priority: 5, envVar: 'LOCAL_LLM_PORT' },
   postgres: { port: 5432, range: [5432, 5442], priority: 0, envVar: 'POSTGRES_PORT' },
   redis: { port: 6379, range: [6379, 6389], priority: 0, envVar: 'REDIS_PORT' },
 };
@@ -144,7 +144,10 @@ export function killPidBatch(port) {
     try {
       process.kill(entry.pid);
       killed.push(entry.pid);
-    } catch {}
+     } catch (err) {
+         // Ignore errors when killing PIDs - process may have already exited
+         console.warn(`Failed to kill PID ${entry.pid}:`, err.message || err);
+     }
   }
 
   deleteLockAndMetadata(port);
@@ -244,15 +247,20 @@ export function reservePort(port, serviceName) {
     addPidToMetadata(port, serviceName, process.pid);
     
     return true;
-  } catch (err) {
-    if (existsSync(lockFile)) {
-      try { unlinkSync(lockFile); } catch {}
-    }
-    if (existsSync(metadataFile)) {
-      try { unlinkSync(metadataFile); } catch {}
-    }
-    return false;
-  }
+   } catch (err) {
+     // Log cleanup errors but don't fail the reservation
+     if (existsSync(lockFile)) {
+       try { unlinkSync(lockFile); } catch (cleanupErr) {
+         console.warn(`Failed to cleanup lock file for port ${port}:`, cleanupErr.message || cleanupErr);
+       }
+     }
+     if (existsSync(metadataFile)) {
+       try { unlinkSync(metadataFile); } catch (cleanupErr) {
+         console.warn(`Failed to cleanup metadata file for port ${port}:`, cleanupErr.message || cleanupErr);
+       }
+     }
+     return false;
+   }
 }
 
 /**
@@ -427,7 +435,10 @@ export function getReservedPorts() {
         });
       });
     }
-  } catch {}
+   } catch (err) {
+     // Ignore errors when getting reserved ports - may be permission issues
+     console.warn('Failed to get reserved ports:', err.message || err);
+   }
   
   return reserved;
 }

@@ -1,10 +1,10 @@
 /**
- * Client-side tool execution + sync re-invoke chain (agent mode).
+ * Client-side tool execution + chained POST /invoke (agent mode), async-only server.
  * When A2A returns a single client-executable execute key, run it under the session project path and POST /invoke again.
  * Supports: rag-search, read-file, list-directory, grep-search, file-exists, write-file,
  * execute-command, run-script, edit-patch. (execute.script is not auto-chained — use SDK / UI.)
  *
- * Architecture (T021): this is a **loop** of single-key `execute` responses — not a multi-key `execute`.
+ * Architecture (T021): each iteration is one **tool** action key (optionally with `execute.message` / `execute.completed` alongside — same object).
  * Each iteration: server returns one tool key → client runs tool → client sends `result` → next `/invoke`.
  * See `a2a-server/docs/EXTENDING-LLM-ACTIONS.md` for protocol limits (one action key per `response.json`).
  */
@@ -93,24 +93,27 @@ function postInvokeJson(a2aServerUrl, body) {
  * @returns {Promise<{ key: string; value: unknown } | null>}
  */
 async function runClientToolForExecute(cwd, projectPath, toolKey, payload) {
+    const safeCwd = typeof cwd === 'string' && cwd.trim() ? cwd : process.cwd();
+    const safeProject =
+        typeof projectPath === 'string' && projectPath.trim() ? projectPath : safeCwd;
     const p = payload && typeof payload === 'object' ? payload : {};
     switch (toolKey) {
         case 'rag-search':
-            return { key: 'rag-search', value: await runClientRagSearchForExecute(cwd, projectPath, p) };
+            return { key: 'rag-search', value: await runClientRagSearchForExecute(safeCwd, safeProject, p) };
         case 'read-file':
-            return { key: 'read-file', value: await runClientReadFile(projectPath, p) };
+            return { key: 'read-file', value: await runClientReadFile(safeProject, p) };
         case 'list-directory':
-            return { key: 'list-directory', value: await runClientListDirectory(projectPath, p) };
+            return { key: 'list-directory', value: await runClientListDirectory(safeProject, p) };
         case 'file-exists':
-            return { key: 'file-exists', value: await runClientFileExists(projectPath, p) };
+            return { key: 'file-exists', value: await runClientFileExists(safeProject, p) };
         case 'write-file':
-            return { key: 'write-file', value: await runClientWriteFile(projectPath, p) };
+            return { key: 'write-file', value: await runClientWriteFile(safeProject, p) };
         case 'grep-search':
-            return { key: 'grep-search', value: await runClientGrepSearch(projectPath, p) };
+            return { key: 'grep-search', value: await runClientGrepSearch(safeProject, p) };
         case 'execute-command': {
-            let cwdAbs = projectPath;
+            let cwdAbs = safeProject;
             if (p.cwd && typeof p.cwd === 'string') {
-                const r = resolveUnderProjectRoot(projectPath, p.cwd);
+                const r = resolveUnderProjectRoot(safeProject, p.cwd);
                 if (!r) {
                     return {
                         key: 'execute-command',
@@ -128,17 +131,56 @@ async function runClientToolForExecute(cwd, projectPath, toolKey, payload) {
             }
             return { key: 'execute-command', value: await runClientExecuteCommand(cwdAbs, p) };
         }
-        case 'run-script':
-            return { key: 'run-script', value: await runClientRegisteredScript(projectPath, p) };
+        case 'run-script': {
+            // LLMs often emit run-script { command: "npm run ..." } instead of scriptId; chain must still run.
+            if (typeof p.command === 'string' && p.command.trim()) {
+                let cwdAbs = safeProject;
+                if (p.cwd && typeof p.cwd === 'string') {
+                    const r = resolveUnderProjectRoot(safeProject, p.cwd);
+                    if (!r) {
+                        return {
+                            key: 'run-script',
+                            value: {
+                                success: false,
+                                scriptId: '',
+                                inlineCommand: true,
+                                error: 'cwd outside project',
+                                output: '',
+                            },
+                        };
+                    }
+                    cwdAbs = r;
+                }
+                const inlinePayload =
+                    typeof p.timeout === 'number'
+                        ? p
+                        : {...p, timeout: 600000};
+                const ec = await runClientExecuteCommand(cwdAbs, inlinePayload);
+                return {
+                    key: 'run-script',
+                    value: {
+                        success: ec.success,
+                        scriptId: '',
+                        inlineCommand: true,
+                        output: [ec.stdout, ec.stderr].filter(Boolean).join('\n'),
+                        error: ec.error || (ec.exitCode !== 0 && ec.stderr ? ec.stderr : undefined),
+                        exitCode: ec.exitCode,
+                        timedOut: ec.timedOut,
+                    },
+                };
+            }
+            return { key: 'run-script', value: await runClientRegisteredScript(safeProject, p) };
+        }
         case 'edit-patch':
-            return { key: 'edit-patch', value: await runClientEditPatch(projectPath, p) };
+            return { key: 'edit-patch', value: await runClientEditPatch(safeProject, p) };
         default:
             return null;
     }
 }
 
 /**
- * Follow-up sync invokes while the latest response asks for a chainable client tool execute key.
+ * Follow-up chained invokes while the latest response asks for a chainable client tool execute key.
+ * Stops when POST /invoke returns promiseId (normal async path); outer flow must poll and resume.
  *
  * @returns {{ serverResponse: object, stepNum: number, savedContext: object }}
  */
@@ -161,8 +203,11 @@ export async function chainSyncInvokesForAgentTools({
         return { serverResponse: lastResp, stepNum, savedContext: ctx };
     }
 
-    const projectPath =
+    let projectPath =
         process.env.A2A_RAG_PROJECT_PATH || process.env.A2A_PROJECT_PATH || getProjectPathForSessions(cwd);
+    if (typeof projectPath !== 'string' || !projectPath.trim()) {
+        projectPath = typeof cwd === 'string' && cwd.trim() ? cwd : process.cwd();
+    }
 
     let depth = 0;
     while (depth < max) {
@@ -205,7 +250,7 @@ export async function chainSyncInvokesForAgentTools({
             console.error('[VitePlugin] Chained invoke failed', statusCode);
             break;
         }
-        if (parsed.data?.promiseId) {
+        if (parsed?.data?.promiseId) {
             console.log('[VitePlugin] Chained invoke returned promiseId — stopping tool chain');
             lastResp = parsed;
             break;

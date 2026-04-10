@@ -33,8 +33,7 @@ log() {
 # Service definitions
 # Format: name|port|pidkey|process1,process2
 SERVICES=(
-    "Ollama|11434|OLLAMA_PID|ollama"
-    "ai-integration|11435|AI_INTEGRATION_PID|python,uvicorn"
+    "ai-integration|11434|AI_INTEGRATION_PID|python,uvicorn"
     "a2a-server|3000|A2A_SERVER_PID|node"
     "client-api|3001|CLIENT_API_PID|node"
     "web-ui|5173|WEB_UI_PID|node"
@@ -53,6 +52,16 @@ if [[ -f "$PID_FILE" ]]; then
     done < "$PID_FILE"
 else
     log INFO "$PID_FILE not found, proceeding without PID file"
+fi
+
+echo ""
+log STEP "Phase 0" "Kill promise-queue-daemon by PID (if recorded)"
+if [[ -n "${PIDS[PROMISE_QUEUE_DAEMON_PID]}" ]]; then
+    pq_pid="${PIDS[PROMISE_QUEUE_DAEMON_PID]}"
+    if kill -0 "$pq_pid" 2>/dev/null; then
+        kill -9 "$pq_pid" 2>/dev/null || true
+        log OK "Killed promise-queue-daemon PID $pq_pid"
+    fi
 fi
 
 echo ""

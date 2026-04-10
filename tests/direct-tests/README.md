@@ -8,7 +8,7 @@
 
 | If you are debugging… | Use |
 |------------------------|-----|
-| Wrong `execute` / `result` keys, router beats, Client API session steps | [Dialog](#dialog), `dialog/run-dialog-direct-ollama.ps1`, `e2e-dialog-test.js` |
+| Wrong `execute` / `result` keys, router beats, Client API session steps | [Dialog](#dialog), `dialog/run-dialog-direct-local-hub.ps1`, `e2e-dialog-test.js` |
 | **Sticky router** (same `form.choices` again after a router choice, or `task`/`router` never clears) | `node tests/direct-tests/e2e-dialog-test.js --only=routerAgentNoLoop` — also `routerAgentNoLoopTaskShorthand`, `routerAgentNoLoopUtf8Task`, **`routerDialogNoLoop`** / **`routerDialogNoLoopTaskShorthand`** (after **dialog** choice), `routerWrongBeatMessage`. Replay: `replay-session-from-disk.js … --assert-no-sticky-router`. **Direct server invoke repro (fast scripted choice):** `node tests/direct-tests/router-choice-transition-run.mjs` — uses keyword task → `fix-vue-imports` choice (no LLM dialog pipeline). Vitest: `router-choice-transition.test.mjs` validates `server-invoke-request.schema.json` + optional live check when `GET {A2A_SERVER_URL}/health` is OK (default `http://127.0.0.1:3000`) |
 | **Replay a saved session folder** (`client-result.json` per step) | [replay-session-from-disk.js](#replay-saved-session-steps) — needs UTF-8 `replay-create.json` (or path arg) matching how the session was opened |
 | Stack reachability before deep JSON work | [run-checks.ps1](#hub-checks-by-stack-part) (`-Scope …`) |
@@ -20,7 +20,7 @@
 **Hardening / reduce LLM work:**
 - `--only=case1,case2` — run specific cases only (e.g., `--only=routerAgentNoLoop,routerDialogNoLoop`)
 - `E2E_DIRECT_LOW_LLM=1` — enables both merges below
-- `E2E_DIRECT_MERGE_INVOKE=1` — one sync invoke replaces 3 cases (3→1 LLM)
+- `E2E_DIRECT_MERGE_INVOKE=1` — one **invoke + poll** round-trip replaces 3 cases (3→1 LLM)
 - `E2E_DIRECT_MERGE_CLIENT_SESSION_SCHEMA=1` — one session replaces 9 cases (9→1 session)
 
 Subset examples:
@@ -31,6 +31,8 @@ node tests/direct-tests/e2e-dialog-test.js --only=routerAgentNoLoop,routerAgentN
 # Health checks only (no LLM)
 node tests/direct-tests/e2e-dialog-test.js --only=clientProjects,serverHealth,serverHealthJson
 ```
+
+If Vite returns **`503` / `A2A server unavailable`** on `/next` under load, the harness **retries** Client API fetches (`E2E_FETCH_RETRIES`, `E2E_FETCH_RETRY_BASE_MS`, optional `E2E_CASE_COOLDOWN_MS` between cases) — see the header comment in `e2e-dialog-test.js`.
 
 **Manual full direct suite (Papa):** [`run-post-start-all.ps1`](run-post-start-all.ps1) — hub (`run-checks.ps1` with Client **3001** / Web **5173**), Vitest, `router-choice-transition.test.mjs`, full `e2e-dialog-test.js`, `gray-room-test.js`, `test-dialog-flow.ps1`, `test-agent-flow.ps1`, `server-invoke-agent.ps1`. Set **`A2A_POST_START_SKIP_HEAVY=1`** to skip LLM-heavy steps (hub + Vitest + router + short e2e subset only). **`start-all.bat` does not run this** — see [PAPA-MAMA.md](../../PAPA-MAMA.md).
 
@@ -43,6 +45,7 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 | Entry | Purpose |
 |-------|---------|
 | [validators/](validators/) | Standalone validators (not Vitest); see [validators/README.md](validators/README.md) |
+| [`scripts/promise-artifacts-report.mjs`](../../scripts/promise-artifacts-report.mjs) (repo root) | `npm run report:promise -- <promiseId> [--out report.md] [--logs]` — one **Markdown** report: server `storage/requests/{id}.json`, Gray Room (`interruptTrace`, `grayRoom`, `operationHistory`), client `sessions/**/server-promise.json`, `ai-integration/proxy_logs/promises/<id>/` |
 | [validators/scan-promise-bodies.mjs](validators/scan-promise-bodies.mjs) | `npm run scan-promise-bodies` — proxy promise `body.md` LLM JSON |
 | [validators/scan-session-responses.mjs](validators/scan-session-responses.mjs) | `npm run scan-session-responses` — `storage/sessions/**/server-response.json` (same shape rules; noisy) |
 | [validators/verify-gray-room-state.mjs](validators/verify-gray-room-state.mjs) | `npm run verify:gray-room -- <snapshot.json>` — sequence / workbench snapshot |
@@ -50,7 +53,7 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 | [run-checks.ps1](run-checks.ps1) | Hub: health checks by scope (LLM, ServerLLM, ClientServer, …) |
 | [run-post-start-all.ps1](run-post-start-all.ps1) | Chains hub + Vitest + node + PS1 flows; run manually after the stack is up ([PAPA-MAMA.md](../../PAPA-MAMA.md)) |
 | [scripts/](scripts/) | Runners → `scripts/tests/` and root `scripts/` (prod-test, pre-release, web-ui-smoke-report) |
-| [dialog/](dialog/) | Dialog flow with direct Ollama (bypass ai-integration timeout) |
+| [dialog/](dialog/) | Dialog flow with direct Local LLM upstream (bypass ai-integration timeout) |
 | [rag/](rag/), [sdk/](sdk/), [ai-integration/](ai-integration/), [server/](server/) | Runners → packages (RAG, SDK, AI, sim) |
 
 ---
@@ -61,10 +64,10 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 
 | Scope | Checks |
 |-------|--------|
-| `LLM` | Ollama + AI proxy |
-| `ServerLLM` | Server + Ollama + AI proxy |
+| `LLM` | Local LLM upstream + AI proxy |
+| `ServerLLM` | Server + Local LLM upstream + AI proxy |
 | `ClientServer` | Client API + Server |
-| `ClientServerLLM` | Client + Server + Ollama + AI proxy |
+| `ClientServerLLM` | Client + Server + Local LLM upstream + AI proxy |
 | `WebClient` | Web UI + Client API |
 | `WebClientServer` | Web + Client + Server |
 | `Full` | Web + Client + Server + LLM |
@@ -74,7 +77,7 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 .\tests\direct-tests\run-checks.ps1 -Scope ClientServerLLM
 .\tests\direct-tests\run-checks.ps1 -Scope Full
 # Override ports/URLs:
-.\tests\direct-tests\run-checks.ps1 -Scope Full -ServerPort 3000 -ClientPort 5173 -WebPort 5173 -AiProxyUrl http://localhost:11435
+.\tests\direct-tests\run-checks.ps1 -Scope Full -ServerPort 3000 -ClientPort 5173 -WebPort 5173 -AiProxyUrl http://localhost:11434
 ```
 
 ## Dialog
@@ -85,16 +88,18 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 # Full dialog chain: task -> choices -> choice dialog -> input -> message -> message
 .\tests\direct-tests\test-dialog-flow.ps1
 
-# With Ollama checks + retry helper
-.\tests\direct-tests\dialog\run-dialog-direct-ollama.ps1
-.\tests\direct-tests\dialog\run-dialog-direct-ollama.ps1 -RetryRequest "a2a-server\storage\requests\prom_xxx.json"
+# With Local LLM upstream checks + retry helper
+.\tests\direct-tests\dialog\run-dialog-direct-local-hub.ps1
+.\tests\direct-tests\dialog\run-dialog-direct-local-hub.ps1 -RetryRequest "a2a-server\storage\requests\prom_xxx.json"
 ```
 
 ai-integration uses FORWARD_TIMEOUT_SECONDS=180 (set in start-ai-integration.bat) for slow models.
 
 ## Artifact tracking and cleanup
 
-Direct Node-based tests (`e2e-dialog-test.js`, `gray-room-test.js`) record the client sessions and server promiseIds they create into `artifacts-registry.json` in this folder.
+Direct Node-based tests (`e2e-dialog-test.js`, `gray-room-test.js`) append client sessions and server `promiseId`s to **`artifacts-registry.json`** (gitignored; shape: [`artifacts-registry.json.example`](artifacts-registry.json.example)). If the file is missing, the registry starts empty and is created on first write.
+
+**Trace one `promiseId` across storages (Markdown):** from repo root, `npm run report:promise -- <promiseId> --out docs/tmp/promise-trace.md` (optional `--logs` for server log lines). See [`scripts/promise-artifacts-report.mjs`](../../scripts/promise-artifacts-report.mjs).
 
 To remove those artifacts and run ai-integration cleanup after a batch of direct tests:
 
@@ -107,7 +112,7 @@ What it does:
 - Deletes recorded Client API sessions via `DELETE /api/a2a/sessions/:id`
 - Deletes matching A2A Server request files from `a2a-server/storage/requests/{promiseId}.json`
 - Runs `tests/direct-tests/ai-integration/run-test-cleanup.ps1` to clear ai-integration requests/promises/cache
-- Clears `tests/direct-tests/artifacts-registry.json`
+- Clears the registry file (empties tracked IDs)
 
 ## Replay saved session steps
 
@@ -142,7 +147,7 @@ node tests/direct-tests/replay-session-from-disk.js a2a-client/storage/sessions/
 
 - `test-services-basic.ps1`, `test-web-ui.ps1`, `test-a2a-client.ps1` — services / web / client checks
 - `web-ui-smoke-report.ps1` — smoke report from logs
-- `prod-test.js` — production test requests (Client API → Server → Ollama)
+- `prod-test.js` — production test requests (Client API → Server → Local LLM upstream)
 - `pre-release.js` — pre-release validation
 
 ## RAG (`a2a-client/packages/rag/scripts/`)
@@ -236,7 +241,7 @@ $env:A2A_SERVER_URL="http://127.0.0.1:3000"; node tests/direct-tests/router-choi
 ```
 
 What it does:
-1. `POST /api/v1/invoke` with **`{ task: "fix vue imports", sync: true }`** (first-request schema branch) → expect router `execute.form.choices`.
-2. Second invoke with **`context.session_id: "stateless"`** + **`context.task` + `context.execution` + `result.choice: "fix-vue-imports"`** → expect **no** router form again (scripted registry action). (Invoke responses may omit `session_id`; explicit `stateless` matches the server default contour.)
+1. `POST /api/v1/invoke` with **`{ task: "fix vue imports" }`**, then poll **`GET …/requests/{promiseId}/result`** → expect router `execute.form.choices`.
+2. Second invoke + poll with **`context.session_id: "stateless"`** + **`context.task` + `context.execution` + `result.choice: "fix-vue-imports"`** → expect **no** router form again (scripted registry action). (Invoke POST ack may omit `session_id`; explicit `stateless` matches the server default contour.)
 
 For LLM pipeline choices (`dialog` / `agent` / `task-decomposition`), use the **Client API** session flow (`e2e-dialog-test.js` cases above) — those paths invoke the dialog processor and are not duplicated here.

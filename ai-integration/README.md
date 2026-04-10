@@ -1,25 +1,25 @@
-# AI Integration Proxy (Z.AI first, Ollama optional)
+# AI Integration Proxy (Z.AI first, Local LLM upstream optional)
 
-**Live stack:** Start or restart the **whole** coordinated stack from the repo root: **`.\start-all.bat`** (Windows) or **`./start-all.sh`** (Linux/macOS). The proxy routes requests to the configured providers (Z.AI by default, with Ollama/Groq/OpenRouter fallbacks) and logs every call with optional simulation hooks.
+**Live stack:** Start or restart the **whole** coordinated stack from the repo root: **`.\start-all.bat`** (Windows) or **`./start-all.sh`** (Linux/macOS). The proxy routes requests to the configured providers (Z.AI by default, with Local LLM upstream/Groq/OpenRouter fallbacks) and logs every call with optional simulation hooks.
 
 **Documentation index:** [`docs/README.md`](docs/README.md) — providers/`api_keys`, API reference, testing, troubleshooting.
 
-Самостоятельный прокси объединяет несколько LLM-поставщиков: по умолчанию это Z.AI (`glm-4.7-flash`), а локальная Ollama выступает как дополнительный источник моделей, который добавляется в `/api/tags` только если доступен.
+Самостоятельный прокси объединяет несколько LLM-поставщиков: по умолчанию это Z.AI (`glm-4.7-flash`), а локальная Local LLM upstream выступает как дополнительный источник моделей, который добавляется в `/api/tags` только если доступен.
 
 ## Возможности
 
-- **Маршрутизация между провайдерами**: Z.AI (по умолчанию) + fallback (Ollama, Groq, OpenRouter, HuggingFace, Cohere и т.д.) — правила задаются в `AI_HUB_CONFIG` / `providers.json`.
-- **Логирование**: Каждый запрос сохраняется в отдельную папку (`proxy_logs/requests/request_*`) с `request.json` и `response.json`.
+- **Маршрутизация между провайдерами**: Z.AI (по умолчанию) + fallback (Local LLM upstream, Groq, OpenRouter, HuggingFace, Cohere и т.д.) — правила задаются в `AI_HUB_CONFIG` / `providers.json`.
+- **Логирование**: LLM `POST`/`PUT`/`PATCH` (chat/generate/embeddings) — трассы в `proxy_logs/promises/<promiseId>/`. Прочие пути по-прежнему могут писать в `proxy_logs/requests/request_*` (`request.json` / `response.json`).
 - **ML-симуляция**: Симуляции rnj-L / rnj-1 и правила `simulate`/`set_model`.
 - **Маппинг моделей + конфигурация**: `AI_HUB_CONFIG` + `providers.json` позволяют переадресовать `model`, вставлять `virtual_models` и наблюдать `api/tags`.
 - **Async Promises**: Поддержка `promiseId` → `POST /api/promises/create` → потом `result`. При **`PROMISE_DAEMON_ONLY=true`** (по умолчанию) реальный форвард на провайдера выполняет **очередь/daemon** или ручной **`POST /promise/<id>/execute`**; см. [`docs/workflows/WORKFLOWS.md`](docs/workflows/WORKFLOWS.md). Поле **`promise_daemon_only`** в **`GET /health`** использует Task Monitor (см. корневой **`MONITOR-QUICK-START.md`**).
-- **OllamaManager**: Управление локальным Ollama (старт/стоп/health) — используется только при необходимости.
+- **Local LLM upstreamManager**: Управление локальным Local LLM upstream (старт/стоп/health) — используется только при необходимости.
 
 ### Политика авторизации (без форварда)
 
 - Клиентские сервисы (Web UI, a2a-server, любые внешние клиенты) **не должны** прокидывать свои `Authorization` / `API-Key` заголовки до LLM.
 - Proxy сам собирает upstream‑хедеры для провайдера (например, `Authorization: Bearer …` для Z.AI) на основе **`config/providers.json`** (`api_keys` и провайдеры); см. [`docs/configuration/PROVIDERS_AND_API_KEYS.md`](docs/configuration/PROVIDERS_AND_API_KEYS.md). Ключи **не** должны храниться в `.env`, если политика команды — только JSON-конфиг.
-- Входящие auth‑хедеры используются только для аутентификации самого клиента (если включено), но **никогда не пробрасываются** дальше в Z.AI/Ollama — это сознательно запрещённый сценарий.
+- Входящие auth‑хедеры используются только для аутентификации самого клиента (если включено), но **никогда не пробрасываются** дальше в Z.AI/Local LLM upstream — это сознательно запрещённый сценарий.
 
 ## Установка
 
@@ -61,7 +61,7 @@ bash
 python -m proxy
 
 # Или через __main__
-python -m proxy --port 11434 --ollama-host http://localhost:11435
+python -m proxy --port 11434 --compat_llm-host http://localhost:11435
 
 # С включенной симуляцией
 set SIMULATION_ENABLED=true
@@ -83,14 +83,14 @@ python -m proxy
 | Z_AI_BASE_URL           | https://api.z.ai/api/paas/v4/ | Базовый URL для Z.AI (по умолчанию). |
 | Z_AI_MODEL              | glm-4.7-flash           | Модель Z.AI по умолчанию.        |
 | Z_AI_API_KEY            | -                       | Опционально; основной источник ключей — `config/providers.json` → `api_keys` (см. [`docs/configuration/PROVIDERS_AND_API_KEYS.md`](docs/configuration/PROVIDERS_AND_API_KEYS.md)). |
-| OLLAMA_HOST             | http://localhost:11435 | Хост локальной Ollama (фолбэк, необязательный). |
+| LOCAL_LLM_UPSTREAM_URL             | http://localhost:11435 | Хост локальной Local LLM upstream (фолбэк, необязательный). |
 | STORAGE_DIR             | proxy_logs             | Папка для логов                 |
 | SIMULATION_ENABLED      | false                  | Включить ML симуляцию           |
 | SIMULATION_DATA_PATH    | simulation_data        | Папка данных симуляции          |
 | AI_HUB_CONFIG           | -                      | JSON-конфиг маппинга/симуляции  |
 | FORWARD_TIMEOUT_SECONDS | 60                     | Таймаут проксирования           |
-| OLLAMA_AUTO_START       | true                   | Автозапуск Ollama               |
-| OLLAMA_IDLE_TIMEOUT     | 300                    | Секунд до остановки Idle Ollama |
+| LOCAL_LLM_AUTO_START       | true                   | Автозапуск Local LLM upstream               |
+| LOCAL_LLM_IDLE_TIMEOUT     | 300                    | Секунд до остановки Idle Local LLM upstream |
 | HEALTH_CHECK_INTERVAL   | 5                      | Интервал health check (сек)     |
 | LOG_LEVEL               | INFO                   | Уровень логирования             |
 | LOG_FORMAT              | json                   | Формат логов (json/text)        |
@@ -104,31 +104,31 @@ python -m proxy
 {
   "status": "running",
   "proxy_port": 11434,
-  "ollama_host": "http://localhost:11435",
-  "ollama_available": true
+  "local_llm_upstream_host": "http://localhost:11435",
+  "local_llm_upstream_available": true
 }
 ```
 
-### `/health/ollama` - Ollama Availability
-Проверка доступности Ollama. Возвращает HTTP 503 если Ollama недоступна.
+### `/health/compat_llm` - Local LLM upstream Availability
+Проверка доступности Local LLM upstream. Возвращает HTTP 503 если Local LLM upstream недоступна.
 
 ```json
 {
   "status": "healthy",
-  "ollama_available": true,
-  "ollama_url": "http://localhost:11435",
-  "ollama_pid": 12345,
+  "local_llm_upstream_available": true,
+  "local_llm_upstream_url": "http://localhost:11435",
+  "local_llm_upstream_pid": 12345,
   "idle_seconds": 120
 }
 ```
 
 ### `/health/ready` - Readiness Probe
-Проверка готовности прокси к обработке запросов. Возвращает HTTP 200 если доступен текущий default-провайдер (Z.AI по умолчанию). Если по умолчанию стоит `ollama`, то поведение прежнее: при недоступной Ollama — HTTP 503.
+Проверка готовности прокси к обработке запросов. Возвращает HTTP 200 если доступен текущий default-провайдер (Z.AI по умолчанию). Если по умолчанию стоит `compat_llm`, то поведение прежнее: при недоступной Local LLM upstream — HTTP 503.
 
 ```json
 {
   "status": "ready",
-  "ollama_available": true,
+  "local_llm_upstream_available": true,
   "cache_status": "active"
 }
 ```
@@ -143,7 +143,7 @@ python -m proxy
 | `ai_proxy_requests_total` | counter | Общее количество запросов |
 | `ai_proxy_request_duration_seconds` | histogram | Гистограмма времени обработки |
 | `ai_proxy_errors_total` | counter | Общее количество ошибок |
-| `ollama_model_loaded` | gauge | Загружена ли модель (1/0) |
+| `local_llm_model_loaded` | gauge | Загружена ли модель (1/0) |
 | `ai_proxy_uptime_seconds` | gauge | Время работы (сек) |
 
 ## Graceful Shutdown
@@ -151,7 +151,7 @@ python -m proxy
 Прокси поддерживает graceful shutdown:
 - Обработка SIGTERM/SIGINT сигналов
 - Ожидание завершения активных запросов (до 30 сек)
-- Корректная остановка Ollama (если запущена прокси)
+- Корректная остановка Local LLM upstream (если запущена прокси)
 - Логирование процесса shutdown
 
 ## Структура проекта
@@ -164,7 +164,7 @@ ai-integration/
 │   ├── config.py               # Конфигурация
 │   ├── routes.py               # Маршруты API
 │   ├── proxy_handler.py        # Обработка запросов
-│   ├── ollama_manager.py       # Управление Ollama
+│   ├── compat_llm_manager.py       # Управление Local LLM upstream
 │   ├── promises.py            # Async promises
 │   ├── ai_hub_config.py        # AI Hub конфиг
 │   ├── views.py                # Дополнительные view
@@ -212,13 +212,13 @@ ai-integration/
 
 ---
 
-`GET /api/tags` собирает единый список: модели из конфигурации включённых облачных провайдеров (например Z.AI), затем живой ответ `OLLAMA_HOST/api/tags` (если сервер доступен), затем `virtual_models` из AI Hub config. У каждой записи есть поле `provider` (`z_ai`, `ollama`, `virtual`, …) для выбора бэкенда.
+`GET /api/tags` собирает единый список: модели из конфигурации включённых облачных провайдеров (например Z.AI), затем живой ответ `LOCAL_LLM_UPSTREAM_URL/api/tags` (если сервер доступен), затем `virtual_models` из AI Hub config. У каждой записи есть поле `provider` (`z_ai`, `compat_llm`, `virtual`, …) для выбора бэкенда.
 
 ### Симуляция (когда SIMULATION_ENABLED=true)
 
 - `GET /simulation/status` - Статус симуляции
 - `POST /simulation/test` - Тест симуляции
-- `POST /simulation/force-real` - Форсировать реальный Ollama
+- `POST /simulation/force-real` - Форсировать реальный Local LLM upstream
 
 ## Scripts
 
@@ -291,7 +291,7 @@ curl http://localhost:11434/health
 
 ### Структура сервисов
 
-- **ollama**: LLM сервер (порт 11435)
+- **compat_llm**: LLM сервер (порт 11435)
 - **ai-integration**: Прокси с демоном (порт 11434)
 - **ai-integration-dev**: Режим разработки (порт 11438)
 
@@ -299,7 +299,7 @@ curl http://localhost:11434/health
 
 ```bash
 # Основные настройки
-OLLAMA_HOST=http://ollama:11435
+LOCAL_LLM_UPSTREAM_URL=http://compat_llm:11435
 PROXY_PORT=11434
 
 # Очистка
@@ -313,15 +313,15 @@ LOG_LEVEL=INFO
 
 ## Testing scripts
 
-- `python -m scripts.test_ai_integration` — runs proxy/ollama health checks, then verifies the promise daemon by reusing the promise-chain helper; add `--skip-promise` if the daemon is temporarily unavailable.
+- `python -m scripts.test_ai_integration` — runs proxy/compat_llm health checks, then verifies the promise daemon by reusing the promise-chain helper; add `--skip-promise` if the daemon is temporarily unavailable.
 - `python -m scripts.tests.promise_chain` — focused promise-chain smoke test (creates a promise with `?promise=1` and waits for the daemon to intercept it) that can also be used inside CI workflows.
-- `python -m scripts.tests.daemon_resilience` — validates daemon resilience across provider disconnect/reconnect (`/ollama/stop` -> health/daemon checks -> `/ollama/start`).
+- `python -m scripts.tests.daemon_resilience` — validates daemon resilience across provider disconnect/reconnect (`/compat_llm/stop` -> health/daemon checks -> `/compat_llm/start`).
 - `python scripts/test_promise_daemon.py` — standalone CLI that checks `/health`, sends `?promise=1`, waits for the daemon to complete it, and then retrieves `/promise/<id>/response`; accepts `--host`, `--port`, `--timeout`, `--path`, `--model`, and `--prompt`.
 - `python -m scripts.test_ai_integration_chain` — single command that walks health → metrics → optional simulation probes → optional promise chain → optional proxy_logs inspection (use `--skip-*` / `--check-logs` as needed).
 
 ## Model normalization
 
-All POST/PUT/PATCH payloads that include a `model` field are rewritten to `qwen3:8b` before being forwarded to Ollama. That override happens after alias resolution and simulation/routing rules — downstream components can still read the original `requested_model`, but every proxied call hits `qwen3:8b`.
+All POST/PUT/PATCH payloads that include a `model` field are rewritten to `qwen3:8b` before being forwarded to Local LLM upstream. That override happens after alias resolution and simulation/routing rules — downstream components can still read the original `requested_model`, but every proxied call hits `qwen3:8b`.
 
 ## ML Симуляция
 

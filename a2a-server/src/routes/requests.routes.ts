@@ -6,12 +6,16 @@
  */
 
 import {Router, Request, Response, NextFunction} from 'express';
-import {humanizeUpstreamErrorMessage, requestService} from '../services/core/request/request.service.js';
+import {sanitizeErrorMessage} from '../utils/errors.js';
+import {requestService} from '../services/core/request/request.service.js';
+import {registryAuth} from '../middleware/registry-auth.middleware.js';
+import {clientSafeWorkbench} from '../services/core/request/client-visible-context.js';
 
 const router = Router();
 
 /** Context fields preserved on GET /requests/:id/result (align with simulations/SCHEMA.md). */
 const POLL_CONTEXT_KEYS = [
+    'session_id',
     'task',
     'execution',
     'history',
@@ -29,7 +33,7 @@ function clientSafeErrorField(err: Record<string, unknown> | null | undefined): 
     if (!err || typeof err !== 'object') return undefined;
     const msg = err['message'];
     if (typeof msg !== 'string') return err;
-    return {...err, message: humanizeUpstreamErrorMessage(msg)};
+    return {...err, message: sanitizeErrorMessage(msg)};
 }
 
 export function filterResponse(result: Record<string, unknown>): Record<string, unknown> {
@@ -44,7 +48,8 @@ export function filterResponse(result: Record<string, unknown>): Record<string, 
 
         for (const key of POLL_CONTEXT_KEYS) {
             if (ctx[key] !== undefined) {
-                filteredContext[key] = ctx[key];
+                filteredContext[key] =
+                    key === 'workbench' ? clientSafeWorkbench(ctx[key]) : ctx[key];
             }
         }
 
@@ -205,7 +210,7 @@ router.get('/:promiseId/result', async (req: Request, res: Response, next: NextF
             const msg = r?.error ?? r?.message;
             if (msg !== undefined) {
                 responseData.error =
-                    typeof msg === 'string' ? {message: humanizeUpstreamErrorMessage(msg)} : msg;
+                    typeof msg === 'string' ? {message: sanitizeErrorMessage(msg)} : msg;
             }
         }
 
@@ -219,7 +224,7 @@ router.get('/:promiseId/result', async (req: Request, res: Response, next: NextF
  * POST /requests/:promiseId/halt
  * Halt an active request
  */
-router.post('/:promiseId/halt', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+router.post('/:promiseId/halt', registryAuth, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const promiseId = String(req.params.promiseId || '');
         const { haltRequest } = await import('../services/core/request-processor/request-processor.service.js');

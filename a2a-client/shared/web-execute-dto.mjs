@@ -7,6 +7,9 @@ import { INTERNAL_CLIENT_ACTION_KEYS } from './internal-client-action-keys.mjs';
 
 const INTERNAL_CLIENT_ACTION_KEYS_SET = new Set(INTERNAL_CLIENT_ACTION_KEYS);
 
+/** Web-facing execute: only these top-level keys may be forwarded (allowlist). */
+const WEB_EXECUTE_PUBLIC_KEYS = ['form', 'message', 'attachments'];
+
 function collectReadFileEntries(readFilePayload) {
     const out = [];
     if (!readFilePayload || typeof readFilePayload !== 'object' || Array.isArray(readFilePayload)) {
@@ -146,7 +149,13 @@ export function buildWebExecute(execute, options) {
 
     augmentExecuteFromAutoScriptWorkbench(ex, options?.context);
 
-    return ex;
+    const slim = {};
+    for (const k of WEB_EXECUTE_PUBLIC_KEYS) {
+        if (k in ex && ex[k] !== undefined) {
+            slim[k] = ex[k];
+        }
+    }
+    return slim;
 }
 
 /** Form-only execute after auto `run-script`: surface script id + status line (see simulations/SCHEMA.md). */

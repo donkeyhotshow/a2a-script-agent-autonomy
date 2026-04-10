@@ -62,7 +62,7 @@ describe('Record/Replay Integration Tests', () => {
         });
     });
 
-    describe('Ollama API Recording/Replaying', () => {
+    describe('Local LLM upstream API Recording/Replaying', () => {
         // Test recording data
         const testRecording = {
             url: '/api/generate',
@@ -95,7 +95,7 @@ describe('Record/Replay Integration Tests', () => {
         });
 
         it('should save recording to filesystem', async () => {
-            const recordingFile = path.join(replayDir, 'ollama-generate-test.json');
+            const recordingFile = path.join(replayDir, 'compat_llm-generate-test.json');
             
             // In record mode, this would save real responses
             // In replay mode, we verify the structure
@@ -113,7 +113,7 @@ describe('Record/Replay Integration Tests', () => {
         });
 
         it('should load recording from filesystem', async () => {
-            const recordingFile = path.join(replayDir, 'ollama-generate-test.json');
+            const recordingFile = path.join(replayDir, 'compat_llm-generate-test.json');
 
             try {
                 const content = await fs.readFile(recordingFile, 'utf-8');
@@ -148,7 +148,7 @@ describe('Record/Replay Integration Tests', () => {
 
         it('should demonstrate replay pattern', async () => {
             // Demonstrate the record/replay pattern
-            const recordingFile = path.join(replayDir, 'ollama-generate-test.json');
+            const recordingFile = path.join(replayDir, 'compat_llm-generate-test.json');
 
             let responseText: string;
 

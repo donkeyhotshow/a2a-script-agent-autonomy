@@ -73,6 +73,7 @@ Rules:
 - `execute`: MUST follow **action-key shape** — exactly one key per turn.
 - Allowed actions (keys): `rag-search`, `list-directory`, `read-file`, `write-file`, `grep-search`, `file-exists`, `edit-patch`, `run-script`, `execute-command`, `script`.
 - `completed`: Set `true` only when the task is fully finished. When `true`, omit or empty `execute`.
+- **Server:** Transforms copy **`completed`** → **`result.completed`**. On non-dialog Gray Room exits, **`true`** can trigger **syndicate / SIEGE_REVIEW** (same contract as Agent).
 
 ## Current State
 

@@ -9,10 +9,12 @@ import {
     buildConfirmContext,
     buildFileResponseContext,
     type FileBlockLike,
-} from './protocol';
-import {AsyncApiClient, PromisePoller} from './async-client';
-import {handleActionResponse, handleExecuteAction, createExecuteScript, extractExecuteAction} from './action-handler';
+} from './protocol.js';
+import {AsyncApiClient} from './async-api-client.js';
+import {PromisePoller} from './polling.js';
+import {handleActionResponse, handleExecuteAction, createExecuteScript, extractExecuteAction} from './action-handler.js';
 import {unwrapEnvelope} from './client-api-envelope.js';
+import {ApiError} from './utils/api-error.js';
 
 export interface ApiClientConfig {
     serverUrl?: string;
@@ -21,17 +23,7 @@ export interface ApiClientConfig {
     timeout?: number;
 }
 
-export class ApiError extends Error {
-    status: number;
-    data: Record<string, unknown>;
 
-    constructor(message: string, status: number, data: Record<string, unknown> = {}) {
-        super(message);
-        this.name = 'ApiError';
-        this.status = status;
-        this.data = data;
-    }
-}
 
 export class ApiClient {
     serverUrl: string;
@@ -61,7 +53,7 @@ export class ApiClient {
         if (body) options.body = JSON.stringify(body);
         try {
             const response = await fetch(url, options as RequestInit);
-            const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+            const data = (await response.json()) as Record<string, unknown>;
             if (!response.ok) {
                 const err = data?.error as { message?: string } | undefined;
                 throw new ApiError(err?.message ?? 'Request failed', response.status, data);
@@ -184,8 +176,12 @@ export class ApiClient {
     }
 }
 
-export {AsyncApiClient, PromisePoller, handleActionResponse, handleExecuteAction, createExecuteScript, extractExecuteAction};
-export type {ExecuteScriptFn, HandleActionOptions, HandleActionResult} from './action-handler';
+export {AsyncApiClient} from './async-api-client.js';
+export {SessionManager, buildSessionGetQuery} from './session-manager.js';
+export type {SessionGetQueryOptions} from './session-manager.js';
+export {PromisePoller} from './polling.js';
+export {handleActionResponse, handleExecuteAction, createExecuteScript, extractExecuteAction} from './action-handler.js';
+export type {ExecuteScriptFn, HandleActionOptions, HandleActionResult} from './action-handler.js';
 export {
     buildNewTaskContext,
     buildContinueContext,
@@ -204,7 +200,7 @@ export {
     parseFileBlock,
     parseMessage,
     type FileBlockLike,
-} from './protocol';
+} from './protocol.js';
 
 // Session management types (implemented in AsyncApiClient)
 export type {

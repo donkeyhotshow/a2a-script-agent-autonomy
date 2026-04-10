@@ -13,7 +13,8 @@
  */
 
 import * as path from 'path';
-import * as fs from 'fs/promises';
+import * as fs from 'node:fs/promises';
+import { deepCloneJson } from '../utils/deep-clone-json.js';
 import {
   query,
   set as jsonPathSet,
@@ -173,7 +174,7 @@ async function applyCopy(
   // Set value at destination
   if (value !== undefined) {
     // Deep clone to avoid reference issues
-    const clonedValue = JSON.parse(JSON.stringify(value));
+    const clonedValue = deepCloneJson(value);
     jsonPathSet(context.$out, to, clonedValue);
   }
 }

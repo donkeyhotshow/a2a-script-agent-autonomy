@@ -1,267 +1,77 @@
 /**
- * Sync Flow Integration Tests
- * Tests the synchronous request processing flow for immediate UI responses
+ * Invoke is async-only: POST /api/v1/invoke returns promiseId; terminal payload via GET …/result.
  */
 
 import request from 'supertest';
 import app from '../../src/app.js';
 import {describe, it, expect, beforeAll, afterAll} from 'vitest';
 
-// Проверка доступности сервера Ollama
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11435';
-let ollamaAvailable = false;
+const POLL_INTERVAL_MS = 40;
 
-async function checkOllamaAvailability(): Promise<boolean> {
-    try {
-        const response = await fetch(`${OLLAMA_URL}/api/tags`, {
-            method: 'GET',
-            signal: AbortSignal.timeout(2000),
-        });
-        return response.ok;
-    } catch {
-        return false;
+async function pollResultUntilTerminal(promiseId: string): Promise<{
+    terminal: 'completed' | 'failed' | 'cancelled';
+    data: Record<string, unknown>;
+}> {
+    for (;;) {
+        const res = await request(app).get(`/api/v1/requests/${encodeURIComponent(promiseId)}/result`);
+        expect(res.status).toBe(200);
+        expect(res.body.success).toBe(true);
+        const data = res.body.data as Record<string, unknown>;
+        const st = data.status;
+        if (st === 'completed' || st === 'failed' || st === 'cancelled') {
+            return {terminal: st, data};
+        }
+        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
     }
 }
 
-describe('Sync Flow Integration', () => {
-    let step1Context: any;
-    let step2Context: any;
-    let step3Context: any;
-
-    beforeAll(async () => {
-        ollamaAvailable = await checkOllamaAvailability();
-        // Setup test environment if needed
-        process.env.DEFAULT_SYNC_MODE = '1'; // Enable sync mode for testing
-        process.env.SKIP_AUTH = '1'; // Skip auth for testing
+describe('Invoke async-only (no sync)', () => {
+    beforeAll(() => {
+        process.env.SKIP_AUTH = '1';
     });
 
-    afterAll(async () => {
-        // Cleanup
-        delete process.env.DEFAULT_SYNC_MODE;
+    afterAll(() => {
         delete process.env.SKIP_AUTH;
     });
 
-    describe('Basic Sync Flow API Tests', () => {
-        it('should accept sync flag in invoke request', async () => {
-            const res = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    task: 'test-sync-flag',
-                    sync: true
-                });
-
-            // Should not return 404 - endpoint exists and accepts the request
-            expect(res.status).not.toBe(404);
-            expect([200, 201, 400]).toContain(res.status); // Accept validation errors too
-        });
-
-        it('should accept async request (no sync flag)', async () => {
-            const res = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    task: 'test-async-default'
-                    // No sync flag - should default to async
-                });
-
-            // Should not return 404 - endpoint exists and accepts the request
-            expect(res.status).not.toBe(404);
-            expect([200, 201, 400]).toContain(res.status); // Accept validation errors too
-        });
-
-        it('should accept explicit async flag', async () => {
-            const res = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    task: 'test-async-explicit',
-                    sync: false
-                });
-
-            // Should not return 404 - endpoint exists and accepts the request
-            expect(res.status).not.toBe(404);
-            expect([200, 201, 400]).toContain(res.status); // Accept validation errors too
-        });
-
-        it('Step 1: Initial dialog request should return form with choices', async () => {
-            if (!ollamaAvailable) return; // Skip if Ollama is not running
-            const res = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    task: 'dialog',
-                    sync: true
-                });
-
-            expect([200, 201]).toContain(res.status);
-
-            if (res.body.success && res.body.data?.execute?.form?.choices) {
-                expect(res.body.data.execute.form.choices).toBeDefined();
-                expect(Array.isArray(res.body.data.execute.form.choices)).toBe(true);
-                expect(res.body.data.context?.execution?.step).toBeDefined();
-                expect(res.body.data.sync).toBe(true);
-                step1Context = res.body.data.context; // Save context for step 2
-            } else if (res.body.success && res.body.data?.promiseId) {
-                // Async response acceptable
-                expect(res.body.data.promiseId).toBeDefined();
-            }
-        });
-
-        it('Step 2: Submit choice selection should return sync input form', async () => {
-            if (!ollamaAvailable) return; // Skip if Ollama is not running
-            if (!step1Context) return; // Skip if step 1 failed
-
-            const res = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    context: step1Context, // Include context from step 1
-                    result: { choice: 'dialog' },
-                    sync: true
-                });
-
-            expect([200, 201]).toContain(res.status);
-
-            if (res.body.success && res.body.data?.execute?.form?.textarea) {
-                expect(res.body.data.execute.form.textarea).toBeDefined();
-                expect(Array.isArray(res.body.data.execute.form.textarea)).toBe(true);
-                expect(res.body.data.context?.execution?.step).toBeDefined();
-                expect(res.body.data.context?.execution?.action).toBe('dialog');
-                expect(res.body.data.sync).toBe(true);
-                step2Context = res.body.data.context; // Save context for next steps
-            } else if (res.body.success && res.body.data?.promiseId) {
-                // Async response acceptable
-                expect(res.body.data.promiseId).toBeDefined();
-            }
-        }, 60000);
-
-        it('Step 3: Submit message should return sync response with message + input form', async () => {
-            if (!ollamaAvailable) return; // Skip if Ollama is not running
-            if (!step2Context) return; // Skip if step 2 failed
-
-            const res = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    context: step2Context, // Include context from step 2
-                    result: { message: 'Hello from sync flow test' },
-                    sync: true
-                });
-
-            expect([200, 201]).toContain(res.status);
-
-            if (res.body.success && res.body.data?.execute?.message && res.body.data?.execute?.form?.textarea) {
-                expect(res.body.data.execute.message).toBeDefined();
-                expect(res.body.data.execute.form.textarea).toBeDefined();
-                expect(Array.isArray(res.body.data.execute.form.textarea)).toBe(true);
-                expect(res.body.data.context?.execution?.step).toBeDefined();
-                expect(res.body.data.context?.history).toBeDefined();
-                expect(Array.isArray(res.body.data.context.history)).toBe(true);
-                expect(res.body.data.sync).toBe(true);
-                step3Context = res.body.data.context; // Save context for next steps
-            } else if (res.body.success && res.body.data?.promiseId) {
-                // Async response acceptable
-                expect(res.body.data.promiseId).toBeDefined();
-            }
-        }, 60000);
-
-        it('Step 4: Submit final message should complete the dialog', async () => {
-            if (!ollamaAvailable) return; // Skip if Ollama is not running
-            if (!step3Context) return; // Skip if step 3 failed
-
-            const res = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    context: step3Context, // Include context from step 3
-                    result: { message: 'Thanks! This completes the sync flow test.' },
-                    sync: true
-                });
-
-            expect([200, 201]).toContain(res.status);
-
-            // Final response should have execute object (completion)
-            if (res.body.success && res.body.data?.execute) {
-                expect(res.body.data.execute).toBeDefined();
-                expect(res.body.data.context?.execution?.step).toBeDefined();
-                expect(res.body.data.sync).toBe(true);
-            } else if (res.body.success && res.body.data?.promiseId) {
-                // Async completion also acceptable
-                expect(res.body.data.promiseId).toBeDefined();
-            }
-        }, 60000);
+    it('POST /invoke returns promiseId, not inline execute', async () => {
+        const res = await request(app).post('/api/v1/invoke').send({task: 'dialog'});
+        expect([200, 201]).toContain(res.status);
+        expect(res.body.success).toBe(true);
+        const data = res.body.data as Record<string, unknown>;
+        expect(typeof data.promiseId).toBe('string');
+        expect(data.promiseId).toMatch(/^prom_/);
+        expect(data.execute).toBeUndefined();
+        expect(data.sync).toBeUndefined();
     });
 
-    describe('Environment Configuration', () => {
-        it('should respect DEFAULT_SYNC_MODE environment variable', async () => {
-            // Test with sync mode enabled
-            process.env.DEFAULT_SYNC_MODE = '1';
-            const resSync = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    task: 'test-env-sync'
-                });
+    it('poll after task yields router choices + srv_sess_ id', async () => {
+        const inv = await request(app).post('/api/v1/invoke').send({task: 'dialog'});
+        expect(inv.status).toBe(200);
+        const pid = (inv.body.data as {promiseId?: string}).promiseId;
+        expect(pid).toBeDefined();
 
-            expect(resSync.status).not.toBe(404);
+        const {terminal, data} = await pollResultUntilTerminal(pid!);
+        expect(terminal).toBe('completed');
+        const choices = (data.execute as Record<string, unknown> | undefined)?.form as
+            | {choices?: unknown}
+            | undefined;
+        expect(Array.isArray(choices?.choices)).toBe(true);
+        const ctx = data.context as Record<string, unknown> | undefined;
+        expect(typeof ctx?.session_id).toBe('string');
+        expect(String(ctx?.session_id)).toMatch(/^srv_sess_/);
+    }, 0);
 
-            // Test with sync mode disabled (default async)
-            delete process.env.DEFAULT_SYNC_MODE;
-            const resAsync = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    task: 'test-env-async'
-                });
-
-            expect(resAsync.status).not.toBe(404);
-
-            // Restore sync mode for other tests
-            process.env.DEFAULT_SYNC_MODE = '1';
+    it('rejects unknown property sync (schema additionalProperties)', async () => {
+        const res = await request(app).post('/api/v1/invoke').send({
+            task: 'x',
+            sync: true,
         });
-
-        it('should override DEFAULT_SYNC_MODE with explicit sync flag', async () => {
-            // Even with DEFAULT_SYNC_MODE=1, explicit sync: false should work
-            const res = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    task: 'test-override',
-                    sync: false
-                });
-
-            expect(res.status).not.toBe(404);
-        });
+        expect(res.status).toBe(400);
     });
 
-    describe('Protocol Compliance', () => {
-        it('should validate request schema correctly', async () => {
-            // Valid first request
-            const res1 = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    task: 'dialog',
-                    sync: true
-                });
-
-            expect([200, 201, 400]).toContain(res1.status); // 400 is OK for validation errors
-
-            // Invalid request - missing required task
-            const res2 = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    sync: true
-                    // Missing task
-                });
-
-            expect([400]).toContain(res2.status); // Should fail validation
-        });
-
-        it('should accept action-key shaped result objects', async () => {
-            // Test with valid result format
-            const res = await request(app)
-                .post('/api/v1/invoke')
-                .send({
-                    context: {
-                        task: 'test',
-                        execution: { action: 'test', step: 'test' }
-                    },
-                    result: { choice: 'dialog' },
-                    sync: true
-                });
-
-            expect([200, 201, 400]).toContain(res.status); // 400 acceptable for validation
-        });
+    it('rejects first request missing task', async () => {
+        const res = await request(app).post('/api/v1/invoke').send({});
+        expect(res.status).toBe(400);
     });
 });

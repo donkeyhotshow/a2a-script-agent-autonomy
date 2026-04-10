@@ -8,15 +8,18 @@ Canonical cross-module environment alignment for client, server, and ai-integrat
 |---|---|---|---|---|
 | `A2A_SERVER_URL` | `http://localhost:3000` | Pipeline server base URL | Public/internal server base URL | Base origin. `.../api/v1` is accepted and normalized by client helpers. |
 | `AI_HUB_URL` | `http://localhost:11434` | CI AI hub URL | Internal AI hub URL | Used by `a2a-server` for promise polling and response fetch. |
+| `A2A_PREVIEW_URL` | `http://localhost:5173` | CI client URL | Public client URL | Client preview URL for screenshot capture in gray room. Defaults to Vite dev server. |
 
 ## Auth and Sync Flags
 
 | Variable | dev | CI | prod | Notes |
-|---|---|---|---|---|
+|---|---|---|---|
 | `SKIP_AUTH` | `1` allowed | `1` only in test jobs | `0` required | Dev/test bypass only. Do not use in production. |
-| `DEFAULT_SYNC_MODE` | `1` for sync simulations/UI flows | Optional per job | Usually unset/`0` | Async (`promiseId`) remains default production mode. |
 | `JWT_SECRET` | Required (>=32 chars) | Required (secret) | Required (secret) | Server auth secret. |
 | `ENCRYPTION_KEY` | Required (exactly 32 chars) | Required (secret) | Required (secret) | Required by tests and runtime encryption flows. |
+| `ALLOW_TOOLS_EVOLVE` | unset (=disabled) | unset | unset | Admin-only flag for dangerous `/api/tools/evolve` endpoint. Enable only in dev. |
+| `NODE_ENV` | `development` | unset or `production` | unset or `production` | Controls error detail exposure; only `development` exposes stacks and internal messages. |
+| `A2A_ERROR_EXPOSE_DETAILS` | unset (use NODE_ENV) | unset (use NODE_ENV) | unset (use NODE_ENV) | Force enable error detail exposure regardless of NODE_ENV when set to `1` or `true`. |
 
 ## Polling and Time Budgets
 
@@ -32,6 +35,9 @@ Canonical cross-module environment alignment for client, server, and ai-integrat
 | `A2A_GRAY_ROOM_ENABLED` | unset (=on) or `1` | unset or `1` | policy | Default **on** when unset; set `0`/`false`/`off` to skip interrupt expansion (one response transform). |
 | `A2A_GRAY_ROOM_MAX_TURNS` | `10` | `10` | tuned | Fallback budget when `A2A_MAX_INTERRUPT_TURNS` unset. |
 | `A2A_COMPRESS_HISTORY_MIN_ENTRIES` | `0` | `0` | `0` or tuned | Skip compress sidecar under threshold. |
+| `FORWARD_TIMEOUT_SECONDS` | `30` | `30` | tuned | ai-integration proxy forward timeout in seconds. 0 = unlimited. |
+| `PROVIDER_TIMEOUT` | `30` | `30` | tuned | ai-integration provider session timeout in seconds. 0 = unlimited. |
+| `VISION_MOCK_MODE` | `deterministic` | `deterministic` | `deterministic` | Controls vision tester mock behavior: 'always_pass', 'always_fail', 'random', or 'deterministic' (default). Deterministic mode uses hash of inputs for consistent results. |
 
 ## Baseline Rules
 

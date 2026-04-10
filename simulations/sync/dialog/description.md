@@ -39,6 +39,8 @@ request.json → server-transforms-request.json → response.json
 - Шаг 3: user: "hello world" → assistant: "hello world"
 - Шаг 4: user: "Дякую!" → (завершення діалогу)
 
+**Инвариант (сервер → клиент):** если `context.task` непустой и `context.history` уже содержит строки, в ней **обязательно** есть хотя бы одна запись `role: "user"`. История только из `assistant` при заданном `task` — невалидна (UI теряет «что написал пользователь»). Эталон: `3/response.json`, `4/response.json`; материализация `result.message` в историю: `a2a-server/src/transform/materialize-result-for-llm.ts`. Проверка сохранённых сессий: `npm run scan-session-responses`.
+
 ## Структура файлов
 
 ```

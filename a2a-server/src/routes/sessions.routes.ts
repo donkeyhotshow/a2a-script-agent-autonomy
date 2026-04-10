@@ -3,7 +3,6 @@ import {actionProcessor} from '../actions/action-processor.js';
 import type {ActionProcessorResult} from '../actions/action-processor.js';
 import {actionRegistry} from '../actions/action-registry.js';
 import {logger} from '../utils/logger.js';
-import { globalEventBus } from '../services/core/event-bus.js';
 
 const router = Router({mergeParams: true});
 
@@ -82,44 +81,4 @@ router.post('/:sessionId/next', async (req: Request, res: Response, next: NextFu
 
 export default router;
 
-/**
- * GET /api/a2a/sessions/:sessionId/events
- * Server-Sent Events stream for real-time agent event delivery.
- * Replays buffered events since `fromTimestamp` query param (ms), then streams new ones.
- *
- * Usage: const es = new EventSource('/api/a2a/sessions/sess_123/events');
- */
-router.get('/:sessionId/events', (req: Request, res: Response): void => {
-  const sessionId = String(req.params['sessionId'] ?? '');
-  const fromTimestamp = req.query['fromTimestamp']
-    ? Number(req.query['fromTimestamp'])
-    : undefined;
-
-  res.setHeader('Content-Type', 'text/event-stream');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.setHeader('Connection', 'keep-alive');
-  res.setHeader('X-Accel-Buffering', 'no');
-  res.flushHeaders();
-
-  const send = (event: unknown) => {
-    res.write(`data: ${JSON.stringify(event)}\n\n`);
-  };
-
-  // Replay buffered events first
-  const replayed = globalEventBus.replay(sessionId, fromTimestamp);
-  for (const evt of replayed) {
-    send(evt);
-  }
-
-  // Subscribe to new events for this session
-  const unsub = globalEventBus.subscribeSession(sessionId, send);
-
-  // Heartbeat every 30s to keep connection alive
-  const heartbeat = setInterval(() => res.write(': heartbeat\n\n'), 30_000);
-
-  req.on('close', () => {
-    clearInterval(heartbeat);
-    unsub();
-  });
-});
 

@@ -13,7 +13,7 @@ def read_requirements():
 setup(
     name="ai-integration",
     version="0.1.0",
-    description="Ollama Proxy Service with AI Integration",
+    description="Local LLM upstream Proxy Service with AI Integration",
     long_description=open('README.md').read(),
     long_description_content_type='text/markdown',
     author="A2A Script Agent Team",

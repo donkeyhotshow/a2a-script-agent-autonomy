@@ -1,6 +1,6 @@
 """
 Proxy Handler Module
-Main proxy logic for forwarding requests to Ollama
+Main proxy logic for forwarding requests to Local LLM upstream
 Uses modular architecture with separate processors
 """
 import os
@@ -17,17 +17,18 @@ from typing import Optional, Any
 logger = logging.getLogger(__name__)
 
 from .config import (
-    OLLAMA_HOST,
+    LOCAL_LLM_UPSTREAM_URL,
+    local_llm_upstream_base,
     STORAGE_DIR,
     FORWARD_TIMEOUT,
-    OLLAMA_AUTO_START,
+    LOCAL_LLM_AUTO_START,
     SIMULATION_ENABLED,
     SIMULATION_DATA_PATH,
     PROMISE_DELAY_BEFORE_EXECUTE,
     PROMISE_DAEMON_ONLY,
 )
 from .api_key_routing import forward_with_api_key_failover, write_routing_hint
-from .ollama_manager import get_ollama_manager, check_port_occupied, get_ollama_host_port
+from .local_llm_manager import get_local_llm_manager, check_port_occupied, get_local_llm_upstream_host_port
 from .ai_hub_config import (
     get_ai_hub_config, _is_truthy, _normalize_path, _normalize_model_key,
     _extract_prompt, _get_virtual_model, _virtual_show_response, _virtual_tags_entry,
@@ -43,27 +44,26 @@ from .promises import (
 # Import new modules
 from .request_processor import (
     _is_real_data_path, _check_promise_requested, _prepare_headers,
-    _get_body, _get_forward_args
+    _get_body, _get_forward_args, force_promise_llm_path,
 )
 from .response_handler import create_error_response, create_simulated_response, forward_response
 from .model_resolver import resolve_model_name
-from .caching import get_cache
+
+# Import refactored modules
+from .rule_engine import process_model_and_rules
+from .promise_manager import handle_promise_mode
+from .upstream_client import forward_request, check_cache, save_to_cache
+from .router_manager import (
+    get_router,
+    initialize_router_if_needed,
+    resolve_routing,
+    auto_start_local_llm_upstream,
+    _translate_compat_to_openai_path,
+)
+from .simulation_handler import handle_simulated_response, handle_virtual_show_response
 
 
-def _translate_ollama_to_openai_path(path: str) -> str:
-    """Translate Ollama-style API paths to OpenAI-compatible paths"""
-    path_norm = path.lstrip('/')
-    translations = {
-        'api/chat': 'chat/completions',
-        'api/generate': 'completions',
-        'api/embeddings': 'embeddings',
-        'v1/chat/completions': 'chat/completions',
-        'v1/completions': 'completions',
-        'v1/embeddings': 'embeddings',
-    }
-    if path_norm in translations:
-        return translations[path_norm]
-    return path_norm
+
 
 import requests
 
@@ -73,13 +73,15 @@ def _fetch_tags_response(url: str, headers: dict[str, Any], params: Optional[dic
         return None, None
     try:
         resp = requests.get(url, params=params or {}, headers=headers, timeout=FORWARD_TIMEOUT)
-    except requests.exceptions.RequestException:
+    except requests.exceptions.RequestException as exc:
+        logger.warning("tags fetch failed %s: %s", url, exc, exc_info=True)
         return None, None
     if resp.status_code != 200:
         return resp, None
     try:
         tags = resp.json()
-    except Exception:
+    except Exception as exc:
+        logger.warning("tags response not JSON %s: %s", url, exc, exc_info=True)
         return resp, None
     return resp, tags if isinstance(tags, dict) else None
 
@@ -93,14 +95,14 @@ def _handle_api_tags_unified(
     folder_path: str,
 ) -> Response:
     """
-    Combined /api/tags: provider-config models (e.g. z_ai) + live Ollama + virtual_models.
-    Each entry includes a string \"provider\" (e.g. z_ai, ollama, virtual).
+    Combined /api/tags: provider-config models (e.g. z_ai) + live Local LLM upstream + virtual_models.
+    Each entry includes a string \"provider\" (e.g. z_ai, compat_llm, virtual).
     """
     models: list[dict[str, Any]] = []
     existing: set[str] = set()
 
     if router._initialized:
-        for entry in router.tag_entries_from_non_ollama_providers():
+        for entry in router.tag_entries_from_non_compat_providers():
             if not isinstance(entry, dict):
                 continue
             k = _normalize_model_key(entry.get('name') or entry.get('model') or '')
@@ -108,23 +110,23 @@ def _handle_api_tags_unified(
                 existing.add(k)
             models.append(entry)
 
-    ollama_models_injected = 0
-    ollama_base = (OLLAMA_HOST.rstrip('/') or OLLAMA_HOST)
-    if ollama_base:
-        ollama_url = f"{ollama_base}/api/tags"
-        _, ollama_tags = _fetch_tags_response(ollama_url, headers, forward_args or {})
-        if isinstance(ollama_tags, dict):
-            for entry in ollama_tags.get('models') or []:
+    compat_models_injected = 0
+    upstream_tags_base = local_llm_upstream_base()
+    if upstream_tags_base:
+        local_llm_upstream_url = f"{upstream_tags_base}/api/tags"
+        _, upstream_tags_payload = _fetch_tags_response(local_llm_upstream_url, headers, forward_args or {})
+        if isinstance(upstream_tags_payload, dict):
+            for entry in upstream_tags_payload.get('models') or []:
                 if not isinstance(entry, dict):
                     continue
                 name_key = _normalize_model_key(entry.get('name') or entry.get('model') or '')
                 if not name_key or name_key in existing:
                     continue
                 row = dict(entry)
-                row.setdefault('provider', 'ollama')
+                row.setdefault('provider', 'compat_llm')
                 existing.add(name_key)
                 models.append(row)
-                ollama_models_injected += 1
+                compat_models_injected += 1
 
     virtual_models = cfg.get('virtual_models') or {}
     virtual_models_injected = 0
@@ -152,7 +154,7 @@ def _handle_api_tags_unified(
             "content": out[:10000].decode('utf-8', errors='replace'),
             "simulated": True,
             "virtual_models_injected": virtual_models_injected,
-            "ollama_models_injected": ollama_models_injected,
+            "compat_models_injected": compat_models_injected,
             "multi_provider_tags": True,
         })
     return response
@@ -162,14 +164,11 @@ def handle_proxy_request(path: str, request) -> Response:
     """Main proxy request handler - coordinates all processing modules"""
     
     should_log_base = _is_real_data_path(path)
-    should_log = False
+    legacy_requests_log = False
     folder_path = ''
     
-    # Auto-start Ollama if enabled
-    if OLLAMA_AUTO_START and path.startswith('api/'):
-        mgr = get_ollama_manager()
-        if not mgr.is_running():
-            mgr.start()
+    # Auto-start Local LLM upstream if enabled
+    auto_start_local_llm_upstream(path)
     
     try:
         # Base headers from incoming request (for content-type, etc.)
@@ -177,9 +176,14 @@ def handle_proxy_request(path: str, request) -> Response:
         body, body_json = _get_body(request)
         promise_requested = _check_promise_requested(request, body_json)
         forward_args = _get_forward_args(request)
-        
-        should_log = should_log_base or promise_requested
-        if should_log:
+
+        path_norm = _normalize_path(path)
+        force_promise = force_promise_llm_path(path_norm, request.method)
+        promise_mode = promise_requested or force_promise
+        want_trace = should_log_base or promise_requested or force_promise
+        legacy_requests_log = want_trace and not promise_mode
+
+        if legacy_requests_log:
             request_id = str(uuid.uuid4())[:8]
             unix_timestamp = int(datetime.datetime.now().timestamp())
             folder_name = f"request_{unix_timestamp}_{request_id}"
@@ -187,167 +191,69 @@ def handle_proxy_request(path: str, request) -> Response:
             os.makedirs(folder_path, exist_ok=True)
             req_data = create_request_log(request, body)
             save_request(folder_path, req_data)
-        
+
         cfg = get_ai_hub_config()
-        path_norm = _normalize_path(path)
-        
-        model = None
-        if isinstance(body_json, dict):
-            model = body_json.get('model')
-        
-        from .providers.router import get_router
+
         router = get_router()
-        
-        if not router._initialized:
-            try:
-                import asyncio
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                try:
-                    loop.run_until_complete(router.initialize())
-                finally:
-                    loop.close()
-            except Exception as e:
-                logger.warning(f"Failed to initialize router: {e}, falling back to Ollama")
+        initialize_router_if_needed(router)
 
-        routed_provider_name: Optional[str] = None
-        routed_provider_type: Optional[str] = None
-        headers = base_headers
-
-        if model and router._initialized:
-            model = router._resolve_model(model)
-            provider_chain = router._get_provider_chain(model)
-            if provider_chain:
-                provider_name, provider = provider_chain[0]
-                provider_type = getattr(provider.config, 'type', '')
-                if provider_type in ('openai', 'z_ai'):
-                    translated_path = _translate_ollama_to_openai_path(path)
-                    target_url = provider.config.url.rstrip('/') + '/' + translated_path
-                    logger.info(f"Routed request for model '{model}' to provider '{provider_name}' -> {target_url} (translated from {path})")
-                else:
-                    target_url = provider.config.url.rstrip('/') + '/' + path
-                    logger.info(f"Routed request for model '{model}' to provider '{provider_name}' -> {target_url}")
-                upstream_headers: dict[str, Any] = {}
-                for hk, hv in base_headers.items():
-                    lk = str(hk).lower()
-                    if lk in ('content-type', 'accept', 'accept-language', 'user-agent'):
-                        upstream_headers[hk] = hv
-                headers = upstream_headers
-                routed_provider_name = provider_name
-                routed_provider_type = provider_type
-            else:
-                fallback_host = OLLAMA_HOST.rstrip('/') or OLLAMA_HOST
-                target_url = f"{fallback_host}/{path}"
-                logger.warning(f"No provider available for model '{model}', falling back to Ollama")
-        else:
-            fallback_host = OLLAMA_HOST.rstrip('/') or OLLAMA_HOST
-            target_url = f"{fallback_host}/{path}"
-
-        if should_log and folder_path and routed_provider_name and routed_provider_type:
-            write_routing_hint(
-                folder_path,
-                provider_name=routed_provider_name,
-                provider_type=routed_provider_type,
-                key_failover=routed_provider_type != 'ollama',
-            )
-        
         # Handle virtual models - api/show
         if request.method == 'GET' and path_norm == 'api/show':
             model_q = request.args.get('model')
             if isinstance(model_q, str) and model_q.strip():
-                vm = _get_virtual_model(cfg, model_q.strip())
-                if vm is not None:
-                    body_obj = _virtual_show_response(vm)
-                    body_bytes = _json_bytes(body_obj)
-                    response = Response(body_bytes, status=200, mimetype='application/json')
-                    if should_log:
-                        save_response(folder_path, {
-                            "status_code": 200,
-                            "headers": {"Content-Type": "application/json"},
-                            "content": body_bytes[:10000].decode('utf-8', errors='replace'),
-                            "simulated": True,
-                            "virtual_model": vm.get('name') or vm.get('key'),
-                        })
+                response = handle_virtual_show_response(cfg, model_q, legacy_requests_log, folder_path)
+                if response:
                     return response
         
-        # Combined multi-provider /api/tags (Z.AI config + live Ollama + virtual_models)
+        # Combined multi-provider /api/tags (Z.AI config + live Local LLM upstream + virtual_models)
         if request.method == 'GET' and path_norm == 'api/tags':
-            return _handle_api_tags_unified(cfg, router, headers, forward_args, should_log, folder_path)
+            return _handle_api_tags_unified(cfg, router, base_headers, forward_args, legacy_requests_log, folder_path)
 
-        # Process model and rules
-        requested_model: Optional[str] = None
-        resolved_model: Optional[str] = None
-        prompt = ''
-        simulate_action: Optional[dict] = None
-        
-        # Debug logging
-        debug_file = STORAGE_DIR + '/debug.log'
-        
         # Remove promise from body
         if isinstance(body_json, dict):
             body_json.pop('promise', None)
-            
-            # Get requested model
-            requested_model = body_json.get('model') if isinstance(body_json.get('model'), str) else None
-            resolved_model, _ = resolve_model_name(requested_model, cfg)
-            
-            if requested_model and resolved_model is None:
-                error_data = {
-                    "error": "unknown_model",
-                    "message": f"Unknown model alias: {requested_model}",
-                }
-                if should_log:
-                    save_response(folder_path, error_data)
-                return Response(_json_bytes(error_data), status=400, mimetype='application/json')
-            
-            if resolved_model:
-                body_json['model'] = resolved_model
-            
+
+        # Process model and rules
+        requested_model, resolved_model, prompt, simulate_action = process_model_and_rules(
+            cfg, body_json, forward_args, request.method, path
+        )
+
+        # Canonical model for provider routing + forwarded body (e.g. qwen3:8b -> glm-4.7-flash via z_ai fallback_models)
+        routing_model = None
+        if isinstance(body_json, dict):
+            mv = body_json.get('model')
+            if isinstance(mv, str) and mv.strip():
+                routing_model = router._resolve_model(mv.strip())
+                body_json['model'] = routing_model
+        if routing_model is None and request.method == 'GET':
+            ma = forward_args.get('model')
+            if isinstance(ma, str) and ma.strip():
+                routing_model = router._resolve_model(ma.strip())
+                forward_args['model'] = routing_model
+        if routing_model is not None:
+            resolved_model = routing_model
+
+        target_url, headers, routed_provider_name, routed_provider_type = resolve_routing(
+            path, routing_model, cfg, router, base_headers, legacy_requests_log and bool(folder_path), folder_path
+        )
+
+        # Handle unknown model error
+        if requested_model and resolved_model is None:
+            error_data = {
+                "error": "unknown_model",
+                "message": f"Unknown model alias: {requested_model}",
+            }
+            if legacy_requests_log:
+                save_response(folder_path, error_data)
+            return Response(_json_bytes(error_data), status=400, mimetype='application/json')
+
+        # Convert body to bytes and log
+        if isinstance(body_json, dict):
             # Disable streaming
             body_json['stream'] = False
-            
-            prompt = _extract_prompt(body_json)
-
-            # Apply routing rules
-            for rule in cfg.get('rules') or []:
-                when = rule.get('when') or {}
-                if not isinstance(when, dict):
-                    continue
-                if not _match_when(
-                    when,
-                    method=request.method,
-                    path=path,
-                    requested_model=requested_model,
-                    resolved_model=resolved_model,
-                    prompt=prompt,
-                    compiled_rule=rule,
-                ):
-                    continue
-                
-                then = rule.get('then')
-                actions = then if isinstance(then, list) else [then]
-                for action in actions:
-                    if not isinstance(action, dict):
-                        continue
-                    action_type = str(action.get('type') or '').strip()
-                    
-                    if action_type in {'set_model', 'reroute_model', 'reroute'}:
-                        new_model = action.get('model')
-                        if isinstance(new_model, str) and new_model.strip():
-                            mapped, _ = resolve_model_name(new_model, cfg)
-                            body_json['model'] = mapped or new_model.strip()
-                            resolved_model = body_json['model']
-                    elif action_type in {'simulate'}:
-                        simulate_action = action
-                        break
-                
-                if simulate_action is not None:
-                    break
-            
-            # Convert body to bytes
             body = _json_bytes(body_json)
-            
-            if should_log:
+
+            if legacy_requests_log:
                 try:
                     _write_json_file(os.path.join(folder_path, 'forwarded_request.json'), body_json)
                     hdr_safe = dict(headers)
@@ -359,351 +265,65 @@ def handle_proxy_request(path: str, request) -> Response:
                             hdr_safe[k] = '***'
                     _write_json_file(os.path.join(folder_path, 'forwarded_headers.json'), hdr_safe)
                 except Exception as e:
-                    logger.debug(f"Failed to save forwarded request: {e}")
-        else:
-            # GET requests or non-JSON body
-            model_arg = forward_args.get('model')
-            if isinstance(model_arg, str) and model_arg.strip():
-                requested_model = model_arg
-                resolved_model, _ = resolve_model_name(model_arg, cfg)
-                if requested_model and resolved_model is None:
-                    error_data = {
-                        "error": "unknown_model",
-                        "message": f"Unknown model alias: {requested_model}",
-                    }
-                    if should_log:
-                        save_response(folder_path, error_data)
-                    return Response(_json_bytes(error_data), status=400, mimetype='application/json')
-                if resolved_model:
-                    forward_args['model'] = resolved_model
-            
-            # Apply rules for non-JSON
-            for rule in cfg.get('rules') or []:
-                when = rule.get('when') or {}
-                if not isinstance(when, dict):
-                    continue
-                if not _match_when(
-                    when,
-                    method=request.method,
-                    path=path,
-                    requested_model=requested_model,
-                    resolved_model=resolved_model,
-                    prompt='',
-                    compiled_rule=rule,
-                ):
-                    continue
-                
-                then = rule.get('then')
-                actions = then if isinstance(then, list) else [then]
-                for action in actions:
-                    if not isinstance(action, dict):
-                        continue
-                    action_type = str(action.get('type') or '').strip()
-                    if action_type in {'set_model', 'reroute_model', 'reroute'}:
-                        new_model = action.get('model')
-                        if isinstance(new_model, str) and new_model.strip():
-                            mapped, _ = resolve_model_name(new_model, cfg)
-                            forward_args['model'] = mapped or new_model.strip()
-                            resolved_model = forward_args['model']
-                    elif action_type in {'simulate'}:
-                        simulate_action = action
-                        break
-                
-                if simulate_action is not None:
-                    break
-        
-        # Handle simulated response (non-promise)
-        if simulate_action is not None and not promise_requested:
-            delay_ms = simulate_action.get('delay_ms')
-            try:
-                delay_ms = int(delay_ms) if delay_ms is not None else 0
-            except Exception:
-                delay_ms = 0
-            if delay_ms > 0:
-                time.sleep(delay_ms / 1000.0)
-            
-            status_code = int(simulate_action.get('status_code') or 200)
-            sim_headers = simulate_action.get('headers') if isinstance(simulate_action.get('headers'), dict) else {}
-            sim_body, content_type = _build_simulated_body(
-                simulate_action,
-                model=resolved_model,
-                prompt=prompt,
-                path=path,
-                request_json=body_json if isinstance(body_json, dict) else None,
-            )
-            response = Response(sim_body, status=status_code)
-            response.headers['Content-Type'] = sim_headers.get('Content-Type', content_type)
-            for k, v in sim_headers.items():
-                if str(k).lower() == 'content-type':
-                    continue
-                response.headers[str(k)] = str(v)
-            
-            if should_log:
-                save_response(folder_path, {
-                    "status_code": status_code,
-                    "headers": dict(response.headers),
-                    "content": (sim_body[:10000].decode('utf-8', errors='replace') if isinstance(sim_body, (bytes, bytearray)) else str(sim_body))[:10000],
-                    "simulated": True,
-                })
-            return response
-        
-        # Promise mode
-        if promise_requested:
-            simulate_snapshot = simulate_action if isinstance(simulate_action, dict) else None
-            
-            server_promise_id = (request.headers.get('X-Server-Promise-Id') or '').strip() or None
-            promise = create_promise(
-                method=request.method,
-                path=path,
-                target_url=target_url,
-                log_folder=folder_path if should_log else '',
-                simulate=simulate_snapshot,
-                server_promise_id=server_promise_id,
-            )
-            
-            if should_log:
-                try:
-                    _write_json_file(
-                        os.path.join(folder_path, 'promise.json'), 
-                        {"promiseId": promise.promise_id, "status": "pending"}
-                    )
-                except Exception as e:
-                    logger.debug(f"Failed to save promise.json: {e}")
-            
-            body_snapshot = body
-            args_snapshot = dict(forward_args)
-            headers_snapshot = dict(headers)
-            method_snapshot = request.method
-            prompt_snapshot = prompt
-            model_snapshot = resolved_model
-            body_json_snapshot = body_json if isinstance(body_json, dict) else None
-            routed_provider_snapshot = routed_provider_name
-            routed_type_snapshot = routed_provider_type
-            router_config_snapshot = router.config
+                    logger.warning("Failed to save forwarded request: %s", e, exc_info=True)
 
-            def _job():
-                try:
-                    debug_payload = {
-                        "method": method_snapshot,
-                        "url": target_url,
-                        "headers": headers_snapshot,
-                        "params": args_snapshot,
-                        "body_json": body_json_snapshot,
-                    }
-                    debug_path = os.path.join(STORAGE_DIR, "debug-request-latest.json")
-                    _write_json_file(debug_path, debug_payload)
-                except Exception as e:
-                    logger.debug(f"Failed to write debug request payload: {e}")
-                try:
-                    if simulate_snapshot is not None:
-                        delay_ms = simulate_snapshot.get('delay_ms')
-                        try:
-                            delay_ms = int(delay_ms) if delay_ms is not None else 0
-                        except Exception:
-                            delay_ms = 0
-                        if delay_ms > 0:
-                            time.sleep(delay_ms / 1000.0)
-                        
-                        status_code = int(simulate_snapshot.get('status_code') or 200)
-                        sim_headers = simulate_snapshot.get('headers') if isinstance(simulate_snapshot.get('headers'), dict) else {}
-                        
-                        sim_body, content_type = _build_simulated_body(
-                            simulate_snapshot,
-                            model=model_snapshot,
-                            prompt=prompt_snapshot,
-                            path=path,
-                            request_json=body_json_snapshot,
-                        )
-                        
-                        headers_out = dict(sim_headers)
-                        headers_out.setdefault('Content-Type', content_type)
-                        _promise_set_done(promise.promise_id, status_code=status_code, headers=headers_out, body=sim_body)
-                        
-                        if should_log and folder_path:
-                            save_response(folder_path, {
-                                "status_code": status_code,
-                                "headers": headers_out,
-                                "content": (sim_body[:10000].decode('utf-8', errors='replace') if isinstance(sim_body, (bytes, bytearray)) else str(sim_body))[:10000],
-                                "simulated": True,
-                            })
-                        return
-                    
-                    if routed_provider_snapshot is not None and routed_type_snapshot is not None:
-                        resp0, _ = forward_with_api_key_failover(
-                            method=method_snapshot,
-                            target_url=target_url,
-                            body=body_snapshot,
-                            forward_args=args_snapshot,
-                            base_header_subset=headers_snapshot,
-                            provider_name=routed_provider_snapshot,
-                            provider_type=routed_type_snapshot,
-                            timeout=FORWARD_TIMEOUT,
-                            cfg=router_config_snapshot,
-                        )
-                    elif method_snapshot == 'GET':
-                        resp0 = requests.get(target_url, params=args_snapshot, headers=headers_snapshot, timeout=FORWARD_TIMEOUT)
-                    elif method_snapshot == 'POST':
-                        resp0 = requests.post(target_url, data=body_snapshot, headers=headers_snapshot, timeout=FORWARD_TIMEOUT, stream=False)
-                    elif method_snapshot == 'PUT':
-                        resp0 = requests.put(target_url, data=body_snapshot, headers=headers_snapshot, timeout=FORWARD_TIMEOUT)
-                    elif method_snapshot == 'DELETE':
-                        resp0 = requests.delete(target_url, headers=headers_snapshot, timeout=FORWARD_TIMEOUT)
-                    else:
-                        resp0 = requests.request(method_snapshot, target_url, data=body_snapshot, headers=headers_snapshot, timeout=FORWARD_TIMEOUT)
-                    
-                    _promise_set_done(promise.promise_id, status_code=resp0.status_code, headers=dict(resp0.headers), body=resp0.content)
-                    
-                    if should_log and folder_path:
-                        save_response(folder_path, {
-                            "status_code": resp0.status_code,
-                            "headers": dict(resp0.headers),
-                            "content": resp0.text[:10000] if len(resp0.text) > 10000 else resp0.text,
-                            "promised": True,
-                        })
-                except Exception as e:
-                    _promise_reset_pending(promise.promise_id, delay_seconds=10.0)
-                    if should_log and folder_path:
-                        save_response(folder_path, {"error": "promise_error", "message": str(e)})
-            
-            # TEMP: always run promise job inline so debug payload is written immediately.
-            if PROMISE_DELAY_BEFORE_EXECUTE > 0:
-                time.sleep(PROMISE_DELAY_BEFORE_EXECUTE)
-            _PROMISE_EXECUTOR.submit(_job)
-            
+        # Handle simulated response (non-promise)
+        if simulate_action is not None and not promise_mode:
+            return handle_simulated_response(
+                simulate_action, resolved_model, prompt, path, body_json, legacy_requests_log, folder_path
+            )
+
+        # Promise mode (explicit ?promise=1 / header/body or forced for POST/PUT/PATCH LLM paths)
+        if promise_mode:
+            promise_response = handle_promise_mode(
+                request, path, target_url, body, forward_args, headers, simulate_action,
+                resolved_model, prompt, body_json, routed_provider_name, routed_provider_type,
+                router.config, want_trace, STORAGE_DIR
+            )
+            if isinstance(promise_response, Response):
+                return promise_response
             return Response(
-                _json_bytes({"promiseId": promise.promise_id, "status": "pending"}),
+                _json_bytes(promise_response),
                 status=202,
                 mimetype='application/json',
             )
         
-        # Cache check before request to upstream (Ollama or external provider)
-        cache = get_cache()
-        cache_key = cache.build_key("ollama", {"path": path, "body": body_json})
-        
-        # Check cache first (do not serve poisoned 200 + provider error JSON)
-        cached = cache.get(cache_key)
+        # Check cache first
+        cached = check_cache(
+            path, request.method, target_url, forward_args, body_json
+        )
         if cached:
-            body_text = cached.get('body', '')
-            body_b = body_text.encode('utf-8') if isinstance(body_text, str) else (body_text or b'')
-            st = int(cached.get('status', 200))
-            if is_llm_upstream_response_ok(st, body_b, 'application/json'):
-                logger.debug(f"Cache hit for key: {cache_key[:16]}...")
-                return Response(cached['body'], status=cached['status'], content_type='application/json')
-            logger.warning(
-                'Rejecting cached response: not a valid LLM success (invalidating key %s...)',
-                cache_key[:16],
-            )
-            cache.delete(cache_key)
-        
-        # Forward request to upstream (Ollama or external provider)
-        if routed_provider_name is not None and routed_provider_type is not None:
-            resp, _ = forward_with_api_key_failover(
-                method=request.method,
-                target_url=target_url,
-                body=body,
-                forward_args=forward_args,
-                base_header_subset=headers,
-                provider_name=routed_provider_name,
-                provider_type=routed_provider_type,
-                timeout=FORWARD_TIMEOUT,
-                cfg=router.config,
-            )
-        elif request.method == 'GET':
-            resp = requests.get(target_url, params=forward_args, headers=headers, timeout=FORWARD_TIMEOUT)
-        elif request.method == 'POST':
-            resp = requests.post(target_url, data=body, headers=headers, timeout=FORWARD_TIMEOUT, stream=False)
-        elif request.method == 'PUT':
-            resp = requests.put(target_url, data=body, headers=headers, timeout=FORWARD_TIMEOUT)
-        elif request.method == 'DELETE':
-            resp = requests.delete(target_url, headers=headers, timeout=FORWARD_TIMEOUT)
-        else:
-            resp = requests.request(request.method, target_url, data=body, headers=headers, timeout=FORWARD_TIMEOUT)
-        
-        # Normalize upstream auth error code: Z.AI sometimes returns code 1001 with 401.
-        # 401 статус оставляем, но меняем machine-readable code, чтобы 1001 не просачивался в систему.
-        if resp.status_code == 401 and resp.headers.get('Content-Type', '').startswith('application/json'):
-            try:
-                err_obj = resp.json()
-            except Exception:
-                err_obj = None
-            if isinstance(err_obj, dict):
-                err = err_obj.get('error') or {}
-                if isinstance(err, dict) and str(err.get('code')) == '1001':
-                    err['code'] = 'upstream_auth_failed'
-                    err.setdefault('message', 'Upstream authentication failed')
-                    err_obj['error'] = err
-                    from .promises import _json_bytes as _json_bytes_local
-                    patched_body = _json_bytes_local(err_obj)
-                    # Patch resp for downstream logging/forwarding
-                    resp._content = patched_body
-                    resp.headers['Content-Length'] = str(len(patched_body))
-        
-        # Save to cache only for real LLM successes (not 200 + {"error":...})
-        if resp.status_code == 200:
-            ct = (resp.headers.get('Content-Type') or '') if resp.headers else ''
-            if is_llm_upstream_response_ok(resp.status_code, resp.content or b'', ct):
-                cache.set(cache_key, {"status": resp.status_code, "body": resp.text})
-                logger.debug(f"Cached response for key: {cache_key[:16]}...")
-            else:
-                logger.warning(
-                    'Not caching upstream response: LLM failure payload (status=%s key=%s...)',
-                    resp.status_code,
-                    cache_key[:16],
-                )
-        
+            return Response(cached['body'], status=cached['status'], content_type='application/json')
+
+        # Forward request to upstream
+        resp = forward_request(
+            request.method, target_url, body, forward_args, headers,
+            routed_provider_name, routed_provider_type, router.config
+        )
+
+        # Save to cache for successful responses
+        save_to_cache(
+            path, request.method, target_url, forward_args, body_json, resp
+        )
+
         # Forward response
-        if should_log:
-            response_data = {
-                "status_code": resp.status_code,
-                "headers": dict(resp.headers),
-                "content": resp.text[:10000] if len(resp.text) > 10000 else resp.text
-            }
-            
-            if 'text/event-stream' in resp.headers.get('Content-Type', ''):
-                response_data["stream"] = True
-                save_response(folder_path, response_data)
-                
-                def generate():
-                    for chunk in resp.iter_content(chunk_size=None):
-                        yield chunk
-                
-                response = Response(generate(), status=resp.status_code)
-                response.headers = dict(resp.headers)
-                return response
-            else:
-                save_response(folder_path, response_data)
-                response = Response(resp.content, status=resp.status_code)
-                response.headers = dict(resp.headers)
-                return response
-        else:
-            # Forward without logging
-            if 'text/event-stream' in resp.headers.get('Content-Type', ''):
-                def generate():
-                    for chunk in resp.iter_content(chunk_size=None):
-                        yield chunk
-                
-                response = Response(generate(), status=resp.status_code)
-                response.headers = dict(resp.headers)
-                return response
-            else:
-                response = Response(resp.content, status=resp.status_code)
-                response.headers = dict(resp.headers)
-                return response
+        return forward_response(resp, legacy_requests_log, folder_path)
                 
     except requests.exceptions.ConnectionError as e:
         error_data = {
-            "error": "Ollama not available",
-            "message": f"Could not connect to Ollama at {OLLAMA_HOST}",
+            "error": "Local LLM upstream not available",
+            "message": f"Could not connect to Local LLM upstream at {LOCAL_LLM_UPSTREAM_URL}",
             "details": str(e)
         }
-        if should_log:
+        if legacy_requests_log:
             save_response(folder_path, error_data)
         return Response(json.dumps(error_data), status=502, mimetype='application/json')
     except Exception as e:
+        logger.exception("Proxy handler error path=%s", path)
         error_data = {
             "error": "Proxy error",
             "message": str(e)
         }
-        if should_log:
+        if legacy_requests_log:
             save_response(folder_path, error_data)
         return Response(json.dumps(error_data), status=500, mimetype='application/json')

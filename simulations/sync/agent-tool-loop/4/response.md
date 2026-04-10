@@ -34,6 +34,9 @@ Mirror of `response.json` for prompt pipeline / `sim:check-md`.
     "read-file": {
       "path": "utils/helpers.js"
     }
+  },
+  "result": {
+    "completed": false
   }
 }
 ```

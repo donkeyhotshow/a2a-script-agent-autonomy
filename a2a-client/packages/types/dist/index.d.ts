@@ -1,257 +1,31 @@
 /**
  * @a2a/types - Shared TypeScript types for A2A packages
  * Shared between @a2a/client, @a2a/server, and other packages.
+ *
+ * Protocol types for new-request-flow: https://github.com/org-carrier/a2a-script-agent/tree/main/docs/new-request-flow
+ *
+ * This file re-exports from modular sub-packages for backward compatibility.
+ * The actual types have been split into:
+ * - protocol/ - Protocol types (new-request-flow)
+ * - state/ - Task and session state types
+ * - search/ - Search functionality types
+ * - rag/ - RAG (Retrieval-Augmented Generation) types
+ * - api/ - API response types
+ * - arch/ - Architectural feature types
+ * - file/ - File operation types
+ * - message/ - Client/server message types
+ * - factory/ - Factory functions
  */
-export type TaskType = 'analyze' | 'refactor' | 'test' | 'document' | 'fix' | 'create' | 'delete';
-export type TaskStatus = 'pending' | 'in_progress' | 'completed' | 'failed' | 'cancelled';
-
-export interface ProtocolError {
-    code: string;
-    message: string;
-    file?: string;
-    line?: number;
-}
-
-export interface Task {
-    id: string;
-    type: TaskType;
-    status: TaskStatus;
-    target?: string;
-    progress?: number;
-}
-
-export interface ContextBlock {
-    version: '1.0';
-    session_id: string;
-    new_task?: string[];
-    architectural_features?: string[];
-    continue?: boolean;
-    tasks?: Task[];
-    request_files?: string[];
-    confirm?: boolean;
-    errors?: ProtocolError[];
-}
-
-export interface FileBlock {
-    path: string;
-    content: string;
-    startLine?: number;
-    endLine?: number;
-}
-
-export interface FileBlockRequest {
-    path: string;
-    startLine?: number;
-    endLine?: number;
-}
-
-export interface ClientMessage {
-    context: ContextBlock;
-    files?: FileBlock[];
-}
-
-export interface CurrentStep {
-    id: string;
-    title: string;
-    code?: string;
-}
-
-export interface NextStep {
-    id: string;
-    title: string;
-}
-
-export interface ActionData {
-    id?: string;
-    title?: string;
-    matchScore?: number;
-    currentStep?: CurrentStep;
-    nextSteps?: NextStep[];
-}
-
-export interface ServerMessage {
-    context: ContextBlock;
-    files?: FileBlock[];
-    message?: string;
-    action?: ActionData;
-}
-
-export interface SearchFilters {
-    file_types?: string[];
-    directories?: string[];
-    framework?: string;
-    exclude?: string[];
-}
-
-export interface SearchOptions {
-    limit?: number;
-    min_score?: number;
-    include_context?: boolean;
-    highlight_matches?: boolean;
-}
-
-export interface SearchQuery {
-    query: string;
-    filters?: SearchFilters;
-    options?: SearchOptions;
-}
-
-export interface MatchDetail {
-    line_start: number;
-    line_end: number;
-    content: string;
-    highlight: string;
-    context_score: number;
-}
-
-export interface FileMetadata {
-    framework: string;
-    type: string;
-    last_modified: string;
-}
-
-export interface SearchMatch {
-    file: string;
-    score: number;
-    matches: MatchDetail[];
-    metadata: FileMetadata;
-}
-
-export interface SearchResult {
-    results: SearchMatch[];
-    total: number;
-    query_time_ms: number;
-    algorithm_used: string;
-}
-
-export interface RAGConfig {
-    projectPath: string;
-    includePatterns?: string[];
-    excludePatterns?: string[];
-    useTFIDF?: boolean;
-    useBM25?: boolean;
-    useSemantic?: boolean;
-    maxDepth?: number;
-    maxFiles?: number;
-    embeddingModel?: string;
-    embeddingProvider?: string;
-}
-
-export interface Chunk {
-    id: string;
-    filePath: string;
-    type: string;
-    name: string;
-    content: string;
-    startLine: number;
-    endLine?: number;
-    visibility?: string;
-    method?: string;
-}
-
-export interface IndexStats {
-    filesIndexed: number;
-    chunksIndexed: number;
-    lastUpdated: number;
-    indexedExtensions?: string[];
-}
-
-export interface ApiError {
-    code: string;
-    message: string;
-    details?: Record<string, unknown>;
-}
-
-export interface ApiResponse<T = unknown> {
-    success: boolean;
-    data?: T;
-    error?: ApiError;
-}
-
-export interface PaginatedResponse<T> {
-    items: T[];
-    total: number;
-    page: number;
-    per_page: number;
-}
-
-export type WsEventType = 'task:progress' | 'task:completed' | 'files:updated' | 'files:requested' | 'error';
-
-export interface WsEvent<T = unknown> {
-    type: WsEventType;
-    payload: T;
-    timestamp: Date;
-}
-
-export type ArchitecturalFeatureCategory = 'directory_structure' | 'naming_convention' | 'custom_pattern' | 'framework';
-
-export interface ArchitecturalFeature {
-    name: string;
-    category: ArchitecturalFeatureCategory;
-    description?: string;
-    path?: string;
-    metadata?: Record<string, unknown>;
-}
-
-export interface RequestContextBlock {
-    tasks?: Task[];
-    request_files?: string[];
-    architectural_features?: ArchitecturalFeature[];
-    graph?: Record<string, unknown>;
-    frameworks?: Record<string, unknown>;
-    new_task?: string[];
-}
-
-export interface RequestApiResult {
-    outcome: 'completed' | 'graph_incomplete' | 'failed';
-    message?: string;
-    context?: RequestContextBlock;
-    questions?: string[];
-    missing?: string[];
-    graph_stats?: Record<string, unknown>;
-    activated_neuron_ids?: string[];
-    injected_content?: string[];
-    error?: Record<string, unknown>;
-}
-
-export interface CreateContextBlockOptions {
-    sessionId: string;
-    newTask?: string[];
-    architecturalFeatures?: string[];
-    continue?: boolean;
-    tasks?: Task[];
-    requestFiles?: string[];
-    confirm?: boolean;
-    errors?: ProtocolError[];
-}
-
-export interface CreateTaskOptions {
-    id?: string;
-    type?: TaskType;
-    status?: TaskStatus;
-    target?: string;
-    progress?: number;
-}
-
-export interface CreateFileBlockOptions {
-    path: string;
-    content: string;
-    startLine?: number;
-    endLine?: number;
-}
-
-export interface CreateSearchQueryOptions {
-    query: string;
-    filters?: SearchFilters;
-    options?: SearchOptions;
-}
-
-export declare function createContextBlock(options: CreateContextBlockOptions): ContextBlock;
-
-export declare function createTask(options: CreateTaskOptions): Task;
-
-export declare function createFileBlock(options: CreateFileBlockOptions): FileBlock;
-
-export declare function createSearchQuery(options: CreateSearchQueryOptions): SearchQuery;
-
+export { FormAction, FormInput, FormChoice, ScriptAction, RagSearchAction, RagSearchFilters, RagSearchOptions, ReadFileAction, WriteFileAction, ExecuteCommandAction, MessageAction, ExecutePayload, ExecuteActionType, ExecuteScript, ExecuteReadFile, ExecuteWriteFile, ExecuteRagSearch, ExecuteCommand, ExecuteForm, ExecuteMessage, ScriptResult, RagSearchResult, RagSearchResultPayload, ReadFileResult, WriteFileResult, FormResult, ActionResult, ScriptActionResult, ReadFileActionResult, WriteFileActionResult, RagSearchActionResult, CommandActionResult, FormActionResult, } from './action-types.js';
+export * from './protocol/index.js';
+export * from './state/index.js';
+export * from './search/index.js';
+export * from './rag/index.js';
+export * from './api/index.js';
+export * from './arch/index.js';
+export * from './file/index.js';
+export * from './message/index.js';
+export * from './factory/index.js';
+export { Session, SESSION_STATUS, LEGACY_SESSION_STATUS, SESSION_ACTIONS, MESSAGE_ROLES, EXCHANGE_LOG_TYPES, createSession, validateSessionData, sanitizeSessionForClient, } from './types.js';
+export { createContextBlock, createTask, createFileBlock, createSearchQuery, } from './factory/index.js';
 //# sourceMappingURL=index.d.ts.map

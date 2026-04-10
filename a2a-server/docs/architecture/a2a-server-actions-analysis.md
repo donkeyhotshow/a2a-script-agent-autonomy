@@ -208,7 +208,7 @@ export class ActionRegistry {
 ┌─────────────┐     ┌──────────────┐     ┌─────────────────┐
 │   A2A-Server │────▶│ LLM Adapter  │────▶│  External AI    │
 │              │     │              │     │    Hub          │
-│              │◀────│              │◀────│  (Ollama)       │
+│              │◀────│              │◀────│  (Local LLM upstream)       │
 └─────────────┘     └──────────────┘     └─────────────────┘
        │                                          │
        │     ┌──────────────┐                    │
@@ -234,17 +234,17 @@ export async function callLLM(input: LLMInput): Promise<string>
 Поддерживаемые провайдеры:
 | Провайдер | Переменная окружения | Endpoint |
 |-----------|---------------------|----------|
-| Ollama | `LLM_PROVIDER=ollama` или `USE_OLLAMA=1` | `AI_HUB_URL/api/generate` |
+| Local LLM upstream | `LLM_PROVIDER=compat_llm` или `USE_LOCAL_LLM=1` | `AI_HUB_URL/api/generate` |
 | OpenAI | `LLM_PROVIDER=openai` | `api.openai.com/v1/chat/completions` |
 | Placeholder | fallback | - |
 
-### 2.3 Ollama Promise-Based Flow
+### 2.3 Local LLM upstream Promise-Based Flow
 
-Файл: [`services/ollama-adapter.ts`](a2a-server/src/services/ollama-adapter.ts)
+Файл: [`services/compat_llm-adapter.ts`](a2a-server/src/services/compat_llm-adapter.ts)
 
 ```typescript
 // Создание промиса (неблокирующий)
-export async function createOllamaPromise(request: OllamaRequest): 
+export async function createLocal LLM upstreamPromise(request: Local LLM upstreamRequest): 
   Promise<{ promiseId: string }>
 
 // Проверка статуса
@@ -474,7 +474,7 @@ Planned:
          ▼                              ▼
 ┌─────────────────┐            ┌─────────────────┐
 │  Client API     │            │  External AI    │
-│  (3001)         │            │  Hub (Ollama)   │
+│  (3001)         │            │  Hub (Local LLM upstream)   │
 └─────────────────┘            └─────────────────┘
 ```
 

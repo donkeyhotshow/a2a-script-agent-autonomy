@@ -6,7 +6,8 @@
 
 import {logger} from '../../utils/logger.js';
 import {spawn} from 'node:child_process';
-import * as path from 'node:path';
+import {validatePath} from './file-operations/security.js';
+import {executeAction, ValidationResult} from '../utils.js';
 
 export interface ExecuteCommandInput {
     command: string;
@@ -34,50 +35,64 @@ export interface CommandValidationResult {
     sanitizedCommand?: string;
 }
 
-// Whitelist of allowed commands
-const ALLOWED_COMMANDS = [
-    'git',
-    'npm',
-    'npx',
+// Command tiers for security levels
+const COMMAND_TIERS: Record<string, 'read-only' | 'build' | 'network'> = {
+    // Read-only commands (always allowed)
+    'cat': 'read-only',
+    'ls': 'read-only',
+    'dir': 'read-only',
+    'echo': 'read-only',
+    'pwd': 'read-only',
+    'find': 'read-only',
+    'grep': 'read-only',
+    'head': 'read-only',
+    'tail': 'read-only',
+    'wc': 'read-only',
+    'sort': 'read-only',
+    'uniq': 'read-only',
+    'diff': 'read-only',
+
+    // Build commands (require ALLOW_BUILD_COMMANDS=1)
+    'git': 'build',
+    'npm': 'build',
+    'npx': 'build',
+    'node': 'build',
+    'tsc': 'build',
+    'eslint': 'build',
+    'prettier': 'build',
+    'mkdir': 'build',
+    'cp': 'build',
+    'copy': 'build',
+    'mv': 'build',
+    'move': 'build',
+    'rm': 'build',
+    'del': 'build',
+    'touch': 'build',
+    'zip': 'build',
+    'unzip': 'build',
+    'tar': 'build',
+    'prisma': 'build',
+    'vitest': 'build',
+    'jest': 'build',
+    'playwright': 'build',
+    'cypress': 'build',
+
+    // Network commands (require ALLOW_NETWORK_COMMANDS=1)
+    'curl': 'network',
+    'wget': 'network',
+    'docker': 'network',
+    'docker-compose': 'network',
+};
+
+// High-risk binaries that require explicit enablement
+const HIGH_RISK_COMMANDS = new Set([
     'node',
-    'tsc',
-    'eslint',
-    'prettier',
-    'cat',
-    'ls',
-    'dir',
-    'echo',
-    'mkdir',
-    'cd',
-    'pwd',
-    'cp',
-    'copy',
-    'mv',
-    'move',
-    'rm',
-    'del',
-    'touch',
-    'find',
-    'grep',
-    'head',
-    'tail',
-    'wc',
-    'sort',
-    'uniq',
-    'diff',
-    'zip',
-    'unzip',
-    'tar',
+    'npx',
+    'docker',
     'curl',
     'wget',
-    'docker',
-    'docker-compose',
-    'prisma',
-    'vitest',
-    'jest',
-    'playwright',
-    'cypress',
-];
+    'npm',
+]);
 
 // Blacklist of dangerous patterns
 const DANGEROUS_PATTERNS = [
@@ -99,72 +114,61 @@ export async function executeCommand(
     input: ExecuteCommandInput
 ): Promise<ExecuteCommandOutput> {
     const startTime = Date.now();
-    
-    logger.info('[execute-command] Executing', {
-        command: input.command,
-        args: input.args,
-        cwd: input.cwd,
-    });
 
-    try {
-        // Validate command
-        const validation = validateCommand(input);
-        if (!validation.valid) {
+    return executeAction(
+        'execute-command',
+        input,
+        (input): ValidationResult => {
+            // Validate command
+            const cmdValidation = validateCommand(input);
+            if (!cmdValidation.valid) {
+                return cmdValidation;
+            }
+
+            // Validate working directory
+            if (input.cwd) {
+                const cwdValidation = validatePath(input.cwd);
+                if (!cwdValidation.valid) {
+                    return { valid: false, error: `Invalid working directory: ${cwdValidation.error}` };
+                }
+            }
+
+            return { valid: true };
+        },
+        async (input) => {
+            // Execute command with timeout
+            const timeout = input.timeout || 60000; // 1 minute default
+            const maxOutput = input.maxOutput || 1024 * 1024; // 1MB default
+
+            const result = await runCommand({
+                command: input.command,
+                args: input.args,
+                cwd: input.cwd,
+                env: input.env,
+                timeout,
+                maxOutput,
+                shell: input.shell,
+            });
+
+            const executionTime = Date.now() - startTime;
+
+            logger.info('[execute-command] Command executed', {
+                command: input.command,
+                exitCode: result.exitCode,
+                executionTime,
+                timedOut: result.timedOut,
+            });
+
             return {
-                success: false,
-                error: validation.error,
+                success: result.exitCode === 0,
+                stdout: result.stdout,
+                stderr: result.stderr,
+                exitCode: result.exitCode,
+                executionTime,
+                timedOut: result.timedOut,
             };
         }
-
-        // Validate working directory
-        if (input.cwd) {
-            const cwdValidation = validatePath(input.cwd);
-            if (!cwdValidation.valid) {
-                return {
-                    success: false,
-                    error: `Invalid working directory: ${cwdValidation.error}`,
-                };
-            }
-        }
-
-        // Execute command with timeout
-        const timeout = input.timeout || 60000; // 1 minute default
-        const maxOutput = input.maxOutput || 1024 * 1024; // 1MB default
-
-        const result = await runCommand({
-            command: input.command,
-            args: input.args,
-            cwd: input.cwd,
-            env: input.env,
-            timeout,
-            maxOutput,
-            shell: input.shell,
-        });
-
-        const executionTime = Date.now() - startTime;
-
-        logger.info('[execute-command] Command executed', {
-            command: input.command,
-            exitCode: result.exitCode,
-            executionTime,
-            timedOut: result.timedOut,
-        });
-
-        return {
-            success: result.exitCode === 0,
-            stdout: result.stdout,
-            stderr: result.stderr,
-            exitCode: result.exitCode,
-            executionTime,
-            timedOut: result.timedOut,
-        };
-    } catch (error) {
-        logger.error('[execute-command] Execution failed', {error: String(error)});
-        return {
-            success: false,
-            error: String(error),
-        };
-    }
+    );
 }
 
 /**
@@ -185,14 +189,53 @@ export function validateCommand(input: ExecuteCommandInput): CommandValidationRe
         }
     }
 
-    // Check if command is in whitelist
+    // Validate command against tiers and security flags
     const commandParts = input.command.split(' ');
     const baseCommand = commandParts[0]?.toLowerCase();
-    
-    if (!baseCommand || !ALLOWED_COMMANDS.includes(baseCommand)) {
+
+    if (!baseCommand) {
         return {
             valid: false,
-            error: `Command '${baseCommand}' is not in the allowed list`,
+            error: 'No command specified',
+        };
+    }
+
+    const tier = COMMAND_TIERS[baseCommand];
+    if (!tier) {
+        return {
+            valid: false,
+            error: `Command '${baseCommand}' is not allowed`,
+        };
+    }
+
+    // Check tier-specific permissions
+    if (tier === 'build' && process.env.ALLOW_BUILD_COMMANDS !== '1') {
+        return {
+            valid: false,
+            error: `Build commands not allowed. Set ALLOW_BUILD_COMMANDS=1`,
+        };
+    }
+
+    if (tier === 'network' && process.env.ALLOW_NETWORK_COMMANDS !== '1') {
+        return {
+            valid: false,
+            error: `Network commands not allowed. Set ALLOW_NETWORK_COMMANDS=1`,
+        };
+    }
+
+    // Check high-risk command permissions
+    if (HIGH_RISK_COMMANDS.has(baseCommand) && process.env.ALLOW_HIGH_RISK_COMMANDS !== '1') {
+        return {
+            valid: false,
+            error: `High-risk command '${baseCommand}' not allowed. Set ALLOW_HIGH_RISK_COMMANDS=1`,
+        };
+    }
+
+    // Shell execution requires high-risk permissions
+    if (input.shell && process.env.ALLOW_HIGH_RISK_COMMANDS !== '1') {
+        return {
+            valid: false,
+            error: 'Shell execution not allowed. Set ALLOW_HIGH_RISK_COMMANDS=1',
         };
     }
 
@@ -294,23 +337,3 @@ function runCommand(options: RunCommandOptions): Promise<RunCommandResult> {
     });
 }
 
-function validatePath(dirPath: string): {valid: boolean; error?: string} {
-    const resolved = path.resolve(dirPath);
-    const cwd = process.cwd();
-
-    // Prevent access outside workspace
-    const allowedPrefixes = [cwd, '/tmp', '/var/tmp', process.env.HOME || ''];
-    
-    const isAllowed = allowedPrefixes.some(prefix => 
-        prefix && resolved.startsWith(path.resolve(prefix))
-    );
-
-    if (!isAllowed) {
-        return {
-            valid: false,
-            error: 'Path is outside allowed directories',
-        };
-    }
-
-    return {valid: true};
-}

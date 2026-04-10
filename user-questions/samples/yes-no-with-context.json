@@ -1,0 +1,27 @@
+{
+  "id": "yes-no-with-context",
+  "title": "Confirm action",
+  "questions": [
+    {
+      "id": "proceed",
+      "text": "Apply the proposed change to session storage?",
+      "options": [
+        {
+          "id": "yes",
+          "label": "Yes",
+          "description": "Proceed and record evidence in DEV_STATE."
+        },
+        {
+          "id": "no",
+          "label": "No",
+          "description": "Cancel; keep current behavior."
+        },
+        {
+          "id": "review",
+          "label": "Show diff first",
+          "description": "No write until after review."
+        }
+      ]
+    }
+  ]
+}

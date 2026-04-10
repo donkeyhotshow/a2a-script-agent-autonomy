@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import * as fs from 'fs';
+import { promises as fsPromises } from 'node:fs';
 import * as path from 'path';
 import { logger } from '../../utils/logger.js';
 
@@ -17,35 +17,54 @@ export class RepoMapService {
   async scanProject(rootPath: string): Promise<SymbolSignature[]> {
     logger.info('[RepoMap] Scanning project structural signatures', { rootPath });
     const signatures: SymbolSignature[] = [];
-    const files = this.getFiles(rootPath);
+    const files = await this.getFiles(rootPath);
 
-    for (const file of files) {
-      if (file.endsWith('.ts') || file.endsWith('.js')) {
-        const fileSigs = this.extractSignatures(file);
-        signatures.push(...fileSigs);
+    // Process files in chunks to bound concurrency
+    const chunkSize = 10;
+    const chunks: string[][] = [];
+    for (let i = 0; i < files.length; i += chunkSize) {
+      chunks.push(files.slice(i, i + chunkSize));
+    }
+
+    for (const chunk of chunks) {
+      const tsJsFiles = chunk.filter(file => file.endsWith('.ts') || file.endsWith('.js'));
+      const chunkSigs = await Promise.all(tsJsFiles.map(file => this.extractSignatures(file)));
+      for (const sigs of chunkSigs) {
+        signatures.push(...sigs);
       }
     }
 
     return signatures;
   }
 
-  private getFiles(dir: string, fileList: string[] = []): string[] {
-    const files = fs.readdirSync(dir);
-    for (const file of files) {
-      const name = path.join(dir, file);
-      if (fs.statSync(name).isDirectory()) {
-        if (!file.startsWith('.') && file !== 'node_modules') {
-          this.getFiles(name, fileList);
+  private async getFiles(dir: string): Promise<string[]> {
+    const fileList: string[] = [];
+    const queue: string[] = [dir];
+
+    while (queue.length > 0) {
+      const currentDir = queue.shift()!;
+      try {
+        const files = await fsPromises.readdir(currentDir);
+        for (const file of files) {
+          const name = path.join(currentDir, file);
+          const stat = await fsPromises.stat(name);
+          if (stat.isDirectory()) {
+            if (!file.startsWith('.') && file !== 'node_modules') {
+              queue.push(name);
+            }
+          } else {
+            fileList.push(name);
+          }
         }
-      } else {
-        fileList.push(name);
+      } catch (error) {
+        logger.warn('[RepoMap] Error reading directory', { dir: currentDir, error });
       }
     }
     return fileList;
   }
 
-  private extractSignatures(filePath: string): SymbolSignature[] {
-    const sourceCode = fs.readFileSync(filePath, 'utf-8');
+  private async extractSignatures(filePath: string): Promise<SymbolSignature[]> {
+    const sourceCode = await fsPromises.readFile(filePath, 'utf-8');
     const sourceFile = ts.createSourceFile(
       filePath,
       sourceCode,

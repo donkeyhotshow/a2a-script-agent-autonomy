@@ -13,7 +13,8 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 
-DEFAULT_PROXY_URL = os.environ.get("PROMISE_PROXY_URL") or os.environ.get("PROXY_URL") or "http://localhost:11435"
+# Hub is ai-integration (e.g. :11434), not Local LLM upstream (:11435) — pending/execute live on the proxy.
+DEFAULT_PROXY_URL = os.environ.get("PROMISE_PROXY_URL") or os.environ.get("PROXY_URL") or "http://localhost:11434"
 DEFAULT_POLL_INTERVAL = 4.0
 DEFAULT_TIMEOUT = 15.0
 DEFAULT_RESPONSE_ATTEMPTS = 5
@@ -23,7 +24,7 @@ USER_AGENT = "ai-integration-promise-daemon/1.0"
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Poll proxy tickets (promise queue) and optionally execute them against Ollama."
+        description="Poll proxy tickets (promise queue) and optionally execute them against Local LLM upstream."
     )
     parser.add_argument(
         "--proxy-url",
@@ -122,11 +123,20 @@ def execute_promise(session: requests.Session, proxy_url: str, promise_id: str, 
             payload = response.json()
         except ValueError:
             payload = None
-        if not response.ok:
-            logging.warning("Execute returned %s for %s: %s", response.status_code, promise_id, payload or response.text[:200])
-            return None
-        logging.info("Promise %s executed → result %s", promise_id, payload.get("result_status_code") if isinstance(payload, dict) else "ok")
-        return payload
+        if response.ok:
+            logging.info(
+                "Promise %s executed → result %s",
+                promise_id,
+                payload.get("result_status_code") if isinstance(payload, dict) else "ok",
+            )
+            return payload
+        logging.warning(
+            "Execute returned %s for %s: %s",
+            response.status_code,
+            promise_id,
+            payload or response.text[:200],
+        )
+        return None
     except requests.RequestException as exc:
         logging.warning("Execution failed for %s: %s", promise_id, exc)
         return None
@@ -171,9 +181,19 @@ def handle_promise(session: requests.Session, args: argparse.Namespace, entry: D
     logging.info("Ticket %s – %s", promise_id, describe_pending(entry))
     snapshot = fetch_request_snapshot(session, args.proxy_url, promise_id, args.timeout)
     if snapshot:
-        logging.debug("Request body: %s", shorten_text(snapshot.get("body", ""), limit=1000))
+        _b = snapshot.get("body", "")
+        if isinstance(_b, (dict, list)):
+            _b = json.dumps(_b, ensure_ascii=False)
+        logging.debug("Request body: %s", shorten_text(str(_b), limit=1000))
     if args.dry_run or args.no_auto_approve:
         logging.info("Auto-approve disabled; skipping execution for %s", promise_id)
+        return
+    entry_status = (entry.get("status") or "pending").strip().lower()
+    if entry_status == "error":
+        logging.warning(
+            "Skipping %s: status error — use POST /promise/<id>/retry then re-queue, or DELETE to drop",
+            promise_id,
+        )
         return
     execute_payload = execute_promise(session, args.proxy_url, promise_id, args.timeout)
     if execute_payload is None:

@@ -1,81 +1,128 @@
-# DEV_STATE - 2026-04-03
+# DEV_STATE — 2026-04-08
 
-**Self-Upgrade:** Process of system self-improvement via daemon script `monitor-and-process-tasks.js` or manual API dialog with agent. See [GLOSSARY.md](GLOSSARY.md). In this repo, **“doing work” = executing concrete tasks _and_, when that queue is empty, driving prompts through the Client API / monitor until new concrete, testable tasks appear and are written back into `tasks/` + `DEV_STATE`**. **Operator order:** advance `tasks/` / `tasks/ide-prompts/` first; **before large session volume**, archive needed `a2a-client/storage/sessions/` ([`tasks/README.md`](tasks/README.md) step 2, *Session archival*); run `prompts-to-agent-mode/` (monitor / session API) after — policy only, not enforced in code ([`tasks/README.md`](tasks/README.md) *Self-Upgrade order*).
+**Rules Q&A:** [`docs/PROJECT-RULES-QA.md`](docs/PROJECT-RULES-QA.md) · Normative: [`AGENTS.md`](AGENTS.md)
 
-**Doc:** Schema-debug entry point: [`tests/direct-tests/README.md`](tests/direct-tests/README.md) (hub moved from `scripts/direct-tests/`; stub [`scripts/direct-tests/README.md`](scripts/direct-tests/README.md) redirects), [`simulations/SCHEMA.md`](simulations/SCHEMA.md), [`AGENTS.md`](AGENTS.md).
+**Project status (elevated bar):** treat the repo as an **autonomous AI operator workstation** — async sessions until terminal completion, not ad-hoc invokes. **Production acceptance** = explicit criteria in `tasks/` + monitor-driven runs + offline validators (contracts, **boundary cases**, cross-system checks). Evidence before closure — [`AGENTS.md`](AGENTS.md) *Evidence-first loop*.
 
-**Agent-mode task prompts (Task Monitor scans this folder only):** [`prompts-to-agent-mode/README.md`](prompts-to-agent-mode/README.md); **IDE/docs prompts (not in monitor scan):** [`tasks/ide-prompts/README.md`](tasks/ide-prompts/README.md); **live stack contract:** [`prompts-to-agent-mode/STACK-RUN.md`](prompts-to-agent-mode/STACK-RUN.md); **linear workflow:** [`prompts-to-agent-mode/ONE-PIPELINE.md`](prompts-to-agent-mode/ONE-PIPELINE.md); **root master prompt (full index run):** [`START-FULL-SPECTRUM.md`](START-FULL-SPECTRUM.md) — Client API + seed **`mode: "agent"`** (not `invoke` alone; see `AGENTS.md` *Unified manual path*).
+---
 
-**System roadmap:** [`tasks/system-improvement-priorities.md`](tasks/system-improvement-priorities.md) (contract unification, gray room, verification pyramid, observability).
+## Primary goal (north star)
 
-**Open work (authoritative queue):** [`work/STATE.md`](work/STATE.md) — table *Очередь задач*. Root file keeps narrative only; do not treat a single line here as the row-by-row status.
+**Execute indexed stack work through the Task Monitor** — **`npm run monitor`** / **`monitor:once`** with Client API session flow and evidence in `merged`. Canonical workflow, anti-patterns, and closure gate live in [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](docs/OPERATOR-MONITOR-MANUAL-QA.md). Manual curl remains debug-only ([`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md)).
 
-Current system state: **Stack готов** - все сервисы работают; `sim:validate -- --all --step-contract` зелёный.
+**Last monitor run (2026-04-08T14:11:22+03:00):** Processed 1 task from queue (`doc-adr-0036-master-orchestration-memory-proposed.md`), which timed out after 302s at `status=idle`. Hub had 79 error promises (401 auth errors). 17 tasks skipped as already completed. Evidence: task monitor logs showing timeout and promise queue state.
 
-**Sequence queue checks:** `npm run verify:gray-room -- <snapshot.json>` (or `--stdin`) — offline validation of `context.workbench.sections.sequence` / `predictions` / `history`; [`tests/direct-tests/validators/verify-gray-room-state.mjs`](tests/direct-tests/validators/verify-gray-room-state.mjs).
+**Doc iteration (2026-04-08, operator protocol):** Added [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](docs/OPERATOR-MONITOR-MANUAL-QA.md) to formalize monitor + manual QA operating loop. Scope includes prior proposal items **1-8, 10-12** and explicitly excludes centralized orchestrator routine (`npm run central`) for this request. Evidence: repo diff adds new protocol with contract block, mandatory workflow, and per-iteration manual QA checklist.
+**Doc dedup iteration (2026-04-08, cross-links):** Linked [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md), [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md), and [`docs/AGENTS-REFERENCE.md`](docs/AGENTS-REFERENCE.md) to canonical acceptance source [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](docs/OPERATOR-MONITOR-MANUAL-QA.md). Replaced repeated closure wording with links to reduce drift risk.
+**Operator scan iteration (2026-04-08, client/sdk/web/storage + tests):** Added [`docs/OPERATOR-TESTING-MATRIX.md`](docs/OPERATOR-TESTING-MATRIX.md) with deterministic test matrix and operator facts from `a2a-client` protocol docs (`WEB_UI_PROTOCOL.md`, `api-testing-plan.md`) and root script inventory. Linked matrix from [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md), [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](docs/OPERATOR-MONITOR-MANUAL-QA.md), [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md), and [`docs/AGENTS-REFERENCE.md`](docs/AGENTS-REFERENCE.md).
+**Operator hardening iteration (2026-04-08, triangle + alerts + UI switch scope):** Added concrete wrong-behavior incident playbook to [`docs/TRIANGLE-WORKFLOW.md`](docs/TRIANGLE-WORKFLOW.md), added color-alert reminder to [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](docs/OPERATOR-MONITOR-MANUAL-QA.md), and created testable implementation task [`tasks/web-ui-client-prototype-toggle.md`](tasks/web-ui-client-prototype-toggle.md) for runtime switch between current client UI and prototype UI.
+**UI switch implementation (2026-04-08):** Implemented runtime interface toggle in client web header (`Client UI` / `Prototype UI`) with persisted mode + configurable prototype URL in settings; added return switch inside `a2a-prototype` UI. Verification: `npm --prefix a2a-client run test:web` -> **52 passed**.
 
-**Recent (operator / parity batch):** Task Monitor with promise queue support; Client API multi-provider LLM routing; session storage improvements.
+**Canonical operator runbook (deduplicated):** use [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](docs/OPERATOR-MONITOR-MANUAL-QA.md) as the single workflow source for monitor execution, manual QA, anti-patterns, and **100% production-ready** acceptance criteria. Keep `DEV_STATE` entries focused on iteration evidence and deltas.
 
-**Fixed:** Added check in dialog request processor to return initial form directly from request transform for dialog schema without user input, before attempting LLM call.
+**Cross-system shapes (wrong returns between layers):** hub [`cross-system-contracts/README.md`](cross-system-contracts/README.md), sequence [`cross-system-contracts/SEQUENCE.md`](cross-system-contracts/SEQUENCE.md), operator notes [`cross-system-contracts/PRACTICE.md`](cross-system-contracts/PRACTICE.md), **`npm run cross-system:validate`**, backlog [`tasks/pending/cross-system-parameter-hunt.md`](tasks/pending/cross-system-parameter-hunt.md). 
 
-**Fixed (artifact paths):** Windows `scripts\start-*.bat` and `start-all.bat` / `kill-all.bat` now `cd` to repo root via `%~dp0` so logs land in `a2a-client/logs`, `a2a-server/logs` (not nested `a2a-client/a2a-client/...`). `start-all.sh` / `start-all.ps1` anchor to script directory. Proxy request dumps from `proxy_handler.py` use `proxy_logs/requests/request_*` (aligned with `request_processor.py`); `cleanup.py` prunes both `requests/` and legacy top-level `request_*`.
+---
 
-**Fixed:** Router no longer overwrites `execution.action` when session created with `mode: "agent"`. `isTaskRequest()` in `base-processor.ts` now checks if `execution.action` is already an LLM pipeline action and returns `false` to prevent forced routing. Added direct LLM pipeline handling in `action-request-processor.ts` for seeded agent mode.
+## Triangle workflow + colored alerts (whole-stack lens)
 
-**Fixed (router beat B, 2026-04-03):** `determineRequestType` routes `execution.step === 'router'` + pipeline `result.choice` to **action** first so `handleRouterChoice` patches `execution` before dialog. Dialog processor failed outcomes now include normalized `context`; `request.service` `updateStatus` merges `result.context` on **failed** as well as **completed** (sticky `task`/`router` after LLM errors).
+**Normative loop:** [`docs/TRIANGLE-WORKFLOW.md`](docs/TRIANGLE-WORKFLOW.md) — gates **C1 / A1 / B1**, then per turn **observe session (1)** → **poll `/async` (2)** → **optional `/next` (3)** → compare to goldens **(4)**.
 
-**Papa–Mama test matrix (2026-04-04):** Added realistic Mama fixture `sim-agent-vertical.spec.json` using `simulations/sync/agent/*` goldens; updated `run-all.mjs` (7/7 green). Documented Papa hardening (`--only`, `E2E_DIRECT_LOW_LLM`, merge flags) in `tests/direct-tests/README.md`. Failure class matrix documented in `tests/indirect-tests/README.md`. Proposals doc: [`tasks/pending/test-architecture-proposals.md`](tasks/pending/test-architecture-proposals.md) — глубокий анализ выполнен:
-- Gray room: 3/6 handlers имеют fixtures (missing: compress_history, clarify, algorithm_invoke chains)
-- Execute shape: 0 violations в 29 категориях simulations (сканер `audit-execute-shape-explore.mjs`)
-- Runtime validators: 5+ валидаторов в `transform-execute-validator.ts` (dialog/agent/result/router)
-- Sticky router: логика переходов документирована (valid vs STICKY_ROUTER/ACTION_JUMP)
-- Идеальные варианты: A (Unified Auditor), B (Live Drift Detector), C (Simulation-First)
-- **Papa & Mama Gang:** Создан единый оркестратор `tests/papa-mama-gang.mjs` (`npm run test:gang`), который последовательно запускает смену Мамы (оффлайн проверки, юнит-тесты сервера и клиента, симуляции) и смену Папы (E2E на живом стеке). Документировано в `PAPA-MAMA.md`. Добавлена философия "Zero Trust": если скрипт зелёный, значит мы плохо искали. Новые проблемы должны вшиваться в скрипт (мы злопамятные). **Ориентация после банды:** `npm run gang:orient-session` или `GANG_ORIENT_SESSION=1 npm run test:gang` — `tests/gang-orient-session.mjs` создаёт Client API сессию `mode: agent` с задачей обхода `DEV_STATE` / `tasks` / `AGENTS`; без стека печатает тот же текст для IDE.
-- **Metaphor «Папа и мама поехали на дачу»:** [`GLOSSARY.md`](GLOSSARY.md) + [`PAPA-MAMA.md`](PAPA-MAMA.md) (*Metaphor* — последовательные смены, стейт-доки, анти-паттерн «Mama green = всё сделано»).
-- **Mama hardening (2026-04-04):** Исправлены `clarify.spec.json` / `algorithm-invoke.spec.json` под формат `validate-gray-room-horizontal.mjs`. Добавлен `validators/audit-execute-shape-simulations.mjs` (165 `response.json`, шаги `N-sub-M`; в комментарии нельзя `**/`). В `run-all.mjs` теперь **14** шагов (+ `audit-sim-choice-descriptions`, + `verify-gray-room-state` на `gray-room/fixtures/sequence-workbench-snapshot.json`). **`test:gang`:** также `test:direct-tests` (Vitest), `sim:lint:all`, префлайт Папы на Client API (`CLIENT_API_URL`, default `:5173`), флаги `--mama-only` / `--papa-only` (`npm run test:gang:mama` / `test:gang:papa`). **`test:server:unit`** (`run-server-unit-tests.ps1`) по умолчанию **исключает** `tests/integration/**` и `tests/e2e/**` (офлайн); полный Vitest: `npm run test:server:unit:all` или `-IncludeIntegration`. После зелёного Papa E2E опционально `PAPA_SERVER_VITEST_ALL=1` → `test:server:unit:all`. Papa: `PAPA_E2E_ONLY` / `E2E_DIRECT_ONLY` или `node tests/papa-mama-gang.mjs --e2e-only=a,b` → `--only=` у `e2e-dialog-test.js`. **Battle recon:** `npm run test:recon` / `test:recon:mama`, флаг `--recon` (строгие артефакты + `sim:validate:all:contract` + async E2E). **Исправление:** смена Мамы вызывала `npm run sim:validate` без `--all` (CLI требует `--sim` или `--all`) — теперь `sim:validate:all` / `sim:validate:all:contract` и скрипты в корневом `package.json`. Papa preflight: `A2A_SERVER_URL` (default `:3000`). После `test:indirect` банда гоняет `scan-promise-bodies` / `scan-session-responses` с `--skip-if-missing`; `MAMA_ARTIFACT_STRICT=1` или `npm run test:gang:strict` (`--strict-artifacts`) добавляет `--strict`. Mama: `a2a-client/packages/web` — `npx vitest run --passWithNoTests`. CLI: `node tests/papa-mama-gang.mjs --help`. Papa: `PAPA_REQUIRE_ASYNC=1` → `REQUIRE_ASYNC_PIPELINE=1` в e2e. Скрипты: `npm run scan-promise-bodies:strict` / `scan-session-responses:strict`. Строгий MD↔JSON: `npm run sim:check-md:fail` (сейчас есть расхождения — не в банде). Unit: `a2a-server/tests/unit/black-room-orchestrator.test.ts` (unknown algorithm → failed).
+| Vertex | Layer | Typical triage alert (see [`GLOSSARY.md`](GLOSSARY.md) *Alerts*) | Note |
+|--------|--------|------------------------------------------------------------------|------|
+| **A** | Client API + `a2a-client/storage/sessions/` | **Blue** (router / `message` vs `choice`, step storage), **Orange** (async / promise polling), **Teal** (Client ↔ server DTO) | Not the same as **Red Room** (client tool phase after server decision) |
+| **B** | `a2a-server` (`/api/v1/invoke`, transforms) | **Gray alert** = *assume server bug first* | **Gray Room** = server LLM chain (runtime); different from Gray **alert** |
+| **C** | `ai-integration` hub (`11434`) + upstream (`11435` if used) | **Black alert (proxy)** | Hub health = gate **C1** |
 
-- **System errors hub:** [`docs/system-errors/README.md`](docs/system-errors/README.md) — один каталог описаний: Monitor ErrorClassifier, коды `transform-execute-validator`, offline LLM shape, таблица npm-валидаторов.
+**Full monitor / queue burn:** **Red alert** = run Task Monitor through Client API ([`GLOSSARY.md`](GLOSSARY.md) *Red alert*).
 
-**Extended deep search findings (2026-04-04):**
-- Validator gaps: `TOP_LEVEL_MESSAGE_WITH_TOOL`, `DUPLICATE_TOP_AND_EXECUTE_MESSAGE`, `EXECUTE_MESSAGE_ONLY` — есть в `check-llm-execute-shape.mjs`, но **не в** `transform-execute-validator.ts` (runtime не проверяет)
-- Form-choice pipeline gap: `form-choice-pipeline.ts:33` валидирует `formProcessResult`, но не `execute` shape
-- Strict mode policy: `A2A_TRANSFORM_STRICT` работает, но нет documented policy когда включать (CI vs dev)
-- Black Room: `black-room-orchestrator.ts` не имеет unit/integration тестов, нет Mama fixtures для `algorithm_invoke`
-- Client API: `step-routes-dialog-flow.js:435` возвращает 502 при parse error, но нет тестов на recovery (stuck step)
-- New proposals added: #8 (missing validators), #9 (form-choice validation), #10 (strict mode policy), #11 (Black Room tests), #12 (Client API recovery)
+**Rooms (runtime phases)** — Gray Room / Red Room / Black Room — vs **alerts (labels)** — spelled out in [`GLOSSARY.md`](GLOSSARY.md) *Rooms vs alerts*.
 
-**Recent (client UI):** Async polling improvements; sticky router prevention with localized text mapping.
+**Orange alert:** documented as **permanent** async-only policy (“оранжевая тревога навсегда”) — [`GLOSSARY.md`](GLOSSARY.md), [`docs/AGENT-DIALOG-API-STATE.md`](docs/AGENT-DIALOG-API-STATE.md).
 
-**Recent (direct-tests):** Post-start checks; sticky router testing improvements; router choice validation; `validators/lib/check-llm-execute-shape.mjs` shared by `scan-promise-bodies` + `scan-session-responses`; root `npm run sim:check-md` delegates to a2a-server MD/JSON drift check.
+---
 
-**Recent (simulations):** MD mirrors for async sims; unified SCHEMA.md scope; gray room goldens; router descriptions audit; S11 mirror sweep completed.
+## Iterativity — conditions for full project normalization
 
-**Recent (docs):** Completed task notes from `tasks/completed/` folded into `docs/` (see `docs/new-request-flow/SIMULATION-VALIDATION.md` *Sync golden conventions*, `docs/ARCHITECTURE-IMPROVEMENTS-PROPOSALS.md` Category D, `docs/agent-iteration-traps.md` *Task Monitor*, `docs/WORKFLOW.md` *Task Monitor metrics*, `docs/SESSION-SYSTEMS-OVERVIEW.md` *Execution mode parity*, `docs/adr/ADR-0059` Related); `tasks/completed/*.md` removed.
+**Normalization** here means: one **contractual** story across **A / B / C** (Client API ↔ server ↔ hub), **async-only** transport, **action-key** shapes, and **canonical docs** that match production paths — without duplicate sources of truth ([`GLOSSARY.md`](GLOSSARY.md) *Purple* / *Brown* / *Amber* alerts).
 
-**Pre-existing issues (known):**
-- a2a-client: `@a2a/rag` tests green — Vitest `fs/promises` hoisted mocks + BM25 `minScore` / corpus fixes (`packages/rag/tests/rag.test.js`).
-- Orchestrator metrics: requires periodic updates
-- **S18 (partial):** `a2a-client` dev `vite.config.js` `root: web`, workspace `web` + `@a2a-client/vite-plugin`; physical move to `packages/web` still pending ([`tasks/pending/a2a-client-web-scoped-package.md`](tasks/pending/a2a-client-web-scoped-package.md)).
+**Each iteration must:**
 
-## System Backlog:
-- **Architecture - Gray Room Refinement**: Refine Gray Room implementation per work/STATE.md focus §3
-- **Architecture - Black Room / Gray Room Split**: Implement Black Room / Gray Room Split concept from ADR-0058
-- **S18 (partial):** Complete `@a2a-client` web + vite-plugin scoped package migration
+1. **Touch state** — Update root + any affected module [`DEV_STATE.md`](a2a-client/DEV_STATE.md) before/after work ([`.cursor/rules/document-hierarchy.mdc`](.cursor/rules/document-hierarchy.mdc) *DEV_STATE Protocol*).
+2. **Classify layer** — If something fails, run the [**triangle loop**](docs/TRIANGLE-WORKFLOW.md) (gates **0**, then **1→2→3**) and pick the right **alert** color ([`GLOSSARY.md`](GLOSSARY.md) *Alerts*); do not guess without `GET …/sessions/{id}` + `/async` when sessions are involved.
+3. **Verify what changed** — At least one of: module tests, `tests/direct-tests` for shape, or `sim:lint` / `sim:validate` for touched sim surfaces ([`tests/direct-tests/README.md`](tests/direct-tests/README.md)).
+4. **Queue honesty** — Remove done items from `DEV_STATE` / `tasks/`; **discover** new gaps; **write** concrete next steps. **Empty queue ≠ done** — run [`AGENTS.md`](AGENTS.md) *Empty queue* (prune → discover → write → drive stack).
+5. **Hygiene when stuck** — **Hygiene** section in this file (processes + storage + optional monitor reset); **do not** wipe LLM disk cache unless explicitly requested.
+6. **Evidence first** — Each loop must record practical artifacts (test output, `sessionId`/`promiseId`, async terminal status, or concrete diff). If missing, run a minimal experiment first and log it in state (see [`AGENTS.md`](AGENTS.md) *Evidence-first loop* and [`docs/agent-iteration-traps.md`](docs/agent-iteration-traps.md) *Evidence rule*).
+
+**Continue iterating until** (normalization bar for the current scope): no open **P0** for that scope (broken stack, wrong router contract, sync invoke escape hatch, or doc that lies about the Client API path), and the **next** prune/discover pass either adds only **P1+** items or none — then record **as-of date** in `DEV_STATE` instead of declaring “forever done.”
+
+**Legitimate stop:** user acceptance, or a **logged blocker** (evidence + owner + next experiment) — not “I answered once” or “the list looked empty.” Misreads: [`docs/agent-iteration-traps.md`](docs/agent-iteration-traps.md).
+
+---
+
+## Environment snapshot (this machine)
+
+Probed **2026-04-08**: `5173` (`/api/a2a/projects`), `3000` (/health), `11434` (/health), `11435` (/api/tags) — **HTTP 200**. **`npm run monitor:once`** with **`TASK_MONITOR_SKIP_PROMISE_GATE=1`** → **1 succeeded** (~33s): [`client-api-04-session-rebuild-highest-step.md`](prompts-to-agent-mode/client-api-04-session-rebuild-highest-step.md), session **`sess_1775596533968`** (6 prior prompts skipped). Earlier same day: **`client-api-03`** → **`sess_1775596093325`**. **Regression:** **`npm run test:monitor`** → **38 passed** (includes central-orchestrator argv contract; re-run locally to confirm).
+
+Earlier probe **2026-04-07**: same ports — **HTTP 200**.
+
+If any probe fails: start with **`start-all.bat`**, then re-run the curls in *Health checks* below.
+
+---
+
+## Task Monitor signal
+
+- **Operator + narrative index:** [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md) (no root `COMPLETION-REPORT.md` — see [`tasks/brown-alert/monitor-docs-duplicate-surfaces.md`](tasks/brown-alert/monitor-docs-duplicate-surfaces.md)).
+- **State file:** `task-monitor-state.json` — `currentTask`, `sessionId`, `status`, `processedTasks[]`, **`taskSessions`** (one bound Client API `sessionId` per prompts-to-agent-mode markdown task until completion or **`TASK_MONITOR_NEW_SESSION_PER_TASK=1`**). **Completed → `sessionId` for scripts:** `npm run monitor:completed:json` → **`merged`**. **Regression:** `npm run test:monitor` — **38 passed** (re-run locally to refresh).
+- **Poll iteration ceiling (2026-04-08):** `process-task.js` used `ceil(POLL_TIMEOUT_MS / POLL_INTERVAL_MS)+100` (~220 iterations) while real async polls are ~800ms+ → false timeouts ~270s with 10m wall cap. **Fix:** scale ceiling with **`ceil(POLL_TIMEOUT_MS / 800)+100`**. Defaults: **`TASK_MONITOR_AGENT_TOOL_STALL_MS=600000`**, **`TASK_MONITOR_STALL_POLLS=80`** (see [`.env.example`](.env.example), [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md)).
+- **Timeouts:** **`TASK_MONITOR_POLL_TIMEOUT_MS`** wall cap is authoritative (~**600000ms** default); poll iteration ceiling scales with timeout ÷ interval so **`TASK_MONITOR_MAX_POLL_ATTEMPTS`** cannot shorten a run below that wall clock. Async `/async` **`pending`** is treated as busy (same as `processing`). **`TASK_MONITOR_AGENT_TOOL_STALL_MS`** (default **180000**) fails fast if `action=agent` stays in any **`tool_*`** step that long; **`TASK_MONITOR_STALL_POLLS`** uses an **`agent_tool_phase`** key so rotating tool steps still counts toward stall. Vitest: `npx vitest run tests/infrastructure/monitor-and-process-tasks.test.js`. Still inspect `GET /api/a2a/sessions/{id}` + `/async` when stuck ([`AGENTS.md`](AGENTS.md) *Stack / promise pending*).
+- **Agent tool chain (2026-04-07):** Client API **`execute['run-script']`** with **`command`** (LLM one-liner) is now chained like **`scriptId`** — previously `getValidatedToolKey` rejected it and sessions stuck on **`tool_run_script`** with no `context.result` ([`a2a-client/DEV_STATE.md`](a2a-client/DEV_STATE.md)). **Evidence:** `npx vitest run tests/direct-tests/chain-guards-message-plus-tool.test.mjs tests/infrastructure/monitor-and-process-tasks.test.js` → **29 passed** (2026-04-07).
+- **Orange alert (async driver) — 2026-04-08:** **`npm run test:monitor`** → **25 passed**; **`npm run monitor:once`** → [`client-api-03-async-resolves-pending.md`](prompts-to-agent-mode/client-api-03-async-resolves-pending.md) completed (**`sess_1775596093325`**, `/next` → `/async` → hydrate). Prior **`TASK_MONITOR_ASSISTANT_LOOSE`** env was inverted (`1` did not enable loose mode) — fixed in `tests/monitor-tasks/task-monitor-processing.js`.
+- **Resume kick (2026-04-08):** Resuming from **`task-monitor-state.json`** without sending **`/next`** left sessions with **no assistant** in the timeline idling until poll timeout. **Fix:** after resume, if **`sessionTimelineEntries`** has **no** assistant line, send the same **`/next` (task)** as a fresh run. **`client-api-04-session-rebuild-highest-step.md`** re-ran clean (**`sess_1775596833372`**, ~34s) after state cleared; tests still **23 passed**.
+- **Monitor queue (2026-04-08):** **`client-api-05-red-room-artifacts.md`** completed (**`sess_1775596882819`**, ~43s).
+- **`sessionTimelineEntries` (2026-04-08):** When **`context.history`** was longer than **`messages`**, the monitor used history only and **dropped assistant lines present only on `messages`** → false 600s timeouts (`dev-state-client-test-failures.md`). **Fix:** if **`messages`** has more (or any) assistant rows than the mapped history, prefer **`messages`**. **`dev-state-client-test-failures.md`** then completed (**`sess_1775597582712`**, ~43s).
+- **Monitor queue (2026-04-08):** **`dev-state-orchestrator-metrics.md`** completed (**`sess_1775597640359`**, ~32s).
+- **Monitor queue (2026-04-08):** **`dev-state-router-drift-optional.md`** completed (**`sess_1775598309788`**, ~44s).
+- **START-FULL-SPECTRUM / monitor:once (2026-04-08):** [`doc-adr-0021-cross-browser-matrix.md`](prompts-to-agent-mode/doc-adr-0021-cross-browser-matrix.md) → **`sess_1775603431242`**; [`doc-adr-0025-promise-ui-decouple.md`](prompts-to-agent-mode/doc-adr-0025-promise-ui-decouple.md) → **`sess_1775603572213`**. **`hooks/task_monitor_issue.json`** reset (empty **`errors[]`**). **Hub proxy probe:** `tests/monitor-tasks/promise-queue-probe.mjs` now **`normalizeClientHubProbeOrigin`** (`localhost` / IPv6 loopback → **`127.0.0.1`**) before **`/api/a2a/hub/promises/*`** fetches — avoids spurious **404** when Vite is IPv4-only. Tests: **`npx vitest run tests/unit/promise-queue-probe-normalize.test.js`**.
+- **START-FULL-SPECTRUM (2026-04-08, IDE):** `npm run monitor:once` → [`doc-adr-0027-planning-readme-missing.md`](prompts-to-agent-mode/doc-adr-0027-planning-readme-missing.md) completed, **`sess_1775603823624`** (~29s), **1 succeeded / 0 failed / 15 skipped**. Hub **0 pending**, **65** in `/promises/errors` (stale 401). **WARN:** `http://127.0.0.1:5173/api/a2a/hub/promises/{pending,errors}` → **404** (run still succeeded).
+- **doc-adr-0035 (2026-04-08):** Earlier fail **`sess_1775604739617`** (strict **`/next`** timeout + pending hub ticket). **Pass after defaults change:** **`npm run monitor:once`** with **`TASK_MONITOR_STRICT_AGENT_COMPLETION=0`** (default) → [`doc-adr-0035-open-followups.md`](prompts-to-agent-mode/doc-adr-0035-open-followups.md) **completed**, **`sess_1775605500906`** (~33s). **WARN:** monitor **artifact-scan** — `context.history` assistant rows look like raw **`choices[]`** envelope (steps 3–4); inspect server unwrap / history merge.
+- **Task Monitor / agent completion (2026-04-08):** **`TASK_MONITOR_STRICT_AGENT_COMPLETION`** defaults to **`0`** in [`tests/monitor-and-process-tasks.js`](tests/monitor-and-process-tasks.js) if unset — **no** auto continuation **`/next`**; poll-only until terminal session shape (Red Room / client tool cycle unchanged). **Opt in strict nudges:** **`TASK_MONITOR_STRICT_AGENT_COMPLETION=1`** + **`TASK_MONITOR_AGENT_CONTINUE_MAX`**. Doc: [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md). Tests: **`npx vitest run tests/infrastructure/monitor-and-process-tasks.test.js`**.
+- **Session artifact scan (2026-04-08):** On task success, monitor warns if **`a2a-client/storage/sessions/<id>/*/server-response.json`** has **`context.history`** assistant **`message`** starting with raw **`{"choices":[`** (wire completion). Opt out: **`TASK_MONITOR_SESSION_ARTIFACT_SCAN=0`**. **`doc-adr-0012-session-store-enhancements.md`** completed (**`sess_1775598589644`**, ~29s); **`npm run test:monitor`** → **25 passed**.
+- **Task Monitor sequential `processTask` (2026-04-07):** Router-stuck cap **5** was shared with **successful** monitor-gate advances — after **5** agent/router steps, **`tryAdvanceMonitorGate`** stopped entirely → timeout at `idle` + `agent`/`step=request`. **Fixed:** `routerIdleStuckCount` only when **choices** exist and no auto-advance; gate advances uncapped. **Also:** `tryAdvanceMonitorGate` no longer re-sends task text when **`action=agent` + `step=request`** (duplicate `POST /next` spam). **Idle + `step=request` + no `context.result`:** complete when **`messages`** show **post-router** assistant text — assistant **after** user line **`agent`** / **`dialog`** / **`task-decomposition`**, or **2+** assistants (≥20 chars), or **one** assistant ≥**80** chars, or (fallback) assistant after user line matching task stub. **`TASK_MONITOR_ASSISTANT_LOOSE=1`** restores the old “any assistant ≥20 chars” rule. **2026-04-08:** completion **`GET …/sessions`** uses **`includeContext=1`**; timeline prefers **`context.history`** when longer than **`messages`**; user router choice also accepts JSON **`{"choice":"agent"}`** bodies. **Evidence:** `npm run test:monitor` green; **`npm run monitor:once`** with **`TASK_MONITOR_SKIP_PROMISE_GATE=1`** → **1 succeeded** (~37s, `sess_1775594181259`); repeat run → next prompt **`ai-integration-promise-queue-plan.md`** (~33s, `sess_1775594257680`); **`ai-integration-ui-improvements-plan.md`** (~35s, `sess_1775594339460`); **`client-api-01-sessions-create-load.md`** (~43s, `sess_1775595095247`).
+- **Practical monitor run (2026-04-08, doc-adr-0036):** Applied two shape fixes to keep agent path simulation-aligned during fallback states: **`a2a-server/src/services/core/request-processor/dialog-request-processor.ts`** now synthesizes **agent `execute.form`** when execute is missing/empty; **`a2a-server/prompts/transforms/agent-request.json`** now emits **`execute.form`** instead of message-only *"Pending LLM..."*. **Evidence:** repeated `npm run monitor:once` moved failure mode from idle/message-only to active agent start, but run still timed out due to runtime transport issues (intermittent `:5173` during dev auto-restart, `AggregateError` on `sendNext/getSession`, and increasing hub `/promises/errors` with `hub_promise_empty` + historical 401 auth failures). Practical takeaway: shape regressions were fixed; remaining blocker is stack/runtime stability and hub auth queue hygiene, not Client API execute contract.
+- **Monitor validation / completion (2026-04-07):** `validateActionKeyShape` wrongly failed on **`execute: { message }` only** (agent completion with no tool key) and on **`form`/`llmMessage`** not counted as aux. **`processTask`** now treats **`action=agent` + `step=completed` + `execute.message`** as success when **`context.result`** is absent. Tests: `tests/infrastructure/task-monitor-validation-shape.test.js` + `npm run test:monitor`.
+- **Async poll + execution (2026-04-07):** Task Monitor **`pollAsync`** uses **`GET …/async?includeContext=1`**; plugin attaches **`context.execution`** when the server result has `context` — fixes missing **`tool_*`** step in the poll body (stall / `TASK_MONITOR_AGENT_TOOL_STALL_MS` relied on it). Evidence: `npm run test:monitor` green.
+- **Promise queue:** with **`PROMISE_DAEMON_ONLY`** (hub default), LLM `?promise=1` tickets must be drained — **`start-all.bat`** starts the **promise-queue-daemon**; hub **`http://localhost:11434`** (or **`GET /api/a2a/hub/...`** via Client API). **`GET /promises/pending`** is **pending-only**; failed tickets: **`GET /promises/errors`**, **`POST /promise/<id>/retry`** + **`/execute`**, or **`DELETE /promise/<id>`** — [`ai-integration/docs/api-reference/PROXY_API.md`](ai-integration/docs/api-reference/PROXY_API.md); Web **Hub queue** (header). **2026-04-08:** a2a-server **`fetchAiHubChatJson`** (sync hub calls, e.g. LlmService / Gray internal debate) now **POSTs `/execute`** after **202** init so work is not left pending-only. **`hub_promise_empty`** if it still appears: upstream busy (**503** on execute) or empty LLM body — see hub logs.
+
+**Authoritative human queue (if used):** [`work/STATE.md`](work/STATE.md) — table *Очередь задач*.
+
+---
+
+## Cross-module DEV_STATE
+
+| Module | File |
+|--------|------|
+| Client + sessions | [a2a-client/DEV_STATE.md](a2a-client/DEV_STATE.md) |
+| Invoke + processors | [a2a-server/DEV_STATE.md](a2a-server/DEV_STATE.md) |
+| AI hub + promises | [ai-integration/DEV_STATE.md](ai-integration/DEV_STATE.md) |
+
+**Security (as-of 2026-04-07):** Harmful-pattern pass + follow-up fixes in [`docs/PURPLE-ALERT-HARMFUL-HUNT.md`](docs/PURPLE-ALERT-HARMFUL-HUNT.md) (*Last run log*): `skillLite` stub (no exec), `template-loader` escaped `{{key}}`, `cross-system-validate` argv `npm run`, `run-human-review` via `vitest.mjs`, `@a2a/execution` `vm2` dep, `render-layout`/`runbook-cli` hardening. **Magenta:** production `npm audit --omit=dev` **0** for root, `a2a-server`, `a2a-client` (2026-04-07). Summary: [`tasks/completed/magenta-npm-audit-2026-04.md`](tasks/completed/magenta-npm-audit-2026-04.md). **`POST /api/tools/evolve`:** TS + vm2 validation in [`a2a-server/src/api/tools-evolve-sandbox.ts`](a2a-server/src/api/tools-evolve-sandbox.ts) — [`tasks/completed/improve-tools-evolve-sandboxing.md`](tasks/completed/improve-tools-evolve-sandboxing.md).
 
 ---
 
 ## Ports
 
-| Port | Component |
-|------|-----------|
-| 11435 | Ollama |
-| 11434 | AI Integration |
+| Port | Role |
+|------|------|
+| 11435 | Local LLM upstream |
+| 11434 | AI Integration (hub) |
 | 3000 | a2a-server |
 | 5173 | Vite + Client API |
 
 ---
 
-## Health Checks
+## Health checks
 
 ```bash
 curl http://localhost:3000/health
@@ -86,36 +133,33 @@ curl http://localhost:5173/api/a2a/projects
 
 ---
 
-## Subsystems
+## Hygiene (stuck monitor / zombie stack)
 
-| Module | State |
-|--------|-------|
-| a2a-client | [DEV_STATE.md](a2a-client/DEV_STATE.md) |
-| a2a-server | [DEV_STATE.md](a2a-server/DEV_STATE.md) |
-| ai-integration | [DEV_STATE.md](ai-integration/DEV_STATE.md) |
+1. **Processes:** [`kill-all.bat`](kill-all.bat) (repo root) or [`kill-all.ps1`](kill-all.ps1) / [`kill-all.sh`](kill-all.sh) — frees ports 5173 / 3000 / 11434 (and related).
+2. **Session + async storage (no cache):** [`cleanup-session-state.js`](cleanup-session-state.js) — `npm run cleanup:state` or `node cleanup-session-state.js`. Wipes **all** of `a2a-client/storage/sessions/*`, hub `proxy_logs`, `ai-integration/storage/promises`, `a2a-server/storage/requests`. **No** age-based pruning for client sessions — only explicit cleanup; after that Task Monitor uses **one** Client API session per prompt (`taskSessions`) until done. **Does not** touch `ai-integration/storage/cache` (LLM disk cache) or npm/vite caches.
+3. **Task Monitor pointer reset (optional):** `npm run monitor:reset` removes `task-monitor-state.json` if the daemon left a bad cursor.
+4. **Session storage “engine check” (optional):** `npm run audit:session-storage` — writes deterministic `tasks/pending/session-storage-*.md` from `a2a-client/storage/sessions/` (always overwrites; no content-hash tracking); deletes per-session/cluster tasks when defects clear; each generated task includes **Task handling (generated)** (analyze before execution; delete the file after completion). **Full verify (regen + accuracy):** `npm run verify:audit-session-storage` (last step of `npm run test:before-start`). **CI-safe contract only:** `npm run verify:audit-session-storage-generator`.
 
----
-
-## Testing
-
-`tests/direct-tests/e2e-dialog-test.js`: added 8 server-only cases (invoke 400s, `/health` JSON, `/api/v1/requests/*` batch/single).
-
-```bash
-npm run sim:lint -- --all
-npm run sim:validate -- --all
-cd a2a-server && npm run test
-cd a2a-client && npm test
-```
+Then `start-all.bat` and retry.
 
 ---
 
-## Cross-Module: Multi-Provider Model Selection
+## Next (ordered)
 
-**Status:** Done (API path) — Combined `GET /api/tags` with `provider`; invoke / context **`llmModel`** and Client API **`POST /sessions` { llmModel }** propagate to dialog + gray room (`resolveLlmModelFromContext`). ADR-0059. Optional: Web UI dropdown.
+1. **Broader offline:** `npm run test:direct-tests` — **33 passed** · `npm run cross-system:validate` — exit **0** (may print `EXECUTE_MESSAGE_ONLY` on stored hub/session files — informational) · **`npm run test:before-start`** — indirect + server units + **`test:monitor`** + **`verify:audit-session-storage`** (re-run `npm run test:monitor` / `test:before-start` to confirm; Vitest file count drifts) · `npm run test:gang` only when changing session/proxy contracts — **last stage** `validate:proba-servera` needs **ai-integration `:11434`** unless **`PROBA_SERVERA_SKIP_STACK_CHECK=1`**. **Proba `agent-tool-rag-search`:** gray-room merges include **`workbench.sections`** ([`interrupt-trace-contract.ts`](a2a-server/src/transform/interrupt-trace-contract.ts)); `ensureWorkbenchSectionsShape` coerces bad **`workbench` / `sections`** ([`dialog-request-processor.ts`](a2a-server/src/services/core/request-processor/dialog-request-processor.ts)).
+2. **Sims:** `npm run sim:lint -- --all` · `npm run sim:validate -- --all` (from root) — **2026-04-08:** exit **0** — `sim:lint` / `sim:validate` JSON: all sims **`valid: true`**, **`warningCount: 0`** (same bar as **2026-04-07** run).
+3. **Live stack / north star:** `start-all.bat` → `npm run monitor:once` (or one manual Client API session per [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md)); set **`TASK_MONITOR_SKIP_PROMISE_GATE=1`** when hub reports `promise_daemon_only` and the queue is drained.
+4. **Test-architecture debt (fixtures / gray paths):** [`tasks/pending/test-architecture-proposals.md`](tasks/pending/test-architecture-proposals.md).
 
-**Goal:** Enable model selection throughout the stack (Z.AI `glm-4.7-flash` vs Ollama `qwen3:8b`).
+## Secondary / backlog (not blocking the north star)
 
-**Done:**
-1. **a2a-server:** `context.llmModel` + top-level invoke `llmModel` → AI Hub `/api/chat` body `model`
-2. **a2a-client:** Session create + `/next` merge `llmModel`; full UI picker optional
-3. **Shared:** ADR-0059
+- **Central orchestrator (parameterless):** [`docs/CENTRAL-ORCHESTRATOR.md`](docs/CENTRAL-ORCHESTRATOR.md) — **`npm run central`** → **`test:before-start`** + **`cross-system:validate`** + **`sim:check-md:fail`** + **`sim:lint:all`** + **`sim:validate --all`** + **`monitor:once`**; optional **`CENTRAL_SKIP_OFFLINE=1`** → **`monitor:once`** only; links [`docs/PROJECT-RULES-QA.md`](docs/PROJECT-RULES-QA.md).
+- Offline gate (repo root): **`npm run test:before-start`** — ends with **`verify:audit-session-storage`**; last full pass **2026-04-08** (green).
+- Roadmap: [`tasks/system-improvement-priorities.md`](tasks/system-improvement-priorities.md)
+- Schema debug entry: [`tests/direct-tests/README.md`](tests/direct-tests/README.md)
+- Gray room offline check: `npm run verify:gray-room -- <snapshot.json>`
+- Sims: `npm run sim:lint -- --all` · `npm run sim:validate -- --all`
+
+**2026-04-08:** Docs tightened — indexed stack workflow normative on Task Monitor (`AGENTS.md`, `ONE-PIPELINE.md`, `tasks/README.md`, `MONITOR-QUICK-START.md`, `STACK-RUN.md`, `GLOSSARY.md`). **`npm run test:monitor`** → **38 passed** (re-verified; + central-orchestrator argv test; + sequential `createCompletionReport` guard). **`START-FULL-SPECTRUM.md`** Agent prompt updated: real **`hooks/task_monitor_issue.json`** (`errors[]`), **`task_completion_report.json`**, optional sample **`CURSOR_AGENT_SIGNAL`** (no in-repo ticker script), monitor-owned `/next` loop, IDE cadence + [`docs/agent-iteration-traps.md`](docs/agent-iteration-traps.md), evidence before hook cleanup. Dead **`BREAK_STATE.md`** links removed from [`docs/PROMISE-RETRY-DIALOG.md`](docs/PROMISE-RETRY-DIALOG.md) and [`a2a-server/docs/GRAY-ROOM.md`](a2a-server/docs/GRAY-ROOM.md); **`test:before-start`** includes **`test:monitor`** (see *Next* §1 for current count); [`prompts-to-agent-mode/methodology-proposals-folder-missing.md`](prompts-to-agent-mode/methodology-proposals-folder-missing.md) no longer claims missing `tasks.md` is “done.”
+
+Historical change log was pruned in favor of this goal-centric view; use `git log` and module DEV_STATE history for archaeology.

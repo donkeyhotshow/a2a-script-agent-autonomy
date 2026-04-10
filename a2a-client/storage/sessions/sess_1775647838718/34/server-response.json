@@ -1,0 +1,69 @@
+{
+  "step": 34,
+  "timestamp": "2026-04-08T12:32:42.680Z",
+  "execute": {
+    "form": {
+      "title": "Agent",
+      "description": "Pending LLM request. You can still provide your next instruction.",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Message",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "agent",
+      "step": "start"
+    },
+    "task": "Assign reviewers or mark as exploratory; split Phase 1 into `tasks/*` specs with testable slices, or fold into existing gray-room / ADR-0035 work. Do not leave **Proposed** + **[TBD]** indefinitely without a decision record in the ADR header. — [prompt: doc-adr-0036-master-orchestration-memory-proposed.md]",
+    "projectId": "p_1771576028988",
+    "history": [
+      {
+        "role": "user",
+        "message": "Assign reviewers or mark as exploratory; split Phase 1 into `tasks/*` specs with testable slices, or fold into existing gray-room / ADR-0035 work. Do not leave **Proposed** + **[TBD]** indefinitely without a decision record in the ADR header. — [prompt: doc-adr-0036-master-orchestration-memory-proposed.md]"
+      },
+      {
+        "role": "system",
+        "message": "choice: agent"
+      },
+      {
+        "role": "assistant",
+        "message": "I need to locate the ADR-0036 document to review the current status of Phase 1 and resolve the pending decisions regarding reviewers and task splitting."
+      },
+      {
+        "role": "assistant",
+        "message": "I will search for the ADR-0036 document to review the status of Phase 1 and resolve the pending decisions regarding reviewers and task splitting."
+      },
+      {
+        "role": "system",
+        "message": "RAG (0 files, page 1, hasMore false)"
+      },
+      {
+        "role": "user",
+        "message": "Task specification is in the markdown file below. Read it with read-file (path is relative to the repository root), then work iteratively until the file’s goals are satisfied; use tools as needed and report progress each turn.\n\nRepo path: prompts-to-agent-mode/doc-adr-0036-master-orchestration-memory-proposed.md\nFile URL: file:///C:/workspace/org-carrier/a2a-script-agent/prompts-to-agent-mode/doc-adr-0036-master-orchestration-memory-proposed.md\n\nSummary: Assign reviewers or mark as exploratory; split Phase 1 into `tasks/*` specs with testable slices, or fold into existing gray-room / ADR-0035 work. Do not leave **Proposed** + **[TBD]** indefinitely without a decision record in the ADR header."
+      },
+      {
+        "role": "assistant",
+        "message": "I will read the ADR-0036 document to understand the current status of Phase 1 and the pending decisions regarding reviewers and task splitting."
+      },
+      {
+        "role": "system",
+        "message": "Read doc-adr-0036-master-orchestration-memory-proposed.md (0 lines)"
+      },
+      {
+        "role": "assistant",
+        "message": "I will read the ADR-0036 document to understand the current status of Phase 1 and the pending decisions regarding reviewers and task splitting."
+      }
+    ],
+    "session_id": "srv_sess_stateless",
+    "workbench": {
+      "slots": {},
+      "sections": {}
+    }
+  }
+}

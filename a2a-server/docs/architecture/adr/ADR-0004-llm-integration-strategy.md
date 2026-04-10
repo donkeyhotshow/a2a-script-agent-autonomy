@@ -37,7 +37,7 @@ interface LLMProvider {
 
 **Supported Providers:**
 - **OpenAI** - GPT-4, GPT-3.5 with full feature support
-- **Ollama** - Local LLMs with ai-integration service
+- **Local LLM upstream** - Local LLMs with ai-integration service
 - **Placeholder** - Mock responses for development/testing
 
 **Provider Selection Strategy:**
@@ -58,14 +58,14 @@ interface LLMProvider {
 **Configuration Management:**
 ```typescript
 interface LLMConfig {
-  provider: 'openai' | 'ollama' | 'placeholder'
+  provider: 'openai' | 'compat_llm' | 'placeholder'
   openai?: {
     apiKey: string
     model: string
     timeout: number
     maxRetries: number
   }
-  ollama?: {
+  compat_llm?: {
     baseUrl: string
     model: string
     timeout: number

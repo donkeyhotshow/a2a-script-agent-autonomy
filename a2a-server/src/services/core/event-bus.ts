@@ -9,12 +9,10 @@
  *   ArtifactStore       → publish ARTIFACT_WRITTEN
  *   SafetyLayer         → publish SAFETY_INTERCEPT
  *   AutonomousDecision  → publish DECISION_MADE
- *
- * SSE stream: GET /api/a2a/events/:sessionId  (see sessions.routes.ts)
  */
 
 import { EventEmitter } from 'events';
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 
 // ── Public event types ────────────────────────────────────────────────────────
 
@@ -54,6 +52,7 @@ class CircularBuffer {
   private readonly buf: AgentEvent[] = [];
   private head = 0;
   private count = 0;
+  private lastAccessed: number = 0;
 
   push(event: AgentEvent): void {
     if (this.count < BUFFER_SIZE) {
@@ -63,10 +62,12 @@ class CircularBuffer {
       this.buf[this.head] = event;
       this.head = (this.head + 1) % BUFFER_SIZE;
     }
+    this.lastAccessed = Date.now();
   }
 
   /** Returns all stored events in insertion order */
   toArray(): AgentEvent[] {
+    this.lastAccessed = Date.now();
     if (this.count < BUFFER_SIZE) {
       return this.buf.slice();
     }
@@ -74,17 +75,26 @@ class CircularBuffer {
     const head = this.buf.slice(0, this.head);
     return [...tail, ...head];
   }
+
+  /** Get the timestamp of when the buffer was last accessed */
+  getLastAccessed(): number {
+    return this.lastAccessed;
+  }
 }
 
-// ── EventBus ──────────────────────────────────────────────────────────────────
+// ── EventBus ────────────────────────────────────────────────────────────────
 
 export class EventBus {
   private readonly emitter = new EventEmitter();
   /** Per-session circular buffers */
   private readonly buffers = new Map<string, CircularBuffer>();
+  /** Maximum time (in ms) a buffer can be idle before being eligible for cleanup */
+  private static readonly MAX_IDLE_TIME_MS = 60 * 60 * 1000; // 1 hour
+  /** Maximum number of session buffers to keep in memory */
+  private static readonly MAX_BUFFERS = 1000;
 
   constructor() {
-    // Allow many listeners per event type (one per service + SSE streams)
+    // Allow many listeners per event type (one per service)
     this.emitter.setMaxListeners(100);
   }
 
@@ -106,8 +116,6 @@ export class EventBus {
 
     // Emit synchronously; async handlers MUST be wrapped by the subscriber
     this.emitter.emit(full.type, full);
-    // Also emit on a wildcard-ish session channel for SSE
-    this.emitter.emit(`session:${full.session_id}`, full);
 
     return full;
   }
@@ -136,20 +144,8 @@ export class EventBus {
     return () => this.emitter.off(type, listener);
   }
 
-  /**
-   * Subscribe to ALL events for a specific session (used by SSE endpoint).
-   * Returns unsubscribe function.
-   */
-  subscribeSession(
-    sessionId: string,
-    handler: EventHandler,
-  ): Unsubscribe {
-    const channel = `session:${sessionId}`;
-    this.emitter.on(channel, handler);
-    return () => this.emitter.off(channel, handler);
-  }
 
-  // ── replay() ──────────────────────────────────────────────────────────────
+  // ── replay() ────────────────────────────────────────────────────────────
 
   /**
    * Return all buffered events for a session, ordered chronologically,
@@ -169,20 +165,38 @@ export class EventBus {
    */
   getEventChain(correlationId: string): AgentEvent[] {
     const chain: AgentEvent[] = [];
-    for (const buf of this.buffers.values()) {
-      for (const evt of buf.toArray()) {
+    this.buffers.forEach((buf) => {
+      buf.toArray().forEach((evt) => {
         if (evt.correlation_id === correlationId) chain.push(evt);
-      }
-    }
+      });
+    });
     chain.sort((a, b) => a.timestamp - b.timestamp);
     return chain;
   }
 
-  // ── helpers ───────────────────────────────────────────────────────────────
+  // ── helpers ───────────────────────────────────────────────────────────
 
   private _getBuffer(sessionId: string): CircularBuffer {
     let buf = this.buffers.get(sessionId);
     if (!buf) {
+      // If we're at max capacity, evict the least recently used buffer
+      if (this.buffers.size >= EventBus.MAX_BUFFERS) {
+        let lruSessionId: string | null = null;
+        let lruTime = Date.now();
+
+        this.buffers.forEach((buffer, id) => {
+          const lastAccessed = buffer.getLastAccessed();
+          if (lastAccessed < lruTime) {
+            lruTime = lastAccessed;
+            lruSessionId = id;
+          }
+        });
+
+        if (lruSessionId !== null) {
+          this.buffers.delete(lruSessionId);
+        }
+      }
+
       buf = new CircularBuffer();
       this.buffers.set(sessionId, buf);
     }
@@ -197,6 +211,33 @@ export class EventBus {
   /** Number of sessions with active buffers. */
   get activeSessions(): number {
     return this.buffers.size;
+  }
+
+  /**
+   * Get the last accessed timestamp for a session's buffer.
+   * Returns 0 if the buffer doesn't exist.
+   */
+  getBufferLastAccessed(sessionId: string): number {
+    const buf = this.buffers.get(sessionId);
+    return buf ? buf.getLastAccessed() : 0;
+  }
+
+  /**
+   * Remove buffers that have been idle longer than MAX_IDLE_TIME_MS.
+   * Returns the number of buffers removed.
+   */
+  cleanupIdleBuffers(): number {
+    const now = Date.now();
+    let removedCount = 0;
+
+    this.buffers.forEach((buf, sessionId) => {
+      if (now - buf.getLastAccessed() > EventBus.MAX_IDLE_TIME_MS) {
+        this.buffers.delete(sessionId);
+        removedCount++;
+      }
+    });
+
+    return removedCount;
   }
 }
 

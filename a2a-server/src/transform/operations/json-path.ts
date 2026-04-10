@@ -6,6 +6,10 @@
 
 // @ts-expect-error - jsonpath-plus typing issues in NodeNext ESM
 import { JSONPath } from 'jsonpath-plus';
+import { logger } from '../../utils/logger.js';
+import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
+import { deepCloneJson } from '../../utils/deep-clone-json.js';
+import { stringifyForTemplate } from './value-helpers.js';
 
 /**
  * Query values from an object using JSONPath
@@ -144,7 +148,7 @@ export function copy(
   
   // Set value at destination
   if (value !== undefined) {
-    set(obj, toPath, JSON.parse(JSON.stringify(value))); // Deep clone
+    set(obj, toPath, deepCloneJson(value));
   }
   
   return obj;
@@ -256,35 +260,20 @@ export function exists(obj: unknown, path: string): boolean {
 }
 
 /**
- * Extract JSON from markdown content
- * Looks for JSON blocks (```json ... ```) or raw JSON
+ * Extract JSON from markdown content (fences, prose, or whole-body JSON).
+ * On failure returns the original string (callers may treat non-object results as opaque).
  */
 export function extractJsonFromMarkdown(md: string): unknown {
-  // Try to find JSON code block
-  const jsonBlockMatch = md.match(/```json\s*([\s\S]*?)\s*```/);
-  if (jsonBlockMatch && jsonBlockMatch[1]) {
-    try {
-      return JSON.parse(jsonBlockMatch[1]);
-    } catch {
-      // Fall through to try raw JSON
-    }
+  const parsed = tryParseJsonFromLlmText(md);
+  if (parsed !== null) {
+    return parsed;
   }
-  
-  // Try to find any code block
-  const codeBlockMatch = md.match(/```\s*([\s\S]*?)\s*```/);
-  if (codeBlockMatch && codeBlockMatch[1]) {
-    try {
-      return JSON.parse(codeBlockMatch[1]);
-    } catch {
-      // Fall through to try raw
-    }
-  }
-  
-  // Try parsing the entire content as JSON
   try {
-    return JSON.parse(md);
+    return JSON.parse(md.trim());
   } catch {
-    // Return the raw content if no valid JSON found
+    logger.debug('[extractJsonFromMarkdown] Parse failed — returning raw markdown', {
+      preview: md.slice(0, 120),
+    });
     return md;
   }
 }
@@ -301,34 +290,4 @@ export function renderTemplateSimple(template: string, data: Record<string, unkn
     const value = query(data, trimmedKey);
     return stringifyForTemplate(value);
   });
-}
-
-function stringifyForTemplate(value: unknown): string {
-  if (value === undefined) {
-    return 'null';
-  }
-  if (value === null) {
-    return 'null';
-  }
-  if (typeof value === 'string') {
-    return value;
-  }
-  if (typeof value === 'number' || typeof value === 'boolean') {
-    return String(value);
-  }
-  return JSON.stringify(sortKeys(value), null, 2);
-}
-
-function sortKeys(value: unknown): unknown {
-  if (Array.isArray(value)) {
-    return value.map(sortKeys);
-  }
-  if (typeof value === 'object' && value !== null) {
-    const sorted: Record<string, unknown> = {};
-    for (const key of Object.keys(value).sort()) {
-      sorted[key] = sortKeys((value as Record<string, unknown>)[key]);
-    }
-    return sorted;
-  }
-  return value;
 }

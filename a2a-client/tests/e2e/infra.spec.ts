@@ -8,7 +8,7 @@ const SERVICES = {
   clientApi: { health: 'http://localhost:5173/api/a2a/projects' },
   webUi: { health: 'http://localhost:5173' },
   aiHub: { health: 'http://localhost:11434/health' },
-  ollama: { health: 'http://localhost:11435/api/tags' }
+  compat_llm: { health: 'http://localhost:11435/api/tags' }
 };
 
 test.describe('Infrastructure Validation', () => {
@@ -18,14 +18,14 @@ test.describe('Infrastructure Validation', () => {
       dockerServices: false,
       serviceStartup: false,
       aiHub: false,
-      ollama: false
+      compat_llm: false
     };
     const servicesStatus = {
       server: false,
       clientApi: false,
       webUi: false,
       aiHub: false,
-      ollama: false
+      compat_llm: false
     };
 
     try {
@@ -66,21 +66,21 @@ test.describe('Infrastructure Validation', () => {
         console.log('⚠ AI Hub not available:', message);
       }
 
-      // Check Ollama API (localhost:11435) - optional check
+      // Check Local LLM upstream API (localhost:11435) - optional check
       try {
-        const ollamaResponse = await request.get(SERVICES.ollama.health);
-        const status = await ollamaResponse.status();
+        const compat_llmResponse = await request.get(SERVICES.compat_llm.health);
+        const status = await compat_llmResponse.status();
         if (status < 500) {
-          servicesStatus.ollama = true;
-          infraStatus.ollama = true;
-          console.log('✓ Ollama API check passed');
+          servicesStatus.compat_llm = true;
+          infraStatus.compat_llm = true;
+          console.log('✓ Local LLM upstream API check passed');
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        console.log('⚠ Ollama API not available:', message);
+        console.log('⚠ Local LLM upstream API not available:', message);
       }
 
-      console.log('✓ All infrastructure and services validated including AI Hub and Ollama');
+      console.log('✓ All infrastructure and services validated including AI Hub and Local LLM upstream');
       console.log('Infrastructure validation passed:', Date.now() - startTime, 'ms');
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);

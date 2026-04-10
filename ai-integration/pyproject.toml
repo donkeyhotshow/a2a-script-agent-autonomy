@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ai-integration"
 version = "0.1.0"
-description = "Ollama Proxy Service with AI Integration"
+description = "Local LLM upstream Proxy Service with AI Integration"
 readme = "README.md"
 requires-python = ">=3.8"
 authors = [
@@ -73,6 +73,11 @@ target-version = ['py38']
 [tool.isort]
 profile = "black"
 line_length = 100
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# Exploratory human-review suite: `python scripts/run-human-review.py`
+addopts = "--ignore=tests/human-review"
 
 [tool.mypy]
 python_version = "3.8"

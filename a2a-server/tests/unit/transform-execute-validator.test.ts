@@ -3,6 +3,8 @@ import {
     shouldEnforceTransformStrictMode,
     validateAgentExecuteShape,
     validateDialogExecuteShape,
+    validateExecuteShapeForSchema,
+    isAgentTransformSchema,
     validateFormChoiceProcessResult,
     validateResultShape,
     validateRouterResultShape,
@@ -159,6 +161,37 @@ describe('validateResultShape (legacy bare blobs)', () => {
     it('does not flag read-file action-key shape', () => {
         const issues = validateResultShape({'read-file': {path: 'a.ts'}});
         expect(issues).toHaveLength(0);
+    });
+});
+
+describe('validateExecuteShapeForSchema', () => {
+    it('uses agent rules for coder schema', () => {
+        const ex = {message: 'x'} as any;
+        const agentIssues = validateExecuteShapeForSchema('coder', ex);
+        const dialogIssues = validateDialogExecuteShape(ex);
+        expect(agentIssues).toHaveLength(0);
+        expect(dialogIssues).toHaveLength(0);
+    });
+
+    it('uses dialog rules for dialog schema', () => {
+        const issues = validateExecuteShapeForSchema('dialog', {
+            form: {choices: [{id: 'a', label: 'A'}]},
+        } as any);
+        expect(issues).toHaveLength(0);
+    });
+});
+
+describe('isAgentTransformSchema', () => {
+    it('classifies known agent pipelines', () => {
+        expect(isAgentTransformSchema('agent')).toBe(true);
+        expect(isAgentTransformSchema('agent-tools')).toBe(true);
+        expect(isAgentTransformSchema('coder')).toBe(true);
+        expect(isAgentTransformSchema('fix-vue-imports')).toBe(true);
+        expect(isAgentTransformSchema('fix-vue-imports-decline')).toBe(true);
+        expect(isAgentTransformSchema('fix-vue-imports-batched')).toBe(true);
+        expect(isAgentTransformSchema('dialog')).toBe(false);
+        expect(isAgentTransformSchema('dialog/3')).toBe(false);
+        expect(isAgentTransformSchema('router')).toBe(false);
     });
 });
 

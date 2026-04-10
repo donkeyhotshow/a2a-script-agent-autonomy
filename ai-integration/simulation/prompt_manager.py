@@ -26,7 +26,7 @@ class AbstractPrompt:
     context: Dict[str, Any]  # Variables, constraints, etc.
     complexity_score: float  # 0-1 complexity rating
     decomposition_steps: List[str]  # If broken down
-    target_format: str  # "ollama", "openai", "anthropic", etc.
+    target_format: str  # "compat_llm", "openai", "anthropic", etc.
     
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -48,7 +48,7 @@ class AbstractPrompt:
             context=data.get("context", {}),
             complexity_score=data.get("complexity_score", 0.5),
             decomposition_steps=data.get("decomposition_steps", []),
-            target_format=data.get("target_format", "ollama")
+            target_format=data.get("target_format", "compat_llm")
         )
 
 
@@ -57,7 +57,7 @@ class PromptConversion:
     """Result of converting abstract to concrete prompt"""
     abstract_prompt: AbstractPrompt
     concrete_prompt: str  # Actual text sent to model
-    format_type: str  # "ollama", "openai", etc.
+    format_type: str  # "compat_llm", "openai", etc.
     estimated_complexity: float
     suggested_decomposition: bool
 
@@ -388,9 +388,9 @@ class AbstractPromptManager:
         )
         os.makedirs(self.abstract_prompts_path, exist_ok=True)
     
-    def convert_to_ollama(self, abstract_text: str, context: Dict = None) -> PromptConversion:
+    def convert_to_compat_llm(self, abstract_text: str, context: Dict = None) -> PromptConversion:
         """
-        Convert abstract prompt to Ollama-compatible concrete prompt
+        Convert abstract prompt to Local LLM upstream-compatible concrete prompt
         """
         if context is None:
             context = {}
@@ -404,7 +404,7 @@ class AbstractPromptManager:
             context=context,
             complexity_score=0.0,  # Will be calculated
             decomposition_steps=[],
-            target_format="ollama"
+            target_format="compat_llm"
         )
         
         # Analyze complexity
@@ -414,9 +414,9 @@ class AbstractPromptManager:
         # Decide on decomposition
         if metrics.is_complex():
             abstract.decomposition_steps = self.decomposer.decompose(abstract)
-            concrete = self._format_decomposed_for_ollama(abstract)
+            concrete = self._format_decomposed_for_compat_llm(abstract)
         else:
-            concrete = self._format_simple_for_ollama(abstract_text, context)
+            concrete = self._format_simple_for_compat_llm(abstract_text, context)
         
         # Save abstract prompt
         self._save_abstract_prompt(abstract)
@@ -424,21 +424,21 @@ class AbstractPromptManager:
         return PromptConversion(
             abstract_prompt=abstract,
             concrete_prompt=concrete,
-            format_type="ollama",
+            format_type="compat_llm",
             estimated_complexity=metrics.overall_score,
             suggested_decomposition=len(abstract.decomposition_steps) > 0
         )
     
-    def _format_simple_for_ollama(self, text: str, context: Dict) -> str:
-        """Format simple prompt for Ollama"""
+    def _format_simple_for_compat_llm(self, text: str, context: Dict) -> str:
+        """Format simple prompt for Local LLM upstream"""
         # Add context if available
         if context:
             context_str = "\n".join([f"{k}: {v}" for k, v in context.items()])
             return f"Context:\n{context_str}\n\nTask: {text}"
         return text
     
-    def _format_decomposed_for_ollama(self, abstract: AbstractPrompt) -> str:
-        """Format decomposed prompt for Ollama"""
+    def _format_decomposed_for_compat_llm(self, abstract: AbstractPrompt) -> str:
+        """Format decomposed prompt for Local LLM upstream"""
         steps_text = "\n".join([
             f"{i+1}. {step}" for i, step in enumerate(abstract.decomposition_steps)
         ])
@@ -510,10 +510,10 @@ Provide detailed output for each step."""
 
 
 # Convenience functions
-def convert_abstract_to_ollama(abstract_text: str, context: Dict = None) -> str:
-    """Convert abstract prompt to Ollama format"""
+def convert_abstract_to_compat_llm(abstract_text: str, context: Dict = None) -> str:
+    """Convert abstract prompt to Local LLM upstream format"""
     manager = AbstractPromptManager()
-    conversion = manager.convert_to_ollama(abstract_text, context)
+    conversion = manager.convert_to_compat_llm(abstract_text, context)
     return conversion.concrete_prompt
 
 

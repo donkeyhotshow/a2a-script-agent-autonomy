@@ -55,6 +55,9 @@ Mirror of `response.json` for prompt pipeline / `sim:check-md`.
       "path": "utils/helpers.js",
       "content": "function calculateTotal(items) {\n  return items.reduce((sum, item) => sum + item.price, 0);\n}\n\nmodule.exports = { calculateTotal };"
     }
+  },
+  "result": {
+    "completed": false
   }
 }
 ```

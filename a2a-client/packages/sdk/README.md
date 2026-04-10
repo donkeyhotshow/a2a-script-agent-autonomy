@@ -42,7 +42,8 @@ Same router is mounted at multiple prefixes:
 |-------|----------------|----------|
 | POST | `.../sessions` | Создать сессию → **`201`** `{ success, session }` (`id`: body `id` or `sess_<timestamp>`) |
 | POST | `.../sessions/:id/next` | Следующий шаг (ack-only; hydrate via GET session + promise poll) |
-| GET | `.../sessions/:id` | Состояние сессии |
+| GET | `.../sessions/:id` | Состояние: по умолчанию **`{ success, session }`**; **`?unwrap=1`** — тело как у Vite; **`?includeContext=1`** — полный контекст (**403** при `NODE_ENV=production`) |
+| GET | `.../sessions/:id/messages` | Без **`afterSeq`**: **`{ success, data, count }`**. С **`afterSeq`** — дельта как у Vite (`lastSeq`, `hasMore`, …) |
 | GET | `.../sessions` | Список |
 
 ## Протокол
@@ -71,7 +72,7 @@ Same router is mounted at multiple prefixes:
 }
 ```
 
-Сокращение: поле **`task`** со значением **`id`** выбора, если предыдущий шаг уже показывал **choices** (как `buildSubmitResult` в `packages/vite-plugin/routes/step-routes-router-flow.js`).
+Сокращение: поле **`task`** со значением **`id`** выбора, если предыдущий шаг уже показывал **choices** (реализация: [`shared/router-submit.mjs`](../../shared/router-submit.mjs) `buildSubmitResult`, реэкспорт в Vite `step-routes-router-flow.js`).
 
 Legacy / отдельный маршрут SDK: `POST .../action` с телом `{ "choice": "..." }` — см. `sessions-async.ts`.
 

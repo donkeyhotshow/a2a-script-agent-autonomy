@@ -68,12 +68,15 @@ Recommended sections:
 - `ADR-0051-orchestrator-single-state-enum.md` - Single FSM enum for orchestrator states to avoid boolean flags
 - `ADR-0052-session-finite-state-machine.md` - Session FSM with exhaustive transitions and guard validation
 - `ADR-0053-artifact-lifecycle-authority.md` - Canonical authority model for artifact writing, retention, and consumption
-- `ADR-0054-real-time-update-contracts.md` - Superseded: HTTP polling only (no WebSocket in this repo)
+- `ADR-0054-real-time-update-contracts.md` - Superseded: HTTP polling only (no WebSocket or SSE in this repo)
 - `ADR-0055-evidence-first-ui-architecture.md` - Evidence-first UI components with stale detection rules
 - `ADR-0056-operator-decision-model.md` - Steering Controls Authority table defining operator actions per state
 - `ADR-0057-canonical-schema-registry.md` - JSON Schema registry plus validator guarantees for artifacts
-- `ADR-0058-gray-room-split-prompt-vs-algorithm.md` - Prompt Mode (cloud API) vs Algorithm Mode (local Ollama / Black Room) split (see `ai-integration/docs/BLACK-ROOM.md`)
+- `ADR-0058-gray-room-split-prompt-vs-algorithm.md` - Prompt Mode (cloud API) vs Algorithm Mode (local Local LLM upstream / Black Room) split (see `ai-integration/docs/BLACK-ROOM.md`)
 - `ADR-0059-invoke-llm-model-and-proxy-tags.md` - Per-invoke `context.llmModel` / `llmModel` on invoke body; combined `GET /api/tags` with `provider` on each model row
+- `ADR-0088-agentic-decision-cell.md` - **Superseded:** standalone DecisionCell LLM removed; SIEGE keys off primary **`result.completed`**
+- `ADR-0093-internal-agent-debate.md` - Internal debate (`llmService.debate`) before first response transform on non-dialog agent invokes
+- `ADR-0095-gray-room-2-0.md` - Gray Room 2.0 FSM / SIEGE architecture narrative
 
 ## Reference bundles (large / multi-topic)
 
@@ -102,7 +105,7 @@ These are **not** single numbered ADRs. Use them as **roadmap, audit, and featur
 
 To **stress the live stack** (not only sims/unit tests), an orchestrator can drive the same **Client API** as the UI (`POST /sessions`, `POST /sessions/{id}/next`, `GET /sessions/{id}/async`) with tasks like “align code with ADR-00xx.”
 
-Use a **separate state file** (curated ADR **queue**, current ADR, **per-ADR phase/progress**, completed set) keyed to **one target project** — do not rescan the whole ADR directory every run or rely on session JSON alone for long queues. Full contract: [`methodology/adr-compliance-orchestrator.md`](../../archive/methodology/adr-compliance-orchestrator.md).
+Use a **separate state file** (curated ADR **queue**, current ADR, **per-ADR phase/progress**, completed set) keyed to **one target project** — do not rescan the whole ADR directory every run or rely on session JSON alone for long queues. A longer “orchestrator contract” lived under removed `archive/methodology/` — see [`tasks/brown-alert/archive-methodology-missing.md`](../../tasks/brown-alert/archive-methodology-missing.md).
 
 ## Related (not ADRs)
 

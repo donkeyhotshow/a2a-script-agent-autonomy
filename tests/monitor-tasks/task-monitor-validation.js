@@ -1,21 +1,165 @@
 import axios from 'axios';
 
+/**
+ * Action-key shape for Client API session payloads (projected execute / result).
+ * @param {object} obj
+ * @param {'execute'|'result'} type
+ */
+export function validateActionKeyShape(obj, type) {
+  if (!obj || typeof obj !== 'object') return false;
+  const keys = Object.keys(obj);
+  if (type === 'execute') {
+    const aux = new Set(['message', 'completed', 'llmMessage', 'attachments', 'form']);
+    const actionKeys = keys.filter((k) => !aux.has(k));
+    if (actionKeys.length === 0) {
+      return keys.length > 0;
+    }
+    if (actionKeys.length !== 1) return false;
+    return actionKeys[0] !== 'result';
+  }
+  const auxResult = new Set(['message', 'completed', 'llmMessage']);
+  const actionKeys = keys.filter((k) => !auxResult.has(k));
+  if (actionKeys.length === 0) return keys.length > 0;
+  if (actionKeys.length !== 1) return false;
+  return actionKeys[0] !== 'execute';
+}
+
+/**
+ * Validate a GET /api/a2a/sessions/:id body (Vite storage-mode: top-level session DTO).
+ * @param {object|null|undefined} sessionData
+ * @param {{ requireId?: boolean, checkMessages?: boolean, checkAsyncPending?: boolean, checkContextResult?: boolean }} [options]
+ * @returns {{ valid: boolean, error?: string, errors: string[] }}
+ */
+/** Default: validation on. Set `TASK_MONITOR_VALIDATE_SESSION=0` to skip shape warnings on Client API traffic. */
+export function isTaskMonitorSessionValidationDisabled() {
+  const v = process.env.TASK_MONITOR_VALIDATE_SESSION;
+  if (v == null || String(v).trim() === '') return false;
+  return /^(0|false|no)$/i.test(String(v).trim());
+}
+
+/**
+ * Options for {@link validateClientSession} after GET /sessions/:id.
+ * @param {object} data
+ * @param {boolean} includeContext
+ */
+export function buildGetSessionValidateOptions(data, includeContext) {
+  return {
+    requireId: true,
+    checkContextResult: includeContext === true,
+    checkMessages:
+      includeContext === true &&
+      data &&
+      typeof data === 'object' &&
+      !Array.isArray(data) &&
+      'messages' in data &&
+      data.messages != null,
+    checkAsyncPending: !!(data && typeof data === 'object' && !Array.isArray(data) && 'asyncPending' in data),
+  };
+}
+
+/**
+ * Validate top-level `execute` / `result` only (e.g. /next ack, /async envelope).
+ * @param {object|null|undefined} data
+ * @returns {{ valid: boolean, errors: string[] }}
+ */
+export function validatePartialSessionEnvelope(data) {
+  const errors = [];
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    return { valid: true, errors: [] };
+  }
+  if (data.execute != null) {
+    if (typeof data.execute !== 'object' || Array.isArray(data.execute)) {
+      errors.push('execute must be a plain object when present');
+    } else if (!validateActionKeyShape(data.execute, 'execute')) {
+      errors.push('Invalid execute action-key shape');
+    }
+  }
+  if (data.result != null) {
+    if (typeof data.result !== 'object' || Array.isArray(data.result)) {
+      errors.push('result must be a plain object when present');
+    } else if (!validateActionKeyShape(data.result, 'result')) {
+      errors.push('Invalid result action-key shape');
+    }
+  }
+  return errors.length ? { valid: false, errors } : { valid: true, errors: [] };
+}
+
+export function validateClientSession(sessionData, options = {}) {
+  const errors = [];
+  const requireId = options.requireId !== false;
+  const checkMessages = options.checkMessages === true;
+  const checkAsyncPending = options.checkAsyncPending === true;
+  const checkContextResult = options.checkContextResult !== false;
+
+  if (!sessionData || typeof sessionData !== 'object' || Array.isArray(sessionData)) {
+    const msg = 'Session must be a non-null plain object';
+    return { valid: false, error: msg, errors: [msg] };
+  }
+
+  const sid = sessionData.id ?? sessionData.sessionId;
+  if (requireId && (typeof sid !== 'string' || !sid.trim())) {
+    errors.push('Missing session id (expected string id or sessionId)');
+  }
+
+  if (sessionData.execute != null) {
+    if (typeof sessionData.execute !== 'object' || Array.isArray(sessionData.execute)) {
+      errors.push('execute must be a plain object when present');
+    } else if (!validateActionKeyShape(sessionData.execute, 'execute')) {
+      errors.push('Invalid execute action-key shape');
+    }
+  }
+
+  if (sessionData.result != null) {
+    if (typeof sessionData.result !== 'object' || Array.isArray(sessionData.result)) {
+      errors.push('result must be a plain object when present');
+    } else if (!validateActionKeyShape(sessionData.result, 'result')) {
+      errors.push('Invalid result action-key shape');
+    }
+  }
+
+  if (checkContextResult && sessionData.context != null && typeof sessionData.context === 'object') {
+    const ctxRes = sessionData.context.result;
+    if (ctxRes != null && typeof ctxRes === 'object' && !Array.isArray(ctxRes)) {
+      if (!validateActionKeyShape(ctxRes, 'result')) {
+        errors.push('Invalid context.result action-key shape');
+      }
+    }
+  }
+
+  if (checkMessages && 'messages' in sessionData && sessionData.messages != null) {
+    if (!Array.isArray(sessionData.messages)) {
+      errors.push('messages must be an array when present');
+    }
+  }
+
+  if (checkAsyncPending && 'asyncPending' in sessionData && typeof sessionData.asyncPending !== 'boolean') {
+    errors.push('asyncPending must be boolean when present');
+  }
+
+  if (errors.length === 0) {
+    return { valid: true, errors: [] };
+  }
+  return { valid: false, error: errors[0], errors };
+}
+
 class TaskMonitorValidation {
   validateActionKeyShape(obj, type) {
-    if (!obj || typeof obj !== 'object') return false;
-    const keys = Object.keys(obj);
-    return keys.length === 1 && (type === 'execute' ? keys[0] !== 'result' : keys[0] !== 'execute');
+    return validateActionKeyShape(obj, type);
   }
 
   validateSessionResponse(response) {
     if (!response) return { valid: false, error: 'No response' };
-    if (response.execute && !this.validateActionKeyShape(response.execute, 'execute')) {
-      return { valid: false, error: 'Invalid execute action-key shape' };
-    }
-    if (response.result && !this.validateActionKeyShape(response.result, 'result')) {
-      return { valid: false, error: 'Invalid result action-key shape' };
-    }
+    const r = validatePartialSessionEnvelope(response);
+    if (!r.valid) return { valid: false, error: r.errors[0] };
     return { valid: true };
+  }
+
+  /**
+   * Full client session DTO check (id, execute/result, optional context.result).
+   * Same as exported {@link validateClientSession}.
+   */
+  validateClientSession(sessionData, options) {
+    return validateClientSession(sessionData, options);
   }
 
   validateReportState() {
@@ -38,20 +182,22 @@ class TaskMonitorValidation {
     const results = {
       clientApi: false,
       a2aServer: false,
-      ollama: false,
+      compat_llm: false,
       aiHub: false,
       allOk: false,
       details: {}
 
     };
 
-    // Use environment variables for service URLs or fall back to defaults
-    const ollamaUrl = process.env.OLLAMA_HOST || 'http://localhost:11435';
+    // Proxy-first stack: compat check uses proxy tags endpoint unless explicitly overridden.
     const aiHubUrl = process.env.AI_HUB_URL || 'http://localhost:11434';
+    const compat_llmUrl = process.env.LOCAL_LLM_UPSTREAM_URL || aiHubUrl;
+
+    const healthTimeout = parseInt(process.env.TASK_MONITOR_HEALTH_TIMEOUT_MS || '15000', 10);
 
     try {
       // Check Client API
-      const clientRes = await axios.get(`${this.baseUrl}/projects`, { timeout: 5000 });
+      const clientRes = await axios.get(`${this.baseUrl}/projects`, { timeout: healthTimeout });
       results.clientApi = clientRes.status === 200 && Array.isArray(clientRes.data.projects);
       results.details.clientApi = results.clientApi ? 'OK' : 'Failed';
     } catch (error) {
@@ -60,7 +206,7 @@ class TaskMonitorValidation {
 
     try {
       // Check A2A Server
-      const serverRes = await axios.get(`${this.serverBaseUrl}/health`, { timeout: 5000 });
+      const serverRes = await axios.get(`${this.serverBaseUrl}/health`, { timeout: healthTimeout });
       results.a2aServer = serverRes.status === 200;
       results.details.a2aServer = results.a2aServer ? 'OK' : 'Failed';
     } catch (error) {
@@ -68,24 +214,24 @@ class TaskMonitorValidation {
     }
 
     try {
-      // Check Ollama
-      const ollamaRes = await axios.get(`${ollamaUrl}/api/tags`, { timeout: 5000 });
-      results.ollama = ollamaRes.status === 200 && Array.isArray(ollamaRes.data.models);
-      results.details.ollama = results.ollama ? 'OK' : 'Failed';
+      // Check Local LLM upstream
+      const compat_llmRes = await axios.get(`${compat_llmUrl}/api/tags`, { timeout: healthTimeout });
+      results.compat_llm = compat_llmRes.status === 200 && Array.isArray(compat_llmRes.data.models);
+      results.details.compat_llm = results.compat_llm ? 'OK' : 'Failed';
     } catch (error) {
-      results.details.ollama = `Error: ${error.message}`;
+      results.details.compat_llm = `Error: ${error.message}`;
     }
 
     try {
       // Check AI Hub
-      const aiHubRes = await axios.get(`${aiHubUrl}/health`, { timeout: 5000 });
+      const aiHubRes = await axios.get(`${aiHubUrl}/health`, { timeout: healthTimeout });
       results.aiHub = aiHubRes.status === 200;
       results.details.aiHub = results.aiHub ? 'OK' : 'Failed';
     } catch (error) {
       results.details.aiHub = `Error: ${error.message}`;
     }
 
-    results.allOk = results.clientApi && results.a2aServer && results.ollama && results.aiHub;
+    results.allOk = results.clientApi && results.a2aServer && results.compat_llm && results.aiHub;
 
     if (typeof this.scanApplicationLogs === 'function') {
       try {

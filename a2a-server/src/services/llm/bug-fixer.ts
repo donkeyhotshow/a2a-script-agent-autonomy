@@ -1,7 +1,8 @@
 import { llmService } from './llm-service.js';
 import { logger } from '../../utils/logger.js';
-import { readFile } from 'fs/promises';
-import { execSync } from 'child_process';
+import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
+import { readFile } from 'node:fs/promises';
+import { spawnSync } from 'node:child_process';
 
 export interface BugFixPatch {
   file: string;
@@ -29,17 +30,14 @@ export interface BugFixResult {
  * Parse JSON from LLM response with fallback
  */
 function parseBugFixResult(content: string): BugFixResult {
-  try {
-    return JSON.parse(content) as BugFixResult;
-  } catch {
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      try {
-        return JSON.parse(jsonMatch[0]) as BugFixResult;
-      } catch {
-        // Fall through
-      }
-    }
+  const parsed = tryParseJsonFromLlmText(content);
+  if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+    return parsed as BugFixResult;
+  }
+  if (content.trim().length > 0) {
+    logger.debug('[BugFixer] Fix-result JSON parse failed', {
+      preview: content.slice(0, 120),
+    });
   }
   return { fixed: false, patches: [], analysis: 'Failed to parse fix result' };
 }
@@ -60,12 +58,24 @@ function extractFilePath(code: string, error: string): string | null {
  */
 async function getGitDiff(filePath: string): Promise<string> {
   try {
-    const diff = execSync(`git diff --no-color "${filePath}"`, { 
+    const r = spawnSync('git', ['diff', '--no-color', '--', filePath], {
       encoding: 'utf-8',
-      timeout: 5000 
+      timeout: 5000,
+      maxBuffer: 10 * 1024 * 1024,
     });
-    return diff || '';
-  } catch {
+    if (r.error) {
+      logger.debug('[BugFixer] git diff unavailable', {
+        filePath,
+        error: r.error.message,
+      });
+      return '';
+    }
+    return typeof r.stdout === 'string' ? r.stdout : '';
+  } catch (err: unknown) {
+    logger.debug('[BugFixer] git diff unavailable', {
+      filePath,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return '';
   }
 }
@@ -88,7 +98,11 @@ async function getSurroundingContext(filePath: string): Promise<{imports: string
     const context = lines.slice(0, 50).join('\n');
     
     return { imports, context };
-  } catch {
+  } catch (err: unknown) {
+    logger.debug('[BugFixer] Could not read surrounding context', {
+      filePath,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return { imports: [], context: '' };
   }
 }
@@ -121,8 +135,11 @@ export class BugFixer {
 
       try {
         gitDiff = await getGitDiff(filePath);
-      } catch {
-        // Git diff not available
+      } catch (err: unknown) {
+        logger.debug('[BugFixer] getGitDiff threw', {
+          filePath,
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }
 
@@ -199,8 +216,11 @@ Output JSON ONLY:
             conflicts.push(impPath);
           }
         }
-      } catch {
-        // File read error
+      } catch (err: unknown) {
+        logger.debug('[BugFixer] Cascade check file read failed', {
+          filePath,
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }
 

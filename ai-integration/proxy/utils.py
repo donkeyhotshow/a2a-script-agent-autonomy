@@ -4,7 +4,7 @@ Utility Functions Module
 
 # Re-export from network.py for backwards compatibility
 from .network import check_port_occupied
-from .config import OLLAMA_MODELS
+from .config import LOCAL_LLM_MODELS_DIR
 
 
 def get_pid_by_port(port: int):
@@ -48,18 +48,18 @@ def kill_process_on_port(port: int) -> bool:
         return False
 
 
-def kill_ports(proxy_port: int, ollama_port: int) -> bool:
+def kill_ports(proxy_port: int, local_llm_upstream_port: int) -> bool:
     """Убивает процессы на указанных портах"""
     print(f"\nОчистка портов:")
     killed_any = False
     
-    # Get ollama port from OLLAMA_HOST
-    from .ollama_manager import get_ollama_host_port
-    ollama_host, ollama_target_port = get_ollama_host_port()
-    
+    # Upstream port from LOCAL_LLM_UPSTREAM_URL
+    from .local_llm_manager import get_local_llm_upstream_host_port
+    local_llm_upstream_host, upstream_target_port = get_local_llm_upstream_host_port()
+
     ports_to_kill = [proxy_port]
-    if ollama_target_port != proxy_port:
-        ports_to_kill.append(ollama_target_port)
+    if upstream_target_port != proxy_port:
+        ports_to_kill.append(upstream_target_port)
     
     for port in ports_to_kill:
         if kill_process_on_port(port):
@@ -73,74 +73,54 @@ def kill_ports(proxy_port: int, ollama_port: int) -> bool:
     return killed_any
 
 
-def start_ollama(ollama_host: str, ollama_port: int) -> bool:
+def start_local_llm_upstream(local_llm_upstream_host: str, local_llm_upstream_port: int) -> bool:
     """
-    Attempts to start Ollama server automatically
-    Returns True if Ollama was started successfully
+    Attempts to start local HTTP LLM via LOCAL_LLM_SERVE_CMD (shell string).
     """
+    import os
+    import shlex
     import subprocess
     import time
-    
-    # First check if Ollama is already running on the target port
-    if check_port_occupied(ollama_host, ollama_port):
-        print(f"    Ollama already running on port {ollama_port}")
+
+    if check_port_occupied(local_llm_upstream_host, local_llm_upstream_port):
+        print(f"    Local LLM upstream already running on port {local_llm_upstream_port}")
         return True
-    
-    # Check if maybe Ollama is already running on default port
-    if ollama_port != 11434 and check_port_occupied(ollama_host, 11434):
-        print(f"    Ollama might be running on default port 11434 instead of {ollama_port}")
-        print(f"    Please set OLLAMA_HOST=http://localhost:11434 or stop that Ollama instance")
+
+    cmd = (os.environ.get('LOCAL_LLM_SERVE_CMD') or '').strip()
+    if not cmd:
+        print("    [X] LOCAL_LLM_SERVE_CMD is not set; cannot auto-start upstream")
         return False
-    
-    import os
-    default_port = 11434
-    if ollama_port != default_port:
-        # Need to set custom host/port for Ollama
-        env = os.environ.copy()
-        env['OLLAMA_HOST'] = f"http://localhost:{ollama_port}"
-        if OLLAMA_MODELS:
-            env['OLLAMA_MODELS'] = OLLAMA_MODELS
-        try:
-            print(f"    Attempting to start Ollama on port {ollama_port}...")
-            # Start Ollama in background
+
+    env = os.environ.copy()
+    env['LOCAL_LLM_UPSTREAM_URL'] = f"http://localhost:{local_llm_upstream_port}"
+    if LOCAL_LLM_MODELS_DIR:
+        env['LOCAL_LLM_MODELS_DIR'] = LOCAL_LLM_MODELS_DIR
+    try:
+        print(f"    Attempting to start local LLM upstream on port {local_llm_upstream_port}...")
+        if os.name == 'nt':
             subprocess.Popen(
-                ['ollama', 'serve'],
+                cmd,
+                shell=True,
                 env=env,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
-                creationflags=subprocess.CREATE_NO_WINDOW if os.name == 'nt' else 0
+                creationflags=subprocess.CREATE_NO_WINDOW,
             )
-            # Wait for Ollama to start
-            for i in range(10):
-                time.sleep(1)
-                if check_port_occupied(ollama_host, ollama_port):
-                    print(f"    [OK] Ollama started successfully!")
-                    return True
-            print(f"    [X] Could not start Ollama within 10 seconds")
-            return False
-        except Exception as e:
-            print(f"    [X] Error starting Ollama: {e}")
-            return False
-    else:
-        # Default port - try to start Ollama normally
-        try:
-            print(f"    Attempting to start Ollama...")
-            env = os.environ.copy()
-            if OLLAMA_MODELS:
-                env['OLLAMA_MODELS'] = OLLAMA_MODELS
+        else:
+            args = shlex.split(cmd)
             subprocess.Popen(
-                ['ollama', 'serve'],
+                args,
                 env=env,
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
             )
-            # Wait for Ollama to start
-            for i in range(10):
-                time.sleep(1)
-                if check_port_occupied(ollama_host, ollama_port):
-                    print(f"    [OK] Ollama started successfully!")
-                    return True
-            return False
-        except Exception as e:
-            print(f"    [X] Error starting Ollama: {e}")
-            return False
+        for _ in range(10):
+            time.sleep(1)
+            if check_port_occupied(local_llm_upstream_host, local_llm_upstream_port):
+                print("    [OK] Local LLM upstream started successfully!")
+                return True
+        print("    [X] Could not start Local LLM upstream within 10 seconds")
+        return False
+    except Exception as e:
+        print(f"    [X] Error starting Local LLM upstream: {e}")
+        return False

@@ -12,4 +12,4 @@ Verify orchestrator metrics still update on each cycle (`runtime/metrics.json` o
 
 ## Completion
 
-- [ ] Done
+[X] Completed

@@ -50,8 +50,8 @@ function printSuccess(): void {
     console.log(`  Proxy Port:       ${config.ports.proxyPort}`);
     console.log(`  Database URL:     ${maskUrl(config.database.databaseUrl)}`);
     console.log(`  Redis URL:        ${maskUrl(config.database.redisUrl)}`);
-    console.log(`  Ollama Host:      ${config.ai.ollamaHost}`);
-    console.log(`  Ollama Model:     ${config.ai.ollamaModel}`);
+    console.log(`  Local LLM upstream Host:      ${config.ai.localLlmUpstreamUrl}`);
+    console.log(`  Local LLM upstream Model:     ${config.ai.localLlmModel}`);
     console.log(`  LLM Provider:     ${config.ai.llmProvider || '(auto)'}`);
     console.log(`  Log Level:        ${config.logging.logLevel}`);
     console.log(`  Skip Auth:        ${config.security.skipAuth}`);

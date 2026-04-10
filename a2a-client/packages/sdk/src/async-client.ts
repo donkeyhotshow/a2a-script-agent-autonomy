@@ -186,7 +186,7 @@ export class AsyncClient {
 
             const data = await response.json();
             if (!data.pendingOperations) {
-                console.warn('[AsyncClient] No pendingOperations in response, returning empty array');
+                console.error('[AsyncClient] No pendingOperations in response, returning empty array');
             }
             return data.pendingOperations || [];
         } catch (error) {
@@ -207,7 +207,7 @@ export class AsyncClient {
                 await this.cancelOperation(promiseId);
             } catch (error) {
                 // Log error but don't throw to allow cleanup to continue
-                console.warn(`Failed to cancel operation ${promiseId}:`, error);
+                console.error(`[AsyncClient] Failed to cancel operation ${promiseId}:`, error);
             }
         }
         

@@ -11,7 +11,7 @@ The A2A Server is the central component of the Agent-to-Agent platform that hand
 - Database operations and state management
 - Authentication and authorization
 - Real-time communication via SSE
-- Integration with LLM providers (OpenAI, Ollama)
+- Integration with LLM providers (OpenAI, Local LLM upstream)
 - Client-side action execution coordination
 
 The server must be:
@@ -47,7 +47,6 @@ Adopt a layered architecture with clear separation of concerns and modular desig
 
 ### 4. Communication Patterns
 - **RESTful API** for synchronous operations
-- **Server-Sent Events (SSE)** for real-time updates
 - **Promise-based integration** with ai-integration service
 - **Action protocol** for client-side operations
 

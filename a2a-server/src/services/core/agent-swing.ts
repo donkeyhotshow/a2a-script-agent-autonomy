@@ -1,4 +1,10 @@
-import { resolveGrayRoomLlmModelFromContext } from './request-processor/llm-model-resolver.js';
+import { logger } from '../../utils/logger.js';
+import {
+  extractLlmTextFromHubResponseBody,
+  initAiHubChatPromise,
+} from '../../daemon/llm-hub-poll.js';
+import { BLACK_ROOM_DEFAULT_LLM_MODEL } from './black-room/black-room-defaults.js';
+import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
 
 export interface AgentSwingResult {
   best_history: any[];
@@ -26,7 +32,7 @@ export class AgentSwing {
     }
 
     // Cascade Model Optimization: Use a smaller model for lookahead drafting
-    const sidecarModel = process.env.A2A_BLACK_ROOM_DEFAULT_MODEL || 'llama3.1:8b';
+    const sidecarModel = BLACK_ROOM_DEFAULT_LLM_MODEL;
     const historyJson = JSON.stringify(history, null, 2);
 
     // K-step parallel lookahead (k=3)
@@ -39,31 +45,32 @@ History:
 ${historyJson}`;
 
       try {
-        const res = await fetch(`${aiHubUrl}/api/chat?promise=1`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'X-Server-Promise-Id': `${promiseId}-swing-${index}` },
-          body: JSON.stringify({ model: sidecarModel, messages: [{ role: 'user', content: prompt }], stream: false }),
+        const init = await initAiHubChatPromise(aiHubUrl, `${promiseId}-swing-${index}`, {
+          model: sidecarModel,
+          messages: [{ role: 'user', content: prompt }],
+          stream: false,
         });
-
-        if (res.status === 202) {
-          const initData = (await res.json()) as { promiseId?: string };
-          if (initData?.promiseId) {
-            const compressedStr = await pollReadyThenFetch(aiHubUrl, initData.promiseId);
-            if (compressedStr) {
-              const parsed = JSON.parse(compressedStr.trim());
-              if (Array.isArray(parsed)) {
-                // Heuristic score: shorter is better, but must be > 0.
-                const lengthRatio = JSON.stringify(parsed).length / historyJson.length;
-                let score = 1.0 - lengthRatio; 
-                if (parsed.length === 0) score = 0; // penalize complete loss
-                
-                return { history: parsed, score };
-              }
+        if (init.ok) {
+          const compressedRaw =
+            init.inlineResponseBody ?? (await pollReadyThenFetch(aiHubUrl, init.llmPromiseId));
+          const compressedStr = compressedRaw
+            ? extractLlmTextFromHubResponseBody(compressedRaw)
+            : null;
+          if (compressedStr) {
+            const parsed = tryParseJsonFromLlmText<unknown>(compressedStr);
+            if (Array.isArray(parsed)) {
+              const lengthRatio = JSON.stringify(parsed).length / historyJson.length;
+              let score = 1.0 - lengthRatio;
+              if (parsed.length === 0) score = 0;
+              return { history: parsed, score };
             }
           }
         }
-      } catch (e) {
-        // Fallback or ignore
+      } catch (e: unknown) {
+        logger.debug('[AgentSwing] Branch failed', {
+          strategyIndex: index,
+          error: e instanceof Error ? e.message : String(e),
+        });
       }
       return { history: null, score: -1 };
     });

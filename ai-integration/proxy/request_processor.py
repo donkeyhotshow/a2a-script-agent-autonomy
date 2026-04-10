@@ -27,6 +27,13 @@ def _is_real_data_path(path: str) -> bool:
     return normalized in REAL_DATA_PATHS
 
 
+def force_promise_llm_path(path: str, method: str) -> bool:
+    """POST/PUT/PATCH to chat/generate/embeddings always use the promise pipeline (no sync forward)."""
+    if not _is_real_data_path(path):
+        return False
+    return method.upper() in ('POST', 'PUT', 'PATCH')
+
+
 def _prepare_headers(request) -> Dict[str, str]:
     """Extract and clean headers from request"""
     headers = dict(request.headers)
@@ -46,6 +53,15 @@ def _get_body(request) -> Tuple[bytes, Optional[Dict]]:
     body_json = None
     if request.method in ['POST', 'PUT', 'PATCH']:
         body_json = _safe_json_loads(body)
+        if (
+            body_json is None
+            and body.strip()
+            and 'json' in (request.content_type or '').lower()
+        ):
+            logger.warning(
+                "Declared JSON Content-Type but body did not parse (%d bytes)",
+                len(body),
+            )
     return body, body_json
 
 
@@ -146,6 +162,6 @@ class RequestProcessor:
         if isinstance(self.body_json, dict):
             self.body_json.pop('promise', None)
     
-    def get_target_url(self, ollama_host: str) -> str:
+    def get_target_url(self, local_llm_upstream_host: str) -> str:
         """Get the target URL for proxying"""
-        return f"{ollama_host}/{self.path}"
+        return f"{local_llm_upstream_host}/{self.path}"

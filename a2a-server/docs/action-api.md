@@ -63,12 +63,13 @@
 
 Инициирует поиск подходящего action по описанию задачи.
 
-**Endpoint:** `POST /api/sessions`
+**Транспорт:** браузер → **Client API** `POST /api/a2a/sessions` / `POST /api/a2a/sessions/:id/next` (Vite **5173**); standalone SDK — тот же контракт на **`/api/a2a/*`** или alias **`/api/sessions/*`** (см. [`docs/adr/ADR-0028-client-api-deployment-modes.md`](../../docs/adr/ADR-0028-client-api-deployment-modes.md)). **A2A Server** stateless: только **`POST /api/v1/invoke`** — см. [`docs/new-request-flow/PROTOCOL.md`](../../docs/new-request-flow/PROTOCOL.md).
+
+Пример **первого тела invoke** к серверу (часто только `task`; `projectId` хранится на Client API и в invoke **не** пересылается):
 
 ```json
 {
-  "task": "Исправить сломанные импорты в Vue файлах",
-  "projectId": "proj_abc123"
+  "task": "Исправить сломанные импорты в Vue файлах"
 }
 ```
 
@@ -102,7 +103,7 @@
 
 Клиент выполняет код и отправляет результат.
 
-**Endpoint:** `POST /api/v1/requests`
+**Endpoint:** `POST /api/v1/invoke` (следующий шаг — снова invoke с `context` + `result`)
 
 ```json
 {
@@ -535,7 +536,7 @@ export default async function run(input: { rootDir: string }): Promise<{ broken_
 ### Использование async-client.js
 
 ```javascript
-const { ApiClient } = require('@a2a/api-client');
+const { ApiClient } = require('@a2a/sdk');
 
 const client = new ApiClient({
   serverUrl: 'http://localhost:3000/api/v1',
@@ -785,7 +786,7 @@ jobs:
 
 ```javascript
 // scripts/fix-imports.js
-const { ApiClient } = require('@a2a/api-client');
+const { ApiClient } = require('@a2a/sdk');
 
 async function main() {
   const client = new ApiClient({
@@ -828,5 +829,5 @@ main().catch(console.error);
 - [Action Service](../src/actions/action-service.ts)
 - [Action Executor](../src/actions/action-executor.ts)
 - [Action Types](../src/actions/types.ts)
-- [API Client](../../a2a-client/packages/api-client/src/async-client.js)
+- [SDK async client](../../a2a-client/packages/sdk/src/async-client.ts)
 - [Example Action: fix-vue-imports](../src/actions/definitions/fix-vue-imports.md)

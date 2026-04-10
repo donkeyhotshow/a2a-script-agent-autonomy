@@ -1,0 +1,15 @@
+{
+  "context": {
+    "task": "fix vue imports",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    },
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "result": {
+    "choice": "fix-vue-imports"
+  }
+}

@@ -1,0 +1,37 @@
+{
+  "context": {
+    "session_id": "srv_sess_stateless",
+    "task": "Запусти повний прохід інструментів на симуляції sync/agent: RAG, list-directory, read-file, grep, file-exists, edit-patch, write-file, shell, run-script, script — шляхи лише в межах цього репо.",
+    "execution": {
+      "action": "agent",
+      "step": "request"
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "result": {
+      "message": "Запусти повний прохід інструментів на симуляції sync/agent: RAG, list-directory, read-file, grep, file-exists, edit-patch, write-file, shell, run-script, script — шляхи лише в межах цього репо."
+    },
+    "message": "Запусти повний прохід інструментів на симуляції sync/agent: RAG, list-directory, read-file, grep, file-exists, edit-patch, write-file, shell, run-script, script — шляхи лише в межах цього репо.",
+    "history": [
+      {
+        "role": "user",
+        "message": "Запусти повний прохід інструментів на симуляції sync/agent: RAG, list-directory, read-file, grep, file-exists, edit-patch, write-file, shell, run-script, script — шляхи лише в межах цього репо."
+      }
+    ]
+  },
+  "execute": {
+    "form": {
+      "title": "Agent Mode",
+      "description": "Enter your task for the agent",
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Task",
+          "required": true
+        }
+      ]
+    }
+  }
+}

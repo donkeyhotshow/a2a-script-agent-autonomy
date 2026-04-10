@@ -1,0 +1,22 @@
+{
+  "context": {
+    "task": "Follow-up in dialog",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Hello"
+      },
+      {
+        "role": "assistant",
+        "message": "Hi there! How can I help?"
+      }
+    ]
+  },
+  "result": {
+    "message": "What does A2A mean in this project?"
+  }
+}

@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import { ServerUnavailableError } from './errors.js';
 
 class TaskMonitorDaemon {
   async run() {
@@ -13,6 +14,13 @@ class TaskMonitorDaemon {
       console.error('Initial health check failed:', initialHealth.details);
       this.state.status = 'health-check-failed';
       this.saveState();
+      this.writeRunArtifact({
+        mode: 'once',
+        finalStage: this.state.status,
+        sessionId: this.state.sessionId || null,
+        rootCauseClass: 'health-check',
+        nextAction: 'fix service health and rerun monitor:once',
+      });
       return;
     }
     console.log('Initial health check passed');
@@ -52,12 +60,18 @@ class TaskMonitorDaemon {
     }
 
     console.log(`Found ${taskFiles.length} task files`);
+    if (this.maxTasksPerRun > 0) {
+      console.log(
+        `TASK_MONITOR_MAX_TASKS_PER_RUN=${this.maxTasksPerRun} — will stop after that many non-skipped task(s) this run.`
+      );
+    }
     let successCount = 0;
     let failureCount = 0;
     let skipCount = 0;
 
     // Process each task that hasn't been completed
     let encounteredServerUnavailable = false;
+    let tasksExecutedThisRun = 0;
     for (const taskFile of taskFiles) {
       // Check if task is already marked as completed
       if (taskFile.content.includes('[X] Completed') ||
@@ -80,6 +94,14 @@ class TaskMonitorDaemon {
         }
         console.log(`Failed to process task: ${taskFile.name}`);
         failureCount++;
+        tasksExecutedThisRun++;
+        this.saveState();
+        if (this.maxTasksPerRun > 0 && tasksExecutedThisRun >= this.maxTasksPerRun) {
+          console.log(
+            `Stopping after ${tasksExecutedThisRun} executed task(s) (TASK_MONITOR_MAX_TASKS_PER_RUN=${this.maxTasksPerRun}). Re-run for the next prompt.`
+          );
+          break;
+        }
         continue;
       }
       if (success) {
@@ -90,9 +112,16 @@ class TaskMonitorDaemon {
         failureCount++;
         // Continue with other tasks even if one fails
       }
+      tasksExecutedThisRun++;
 
       // Save state between tasks
       this.saveState();
+      if (this.maxTasksPerRun > 0 && tasksExecutedThisRun >= this.maxTasksPerRun) {
+        console.log(
+          `Stopping after ${tasksExecutedThisRun} executed task(s) (TASK_MONITOR_MAX_TASKS_PER_RUN=${this.maxTasksPerRun}). Re-run for the next prompt.`
+        );
+        break;
+      }
     }
 
     // Run final health check
@@ -115,6 +144,8 @@ class TaskMonitorDaemon {
 
     console.log(`Task processing complete (${successCount} succeeded, ${failureCount} failed, ${skipCount} skipped).`);
 
+    this.logCompletedSessionsSummary();
+
     // Print diagnostic summary if there were errors
     if (this.errorLog.length > 0) {
       this.printDiagnosticSummary();
@@ -122,14 +153,33 @@ class TaskMonitorDaemon {
 
     if (encounteredServerUnavailable) {
       this.state.status = 'server-unavailable';
-    } else if (taskFiles.length === 0 || successCount === 0 && failureCount === 0) {
+    } else if (taskFiles.length === 0 || (successCount === 0 && failureCount === 0)) {
       this.state.status = 'idle';
+    } else if (failureCount > 0) {
+      this.state.status = this.state.sessionId ? 'processing' : 'error';
     } else {
-      this.state.status = failureCount > 0 ? 'error' : 'completed';
+      this.state.status = 'completed';
     }
-    this.state.currentTask = null;
-    this.state.sessionId = null;
+    // sessionId / currentTask: leave as set by processTask (kept on failure for resume via state file)
     this.saveState();
+    const failed = (this.state.processedTasks || []).find((t) => t.status === 'failed');
+    const rootCauseClass =
+      this.errorLog[0]?.type ||
+      (failed?.detail ? String(failed.detail).split(':')[0].slice(0, 80) : null) ||
+      (this.state.status === 'completed' ? 'none' : 'monitor-failure');
+    const nextAction =
+      this.state.status === 'completed'
+        ? 'none'
+        : this.state.status === 'server-unavailable'
+          ? 'restore server availability and rerun with resume'
+          : 'inspect monitor artifact and retry task with deterministic resume policy';
+    this.writeRunArtifact({
+      mode: 'once',
+      finalStage: this.state.status,
+      sessionId: this.state.sessionId || null,
+      rootCauseClass,
+      nextAction,
+    });
   }
 
   async runDaemon() {
@@ -172,33 +222,75 @@ class TaskMonitorDaemon {
     process.on('SIGTERM', shutdownHandler);
 
     let cycleCount = 0;
-    // Start monitoring loop
+    // INVARIANT: one incomplete prompt per iteration — await processTask until it returns; no second prompt in parallel.
+    // Inside processTask: one Client API session for that file until terminal completion (async-only /next + /async).
     while (true) {
       try {
         cycleCount++;
         if (cycleCount % 30 === 0) {
-          // Log status every 30 seconds (30 cycles of 1 second each)
-          const activeCount = this.activeTasks.size;
           const completedCount = this.state.processedTasks.filter(t => t.status === 'completed').length;
           const failedCount = this.state.processedTasks.filter(t => t.status === 'failed').length;
-          console.log(`\n[daemon status] Active: ${activeCount} | Completed: ${completedCount} | Failed: ${failedCount}`);
+          console.log(
+            `\n[daemon status] sequential-async (one session) | Completed: ${completedCount} | Failed: ${failedCount}`
+          );
           if (typeof this.scanApplicationLogs === 'function' && typeof this.reportLogScanHits === 'function') {
             const logScan = this.scanApplicationLogs();
             if (logScan.hitCount > 0) this.reportLogScanHits(logScan.hits);
           }
+          if (process.env.TASK_MONITOR_HUB_PROBE_DAEMON_STATUS === '1') {
+            await this.logHubPromiseQueueSnapshot();
+          }
         }
 
-        await this.processNewTasks();
-        await this.monitorActiveTasks();
-        await this.cleanupCompletedTasks();
+        const taskFiles = await this.getTaskFiles();
+        let nextTask = null;
+        for (const tf of taskFiles) {
+          const done =
+            tf.content.includes('[X] Completed') ||
+            (tf.content.includes('## Completion') && tf.content.includes('Completed'));
+          if (!done) {
+            nextTask = tf;
+            break;
+          }
+        }
+
+        if (!nextTask) {
+          this.state.status = 'idle';
+          this.state.currentTask = null;
+          this.state.sessionId = null;
+          this.saveState();
+          await new Promise((r) => setTimeout(r, 5000));
+          continue;
+        }
+
+        try {
+          await this.processTask(nextTask);
+        } catch (error) {
+          if (error instanceof ServerUnavailableError) {
+            console.error('A2A server unavailable; backing off before retry...');
+            this.state.status = 'server-unavailable';
+            this.saveState();
+            await new Promise((r) => setTimeout(r, 15000));
+            continue;
+          }
+          const classification = this.logError('daemon-sequential-task', error, nextTask.name, {
+            phase: 'processTask',
+          });
+          await this.createHookDocument(
+            null,
+            nextTask.name,
+            'failed',
+            `${classification.type}:${classification.subtype} - ${error.message}`,
+            { stage: 'daemon-sequential-task', detail: classification.hint }
+          );
+          if (classification.severity === 'critical') {
+            this.printDiagnosticSummary();
+          }
+        }
       } catch (error) {
-        // Enhanced error logging for daemon cycle
         const classification = this.logError('daemon-cycle', error, 'daemon', {
           phase: 'monitoring-cycle',
-          activeTasks: this.activeTasks.size
         });
-
-        // Create hook document for daemon errors with classification info
         await this.createHookDocument(
           null,
           'daemon-cycle',
@@ -206,42 +298,19 @@ class TaskMonitorDaemon {
           `${classification.type}:${classification.subtype} - ${error.message}`,
           { stage: 'daemon-cycle', detail: classification.hint }
         );
-
-        // If critical error, print diagnostic summary
         if (classification.severity === 'critical') {
           this.printDiagnosticSummary();
         }
-
-        // Continue running despite errors
       }
 
-      // Brief pause before next cycle
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
 
   async gracefulShutdown() {
-    console.log('Saving state and waiting for active tasks...');
-    const maxWaitTime = 30000; // 30 seconds
-    const startTime = Date.now();
-    let lastCheck = 0;
-
-    while (this.activeTasks.size > 0 && Date.now() - startTime < maxWaitTime) {
-      const elapsed = Date.now() - startTime;
-      if (elapsed - lastCheck > 5000) {
-        // Log every 5 seconds
-        console.log(`  Waiting... ${this.activeTasks.size} tasks still active (${Math.floor(elapsed / 1000)}s elapsed)`);
-        lastCheck = elapsed;
-      }
-
-      await this.monitorActiveTasks();
-      await this.cleanupCompletedTasks();
-      await new Promise(resolve => setTimeout(resolve, 500));
-    }
-
-    if (this.activeTasks.size > 0) {
-      console.warn(`\n  Force shutdown with ${this.activeTasks.size} tasks still active`);
-    }
+    console.log('Saving daemon state (sequential mode — no parallel session drain)...');
+    this.activeTasks.clear();
+    this.state.activeTasks = {};
 
     // Final state save
     this.state.status = 'daemon-shutdown';

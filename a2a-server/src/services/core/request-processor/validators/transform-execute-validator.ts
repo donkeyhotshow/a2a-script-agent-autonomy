@@ -10,6 +10,27 @@ export interface TransformExecuteValidationIssue {
  * Single-tool execute keys (agent + dialog LLM transforms, workspace tools).
  * Keep aligned with prompts (e.g. agent-request/coder-request) and `VALID_EXECUTE_KEYS` in action-validator.
  */
+export function isAgentTransformSchema(schemaName: string): boolean {
+    return (
+        schemaName === 'agent' ||
+        schemaName.startsWith('agent-') ||
+        schemaName === 'coder' ||
+        schemaName === 'analyze' ||
+        schemaName === 'auto-ai' ||
+        schemaName.startsWith('fix-vue-imports') ||
+        schemaName === 'fix-laravel-namespaces-and-uses'
+    );
+}
+
+export function validateExecuteShapeForSchema(
+    schemaName: string,
+    execute: ProcessResult['execute'] | undefined
+): TransformExecuteValidationIssue[] {
+    return isAgentTransformSchema(schemaName)
+        ? validateAgentExecuteShape(execute)
+        : validateDialogExecuteShape(execute);
+}
+
 export const SINGLE_TOOL_EXECUTE_KEYS = [
     'rag-search',
     'read-file',
@@ -59,6 +80,9 @@ export function validateDialogExecuteShape(execute: ProcessResult['execute'] | u
         return issues;
     }
     if (!hasForm && activeToolKeys.length === 0) {
+        if (hasExecuteMessage) {
+            return issues;
+        }
         issues.push({
             code: 'DIALOG_EXECUTE_UNKNOWN_SHAPE',
             message: 'Dialog execute shape is neither chat form nor single tool action',
@@ -176,6 +200,10 @@ export function validateLlmOutputShape(result: ProcessResult | Record<string, un
         activeToolKeys.length === 0 &&
         !(topMsg && topMsg === exMsg)
     ) {
+        const outcome = (result as {outcome?: string}).outcome;
+        if (outcome === 'ai_action_ready') {
+            return issues;
+        }
         issues.push({
             code: 'EXECUTE_MESSAGE_ONLY',
             message: 'execute has only message string — expected form or tool keys',

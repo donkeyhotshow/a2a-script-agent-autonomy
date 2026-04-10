@@ -2,5 +2,5 @@
  * @fileoverview HTML report entry point
  */
  
-export type { HTMLReportOptions } from '../reporter/report-formatter.js';
-export { generateHTMLReport } from '../reporter/report-formatter.js';
+export type { HTMLReportOptions } from '../formatters/html.js';
+export { generateHTMLReport } from '../formatters/html.js';

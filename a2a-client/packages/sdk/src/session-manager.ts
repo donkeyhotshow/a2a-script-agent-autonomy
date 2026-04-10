@@ -15,8 +15,13 @@ import {unwrapEnvelope} from './client-api-envelope.js';
 import {
     buildFetchHeaders,
     normalizeSessionResponse,
-    normalizeSessionsList
+    normalizeSessionsList,
+    isPromiseResolved,
+    isPromiseFailed,
+    DEFAULT_POLL_INTERVAL,
+    DEFAULT_POLL_TIMEOUT,
 } from '../../../shared/api-helpers.js';
+import {ApiError} from './utils/api-error.js';
 
 /**
  * Lightweight EventEmitter implementation for browser/Node compatibility
@@ -89,16 +94,14 @@ export interface RequestTransformer {
     transformResponse?: (data: Record<string, unknown>) => Record<string, unknown>;
 }
 
-export class ApiError extends Error {
-    status: number;
-    data: Record<string, unknown>;
+export type SessionGetQueryOptions = { unwrap?: boolean; includeContext?: boolean };
 
-    constructor(message: string, status: number, data: Record<string, unknown> = {}) {
-        super(message);
-        this.name = 'ApiError';
-        this.status = status;
-        this.data = data;
-    }
+/** Query suffix for SDK `GET /sessions/:id` (`unwrap` / `includeContext` parity with Vite). */
+export function buildSessionGetQuery(options: SessionGetQueryOptions = {}): string {
+    const params = new URLSearchParams();
+    if (options.unwrap) params.append('unwrap', '1');
+    if (options.includeContext) params.append('includeContext', '1');
+    return params.toString() ? `?${params}` : '';
 }
 
 /**
@@ -242,10 +245,14 @@ export class SessionManager extends EventEmitter {
     }
 
     /**
-     * Get session with full details
+     * Get session with full details (same query flags as `getSession`)
      */
-    async getSessionDetails(sessionId: string): Promise<Session> {
-        const res = await this.request('GET', `/sessions/${sessionId}`);
+    async getSessionDetails(
+        sessionId: string,
+        options: SessionGetQueryOptions = {}
+    ): Promise<Session> {
+        const q = buildSessionGetQuery(options);
+        const res = await this.request('GET', `/sessions/${sessionId}${q}`);
         const payload = unwrapEnvelope<Session>(res) as Session;
         const normalized = normalizeSessionResponse(payload);
         return (normalized ?? payload) as Session;
@@ -304,10 +311,11 @@ export class SessionManager extends EventEmitter {
     }
 
     /**
-     * Get session details
+     * Get session details (`unwrap: true` → `?unwrap=1`, top-level session body like Vite)
      */
-    async getSession(sessionId: string): Promise<unknown> {
-        const res = await this.request('GET', `/sessions/${sessionId}`);
+    async getSession(sessionId: string, options: SessionGetQueryOptions = {}): Promise<unknown> {
+        const q = buildSessionGetQuery(options);
+        const res = await this.request('GET', `/sessions/${sessionId}${q}`);
         return unwrapEnvelope(res);
     }
 
@@ -378,11 +386,19 @@ export class SessionManager extends EventEmitter {
      */
     async getMessages(
         sessionId: string,
-        options: { limit?: number; offset?: number } = {}
+        options: {
+            limit?: number;
+            offset?: number;
+            /** Vite delta mode: adds `afterSeq` → unwrapped `{ sessionId, messages, lastSeq, … }` */
+            afterSeq?: number;
+            withExecute?: boolean;
+        } = {}
     ): Promise<unknown> {
         const params = new URLSearchParams();
         if (options.limit != null) params.append('limit', String(options.limit));
         if (options.offset != null) params.append('offset', String(options.offset));
+        if (options.afterSeq != null) params.append('afterSeq', String(options.afterSeq));
+        if (options.withExecute) params.append('withExecute', '1');
         const query = params.toString() ? `?${params}` : '';
         const res = await this.request('GET', `/sessions/${sessionId}/messages${query}`);
         return unwrapEnvelope(res);
@@ -418,8 +434,7 @@ export class SessionManager extends EventEmitter {
      * Get request status
      */
     async getRequestStatus(promiseId: string): Promise<unknown> {
-        // FIX: Use correct endpoint path with /api/v1 prefix
-        const res = await this.request('GET', `/api/v1/requests/${promiseId}/status`);
+        const res = await this.request('GET', `/requests/${encodeURIComponent(promiseId)}/status`);
         return (res as { data?: unknown }).data ?? res;
     }
 
@@ -427,8 +442,7 @@ export class SessionManager extends EventEmitter {
      * Get request result
      */
     async getRequestResult(promiseId: string): Promise<unknown> {
-        // FIX: Use correct endpoint path with /api/v1 prefix
-        const res = await this.request('GET', `/api/v1/requests/${promiseId}/result`);
+        const res = await this.request('GET', `/requests/${encodeURIComponent(promiseId)}/result`);
         return (res as { data?: unknown }).data ?? res;
     }
 
@@ -436,8 +450,7 @@ export class SessionManager extends EventEmitter {
      * Cancel request
      */
     async cancelRequest(promiseId: string): Promise<unknown> {
-        // FIX: Use correct endpoint path with /api/v1 prefix
-        const res = await this.request('DELETE', `/api/v1/requests/${promiseId}`);
+        const res = await this.request('DELETE', `/requests/${encodeURIComponent(promiseId)}`);
         return (res as { data?: unknown }).data ?? res;
     }
 
@@ -445,9 +458,47 @@ export class SessionManager extends EventEmitter {
      * Get queue stats
      */
     async getQueueStats(): Promise<unknown> {
-        // FIX: Use correct endpoint path with /api/v1 prefix
-        const res = await this.request('GET', '/api/v1/requests/queue/stats');
+        const res = await this.request('GET', '/requests/queue/stats');
         return (res as { data?: unknown }).data ?? res;
+    }
+
+    /**
+     * Client API async envelope (parity with Vite GET /api/a2a/sessions/:id/async).
+     */
+    async getSessionAsync(sessionId: string): Promise<Record<string, unknown>> {
+        const res = await this.request('GET', `/sessions/${encodeURIComponent(sessionId)}/async`);
+        if (res && typeof res === 'object' && 'asyncPending' in res) {
+            return res as Record<string, unknown>;
+        }
+        return ((res as { data?: Record<string, unknown> }).data ?? res) as Record<string, unknown>;
+    }
+
+    /**
+     * Poll Client API /sessions/:id/async until idle/execute or terminal failure.
+     */
+    async waitForSessionAsync(
+        sessionId: string,
+        options?: {
+            pollIntervalMs?: number;
+            timeoutMs?: number;
+            onTick?: (snapshot: Record<string, unknown>) => void;
+        }
+    ): Promise<Record<string, unknown>> {
+        const interval = options?.pollIntervalMs ?? DEFAULT_POLL_INTERVAL;
+        const timeout = options?.timeoutMs ?? DEFAULT_POLL_TIMEOUT;
+        const start = Date.now();
+        while (Date.now() - start < timeout) {
+            const snap = await this.getSessionAsync(sessionId);
+            options?.onTick?.(snap);
+            if (isPromiseResolved(snap)) {
+                return snap;
+            }
+            if (isPromiseFailed(snap)) {
+                return snap;
+            }
+            await new Promise((r) => setTimeout(r, interval));
+        }
+        throw new ApiError('Session async poll timeout', 408, { sessionId });
     }
 
     // ==================== Progress Tracking ====================

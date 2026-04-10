@@ -4,7 +4,7 @@ This document defines the base linear flow and operational terms used in the pro
 
 **Operator control plane:** the live stack is used as a **sub-agent**—driven by **HTTP** on the Client API: **`Task Monitor`** ([`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)) for indexed tasks through session dialog, or **`curl`** for manual turns. See [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md).
 
-**Empty task queue:** **not** “nothing to do.” Prune root/module [`DEV_STATE.md`](../DEV_STATE.md), discover work (code, sims, risks), write tasks into `DEV_STATE` / `tasks/pending/`. See [`AGENTS.md`](../AGENTS.md) — **“Empty queue — mandatory”** (under Quick Reference) + DEV_STATE Protocol — and [`methodology/tasks.md`](../archive/methodology/tasks.md).
+**Empty task queue:** **not** “nothing to do.” Prune root/module [`DEV_STATE.md`](../DEV_STATE.md), discover work (code, sims, risks), write tasks into `DEV_STATE` / `tasks/pending/`. See [`AGENTS.md`](../AGENTS.md) — **“Empty queue — mandatory”** (under Quick Reference) + DEV_STATE Protocol. (Removed `archive/methodology/tasks.md` — tracked in [`tasks/brown-alert/archive-methodology-missing.md`](../tasks/brown-alert/archive-methodology-missing.md).)
 
 ## Flow Diagram
 
@@ -104,12 +104,12 @@ Server-driven LLM/transform substeps before final client response:
 
 ### Black Room
 
-Algorithm execution mode for deterministic operations on **local Ollama**:
+Algorithm execution mode for deterministic operations on **local Local LLM upstream**:
 
 - **Purpose:** Run pre-defined algorithms (pattern matching, context gathering, edits) on local LLM instead of paid API
 - **Trigger:** `interrupt.reason: "algorithm_invoke"` from Gray Room
 - **Algorithm IDs:** `ctx-gather-*`, `edit-apply-*`, `pattern-match-*`, `validate-*`
-- **Historical context:** Session state passed to Ollama via system prompt
+- **Historical context:** Session state passed to Local LLM upstream via system prompt
 - **Cost:** Free (local compute) vs paid API for Prompt Mode
 - **Status:** Proposed per [ADR-0058](./adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md)
 - **Doc:** [`a2a-server/docs/BLACK-ROOM.md`](../a2a-server/docs/BLACK-ROOM.md)
@@ -126,7 +126,7 @@ Algorithm execution mode for deterministic operations on **local Ollama**:
 
 ## Task Monitor metrics
 
-`monitor-and-process-tasks.js` emits logs that `scripts/orchestrator-metrics.js` aggregates into [`runtime/metrics.json`](../runtime/metrics.json) (per-day totals, provider mix). Refresh on demand: `node scripts/orchestrator-metrics.js --record`. See root [`DEV_STATE.md`](../DEV_STATE.md) / `work/STATE.md` when tracking orchestrator health.
+`tests/monitor-and-process-tasks.js` emits logs that `scripts/orchestrator-metrics.js` aggregates into [`runtime/metrics.json`](../runtime/metrics.json) (per-day totals, provider mix). Refresh on demand: `node scripts/orchestrator-metrics.js --record`. See root [`DEV_STATE.md`](../DEV_STATE.md) / `work/STATE.md` when tracking orchestrator health.
 
 ## Related Documentation
 - [`a2a-server/docs/GRAY-ROOM.md`](../../a2a-server/docs/GRAY-ROOM.md) - Подробная документация (242 строки)

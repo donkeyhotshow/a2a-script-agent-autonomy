@@ -43,7 +43,7 @@ type AgentDelegation = {
 | Mode | LLM | Use Case | Cost |
 |------|-----|----------|------|
 | Prompt Mode | Paid API (Z.AI, GPT-4) | Strategy, reasoning | $$ |
-| Algorithm Mode | Local Ollama | Pattern match, edits | $ (free) |
+| Algorithm Mode | Local Local LLM upstream | Pattern match, edits | $ (free) |
 
 **Trigger:** `interrupt.reason: "algorithm_invoke"`
 
@@ -222,7 +222,7 @@ Previously excluded suites (`neurons-v2`, `rag-entity-integration`, `auth.middle
 `a2a-client/packages/rag/tests/rag.test.js` exercises indexer/searcher/chunk/BM25/hybrid/reranker/query-understanding (no placeholder `expect(true)` stubs).
 
 ### D5. Canonical methodology path
-Indexed task methodology lives under [`archive/methodology/`](../../archive/methodology/) (not a root `methodology/` folder). Links from [`AGENTS.md`](../../AGENTS.md) point there.
+The old `archive/methodology/` tree is **not** in the repo anymore; inbound links are tracked in [`tasks/brown-alert/archive-methodology-missing.md`](../../tasks/brown-alert/archive-methodology-missing.md). Use [`tasks/README.md`](../../tasks/README.md), [`prompts-to-agent-mode/ONE-PIPELINE.md`](../../prompts-to-agent-mode/ONE-PIPELINE.md), and [`AGENTS.md`](../../AGENTS.md) for current process.
 
 ### D6. NodeNext vs bundled UI imports
 **Norm:** [`.cursor/rules/code-hierarchy.mdc`](../../.cursor/rules/code-hierarchy.mdc) — `a2a-server` / Node packages use **`.js` on relative imports**; `premium-ui` may use **`@/`** as resolved by Vite; `@a2a/execution` barrel + file-scanner chain uses `.js` relatives. [`AGENTS.md`](../../AGENTS.md) *Imports* row matches.

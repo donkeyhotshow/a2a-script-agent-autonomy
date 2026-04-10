@@ -85,13 +85,13 @@ export const PORT_CONFIG: Record<ServiceKey, PortConfig> = {
   },
   
   // AI services (optional)
-  ollama: {
+  compat_llm: {
     port: 11435,
     range: [11435, 11445],
     priority: 4,
-    name: 'Ollama',
+    name: 'Local LLM upstream',
     description: 'Local LLM server',
-    envVar: 'OLLAMA_PORT',
+    envVar: 'LOCAL_LLM_PORT',
     healthPath: '/api/tags',
     optional: true,
     category: 'ai',

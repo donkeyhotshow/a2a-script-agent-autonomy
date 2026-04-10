@@ -30,12 +30,13 @@ export {
     mergeInterruptTraceIntoContext,
     mergeGrayRoomSlotIntoContext,
 } from './interrupt-trace-contract.js';
-export {query, resolveTemplates} from './jsonpath.js';
+export {query, resolveTemplates} from './operations/json-path.js';
 export * from './operations.js';
 export * from './pipeline.js';
 export {
   prepareInvokePayloadForLlmPrompt,
   materializeResultIntoHistoryForLlm,
-  formatToolResultForHistory
+  formatToolResultForHistory,
+  syncLiveContextHistoryFromResultMessage,
 } from './materialize-result-for-llm.js';
 export * from './operation-history.js';

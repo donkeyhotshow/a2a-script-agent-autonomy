@@ -95,15 +95,15 @@ export class PerformanceMonitor {
     }
   }
 
-  private measureEventLoopLag(): number {
-    const start = process.hrtime.bigint();
-    return new Promise<number>((resolve) => {
-      setImmediate(() => {
-        const end = process.hrtime.bigint();
-        resolve(Number(end - start) / 1e6); // Convert to milliseconds
-      });
-    }) as any;
-  }
+   private measureEventLoopLag(): Promise<number> {
+     const start = process.hrtime.bigint();
+     return new Promise<number>((resolve) => {
+       setImmediate(() => {
+         const end = process.hrtime.bigint();
+         resolve(Number(end - start) / 1e6); // Convert to milliseconds
+       });
+     });
+   }
 
   private getActiveHandles(): number {
     // This is a simplified approximation
@@ -128,39 +128,39 @@ export class PerformanceMonitor {
         };
       });
 
-      // Get Web Vitals (simplified)
-      const webVitals = await page.evaluate(() => {
-        // @ts-ignore
-        const observer = new PerformanceObserver((list) => {
-          const entries = list.getEntries();
-          return entries;
-        });
+       // Get Web Vitals (simplified)
+       const webVitals = await page.evaluate(() => {
+         // @ts-expect-error - PerformanceObserver is a browser API that may not be available in all TS environments
+         const observer = new PerformanceObserver((list) => {
+           const entries = list.getEntries();
+           return entries;
+         });
 
-        return new Promise((resolve) => {
-          // @ts-ignore
-          if (window.performance && window.performance.memory) {
-            // @ts-ignore
-            resolve(window.performance.memory);
-          } else {
-            resolve(null);
-          }
-        });
-      });
+         return new Promise((resolve) => {
+           // @ts-expect-error - window.performance.memory is a browser API that may not be available in all TS environments
+           if (window.performance && window.performance.memory) {
+             // @ts-expect-error - window.performance.memory is a browser API that may not be available in all TS environments
+             resolve(window.performance.memory);
+           } else {
+             resolve(null);
+           }
+         });
+       });
 
-      // Get network request counts
-      const networkRequests = await page.evaluate(() => {
-        // @ts-ignore
-        if (window.performance && window.performance.getEntriesByType) {
-          // @ts-ignore
-          const entries = window.performance.getEntriesByType('resource');
-          const failed = entries.filter((entry: any) => entry.transferSize === 0 && entry.decodedBodySize === 0).length;
-          return {
-            total: entries.length,
-            failed
-          };
-        }
-        return { total: 0, failed: 0 };
-      });
+       // Get network request counts
+       const networkRequests = await page.evaluate(() => {
+         // @ts-expect-error - window.performance.getEntriesByType is a browser API that may not be available in all TS environments
+         if (window.performance && window.performance.getEntriesByType) {
+           // @ts-expect-error - window.performance.getEntriesByType is a browser API that may not be available in all TS environments
+           const entries = window.performance.getEntriesByType('resource');
+           const failed = entries.filter((entry: any) => entry.transferSize === 0 && entry.decodedBodySize === 0).length;
+           return {
+             total: entries.length,
+             failed
+           };
+         }
+         return { total: 0, failed: 0 };
+       });
 
       const metrics: PageMetrics = {
         timestamp,

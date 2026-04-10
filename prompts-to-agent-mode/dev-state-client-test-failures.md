@@ -12,4 +12,4 @@ Fix a2a-client Vitest/SDK configuration so the 41 tests currently failing with â
 
 ## Completion
 
-- [ ] Done
+[X] Completed

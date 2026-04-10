@@ -10,7 +10,11 @@
 import { vi } from 'vitest';
 import { readFile } from 'node:fs/promises';
 import { resolve as resolvePath } from 'node:path';
-import type { LLMInput } from '../../../src/services/ai/llm-adapter.js';
+
+/** Mock-only input shape (no production `services/ai/llm-adapter` module). */
+export interface LLMInput {
+    context?: Record<string, unknown>;
+}
 
 // Map of response keys to preset responses
 const responseMap = new Map<string, string>();

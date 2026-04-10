@@ -24,7 +24,7 @@ export function pickInvokeContextPatch(src) {
     if (o.scratchpad && typeof o.scratchpad === 'object' && !Array.isArray(o.scratchpad)) {
         out.scratchpad = o.scratchpad;
     }
-    if (o.workbench !== undefined) {
+    if (o.workbench !== undefined && o.workbench !== null) {
         out.workbench = o.workbench;
     }
     if (o.ragResults !== undefined) {

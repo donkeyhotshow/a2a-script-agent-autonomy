@@ -13,7 +13,7 @@ graph TB
         A[proxy.py<br/>Flask app] --> B[Web UI<br/>promise-viewer.html]
         B --> A
         A --> C[promises/<br/>pending requests]
-        A --> D[Ollama<br/>localhost:11435]
+        A --> D[Local LLM upstream<br/>localhost:11435]
     end
 ```
 
@@ -76,7 +76,7 @@ graph TB
 
 ### 4. POST /promise/<promise_id>/execute
 
-Выполнить запрос к Ollama (для "кнопка выполнить").
+Выполнить запрос к Local LLM upstream (для "кнопка выполнить").
 
 **Response:**
 
@@ -100,7 +100,7 @@ graph TB
 5. **Status Bar** - отображение статуса promise
 6. **Provider Panel** - карта доступных провайдеров (основана на `config/providers.json`)
     - Перечень провайдеров в порядке priority с выделением `default_provider`
-    - Статус `enabled/disabled`, URL и тип (`ollama`, `openai`, `huggingface` и т.п.)
+    - Статус `enabled/disabled`, URL и тип (`compat_llm`, `openai`, `huggingface` и т.п.)
     - Timeout/max_retries и модели, связанные с каждым провайдером, для понимания маршрута
     - Индикация fallback chain и активного провайдера (когда `enable_fallback` true)
     - Подсказка по требуемым переменным окружения (`OPENROUTER_API_KEY`, `GROQ_API_KEY`, `HF_TOKEN`, `COHERE_API_KEY`)
@@ -113,7 +113,7 @@ graph TB
 2. Отображение первого pending запроса
 3. Пользователь может:
    a) Нажать "Copy Request" → копирует тело в буфер
-   b) Нажать "Execute Request" → выполняет запрос к Ollama
+   b) Нажать "Execute Request" → выполняет запрос к Local LLM upstream
    c) Ввести ответ в textarea и нажать "Submit Answer"
 4. После получения ответа:
    a) Ответ отображается в Response Panel

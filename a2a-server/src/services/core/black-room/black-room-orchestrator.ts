@@ -1,26 +1,35 @@
 /**
- * Black Room Orchestrator - Executes algorithms on local Ollama
+ * Black Room Orchestrator — algorithm calls go through AI Integration hub (not direct Local LLM upstream).
  *
  * Handles deterministic algorithm execution for the Black Room (Algorithm Mode)
  * as defined in ADR-0058.
  */
 
 import {logger} from '../../../utils/logger.js';
-import {pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
+import {resolveAiHubBaseUrlWithModuleEnv} from '../../../utils/ai-hub-url.js';
+import {
+    extractLlmTextFromHubResponseBody,
+    initAiHubChatPromise,
+    pollReadyThenFetch,
+} from '../../../daemon/llm-hub-poll.js';
+import {BLACK_ROOM_DEFAULT_LLM_MODEL} from './black-room-defaults.js';
+import {tryParseJsonFromLlmText} from '../../../utils/strip-markdown-json-fence.js';
 import {AlgorithmDefinition, AlgorithmContext, AlgorithmData, AlgorithmResult, BlackRoomExecutionOptions} from './types.js';
 import {algorithmRegistry} from './algorithm-registry.js';
 
-const DEFAULT_OLLAMA_URL = 'http://localhost:11435';
 const DEFAULT_MAX_RETRIES = 1;
 
 export class BlackRoomOrchestrator {
-    private ollamaUrl: string;
+    private aiHubUrl: string;
     private defaultModel: string;
     private maxRetries: number;
 
     constructor(options: BlackRoomExecutionOptions = {}) {
-        this.ollamaUrl = options.ollamaUrl || process.env.A2A_BLACK_ROOM_OLLAMA_URL || DEFAULT_OLLAMA_URL;
-        this.defaultModel = options.defaultModel || process.env.A2A_BLACK_ROOM_DEFAULT_MODEL || 'llama3.1:8b';
+        this.aiHubUrl = resolveAiHubBaseUrlWithModuleEnv(
+            options.aiHubUrl,
+            'A2A_BLACK_ROOM_AI_HUB_URL'
+        );
+        this.defaultModel = options.defaultModel || BLACK_ROOM_DEFAULT_LLM_MODEL;
         this.maxRetries = options.maxRetries || DEFAULT_MAX_RETRIES;
     }
 
@@ -68,13 +77,13 @@ export class BlackRoomOrchestrator {
             // Build prompt from template (simplified - in real implementation, load from files)
             const prompt = this.buildAlgorithmPrompt(algorithm, context, data);
 
-            // Execute on Ollama with retries
+            // Execute via AI hub with retries
             let result: AlgorithmResult | null = null;
             let lastError: string | null = null;
 
             for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
                 try {
-                    result = await this.executeOnOllama(algorithm, prompt, startTime);
+                    result = await this.executeOnAiHub(algorithm, prompt, startTime);
                     if (result.status === 'completed') {
                         break;
                     }
@@ -168,56 +177,47 @@ Return findings as JSON.`;
         return { system: systemPrompt, user: userPrompt };
     }
 
-    private async executeOnOllama(
+    private async executeOnAiHub(
         algorithm: AlgorithmDefinition,
         prompt: { system: string; user: string },
         startTime: number
     ): Promise<AlgorithmResult> {
         const model = algorithm.model || this.defaultModel;
 
-        // Create promise for Ollama chat
         const promiseId = `black-room-${algorithm.id}-${Date.now()}`;
-        const chatRes = await fetch(`${this.ollamaUrl}/api/chat?promise=1`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Server-Promise-Id': promiseId,
+        const chatInit = await initAiHubChatPromise(this.aiHubUrl, promiseId, {
+            model,
+            messages: [
+                {role: 'system', content: prompt.system},
+                {role: 'user', content: prompt.user},
+            ],
+            stream: false,
+            options: {
+                temperature: algorithm.temperature,
+                num_predict: algorithm.maxTokens,
             },
-            body: JSON.stringify({
-                model,
-                messages: [
-                    { role: 'system', content: prompt.system },
-                    { role: 'user', content: prompt.user }
-                ],
-                stream: false,
-                options: {
-                    temperature: algorithm.temperature,
-                    num_predict: algorithm.maxTokens
-                }
-            }),
         });
-
-        if (chatRes.status !== 202) {
-            const errorText = await chatRes.text();
-            throw new Error(`Ollama chat init failed: ${chatRes.status} ${errorText}`);
+        if (!chatInit.ok) {
+            if (chatInit.reason === 'bad_http_status') {
+                throw new Error(`AI hub chat init failed: ${chatInit.status} ${chatInit.bodyText}`);
+            }
+            throw new Error('No promiseId in AI hub response');
         }
 
-        const initData = await chatRes.json() as { promiseId?: string };
-        const ollamaPromiseId = initData?.promiseId;
-        if (!ollamaPromiseId) {
-            throw new Error('No promiseId in Ollama response');
-        }
-
-        // Poll for completion
-        const response = await pollReadyThenFetch(this.ollamaUrl, ollamaPromiseId);
-        if (!response) {
-            throw new Error('Ollama response fetch failed');
+        const responseRaw =
+            chatInit.inlineResponseBody ?? (await pollReadyThenFetch(this.aiHubUrl, chatInit.llmPromiseId));
+        const response = responseRaw ? extractLlmTextFromHubResponseBody(responseRaw) : null;
+        if (!response?.trim()) {
+            throw new Error('AI hub response fetch failed');
         }
 
         const durationMs = Date.now() - startTime;
 
         try {
-            const parsed = JSON.parse(response.trim());
+            const parsed = tryParseJsonFromLlmText(response);
+            if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+                throw new SyntaxError('Invalid JSON object in AI hub response');
+            }
 
             // Estimate token counts (simplified)
             const tokensIn = Math.ceil((prompt.system.length + prompt.user.length) / 4); // rough estimate
@@ -225,7 +225,7 @@ Return findings as JSON.`;
 
             return {
                 status: 'completed',
-                output: parsed,
+                output: parsed as Record<string, unknown>,
                 metrics: {
                     durationMs,
                     tokensIn,
@@ -261,9 +261,13 @@ Return findings as JSON.`;
      */
     async isAvailable(): Promise<boolean> {
         try {
-            const healthRes = await fetch(`${this.ollamaUrl}/api/tags`);
+            const healthRes = await fetch(`${this.aiHubUrl}/api/tags`);
             return healthRes.ok;
-        } catch {
+        } catch (err: unknown) {
+            logger.debug('[BlackRoomOrchestrator] AI hub health check failed', {
+                url: this.aiHubUrl,
+                error: err instanceof Error ? err.message : String(err),
+            });
             return false;
         }
     }

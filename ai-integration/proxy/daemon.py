@@ -24,7 +24,13 @@ from .config import (
     FORWARD_TIMEOUT,
 )
 from .cleanup import get_cleanup_manager
-from .caching import get_cache
+from .caching import (
+    get_cache,
+    build_llm_cache_payload,
+    build_llm_cache_key,
+    is_valid_llm_disk_cache_value,
+    llm_disk_cache_log,
+)
 from .promises import (
     get_promise,
     is_llm_upstream_response_ok,
@@ -32,8 +38,9 @@ from .promises import (
     _load_request_snapshot,
     _prepare_execute_body,
     _sanitize_execute_headers,
+    pass_through_llm_upstream_headers,
     _promise_set_done,
-    _promise_reset_pending,
+    _promise_set_error,
 )
 from .api_key_routing import forward_with_api_key_failover, load_routing_hint
 from .providers.config_loader import load_providers_config
@@ -193,7 +200,13 @@ class PromiseDaemon:
             try:
                 import datetime
                 created_iso = datetime.datetime.fromtimestamp(rec.created_at, datetime.timezone.utc).isoformat()
-            except Exception:
+            except Exception as e:
+                logger.warning(
+                    "invalid created_at %r for promise %s: %s",
+                    rec.created_at,
+                    rec.promise_id,
+                    e,
+                )
                 created_iso = None
             result.append({
                 "promiseId": rec.promise_id,
@@ -235,21 +248,13 @@ class PromiseDaemon:
             logger.debug(f"Promise {promise_id} already processed (status={rec.status})")
             return
 
-        # If status is error but it's ready for retry, reset to pending
         if rec.status == 'error':
-            now = time.time()
-            next_attempt = rec.next_attempt_at or 0
-            if next_attempt <= now:
-                logger.info(f"Promise {promise_id} retrying after error")
-                _promise_reset_pending(promise_id)
-                rec = get_promise(promise_id)  # Re-fetch after reset
-                if rec is None or rec.status != 'pending':
-                    logger.warning(f"Failed to reset promise {promise_id} to pending")
-                    return
-            else:
-                logger.debug(f"Promise {promise_id} not yet ready for retry (next_attempt_at={next_attempt})")
-                return
-        
+            logger.debug(
+                "Promise %s is in error state; use POST /promise/<id>/retry to resume (not auto-run)",
+                promise_id,
+            )
+            return
+
         # Check if promise has simulate config - if so, skip daemon execution (inline job handles it)
         # This can be disabled with DAEMON_SKIP_SIMULATE=false
         if rec.simulate is not None and DAEMON_SKIP_SIMULATE:
@@ -259,8 +264,11 @@ class PromiseDaemon:
         # Load request snapshot
         request_snapshot = _load_request_snapshot(rec.log_folder)
         if not request_snapshot:
-            logger.warning(f"Request snapshot missing for {promise_id}, will retry in 10 seconds")
-            _promise_reset_pending(promise_id, delay_seconds=10.0)
+            logger.warning(
+                "Request snapshot missing for %s; set error (use POST /promise/<id>/retry to resume)",
+                promise_id,
+            )
+            _promise_set_error(promise_id, error="request_snapshot_missing", delay_seconds=None)
             return
         
         # Prepare request
@@ -270,33 +278,33 @@ class PromiseDaemon:
         headers = _sanitize_execute_headers(raw_headers)
         body_payload = _prepare_execute_body(request_snapshot.get('body'))
         routing = load_routing_hint(rec.log_folder or "")
-        safe_upstream = {}
-        for hk, hv in (raw_headers or {}).items():
-            lk = str(hk).lower()
-            if lk in ('content-type', 'accept', 'accept-language', 'user-agent'):
-                safe_upstream[hk] = str(hv)
+        safe_upstream = pass_through_llm_upstream_headers(raw_headers)
         
-        # Build cache key
         cache = get_cache()
-        cache_payload = {
-            "url": rec.target_url,
-            "method": rec.method,
-            "args": args,
-            "body": request_snapshot.get('body'),
-        }
-        cache_key = cache.build_key("ollama", cache_payload)
+        cache_payload = build_llm_cache_payload(
+            path=str(request_snapshot.get('path') or ''),
+            method=rec.method,
+            target_url=rec.target_url,
+            forward_args=args,
+            raw_body=request_snapshot.get('body'),
+        )
+        cache_key = build_llm_cache_key(cache, cache_payload)
         
         # Check cache first (reject poisoned 200 + provider error JSON)
         cached_response = cache.get(cache_key)
-        if cached_response is not None:
-            body_b = (
-                base64.b64decode(cached_response.get('body_base64', ''))
-                if cached_response.get('body_base64')
-                else b''
+        if cached_response is not None and not is_valid_llm_disk_cache_value(cached_response):
+            logger.warning(
+                "Daemon %s: disk cache entry malformed; invalidating",
+                promise_id,
             )
-            hdrs = cached_response.get('headers', {}) or {}
-            ct = hdrs.get('Content-Type') or hdrs.get('content-type') or ''
-            sc = int(cached_response.get('status_code', 200))
+            cache.delete(cache_key)
+            cached_response = None
+        if cached_response is not None:
+            b64 = cached_response["body_base64"]
+            body_b = base64.b64decode(b64) if b64 else b""
+            hdrs = cached_response["headers"] or {}
+            ct = hdrs.get("Content-Type") or hdrs.get("content-type") or ""
+            sc = int(cached_response["status_code"])
             if not is_llm_upstream_response_ok(sc, body_b, ct):
                 logger.warning(
                     'Daemon %s: invalid cached LLM payload; invalidating cache',
@@ -306,15 +314,29 @@ class PromiseDaemon:
                 cached_response = None
         if cached_response is not None:
             logger.info(f"Daemon {promise_id} served from cache")
+            llm_disk_cache_log(
+                "hit",
+                path=str(request_snapshot.get("path") or ""),
+                stage="daemon",
+                cache_key=cache_key,
+            )
+            b64 = cached_response["body_base64"]
             _promise_set_done(
                 promise_id,
-                status_code=cached_response.get('status_code', 200),
-                headers=cached_response.get('headers', {}),
-                body=base64.b64decode(cached_response.get('body_base64', '')) if cached_response.get('body_base64') else b''
+                status_code=int(cached_response["status_code"]),
+                headers=cached_response["headers"],
+                body=base64.b64decode(b64) if b64 else b"",
             )
             return
-        
-        # Execute request (use FORWARD_TIMEOUT for Ollama, not execute_timeout)
+
+        llm_disk_cache_log(
+            "miss",
+            path=str(request_snapshot.get("path") or ""),
+            stage="daemon",
+            cache_key=cache_key,
+        )
+
+        # Execute request (use FORWARD_TIMEOUT for Local LLM upstream, not execute_timeout)
         req_timeout = FORWARD_TIMEOUT
         try:
             use_failover = (
@@ -373,6 +395,12 @@ class PromiseDaemon:
                     "body_base64": base64.b64encode(resp.content).decode('utf-8') if resp.content else '',
                 })
                 logger.info(f"Daemon {promise_id} response cached")
+                llm_disk_cache_log(
+                    "store",
+                    path=str(request_snapshot.get("path") or ""),
+                    stage="daemon",
+                    cache_key=cache_key,
+                )
             
             _promise_set_done(
                 promise_id,
@@ -383,8 +411,8 @@ class PromiseDaemon:
             logger.info(f"Promise {promise_id} executed → result {resp.status_code}")
             
         except requests.RequestException as e:
-            _promise_reset_pending(promise_id, delay_seconds=10.0)
-            logger.error(f"Request failed for {promise_id}: {e}, will retry in 10 seconds")
+            _promise_set_error(promise_id, error=str(e), delay_seconds=None)
+            logger.error("Request failed for %s: %s (manual retry via POST /promise/<id>/retry)", promise_id, e)
 
 
 # Global daemon instance

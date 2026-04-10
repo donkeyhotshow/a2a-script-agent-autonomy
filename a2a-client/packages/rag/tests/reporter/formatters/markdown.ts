@@ -12,6 +12,7 @@ import {
   calculateCategorySummaries,
   generateRecommendations,
 } from '../result-aggregator.js';
+import { formatDuration, formatPercentage, getStatusIcon } from '../utils/format-utils.js';
 
 /**
  * Options for Markdown report generation

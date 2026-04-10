@@ -513,7 +513,7 @@ simulations/
 ### Финализация
 
 - [ ] Финальный шаг имеет `"status": "completed"` в `execution`
-- [ ] Финальный `response.json` содержит `result.completed` и/или action-key `result` (опционально)
+- [ ] Финальный `response.json` содержит `result.completed` и/или action-key `result` (опционально); для цепочек agent-class промежуточные шаги часто с `"result": { "completed": false }` — см. [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) (*Optional `result` на `response.json`*)
 - [ ] Создать `analysis.md` с анализом симуляции
 
 ---

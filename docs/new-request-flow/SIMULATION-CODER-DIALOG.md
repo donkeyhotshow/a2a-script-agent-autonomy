@@ -80,7 +80,7 @@
 
 - **BM25** - алгоритм пошуку для точного збігу коду
 - **TF-IDF** - частота термінів
-- **Semantic search** - семантичний пошук з Ollama
+- **Semantic search** - семантичний пошук з Local LLM upstream
 - **Hybrid search** - комбінує sparse та dense методи
 - **Query understanding** - розуміє намір користувача
 - **Search suggestions** - підказки автодоповнення

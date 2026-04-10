@@ -4,9 +4,10 @@
  * Реализация на основе плана: plans/action-scripts-integration.md
  */
 
-import * as fs from 'fs/promises';
+import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import {ActionDefinition, SubAction, ActionContext, DSLDefinition} from './types.js';
+import {tryParseJsonFromLlmText} from '../utils/strip-markdown-json-fence.js';
 
 /**
  * Parse a primitive type from a string value
@@ -34,19 +35,18 @@ export function parsePrimitive(value: string): unknown {
  * Supports both inline format and JSON code blocks
  */
 function parseDSL(dslSection: string): DSLDefinition {
-    // Try to extract JSON from code block first
-    const jsonBlockMatch = dslSection.match(/```(?:json)?\s*([\s\S]*?)```/i);
-    if (jsonBlockMatch?.[1]) {
-        try {
-            const jsonContent = jsonBlockMatch[1].trim();
-            const parsed = JSON.parse(jsonContent);
-            return {
-                script: parsed.script ?? '',
-                input: parsed.input ?? {}
-            };
-        } catch {
-            // Fall through to inline parsing
-        }
+    const parsed = tryParseJsonFromLlmText(dslSection);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        const p = parsed as Record<string, unknown>;
+        const rawIn = p['input'];
+        const input: Record<string, unknown> =
+            rawIn && typeof rawIn === 'object' && !Array.isArray(rawIn)
+                ? (rawIn as Record<string, unknown>)
+                : {};
+        return {
+            script: typeof p['script'] === 'string' ? p['script'] : String(p['script'] ?? ''),
+            input,
+        };
     }
 
     // Fallback to inline format parsing

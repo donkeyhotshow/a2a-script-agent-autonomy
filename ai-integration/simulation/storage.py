@@ -2,12 +2,15 @@
 Storage layer for rnj-L simulation system
 Handles conversation records and vector index persistence
 """
-import os
+import datetime
 import json
+import logging
+import os
 import shutil
 import uuid
-import datetime
 from typing import List, Dict, Any, Optional
+
+logger = logging.getLogger(__name__)
 from dataclasses import dataclass, asdict
 import numpy as np
 
@@ -191,7 +194,7 @@ class ConversationStore:
                 faiss_index=faiss_index
             )
         except Exception as e:
-            print(f"Error loading index: {e}")
+            logger.warning("Error loading vector index: %s", e, exc_info=True)
             return None
     
     def index_exists(self) -> bool:

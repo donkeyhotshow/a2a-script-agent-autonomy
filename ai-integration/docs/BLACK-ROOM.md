@@ -1,13 +1,13 @@
 # Black Room (Algorithm Mode)
 
-**Black Room** is the execution container for **algorithmic tasks** in the A2A workflow — deterministic operations that run on **local Ollama** instead of the paid API used by Gray Room's Prompt Mode.
+**Black Room** is the execution container for **algorithmic tasks** in the A2A workflow — deterministic operations that run on **local Local LLM upstream** instead of the paid API used by Gray Room's Prompt Mode.
 
 | Room | Who Acts | LLM Type | Cost | Speed |
 |------|----------|----------|------|-------|
 | **Red Room** | Client auto-replies to tools | None | Free | Fastest |
 | **Gray Room (Prompt Mode)** | Server runs strategy/reasoning | Paid API (GPT-4, Claude) | $$ | Medium |
-| **Gray Room (Algorithm Mode)** | Server runs deterministic ops | Local Ollama | Free | Fast |
-| **Black Room** | Dedicated algorithm executor | Local Ollama (specialized) | Free | Fast |
+| **Gray Room (Algorithm Mode)** | Server runs deterministic ops | Local Local LLM upstream | Free | Fast |
+| **Black Room** | Dedicated algorithm executor | Local Local LLM upstream (specialized) | Free | Fast |
 
 **Status:** Proposed per [ADR-0058](../../docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md). Not yet implemented.
 
@@ -48,7 +48,7 @@ The `algorithmId` maps to a **known execution pattern** in Black Room — no nat
                                 ▼
                     ┌─────────────────────────┐     ┌─────────────────┐
                     │   Black Room Entry      │────►│ Algorithm Mode  │
-                    │    (in ai-integration)  │     │  (Local Ollama) │
+                    │    (in ai-integration)  │     │  (Local Local LLM upstream) │
                     └───────────┬─────────────┘     └─────────────────┘
                                 │
                                 │ result
@@ -64,15 +64,15 @@ The `algorithmId` maps to a **known execution pattern** in Black Room — no nat
 | Component | Module | Responsibility |
 |-----------|--------|--------------|
 | **Gray Room Orchestrator** | `a2a-server` | Detects `algorithm_invoke`, routes to Black Room |
-| **Black Room Orchestrator** | `ai-integration` | Executes algorithms on local Ollama |
+| **Black Room Orchestrator** | `ai-integration` | Executes algorithms on local Local LLM upstream |
 | **Algorithm Registry** | `ai-integration` | Stores and serves algorithm definitions |
-| **Ollama Client** | `ai-integration` | Direct communication with Ollama (port 11435) |
+| **Local LLM upstream Client** | `ai-integration` | Direct communication with Local LLM upstream (port 11435) |
 
 ### Components
 
 #### 1. BlackRoomOrchestrator (in ai-integration)
 
-Entry point for algorithm mode. Resides in `ai-integration` as it directly manages Ollama communication.
+Entry point for algorithm mode. Resides in `ai-integration` as it directly manages Local LLM upstream communication.
 
 ```typescript
 // ai-integration/src/black-room/black-room-orchestrator.ts (proposed)
@@ -94,7 +94,7 @@ Maps `algorithmId` to execution definition:
 interface AlgorithmDefinition {
   id: string;
   version: string;
-  model: string;                    // Ollama model name
+  model: string;                    // Local LLM upstream model name
   promptTemplate: string;           // Path to template
   outputSchema: JSONSchema;         // Expected output shape
   contextRequirements: string[];    // Required context slots
@@ -105,7 +105,7 @@ interface AlgorithmDefinition {
 
 #### 3. Context Management
 
-Black Room maintains **session context** passed to Ollama via system prompt:
+Black Room maintains **session context** passed to Local LLM upstream via system prompt:
 
 ```json
 {
@@ -229,8 +229,8 @@ Pre-spins are tracked in `context.workbench.slots.grayRoomPreSpins[]`.
 # Enable Black Room
 A2A_BLACK_ROOM_ENABLED=1
 
-# Ollama connection (ai-integration already connects here)
-A2A_BLACK_ROOM_OLLAMA_URL=http://localhost:11435
+# Local LLM upstream connection (ai-integration already connects here)
+A2A_BLACK_ROOM_COMPAT_LLM_URL=http://localhost:11435
 A2A_BLACK_ROOM_DEFAULT_MODEL=llama3.1:8b
 
 # Algorithm registry path (relative to ai-integration/)
@@ -263,7 +263,7 @@ When Black Room fails, escalate to Gray Room Prompt Mode:
 | Failure | Fallback Action |
 |---------|-----------------|
 | Algorithm not found | Log error, escalate to Prompt Mode |
-| Ollama unavailable | Retry once, then escalate |
+| Local LLM upstream unavailable | Retry once, then escalate |
 | Output validation fails | Retry with temperature=0.2, then escalate |
 | Timeout | Escalate immediately |
 | Max turns exceeded | Return partial result with `truncated: true` |
@@ -274,7 +274,7 @@ When Black Room fails, escalate to Gray Room Prompt Mode:
 |--------|------------------------|------------------------------|
 | **Location** | `a2a-server` | `ai-integration` |
 | **Input** | Natural language | Structured algorithmId + data |
-| **Model** | Paid API (GPT-4/Claude) | Local Ollama |
+| **Model** | Paid API (GPT-4/Claude) | Local Local LLM upstream |
 | **Cost** | Per-token | Free (local compute) |
 | **Speed** | Network latency | Local inference |
 | **Output** | Free-form | Schema-validated |

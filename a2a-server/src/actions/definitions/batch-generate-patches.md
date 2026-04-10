@@ -14,20 +14,20 @@ Validates that the project root exists and contains the migration inventory.
 **Output:** `{ inventoryPath: string }`
 
 ```typescript
-import fs from 'fs/promises';
+import fs from 'node:fs/promises';
 import path from 'path';
 
 export default async function run(input: { projectRoot: string }): Promise<{ inventoryPath: string }> {
-  const { projectRoot } = input;
-  const inventoryPath = path.join(projectRoot, 'migration-inventory.json');
-  
-  try {
-    await fs.access(projectRoot);
-    await fs.access(inventoryPath);
-    return { inventoryPath };
-  } catch (error) {
-    throw new Error(`Invalid project root or missing migration inventory: ${error.message}`);
-  }
+   const { projectRoot } = input;
+   const inventoryPath = path.join(projectRoot, 'migration-inventory.json');
+   
+   try {
+     await fs.access(projectRoot);
+     await fs.access(inventoryPath);
+     return { inventoryPath };
+   } catch (error) {
+     throw new Error(`Invalid project root or missing migration inventory: ${error.message}`);
+   }
 }
 ```
 

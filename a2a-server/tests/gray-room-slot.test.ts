@@ -28,4 +28,21 @@ describe('mergeGrayRoomSlotIntoContext', () => {
         expect(slots['interruptTrace']).toHaveLength(1);
         expect(slots['grayRoom']).toEqual(env);
     });
+
+    it('adds empty workbench.sections when workbench had no sections (proba / UI contract)', () => {
+        const env: GrayRoomControlEnvelope = {
+            enabled: true,
+            planId: 'prom_1',
+            phase: 'completed',
+            maxTurns: 10,
+            turn: 0,
+            status: 'completed',
+            timestamps: {startedAt: 't0', lastUpdateAt: 't1'},
+            traceRef: {length: 0},
+        };
+        const ctx = mergeGrayRoomSlotIntoContext({}, env);
+        const wb = ctx['workbench'] as Record<string, unknown>;
+        expect(wb['sections']).toEqual({});
+        expect((wb['slots'] as Record<string, unknown>)['grayRoom']).toEqual(env);
+    });
 });

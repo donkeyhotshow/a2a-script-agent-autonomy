@@ -406,10 +406,10 @@ export const fixtures = {
         }
     },
 
-    // Session list
+    // Session list — GET /api/a2a/sessions (vite sessionRoutes: success + sessions + count)
     sessions: {
         success: true,
-        data: [
+        sessions: [
             {
                 id: 'session_001',
                 title: 'исправить импорты',
@@ -425,7 +425,8 @@ export const fixtures = {
                     }
                 ]
             }
-        ]
+        ],
+        count: 1
     },
 
     // Single session

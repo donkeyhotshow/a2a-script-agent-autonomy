@@ -203,7 +203,7 @@ try {
 }
 
 // Обработка API ошибки
-ErrorHandler.handleApiError(response, { endpoint: '/api/sessions' });
+ErrorHandler.handleApiError(response, { endpoint: '/api/a2a/sessions' });
 ```
 
 ---

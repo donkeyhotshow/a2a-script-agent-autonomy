@@ -1,5 +1,7 @@
 # Simulations schema (canonical)
 
+**Authoritative contract:** Step **`request.json`** / **`response.json`** (and **`received.json`** where applicable) under `simulations/sync/` and `simulations/async/` define the **canonical** invoke and client-merge shapes. Other test harnesses (**[`tests/proba-servera/`](../tests/proba-servera/README.md)** — in-process invoke regression, optional `$proba` metadata) **must align** with these goldens; they are not a second source of truth.
+
 **Debugging broken JSON shapes:** do **not** start here. Reproduce the issue in [`tests/direct-tests/README.md`](../tests/direct-tests/README.md) first (mandatory order in [`AGENTS.md`](../AGENTS.md)), then return to simulations once the shape is clear.
 
 **Offline validators** (flag specific errors — router descriptions, MD/JSON drift, execute/message shape): [`tests/direct-tests/validators/README.md`](../tests/direct-tests/validators/README.md); from repo root e.g. `npm run audit:sim-choice-descriptions`, `npm run sim:check-md`.
@@ -53,6 +55,12 @@ Canonical files (Web ↔ Client API и Client API ↔ Server ↔ LLM):
 | `server-transforms-response.json` | —                   | Transforms applied after LLM response. Per-step overrides live here; base transforms in `a2a-server/prompts/transforms/`. |
 | `response.json`                   | Server → Client API | Payload sent to Client API (context + execute, etc.).                                                                     |
 | `received.json`                   | Client API → Web    | **Web execute DTO** after sanitization (see below).                                                                       |
+
+### Optional `result` on `response.json`
+
+- Response transforms may attach **`result`**, e.g. **`{ "completed": true \| false }`**, from the LLM JSON field **`completed`** (see `a2a-server/prompts/transforms/agent-response.json`, `dialog-response.json`, `coder-response.json`).
+- **Semantics:** For **agent-class** schemas, when Gray Room finishes a turn **without** continuing the interrupt loop, **`result.completed === true`** is the server signal for optional **syndicate / SIEGE_REVIEW** (no separate decision LLM).
+- Goldens **may omit** `result` when a step does not assert completion. When documenting full agent tool chains, include **`"result": { "completed": false }`** on in-progress steps (see **`simulations/sync/agent-tool-loop/`**).
 
 **Order (полный pipeline):**
 
@@ -123,7 +131,7 @@ Examples: [`agent-auto-ai/6/interrupt.md`](agent-auto-ai/6/interrupt.md); subste
 
 ## LLM provider / model (what sims represent)
 
-Simulations test **payload shape**, not live Z.AI vs Ollama. **`request.md` / `response.md`** are fixtures: they do not prove routing.
+Simulations test **payload shape**, not live Z.AI vs Local LLM upstream. **`request.md` / `response.md`** are fixtures: they do not prove routing.
 
 - **Runtime** model list and routing live in **ai-integration** (`GET /api/tags`, per-request `model`) → see [`LLM-BACKEND-MAP.md`](LLM-BACKEND-MAP.md) for ports, “fixture vs live”, and an optional YAML header for `request.md` so authors state assumed `provider` + `model`.
 - **Future:** when the server stores `model` (and optional provider) on invoke, document the exact `context` paths in `request.json` here and add a targeted golden (tracked in [`tasks/pending/multi-provider-model-selection.md`](../tasks/pending/multi-provider-model-selection.md)).
@@ -250,6 +258,22 @@ default: `.carrier/reports/` (e.g. `architecture-report.md`).
 | `file-exists`     | ❌ Нет                             | ✅ Да                    |
 | `edit-patch`      | ❌ Нет                             | ✅ Да                    |
 | `run-script`      | ❌ Нет                             | ✅ Да                    |
+
+### `execute.wait` — клиентская концепция
+
+**Сервер НЕ возвращает `execute.wait`.** Это концепция клиентского UI:
+
+- Сервер возвращает `promiseId` → клиент опрашивает статус
+- Пока статус `processing` → клиент сам рендерит индикатор ожидания
+- Никакого `execute.wait` в ответе сервера нет и не будет
+
+```json
+// Правильный async-ответ сервера (нет sync-флага):
+{ "promiseId": "prom_123", "status": "processing" }
+
+// Клиент сам решает показывать loader на основе polling:
+GET /api/v1/requests/{promiseId}/result → { "status": "processing" } → UI spinner
+```
 
 **Практика:**
 

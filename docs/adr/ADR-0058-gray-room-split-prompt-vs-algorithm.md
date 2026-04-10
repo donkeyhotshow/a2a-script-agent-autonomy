@@ -19,9 +19,9 @@ Introduce **two-mode Gray Room** with explicit split between:
 | Mode | Purpose | LLM Type | Entry Trigger |
 |------|---------|----------|---------------|
 | **Prompt Mode** | Natural language instructions, strategy, reasoning | Paid API (high capability) | Primary agent request |
-| **Algorithm Mode** | Deterministic execution, pattern matching, edits | Local Ollama (fast/cheap) | `interrupt.reason: "algorithm_invoke"` |
+| **Algorithm Mode** | Deterministic execution, pattern matching, edits | Local Local LLM upstream (fast/cheap) | `interrupt.reason: "algorithm_invoke"` |
 
-The **Black Room** (previously planned as `ai-integration` proxy loop) becomes the **execution container** for Algorithm Mode — a local Ollama instance with pre-loaded "algorithm numbers" (fine-tuned or prompted models for specific tasks).
+The **Black Room** (previously planned as `ai-integration` proxy loop) becomes the **execution container** for Algorithm Mode — a local Local LLM upstream instance with pre-loaded "algorithm numbers" (fine-tuned or prompted models for specific tasks).
 
 ## Architecture
 
@@ -41,7 +41,7 @@ Client → Primary invoke (agent mode)
              │ data: { algorithmId: "ctx-gather-v2", contextKey: "..." }
              ▼
     ┌─────────────────┐
-    │ Algorithm Mode  │ ← Local Ollama (Black Room)
+    │ Algorithm Mode  │ ← Local Local LLM upstream (Black Room)
     │  (Black Room)   │   Deterministic execution
     │                 │   Historical context from slots
     └────────┬────────┘
@@ -77,13 +77,13 @@ Client → Primary invoke (agent mode)
 - `validate-*` — Post-action validation
 
 Each algorithm is either:
-- **Fine-tuned model** (LoRA adapter on Ollama)
+- **Fine-tuned model** (LoRA adapter on Local LLM upstream)
 - **Structured prompt template** with deterministic output schema
 - **Hybrid:** Pattern regex + LLM for edge cases
 
-### 3. Historical Context in Ollama
+### 3. Historical Context in Local LLM upstream
 
-Black Room maintains **session-scoped context slots** passed to Ollama via system prompt:
+Black Room maintains **session-scoped context slots** passed to Local LLM upstream via system prompt:
 
 ```typescript
 // context.workbench.slots.blackRoomContext
@@ -99,7 +99,7 @@ Black Room maintains **session-scoped context slots** passed to Ollama via syste
 }
 ```
 
-Ollama receives this as structured system prompt, enabling **stateful algorithms** without round-trips to paid API.
+Local LLM upstream receives this as structured system prompt, enabling **stateful algorithms** without round-trips to paid API.
 
 ### 4. Pre-Invocation Gray Room Spins
 
@@ -122,7 +122,7 @@ Each spin updates `context.workbench.slots.grayRoomPreSpins[]` with trace.
 ## Consequences
 
 ### Positive
-- **Cost reduction:** Algorithmic tasks use local Ollama (~free) vs paid API
+- **Cost reduction:** Algorithmic tasks use local Local LLM upstream (~free) vs paid API
 - **Speed:** Local inference for deterministic operations
 - **Reliability:** Algorithms produce consistent, testable outputs
 - **Separation of concerns:** Strategy (Prompt) vs Execution (Algorithm)
@@ -149,7 +149,7 @@ Each spin updates `context.workbench.slots.grayRoomPreSpins[]` with trace.
 ```bash
 # Black Room (Algorithm Mode)
 A2A_BLACK_ROOM_ENABLED=1          # Enable algorithm mode
-A2A_BLACK_ROOM_OLLAMA_URL=http://localhost:11435
+A2A_BLACK_ROOM_COMPAT_LLM_URL=http://localhost:11435
 A2A_BLACK_ROOM_DEFAULT_MODEL=llama3.1:8b
 
 # Algorithm registry

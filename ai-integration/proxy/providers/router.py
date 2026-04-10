@@ -5,8 +5,11 @@ Routes requests to appropriate LLM providers with fallback support.
 """
 
 import asyncio
+import logging
 import time
 from typing import Any, Dict, List, Optional, Type
+
+logger = logging.getLogger(__name__)
 
 from .base import (
     LLMProvider,
@@ -16,7 +19,7 @@ from .base import (
     ChatMessage,
     EmbeddingResult,
 )
-from .ollama_provider import OllamaProvider
+from .compat_llm_provider import CompatLlmProvider
 from .openai_compatible_provider import OpenAICompatibleProvider, OpenRouterProvider, GroqProvider, CohereProvider, ZAIProvider
 from .huggingface_provider import HuggingFaceProvider
 from .config_loader import load_providers_config, ProvidersConfig
@@ -24,7 +27,7 @@ from .config_loader import load_providers_config, ProvidersConfig
 
 # Provider type registry
 PROVIDER_REGISTRY: Dict[str, Type[LLMProvider]] = {
-    'ollama': OllamaProvider,
+    'compat_llm': CompatLlmProvider,
     'openai': OpenAICompatibleProvider,
     'openrouter': OpenRouterProvider,
     'groq': GroqProvider,
@@ -66,7 +69,7 @@ class ProviderRouter:
                         # Run initial health check
                         await provider.health_check()
                 except Exception as e:
-                    print(f"Failed to initialize provider '{name}': {e}")
+                    logger.warning("Failed to initialize provider %r: %s", name, e, exc_info=True)
         
         self._initialized = True
     
@@ -74,7 +77,7 @@ class ProviderRouter:
         """Create provider instance from config"""
         provider_class = PROVIDER_REGISTRY.get(config.type)
         if provider_class is None:
-            print(f"Unknown provider type: {config.type}")
+            logger.error("Unknown provider type: %s (name=%s)", config.type, getattr(config, "name", ""))
             return None
         return provider_class(config)
     
@@ -91,18 +94,35 @@ class ProviderRouter:
 
         When Z.AI is default, only models that no registered provider claims
         are left unchanged (or mapped via the default provider's resolve_model).
-        Ollama-local names like qwen3:8b must not be rewritten to the Z.AI default.
+        Local-hub names like qwen3:8b must not be rewritten to the Z.AI default.
         """
         if not model or not str(model).strip():
             if not self._initialized:
                 return (model or "").strip()
             return self._get_default_model()
         model = str(model).strip()
+        # Map legacy hub names via default_provider only when a single enabled provider
+        # claims this name in fallback_models. If several do (e.g. qwen3:8b → different
+        # upstream IDs), keep the alias so _get_provider_chain can try each provider.
+        claimants = sum(
+            1
+            for pc in self.config.providers.values()
+            if pc.enabled and model in (pc.fallback_models or {})
+        )
+        if claimants <= 1:
+            dp_cfg = self.config.get_provider(self.config.default_provider)
+            if dp_cfg and isinstance(dp_cfg.fallback_models, dict):
+                alt = dp_cfg.fallback_models.get(model)
+                if isinstance(alt, str) and alt.strip():
+                    model = alt.strip()
+        if claimants > 1:
+            return model
         if not self._initialized:
             return model
         for _name, provider in self._providers.items():
             if provider.supports_model(model):
-                return model
+                mapped = provider.resolve_model(model)
+                return mapped if mapped else model
         dp_name = self.config.default_provider
         if dp_name in self._providers:
             p = self._providers[dp_name]
@@ -111,16 +131,16 @@ class ProviderRouter:
                 return resolved
         return model
 
-    def tag_entries_from_non_ollama_providers(self) -> list[dict[str, Any]]:
+    def tag_entries_from_non_compat_providers(self) -> list[dict[str, Any]]:
         """
-        Ollama-shaped tag rows for models declared on non-Ollama providers (e.g. z_ai).
-        Live Ollama /api/tags is merged separately in the proxy handler.
+        Tag rows shaped like /api/tags for models declared on non-local providers (e.g. z_ai).
+        Live upstream /api/tags is merged separately in the proxy handler.
         """
         out: list[dict[str, Any]] = []
         if not self._initialized:
             return out
         for name, provider in self._providers.items():
-            if provider.config.type == "ollama":
+            if provider.config.type == "compat_llm":
                 continue
             if not provider.config.enabled:
                 continue
@@ -200,7 +220,12 @@ class ProviderRouter:
                 return result
             except Exception as e:
                 last_error = e
-                print(f"Provider '{provider_name}' failed: {e}")
+                logger.warning(
+                    "Provider %r generate failed: %s",
+                    provider_name,
+                    e,
+                    exc_info=True,
+                )
                 continue
         
         raise ProviderNotAvailableError(
@@ -245,7 +270,12 @@ class ProviderRouter:
                 return result
             except Exception as e:
                 last_error = e
-                print(f"Provider '{provider_name}' failed: {e}")
+                logger.warning(
+                    "Provider %r chat failed: %s",
+                    provider_name,
+                    e,
+                    exc_info=True,
+                )
                 continue
         
         raise ProviderNotAvailableError(
@@ -286,7 +316,12 @@ class ProviderRouter:
                 return result
             except Exception as e:
                 last_error = e
-                print(f"Provider '{provider_name}' failed: {e}")
+                logger.warning(
+                    "Provider %r embeddings failed: %s",
+                    provider_name,
+                    e,
+                    exc_info=True,
+                )
                 continue
         
         raise ProviderNotAvailableError(
@@ -364,7 +399,7 @@ class ProviderRouter:
         """Get default embedding model"""
         # Common embedding models by provider
         embedding_models = {
-            'ollama': 'nomic-embed-text',
+            'compat_llm': 'nomic-embed-text',
             'openrouter': 'sentence-transformers/all-MiniLM-L6-v2',
         }
         
@@ -383,10 +418,17 @@ class ProviderRouter:
     
     async def run_health_checks(self):
         """Run health checks for all providers"""
-        tasks = []
-        for name, provider in self._providers.items():
-            tasks.append(self._check_provider_health(name, provider))
-        await asyncio.gather(*tasks, return_exceptions=True)
+        names = list(self._providers.keys())
+        tasks = [self._check_provider_health(n, self._providers[n]) for n in names]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        for name, res in zip(names, results):
+            if isinstance(res, BaseException):
+                logger.error(
+                    "Health check task failed for provider %r: %s",
+                    name,
+                    res,
+                    exc_info=isinstance(res, Exception),
+                )
         self._last_health_check = time.time()
     
     async def _check_provider_health(self, name: str, provider: LLMProvider):
@@ -394,7 +436,7 @@ class ProviderRouter:
         try:
             await provider.health_check()
         except Exception as e:
-            print(f"Health check failed for '{name}': {e}")
+            logger.warning("Health check failed for %r: %s", name, e, exc_info=True)
     
     def get_provider_status(self) -> Dict[str, Dict[str, Any]]:
         """Get status of all providers"""
@@ -425,7 +467,7 @@ class ProviderRouter:
                     self._providers[name] = provider
                     await provider.health_check()
             except Exception as e:
-                print(f"Failed to enable provider '{name}': {e}")
+                logger.warning("Failed to enable provider %r: %s", name, e, exc_info=True)
                 return False
         
         return True

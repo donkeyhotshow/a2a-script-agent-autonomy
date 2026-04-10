@@ -15,6 +15,27 @@ const argv = new Set(process.argv.slice(2));
 const skipIfMissing = argv.has('--skip-if-missing');
 const strict = argv.has('--strict');
 
+/** Same rule as tests/proba-servera/validate.mts — dialog sim contract (see simulations/sync/dialog/description.md). */
+function checkHistoryHasUserWhenTask(j) {
+  const ctx = j.context;
+  if (!ctx || typeof ctx !== 'object') return null;
+  const task = ctx.task;
+  if (typeof task !== 'string' || !task.trim()) return null;
+  const history = ctx.history;
+  if (!Array.isArray(history) || history.length === 0) return null;
+  const hasUser = history.some(
+    (h) => h && typeof h === 'object' && String(h.role).toLowerCase() === 'user'
+  );
+  if (!hasUser) {
+    return {
+      code: 'history-no-user',
+      detail:
+        'context.task is set and context.history is non-empty but has no role:user (assistant-only breaks session UX).',
+    };
+  }
+  return null;
+}
+
 function collectServerResponseFiles(dir, out = []) {
   if (!fs.existsSync(dir)) return out;
   for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
@@ -55,6 +76,8 @@ function scan() {
     for (const item of analyzeLlmExecuteShape(j)) {
       issues.push({ id: rel, ...item });
     }
+    const histIssue = checkHistoryHasUserWhenTask(j);
+    if (histIssue) issues.push({ id: rel, ...histIssue });
   }
 
   if (issues.length === 0) {

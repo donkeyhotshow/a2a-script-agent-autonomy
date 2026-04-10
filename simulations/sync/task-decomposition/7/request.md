@@ -1,6 +1,6 @@
 # `task-decomposition/7` — copy of `request.json` for drift checks
 
-**Not an LLM prompt.** Since this is sync mode (no render-markdown), this file is a mirror only for `sim:check-md` to compare to `request.json`.
+**Not an LLM prompt.** **Sync golden** folder (`simulations/sync/`) — no render-markdown; this file is a mirror only for `sim:check-md` to compare to `request.json`.
 
 ```json
 {

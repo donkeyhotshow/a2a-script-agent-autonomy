@@ -1,6 +1,6 @@
 # Поток сессий (Session Flow)
 
-> **См.:** [PROTOCOL.md](PROTOCOL.md), [SCHEMA.md](SCHEMA.md)
+> **См.:** [PROTOCOL.md](PROTOCOL.md), [SCHEMAS.md](SCHEMAS.md)
 
 > **ВАЖНО:** Сервер (a2a-server) STATELESS — не хранит сессии!
 > Все сессии хранятся на Client API. Сервер только обрабатывает запросы через **`POST /api/v1/invoke`**.

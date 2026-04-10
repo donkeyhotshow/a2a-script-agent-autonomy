@@ -42,8 +42,8 @@ $interactionTests = @(
         Optional = $true
         Test = {
             # Test AI integration connectivity
-            $ollamaResponse = Invoke-RestMethod -Uri "http://localhost:11435/api/tags" -TimeoutSec 10
-            if ($ollamaResponse.models.Count -eq 0) { throw "No Ollama models available" }
+            $compat_llmResponse = Invoke-RestMethod -Uri "http://localhost:11435/api/tags" -TimeoutSec 10
+            if ($compat_llmResponse.models.Count -eq 0) { throw "No Local LLM upstream models available" }
 
             $proxyResponse = Invoke-WebRequest -Uri "http://localhost:11434/health" -TimeoutSec 10
             if ($proxyResponse.StatusCode -ne 200) { throw "AI proxy not healthy" }

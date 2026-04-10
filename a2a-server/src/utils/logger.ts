@@ -1,7 +1,7 @@
 import winston from 'winston';
 // @ts-expect-error - winston-daily-rotate-file typing issues in NodeNext ESM
 import DailyRotateFile from 'winston-daily-rotate-file';
-import * as fs from 'fs/promises';
+import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import {config} from '../config/index.js';
 
@@ -22,6 +22,11 @@ const logFormat = winston.format.combine(
         })
         : winston.format.json()
 );
+
+const consoleFormat =
+    config.logFormat === 'pretty'
+        ? winston.format.combine(winston.format.colorize(), logFormat)
+        : logFormat;
 
 // Ensure logs directory exists
 async function ensureLogsDir(): Promise<void> {
@@ -83,7 +88,7 @@ export const logger = winston.createLogger({
     transports: [
         // Console transport
         new winston.transports.Console({
-            format: winston.format.combine(winston.format.colorize(), logFormat),
+            format: consoleFormat,
         }),
     ],
 });
@@ -185,6 +190,11 @@ setInterval(performanceMonitor, 5 * 60 * 1000);
 
 // Run cleanup every 24 hours
 setInterval(cleanupOldLogs, 24 * 60 * 60 * 1000);
+
+/** Scoped logger (winston child) for modules that expect `createLogger(name)`. */
+export function createLogger(label: string) {
+    return logger.child({ label });
+}
 
 // Export convenience methods
 export const log = {

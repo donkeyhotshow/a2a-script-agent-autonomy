@@ -74,8 +74,10 @@ if (-not (Test-Endpoint -Name "GET /api/sessions" -Path "/api/sessions")) { $fai
 $sessBody = @{ projectId = "e2e_p_1"; title = "E2E Session" }
 $createResp = $null
 try {
-    $createResp = Invoke-RestMethod -Uri "$BaseUrl/api/sessions" -Method POST -Body ($sessBody | ConvertTo-Json) -ContentType 'application/json' -TimeoutSec 5
-} catch { }
+     $createResp = Invoke-RestMethod -Uri "$BaseUrl/api/sessions" -Method POST -Body ($sessBody | ConvertTo-Json) -ContentType 'application/json' -TimeoutSec 5
+ } catch {
+     # Silently ignore session creation errors - will be handled by null check
+ }
 $sessionId = $createResp.id
 if (-not $sessionId) {
     Write-Fail "POST /api/sessions did not return session id"

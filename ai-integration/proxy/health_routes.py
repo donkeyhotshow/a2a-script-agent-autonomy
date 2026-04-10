@@ -2,12 +2,16 @@
 Health Routes Module
 Contains Flask route handlers for health checks and system status
 """
+import logging
 import os
+
 from flask import Flask, request, Response, send_from_directory
+
+logger = logging.getLogger(__name__)
 
 # Import app from parent module
 from . import app
-from .config import PROXY_PORT, OLLAMA_HOST, STORAGE_DIR
+from .config import PROXY_PORT, LOCAL_LLM_UPSTREAM_URL, STORAGE_DIR
 from .caching import get_cache
 
 # Web folder for static files
@@ -34,21 +38,21 @@ def root():
 @app.route('/health')
 def health():
     """Проверка здоровья прокси (liveness probe)"""
-    from .ollama_manager import get_ollama_host_port, check_port_occupied
+    from .local_llm_manager import get_local_llm_upstream_host_port, check_port_occupied
     from .ai_hub_config import _CONFIG_PATH, get_ai_hub_config
     from .caching import get_cache
     from .config import SIMULATION_ENABLED, PROMISE_DAEMON_ONLY
     
-    ollama_host, ollama_port = get_ollama_host_port()
-    ollama_available = check_port_occupied(ollama_host, ollama_port)
+    local_llm_upstream_host, local_llm_upstream_port = get_local_llm_upstream_host_port()
+    local_llm_upstream_available = check_port_occupied(local_llm_upstream_host, local_llm_upstream_port)
     cfg = get_ai_hub_config()
     cache = get_cache()
     return {
         "status": "running",
         "proxy_port": PROXY_PORT,
-        "ollama_host": OLLAMA_HOST,
-        "ollama_port": ollama_port,
-        "ollama_available": ollama_available,
+        "local_llm_upstream_host": LOCAL_LLM_UPSTREAM_URL,
+        "local_llm_upstream_port": local_llm_upstream_port,
+        "local_llm_upstream_available": local_llm_upstream_available,
         "storage_dir": STORAGE_DIR,
         "ai_hub_config": (_CONFIG_PATH or os.environ.get('AI_HUB_CONFIG', '')) or None,
         "ai_hub_rules": len(cfg.get('rules') or []),
@@ -58,62 +62,74 @@ def health():
     }
 
 
-@app.route('/health/ollama')
-def health_ollama():
-    """Проверка доступности Ollama (deep health check)"""
-    from .ollama_manager import get_ollama_host_port, check_port_occupied, get_ollama_manager
+@app.route('/health/local-llm-upstream')
+def health_local_llm_upstream():
+    """Проверка доступности Local LLM upstream (deep health check)"""
+    from .local_llm_manager import get_local_llm_upstream_host_port, check_port_occupied, get_local_llm_manager
     
-    ollama_host, ollama_port = get_ollama_host_port()
-    ollama_available = check_port_occupied(ollama_host, ollama_port)
-    mgr = get_ollama_manager()
+    local_llm_upstream_host, local_llm_upstream_port = get_local_llm_upstream_host_port()
+    local_llm_upstream_available = check_port_occupied(local_llm_upstream_host, local_llm_upstream_port)
+    mgr = get_local_llm_manager()
     
-    ollama_status = mgr.get_status() if ollama_available else {'running': False, 'error': 'port not available'}
+    upstream_llm_status = mgr.get_status() if local_llm_upstream_available else {'running': False, 'error': 'port not available'}
     
-    if ollama_available:
+    if local_llm_upstream_available:
         return {
             "status": "healthy",
-            "ollama_available": True,
-            "ollama_url": mgr.base_url,
-            "ollama_pid": ollama_status.get('pid'),
-            "idle_seconds": ollama_status.get('idle_seconds', 0),
+            "local_llm_upstream_available": True,
+            "local_llm_upstream_url": mgr.base_url,
+            "local_llm_upstream_pid": upstream_llm_status.get('pid'),
+            "idle_seconds": upstream_llm_status.get('idle_seconds', 0),
         }
     else:
         return {
             "status": "unhealthy",
-            "ollama_available": False,
-            "ollama_host": ollama_host,
-            "ollama_port": ollama_port,
-            "error": "Ollama is not responding on the configured host/port",
+            "local_llm_upstream_available": False,
+            "local_llm_upstream_host": local_llm_upstream_host,
+            "local_llm_upstream_port": local_llm_upstream_port,
+            "error": "Local LLM upstream is not responding on the configured host/port",
         }, 503
 
 
 @app.route('/health/ready')
 def health_ready():
     """Проверка готовности прокси к обработке запросов (readiness probe)"""
-    from .ollama_manager import get_ollama_host_port, check_port_occupied
+    from .local_llm_manager import get_local_llm_upstream_host_port, check_port_occupied
     from .caching import get_cache
     from .providers import get_router
     
-    ollama_host, ollama_port = get_ollama_host_port()
-    ollama_available = check_port_occupied(ollama_host, ollama_port)
+    local_llm_upstream_host, local_llm_upstream_port = get_local_llm_upstream_host_port()
+    local_llm_upstream_available = check_port_occupied(local_llm_upstream_host, local_llm_upstream_port)
     cache = get_cache()
 
-    router = get_router()
-    default_provider = getattr(router.config, 'default_provider', None)
-    requires_ollama = default_provider == 'ollama'
-    
-    if requires_ollama and not ollama_available:
+    try:
+        router = get_router()
+        default_provider = getattr(router.config, "default_provider", None)
+    except Exception as e:
+        logger.warning("health/ready: get_router failed: %s", e, exc_info=True)
         return {
             "status": "not_ready",
-            "reason": "ollama_not_available",
+            "reason": "router_unavailable",
+            "error": str(e),
+            "local_llm_upstream_available": local_llm_upstream_available,
+            "local_llm_upstream_host": local_llm_upstream_host,
+            "local_llm_upstream_port": local_llm_upstream_port,
+        }, 503
+
+    requires_compat_llm = default_provider == 'compat_llm'
+    
+    if requires_compat_llm and not local_llm_upstream_available:
+        return {
+            "status": "not_ready",
+            "reason": "local_llm_upstream_not_available",
             "default_provider": default_provider,
-            "ollama_host": ollama_host,
-            "ollama_port": ollama_port,
+            "local_llm_upstream_host": local_llm_upstream_host,
+            "local_llm_upstream_port": local_llm_upstream_port,
         }, 503
     
     return {
         "status": "ready",
         "default_provider": default_provider,
-        "ollama_available": ollama_available,
+        "local_llm_upstream_available": local_llm_upstream_available,
         "cache_status": cache.status().get('status', 'unknown'),
     }

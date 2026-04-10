@@ -4,7 +4,7 @@ import SessionStorage, {
   PlanEntry,
   TaskEntry,
   ExecutionLogEntry
-} from './session-storage';
+} from './session-storage.js';
 
 export interface HistoryManagerOptions {
   projectPath: string;

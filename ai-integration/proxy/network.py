@@ -17,5 +17,5 @@ def check_port_occupied(host: str, port: int) -> bool:
         sock.close()
         return True
     except Exception as e:
-        logger.debug(f"Port check failed for {host}:{port}: {e}")
+        logger.warning("Port check failed for %s:%s: %s", host, port, e)
         return False

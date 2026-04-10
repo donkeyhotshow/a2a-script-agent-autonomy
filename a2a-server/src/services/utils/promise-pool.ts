@@ -1,5 +1,5 @@
 /**
- * Concurrency-limited promise pool (e.g. for Ollama promise polling per plans/ollama-proxy-integration.md).
+ * Concurrency-limited promise pool (e.g. for Local LLM upstream promise polling per plans/compat_llm-proxy-integration.md).
  */
 
 export interface PromisePoolOptions {

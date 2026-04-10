@@ -1,0 +1,29 @@
+{
+  "$proba": {
+    "inputAbsentPaths": ["context.history"]
+  },
+  "context": {
+    "task": "string",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "workbench": {
+      "sections": {}
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "string",
+      "description": "string",
+      "input": [
+        {
+          "name": "message",
+          "type": "string",
+          "label": "string",
+          "required": true
+        }
+      ]
+    }
+  }
+}

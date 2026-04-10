@@ -1,11 +1,11 @@
 import { Router, Request, Response } from 'express';
 import fs from 'fs/promises';
 import path from 'path';
-import { getStorageDir } from '../../services/storage.js';
+import { SAFE_SEGMENT } from '@a2a-client/shared/session-id.js';
+import { getKvRoot, isNodeEnoent } from '../../services/storage.js';
 
 const router = Router();
-const KV_ROOT = path.join(getStorageDir(), 'kv');
-const SAFE_SEGMENT = /^[a-zA-Z0-9_-]+$/;
+const KV_ROOT = getKvRoot();
 
 function isSafeSegment(value?: string): value is string {
     return typeof value === 'string' && SAFE_SEGMENT.test(value);
@@ -68,7 +68,7 @@ router.get('/:namespace/:key', async (req: Request, res: Response) => {
         const payload = await readKeyFile(filePath);
         return res.json(payload);
     } catch (error: unknown) {
-        if ((error as { code?: string })?.code === 'ENOENT') {
+        if (isNodeEnoent(error)) {
             return res.status(404).json({ error: 'Key not found' });
         }
         console.error('[STORAGE] Failed to read key:', error);
@@ -105,7 +105,7 @@ router.delete('/:namespace/:key', async (req: Request, res: Response) => {
         await fs.unlink(filePath);
         return res.json({ success: true });
     } catch (error: unknown) {
-        if ((error as { code?: string })?.code === 'ENOENT') {
+        if (isNodeEnoent(error)) {
             return res.status(404).json({ error: 'Key not found' });
         }
         console.error('[STORAGE] Failed to delete key:', error);

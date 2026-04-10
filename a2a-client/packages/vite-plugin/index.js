@@ -8,6 +8,7 @@ import { createKvRoutes } from './routes/kvRoutes.js';
 import { createDaemonRoutes } from './routes/daemonRoutes.js';
 import { createActionsRoutes } from './routes/actions.js';
 import { createModelsRoutes } from './routes/modelsRoutes.js';
+import { createHubPromiseRoutes } from './routes/hubPromiseRoutes.js';
 
 /**
  * Dev Client API for `/api/a2a/*`. Separate from `packages/sdk` Express — keep behavior in sync or share code; see docs/CLIENT_API_WEB_SDK.md
@@ -73,6 +74,8 @@ export default function vitePluginA2a() {
                 next();
             });
 
+            // Hub proxy before other /api/a2a/* handlers so promise-queue probes always hit pass-through.
+            server.middlewares.use(createHubPromiseRoutes());
             server.middlewares.use(createProjectRoutes({ cwd }));
             server.middlewares.use(createModelsRoutes());
             server.middlewares.use(createSessionRoutes({ cwd }));

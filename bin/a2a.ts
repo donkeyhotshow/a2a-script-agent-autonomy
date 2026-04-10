@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
-// @ts-ignore
 import fetch from 'node-fetch';
 
 const program = new Command();

@@ -11,4 +11,4 @@ Execute or defer items in the UI plan with explicit scope (which surface: proxy 
 
 ## Completion
 
-- [ ] Done (plan reconciled)
+[X] Completed

@@ -10,7 +10,8 @@ export {
     parseA2aInvokeResponse,
     normalizePromisePollStatus,
     validateClientResultPayload,
-} from '../../../../shared/client-api-envelope.mjs';
+    isRecoverableAsyncSnapshot,
+} from '../../../shared/client-api-envelope.mjs';
 
 /** @deprecated Use unwrapA2aInvokeBody */
-export { unwrapA2aInvokeBody as unwrapA2aSuccessPayload } from '../../../../shared/client-api-envelope.mjs';
+export { unwrapA2aInvokeBody as unwrapA2aSuccessPayload } from '../../../shared/client-api-envelope.mjs';

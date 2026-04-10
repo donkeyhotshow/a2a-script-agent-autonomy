@@ -27,6 +27,16 @@ export async function runTransformPipeline(
 
   const files: Record<string, string> = {};
 
+  // Validate pipeline structure
+  if (!pipeline.steps || !Array.isArray(pipeline.steps)) {
+    return {
+      output: context.$out,
+      files: undefined,
+      success: false,
+      error: 'Invalid pipeline: steps is not an array',
+    };
+  }
+
   try {
     for (const step of pipeline.steps) {
       await applyOperation(step, context);

@@ -1,240 +1,67 @@
-# DEV_STATE - a2a-server (2026-04-01)
+# DEV_STATE — a2a-server (2026-04-08)
 
-Текущее состояние подсистемы a2a-server.
-> Методика: работаем по методике с дев файлами - пишем дев файл всегда, убираем ненужное всегда, двигаемся вперед всегда
-
----
-
-## Scope Boundary
-
-- Этот файл хранит только server-специфичные архитектуру, риски, задачи и историю изменений.
-- Кросс-модульные решения/зависимости ведутся только в root: [`../DEV_STATE.md`](../DEV_STATE.md).
-- Не дублировать здесь client/ai-integration backlog; хранить только ссылки на них при необходимости.
-
-## AI-Integration Work Lock
-
-- Status: **UNBLOCKED (2026-03-27)**.
-- All a2a-client tasks completed.
-- ai-integration tasks can now proceed.
+**Rules Q&A:** [`../docs/PROJECT-RULES-QA.md`](../docs/PROJECT-RULES-QA.md) · [`../AGENTS.md`](../AGENTS.md)
 
 ---
 
-## Recent (2026-04-03)
+## Role for the north star
 
-- **GET `/requests/:id/result` poll context**: `mergePollContextWithPersisted` merges whitelisted fields from `RequestResult.context` into the JSON `data.context` after `filterResponse(result)`, with `workbench.slots` deep-merged so `grayRoom` survives when the stored `result` blob differs (Client API async → session `redGrayRoom` e2e).
-- **`execution.step === 'init'` + root `task`**: `normalizeContext` no longer promotes that `task` into `result.message` (avoids spurious LLM hop on async invoke schema probe). `resolveTransformSchema` maps dialog+init without user message to the dialog schema so the dialog processor returns the initial task form. E2E: `invokeContextFollowup`.
-- **Dialog initial form check**: Added check in `dialog-request-processor.ts` to return initial form directly from request transform for dialog schema without user input, before attempting LLM call.
-- **Upstream errors (Client API messages)**: `humanizeUpstreamErrorMessage()` in `request.service.ts` replaces bare Node `fetch failed` / connection errors with actionable text for sync `/invoke` failures and `executeLlmCall` paths (stored assistant line in session `messages.json` is no longer the opaque two-word error).
-- **Gray Room `mergeTraceIntoResult`**: Always merge `interruptTrace` + `workbench.slots.grayRoom` even when `ProcessResult.context` is missing (finalize path could leave context undefined; early return dropped the slot and broke `e2e-dialog-test.js` `redGrayRoom`).
-- **Agent + dialog prompts (`agent-request.md`, `dialog-request.md`)**: Tool turns: assistant line in **`execute.message`** next to the tool key (no top-level **`message`**). **`append-to-array`** prefers **`llm.execute.message`** then **`llm.message`**. Dialog: **`execute.message`** required for nested **`form.textarea`**; legacy **`form.input[]`** unchanged. **Not** `execute.dialog` as a tool. Agent aligned with **`simulations/`** for `step` names and shapes.
-- **Router step**: `context.execution.routerAnalysis` is omitted unless `shared/router-static-choices.json` → `routerConfig.autoSelectionEnabled` is true (default **false**). Router choices are always explicit user/monitor `POST …/next` with `result.choice`.
-- **`DEFAULT_SYNC_MODE`**: `invoke.service` now treats `DEFAULT_SYNC_MODE=1` / `true` as default synchronous `/invoke` (unless `sync: false`). Matches integration tests and AGENTS.md.
-- **Task routing**: `parseTaskText` prefers `message` / `result.message` over stale `task`; dialog router keywords include `dialog` / `диалог` / `діалог`.
+Stateless **invoke** server: Client API forwards context; each call may return **`promiseId`** — terminal `execute` / `context` come from **`GET /api/v1/requests/{id}/result`** polling. Dialog and agent pipelines must emit valid **action-key** `execute` / `result` shapes so the client can persist steps and the Task Monitor can finish tasks.
 
-## Текущая архитектура
-
-**Stateless server** - не хранит сессии, только обрабатывает запросы:
-- Контекст передаётся в каждом запросе
-- Session storage в Client API
-- Keyword-based routing (без LLM для роутинга)
+**Triangle vertex B** — [`docs/TRIANGLE-WORKFLOW.md`](../docs/TRIANGLE-WORKFLOW.md). **Gray alert** = server-first triage; **Gray Room** = runtime LLM chain ([`GLOSSARY.md`](../GLOSSARY.md) *Rooms vs alerts*).
 
 ---
 
-## Endpoints
+## Endpoints (operator-relevant)
 
-| Method | Route | Purpose |
-|--------|-------|---------|
+| Method | Path | Note |
+|--------|------|------|
 | GET | `/health` | Liveness |
-| GET | `/api/v1/health` | API health |
-| POST | `/api/v1/invoke` | Main invoke |
-| GET | `/api/v1/requests/:promiseId/status` | Promise status |
-| GET | `/api/v1/requests/:promiseId/result` | Promise result |
-| POST | `/api/a2a/sessions/:sessionId/next` | Session bridge |
+| POST | `/api/v1/invoke` | Returns `promiseId`; poll result |
+| GET | `/api/v1/requests/:id/result` | Terminal payload for pollers |
+
+Session storage is **not** here — see [a2a-client/DEV_STATE.md](../a2a-client/DEV_STATE.md).
+
+**Request files (`storage/requests/*.json`):** corrupt / truncated JSON on `load` is **quarantined** to `{id}.corrupt.{ts}.json`, `load` returns `null` (pollers see missing request instead of `JSON.parse` throw). Test: [`tests/unit/request-file-storage.test.ts`](tests/unit/request-file-storage.test.ts).
 
 ---
 
-## Request Processors
+## Processors (mental model)
 
-| Component | Role |
-|-----------|------|
-| `request-processor.service` | Выбор процессора по action/task |
-| `dialog-request-processor` | Dialog flow с LLM |
-| `gray-room-orchestrator` | Server-side LLM chaining (gray room / interrupt loop) |
-| `action-request-processor` | Tool/action flow |
-| `form-request-processor` | Form/choice handling |
-| `simulation-request-processor` | Simulation/golden flow |
+`request-processor` → dialog / agent / router / form / gray-room paths. For monitor-driven agent work, failures often show up as **stuck `processing`** or bad `execute` shape — start with [`tests/direct-tests/README.md`](../tests/direct-tests/README.md) if contracts break.
+
+**Agent `step=request` loop (2026-04-08):** If the LLM re-emits the initial **Agent Mode** form after **≥2** assistant history lines, [`agent-spurious-request-normalize.ts`](src/services/core/request-processor/agent-spurious-request-normalize.ts) coerces **`processing` + `execute.message`** before `finalizeDialogGrayRoomResult` — avoids Task Monitor strict `/next` spam. Tests: [`tests/unit/agent-spurious-request-normalize.test.ts`](tests/unit/agent-spurious-request-normalize.test.ts).
+
+**Hub disk-cache / `inlineResponseBody` (2026-04-08):** `POST /api/chat?promise=1` **200** returns full provider JSON in `responseBody`. Dialog + Gray Room + Black Room + AgentSwing now run [`extractLlmTextFromHubResponseBody`](src/daemon/llm-hub-poll.ts) on that string before `response.md` / JSON parses — avoids `context.history` assistant lines containing raw `{"choices":[...]}` envelopes. Tests: [`tests/unit/llm-hub-poll.test.ts`](tests/unit/llm-hub-poll.test.ts).
 
 ---
 
-## Gray Room (Concept: GR-S-01)
+## AI-Integration lock
 
-**Gray room** — это overlay на interrupt loop в `dialog-request-processor`:
-- Product name: "gray room" (серверные LLM подзапросы)
-- Implementation: `GrayRoomOrchestrator` в [`gray-room-orchestrator.ts`](src/services/core/request-processor/gray-room-orchestrator.ts)
-- Trigger: `detectGrayRoomTrigger()` → explicit flag → env → policy
-- Loop: `runLoop()` → interrupt budget → transforms → LLM cycle
-
-### Data Flow Boundaries
-
-- **Only** modifies `context.workbench` and `context.history`
-- Does **not** modify `context.execution` (trace only)
-- Final `execute` follows **Action-Key Shape**
-- No client round-trips; server-only
-
-### Documentation
-
-- [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) — full specification with Concept Boundary section
-- [`docs/adr/ADR-0029-server-interrupt-loop.md`](docs/adr/ADR-0029-server-interrupt-loop.md) — decision record
+UNBLOCKED.
 
 ---
 
-## Protocol Contract
+## Security hygiene
 
-### Execute (action-key shape)
+**2026-04-08:** [`ai-hub-chat-sync.ts`](src/utils/ai-hub-chat-sync.ts) — after hub **`POST /api/chat?promise=1`** returns **202**, call **`POST /promise/:id/execute`** before polling so **`PROMISE_DAEMON_ONLY`** tickets actually run (fixes **`hub_promise_empty`** / Gray Room internal debate `AI hub error: 0 hub_promise_empty`). Tests: `npx vitest run tests/unit/ai-hub-chat-sync.test.ts` · `tests/integration/invoke-http-parity.test.ts`.
 
-```json
-{ "execute": { "read-file": { "path": "README.md" } } }
-```
+**2026-04-07:** [`bug-fixer.ts`](src/services/llm/bug-fixer.ts) `getGitDiff` — `spawnSync('git', ['diff','--no-color','--', filePath])` instead of shell-interpolated `execSync`. Purple hunt log: [`docs/PURPLE-ALERT-HARMFUL-HUNT.md`](../docs/PURPLE-ALERT-HARMFUL-HUNT.md).
 
-### Result (action-key shape)
+**Magenta:** [`package.json`](package.json) `overrides.tar` → `^7.5.13` so production `npm audit --omit=dev` is clean (transitive `tar` from `bcrypt` / `node-pre-gyp`).
 
-```json
-{ "result": { "read-file": { "path": "README.md", "content": "..." } } }
-```
+**Tools evolve:** [`src/api/tools-evolve-sandbox.ts`](src/api/tools-evolve-sandbox.ts) validates `toolCode` (TS + vm2 `VM`) before deploy; [`tests/unit/tools-evolve-sandbox.test.ts`](tests/unit/tools-evolve-sandbox.test.ts). Task: [`tasks/completed/improve-tools-evolve-sandboxing.md`](../tasks/completed/improve-tools-evolve-sandboxing.md).
 
 ---
 
-## Context Fields
-
-- `context.execution` - текущее состояние выполнения
-- `context.history` - история выполнения
-- `context.workbench` - рабочее состояние (sections, batch, slots)
-- `context.scratchpad` - временные данные
-
----
-
-## Удалено/Deprecated
-
-- Server-side session storage
-- `neurons` subsystem
-- LLM-based router transform
-- Redis/BullMQ queue orchestration
-- Prisma/PostgreSQL/pgvector persistence
-
----
-
-## Simulations
-
-**Canonical rules:** [`simulations/SCHEMA.md`](../simulations/SCHEMA.md)
-
-### Что показывают goldens
-
-- Router → `execute.form.choices` (keyword-based)
-- Dialog + LLM tools
-- Agent coder / smart flows
-- Task decomposition
-- Workspace tools (`list-directory`, `grep-search`, `read-file`, etc.)
-- Gray room (`N-sub-M/` folders)
-
-### Out of scope
-
-- `promiseId`, async polling, retries
-- `execute.wait` / loader timing
-
-### Команды
+## Verify
 
 ```bash
-# Lint
+cd a2a-server && npm run test
 cd a2a-server && npm run sim:lint -- --all --json
-
-# Validate
 cd a2a-server && npm run sim:validate -- --all --json
-
-# Unified quality gate (CI acceptance rule)
-cd a2a-server && npm run sim:quality
 ```
 
----
+Repo-root **`npm run test:before-start`** runs indirect (Mama) checks, then **`tests/indirect-tests/run-server-unit-tests.ps1`** (full `a2a-server` Vitest), then **`npm run test:monitor`**, then **`npm run verify:audit-session-storage`** (session-storage task regen + accuracy).
 
-## Проверка
-
-```bash
-# Liveness
-curl -s http://localhost:3000/health
-
-# Sync invoke
-curl -s -X POST http://localhost:3000/api/v1/invoke \
-  -H "Content-Type: application/json" \
-  -d "{\"task\":\"hello\",\"sync\":true}"
-```
-
----
-
-## Тесты
-
-| Check | Command | Result |
-|-------|---------|--------|
-| Unit + integration | `cd a2a-server && npm run test` | 445 passed |
-| Simulation lint | `cd a2a-server && npm run sim:lint -- --all --json` | valid |
-| Simulation validate | `cd a2a-server && npm run sim:validate -- --all --json` | valid |
-| ESLint | `cd a2a-server && npm run lint` | 0 errors |
-
----
-
-## Архитектура скриптов (LF-S-04)
-
-**sim-lint разделён на модули (`scripts/sim-lint/`):**
-- `registry.ts` — типы, константы, lint правила (`SIMULATIONS_DIR` = repo-root `simulations/`)
-- `runners.ts` — запуск проверок файлов и симуляций
-- `reporters.ts` — генерация отчётов, CLI args/help
-- `scripts/sim-lint.ts` — точка входа (`import './sim-lint/registry.js'` и т.д.)
-
-**Верификация:** `npm run sim:lint -- --help`
-
----
-
-## Архитектура скриптов (LF-S-03)
-
-**sim-validate разделён на модули (`scripts/sim-validate/`):**
-- `scanner.ts` — сканирование симуляций, CLI args/help
-- `validators.ts` — валидация JSON по схемам, нормализация (repo-root `docs/new-request-flow/json-schemas`)
-- `reporters.ts` — вывод + `main()`
-- `scripts/sim-validate.ts` — точка входа (`import './sim-validate/reporters.js'`)
-
-**Верификация:** `npm run sim:validate -- --help`
-
----
-
-## Ссылки
-
-- [DEV_STATE.md](../DEV_STATE.md) - Root state файл (кросс-модульные зависимости)
-- [AGENTS.md](../AGENTS.md) - Правила работы
-- [docs/new-request-flow/PROTOCOL.md](../docs/new-request-flow/PROTOCOL.md) - Протокол
-- [docs/GRAY-ROOM.md](docs/GRAY-ROOM.md) - Gray room спецификация
-- [simulations/SERVER-CONTRACT.md](../simulations/SERVER-CONTRACT.md) - Contract overview
-
----
-
-## State Governance (Inherited from Root)
-
-- Этот файл является source of truth для server-состояния и обновляется после каждого значимого действия.
-- Все задачи ведутся только со статусами и проверяемыми критериями.
-- После выполнения: фиксировать фактическое состояние, удалять неактуальное, добавлять следующий исполнимый шаг.
-- Блокеры фиксируются явно; при возможности устраняются в текущем цикле.
-- Приоритет: завершение начатого -> стабилизация -> production readiness.
-
----
-
-## Current Status
-
-- *Нет активных задач* — модуль в стабильном состоянии.
-- Все основные задачи модуля закрыты; детали в `docs/TASKS-COMPLETED.md`.
-
-
-
-### Recent (2026-04-03)
-- **Vitest:** Dropped stale excluded suites; removed tests that imported deleted modules (`neurons-v2`, `ollama-adapter`, `rag` entity scorer, `llm-client`, `auth.middleware`, `neuron-activator`, old `simulation/*`). `vitest.config.ts` excludes only `node_modules` / `dist`.
-- **Auto-AI index:** Added [`src/actions/definitions/auto-ai-index.ts`](src/actions/definitions/auto-ai-index.ts) (`AUTO_AI_CATEGORIES`, `AUTO_AI_ACTION_IDS`, helpers) for `definitions-load` + `auto-ai-index` unit tests.
-- **Router static JSON:** Fixed corrupt trailing `]` / `}` in [`shared/router-static-choices.json`](../shared/router-static-choices.json) (was breaking `JSON.parse` in `src/config/router-static.ts`).
-- **Sequence / Gray Room (incremental):** [`sequence-workbench.ts`](src/services/core/request-processor/sequence-workbench.ts) implements `step_complete` against `context.workbench.sections.sequence` (replaces broken `session-manager` import). [`docs/references/sequence-schema.json`](../docs/references/sequence-schema.json) documents `SequenceStep` + `SequencePlan`. No `POST /api/v1/sequence` on the stateless server—queue edits stay on Client API or invoke `context`.
-
+Docs: [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) · [`simulations/SERVER-CONTRACT.md`](../simulations/SERVER-CONTRACT.md)

@@ -1,0 +1,14 @@
+{
+  "context": {
+    "sessionId": "sess_PROBA_PRIVACY_LEAK_TOKEN_xyz",
+    "session_id": "sess_PROBA_PRIVACY_LEAK_TOKEN_xyz",
+    "task": "analyze the codebase",
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  },
+  "result": {
+    "message": "analyze the codebase"
+  }
+}

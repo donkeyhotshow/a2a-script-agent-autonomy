@@ -1,0 +1,33 @@
+{
+  "schemaVersion": "1",
+  "id": "catalog-open-questions",
+  "title": "Questions without a canonical answer in the catalog yet",
+  "questions": [
+    {
+      "id": "operator-sla-async-poll",
+      "text": "What maximum wall-clock wait is acceptable for operators polling GET /async before escalating a stuck session?",
+      "status": "unanswered",
+      "options": [
+        { "id": "policy-2m", "label": "2 minutes" },
+        { "id": "policy-5m", "label": "5 minutes" },
+        { "id": "policy-unbounded", "label": "Unbounded — only terminal status / LLM idle check per OPERATOR-CURL" },
+        { "id": "policy-undecided", "label": "Not decided — record in DEV_STATE" }
+      ]
+    },
+    {
+      "id": "catalog-authority-on-conflict",
+      "text": "If catalog-from-documentation.json and an ADR disagree, which wins until resolved?",
+      "status": "unanswered",
+      "options": [
+        { "id": "adr", "label": "ADR / docs — fix the catalog" },
+        { "id": "catalog", "label": "Catalog — fix the docs" },
+        { "id": "pr", "label": "Team decision per PR" }
+      ]
+    },
+    {
+      "id": "freeform-next-metric",
+      "text": "Which single metric should we track first for Client API session health (beyond pass/fail)?",
+      "status": "unanswered"
+    }
+  ]
+}

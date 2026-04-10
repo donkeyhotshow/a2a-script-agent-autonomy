@@ -49,6 +49,7 @@ describe('session-projection-dto', () => {
         };
         const projected = toPublicSession(session, true);
         expect(projected.context).toEqual(session.context);
+        expect(typeof projected.stage).toBe('string');
     });
 
     /** UA-C-02: normal UI path must not expose raw workbench / slots — only ?includeContext=1 */
@@ -89,5 +90,19 @@ describe('session-projection-dto', () => {
             attachments: { ragQuery: 'health route' },
         });
         expect(out.session.execute).toEqual(out.execute);
+    });
+
+    it('sanitizes top-level execute when session has no projected execute', () => {
+        const out = toPublicNextResponse({
+            success: true,
+            execute: {'read-file': {path: 'a.ts'}},
+            session: {
+                id: 'sess_no_exec',
+                context: {execution: {action: 'agent', step: 'x'}},
+            },
+        });
+        expect(out.execute).not.toHaveProperty('read-file');
+        expect(out.execute?.message).toBe('Reading files…');
+        expect(out.execute?.attachments?.readFiles).toEqual([{path: 'a.ts'}]);
     });
 });

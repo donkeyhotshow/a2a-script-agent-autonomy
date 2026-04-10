@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import compression from 'compression';
 import {requestLogger} from './utils/logger.js';
 import {errorHandler} from './middleware/error.middleware.js';
+import {registryAuth} from './middleware/registry-auth.middleware.js';
 import routes from './routes/index.js';
 import sessionsRouter from './routes/sessions.routes.js';
 import {register} from './utils/metrics.js';
@@ -16,10 +17,15 @@ import toolsEvolveRouter from './api/tools-evolve.js';
 const app: Express = express();
 
 app.use(helmet({contentSecurityPolicy: false, crossOriginEmbedderPolicy: false}));
-app.use(cors({origin: true, credentials: true}));
+const corsOptions = {
+  origin: process.env.NODE_ENV !== 'production' || process.env.CORS_PERMISSIVE === '1' ? true : process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : false,
+  credentials: true
+};
+app.use(cors(corsOptions));
 app.use(compression());
-app.use(express.json({limit: '10mb'}));
-app.use(express.urlencoded({extended: true, limit: '10mb'}));
+const bodyLimit = process.env.BODY_LIMIT || '1mb';
+app.use(express.json({limit: bodyLimit}));
+app.use(express.urlencoded({extended: true, limit: bodyLimit}));
 
 app.use(requestLogger);
 
@@ -32,8 +38,9 @@ app.get('/health', (_req: Request, res: Response) => {
     });
 });
 
-// Prometheus metrics endpoint
-app.get('/metrics', async (_req: Request, res: Response) => {
+// Prometheus metrics endpoint - Protected by registry authentication
+// Accessible when SKIP_AUTH is enabled (development) OR valid X-Registry-Token header is provided
+app.get('/metrics', registryAuth, async (_req: Request, res: Response) => {
     try {
         res.set('Content-Type', register.contentType);
         res.end(await register.metrics());
@@ -44,9 +51,9 @@ app.get('/metrics', async (_req: Request, res: Response) => {
 
 app.use('/api/v1', routes);
 app.use('/api/a2a/sessions', sessionsRouter);
-app.use('/api/registry/register', registryRegisterRouter);
-app.use('/api/registry/route', registryRouteRouter);
-app.use('/api/registry', registryHealthRouter);
+app.use('/api/registry/register', registryAuth, registryRegisterRouter);
+app.use('/api/registry/route', registryAuth, registryRouteRouter);
+app.use('/api/registry', registryAuth, registryHealthRouter);
 app.use('/api/tools', toolsEvolveRouter);
 
 app.use((_req: Request, res: Response) => {

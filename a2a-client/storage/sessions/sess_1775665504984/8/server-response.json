@@ -1,0 +1,45 @@
+{
+  "step": 8,
+  "timestamp": "2026-04-08T16:28:53.311Z",
+  "execute": {
+    "form": {
+      "title": "Agent",
+      "description": "I'll read the ADR document to analyze the proposed phase 1 tasks, reviewer assignments, and exploratory status.",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Message",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "agent",
+      "step": ""
+    },
+    "task": "Assign reviewers or mark as exploratory; split Phase 1 into `tasks/*` specs with testable slices, or fold into existing gray-room / ADR-0035 work. Do not leave **Proposed** + **[TBD]** indefinitely without a decision record in the ADR header. — [prompt: doc-adr-0036-master-orchestration-memory-proposed.md]",
+    "projectId": "p_1771576028988",
+    "history": [
+      {
+        "role": "user",
+        "message": "Assign reviewers or mark as exploratory; split Phase 1 into `tasks/*` specs with testable slices, or fold into existing gray-room / ADR-0035 work. Do not leave **Proposed** + **[TBD]** indefinitely without a decision record in the ADR header. — [prompt: doc-adr-0036-master-orchestration-memory-proposed.md]"
+      },
+      {
+        "role": "system",
+        "message": "choice: agent"
+      },
+      {
+        "role": "assistant",
+        "message": "I'll read the ADR document to analyze the proposed phase 1 tasks, reviewer assignments, and exploratory status."
+      }
+    ],
+    "session_id": "srv_sess_stateless",
+    "workbench": {
+      "slots": {},
+      "sections": {}
+    }
+  }
+}

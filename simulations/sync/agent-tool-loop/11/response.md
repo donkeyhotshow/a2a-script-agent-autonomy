@@ -82,6 +82,9 @@ Mirror of `response.json` for prompt pipeline / `sim:check-md`.
         }
       ]
     }
+  },
+  "result": {
+    "completed": false
   }
 }
 ```

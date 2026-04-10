@@ -1,10 +1,10 @@
 ## LLM Hub Polling (A2A Server → AI Hub)
 
-This document describes how the server polls the AI Hub (ai-integration / Ollama proxy) for LLM promise completion and which environment variables control the behavior.
+This document describes how the server polls the AI Hub (ai-integration / Local LLM upstream proxy) for LLM promise completion and which environment variables control the behavior.
 
 ### Env variables and precedence
 
-- **`LLM_POLL_INTERVAL_MS`**: primary poll interval (ms) for checking `/promises/status`.
+- **`LLM_POLL_INTERVAL_MS`**: primary poll interval (ms) for checking hub promise completion (`GET /promise/:id`).
 - **`POLL_INTERVAL_MS`**: legacy/default interval (ms). Used when `LLM_POLL_INTERVAL_MS` is unset.
 - **`LLM_POLL_TIMEOUT_MS`**: primary timeout budget (ms) for waiting on a single LLM promise.
 - **`POLL_TIMEOUT_MS`**: legacy/default timeout (ms). Used when `LLM_POLL_TIMEOUT_MS` is unset.
@@ -26,7 +26,7 @@ Polling implementation lives in `src/daemon/llm-hub-poll.ts`:
   - `LLM_POLL_TIMEOUT_MS` if set, else `POLL_TIMEOUT_MS` if set, else `3_600_000` ms (1 hour).
   - Clamped to a maximum of `86_400_000` ms (24 hours).
 
-The poller loops on `GET {AI_HUB_URL}/promises/status` until the promise appears in the `ready` list or the timeout window is exceeded, in which case it throws a `LLM promise timeout` error.
+The poller loops on **`GET {AI_HUB_URL}/promise/{llmPromiseId}`** until the JSON body reports `status: "done"` (HTTP 200), then fetches **`GET …/promise/{id}/response`** (or `body_raw` when `responseMode` is `raw_json`). It does **not** depend on `GET /promises/status`’s bulk `ready` list, so completion matches the `resolveLlmPromiseRecovery` path in `llm-hub-poll.ts`. If the promise stays `202` pending until the timeout window, it throws `LLM promise timeout`.
 
 ### Timeout budget and ai-integration alignment
 

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
+import { DEFAULT_RAG_SEARCH_MAX_RESULTS } from '@a2a-client/shared/agent-rag-chain-depth.mjs';
 
 export async function runClientRagSearchForExecute(cwd, projectPath, ragPayload) {
     const query = ragPayload && typeof ragPayload.query === 'string' ? ragPayload.query : '';
@@ -8,9 +9,10 @@ export async function runClientRagSearchForExecute(cwd, projectPath, ragPayload)
         return { query: '', results: [], files: [], error: 'missing query' };
     }
 
-    const distPath = path.join(cwd, 'packages', 'rag', 'dist', 'searcher', 'rag-searcher.js');
+    const viteRoot = typeof cwd === 'string' && cwd.trim() ? cwd : process.cwd();
+    const distPath = path.join(viteRoot, 'packages', 'rag', 'dist', 'searcher', 'rag-searcher.js');
     if (!fs.existsSync(distPath)) {
-        console.warn('[VitePlugin] RAG dist missing at', distPath, '— run: npm run build --prefix packages/rag');
+        console.error('[VitePlugin] RAG dist missing at', distPath, '— run: npm run build --prefix packages/rag');
         return { query, results: [], files: [], error: 'rag module not built' };
     }
 
@@ -20,9 +22,12 @@ export async function runClientRagSearchForExecute(cwd, projectPath, ragPayload)
         if (!RAGSearcher) {
             return { query, results: [], files: [], error: 'RAGSearcher export missing' };
         }
-        const searcher = new RAGSearcher({ projectPath });
+        const ragRoot =
+            typeof projectPath === 'string' && projectPath.trim() ? projectPath : viteRoot;
+        const searcher = new RAGSearcher({ projectPath: ragRoot });
         const protocol = await searcher.searchWithProtocol(query, {
-            maxResults: ragPayload.limit ?? 20,
+            maxResults:
+                typeof ragPayload.limit === 'number' ? ragPayload.limit : DEFAULT_RAG_SEARCH_MAX_RESULTS,
             page: ragPayload.page,
             pageSize: ragPayload.pageSize,
         });

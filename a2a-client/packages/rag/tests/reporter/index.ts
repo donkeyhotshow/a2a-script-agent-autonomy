@@ -13,7 +13,7 @@ export {
     consoleReporter,
     saveReport,
     generateAllReports
-} from './reporter.js';
+} from '../reporter.js';
 
 export type {
     MarkdownReportOptions,
@@ -21,7 +21,7 @@ export type {
     HTMLReportOptions,
     ConsoleReporterOptions,
     CategorySummary
-} from './reporter.js';
+} from '../reporter.js';
 
 export {
     formatDuration,
@@ -29,4 +29,4 @@ export {
     getStatusIcon,
     calculateCategorySummaries,
     generateRecommendations
-} from './reporter.js';
+} from '../reporter.js';

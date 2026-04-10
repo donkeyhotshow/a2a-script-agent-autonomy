@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://a2a-script-agent.local/user-questions/catalog-v1.schema.json",
+  "title": "User questions catalog v1",
+  "type": "object",
+  "required": ["schemaVersion", "id", "questions"],
+  "properties": {
+    "schemaVersion": { "const": "1" },
+    "id": { "type": "string" },
+    "title": { "type": "string" },
+    "questions": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/question" }
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string", "description": "Repo-relative path to the doc" },
+        "section": { "type": "string", "description": "Heading, anchor, or grep hint" }
+      }
+    },
+    "answer": {
+      "type": "object",
+      "required": ["text", "sources"],
+      "properties": {
+        "text": { "type": "string" },
+        "sources": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/source" }
+        }
+      }
+    },
+    "option": {
+      "type": "object",
+      "required": ["id", "label"],
+      "properties": {
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "description": { "type": "string" }
+      }
+    },
+    "question": {
+      "type": "object",
+      "required": ["id", "text", "status"],
+      "properties": {
+        "id": { "type": "string" },
+        "text": { "type": "string" },
+        "status": { "enum": ["unanswered", "answered_from_docs"] },
+        "options": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/option" }
+        },
+        "answer": { "$ref": "#/$defs/answer" }
+      },
+      "description": "answered_from_docs should include answer; unanswered should omit answer."
+    }
+  }
+}

@@ -26,7 +26,7 @@
     },
     "virtual_models": {
       "type": "object",
-      "description": "Virtual Ollama models to simulate presence via /api/tags and /api/show.",
+      "description": "Virtual Local LLM upstream models to simulate presence via /api/tags and /api/show.",
       "additionalProperties": {
         "$ref": "#/$defs/virtual_model"
       },
@@ -222,7 +222,7 @@
         "builder": {
           "type": "string",
           "enum": [
-            "ollama.generate",
+            "compat_llm.generate",
             "openai.chat_completions"
           ]
         },

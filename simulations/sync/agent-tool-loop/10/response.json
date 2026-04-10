@@ -28,7 +28,7 @@
       {
         "role": "assistant",
         "step": "tool_grep_search",
-        "message": "Grep search for 'calculateTotal' found 1 match"  
+        "message": "Grep search for 'calculateTotal' found 1 match"
       },
       {
         "role": "assistant",
@@ -59,5 +59,8 @@
     "run-script": {
       "scriptId": "validate-helper"
     }
+  },
+  "result": {
+    "completed": false
   }
 }

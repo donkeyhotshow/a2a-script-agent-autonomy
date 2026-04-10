@@ -138,15 +138,7 @@
 
 ### 4. SSE Routes (sse.routes.ts)
 
-**Файл:** [`src/routes/sse.routes.ts`](a2a-server/src/routes/sse.routes.ts)
 
-**Назначение:**
-- Server-Sent Events для real-time коммуникации
-- Стриминг событий клиентам
-
-**Endpoints:**
-
-| Method | Path | Назначение |
 |--------|------|------------|
 | GET | `/api/v1/sse/:sessionId` | Подписка на события сессии |
 | GET | `/api/v1/sse` | Глобальная подписка |
@@ -402,12 +394,12 @@ class SSEManager {
 **Файл:** [`src/services/llm-adapter.ts`](a2a-server/src/services/llm-adapter.ts)
 
 **Назначение:**
-- Интеграция с внешними LLM (OpenAI, Ollama)
+- Интеграция с внешними LLM (OpenAI, Local LLM upstream)
 - Fallback на placeholder при недоступности
 
 **Поддерживаемые провайдеры:**
 - `openai` - OpenAI API
-- `ollama` - Ollama через ai-integration
+- `compat_llm` - Local LLM upstream через ai-integration
 - `placeholder` - заглушка
 
 **Основные методы:**
@@ -426,29 +418,29 @@ interface LLMInput {
 ```
 
 **Конфигурация (env):**
-- `LLM_PROVIDER` - выбор провайдера (`openai`, `ollama`)
+- `LLM_PROVIDER` - выбор провайдера (`openai`, `compat_llm`)
 - `OPENAI_API_KEY` - ключ OpenAI
 - `OPENAI_MODEL` - модель (default: `gpt-4o-mini`)
-- `OLLAMA_MODEL` - модель Ollama (default: `qwen3:8b`)
+- `LOCAL_LLM_MODEL` - модель Local LLM upstream (default: `qwen3:8b`)
 
 **Взаимодействие:**
-- [`ollama-adapter.ts`](a2a-server/src/services/ollama-adapter.ts) - promise-based Ollama
+- [`compat_llm-adapter.ts`](a2a-server/src/services/compat_llm-adapter.ts) - promise-based Local LLM upstream
 
 ---
 
-### 7. Ollama Adapter
+### 7. Local LLM upstream Adapter
 
-**Файл:** [`src/services/ollama-adapter.ts`](a2a-server/src/services/ollama-adapter.ts)
+**Файл:** [`src/services/compat_llm-adapter.ts`](a2a-server/src/services/compat_llm-adapter.ts)
 
 **Назначение:**
-- Promise-based интеграция с ai-integration (Ollama)
+- Promise-based интеграция с ai-integration (Local LLM upstream)
 - Polling статуса promise
 
 **Основные методы:**
 
 | Метод | Назначение |
 |-------|------------|
-| `createOllamaPromise(request)` | Создание promise |
+| `createLocal LLM upstreamPromise(request)` | Создание promise |
 | `getPromiseStatus(promiseId)` | Получение статуса |
 | `getPromiseResponse(promiseId)` | Получение результата |
 | `waitForPromise(promiseId, onProgress?)` | Ожидание с polling |
@@ -754,7 +746,7 @@ export type ActionOutcome =
         │  ┌────────┐  │  │    -er       │  │              │
         │  │Registry│  │  └──────────────┘  │  ┌──────────┐│
         │  │Executor│  │                    │  │  OpenAI  ││
-        │  └────────┘  │                    │  │  Ollama  ││
+        │  └────────┘  │                    │  │  Local LLM upstream  ││
         └──────────────┘                    │  └──────────┘│
                                             └──────────────┘
 ```
@@ -820,10 +812,10 @@ POST /invoke (step_result) → ActionProcessor.processStepResult()
 - `ENCRYPTION_KEY` - ключ шифрования (32 chars)
 
 ### LLM
-- `LLM_PROVIDER` - провайдер (`openai`, `ollama`)
+- `LLM_PROVIDER` - провайдер (`openai`, `compat_llm`)
 - `OPENAI_API_KEY` - ключ OpenAI
 - `OPENAI_MODEL` - модель OpenAI
-- `OLLAMA_MODEL` - модель Ollama
+- `LOCAL_LLM_MODEL` - модель Local LLM upstream
 - `AI_HUB_URL` - URL ai-integration
 
 ### Processor

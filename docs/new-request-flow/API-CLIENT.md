@@ -4,7 +4,7 @@
 >
 > **См.:** [ARCHITECTURE.md](ARCHITECTURE.md), [PROTOCOL.md](PROTOCOL.md)
 >
-> **Note:** `@a2a/api-client` объединён в `@a2a/sdk`. Используйте:
+> **Note:** Legacy **`@a2a/api-client`** — в **`@a2a/sdk`**. Используйте:
 > ```typescript
 > import { ApiClient } from '@a2a/sdk/client';
 > ```
@@ -70,7 +70,7 @@ API Client (`a2a-client/packages/sdk`) — это HTTP-клиент для вз�
 ### Конструктор
 
 ```typescript
-import {ApiClient} from '@a2a/api-client';
+import {ApiClient} from '@a2a/sdk';
 
 const client = new ApiClient({
     serverUrl?: string;    // По умолчанию: http://localhost:3000/api/v1
@@ -603,7 +603,7 @@ API Client используется в симуляциях для:
 ### Пример использования в симуляции
 
 ```typescript
-import {ApiClient} from '@a2a/api-client';
+import {ApiClient} from '@a2a/sdk';
 
 const client = new ApiClient({serverUrl: 'http://localhost:3000/api/v1'});
 

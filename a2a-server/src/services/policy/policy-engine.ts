@@ -23,9 +23,13 @@
  */
 
 import { readFileSync } from 'node:fs';
+import { logger } from '../../utils/logger.js';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { globalArtifactStore } from '../core/artifact-store.js';
+import {
+  createArtifactWriteInput,
+  globalArtifactStore,
+} from '../core/artifact-store.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -96,8 +100,13 @@ function loadConfigurablePolicies(): ConfigurablePolicy[] {
         'policy_id' in (p as object) &&
         'message' in (p as object),
     );
-  } catch {
-    // File missing or unreadable — silently use empty list
+  } catch (err: unknown) {
+    const code = (err as NodeJS.ErrnoException)?.code;
+    if (code !== 'ENOENT') {
+      logger.warn('[PolicyEngine] Failed to load config/policies.json', {
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
     return [];
   }
 }
@@ -117,17 +126,23 @@ export class PolicyEngine {
     const blocked = violations.find((v) => v.severity === 'block');
     
     if (blocked && sessionId) {
-      void globalArtifactStore.write({
-        type: 'POLICY_VIOLATION',
-        session_id: sessionId,
-        severity: 'critical',
-        summary: `Policy ${blocked.policy_id} blocked action: ${blocked.message}`,
-        data: {
-          policy_id: blocked.policy_id,
-          message: blocked.message,
-          context: ctx as unknown as Record<string, unknown>
-        }
-      }, 'PolicyEngine');
+      void globalArtifactStore.write(
+        createArtifactWriteInput({
+          artifact_id: `policy-violation-${blocked.policy_id}-${Date.now()}`,
+          artifact_type: 'POLICY_VIOLATION',
+          session_id: sessionId,
+          turn_id: 'policy-check',
+          schema_version: '1.0',
+          severity: 'critical',
+          summary: `Policy ${blocked.policy_id} blocked action: ${blocked.message}`,
+          data: {
+            policy_id: blocked.policy_id,
+            message: blocked.message,
+            context: ctx as unknown as Record<string, unknown>,
+          },
+        }),
+        'PolicyEngine',
+      );
     }
     
     return !!blocked;

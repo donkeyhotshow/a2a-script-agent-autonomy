@@ -84,7 +84,14 @@ const normalizeSessionsList = (raw, filterProjectId = null) => {
 };
 
 const DEFAULT_POLL_INTERVAL = 1000;
-const DEFAULT_POLL_TIMEOUT = 300000;
+/** Wall-clock cap for polling loops (async/session). **Not** used for `promiseId` → GET …/result — those wait until terminal with no deadline. */
+const DEFAULT_POLL_TIMEOUT = Number.POSITIVE_INFINITY;
+
+const isRetryAfterInFuture = (retryAfter) => {
+    if (retryAfter == null || retryAfter === '') return false;
+    const t = Date.parse(String(retryAfter));
+    return Number.isFinite(t) && t > Date.now();
+};
 
 const isPromiseResolved = (result) => {
     if (!result) return false;
@@ -101,9 +108,13 @@ const isPromiseResolved = (result) => {
 
 const isPromiseFailed = (result) => {
     if (!result) return false;
+    if (result.asyncPending === true) return false;
     const status = typeof result.status === 'string' ? result.status.toLowerCase() : null;
     if (status) {
-        return status === 'failed' || status === 'error';
+        if (status === 'failed' || status === 'error') {
+            if (isRetryAfterInFuture(result.retryAfter)) return false;
+            return true;
+        }
     }
     return false;
 };

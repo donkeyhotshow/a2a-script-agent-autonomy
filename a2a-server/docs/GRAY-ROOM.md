@@ -6,7 +6,7 @@
 |------|----------|--------------------|
 | **Red room** | Client auto-completes tool `execute`, then sends next turn | One user-visible step per tool cycle |
 | **Gray room** | Server runs substeps (compress, thinking, re-LLM) | **None** — client gets one response after the chain finishes |
-| **Black room** | Algorithm Mode — local Ollama execution for deterministic tasks | Proposed per [ADR-0058](../../docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md), see [BLACK-ROOM.md](../../ai-integration/docs/BLACK-ROOM.md) (in ai-integration) |
+| **Black room** | Algorithm Mode — local Local LLM upstream execution for deterministic tasks | Proposed per [ADR-0058](../../docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md), see [BLACK-ROOM.md](../../ai-integration/docs/BLACK-ROOM.md) (in ai-integration) |
 
 **Status:** Implemented as an **overlay** on one invoke: [`DialogRequestProcessor`](../src/services/core/request-processor/dialog-request-processor.ts) delegates to [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts). Interrupt trace for the client is merged via [`mergeInterruptTraceIntoContext`](../src/transform/interrupt-trace-contract.ts) (see § Concept Boundary).
 
@@ -25,6 +25,10 @@ Client → Server
               ├── applyInterrupt (e.g. compress_history: extra LLM, then return with same execute)
               └── continueLoop → request transform → LLM #2 → response transform → …
 ```
+
+### No `interrupt`: completion flag and syndicate review
+
+When the response transform yields **no** `interrupt`, the loop still finishes through the same merge path — but **non-dialog** schemas (`agent`, `coder`, `analyze`, `auto-ai`, …) may run **IntentGate** (ADR-0050) and, if transform output has **`result.completed === true`** (copied from the primary LLM JSON field **`completed`** in `agent-response.json` / `coder-response.json` / …), **`executeSyndicateReview`** (SIEGE_REVIEW). **Dialog** returns to the client on this branch **before** those checks — no syndicate on that exit. There is **no** separate “decision cell” hub call (superseded ADR-0088). See [`agent-request.md`](../prompts/agent-request.md) and [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) (*Optional `result` on `response.json`*).
 
 ## Concept Boundary
 
@@ -107,9 +111,13 @@ Adding **`prompts/transforms/<your-name>/`** (with `server-transforms-*.json` an
 | Stage | Behavior |
 |-------|----------|
 | **Entry** | [`DialogRequestProcessor.doProcess()`](../src/services/core/request-processor/dialog-request-processor.ts) runs the LLM, then always calls [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts). Recovery uses [`recoverDialogFromLlmPromise()`](../src/services/core/request-processor/response-path.ts) → same `runLoop`. |
-| **Per iteration** | `runResponseTransform` → `extractInterrupt` → if none, `mergeTraceIntoResult` and return. If `interrupt` and `when` satisfied → budget → `applyInterrupt` → if `continueLoop`, rebuild `request.md` via `runPromptsTransform`, then main LLM again. |
+| **Per iteration** | `runResponseTransform` → `extractInterrupt` → if **none**: non-dialog → optional IntentGate + syndicate if **`result.completed`**; **dialog** → immediate return; then `mergeTraceIntoResult` and return. If `interrupt` and `when` satisfied → budget → `applyInterrupt` → if `continueLoop`, rebuild `request.md` via `runPromptsTransform`, then main LLM again. |
 | **Budget** | `A2A_MAX_INTERRUPT_TURNS` (default 10) on the orchestrator; per-interrupt `maxTurns` clamps via `min`. At 0 with interrupt still present → `context.interrupt_truncated: true` and return. |
 | **Merge to client** | Final `ProcessResult` gets `mergeInterruptTraceIntoContext` → [`interrupt-trace-contract.ts`](../src/transform/interrupt-trace-contract.ts) only; `workbench` / `history` come from transform output and handlers. |
+
+### Hub promise recovery (`recovered: true`)
+
+When `runLoop` is entered from **recovery** (hub `llmPromiseId` already finished; `responseMd` is the stored hub body), **ADR-0093 Internal Debate** (`llmService.debate`, three synchronous hub/Local LLM upstream calls) is **skipped** (`!isRecovered`). Otherwise debate **replaces** `md` before the first response transform and can fail with long Local LLM upstream timeouts while the main hub promise was already done — **2026-04-06:** recovery must skip debate so a finished hub body is not re-driven through three sync hub calls (former incident note lived in removed root `BREAK_STATE.md`).
 
 ### Error paths (sidecar / sub-LLM)
 
@@ -162,7 +170,7 @@ Adding **`prompts/transforms/<your-name>/`** (with `server-transforms-*.json` an
 - **Thinking step** — Store structured reasoning in `context.workbench.slots.thinking`, then run the main LLM again with that context.
 - **RAG pagination** — `auto_rag_page` re-enters the main loop; optional **`@a2a/rag`** search when `data.query` and `A2A_RAG_PROJECT_PATH` / `data.projectPath` are set (see § Implemented `reason` values).
 - **`auto_read_file` / `clarify` / `interrupt.schema`** — implemented in `applyInterrupt` / the loop (`maxTurns` clamping applies per § Loop limits).
-- **Black Room algorithms** — `algorithm_invoke` routes deterministic tasks to local Ollama for cost-effective, consistent execution (see ADR-0058).
+- **Black Room algorithms** — `algorithm_invoke` routes deterministic tasks to local Local LLM upstream for cost-effective, consistent execution (see ADR-0058).
 
 ## Protocol: `interrupt` on transform output
 
@@ -200,7 +208,7 @@ The **response** transform must place `interrupt` on the same object that carrie
 | `auto_rag_page` | Merges `data`, sets `_interrupt_reason`, then **re-enters** the main loop (`continueLoop: true`). If **`data.query`** is non-empty and **`data.projectPath`** or env **`A2A_RAG_PROJECT_PATH`** is set, the server runs **`@a2a/rag`** (`createRAGClientService` → `initialize` → `search`), appends hits to **`context.ragResults`**, and adds **`context._server_rag_page`**. If query or path is missing, behavior is merge-only (no server search). | `true` |
 | `auto_read_file` | Reads `data.filePath` or `data.path` via the workspace `read-file` handler; merges into `context.files`. | `false` — returns with updated context and the same primary `execute`. |
 | `clarify` | Stores `data` under `context.workbench.slots.clarify`. | `false` — same as `auto_read_file` for loop semantics. |
-| `algorithm_invoke` | Routes to **Black Room** (Algorithm Mode) for deterministic execution on local Ollama. Requires `interrupt.algorithmId` and merges results into `context.workbench.slots.blackRoomContext`. | `false` — returns with algorithm results merged into context. |
+| `algorithm_invoke` | Routes to **Black Room** (Algorithm Mode) for deterministic execution on local Local LLM upstream. Requires `interrupt.algorithmId` and merges results into `context.workbench.slots.blackRoomContext`. | `false` — returns with algorithm results merged into context. |
 | *(anything else)* | Logged; loop stops; client gets current result **without** `interrupt` consumption beyond that. | `false` |
 
 ## Loop limits and truncation
@@ -213,7 +221,7 @@ The **response** transform must place `interrupt` on the same object that carrie
 
 - The **first** main LLM call for an invoke still registers `llmPromiseId` on the request via `requestService.updateLlmPromiseId`.
 - **Interrupt** sub-calls use distinct `X-Server-Promise-Id` values (e.g. `${promiseId}-compress`, `${promiseId}-think`, `${promiseId}-intr-<n>`) and **do not** replace that mapping.
-- Model: `OLLAMA_MODEL` (default `qwen3:8b`); base URL: `AI_HUB_URL` (default `http://localhost:11434`).
+- Model: `LOCAL_LLM_MODEL` (default `qwen3:8b`); base URL: `AI_HUB_URL` (default `http://localhost:11434`).
 
 ## Simulations (goldens)
 

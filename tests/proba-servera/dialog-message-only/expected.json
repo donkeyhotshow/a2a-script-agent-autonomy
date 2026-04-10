@@ -1,0 +1,33 @@
+{
+  "$proba": {
+    "ignorePaths": [
+      "context.task",
+      "context.session_id",
+      "context.transformSchema",
+      "context.requestPhase",
+      "context.llmPromiseId",
+      "context.repo_map",
+      "context.debate_consensus",
+      "context.slots",
+      "context.workbench"
+    ],
+    "skipHistoryLengthCheck": true,
+    "ignoreExecuteWhenOutcomeFailed": true,
+    "snapExecuteToActual": true
+  },
+  "context": {
+    "execution": {
+      "action": "dialog",
+      "step": "string"
+    },
+    "history": [
+      { "role": "user", "message": "string" },
+      { "role": "assistant", "message": "string" },
+      { "role": "user", "message": "string" },
+      { "role": "assistant", "message": "string" }
+    ]
+  },
+  "execute": {
+    "message": "string"
+  }
+}

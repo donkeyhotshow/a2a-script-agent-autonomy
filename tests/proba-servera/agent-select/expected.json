@@ -1,0 +1,20 @@
+{
+  "$proba": {
+    "ignorePaths": [
+      "context.task",
+      "context.history",
+      "context.execution",
+      "context.workbench",
+      "context.result",
+      "context.repo_map",
+      "context.requestPhase",
+      "context.llmPromiseId",
+      "context.session_id",
+      "execute"
+    ],
+    "inputAbsentPaths": ["context.history"]
+  },
+  "context": {
+    "transformSchema": "agent"
+  }
+}

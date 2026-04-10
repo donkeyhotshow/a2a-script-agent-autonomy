@@ -23,7 +23,7 @@ Output a short report in `tasks/pending/` or update `DEV_STATE.md` (per repo pro
 
 - **Papa:** Minimal count of **high-value** flows: one end-to-end dialog vertical, one agent seed, one gray-room-visible path, one router regression—each with **clear assertions** and cleanup (`artifacts-registry` / docs).
 - **Mama:** Expand **vertical** (red) and **horizontal** (gray) validators to cover **real** captured fixtures (not only toy examples), plus wrap or migrate validators from `tests/direct-tests/validators` where they are truly offline.
-- **Rule:** Nothing that only needs files should live only in Papa; nothing that truly needs Ollama should be required for Mama `run-all`.
+- **Rule:** Nothing that only needs files should live only in Papa; nothing that truly needs Local LLM upstream should be required for Mama `run-all`.
 
 ## Phase 3 — Implement
 

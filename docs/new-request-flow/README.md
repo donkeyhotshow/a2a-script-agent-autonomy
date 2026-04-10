@@ -3,7 +3,19 @@
 Цель: стандартизировать ответы сервера и обработку ответов клиентом; описать полный поток Web → Client API → Server. 
 Термины: **web** — веб-интерфейс клиента (`a2a-client/packages/web`), **клиент** — `a2a-client`, **Client API** — @a2a-client/vite-plugin (порт 5173), **сервер** — `a2a-server` (порт 3000).
 
-> **См.:** [PROTOCOL.md](PROTOCOL.md), [SCHEMA.md](SCHEMA.md), [simulations/SCHEMA.md](../../simulations/SCHEMA.md)
+> **См.:** [PROTOCOL.md](PROTOCOL.md), [SCHEMAS.md](SCHEMAS.md), [simulations/SCHEMA.md](../../simulations/SCHEMA.md)
+
+## Карта документов (без дублирования)
+
+| Документ | Назначение |
+|----------|------------|
+| [PROTOCOL.md](PROTOCOL.md) | Норматив: контракты, эндпоинты, action-key |
+| [DATA-FLOW.md](DATA-FLOW.md) | Одна головная диаграмма стека + таблица портов |
+| [SESSION-FLOW.md](SESSION-FLOW.md) | Router (два удара), жизненный цикл сессии в Client API |
+| [INTEGRATION.md](INTEGRATION.md) | Доп. ASCII (состояния сессии, симуляции), быстрый старт |
+| [CONTRADICTIONS.md](CONTRADICTIONS.md) | Архив: старые правки расхождений между черновиками |
+
+Глубокий разбор **fix-vue-imports**: [SIMULATION-FIX-VUE-IMPORTS.md](SIMULATION-FIX-VUE-IMPORTS.md) (не дублировать в [SIMULATION-ANALYSIS.md](SIMULATION-ANALYSIS.md)).
 
 ## Каноничные источники
 
@@ -17,48 +29,22 @@
 
 - **Web не знает адрес сервера.** Все запросы к серверу идут через Client API (@a2a-client/vite-plugin на порту 5173).
 - **Конфигурация на Web:** страница настроек (Settings) для URL Client API; редактор проектов (Projects).
-- **Сервер обрабатывает запросы и сохраняет их состояние**, но не хранит долгосрочные пользовательские сессии в традиционном смысле. Каждый запрос ассоциируется с promiseId для отслеживания состояния.
+- **Сервер stateless:** не хранит пользовательские сессии; каждый `POST /api/v1/invoke` даёт **`promiseId`**, финальный `execute`/`context` — после опроса результата. Долгоживущие сессии — на стороне Client API (диск).
 
 ## Поток задачи (Task Flow): Web → Client API → Server
 
-Система поддерживает два типа потоков в зависимости от типа операции и настроек:
-
-### Sync Flow (Для тестирования/симуляций)
-*Включается установкой переменной окружения `DEFAULT_SYNC_MODE=1`*
-- **Когда:** Простые операции, взаимодействие с формами, выбор вариантов
-- **Ответ:** Немедленный объект `execute` с данными формы/ввода
-- **Пример использования:** UI взаимодействия, простые действия, автоматизированное тестирование
-- **Пример:**
-  - `task: "dialog"` → `execute.form.textarea` (прямой диалог)
-  - `task: "analyze code"` → `execute.form.choices` (роутер с вариантами)
-- **Поток:**
-  1. **Web:** поле ввода задачи + кнопка Send → панель с прелоадером
-  2. **POST /api/a2a/sessions** (Web → Client API): `{ projectId, task }`
-  3. **Client API** сохраняет сессию, проксирует на Server: `{ task }`
-  4. **Server** возвращает немедленный результат с `execute.form.textarea` или `execute.form.choices`
-  5. **Client API** возвращает `execute.*` в Web
-  6. **Прелоадер скрывается** после получения ответа (с учетом минимального времени показа 5000мс)
-
-### Async Flow (PromiseId - По умолчанию)
-*Стандартный режим для сложных операций, требующих обработки LLM*
-- **Когда:** Сложная обработка ИИ, вызовы LLM, длительные операции
-- **Ответ:** `promiseId` для опроса статуса/результата
-- **Пример использования:** Генерация ИИ, сложный анализ, внешние вызовы API
-- **Поток:**
+### Поток (async-only)
+- **Server `POST /api/v1/invoke`:** всегда **`promiseId`** в ответе; готовый **`execute` / `context`** — после опроса **`GET /api/v1/requests/{promiseId}/result`**.
+- **Client API (Web):** после **`POST …/next`** опрос **`GET /api/a2a/sessions/{id}/async`** (или legacy promise-route), затем гидратация сессии.
+- **Поток UI:**
   1. **Web:** поле ввода задачи + кнопка Send → панель с прелоадером
   2. **POST /api/a2a/sessions** (Web → Client API): `{ projectId, task }`
   3. **Client API** сохраняет сессию, проксирует на Server: `{ task }`
   4. **Server** возвращает `{ promiseId, status: "pending" }`
-  5. **Client API** опрашивает статус через `GET /api/a2a/sessions/{id}/async` (предпочтительно для веб-UI) или `GET /api/a2a/sessions/{id}/promise/{promiseId}` (legacy)
-  6. **После завершения** Server возвращает результат:
-     - Если задача содержит "dialog" — `execute.form.textarea` (прямой диалог)
-     - Иначе `execute.form.choices` (роутер с вариантами)
+  5. **Client API** опрашивает `GET /api/a2a/sessions/{id}/async` (предпочтительно) или `GET /api/a2a/sessions/{id}/promise/{promiseId}` (legacy)
+  6. **После завершения** в ответе появляются `execute` / `context` (форма диалога, роутер с `choices`, и т.д.)
   7. **Client API** возвращает `execute.*` в Web
-  8. **Прелоадер скрывается** после получения финального результата
-
-#### Обнаружение типа потока
-- **Запрос от Client:** Включите `sync: true` для принудительного синхронного ответа
-- **Ответ от Server:** `sync: true` + `execute` = синхронный, `promiseId` = асинхронный
+  8. **Прелоадер скрывается** после финального результата
 
 Дополнительные сценарии:
 - [Remote web viewer + local client workflow](REMOTE-CLIENT-WEB.md) — когда ты сидишь на телефоне и весь лог/история остаются на локальном клиенте.

@@ -56,7 +56,66 @@ function readTailUtf8(filePath, maxBytes) {
   }
 }
 
+/** Detect assistant `message` that is the whole chat-completion wire JSON (should be unwrapped). */
+const WIRE_COMPLETION_IN_HISTORY_RE = /^\s*\{\s*"choices"\s*:\s*\[/;
+
+function scanSessionServerResponseForWireJsonHistory(sessionId) {
+  const hits = [];
+  if (!sessionId || typeof sessionId !== 'string') return { hits };
+  const base = path.join(process.cwd(), 'a2a-client/storage/sessions', sessionId);
+  if (!fs.existsSync(base)) return { hits };
+  let stepDirs = [];
+  try {
+    stepDirs = fs
+      .readdirSync(base, { withFileTypes: true })
+      .filter((e) => e.isDirectory() && /^\d+$/.test(e.name))
+      .map((e) => parseInt(e.name, 10))
+      .sort((a, b) => b - a);
+  } catch {
+    return { hits };
+  }
+  for (const step of stepDirs.slice(0, 8)) {
+    const fp = path.join(base, String(step), 'server-response.json');
+    if (!fs.existsSync(fp)) continue;
+    let j;
+    try {
+      j = JSON.parse(fs.readFileSync(fp, 'utf8'));
+    } catch {
+      continue;
+    }
+    const hist = j?.context?.history;
+    if (!Array.isArray(hist)) continue;
+    for (let i = 0; i < hist.length; i++) {
+      const row = hist[i];
+      if (!row || String(row.role || '').toLowerCase() !== 'assistant') continue;
+      const msg = String(row.message ?? '');
+      if (msg.length > 80 && WIRE_COMPLETION_IN_HISTORY_RE.test(msg)) {
+        hits.push({
+          step,
+          index: i,
+          preview: msg.slice(0, 160).replace(/\s+/g, ' ') + (msg.length > 160 ? '…' : ''),
+        });
+      }
+    }
+  }
+  return { hits };
+}
+
 class TaskMonitorLogScan {
+  /**
+   * Warn if persisted `server-response.json` still has raw OpenAI-style body in `context.history` assistant rows.
+   * Opt out: `TASK_MONITOR_SESSION_ARTIFACT_SCAN=0`.
+   */
+  warnSessionArtifactWireJson(sessionId) {
+    if (process.env.TASK_MONITOR_SESSION_ARTIFACT_SCAN === '0') return;
+    const { hits } = scanSessionServerResponseForWireJsonHistory(sessionId);
+    if (!hits.length) return;
+    console.warn(
+      `\n[artifact-scan] ${sessionId}: context.history assistant row(s) look like raw chat-completion JSON (choices[] envelope) — check server unwrap / history merge.\n` +
+        hits.map((h) => `  step ${h.step} [#${h.index}]: ${h.preview}`).join('\n')
+    );
+  }
+
   scanApplicationLogs(options = {}) {
     if (process.env.TASK_MONITOR_LOG_SCAN === '0') {
       return { filesScanned: 0, filePaths: [], hitCount: 0, hits: [], skipped: true };
@@ -122,4 +181,10 @@ class TaskMonitorLogScan {
   }
 }
 
-export { TaskMonitorLogScan, DEFAULT_LOG_TARGETS, ERROR_LINE_RE };
+export {
+  TaskMonitorLogScan,
+  DEFAULT_LOG_TARGETS,
+  ERROR_LINE_RE,
+  scanSessionServerResponseForWireJsonHistory,
+  WIRE_COMPLETION_IN_HISTORY_RE,
+};

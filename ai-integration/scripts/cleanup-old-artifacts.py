@@ -291,8 +291,13 @@ def get_storage_stats(logs_dir: Path) -> dict:
                         stats['pending_promises'] += 1
                     elif status == 'done':
                         stats['completed_promises'] += 1
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(
+                    "get_storage_stats: skipped promise dir %s: %s",
+                    promise_dir.name,
+                    e,
+                    exc_info=True,
+                )
 
     # Calculate total size
     total_size = 0
@@ -399,8 +404,13 @@ def main() -> int:
                     try:
                         if cache_file.stat().st_mtime < cutoff_logs:
                             preview_cache.append(cache_file.name)
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        logger.warning(
+                            "dry-run cache preview: stat failed %s: %s",
+                            cache_file,
+                            e,
+                            exc_info=True,
+                        )
 
         # Check logs
         requests_dir = logs_dir / 'requests'
@@ -427,8 +437,13 @@ def main() -> int:
                             preview_pending.append(promise_dir.name)
                         elif status == 'done' and created_at > 0 and created_at < cutoff_completed:
                             preview_completed.append(promise_dir.name)
-                except Exception:
-                    pass
+                except Exception as e:
+                    logger.warning(
+                        "dry-run: skipped promise dir %s: %s",
+                        promise_dir.name,
+                        e,
+                        exc_info=True,
+                    )
 
         print(json.dumps({
             'mode': 'dry-run',

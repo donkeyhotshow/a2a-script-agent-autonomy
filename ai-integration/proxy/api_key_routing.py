@@ -1,5 +1,5 @@
 """
-API key pool: each key has id + provider; Ollama uses a placeholder secret (no Bearer).
+API key pool: each key has id + provider; Local LLM upstream uses a placeholder secret (no Bearer).
 Rate-limit responses trigger failover to the next key for the same provider.
 """
 from __future__ import annotations
@@ -12,7 +12,7 @@ from typing import Any, Callable, Optional, Tuple
 import requests
 
 from .providers.config_loader import (
-    OLLAMA_API_KEY_PLACEHOLDER,
+    LOCAL_LLM_KEY_PLACEHOLDER,
     ProvidersConfig,
     load_providers_config,
 )
@@ -20,11 +20,45 @@ from .providers.config_loader import (
 logger = logging.getLogger(__name__)
 
 
-def is_ollama_placeholder(secret: Optional[str]) -> bool:
+def is_local_llm_key_placeholder(secret: Optional[str]) -> bool:
     if not secret:
         return True
     s = str(secret).strip()
-    return s == OLLAMA_API_KEY_PLACEHOLDER or s == ""
+    return s == LOCAL_LLM_KEY_PLACEHOLDER or s == ""
+
+
+def _parse_json_object_body(
+    body: bytes,
+    content_type: Optional[str],
+    log_label: str,
+) -> Optional[dict[str, Any]]:
+    ct = (content_type or "").lower()
+    if not body or "json" not in ct:
+        return None
+    try:
+        parsed = json.loads(body.decode("utf-8", errors="replace"))
+    except json.JSONDecodeError as e:
+        logger.debug("%s: JSON parse failed (ct=%s): %s", log_label, content_type, e)
+        return None
+    return parsed if isinstance(parsed, dict) else None
+
+
+def _error_payload_rate_limited(
+    parsed: dict[str, Any],
+    *,
+    include_too_many_requests: bool,
+) -> bool:
+    err = parsed.get("error")
+    if isinstance(err, dict):
+        code = str(err.get("code") or "")
+        msg = str(err.get("message") or err.get("msg") or "").lower()
+        if code == "1302" or "rate limit" in msg:
+            return True
+        if include_too_many_requests and "too many requests" in msg:
+            return True
+    elif isinstance(err, str) and "rate limit" in err.lower():
+        return True
+    return False
 
 
 def is_upstream_rate_limited(
@@ -35,35 +69,11 @@ def is_upstream_rate_limited(
     if status_code == 429:
         return True
     if status_code == 503:
-        ct = (content_type or "").lower()
-        if body and "json" in ct:
-            try:
-                parsed = json.loads(body.decode("utf-8", errors="replace"))
-            except Exception:
-                return False
-            if isinstance(parsed, dict):
-                err = parsed.get("error")
-                if isinstance(err, dict):
-                    code = str(err.get("code") or "")
-                    msg = str(err.get("message") or err.get("msg") or "").lower()
-                    if code == "1302" or "rate limit" in msg:
-                        return True
-                elif isinstance(err, str) and "rate limit" in err.lower():
-                    return True
+        parsed = _parse_json_object_body(body, content_type, "is_upstream_rate_limited:503")
+        return bool(parsed and _error_payload_rate_limited(parsed, include_too_many_requests=False))
     if status_code >= 400 and body:
-        ct = (content_type or "").lower()
-        if "json" in ct:
-            try:
-                parsed = json.loads(body.decode("utf-8", errors="replace"))
-            except Exception:
-                return False
-            if isinstance(parsed, dict):
-                err = parsed.get("error")
-                if isinstance(err, dict):
-                    code = str(err.get("code") or "")
-                    msg = str(err.get("message") or err.get("msg") or "").lower()
-                    if code == "1302" or "rate limit" in msg or "too many requests" in msg:
-                        return True
+        parsed = _parse_json_object_body(body, content_type, "is_upstream_rate_limited:error")
+        return bool(parsed and _error_payload_rate_limited(parsed, include_too_many_requests=True))
     return False
 
 
@@ -129,10 +139,10 @@ def forward_with_api_key_failover(
     keys = get_api_keys_for_provider(cfg, provider_name)
     req = request_fn or _do_http
 
-    if provider_type == "ollama":
+    if provider_type == "compat_llm":
         hdr = _merge_upstream_headers(base_header_subset, None)
         resp = req(method, target_url, body=body, headers=hdr, params=forward_args or {}, timeout=timeout)
-        oid = keys[0].id if keys else "ollama-local"
+        oid = keys[0].id if keys else "compat-llm-local"
         return resp, oid
 
     if not keys:
@@ -143,7 +153,7 @@ def forward_with_api_key_failover(
     last: Optional[requests.Response] = None
     for entry in keys:
         secret = entry.secret
-        if is_ollama_placeholder(secret):
+        if is_local_llm_key_placeholder(secret):
             hdr = _merge_upstream_headers(base_header_subset, None)
         else:
             hdr = _merge_upstream_headers(base_header_subset, secret)
@@ -183,7 +193,7 @@ def write_routing_hint(
             },
         )
     except Exception as e:
-        logger.debug("write_routing_hint failed: %s", e)
+        logger.warning("write_routing_hint failed: %s", e, exc_info=True)
 
 
 def load_routing_hint(folder_path: str) -> Optional[dict[str, Any]]:
@@ -198,5 +208,6 @@ def load_routing_hint(folder_path: str) -> Optional[dict[str, Any]]:
         with open(path, "r", encoding="utf-8") as f:
             data = _json.load(f)
         return data if isinstance(data, dict) else None
-    except Exception:
+    except Exception as exc:
+        logger.warning("load_routing_hint failed %s: %s", folder_path, exc, exc_info=True)
         return None

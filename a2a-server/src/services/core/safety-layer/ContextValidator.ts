@@ -8,13 +8,20 @@ import { createHash } from 'node:crypto';
 import type { IntegrityResult } from './types.js';
 
 export class ContextValidator {
+  private static serialise(context: Record<string, unknown>): string {
+    return JSON.stringify(context, Object.keys(context).sort());
+  }
+
+  private static digestSerialised(serialised: string): string {
+    return createHash('sha256').update(serialised, 'utf8').digest('hex');
+  }
+
   /**
    * Compute a canonical SHA-256 over the provided context object.
    * Uses deterministic JSON serialisation (sorted keys via replacer).
    */
   static hash(context: Record<string, unknown>): string {
-    const canonical = JSON.stringify(context, Object.keys(context).sort());
-    return createHash('sha256').update(canonical, 'utf8').digest('hex');
+    return ContextValidator.digestSerialised(ContextValidator.serialise(context));
   }
 
   /**
@@ -25,8 +32,8 @@ export class ContextValidator {
    * @param suppliedHash The hash the caller claims describes the context.
    */
   validate(context: Record<string, unknown>, suppliedHash: string): IntegrityResult {
-    const serialised = JSON.stringify(context, Object.keys(context).sort());
-    const actualHash = createHash('sha256').update(serialised, 'utf8').digest('hex');
+    const serialised = ContextValidator.serialise(context);
+    const actualHash = ContextValidator.digestSerialised(serialised);
 
     return {
       valid: actualHash === suppliedHash,

@@ -1,6 +1,6 @@
 # `task-decomposition/7` — copy of `response.json` for drift checks
 
-**Not model output.** Since this is sync mode (no render-markdown), this file is a mirror only for `sim:check-md` to compare to `response.json`.
+**Not model output.** **Sync golden** folder (`simulations/sync/`) — no render-markdown; this file is a mirror only for `sim:check-md` to compare to `response.json`.
 
 ```json
 {
@@ -16,7 +16,7 @@
     "form": {
       "input": [
         {
-          "name": "task",
+          "name": "message",
           "type": "text",
           "label": "Task doc content (or path)",
           "required": true

@@ -71,7 +71,8 @@ export function convertToVueFlowNodes(response: UnifiedResponse): VueFlowNode[] 
         });
 
         // Proposed actions nodes
-        result.proposedActions.forEach((action, actionIndex) => {
+        if (result.proposedActions) {
+            result.proposedActions.forEach((action, actionIndex) => {
             nodes.push({
                 id: `action_${action.id}`,
                 type: 'action',
@@ -224,7 +225,8 @@ export function convertToVueFlowEdges(response: UnifiedResponse, nodes?: VueFlow
         const contextId = `context_${result.context.session_id}`;
 
         // Edges from context to each proposed action
-        result.proposedActions.forEach((action) => {
+        if (result.proposedActions) {
+            result.proposedActions.forEach((action) => {
             edges.push({
                 id: `edge_${contextId}_${action.id}`,
                 source: contextId,

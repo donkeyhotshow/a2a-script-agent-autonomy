@@ -1,21 +1,24 @@
 # AI Integration Troubleshooting Guide
 
+**Triangle:** Operators should treat **`GET http://localhost:11434/health`** as the hub gate (**C1**). Repository **`start-all` / `runbook-cli`** do not start a local upstream; configure **`LOCAL_LLM_UPSTREAM_URL`**, providers, or your own process.
+
 ## Common Issues
 
-### 1. Ollama Not Available
+### 1. Local LLM upstream Not Available
 
-**Symptom:** `ollama_available: false` in health response
+**Symptom:** `local_llm_upstream_available: false` in health response
 
 **Diagnosis:**
 ```bash
-curl http://localhost:11434/health/ollama
+curl http://localhost:11434/health
+curl http://localhost:11434/health/local-llm-upstream
 curl http://localhost:11435/api/tags
 ```
 
 **Solutions:**
-- Start Ollama: `ollama serve` or `GET /ollama/start`
+- Start local HTTP LLM (your command / process manager), or `GET /local-llm-upstream/start` on the proxy when configured — not via removed `scripts/start-local-llm.bat`.
 - Check if port 11435 is in use: `netstat -ano | findstr 11435`
-- Check Ollama logs: `ollama logs`
+- Check logs from the process you use to run the local HTTP LLM.
 
 ---
 
@@ -35,8 +38,12 @@ curl http://localhost:11434/daemon/status
 **Solutions:**
 - Ensure daemon is running: `POST /daemon/start`
 - Manually execute: `POST /promise/{id}/execute`
-- Check error: `GET /promise/{id}` - look for `error` field
-- Retry failed promise: `POST /promise/{id}/retry`
+- Check error: `GET /promise/{id}` — short `error` by default; full text: `?detail=1`
+- List tickets in **error** (not in `/promises/pending`): `GET /promises/errors` (full text per row: `?detail=1`)
+- Retry after fixing upstream: `POST /promise/{id}/retry` then `POST /promise/{id}/execute` (or let the daemon pick up **pending** only)
+- Drop a stuck ticket: `DELETE /promise/{id}`
+
+Canonical API table: [`docs/api-reference/PROXY_API.md`](../api-reference/PROXY_API.md) § *Promise queue (hub tickets)*.
 
 ---
 
@@ -50,8 +57,8 @@ curl http://localhost:11434/health/ready
 ```
 
 **Solutions:**
-- Check Ollama availability: `GET /health/ollama`
-- Restart Ollama: `POST /ollama/restart`
+- Check local upstream availability: `GET /health/local-llm-upstream`
+- Restart via proxy helper: `POST /local-llm-upstream/restart`
 - Check proxy logs in `proxy_logs/`
 
 ---
@@ -67,7 +74,7 @@ curl http://localhost:11434/v1/models
 ```
 
 **Solutions:**
-- Pull model: `ollama pull qwen3:8b`
+- Pull model: use your local HTTP LLM vendor CLI so `qwen3:8b` appears in `/api/tags`.
 - Check model mapping in `AI_HUB_CONFIG`
 - Update default model in config
 
@@ -85,7 +92,7 @@ grep FORWARD_TIMEOUT ai-integration/.env
 
 **Solutions:**
 - Increase `FORWARD_TIMEOUT_SECONDS` in config
-- Check network connectivity to Ollama
+- Check network connectivity to Local LLM upstream
 - Reduce model complexity or use smaller model
 
 ---
@@ -104,13 +111,13 @@ grep PROVIDER_TIMEOUT ai-integration/.env
 
 **Solutions:**
 - Set `PROVIDER_TIMEOUT=120` for slow external providers (120 seconds)
-- Use default `PROVIDER_TIMEOUT=30` for fast local providers (Ollama)
+- Use default `PROVIDER_TIMEOUT=30` for fast local providers (Local LLM upstream)
 - For quick connection checks only, use `PROVIDER_TIMEOUT=10`
 
 **Recommended Values:**
 | Provider Type | PROVIDER_TIMEOUT | Description |
 |---------------|------------------|-------------|
-| Ollama (local) | 30s | Default, fast local provider |
+| Local LLM upstream (local) | 30s | Default, fast local provider |
 | OpenRouter | 120s | External API, can be slow |
 | Groq | 120s | External API, can be slow |
 | HuggingFace | 120s | External API, can be slow |
@@ -119,7 +126,7 @@ grep PROVIDER_TIMEOUT ai-integration/.env
 **Example:**
 ```bash
 # For slow external providers
-PROVIDER_TIMEOUT=120 python -m pytest tests/providers/test_ollama_provider.py -v
+PROVIDER_TIMEOUT=120 python -m pytest tests/providers/test_router.py -v
 ```
 
 ---
@@ -209,7 +216,7 @@ dir ai-integration\proxy_logs\promises
 ```bash
 # Run complete health check
 curl http://localhost:11434/health
-curl http://localhost:11434/health/ollama
+curl http://localhost:11434/health/local-llm-upstream
 curl http://localhost:11434/health/ready
 ```
 
@@ -249,11 +256,12 @@ curl http://localhost:11434/metrics
 
 | Component | Location |
 |-----------|----------|
-| Proxy logs | `ai-integration/proxy_logs/requests/request_*/` |
+| Proxy LLM traces | `ai-integration/proxy_logs/promises/<promiseId>/` (`request.json`, `response.json`, `body_raw.json`, …) |
+| Legacy request dumps (non-promise paths) | `ai-integration/proxy_logs/requests/request_*/` |
 | Promise upstream bodies (debug) | `ai-integration/proxy_logs/promises/<promiseId>/body.md` |
 | Promise storage | `ai-integration/storage/promises/` |
 | Cache | `ai-integration/storage/cache/` |
-| Ollama logs | `ollama logs` |
+| Local LLM upstream logs | stdout/stderr of your `LOCAL_LLM_SERVE_CMD` process |
 
 ---
 
@@ -281,13 +289,13 @@ rm -rf ai-integration/storage/promises/
 curl -X POST http://localhost:11434/daemon/start
 ```
 
-### Reset Ollama
+### Reset Local LLM upstream
 ```bash
-# Stop Ollama via proxy
-curl -X POST http://localhost:11434/ollama/stop
+# Stop via proxy helper routes
+curl -X POST http://localhost:11434/local-llm-upstream/stop
 
-# Kill any remaining processes
-taskkill /F /IM ollama.exe
+# Kill any remaining local server process (name depends on your install)
+taskkill /F /IM local-llm-server.exe
 
-# Start Ollama
-curl http://localhost:11434/ollama/start
+# Start again
+curl http://localhost:11434/local-llm-upstream/start

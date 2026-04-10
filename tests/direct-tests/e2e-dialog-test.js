@@ -10,9 +10,12 @@
  * Env: A2A_SERVER_URL, CLIENT_API_URL
  * Optional: REQUIRE_ASYNC_PIPELINE=1 — fail if dialog /next does not go async or no in-flight /async seen
  *
+ * Resilience (transient 503 from Vite→A2A proxy): E2E_FETCH_RETRIES (default 6), E2E_FETCH_RETRY_BASE_MS (default 200),
+ * E2E_CASE_COOLDOWN_MS (default 75) between cases, E2E_RED_GRAY_ATTEMPTS (default 6) for redGrayRoom.
+ *
  * Fewer LLM round-trips / sessions (same assertions, merged runners):
  *   E2E_DIRECT_LOW_LLM=1 — enables both merges below
- *   E2E_DIRECT_MERGE_INVOKE=1 — one sync invoke replaces invokeSyncEnvelope + invokeHello + invokeSyncShape (3→1 LLM)
+ *   E2E_DIRECT_MERGE_INVOKE=1 — one invoke+poll replaces invokeAsyncEnvelope + invokeHello + invokeSyncShape (3→1 LLM)
  *   E2E_DIRECT_MERGE_CLIENT_SESSION_SCHEMA=1 — one session replaces asyncAfterCreate, waitingAsyncIdle, waitingGetSession,
  *     waitingLatest, waitingMessagesExecute, sessionMessages, getSessionIncludeContext, nextResultMessage, nextTaskShorthand (9→1 session)
  *
@@ -45,6 +48,13 @@ const SERVER_URL = process.env.A2A_SERVER_URL || 'http://localhost:3000';
 const CLIENT_API_URL = process.env.CLIENT_API_URL || 'http://localhost:5173';
 const REQUIRE_ASYNC_PIPELINE = process.env.REQUIRE_ASYNC_PIPELINE === '1';
 
+/** Transient proxy errors to A2A (:3000) — retry with backoff (503 often empty `message`). */
+const E2E_FETCH_RETRIES = Math.max(1, Number(process.env.E2E_FETCH_RETRIES) || 6);
+const E2E_FETCH_RETRY_BASE_MS = Math.max(50, Number(process.env.E2E_FETCH_RETRY_BASE_MS) || 200);
+/** Optional pause between E2E cases to avoid overloading the dev server connection pool. */
+const E2E_CASE_COOLDOWN_MS = Math.max(0, Number(process.env.E2E_CASE_COOLDOWN_MS) || 75);
+const E2E_RED_GRAY_ATTEMPTS = Math.max(1, Number(process.env.E2E_RED_GRAY_ATTEMPTS) || 6);
+
 function parseArgs(argv) {
   const list = argv.includes('--list');
   const onlyArg = argv.find((a) => a.startsWith('--only='));
@@ -58,8 +68,38 @@ async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * Retry on transient Client API / proxy failures (502/503/429) and network errors.
+ * @param {string} url
+ * @param {RequestInit} [init]
+ */
+async function fetchWithRetry(url, init = {}) {
+  let lastErr;
+  for (let attempt = 0; attempt < E2E_FETCH_RETRIES; attempt++) {
+    try {
+      const response = await fetch(url, init);
+      if (response.ok) return response;
+      const status = response.status;
+      const retryable = status === 503 || status === 502 || status === 429;
+      if (retryable && attempt < E2E_FETCH_RETRIES - 1) {
+        await sleep(E2E_FETCH_RETRY_BASE_MS * (attempt + 1));
+        continue;
+      }
+      return response;
+    } catch (e) {
+      lastErr = e;
+      if (attempt < E2E_FETCH_RETRIES - 1) {
+        await sleep(E2E_FETCH_RETRY_BASE_MS * (attempt + 1));
+        continue;
+      }
+      throw e;
+    }
+  }
+  throw lastErr ?? new Error('fetchWithRetry: exhausted retries');
+}
+
 async function createSession(body = {}) {
-  const response = await fetch(`${CLIENT_API_URL}/api/a2a/sessions`, {
+  const response = await fetchWithRetry(`${CLIENT_API_URL}/api/a2a/sessions`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -77,7 +117,7 @@ async function createSession(body = {}) {
 }
 
 async function sendNext(sessionId, body) {
-  const response = await fetch(
+  const response = await fetchWithRetry(
     `${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/next`,
     {
       method: 'POST',
@@ -98,7 +138,7 @@ async function sendNext(sessionId, body) {
 
 async function getSession(sessionId, opts = {}) {
   const q = opts.includeContext ? '?includeContext=1' : '';
-  const response = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}${q}`);
+  const response = await fetchWithRetry(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}${q}`);
   if (response.status === 403 && opts.includeContext) {
     return null;
   }
@@ -114,10 +154,10 @@ function unwrapPublicSession(body) {
   return body;
 }
 
-async function pollAsyncSettled(sessionId, maxWaitMs = 120_000, stepMs = 500) {
-  const deadline = Date.now() + maxWaitMs;
-  while (Date.now() < deadline) {
-    const r = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
+/** Poll GET …/sessions/:id/async until `asyncPending` is false (same contract as promiseId: no wall-clock cap). */
+async function pollAsyncSettled(sessionId, stepMs = 500) {
+  for (;;) {
+    const r = await fetchWithRetry(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
     if (!r.ok) break;
     const j = await r.json();
     if (!j.asyncPending) return j;
@@ -161,14 +201,14 @@ async function performRedRoomClientExecute(sessionId, executeBlock) {
   assert(ack?.success === true, 'red-room /next ack success expected');
 
   if (ack.asyncPending) {
-    await pollAsyncSettled(sessionId, 120_000);
+    await pollAsyncSettled(sessionId);
   }
 
   return getSession(sessionId);
 }
 
 async function fetchJson(url, init) {
-  const response = await fetch(url, init);
+  const response = await fetchWithRetry(url, init);
   if (!response.ok) {
     const text = await response.text();
     throw new Error(`${url}: ${response.status} ${text}`);
@@ -177,7 +217,7 @@ async function fetchJson(url, init) {
 }
 
 async function invokeDirect(task, context = {}) {
-  const body = { task, sync: true };
+  const body = { task };
   if (context.execution) {
     body.context = {
       task,
@@ -193,7 +233,27 @@ async function invokeDirect(task, context = {}) {
     const error = await response.text();
     throw new Error(`Invoke failed: ${response.status} - ${error}`);
   }
-  return response.json();
+  const wrap = await response.json();
+  const pid = wrap?.data?.promiseId;
+  if (!pid || typeof pid !== 'string') {
+    throw new Error(`async-only invoke: expected data.promiseId, got ${JSON.stringify(wrap)}`);
+  }
+  await recordServerPromise(pid);
+  const terminal = await pollServerRequestResult(pid);
+  if (!terminal?.data) {
+    throw new Error(`invokeDirect: missing terminal data for ${pid}`);
+  }
+  const d = terminal.data;
+  return {
+    success: true,
+    data: {
+      status: d.status,
+      execute: d.execute,
+      context: d.context,
+      message: d.message,
+      result: d.result,
+    },
+  };
 }
 
 /** POST /api/v1/invoke — returns status + parsed body (for 4xx tests). */
@@ -212,11 +272,10 @@ async function postInvokeRaw(payload) {
   return { status: response.status, body };
 }
 
-/** Poll GET /api/v1/requests/:id/result until terminal status (async invoke). */
-async function pollServerRequestResult(promiseId, maxWaitMs = 120_000, stepMs = 500) {
-  const deadline = Date.now() + maxWaitMs;
+/** Poll GET /api/v1/requests/:id/result until terminal status (async invoke). No wall-clock cap. */
+async function pollServerRequestResult(promiseId, stepMs = 500) {
   const url = `${SERVER_URL}/api/v1/requests/${encodeURIComponent(promiseId)}/result`;
-  while (Date.now() < deadline) {
+  for (;;) {
     const r = await fetch(url);
     if (!r.ok) {
       await sleep(stepMs);
@@ -229,13 +288,12 @@ async function pollServerRequestResult(promiseId, maxWaitMs = 120_000, stepMs = 
     }
     await sleep(stepMs);
   }
-  return null;
 }
 
 // --- cases ---
 
 async function caseClientProjects() {
-  const r = await fetch(`${CLIENT_API_URL}/api/a2a/projects`);
+  const r = await fetchWithRetry(`${CLIENT_API_URL}/api/a2a/projects`);
   assert(r.ok, `Client API projects: ${r.status}`);
 }
 
@@ -265,7 +323,6 @@ async function caseInvokeUnknownRootProperty400() {
 
 async function caseInvokeContextFollowupShape() {
   const { status, body } = await postInvokeRaw({
-    sync: false,
     context: {
       task: 'follow-up invoke schema',
       execution: { action: 'dialog', step: 'init' },
@@ -277,7 +334,7 @@ async function caseInvokeContextFollowupShape() {
   assert(typeof pid === 'string' && pid.length > 0, 'follow-up async promiseId');
   await recordServerPromise(pid);
   const terminal = await pollServerRequestResult(pid);
-  assert(terminal, 'follow-up invoke poll timeout');
+  assert(terminal, 'follow-up invoke poll did not return terminal');
   const data = terminal.data;
   assert(data?.status === 'completed', `follow-up invoke terminal: ${data?.status} ${JSON.stringify(data?.error)}`);
   if (data?.execute && typeof data.execute === 'object') {
@@ -306,11 +363,12 @@ async function caseRequestsSingleStatus404() {
   assert(r.status === 404, `single status 404: ${r.status}`);
 }
 
-async function caseInvokeSyncResponseEnvelope() {
+async function caseInvokeAsyncResponseEnvelope() {
   const invokeResult = await invokeDirect('Envelope probe');
-  assert(invokeResult.success === true, 'sync envelope success');
+  assert(invokeResult.success === true, 'invoke envelope success');
   const data = invokeResult.data;
-  assert(data && data.sync === true, 'data.sync true');
+  assert(data?.status === 'completed', `terminal status ${data?.status}`);
+  assert(data.sync === undefined, 'no legacy data.sync');
   assert(
     data.execute !== undefined || data.message !== undefined || data.context !== undefined,
     'data has execute, message, or context'
@@ -390,14 +448,11 @@ async function caseWaitingNextAckShape() {
   assert(ack.success === true, 'next success');
   assert(ack.accepted === true, 'next accepted');
   assert(typeof ack.asyncPending === 'boolean', 'next ack asyncPending boolean');
-  if (ack.asyncPending) {
-    assert(typeof ack.promiseId === 'string' && ack.promiseId.length > 0, 'next ack promiseId when async');
-  }
 }
 
 /**
  * Dialog /next → optional in-flight /async → settle → idle + GET session + legacy GET .../promise/:id.
- * When stack is sync-only, passes unless REQUIRE_ASYNC_PIPELINE=1.
+ * Stack is async-only: if REQUIRE_ASYNC_PIPELINE=1, /next must report asyncPending for this probe.
  */
 async function caseWaitingAsyncPipeline() {
   const { sessionId } = await createSession({
@@ -413,12 +468,26 @@ async function caseWaitingAsyncPipeline() {
     return;
   }
 
-  const promiseId = ack.promiseId;
-  assert(typeof promiseId === 'string' && promiseId.length > 0, 'pipeline: promiseId');
+  let promiseId = null;
+  for (;;) {
+    const r = await fetchWithRetry(
+      `${CLIENT_API_URL}/api/a2a/sessions/${sessionId}?includeContext=1`
+    );
+    if (r.ok) {
+      const j = await r.json();
+      const s = j.session ?? j;
+      if (typeof s?.promiseId === 'string' && s.promiseId.length > 0) {
+        promiseId = s.promiseId;
+        break;
+      }
+    }
+    await sleep(50);
+  }
+  assert(promiseId, 'pipeline: promiseId (GET session ?includeContext=1 while in flight)');
 
   let sawInFlight = false;
-  for (let i = 0; i < 40; i++) {
-    const r = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
+  for (;;) {
+    const r = await fetchWithRetry(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
     assert(r.ok, `pipeline: /async ${r.status}`);
     const j = await r.json();
     if (j.asyncPending === true && j.status !== 'idle') {
@@ -435,7 +504,7 @@ async function caseWaitingAsyncPipeline() {
     throw new Error('REQUIRE_ASYNC_PIPELINE=1 but never observed in-flight GET /async');
   }
 
-  const settled = await pollAsyncSettled(sessionId, 120_000);
+  const settled = await pollAsyncSettled(sessionId);
   assert(settled != null, 'pipeline: poll settled');
   assert(settled.asyncPending === false, 'pipeline: settled asyncPending false');
 
@@ -540,7 +609,7 @@ async function caseAgentModeDialogWorkflow() {
   for (let i = 0; i < 18; i++) {
     let pub = unwrapPublicSession(await getSession(sessionId));
     if (pub.asyncPending) {
-      await pollAsyncSettled(sessionId, 120_000);
+      await pollAsyncSettled(sessionId);
       pub = unwrapPublicSession(await getSession(sessionId));
     }
     assertWaitingPublicSessionShape(pub, `agentDialogWorkflow step ${i}`);
@@ -559,7 +628,7 @@ async function caseAgentModeDialogWorkflow() {
       );
       const ack = await sendNext(sessionId, { result: { choice: 'dialog' } });
       assert(ack?.success !== false, 'submit router choice dialog');
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       pickedDialog = true;
       continue;
     }
@@ -570,23 +639,23 @@ async function caseAgentModeDialogWorkflow() {
           result: { message: 'direct-tests: agent dialog routing probe' },
         });
         assert(ack?.success !== false, 'task direction /next');
-        if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+        if (ack.asyncPending) await pollAsyncSettled(sessionId);
         continue;
       }
       if (postDialogTurns === 0) {
         const ack = await sendNext(sessionId, { result: { message: 'hello world' } });
         assert(ack?.success !== false, 'dialog hello world');
-        if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+        if (ack.asyncPending) await pollAsyncSettled(sessionId);
         postDialogTurns = 1;
         continue;
       }
       if (postDialogTurns === 1) {
         const ack = await sendNext(sessionId, { result: { message: 'Thanks!' } });
         assert(ack?.success !== false, 'dialog Thanks');
-        if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+        if (ack.asyncPending) await pollAsyncSettled(sessionId);
         postDialogTurns = 2;
         const fin = unwrapPublicSession(await getSession(sessionId));
-        if (fin.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+        if (fin.asyncPending) await pollAsyncSettled(sessionId);
         const final = unwrapPublicSession(await getSession(sessionId));
         assertWaitingPublicSessionShape(final, 'agentDialogWorkflow final');
         if (final.execute && typeof final.execute === 'object') {
@@ -623,7 +692,7 @@ async function runRouterChoiceNoLoopCore(opts) {
   for (let i = 0; i < 22; i++) {
     let pub = unwrapPublicSession(await getSession(sessionId));
     if (pub.asyncPending) {
-      await pollAsyncSettled(sessionId, 120_000);
+      await pollAsyncSettled(sessionId);
       pub = unwrapPublicSession(await getSession(sessionId));
     }
     assertWaitingPublicSessionShape(pub, `${label} step ${i}`);
@@ -645,7 +714,7 @@ async function runRouterChoiceNoLoopCore(opts) {
       assert(pick, `${label}: choice id "${choiceId}" missing from router form`);
       const ack = await submitRouterChoice(sessionId, pick);
       assert(ack?.success !== false, `${label}: submit choice`);
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       submittedRouterChoice = true;
       continue;
     }
@@ -658,7 +727,7 @@ async function runRouterChoiceNoLoopCore(opts) {
         result: { message: `direct-tests: task direction (${label})` },
       });
       assert(ack?.success !== false, `${label}: task direction /next`);
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       continue;
     }
 
@@ -768,7 +837,7 @@ async function caseRouterWrongBeatMessage() {
   for (let i = 0; i < 20; i++) {
     let pub = unwrapPublicSession(await getSession(sessionId));
     if (pub.asyncPending) {
-      await pollAsyncSettled(sessionId, 120_000);
+      await pollAsyncSettled(sessionId);
       pub = unwrapPublicSession(await getSession(sessionId));
     }
     assertWaitingPublicSessionShape(pub, `routerWrongBeat step ${i}`);
@@ -788,9 +857,9 @@ async function caseRouterWrongBeatMessage() {
         },
       });
       assert(ack?.success !== false, 'routerWrongBeat: wrong-beat /next');
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       const after = unwrapPublicSession(await getSession(sessionId));
-      if (after.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (after.asyncPending) await pollAsyncSettled(sessionId);
       const settled = unwrapPublicSession(await getSession(sessionId));
       assertWaitingPublicSessionShape(settled, 'routerWrongBeat after wrong beat');
       const c2 = getRouterFormChoiceArray(settled.execute?.form);
@@ -808,7 +877,7 @@ async function caseRouterWrongBeatMessage() {
         result: { message: 'direct-tests: task direction for wrong-beat probe' },
       });
       assert(ack?.success !== false, 'routerWrongBeat: task direction');
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       continue;
     }
 
@@ -825,7 +894,7 @@ async function caseDialogSessionRoundTrip() {
   assert(sessionId, 'session id');
   await sendNext(sessionId, { result: { message: 'Hi' } });
   await sleep(800);
-  await pollAsyncSettled(sessionId, 60_000);
+  await pollAsyncSettled(sessionId);
   const body = await getSession(sessionId);
   const pub = unwrapPublicSession(body);
   assert(pub && typeof pub === 'object', 'GET /sessions/:id public DTO');
@@ -858,7 +927,7 @@ async function navigateThroughRouterToAgent(sessionId, label) {
   for (let i = 0; i < 22; i++) {
     let pub = unwrapPublicSession(await getSession(sessionId));
     if (pub.asyncPending) {
-      await pollAsyncSettled(sessionId, 120_000);
+      await pollAsyncSettled(sessionId);
       pub = unwrapPublicSession(await getSession(sessionId));
     }
     const ex = pub.execute;
@@ -868,7 +937,7 @@ async function navigateThroughRouterToAgent(sessionId, label) {
       assert(pick, `${label}: router missing agent choice`);
       const ack = await sendNext(sessionId, { result: { choice: pick } });
       assert(ack?.success !== false, `${label}: router pick agent`);
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       return;
     }
     if (hasWebFormTextEntry(ex?.form) && !choices?.length) {
@@ -876,7 +945,7 @@ async function navigateThroughRouterToAgent(sessionId, label) {
         result: { message: `${label}: task direction for router` },
       });
       assert(ack?.success !== false, `${label}: task direction`);
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       continue;
     }
     return;
@@ -933,14 +1002,14 @@ async function caseRedAndGrayRoomCycle() {
   }
 
   const promptText =
-    'Please start a tool execution for a file operation. For example: execute {"read-file":{"path":"README.md"}}.';
+    'You must emit a client tool step. Prefer read-file: use action read-file with path README.md at repo root (relative path README.md).';
 
   let redExecute;
-  for (let attempt = 0; attempt < 3; attempt++) {
+  for (let attempt = 0; attempt < E2E_RED_GRAY_ATTEMPTS; attempt++) {
     const ack = await sendNext(sessionId, { result: { message: promptText } });
     assert(ack?.accepted === true, 'red-gray room: /next accepted');
 
-    const settled = await pollAsyncSettled(sessionId, 120_000);
+    const settled = await pollAsyncSettled(sessionId);
     assert(settled, 'red-gray room: first settle');
 
     const full = await pollGrayRoomSlotVisible(sessionId, 'after first settle');
@@ -950,6 +1019,7 @@ async function caseRedAndGrayRoomCycle() {
       redExecute = executeObj;
       break;
     }
+    await sleep(400);
   }
 
   assert(redExecute, 'red-gray room: no tool execute observed after attempts');
@@ -992,13 +1062,14 @@ async function caseInvokeSyncShape() {
   }
 }
 
-/** Single sync invoke: assertions from invokeSyncEnvelope + invokeHello + invokeSyncShape. */
+/** Single invoke + poll: envelope + hello + single-key execute (merge flags). */
 async function caseMergedInvokeHelloEnvelopeShape() {
   const invokeResult = await invokeDirect('Hello');
-  assert(invokeResult.success === true, 'sync envelope success');
+  assert(invokeResult.success === true, 'invoke envelope success');
   assert(invokeResult.success !== false, 'invoke should not report success=false');
   const data = invokeResult.data;
-  assert(data && data.sync === true, 'data.sync true');
+  assert(data?.status === 'completed', `terminal status ${data?.status}`);
+  assert(data.sync === undefined, 'no legacy data.sync');
   assert(
     data.execute !== undefined || data.message !== undefined || data.context !== undefined,
     'data has execute, message, or context'
@@ -1049,7 +1120,7 @@ function buildEffectiveOrder(only) {
   const { mergeInvoke, mergeClientSessionSchema } = collectMergeFlags();
   let order = [...DEFAULT_ORDER];
   if (mergeInvoke) {
-    const drop = new Set(['invokeSyncEnvelope', 'invokeHello', 'invokeSyncShape']);
+    const drop = new Set(['invokeAsyncEnvelope', 'invokeHello', 'invokeSyncShape']);
     order = order.filter((id) => !drop.has(id));
     const afterCtx = order.indexOf('invokeContextFollowup');
     const ins = afterCtx >= 0 ? afterCtx + 1 : 0;
@@ -1113,10 +1184,10 @@ const CASE_REGISTRY = {
     desc: 'POST /invoke context+execution only (async + poll /requests/:id/result)',
     run: caseInvokeContextFollowupShape,
   },
-  invokeSyncEnvelope: {
-    name: 'invokeSyncEnvelope',
-    desc: 'sync invoke response: data.sync + payload fields',
-    run: caseInvokeSyncResponseEnvelope,
+  invokeAsyncEnvelope: {
+    name: 'invokeAsyncEnvelope',
+    desc: 'POST /invoke → promiseId + poll: payload fields on terminal data',
+    run: caseInvokeAsyncResponseEnvelope,
   },
   mergedInvokeHelloEnvelopeShape: {
     name: 'mergedInvokeHelloEnvelopeShape',
@@ -1128,10 +1199,10 @@ const CASE_REGISTRY = {
     desc: 'GET /api/a2a/sessions',
     run: caseClientSessionsList,
   },
-  invokeHello: { name: 'invokeHello', desc: 'POST invoke sync + optional shape', run: caseInvokeHello },
+  invokeHello: { name: 'invokeHello', desc: 'POST invoke + poll: optional execute shape', run: caseInvokeHello },
   invokeSyncShape: {
     name: 'invokeSyncShape',
-    desc: 'invoke: execute has exactly one action key',
+    desc: 'POST /invoke + poll: execute has exactly one action key (registry id legacy)',
     run: caseInvokeSyncShape,
   },
   agentSeed: {
@@ -1266,7 +1337,7 @@ const DEFAULT_ORDER = [
   'requestsBatchFakeId',
   'requestsSingle404',
   'invokeContextFollowup',
-  'invokeSyncEnvelope',
+  'invokeAsyncEnvelope',
   'clientSessionsList',
   'invokeHello',
   'invokeSyncShape',
@@ -1340,6 +1411,9 @@ async function main() {
       failed++;
       console.log('FAIL');
       console.error(e.message || e);
+    }
+    if (E2E_CASE_COOLDOWN_MS > 0) {
+      await sleep(E2E_CASE_COOLDOWN_MS);
     }
   }
 

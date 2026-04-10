@@ -112,7 +112,8 @@ function toRagSearchResult(rawResults, options) {
         base.page = outPage;
         base.pageSize = outPageSize;
         base.total = total;
-        base.hasMore = hasMore;
+        // Runtime guard: ensure hasMore is boolean
+        base.hasMore = Boolean(hasMore);
     }
     return base;
 }

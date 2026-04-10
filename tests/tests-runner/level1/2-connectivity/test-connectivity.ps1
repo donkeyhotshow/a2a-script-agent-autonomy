@@ -76,7 +76,7 @@ $servicePorts = @(
     @{ Port = 3000; Service = "A2A Server" },
     @{ Port = 3001; Service = "Client API" },
     @{ Port = 5173; Service = "Web UI" },
-    @{ Port = 11434; Service = "Ollama" },
+    @{ Port = 11434; Service = "Local LLM upstream" },
     @{ Port = 11435; Service = "AI Proxy" },
     @{ Port = 5433; Service = "PostgreSQL" }
 )

@@ -46,7 +46,7 @@ Each level runner enforces a fixed order of its three sub-levels and fails fast 
 ## Requirements and order
 1. Always start with Level 1 — it verifies foundational services (A2A HTTP/AI proxies, Docker services, DB).  
 2. When Level 1 succeeds, Level 2 validates component boundaries (server, client, AI integration, persistence).  
-3. Level 3 assumes the full stack is running (Web UI on 5173, PostgreSQL, Ollama/model, etc.) before exercising end-to-end flows.
+3. Level 3 assumes the full stack is running (Web UI on 5173, PostgreSQL, Local LLM upstream/model, etc.) before exercising end-to-end flows.
 
 Run the level-specific runners directly for faster iteration against a broken suite:
 ```powershell

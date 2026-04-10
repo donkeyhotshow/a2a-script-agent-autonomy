@@ -1,12 +1,25 @@
 import * as path from 'path';
 import {logger} from '../../../utils/logger.js';
-import {runPromptsTransform} from '../../../transform/index.js';
+import {runPromptsTransform, syncLiveContextHistoryFromResultMessage} from '../../../transform/index.js';
 import type {GrayRoomControlEnvelope, InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
 import {mergeGrayRoomSlotIntoContext, mergeInterruptTraceIntoContext} from '../../../transform/interrupt-trace-contract.js';
-import {pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
+import {executeReadFile} from '../../../actions/handlers/file-operations.js';
+import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
+import {
+    extractLlmTextFromHubResponseBody,
+    initAiHubChatPromise,
+    pollReadyThenFetch,
+} from '../../../daemon/llm-hub-poll.js';
+import {BlackRoomOrchestrator} from '../black-room/black-room-orchestrator.js';
+import type {AlgorithmContext, AlgorithmData} from '../black-room/types.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
-import {validateDialogExecuteShape, validateLlmOutputShape, shouldEnforceTransformStrictMode} from './validators/transform-execute-validator.js';
-import {resolveHistoryLength} from './normalization.js';
+import {
+    validateExecuteShapeForSchema,
+    validateLlmOutputShape,
+    validateRouterResultShape,
+    shouldEnforceTransformStrictMode,
+} from './validators/transform-execute-validator.js';
+import {resolveExecution, resolveHistoryLength, toInvokeShapeForPromptsTransform} from './normalization.js';
 import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver.js';
 import {globalArtifactStore} from '../artifact-store.js';
 import {DedicatedAnalyzer} from '../analyzer.js';
@@ -15,13 +28,22 @@ import {globalMcpRegistry} from '../../mcp/registry.js';
 
 // Import trigger detection logic
 import {
+    detectGrayRoomTrigger,
+    shouldUseGrayRoom,
+    isGrayRoomEnabled,
+    getConfiguredMaxTurns,
     readGrayRoomInterruptBudget,
+    GrayRoomTriggerResult
 } from './gray-room-trigger.js';
 
 // Import utilities
 import {
+    DIALOG_TOOL_EXECUTE_KEYS,
+    isDialogToolExecutePayload,
     mergeGrayRoomFinalizeInnerContext,
-    GrayRoomOptions
+    GrayRoomOptions,
+    type ReviewResult,
+    type GrayRoomContext
 } from './gray-room-utils.js';
 
 // Import interrupt handlers
@@ -32,20 +54,16 @@ import {handleAutoRagPage} from './gray-room-interrupt-handlers/auto-rag-page.js
 import {handleClarify} from './gray-room-interrupt-handlers/clarify.js';
 import {handleAlgorithmInvoke} from './gray-room-interrupt-handlers/algorithm-invoke.js';
 import {globalVisionTester} from '../vision-tester.js';
-import {globalRoleRegistry} from '../agent-role-registry.js';
+import {globalRoleRegistry, AgentRole} from '../agent-role-registry.js';
 import {globalSafetyLayer} from '../safety-layer.js';
 import {globalIntentGate} from '../intent-gate.js';
-import {decisionCell} from './decision-cell.js';
 import {bugFixer} from '../../llm/bug-fixer.js';
 import {repoMapService} from '../../context/repo-map.service.js';
 import {llmService} from '../../llm/llm-service.js';
-import {OrchestratorKernel} from '../orchestrator-kernel.js';
-import type {OrchestratorState, OrchestratorEvent} from '../orchestrator-kernel.js';
-import {globalSkillsRegistry} from '../../skills/skills-registry.js';
-import {OperationCostTracker} from '../operation-cost-tracker.js';
-import {formatTaskNotification} from '../coordinator-contract.js';
-
-const DEFAULT_AI_HUB = 'http://localhost:11434';
+import {contextDiscoveryService} from '../../context/context-discovery.service.js';
+import {resolveAiHubBaseUrl} from '../../../utils/ai-hub-url.js';
+import {mkdtempOsTmp} from '../../../utils/mkdtemp-os-tmp.js';
+import {prepareLlmMessages} from './llm-orchestration.js';
 
 export class GrayRoomOrchestrator {
     private maxInterruptTurns: number;
@@ -56,7 +74,7 @@ export class GrayRoomOrchestrator {
 
     constructor(options: GrayRoomOptions) {
         this.maxInterruptTurns = options.maxInterruptTurns ?? readGrayRoomInterruptBudget();
-        this.aiHubUrl = (options.aiHubUrl ?? process.env.AI_HUB_URL ?? DEFAULT_AI_HUB).replace(/\/$/, '');
+        this.aiHubUrl = resolveAiHubBaseUrl(options.aiHubUrl);
         this.model = options.model ?? grayRoomLlmModelFallback();
         this.promptsTransformsPath = options.promptsTransformsPath;
     }
@@ -93,19 +111,6 @@ export class GrayRoomOrchestrator {
             traceRef: {length: 0},
         };
 
-        // BUG-1 FIX: Declare FSM kernel and currentState (was missing, causing ReferenceError)
-        const kernel = new OrchestratorKernel('EXECUTING', promiseId);
-        let currentState: OrchestratorState = 'EXECUTING';
-
-        // --- OPENHARNESS INTEGRATION (Skills & Cost Tracking) ---
-        const costTracker = new OperationCostTracker();
-        const skill = globalSkillsRegistry.detectRelevantSkill((workingCtx['task'] as string) || '');
-        if (skill) {
-            logger.info('[GrayRoom] Relevant skill detected and injected', { skillName: skill.name });
-            workingCtx['skill_context'] = skill.content;
-        }
-        // --------------------------------------------------------
-
         const controller = new AbortController();
         GrayRoomOrchestrator.activeControllers.set(promiseId, controller);
 
@@ -130,17 +135,27 @@ export class GrayRoomOrchestrator {
         }
         // -------------------------------------------------------------
 
-        // ADR-0093: Internal Debate for the first turn to refine the plan
-        if (turn === 0 && processInterrupts) {
+        // ADR-0093: Internal Debate for the first turn to refine the plan (agent-style tasks).
+        // Skip when recovering from a hub promise: `md` is the completed hub body; debate would
+        // replace it and runs 3 sync hub calls (proxy errors / timeouts).
+        // Skip for `dialog` schema: the main dialog LLM response is already the user-facing turn;
+        // debate was causing failed invokes (e.g. upstream/proxy "terminated") before response transform.
+        if (turn === 0 && processInterrupts && !isRecovered && schemaName !== 'dialog') {
             logger.info('[GrayRoom] Running ADR-0093 Internal Debate');
-            const debateResult = await llmService.debate((workingCtx['task'] as string) || '', workingCtx);
-            md = debateResult.plan;
-            workingCtx['debate_consensus'] = debateResult.consensus;
+            try {
+                const debateResult = await llmService.debate((workingCtx['task'] as string) || '', workingCtx);
+                md = debateResult.plan;
+                workingCtx['debate_consensus'] = debateResult.consensus;
+            } catch (e) {
+                logger.warn('[GrayRoom] Internal debate skipped — using primary LLM output', {
+                    error: String(e),
+                });
+            }
         }
         // ---------------------------------------------------------
 
         // Event-driven Actor Model Step
-        return new Promise<ProcessResult>(async (resolve) => {
+        return new Promise<ProcessResult>((resolve) => {
             const processTick = async () => {
                 if (controller.signal.aborted) {
                     logger.warn('[GrayRoom] Externally halted!', { promiseId });
@@ -199,25 +214,21 @@ export class GrayRoomOrchestrator {
             // -- MCP TOOL BRIDGE (ADR-0078) --
             const executeCall = (result.execute as Record<string, any>);
             if (executeCall) {
-                const actionKeys = Object.keys(executeCall);
-                const actionName = actionKeys.length > 0 ? actionKeys[0] : undefined;
-                if (actionName) {
-                    const mcpTool = globalMcpRegistry.getTool(actionName);
-                    if (mcpTool) {
-                        logger.info('[GrayRoom] Executing MCP Tool', { actionName });
-                        try {
-                            const mcpResult = await mcpTool.execute(executeCall[actionName]);
-                            result.context = { ...result.context, mcp_result: { [actionName]: mcpResult } } as Record<string, unknown>;
-                        } catch (e) {
-                            const err = e as Error;
-                            logger.error('[GrayRoom] MCP Tool failed, triggering BugFixer', { actionName, error: err.message });
-                            const fix = await bugFixer.fix(JSON.stringify(executeCall[actionName]), err.message);
-                            if (fix.fixed) {
-                                logger.info('[GrayRoom] BugFixer produced a patch', { actionName });
-                                result.context = { ...result.context, mcp_error: err.message, bugfix_analysis: fix.analysis, recommended_patch: fix.patches } as Record<string, unknown>;
-                            } else {
-                                result.context = { ...result.context, mcp_error: err.message } as Record<string, unknown>;
-                            }
+                const actionName = Object.keys(executeCall)[0];
+                const mcpTool = globalMcpRegistry.getTool(actionName);
+                if (mcpTool) {
+                    logger.info('[GrayRoom] Executing MCP Tool', { actionName });
+                    try {
+                        const mcpResult = await mcpTool.execute(executeCall[actionName]);
+                        result.result = { [actionName]: mcpResult };
+                    } catch (e) {
+                        logger.error('[GrayRoom] MCP Tool failed, triggering BugFixer', { actionName, error: e.message });
+                        const fix = await bugFixer.fix(JSON.stringify(executeCall[actionName]), e.message);
+                        if (fix.fixed) {
+                            logger.info('[GrayRoom] BugFixer produced a patch', { actionName });
+                            result.result = { error: e.message, bugfix_analysis: fix.analysis, recommended_patch: fix.patches };
+                        } else {
+                            result.result = { error: e.message };
                         }
                     }
                 }
@@ -248,34 +259,38 @@ export class GrayRoomOrchestrator {
             }
 
             if (!interrupt) {
-                // -- DECISION CELL FINAL CHECK (ADR-0088) --
-                const decision = await decisionCell.decide(
-                    (workingCtx['session_id'] as string) || promiseId,
-                    (workingCtx['task'] as string) || '',
-                    workingCtx
-                );
-                
+                // Dialog: response transform already produced user-facing execute — skip syndicate path here
+                // (same as non-dialog: SIEGE_REVIEW only when primary JSON sets result.completed, see below).
+                if (activeSchemaName === 'dialog') {
+                    touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
+                    GrayRoomOrchestrator.activeControllers.delete(promiseId);
+                    resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
+                    return;
+                }
+
+                const primaryTurnComplete = this.isResponseTransformCompleted(rawOutput);
+
                 // -- INTENT DRIFT CHECK (ADR-0050) --
-                // Check for drift every 5 turns after initial passes
                 if (globalIntentGate.getTurnCount() >= 5) {
-                    const executeKey = Object.keys(result.execute || {}).find(k => 
+                    const executeKey = Object.keys(result.execute || {}).find(k =>
                         k !== 'noop' && k !== 'message' && k !== 'form'
                     );
                     const currentPlan = executeKey || (workingCtx['task'] as string) || '';
-                    
+
                     const driftCheck = await globalIntentGate.checkDrift(currentPlan, workingCtx);
                     if (driftCheck.hasDrift && driftCheck.confidence > 0.7) {
-                        logger.error('[GrayRoom] Intent drift detected - halting', { 
+                        logger.error('[GrayRoom] Intent drift detected - halting', {
                             confidence: driftCheck.confidence,
-                            reason: driftCheck.reason 
+                            reason: driftCheck.reason
                         });
                         touchGrayRoom({
                             phase: 'completed',
-                            status: 'truncated',
+                            status: 'halted',
                             turn,
                             remainingBudget: interruptBudget,
                             lastReason: `intent_drift: ${driftCheck.reason}`,
                         });
+                        GrayRoomOrchestrator.activeControllers.delete(promiseId);
                         resolve(this.mergeTraceIntoResult(
                             {...result, context: {...workingCtx, intent_drift_detected: true}} as ProcessResult,
                             trace,
@@ -284,66 +299,40 @@ export class GrayRoomOrchestrator {
                         return;
                     }
                 }
-                // ------------------------------------
-                
-                if (decision.done) {
-                    // ADR-0095: Instead of completing immediately, enter SIEGE_REVIEW
-                    logger.info('[GrayRoom] DecisionCell marked done. Entering SIEGE_REVIEW');
+
+                if (primaryTurnComplete) {
+                    logger.info('[GrayRoom] Primary turn result.completed=true. Entering SIEGE_REVIEW');
                     const reviewResult = await globalRoleRegistry.executeSyndicateReview(workingCtx);
                     if (reviewResult.passed) {
                         logger.info('[GrayRoom] SIEGE_REVIEW passed. Completing session.');
-                        touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
-                        resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
-                        return;
                     } else {
-                        logger.warn('[GrayRoom] SIEGE_REVIEW failed. Forcing extra turn for corrections.', { reason: reviewResult.reason });
+                        logger.warn('[GrayRoom] SIEGE_REVIEW failed.', {reason: reviewResult.reason});
                         workingCtx['task'] = `[SIEGE REVIEW FAILED] ${reviewResult.reason}\n\nPlease correct these issues.`;
-                        // Continue loop
                     }
-                } else if (decision.retry) {
-                    logger.info('[GrayRoom] DecisionCell requested retry', { reason: decision.reason });
-                    // Continue loop instead of exit
-                } else {
-                    touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
-                    resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
-                    return;
                 }
+
+                // Without a gray-room interrupt there is no valid follow-up loop here; previously we fell
+                // through to interruptWhenSatisfied(null) → throw and left the A2A promise stuck processing.
+                touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
+                GrayRoomOrchestrator.activeControllers.delete(promiseId);
+                resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
+                return;
             }
 
-            if (!interrupt || !this.interruptWhenSatisfied(interrupt, workingCtx)) {
-                if (interrupt) {
-                    trace.push({
-                        kind: 'interrupt_skipped',
-                        reason: interrupt.reason,
-                        detail: 'when_clause_not_met',
-                    });
-                }
+            if (!this.interruptWhenSatisfied(interrupt, workingCtx)) {
+                trace.push({
+                    kind: 'interrupt_skipped',
+                    reason: interrupt.reason,
+                    detail: 'when_clause_not_met',
+                });
                 touchGrayRoom({
                     phase: 'completed',
                     status: 'completed',
-                });
-                return this.mergeTraceIntoResult(result, trace, grayRoom);
-            }
-
-            const currentInterrupt = interrupt;
-            if (typeof currentInterrupt.maxTurns === 'number' && Number.isFinite(currentInterrupt.maxTurns) && currentInterrupt.maxTurns >= 0) {
-                interruptBudget = Math.min(interruptBudget, currentInterrupt.maxTurns);
-            }
-
-            if (interruptBudget <= 0) {
-                const c = result.context as Record<string, unknown>;
-                touchGrayRoom({
-                    phase: 'completed',
-                    status: 'truncated',
                     turn,
-                    remainingBudget: 0,
-                    lastReason: currentInterrupt.reason,
+                    remainingBudget: interruptBudget,
+                    lastReason: interrupt.reason,
                 });
-                resolve(this.mergeTraceIntoResult(
-                    {...result, context: {...c, interrupt_truncated: true}} as ProcessResult,
-                    trace,
-                    grayRoom
-                ));
+                resolve(this.mergeTraceIntoResult(result, trace, grayRoom));
                 return;
             }
 
@@ -426,37 +415,17 @@ export class GrayRoomOrchestrator {
             let lastOutcome = (workingCtx['result'] as Record<string, any>)?.['outcome'] || 'noop';
 
             // -- OVERRIDE OUTCOME FOR REVIEW/DEBATE (ADR-0038) --
-            if (currentState === 'REVIEWING' && workingCtx['REVIEW_RESULT']) {
-                const res = workingCtx['REVIEW_RESULT'] as any;
+            if (currentState === OrchestratorState.REVIEWING && workingCtx['REVIEW_RESULT']) {
+                const res = workingCtx['REVIEW_RESULT'] as ReviewResult;
                 lastOutcome = res.passed ? 'review_passed' : 'review_failed';
                 // Clear result for next turns if necessary, or let kernel handle it
             }
-            if (currentState === 'DEBATING' && workingCtx['DEBATE_OUTCOME']) {
+            if (currentState === OrchestratorState.DEBATING && workingCtx['DEBATE_OUTCOME']) {
                 lastOutcome = 'debate_resolved';
             }
             // --------------------------------------------------
 
-            // BUG-1+BUG-5 FIX: Use kernel instance (not this.kernel) and correct signature; handle artifact
-            let fsmTransition: ReturnType<OrchestratorKernel['transition']> | null = null;
-            const fsmEvent = (lastOutcome === 'noop' || !lastOutcome)
-                ? 'execution_complete'
-                : (lastOutcome as OrchestratorEvent);
-            try {
-                fsmTransition = kernel.transition(fsmEvent, {});
-                currentState = fsmTransition.newState;
-                if (fsmTransition.artifactType) {
-                    // BUG-5 FIX: Log artifact instead of silently discarding
-                    logger.info('[GrayRoom] FSM artifact emitted', {
-                        from: fsmTransition.previousState,
-                        to: fsmTransition.newState,
-                        artifact: fsmTransition.artifactType,
-                    });
-                }
-            } catch (fsmErr) {
-                // Invalid transition — log and keep current state rather than crashing
-                logger.warn('[GrayRoom] FSM transition skipped', { event: fsmEvent, state: currentState, error: String(fsmErr) });
-            }
-
+            const {nextState, artifact} = this.kernel.transition(currentState, lastOutcome, workingCtx);
             const lastAction = (workingCtx['execute'] as Record<string, any>)?.['write-file'] || 
                                (workingCtx['execute'] as Record<string, any>)?.['edit-file'];
             const isUIChange = lastAction && (
@@ -469,7 +438,8 @@ export class GrayRoomOrchestrator {
 
             if (isUIChange) {
                 try {
-                    const devUrl = 'http://localhost:5173';
+                    // Logic to determine internal URL - usually a dev server
+                    const devUrl = process.env.A2A_PREVIEW_URL || 'http://localhost:5173'; // Default Vite port
                     const screenshotPath = `storage/screenshots/turn-${turn}.png`;
                     await globalVisionTester.captureScreenshot(devUrl, screenshotPath);
                     const visionResult = await globalVisionTester.performVisualQA(screenshotPath, (workingCtx['task'] as string) || 'UI matching manifesto');
@@ -488,15 +458,19 @@ export class GrayRoomOrchestrator {
                         logger.info('[GrayRoom] Vision QA passed');
                     }
                 } catch (err) {
-                    // BUG-3 FIX: Log the actual error, not a misleading state-transition message
-                    logger.warn('[GrayRoom] Vision QA error (non-fatal, continuing)', { error: String(err) });
+                    logger.info('[GrayRoom] Transitioning state', { from: currentState, to: nextState });
+                    currentState = nextState;
                 }
             }
             // --------------------------------------
 
             // -- SPECIAL HANDLING FOR REVIEWING STATE --
-            if (currentState === 'REVIEWING') {
+            if (currentState === OrchestratorState.REVIEWING) {
                 logger.info('[GrayRoom] Entering Review Phase');
+                // The REVIEWER will analyze the work done in EXECUTING
+                // We'll give it the context and ask for a critique.
+                // For now, we trigger an LLM-based critique turn.
+                // In a real implementation, this might be a specialized transform.
                 workingCtx['task'] = `Review the recent execution. Find bugs or design flaws. Return 'passed: true' or 'passed: false' with critique.`;
             }
             // -----------------------------------------
@@ -527,32 +501,14 @@ export class GrayRoomOrchestrator {
                 const normalizedExecute = rawOutput.execute as ProcessResult['execute'] | undefined;
                 const mergedInner = mergeGrayRoomFinalizeInnerContext(
                     rawOutput.context as Record<string, unknown> | undefined,
-                    nextCtx
+                    nextCtx as GrayRoomContext
                 );
-
-                // --- OPENHARNESS INTEGRATION (Final Notification XML) ---
-                const costSummary = costTracker.summary;
-                const notification = formatTaskNotification({
-                    taskId: promiseId,
-                    status: 'completed',
-                    summary: `Task completed in ${turn} turns. ${costSummary.llmCallCount} LLM calls.`,
-                    result: (mergedInner['summary'] as string) || 'No explicit summary provided',
-                    usage: {
-                        totalTokens: costSummary.totalTokens,
-                        toolUses: turn, // Approximate
-                        llmCalls: costSummary.llmCallCount,
-                    }
-                });
-                mergedInner['task_notification_xml'] = notification;
-                mergedInner['cost_summary'] = costSummary;
-                // --------------------------------------------------------
-
                 const res: ProcessResult = {
                     outcome: 'completed',
                     context: mergedInner,
                     execute: normalizedExecute,
                 };
-                this.warnOnInvalidExecute(res, 'grayRoom.finalize');
+                this.warnOnInvalidExecute(res, 'grayRoom.finalize', activeSchemaName, rawOutput);
                 touchGrayRoom({phase: 'completed', status: 'completed', turn, remainingBudget: interruptBudget});
                 resolve(this.mergeTraceIntoResult(res, trace, grayRoom));
                 return;
@@ -562,17 +518,7 @@ export class GrayRoomOrchestrator {
 
             // Rebuild request for next LLM turn
             const outputDir = await this.createTempDir();
-            const invokeShape: Record<string, unknown> =
-                workingCtx && typeof workingCtx === 'object' && !Array.isArray(workingCtx) && 'context' in workingCtx
-                    ? workingCtx
-                    : {
-                          context: workingCtx,
-                          task:
-                              (workingCtx['task'] as string | undefined) ??
-                              (workingCtx['message'] as string | undefined),
-                          message: workingCtx['message'],
-                          result: (workingCtx['result'] as Record<string, unknown> | undefined) ?? {},
-                      };
+            const invokeShape = toInvokeShapeForPromptsTransform(workingCtx);
             const requestTransformResult = await runPromptsTransform(
                 this.promptsTransformsPath,
                 activeSchemaName,
@@ -601,63 +547,43 @@ export class GrayRoomOrchestrator {
                 return;
             }
 
-            const systemMdFromDisk = files['system.md'] || '';
-            const override = (workingCtx['system_instruction_override'] as string) || '';
-            const finalSystemContent = override ? `${override}\n---\n${systemMdFromDisk}` : systemMdFromDisk;
-
-            const messages: Array<{role: string; content: string}> = [];
-            if (finalSystemContent.trim().length > 0) {
-                messages.push({role: 'system', content: finalSystemContent});
-            }
-            messages.push({role: 'user', content: requestMd});
+            const messages = prepareLlmMessages(
+                files,
+                (workingCtx['system_instruction_override'] as string | undefined) || undefined
+            );
 
             const subHeader = `${promiseId}-intr-${interruptBudget}`;
             const llmModel = resolveGrayRoomLlmModelFromContext(workingCtx, this.model);
-            const chatRes = await fetch(`${this.aiHubUrl}/api/chat?promise=1`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Server-Promise-Id': subHeader,
-                },
-                body: JSON.stringify({
-                    model: llmModel,
-                    messages,
-                    stream: false,
-                }),
+            const chatInit = await initAiHubChatPromise(this.aiHubUrl, subHeader, {
+                model: llmModel,
+                messages,
+                stream: false,
             });
-
-            if (chatRes.status !== 202) {
-                const errText = await chatRes.text();
-                logger.error('[GrayRoom] LLM promise init failed', {status: chatRes.status, error: errText});
-                resolve({
-                    outcome: 'failed',
-                    error: `LLM error (gray room): ${chatRes.status} ${errText.slice(0, 200)}`,
-                } as ProcessResult);
+            if (!chatInit.ok) {
+                if (chatInit.reason === 'bad_http_status') {
+                    logger.error('[GrayRoom] LLM promise init failed', {
+                        status: chatInit.status,
+                        error: chatInit.bodyText,
+                    });
+                    resolve({
+                        outcome: 'failed',
+                        error: `LLM error (gray room): ${chatInit.status} ${chatInit.bodyText.slice(0, 200)}`,
+                    } as ProcessResult);
+                } else {
+                    resolve({outcome: 'failed', error: 'No promiseId in LLM response (gray room)'} as ProcessResult);
+                }
                 return;
             }
 
-            const initData = (await chatRes.json()) as {promiseId?: string};
-            const subLlmId = initData?.promiseId;
-            if (!subLlmId) {
-                resolve({outcome: 'failed', error: 'No promiseId in LLM response (gray room)'} as ProcessResult);
-                return;
-            }
-
-            const llmFetchResult = await pollReadyThenFetch(this.aiHubUrl, subLlmId);
-            if (!llmFetchResult) {
+            const subLlmId = chatInit.llmPromiseId;
+            const nextMdRaw =
+                chatInit.inlineResponseBody ?? (await pollReadyThenFetch(this.aiHubUrl, subLlmId));
+            const nextMd = nextMdRaw ? extractLlmTextFromHubResponseBody(nextMdRaw) : null;
+            if (!nextMd?.trim()) {
                 resolve({outcome: 'failed', error: 'LLM response fetch failed (gray room)'} as ProcessResult);
                 return;
             }
-            
-            // Record usage for cost tracking
-            costTracker.record({
-                inputTokens: llmFetchResult.usage?.input_tokens,
-                outputTokens: llmFetchResult.usage?.output_tokens,
-                model: llmFetchResult.model || llmModel,
-                phase: turn === 0 ? 'primary' : 'interrupt'
-            });
-
-            md = llmFetchResult.content;
+            md = nextMd;
             turn++;
             
             // -- INTENT GATE TURN COUNT (ADR-0050) --
@@ -675,11 +601,12 @@ export class GrayRoomOrchestrator {
                     remainingBudget: 0,
                     lastReason: 'hard_timeout',
                 });
-                // BUG-2 FIX: 'result' and 'c' were not in scope here.
-                // Build a safe timeout result from workingCtx instead.
-                const timeoutCtx = { ...(workingCtx as Record<string, unknown>), hard_timeout: true };
+                const timeoutCtxBase =
+                    result.context && typeof result.context === 'object' && !Array.isArray(result.context)
+                        ? {...(result.context as Record<string, unknown>)}
+                        : {...workingCtx};
                 resolve(this.mergeTraceIntoResult(
-                    { outcome: 'failed', error: 'Hard timeout reached', context: timeoutCtx } as ProcessResult,
+                    {...result, context: {...timeoutCtxBase, hard_timeout: true}} as ProcessResult,
                     trace,
                     grayRoom
                 ));
@@ -688,43 +615,37 @@ export class GrayRoomOrchestrator {
             // -----------------------------------
 
             // -- HANDLE REVIEW OUTCOME (ADR-0038) --
-            if (currentState === 'REVIEWING') {
+            if (currentState === OrchestratorState.REVIEWING) {
                 const isPassed = md.toLowerCase().includes('passed: true');
-                // BUG-6 FIX: Renamed from 'result' to 'reviewResult' to avoid shadowing ProcessResult
-                const reviewResult = {
+                const result = {
                     passed: isPassed,
                     critique: md,
                     turn: turn
                 };
-                workingCtx['REVIEW_RESULT'] = reviewResult;
-                logger.info('[GrayRoom] Review outcome recorded', { passed: isPassed });
-                // Trigger FSM event for review outcome
-                try {
-                    const reviewEvent: OrchestratorEvent = isPassed ? 'review_passed' : 'review_failed';
-                    const reviewTransition = kernel.transition(reviewEvent, {});
-                    currentState = reviewTransition.newState;
-                    logger.info('[GrayRoom] FSM review transition', { to: currentState });
-                } catch (fsmErr) {
-                    logger.warn('[GrayRoom] FSM review transition skipped', { error: String(fsmErr) });
+                workingCtx['REVIEW_RESULT'] = result;
+                
+                if (isPassed) {
+                    logger.info('[GrayRoom] Review passed');
+                    // We need a way to trigger review_passed event
+                    // The simplest way is to inject an interrupt that the kernel understands
+                    // Or let the next iteration handle the transition
+                } else {
+                    logger.warn('[GrayRoom] Review failed');
                 }
             }
             // -------------------------------------
-
-            // BUG-7 FIX: Use direct await recursion instead of setImmediate to avoid
-            // unpredictable I/O-queue delays under load.
-            await processTick();
-            return;
+            
+            // Queue next tick instead of blocking for-loop
+            setImmediate(processTick);
         };
-
-        // Start the actor loop (BUG-7 FIX: direct await, not setImmediate)
-        await processTick();
+        
+        // Start the actor loop
+        setImmediate(processTick);
     });
     }
 
     private async createTempDir(): Promise<string> {
-        const {mkdtemp} = await import('fs/promises');
-        const {tmpdir} = await import('os');
-        return mkdtemp(path.join(tmpdir(), 'a2a-gray-room-'));
+        return mkdtempOsTmp('a2a-gray-room-');
     }
 
     private async runResponseTransform(
@@ -734,10 +655,14 @@ export class GrayRoomOrchestrator {
         _recovered: boolean
     ): Promise<{result: ProcessResult; rawOutput: Record<string, unknown>} | null> {
         try {
-            const {writeFile} = await import('fs/promises');
+            const {writeFile} = await import('node:fs/promises');
             const tempDir = await this.createTempDir();
             await writeFile(path.join(tempDir, 'response.md'), responseMd, 'utf-8');
-            
+
+            // Request transforms fold `result.message` into history on a clone only; live `ctx` still
+            // needs the same user line before append-to-array adds assistant (see materialize-result-for-llm).
+            syncLiveContextHistoryFromResultMessage(ctx);
+
             const responseData = {context: ctx, llm: {response: responseMd}};
             const responseTransformResult = await runPromptsTransform(
                 this.promptsTransformsPath,
@@ -767,7 +692,7 @@ export class GrayRoomOrchestrator {
                 execute: rawOutput.execute as ProcessResult['execute'] | undefined,
                 ...(interruptPassthrough ? {interrupt: interruptPassthrough} : {}),
             };
-            this.warnOnInvalidExecute(result, 'runResponseTransform');
+            this.warnOnInvalidExecute(result, 'runResponseTransform', schemaName, rawOutput);
 
             return {rawOutput, result};
         } catch (err) {
@@ -782,6 +707,16 @@ export class GrayRoomOrchestrator {
         const d = raw as Record<string, unknown>;
         if (typeof d.reason !== 'string') return null;
         return d as unknown as InterruptDirective;
+    }
+
+    /** `result.completed` from response transforms (agent/dialog/coder); optional top-level `completed` fallback. */
+    private isResponseTransformCompleted(raw: Record<string, unknown>): boolean {
+        const res = raw['result'];
+        if (res && typeof res === 'object' && !Array.isArray(res)) {
+            const c = (res as Record<string, unknown>)['completed'];
+            if (c === true) return true;
+        }
+        return raw['completed'] === true;
     }
 
     private interruptWhenSatisfied(interrupt: InterruptDirective, ctx: Record<string, unknown>): boolean {
@@ -801,8 +736,8 @@ export class GrayRoomOrchestrator {
         promiseId: string,
         trace: ServerInterruptTraceEvent[]
     ): Promise<{ nextCtx: Record<string, unknown>; continueLoop: boolean }> {
-        const { reason, context: extraCtx } = interrupt;
-        let nextCtx = extraCtx ? { ...ctx, ...extraCtx } : { ...ctx };
+        const { reason, context: extraCtx, data } = interrupt;
+        const nextCtx = extraCtx ? { ...ctx, ...extraCtx } : { ...ctx };
 
         switch (reason) {
             case 'compress_history': {
@@ -860,10 +795,23 @@ export class GrayRoomOrchestrator {
         return {...result, context: ctx};
     }
 
-    private warnOnInvalidExecute(result: ProcessResult, source: string): void {
+    private warnOnInvalidExecute(
+        result: ProcessResult,
+        source: string,
+        schemaName: string,
+        rawTransformOutput?: Record<string, unknown>
+    ): void {
+        const topMsg =
+            rawTransformOutput && typeof rawTransformOutput['message'] === 'string'
+                ? (rawTransformOutput['message'] as string).trim()
+                : '';
         const issues = [
-            ...validateDialogExecuteShape(result.execute),
-            ...validateLlmOutputShape(result)
+            ...validateExecuteShapeForSchema(schemaName, result.execute),
+            ...(schemaName === 'router' ? validateRouterResultShape(result) : []),
+            ...validateLlmOutputShape({
+                ...(topMsg ? {message: topMsg} : {}),
+                execute: result.execute,
+            }),
         ];
         if (issues.length === 0) return;
         if (shouldEnforceTransformStrictMode()) {
@@ -872,18 +820,3 @@ export class GrayRoomOrchestrator {
         logger.warn('[GrayRoom] Transform execute validation warnings', { source, issues: issues.map(i => i.code) });
     }
 }
-
-export {
-    detectGrayRoomTrigger,
-    shouldUseGrayRoom,
-    isGrayRoomEnabled,
-    getConfiguredMaxTurns,
-    readGrayRoomInterruptBudget,
-    type GrayRoomTriggerResult
-} from './gray-room-trigger.js';
-
-export {
-    DIALOG_TOOL_EXECUTE_KEYS,
-    isDialogToolExecutePayload,
-    type GrayRoomOptions
-} from './gray-room-utils.js';

@@ -2,7 +2,7 @@
 
 ## Sources
 
-- [`work/STATE.md`](../work/STATE.md) — queue table (S9–S14, SYS); `tasks/*.md` links in the table should resolve (see [`../tasks/ide-prompts/repo-task-specs-missing-restore.md`](../tasks/ide-prompts/repo-task-specs-missing-restore.md)). Also scan root `README.md`, `archive/methodology/tasks.md`, and shell headers for dead `docs/troubleshooting/` or `proposals/` paths.
+- [`work/STATE.md`](../work/STATE.md) — queue table (S9–S14, SYS); `tasks/*.md` links in the table should resolve (see [`../tasks/ide-prompts/repo-task-specs-missing-restore.md`](../tasks/ide-prompts/repo-task-specs-missing-restore.md)). Also scan root `README.md`, shell headers, and [`tasks/brown-alert/archive-methodology-missing.md`](../tasks/brown-alert/archive-methodology-missing.md) inbound links for dead `docs/troubleshooting/` or `proposals/` paths.
 - [`../tasks/ide-prompts/repo-task-specs-missing-restore.md`](../tasks/ide-prompts/repo-task-specs-missing-restore.md)
 
 ## Agent prompt (copy)

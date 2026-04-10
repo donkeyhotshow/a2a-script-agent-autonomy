@@ -3,15 +3,16 @@
  * Used by @a2a/sdk client-api-envelope.ts and Vite builders.js.
  *
  * Matrix:
- * - unwrapEnvelope: `{ success, data }` or `{ success, session }` from Client API → inner payload.
+ * - unwrapEnvelope: `{ success, data }` or `{ success, session }` from Client API → inner payload (`data: null` uses `session` when set).
  * - unwrapA2aInvokeBody: A2A `POST /invoke` / result `{ success, data: { execute, context } }` → inner `data`, or passthrough.
  */
 
 export function unwrapEnvelope(res) {
     if (res == null || typeof res !== 'object') return res;
     const r = res;
-    if (r.data !== undefined) return r.data;
+    if (r.data !== undefined && r.data !== null) return r.data;
     if (r.session !== undefined) return r.session;
+    if (r.data !== undefined) return r.data;
     return res;
 }
 
@@ -32,10 +33,10 @@ export function parseA2aInvokeResponse(serverResponse) {
         return { data: undefined, promiseId: null, execute: null, context: null };
     }
     const data = serverResponse.data;
-    const promiseId =
-        (typeof serverResponse.promiseId === 'string' ? serverResponse.promiseId : null) ??
-        (data && typeof data === 'object' && typeof data.promiseId === 'string' ? data.promiseId : null) ??
-        null;
+    const dataPromiseId =
+        data && typeof data === 'object' && typeof data.promiseId === 'string' ? data.promiseId : null;
+    const rootPromiseId = typeof serverResponse.promiseId === 'string' ? serverResponse.promiseId : null;
+    const promiseId = dataPromiseId ?? rootPromiseId ?? null;
     const execute = serverResponse.execute ?? (data && typeof data === 'object' ? data.execute : undefined) ?? null;
     const context = serverResponse.context ?? (data && typeof data === 'object' ? data.context : undefined) ?? null;
     const dataOut = data != null && typeof data === 'object' ? data : undefined;
@@ -59,6 +60,17 @@ export function validateClientResultPayload(result) {
 }
 
 /**
+ * LLM/backoff: `status: failed` with a future `retryAfter` is not terminal — keep polling /async.
+ */
+export function isRecoverableAsyncSnapshot(prom) {
+    if (!prom || typeof prom !== 'object') return false;
+    const ra = prom.retryAfter;
+    if (ra == null || ra === '') return false;
+    const t = Date.parse(String(ra));
+    return Number.isFinite(t) && t > Date.now();
+}
+
+/**
  * Normalize promise payload to common client DTO fields.
  */
 export function normalizePromisePollStatus(promiseStatus) {
@@ -69,13 +81,23 @@ export function normalizePromisePollStatus(promiseStatus) {
         status === 'done' ||
         promiseStatus?.result?.completed === true
     );
-    const failed = status === 'failed' || status === 'error';
+    const failed =
+        (status === 'failed' || status === 'error') && !isRecoverableAsyncSnapshot(promiseStatus);
+    let requestPhase = promiseStatus?.requestPhase ?? null;
+    if (
+        (status === 'completed' || status === 'done') &&
+        promiseStatus?.execute &&
+        typeof promiseStatus.execute === 'object' &&
+        requestPhase === 'llm_error'
+    ) {
+        requestPhase = null;
+    }
     return {
         status: status || (completed ? 'completed' : 'pending'),
         completed,
         failed,
         asyncPending: !(completed || failed),
-        requestPhase: promiseStatus?.requestPhase ?? null,
+        requestPhase,
         retryAfter: promiseStatus?.retryAfter ?? null,
     };
 }

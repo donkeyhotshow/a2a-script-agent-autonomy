@@ -1,13 +1,8 @@
-import { logger } from '../../utils/logger.js';
-// @ts-ignore
+import { logger } from '../utils/logger.js';
 import { createLibp2p } from 'libp2p';
-// @ts-ignore
 import { tcp } from '@libp2p/tcp';
-// @ts-ignore
 import { mplex } from '@libp2p/mplex';
-// @ts-ignore
 import { noise } from '@chainsafe/libp2p-noise';
-// @ts-ignore
 import { gossipsub } from '@chainsafe/libp2p-gossipsub';
 
 export class P2PNode {
@@ -21,15 +16,17 @@ export class P2PNode {
         },
         transports: [tcp()],
         streamMuxers: [mplex()],
-        connectionEncryption: [noise()],
-        pubsub: gossipsub()
+        connectionEncrypters: [noise()],
+        services: {
+          pubsub: gossipsub()
+        }
       });
 
       await this.node.start();
       logger.info('[P2P] Node started', { peerId: this.node.peerId.toString() });
 
-      this.node.pubsub.subscribe('a2a-sessions');
-      this.node.pubsub.addEventListener('message', (evt: any) => {
+      this.node.services.pubsub.subscribe('a2a-sessions');
+      this.node.services.pubsub.addEventListener('message', (evt: any) => {
         const data = new TextDecoder().decode(evt.detail.data);
         logger.info('[P2P] Received pubsub message', { topic: evt.detail.topic, data });
       });
@@ -41,22 +38,22 @@ export class P2PNode {
   async subscribeToRoom(sessionId: string) {
     if (!this.node) return;
     const topic = `a2a-room-${sessionId}`;
-    this.node.pubsub.subscribe(topic);
+    this.node.services.pubsub.subscribe(topic);
     logger.info('[P2P] Subscribed to Relay Room', { topic });
   }
 
-  async publishToRoom(sessionId: string, payload: any) {
+  async publishToRoom(sessionId: string, payload: unknown) {
     if (!this.node) return;
     const topic = `a2a-room-${sessionId}`;
     const msg = JSON.stringify(payload);
-    await this.node.pubsub.publish(topic, new TextEncoder().encode(msg));
+    await this.node.services.pubsub.publish(topic, new TextEncoder().encode(msg));
     logger.info('[P2P] Published to Relay Room', { topic });
   }
 
-  async broadcastSession(sessionId: string, snapshot: any) {
+  async broadcastSession(sessionId: string, snapshot: unknown) {
     if (!this.node) return;
     const msg = JSON.stringify({ sessionId, snapshot });
-    await this.node.pubsub.publish('a2a-sessions', new TextEncoder().encode(msg));
+    await this.node.services.pubsub.publish('a2a-sessions', new TextEncoder().encode(msg));
     logger.info('[P2P] Broadcasted session', { sessionId });
   }
 

@@ -5,7 +5,7 @@ Contains all Flask route handlers
 This module imports routes from separate functional modules:
 - health_routes.py: Health check endpoints
 - metrics_routes.py: Prometheus metrics endpoint
-- ollama_routes.py: Ollama management endpoints
+- local_llm_routes.py: local upstream LLM process endpoints
 - promise_routes.py: Promise/async request management endpoints
 - daemon_routes.py: Daemon management endpoints
 - cleanup_routes.py: Storage cleanup endpoints
@@ -15,6 +15,7 @@ import json
 import logging
 
 from flask import Flask, request, Response, send_from_directory
+from werkzeug.exceptions import BadRequest
 
 # Setup logger
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ from . import app
 # Import all route modules (this registers the routes with the app)
 from . import health_routes
 from . import metrics_routes
-from . import ollama_routes
+from . import local_llm_routes
 from . import promise_routes
 from . import daemon_routes
 from . import cleanup_routes
@@ -40,23 +41,46 @@ def api_v1_generate():
     """
     High-level text generation endpoint.
 
-    Normalizes the underlying Ollama / OpenAI style responses into a simple
+    Normalizes the underlying local / OpenAI style responses into a simple
     shape consumed by the Node.js A2A server:
         { "text": string, "tokensUsed"?: number, "raw"?: any }
     """
     from .proxy_handler import handle_proxy_request
     from .promises import _json_bytes  # local import to avoid cycles
-    from .caching import get_cache
+    from .caching import get_cache, build_v1_api_cache_key
 
     cache = get_cache()
 
-    payload = request.get_json(silent=True) or {}
-    cache_key = None
-    if isinstance(payload, dict):
-        cache_key = cache.build_key("generate", payload)
-        cached = cache.get(cache_key)
-        if cached is not None:
-            return Response(_json_bytes(cached), status=200, mimetype='application/json')
+    try:
+        payload = request.get_json(force=True, silent=False)
+    except BadRequest as e:
+        return Response(
+            _json_bytes(
+                {
+                    "error": "invalid_json",
+                    "message": getattr(e, "description", None) or str(e),
+                }
+            ),
+            status=400,
+            mimetype="application/json",
+        )
+    if payload is None:
+        payload = {}
+    if not isinstance(payload, dict):
+        return Response(
+            _json_bytes(
+                {
+                    "error": "expected_json_object",
+                    "got": type(payload).__name__,
+                }
+            ),
+            status=400,
+            mimetype="application/json",
+        )
+    cache_key = build_v1_api_cache_key(cache, "generate", "api/generate", payload)
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return Response(_json_bytes(cached), status=200, mimetype='application/json')
 
     # Reuse the existing proxy logic (rules, simulation, logging, promises disabled)
     upstream_response = handle_proxy_request('api/generate', request)
@@ -77,7 +101,8 @@ def api_v1_generate():
 
     try:
         data = json.loads(body_text)
-    except Exception:
+    except json.JSONDecodeError as e:
+        logger.warning("api/v1/generate: upstream body is not JSON: %s", e)
         out = {
             "error": "invalid_upstream_json",
             "status": 502,
@@ -89,7 +114,7 @@ def api_v1_generate():
     tokens_used = None
 
     if isinstance(data, dict):
-        # Ollama-style
+        # Local LLM upstream-style
         if isinstance(data.get('response'), str):
             text = data['response']
 
@@ -114,7 +139,13 @@ def api_v1_generate():
             tokens_used = int(usage['total_tokens'])
 
     if text is None:
-        text = body_text
+        logger.warning("api/v1/generate: no extractable text in upstream JSON")
+        out = {
+            "error": "no_text_in_response",
+            "status": 502,
+            "raw": data,
+        }
+        return Response(_json_bytes(out), status=502, mimetype='application/json')
 
     out = {
         "text": text,
@@ -123,7 +154,7 @@ def api_v1_generate():
     }
 
     # Cache only successful, well-formed responses
-    if cache_key is not None and status == 200:
+    if status == 200:
         cache.set(cache_key, out)
 
     return Response(_json_bytes(out), status=200, mimetype='application/json')
@@ -139,20 +170,43 @@ def api_v1_embed():
     """
     from .proxy_handler import handle_proxy_request
     from .promises import _json_bytes  # local import to avoid cycles
-    from .caching import get_cache
+    from .caching import get_cache, build_v1_api_cache_key
 
     cache = get_cache()
 
-    payload = request.get_json(silent=True) or {}
-    if not isinstance(payload, dict):
+    try:
+        payload = request.get_json(force=True, silent=False)
+    except BadRequest as e:
+        return Response(
+            _json_bytes(
+                {
+                    "error": "invalid_json",
+                    "message": getattr(e, "description", None) or str(e),
+                }
+            ),
+            status=400,
+            mimetype="application/json",
+        )
+    if payload is None:
         payload = {}
+    if not isinstance(payload, dict):
+        return Response(
+            _json_bytes(
+                {
+                    "error": "expected_json_object",
+                    "got": type(payload).__name__,
+                }
+            ),
+            status=400,
+            mimetype="application/json",
+        )
 
-    cache_key = cache.build_key("embed", payload)
+    cache_key = build_v1_api_cache_key(cache, "embed", "api/embeddings", payload)
     cached = cache.get(cache_key)
     if cached is not None:
         return Response(_json_bytes(cached), status=200, mimetype='application/json')
 
-    # Forward as-is to embeddings endpoint (Ollama-compatible)
+    # Forward as-is to embeddings endpoint (compat HTTP)
     upstream_response = handle_proxy_request('api/embeddings', request)
 
     status = upstream_response.status_code
@@ -170,7 +224,8 @@ def api_v1_embed():
 
     try:
         data = json.loads(body_text)
-    except Exception:
+    except json.JSONDecodeError as e:
+        logger.warning("api/v1/embed: upstream body is not JSON: %s", e)
         out = {
             "error": "invalid_upstream_json",
             "status": 502,
@@ -181,7 +236,7 @@ def api_v1_embed():
     embedding = None
 
     if isinstance(data, dict):
-        # Ollama-style: { "embedding": [...] }
+        # Single-object embedding shape
         if isinstance(data.get('embedding'), list):
             embedding = data['embedding']
 

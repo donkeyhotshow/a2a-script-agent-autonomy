@@ -6,7 +6,13 @@ import { buildExecuteProjection } from './utils/execute-projection-dto.js';
 import { isPromisePollComplete } from '../storage/promise-status.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.js';
-import { normalizePromisePollStatus } from '@a2a-client/shared/client-api-envelope.mjs';
+import { maybeChainAgentTools } from './step-routes-agent-flow.js';
+import { finalizeSession } from './persistence-manager.js';
+import { unwrapA2aResponse } from './utils/builders.js';
+import {
+    normalizePromisePollStatus,
+    isRecoverableAsyncSnapshot,
+} from '@a2a-client/shared/client-api-envelope.mjs';
 import { resolveProjectPathForApi, loadSession, saveSession } from '../storage/projectSessions.js';
 import { registerStepSessionsParent } from '../storage/newSessions.js';
 import { getActiveAsyncWork } from './utils/session-projection-dto.js';
@@ -30,6 +36,53 @@ function beginProjectStepContextAsync(cwd, sessionId, url, storageMode) {
     fs.mkdirSync(parent, { recursive: true });
     registerStepSessionsParent(sessionId, parent);
     return { projectPath, cleanup: () => registerStepSessionsParent(sessionId, null), notFound: false };
+}
+
+/**
+ * Persisted promise snapshot: on failed/error, avoid re-saving full server blobs each poll
+ * (large `result` / nested errors). Optional short `errorHint` for local grep.
+ * @param {Record<string, unknown>} merged
+ */
+function compactPromiseForStorageIfNeeded(merged) {
+    if (!merged || typeof merged !== 'object') return merged;
+    const st = merged.status;
+    if (st !== 'failed' && st !== 'error') return merged;
+    const small = {
+        promiseId: merged.promiseId,
+        status: st,
+        checkedAt: merged.checkedAt,
+        retryAfter: merged.retryAfter ?? null,
+        requestPhase: merged.requestPhase ?? null,
+    };
+    const hint =
+        typeof merged.message === 'string'
+            ? merged.message.slice(0, 400)
+            : typeof merged.error === 'string'
+              ? merged.error.slice(0, 400)
+              : merged.error &&
+                  typeof merged.error === 'object' &&
+                  merged.error !== null &&
+                  typeof merged.error.message === 'string'
+                ? merged.error.message.slice(0, 400)
+                : null;
+    if (hint) small.errorHint = hint;
+    return small;
+}
+
+/**
+ * Web `/async` body: for failed/error, expose only status (+ retryAfter when recoverable) so the UI
+ * shows "something failed" without re-downloading huge error payloads every poll.
+ * @param {Record<string, unknown> | null | undefined} safeResult
+ * @param {Record<string, unknown>} promiseStatus
+ */
+function buildWebAsyncResultField(safeResult, promiseStatus) {
+    const st = promiseStatus?.status;
+    if (st !== 'failed' && st !== 'error') return safeResult;
+    const out = { status: st };
+    if (isRecoverableAsyncSnapshot(promiseStatus)) {
+        out.retryAfter = promiseStatus.retryAfter ?? null;
+    }
+    return out;
 }
 
 function loadSessionForAsync(cwd, sessionId, projectPath) {
@@ -70,7 +123,7 @@ function runViteClientPromisePoll({
     const xhrReq = http.request(reqOptions, (xhrRes) => {
         let data = '';
         xhrRes.on('data', (chunk) => (data += chunk));
-        xhrRes.on('end', () => {
+        xhrRes.on('end', async () => {
             console.log(`[VitePlugin-Poll] Status [${xhrRes.statusCode}] for promise [${promiseId}]`);
             try {
                 if (!data || data.trim() === '') {
@@ -85,9 +138,19 @@ function runViteClientPromisePoll({
                     ...promiseStatus,
                     checkedAt: new Date().toISOString(),
                 };
-                stepHandlers.saveServerPromise(cwd, sessionId, currentStep, updatedPromise);
+                stepHandlers.saveServerPromise(
+                    cwd,
+                    sessionId,
+                    currentStep,
+                    compactPromiseForStorageIfNeeded(updatedPromise)
+                );
 
-                if (isPromisePollComplete(promiseStatus)) {
+                /** For wire projection after optional client tool chain */
+                let wireServerBody = promiseStatus;
+                let completedPollHandled = false;
+
+                if (isPromisePollComplete(updatedPromise)) {
+                    completedPollHandled = true;
                     const assistantMessage =
                         promiseStatus?.execute?.message ||
                         promiseStatus?.result?.message ||
@@ -117,52 +180,119 @@ function runViteClientPromisePoll({
                         stepHandlers.saveServerResponse(cwd, sessionId, currentStep, stepRecord);
                     }
 
-                    if (promiseStatus.execute) {
-                        session.execute = promiseStatus.execute;
+                    const mergedForChain =
+                        (stepRecord && stepRecord.context) ||
+                        promiseStatus.context ||
+                        session.context ||
+                        {};
+                    let chainOut = {
+                        stepNum: currentStep,
+                        savedContext: mergedForChain,
+                        serverResponse: promiseStatus,
+                    };
+                    try {
+                        chainOut = await maybeChainAgentTools({
+                            cwd,
+                            sessionId,
+                            a2aServerUrl: getA2aServerBaseUrl(),
+                            startStepNum: currentStep,
+                            serverResponse: promiseStatus,
+                            mergedContext: mergedForChain,
+                            messages: session.messages || [],
+                        });
+                    } catch (chainErr) {
+                        console.error('[VitePlugin-Poll] agent tool chain:', chainErr?.message || chainErr);
                     }
-                    session.context = stepRecord?.context || session.context;
-                    session.currentStep = currentStep;
-                    session.promiseId = null;
-                    session.promiseStatus = 'completed';
-                    // LLM turn finished but session may continue (new form / message). Only mark
-                    // lifecycle completed when there is no follow-up execute payload.
+
+                    finalizeSession({
+                        session,
+                        finalStepNum: chainOut.stepNum,
+                        finalSavedContext: chainOut.savedContext,
+                        finalServerResponse: chainOut.serverResponse,
+                    });
+
+                    const wrapped = chainOut.serverResponse;
+                    const nextPid =
+                        (wrapped && wrapped.data && wrapped.data.promiseId) ||
+                        (unwrapA2aResponse(wrapped) && unwrapA2aResponse(wrapped).promiseId) ||
+                        null;
+                    if (nextPid) {
+                        session.promiseId = String(nextPid);
+                        session.promiseStatus = 'pending';
+                        stepHandlers.saveServerPromise(cwd, sessionId, chainOut.stepNum, {
+                            promiseId: String(nextPid),
+                            status: 'pending',
+                        });
+                    } else {
+                        session.promiseId = null;
+                        session.promiseStatus = 'completed';
+                    }
+
                     session.status =
-                        promiseStatus.execute && typeof promiseStatus.execute === 'object'
+                        session.promiseId || (session.execute && typeof session.execute === 'object')
                             ? 'active'
                             : 'completed';
                     session.updatedAt = new Date().toISOString();
-                    
-                    // Save session to persist execute and updated status
+
                     if (projectPath) {
                         saveSession(projectPath, session);
                     }
                     stepHandlers.saveNewSession(cwd, session);
-                    
-                    // Also update session-index.json promise status
+
                     stepHandlers.saveServerPromise(cwd, sessionId, currentStep, {
                         promiseId: promiseId,
                         status: 'completed',
                         completedAt: new Date().toISOString(),
                     });
+
+                    wireServerBody =
+                        unwrapA2aResponse(chainOut.serverResponse) || chainOut.serverResponse || promiseStatus;
                 }
 
-                const normalizedStatus = normalizePromisePollStatus(promiseStatus);
+                // Merge disk promise (retryAfter, requestPhase) so recoverable failed + backoff stays asyncPending.
+                let normalizedStatus;
+                if (completedPollHandled) {
+                    if (session.promiseId) {
+                        normalizedStatus = {
+                            status: 'processing',
+                            completed: false,
+                            failed: false,
+                            asyncPending: true,
+                            requestPhase: null,
+                            retryAfter: null,
+                        };
+                    } else {
+                        normalizedStatus = normalizePromisePollStatus({
+                            ...updatedPromise,
+                            execute: wireServerBody.execute,
+                            result: wireServerBody.result,
+                            status: wireServerBody.status || updatedPromise.status,
+                        });
+                    }
+                } else {
+                    normalizedStatus = normalizePromisePollStatus(updatedPromise);
+                }
                 const includeCtx = requestUrl.searchParams.get('includeContext') === '1';
-                let safeResult = promiseStatus.result || null;
+                let safeResult = wireServerBody.result || null;
                 if (!includeCtx && safeResult && typeof safeResult === 'object') {
                     safeResult = { ...safeResult };
                     delete safeResult.context;
                 }
-                res.setHeader('Content-Type', 'application/json');
                 const statusStr = normalizedStatus.status;
+                const errWire = statusStr === 'failed' || statusStr === 'error';
+                safeResult = buildWebAsyncResultField(safeResult, wireServerBody);
+                res.setHeader('Content-Type', 'application/json');
                 const asyncPending = normalizedStatus.asyncPending;
-                const pollCtx = promiseStatus.context;
-                const webExecute = promiseStatus.execute
-                    ? buildExecuteProjection(promiseStatus.execute, {
-                          context:
-                              pollCtx && typeof pollCtx === 'object' && pollCtx !== null ? pollCtx : undefined,
-                      })
-                    : null;
+                const pollCtx = wireServerBody.context;
+                const webExecute =
+                    errWire || !wireServerBody.execute
+                        ? null
+                        : buildExecuteProjection(wireServerBody.execute, {
+                              context:
+                                  pollCtx && typeof pollCtx === 'object' && pollCtx !== null
+                                      ? pollCtx
+                                      : undefined,
+                          });
                 const payload = includePromiseIdInBody
                     ? {
                           promiseId,
@@ -182,6 +312,16 @@ function runViteClientPromisePoll({
                           requestPhase: normalizedStatus.requestPhase,
                           retryAfter: normalizedStatus.retryAfter,
                       };
+                // Drivers (Task Monitor) need execution.step/action for stall detection; not in web DTO execute.
+                if (
+                    includeCtx &&
+                    pollCtx &&
+                    typeof pollCtx === 'object' &&
+                    pollCtx.execution &&
+                    typeof pollCtx.execution === 'object'
+                ) {
+                    payload.context = { execution: pollCtx.execution };
+                }
                 res.end(JSON.stringify(payload));
             } catch (e) {
                 console.error('[VitePlugin] ERROR in promise check:', e.message, e.stack);

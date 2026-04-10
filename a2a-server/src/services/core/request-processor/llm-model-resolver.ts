@@ -1,10 +1,8 @@
 /**
- * Resolve LLM model id for AI Hub / Ollama proxy from invoke context.
+ * Resolve LLM model id for AI Hub from invoke context.
  * Canonical context key: `llmModel` (string).
  *
- * Main dialog default is GLM (Z.AI) unless the operator explicitly opts into Ollama via
- * `LLM_PROVIDER=ollama` or `USE_OLLAMA=1`/`true`. Plain `OLLAMA_MODEL=qwen3:8b` alone does not
- * override GLM — avoids .env left on "ollama" while proxy providers.json uses z_ai first.
+ * Order: `LLM_MODEL`, then `Z_AI_MODEL`, else default GLM id (hub `providers.json` still decides routing).
  */
 
 const DEFAULT_MAIN_DIALOG_MODEL = 'glm-4.7-flash';
@@ -15,13 +13,6 @@ export function resolveMainDialogLlmModelFromEnv(): string {
     if (llm) return llm;
     const z = process.env.Z_AI_MODEL?.trim();
     if (z) return z;
-    const preferOllama =
-        process.env.LLM_PROVIDER === 'ollama' ||
-        process.env.USE_OLLAMA === 'true' ||
-        process.env.USE_OLLAMA === '1';
-    if (preferOllama) {
-        return process.env.OLLAMA_MODEL?.trim() || 'qwen3:8b';
-    }
     return DEFAULT_MAIN_DIALOG_MODEL;
 }
 
@@ -32,7 +23,7 @@ export function grayRoomLlmModelFallback(): string {
     return (
         process.env.A2A_GRAY_ROOM_LLM_MODEL ||
         process.env.GRAY_ROOM_LLM_MODEL ||
-        'qwen3:8b'
+        DEFAULT_MAIN_DIALOG_MODEL
     );
 }
 

@@ -11,7 +11,9 @@ doc:
     - docs/new-request-flow/PROTOCOL.md
 ---
 
-> **⚠️ Важно:** Это документация для Client API Server (порт 3001).
+> **⚠️ Важно:** Это документация для **standalone Client API** (SDK, порт **3001** по умолчанию).
+> 
+> **Дефолтный dev-стек (Web):** Vite **5173**, сессии и проекты — **`/api/a2a/sessions`**, **`/api/a2a/projects`**. SDK монтирует те же обработчики также на **`/api/sessions`** (совместимость). Норматив: [ADR-0028](../adr/ADR-0028-client-api-deployment-modes.md), [PROTOCOL.md](PROTOCOL.md).
 > 
 > **Транспорт:** Web взаимодействует с Client API через HTTP. Server возвращает `promiseId`, Client API
 > опрашивает статус до `completed`, затем возвращает `execute.*` в Web.

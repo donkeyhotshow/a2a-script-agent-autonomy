@@ -10,11 +10,13 @@
  * Writer: 'cognitive-engine' for REASONING_CHAIN artifacts.
  */
 
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import {
   ArtifactStore,
+  createArtifactWriteInput,
   type StoredArtifact,
 } from './artifact-store.js';
+import { logger } from '../../utils/logger.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -131,16 +133,15 @@ export class ReasoningEngine {
     // Persist as artifact
     const artifactId = `reasoning-${randomUUID()}`;
     await this.artifactStore.write(
-      {
+      createArtifactWriteInput({
         artifact_id: artifactId,
         artifact_type: 'REASONING_CHAIN',
         session_id: sessionId,
         turn_id: turnId,
-        created_at: new Date().toISOString(),
         schema_version: '1.0',
         summary: `Reasoning chain for: ${goal.slice(0, 80)}`,
         data: chain as unknown as Record<string, unknown>,
-      },
+      }),
       COMPONENT_ID,
     );
 
@@ -346,8 +347,11 @@ export class ReasoningEngine {
     for (const id of ids) {
       try {
         results.push(await this.artifactStore.get(id));
-      } catch {
-        // Missing artifact — silently skip
+      } catch (err: unknown) {
+        logger.debug('[CognitiveEngine] Artifact not available for resolution', {
+          artifactId: id,
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }
     return results;

@@ -24,5 +24,8 @@
     "list-directory": {
       "path": "."
     }
+  },
+  "result": {
+    "completed": false
   }
 }

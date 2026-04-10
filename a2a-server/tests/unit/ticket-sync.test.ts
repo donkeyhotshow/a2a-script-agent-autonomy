@@ -68,8 +68,17 @@ describe('TicketSync', () => {
     sync = makeSync(base);
   });
 
-  afterEach(() => {
-    fs.rmSync(base, { recursive: true, force: true });
+  afterEach(async () => {
+    for (let attempt = 0; attempt < 8; attempt++) {
+      try {
+        await fs.promises.rm(base, { recursive: true, force: true, maxRetries: 5, retryDelay: 50 });
+        break;
+      } catch (err: unknown) {
+        const code = (err as NodeJS.ErrnoException)?.code;
+        if (code !== 'ENOTEMPTY' && code !== 'EBUSY' && code !== 'EPERM') throw err;
+        await new Promise((r) => setTimeout(r, 80 * (attempt + 1)));
+      }
+    }
     vi.clearAllMocks();
   });
 

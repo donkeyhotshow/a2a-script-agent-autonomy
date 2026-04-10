@@ -5,7 +5,7 @@ Based on the current `DEV_STATE` analysis and the derail points captured in `wor
 ## High Priority
 
 1. **Router interaction reliability**
-   - Auto-select the `agent` choice in `monitor-and-process-tasks.js` whenever a session is seeded with `mode: "agent"`, proving the service can skip the free-text router prompt without human intervention.
+   - Auto-select the `agent` choice in `tests/monitor-and-process-tasks.js` whenever a session is seeded with `mode: "agent"`, proving the service can skip the free-text router prompt without human intervention.
    - Reference: `tasks/pending/monitor-router-interaction-followup.md`, **work-task** coverage in `work-task-sync-documentation-router-drift.md`.
 
 2. **Script/Dialog/Agent response parity (S14)**
@@ -49,7 +49,7 @@ Based on the current `DEV_STATE` analysis and the derail points captured in `wor
 ## Architecture Enhancements
 
 11. **Self-upgrade observability**
-    - Add a metrics endpoint to the Task Monitor (`monitor-and-process-tasks.js`) tracking tasks/min, failure rate, and LLM latency per provider.
+    - Add a metrics endpoint to the Task Monitor (`tests/monitor-and-process-tasks.js`) tracking tasks/min, failure rate, and LLM latency per provider.
     - Reference: `work-task-orchestrator-metrics-tracking.md` for instrumentation goals.
 
 12. **Client API standalone mode**

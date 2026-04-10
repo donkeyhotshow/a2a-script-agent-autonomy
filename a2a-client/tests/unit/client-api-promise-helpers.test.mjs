@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { isActivePromiseStatus, isPromisePollComplete } from '../../packages/vite-plugin/storage/promise-status.js';
-import { mergeDialogHistoryForInvoke } from '../../packages/vite-plugin/routes/utils/builders.js';
+import { mergeDialogHistoryForInvoke } from '../../shared/dialog-invoke-history.mjs';
 
 describe('isPromisePollComplete', () => {
     it('true when execute or terminal status', () => {
@@ -41,15 +41,21 @@ describe('mergeDialogHistoryForInvoke', () => {
             { role: 'user', message: 'c' },
         ]);
     });
-    it('replaces trailing user when text changes', () => {
+    it('appends new user entry when text changes (accumulate history)', () => {
         const ctx = { history: [{ role: 'user', message: 'old' }] };
         mergeDialogHistoryForInvoke(ctx, 'new');
-        expect(ctx.history).toEqual([{ role: 'user', message: 'new' }]);
+        expect(ctx.history).toEqual([
+            { role: 'user', message: 'old' },
+            { role: 'user', message: 'new' },
+        ]);
     });
-    it('aligns content-only user entry with message field', () => {
+    it('appends new entry when content differs (accumulate history)', () => {
         const ctx = { history: [{ role: 'user', content: 'x' }] };
         mergeDialogHistoryForInvoke(ctx, 'y');
-        expect(ctx.history).toEqual([{ role: 'user', message: 'y' }]);
+        expect(ctx.history).toEqual([
+            { role: 'user', content: 'x' },
+            { role: 'user', message: 'y' },
+        ]);
     });
     it('no-op for null context or empty task', () => {
         expect(() => mergeDialogHistoryForInvoke(null, 'x')).not.toThrow();

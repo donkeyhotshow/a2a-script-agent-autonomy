@@ -178,7 +178,7 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
         clientApi: { port: 5173, health: 'http://localhost:5173' },
         webUi: { port: 5173, health: 'http://localhost:5173' },
         aiHub: { port: 11434, health: 'http://localhost:11434/health' },
-        ollama: { port: 11435, health: 'http://localhost:11435/api/tags' }
+        compat_llm: { port: 11435, health: 'http://localhost:11435/api/tags' }
     };
 
     // Infrastructure validation (mirrors PowerShell script Docker + service checks)
@@ -188,14 +188,14 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
             dockerServices: false,
             serviceStartup: false,
             aiHub: false,
-            ollama: false
+            compat_llm: false
         };
         let servicesStatus = {
             server: false,
             clientApi: false,
             webUi: false,
             aiHub: false,
-            ollama: false
+            compat_llm: false
         };
 
         try {
@@ -238,31 +238,31 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
             }
             // Don't fail test if AI Hub is not available
 
-            // Check Ollama API (localhost:11435) - optional check
+            // Check Local LLM upstream API (localhost:11435) - optional check
             try {
-                const ollamaResponse = await request.get(SERVICES.ollama.health);
-                if (ollamaResponse.status < 500) {
-                    servicesStatus.ollama = true;
-                    infraStatus.ollama = true;
-                    console.log('✓ Ollama API check passed');
-                    const ollamaData = await ollamaResponse.json();
-                    logger.logInfrastructure('Ollama API check', { models: ollamaData.models?.length || 0 });
+                const compat_llmResponse = await request.get(SERVICES.compat_llm.health);
+                if (compat_llmResponse.status < 500) {
+                    servicesStatus.compat_llm = true;
+                    infraStatus.compat_llm = true;
+                    console.log('✓ Local LLM upstream API check passed');
+                    const compat_llmData = await compat_llmResponse.json();
+                    logger.logInfrastructure('Local LLM upstream API check', { models: compat_llmData.models?.length || 0 });
                 }
             } catch (error) {
-                console.log('⚠ Ollama API not available:', error.message);
-                logger.logInfrastructure('Ollama API check failed', { error: error.message });
+                console.log('⚠ Local LLM upstream API not available:', error.message);
+                logger.logInfrastructure('Local LLM upstream API check failed', { error: error.message });
             }
-            // Don't fail test if Ollama is not available
+            // Don't fail test if Local LLM upstream is not available
 
             logger.logInfrastructure('Service health checks completed', {
                 server: servicesStatus.server,
                 clientApi: servicesStatus.clientApi,
                 webUi: servicesStatus.webUi,
                 aiHub: servicesStatus.aiHub,
-                ollama: servicesStatus.ollama
+                compat_llm: servicesStatus.compat_llm
             });
 
-            console.log('✓ All infrastructure and services validated including AI Hub and Ollama');
+            console.log('✓ All infrastructure and services validated including AI Hub and Local LLM upstream');
             logger.logTest('Infrastructure validation', 'passed', Date.now() - startTime, undefined, {
                 ...servicesStatus,
                 docker: infraStatus.dockerServices
@@ -502,7 +502,7 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
     // Original service health test (now secondary after infrastructure validation)
     test('Service health endpoints detailed validation', async ({ request }) => {
         const startTime = Date.now();
-        let servicesStatus = { server: false, clientApi: false, webUi: false, aiHub: false, ollama: false };
+        let servicesStatus = { server: false, clientApi: false, webUi: false, aiHub: false, compat_llm: false };
 
         try {
             test.setTimeout(30000);
@@ -546,16 +546,16 @@ test.describe('Web UI Smoke Test - Enhanced Automation', () => {
                 console.log(`⚠ AI Hub not available: ${error.message}`);
             }
 
-            // Test Ollama API
+            // Test Local LLM upstream API
             try {
-                const ollamaResponse = await request.get(SERVICES.ollama.health);
-                if (ollamaResponse.status < 500) {
-                    servicesStatus.ollama = true;
-                    const ollamaData = await ollamaResponse.json();
-                    console.log(`✓ Ollama API available at port ${SERVICES.ollama.port} (${ollamaData.models?.length || 0} models)`);
+                const compat_llmResponse = await request.get(SERVICES.compat_llm.health);
+                if (compat_llmResponse.status < 500) {
+                    servicesStatus.compat_llm = true;
+                    const compat_llmData = await compat_llmResponse.json();
+                    console.log(`✓ Local LLM upstream API available at port ${SERVICES.compat_llm.port} (${compat_llmData.models?.length || 0} models)`);
                 }
             } catch (error) {
-                console.log(`⚠ Ollama not available: ${error.message}`);
+                console.log(`⚠ Local LLM upstream not available: ${error.message}`);
             }
 
             logger.logTest('Service health checks', 'passed', Date.now() - startTime, undefined, servicesStatus);

@@ -16,14 +16,14 @@ Client API (Vite Plugin)
   └─ Step Handlers (file I/O)
          ↓
 A2A Server (3000)
-  ├─ Invoke Handler (sync/async)
+  ├─ Invoke Handler (async-only: promiseId + poll `/result`)
   ├─ Router (dialog/agent)
   └─ Transforms (workbench)
          ↓
 AI Integration (11434)
   ├─ Promise Routes (async exec)
   ├─ Daemon (background)
-  └─ Ollama (LLM)
+  └─ Local LLM upstream (LLM)
 ```
 
 ---
@@ -74,6 +74,8 @@ Client API → A2A Server → AI Integration
 - `completed` - Successfully finished
 - `failed` - Error occurred
 - `cancelled` - Manually cancelled
+
+**A2A Server request file queue (port 3000):** Dialog/LLM pipeline errors that can recover when the hub or transforms come back **re-queue the same `promiseId`** as `pending` with `retryAfter` instead of going straight to `failed`. Clients should keep polling until `completed` or final `failed`. See **[`docs/PROMISE-RETRY-DIALOG.md`](PROMISE-RETRY-DIALOG.md)**.
 
 ---
 
@@ -408,7 +410,7 @@ storage/sessions/{sessionId}/
 │  ┌────────────────────────────────────────────────────────────┐ │
 │  │ 1. Create promise                                          │ │
 │  │ 2. Daemon processes in background                         │ │
-│  │ 3. Call Ollama for LLM                                    │ │
+│  │ 3. Call Local LLM upstream for LLM                                    │ │
 │  │ 4. Return result (completed/processing/failed)           │ │
 │  └────────────────────────────────────────────────────────────┘ │
 └──────────────────────────────────────────────────────────────────┘
@@ -488,7 +490,7 @@ One **action key** per `execute` and per `result` ([`AGENTS.md`](../AGENTS.md)).
 | **Web DTO / received.json** | `buildWebExecute` strips client-only keys; pending script may surface as `attachments.pendingClientAction`. | Same sanitizer | Same |
 | **Session storage** | Steps under `a2a-client/storage/sessions/`; rebuild from highest step with `server-response.json`. | Same | Same |
 
-**E2E smoke:** `scripts/e2e-client-api-replay-sync-script.mjs` replays Client API `client.json` bodies (sync script path).
+**E2E smoke:** `tests/direct-tests/e2e-dialog-test.js` (Client API: `/sessions` → `/next` → poll `/async`); optional driver `tests/agent-dialog-runner.mjs`.
 
 ---
 
@@ -501,7 +503,6 @@ One **action key** per `execute` and per `result` ([`AGENTS.md`](../AGENTS.md)).
 | `PORT` | 3000 | A2A Server port |
 | `SKIP_AUTH` | - | Bypass auth in dev |
 | `ENCRYPTION_KEY` | required | 32-char key |
-| `DEFAULT_SYNC_MODE` | - | Set to 1 for sync responses |
 | `A2A_MAX_INTERRUPT_TURNS` | 10 | Gray room budget |
 | `A2A_COMPRESS_HISTORY_MIN_ENTRIES` | 0 | Skip compression threshold |
 

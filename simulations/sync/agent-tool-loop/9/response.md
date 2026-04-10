@@ -60,6 +60,9 @@ Mirror of `response.json` for prompt pipeline / `sim:check-md`.
       "command": "node -e \"const h = require('./utils/helpers'); console.log(h.calculateTotal([{price: 10}, {price: 20}]));\"",
       "timeout": 10000
     }
+  },
+  "result": {
+    "completed": false
   }
 }
 ```

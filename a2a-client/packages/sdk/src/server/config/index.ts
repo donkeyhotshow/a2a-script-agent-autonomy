@@ -62,7 +62,6 @@ export interface ApiServerConfig {
     rateLimitWindow: number;
     rateLimitMax: number;
 
-    defaultSyncMode: boolean;
     sdkHttpLimits: {
         corsEnabled: boolean;
         corsOrigin: string[];
@@ -113,7 +112,6 @@ export const config: ApiServerConfig = {
     rateLimitWindow: toNumber(process.env.RATE_LIMIT_WINDOW, 60 * 1000),
     rateLimitMax: toNumber(process.env.RATE_LIMIT_MAX, 100),
 
-    defaultSyncMode: toBoolean(process.env.DEFAULT_SYNC_MODE, false),
     sdkHttpLimits: {
         corsEnabled: toBoolean(process.env.SDK_HTTP_CORS_ENABLED, true),
         corsOrigin: toStringArray(process.env.SDK_HTTP_CORS_ORIGIN, ['*']),

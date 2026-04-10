@@ -14,7 +14,7 @@
 На клієнті доступний пакет @a2a/rag з можливостями:
 
 - **BM25** - алгоритм пошуку для точного збігу коду
-- **Semantic search** - семантичний пошук з Ollama
+- **Semantic search** - семантичний пошук з Local LLM upstream
 - **Hybrid search** - комбінує sparse та dense методи
 - **Query understanding** - розуміє намір користувача
 

@@ -16,7 +16,7 @@ import type {
     RequestContext,
     ProcessResult,
     ProcessOutcome,
-} from '../request-processor.interfaces.js';
+} from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
 import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../../../config/router-static.js';
 import {applySequenceStepComplete} from './sequence-workbench.js';

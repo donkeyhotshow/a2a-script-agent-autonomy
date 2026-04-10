@@ -1,11 +1,14 @@
 """
-Ollama Proxy Package
+Local LLM upstream Proxy Package
 """
 
 import time
 import asyncio
+import logging
 
 from flask import Flask, g, request
+
+_metrics_log = logging.getLogger(__name__)
 
 from .metrics import metrics
 
@@ -25,8 +28,7 @@ def _record_request_metrics(response):
     """
     Record basic per-request metrics.
 
-    Metrics collection must never break the proxy, so all errors
-    are silently ignored.
+    Metrics collection must never break the proxy; failures are logged.
     """
     try:
         started_at = getattr(g, "_proxy_request_started_at", None)
@@ -42,8 +44,7 @@ def _record_request_metrics(response):
             duration=duration,
         )
     except Exception:
-        # Metrics are best-effort only.
-        pass
+        _metrics_log.warning("metrics.record_request failed", exc_info=True)
 
     return response
 
@@ -56,7 +57,7 @@ try:
     from .openai_wrapper import openai_bp
     app.register_blueprint(openai_bp)
 except ImportError as e:
-    print(f"Warning: Could not register OpenAI API routes: {e}")
+    _metrics_log.warning("Could not register OpenAI API routes: %s", e)
 
 # Initialize provider router on startup
 def init_providers():
@@ -70,13 +71,13 @@ def init_providers():
             loop = asyncio.get_running_loop()
         except RuntimeError:
             asyncio.run(router.initialize())
-            print("Provider router initialized successfully")
+            _metrics_log.info("Provider router initialized successfully")
             return
 
         loop.create_task(router.initialize())
-        print("Provider router initialization scheduled")
+        _metrics_log.info("Provider router initialization scheduled")
     except Exception as e:
-        print(f"Warning: Could not initialize provider router: {e}")
+        _metrics_log.warning("Could not initialize provider router: %s", e, exc_info=True)
 
 # Initialize providers when module is loaded
 # init_providers()  # Commented out to avoid event loop issues
@@ -89,9 +90,9 @@ def init_daemon():
         if DAEMON_ENABLED:
             from .daemon import start_daemon
             start_daemon()
-            print("Promise daemon auto-started")
+            _metrics_log.info("Promise daemon auto-started")
     except Exception as e:
-        print(f"Warning: Could not start daemon: {e}")
+        _metrics_log.warning("Could not start daemon: %s", e, exc_info=True)
 
 
 init_daemon()

@@ -1,4 +1,5 @@
-import { execSync } from 'child_process';
+import { execFile } from 'node:child_process';
+import { statSync } from 'fs';
 import { logger } from '../../utils/logger.js';
 
 export interface DiscoveryResult {
@@ -13,12 +14,34 @@ export class ContextDiscoveryService {
    */
   async searchSymbols(query: string, rootPath: string): Promise<DiscoveryResult[]> {
     logger.info('[ContextDiscovery] JIT Searching for symbols', { query });
-    
+
+    // Validate rootPath
+    if (!rootPath || typeof rootPath !== 'string') {
+      logger.warn('[ContextDiscovery] Invalid rootPath', { rootPath });
+      return [];
+    }
     try {
-      // Use ripgrep or grep if available, fallback to simple recursive search
-      const output = execSync(`grep -rni --exclude-dir=node_modules "${query}" "${rootPath}"`, { 
-        encoding: 'utf-8',
-        timeout: 5000 
+      if (!statSync(rootPath).isDirectory()) {
+        logger.warn('[ContextDiscovery] rootPath is not a directory', { rootPath });
+        return [];
+      }
+    } catch (e) {
+      logger.warn('[ContextDiscovery] rootPath does not exist or inaccessible', { rootPath });
+      return [];
+    }
+
+    try {
+      const output = await new Promise<string>((resolve, reject) => {
+        execFile('grep', ['-rni', '--exclude-dir=node_modules', query, rootPath], {
+          encoding: 'utf-8',
+          timeout: 5000
+        }, (error, stdout, stderr) => {
+          if (error && !stdout) {
+            reject(error);
+          } else {
+            resolve(stdout);
+          }
+        });
       });
 
       return this.parseGrepOutput(output);
@@ -37,7 +60,7 @@ export class ContextDiscoveryService {
       if (match) {
         results.push({
           filePath: match[1],
-          lineNumber: parseInt(match[2]),
+          lineNumber: parseInt(match[2], 10),
           lineContent: match[3].trim()
         });
       }

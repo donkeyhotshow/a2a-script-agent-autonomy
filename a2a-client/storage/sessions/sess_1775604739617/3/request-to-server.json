@@ -1,0 +1,14 @@
+{
+  "context": {
+    "execution": {
+      "action": "task",
+      "step": "router"
+    },
+    "task": "Implement or explicitly defer each ⏳ row: client modal behavior for waiting/approval states; session/create or persistence path for `conversation_id` if still required. Update ADR-0035 table (✅/deferred) and `DEV_STATE` for touched modules.",
+    "history": [],
+    "session_id": "srv_sess_stateless"
+  },
+  "result": {
+    "choice": "agent"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "$proba": {
+    "ignorePaths": [
+      "context.session_id",
+      "context.result",
+      "context.message",
+      "context.execution.routerAnalysis",
+      "execute.form.choices"
+    ],
+    "inputAbsentPaths": ["context.history"]
+  },
+  "context": {
+    "task": "string",
+    "execution": {
+      "action": "task",
+      "step": "router"
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Оберіть спосіб виконання",
+      "choices": [
+        {
+          "id": "string",
+          "label": "string",
+          "description": "string"
+        }
+      ]
+    }
+  }
+}

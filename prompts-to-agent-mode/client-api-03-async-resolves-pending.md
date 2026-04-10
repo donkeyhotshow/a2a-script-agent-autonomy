@@ -10,4 +10,4 @@ When `asyncPending=true`, poll `GET /api/a2a/sessions/{id}/async` until terminal
 
 ## Completion
 
-- [ ] Done
+[X] Completed

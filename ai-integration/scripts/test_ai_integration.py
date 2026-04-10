@@ -2,7 +2,7 @@
 """
 High-level smoke tests for the ai-integration layer.
 
-Validates proxy health endpoints, the Ollama backend, and the promise daemon workflow.
+Validates proxy health endpoints, the Local LLM upstream backend, and the promise daemon workflow.
 """
 
 from __future__ import annotations
@@ -23,17 +23,17 @@ if str(PROJECT_ROOT) not in sys.path:
 from scripts.tests.daemon_resilience import run_daemon_resilience_test
 from scripts.tests.promise_chain import DEFAULT_PROXY_URL, run_promise_chain_test
 
-DEFAULT_OLLAMA_URL = "http://127.0.0.1:11434"
+DEFAULT_LOCAL_LLM_UPSTREAM_URL = "http://127.0.0.1:11434"
 
 
-def _build_checks(proxy_url: str, ollama_url: str) -> Iterable[Tuple[str, str]]:
+def _build_checks(proxy_url: str, local_llm_upstream_url: str) -> Iterable[Tuple[str, str]]:
     proxy_base = proxy_url.rstrip('/')
-    ollama_base = ollama_url.rstrip('/')
+    upstream_tags_base = local_llm_upstream_url.rstrip('/')
     return (
         (f"{proxy_base}/health", "proxy liveness"),
         (f"{proxy_base}/health/ready", "proxy readiness check"),
-        (f"{proxy_base}/health/ollama", "proxy → ollama availability"),
-        (f"{ollama_base}/api/tags", "direct Ollama tags"),
+        (f"{proxy_base}/health/local-llm-upstream", "proxy → local upstream availability"),
+        (f"{upstream_tags_base}/api/tags", "direct Local LLM upstream tags"),
     )
 
 
@@ -49,25 +49,29 @@ def _check_endpoint(url: str, label: str, timeout: float) -> bool:
         return False
 
 
-def run_health_verification(proxy_url: str, ollama_url: str, timeout: float) -> bool:
+def run_health_verification(proxy_url: str, local_llm_upstream_url: str, timeout: float) -> bool:
     logging.info("Running ai-integration health checks...")
     passed = True
-    for url, label in _build_checks(proxy_url, ollama_url):
+    for url, label in _build_checks(proxy_url, local_llm_upstream_url):
         passed &= _check_endpoint(url, label, timeout)
     return passed
 
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Smoke-test the ai-integration proxy, daemon, and Ollama connectivity."
+        description="Smoke-test the ai-integration proxy, daemon, and Local LLM upstream connectivity."
     )
     parser.add_argument("--proxy-url", default=DEFAULT_PROXY_URL, help="AI proxy base URL.")
-    parser.add_argument("--ollama-url", default=DEFAULT_OLLAMA_URL, help="Direct Ollama URL.")
+    parser.add_argument(
+        "--local-llm-upstream-url",
+        default=DEFAULT_LOCAL_LLM_UPSTREAM_URL,
+        help="Direct local HTTP LLM base URL.",
+    )
     parser.add_argument("--timeout", type=float, default=5.0, help="HTTP timeout in seconds.")
     parser.add_argument(
         "--skip-promise",
         action="store_true",
-        help="Skip the promise chain test (useful when Ollama is down).",
+        help="Skip the promise chain test (useful when Local LLM upstream is down).",
     )
     parser.add_argument(
         "--verbose",
@@ -89,7 +93,7 @@ def main() -> None:
         format="%(asctime)s %(levelname)s %(message)s",
     )
 
-    success = run_health_verification(args.proxy_url, args.ollama_url, args.timeout)
+    success = run_health_verification(args.proxy_url, args.local_llm_upstream_url, args.timeout)
 
     if not args.skip_promise:
         logging.info("Running promise daemon chain test...")

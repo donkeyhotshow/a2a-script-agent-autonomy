@@ -15,9 +15,14 @@
  *   recall(taskDescription, topK) → topK nearest by cosine similarity
  */
 
-import { randomUUID } from 'crypto';
-import { promises as fs } from 'fs';
+import { randomUUID } from 'node:crypto';
+import { promises as fs } from 'node:fs';
+import { createRequire } from 'node:module';
 import { join } from 'path';
+import { logger } from '../../utils/logger.js';
+import type { Pool } from 'pg';
+
+const requirePg = createRequire(import.meta.url);
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -79,7 +84,13 @@ class JsonFileBackend implements StorageBackend {
       const raw = await fs.readFile(this.filePath, 'utf8');
       const parsed: unknown = JSON.parse(raw);
       return Array.isArray(parsed) ? (parsed as Episode[]) : [];
-    } catch {
+    } catch (err: unknown) {
+      const code = (err as NodeJS.ErrnoException)?.code;
+      if (code === 'ENOENT') return [];
+      logger.error('[EpisodicMemory] JSON backend loadAll failed', {
+        path: this.filePath,
+        error: err instanceof Error ? err.message : String(err),
+      });
       return [];
     }
   }
@@ -87,22 +98,38 @@ class JsonFileBackend implements StorageBackend {
 
 // ── Postgres backend ──────────────────────────────────────────────────────────
 
+interface EpisodeRow {
+  id: string;
+  session_id: string;
+  task_description: string;
+  task_embedding: string | unknown[];
+  outcome: EpisodeOutcome;
+  failure_reason: string | null;
+  lessons: string | unknown[];
+  artifacts_produced: string | unknown[];
+  confidence_final: number;
+  duration_ms: number;
+  loop_count: number;
+  strategies_used: string | unknown[];
+  strategies_that_worked: string | unknown[];
+  strategies_that_failed: string | unknown[];
+  created_at: number;
+}
+
 /**
  * Minimal inline Postgres client — avoids a hard `pg` dependency.
  * If `pg` is not installed the constructor throws and the caller falls back
  * to the JSON backend.
  */
 class PostgresBackend implements StorageBackend {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private pool: any;
+  private pool: Pool;
 
   /**
    * @throws if `pg` is not installed or DATABASE_URL is missing
    */
   constructor(connectionString: string) {
-    // Dynamic require — keeps pg optional
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { Pool } = require('pg') as { Pool: new (opts: object) => object };
+    // Optional dep: load via createRequire so ESM (no global require) still works
+    const { Pool } = requirePg('pg') as { Pool: new (opts: object) => Pool };
     this.pool = new Pool({ connectionString });
   }
 
@@ -141,11 +168,10 @@ class PostgresBackend implements StorageBackend {
 
   async loadAll(): Promise<Episode[]> {
     await this._ensureTable();
-    const result = await this.pool.query(
+    const result = await this.pool.query<EpisodeRow>(
       'SELECT * FROM episodic_memory ORDER BY created_at DESC LIMIT 1000',
     );
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return (result.rows as any[]).map(this._rowToEpisode);
+    return result.rows.map(this._rowToEpisode);
   }
 
   private async _ensureTable(): Promise<void> {
@@ -170,27 +196,26 @@ class PostgresBackend implements StorageBackend {
     `);
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private _rowToEpisode(row: any): Episode {
+   private _rowToEpisode(row: EpisodeRow): Episode {
     const parseJson = (v: unknown): unknown[] =>
       Array.isArray(v) ? v : typeof v === 'string' ? (JSON.parse(v) as unknown[]) : [];
 
     return {
-      id: row.id as string,
-      session_id: row.session_id as string,
-      task_description: row.task_description as string,
+      id: row.id,
+      session_id: row.session_id,
+      task_description: row.task_description,
       task_embedding: parseJson(row.task_embedding) as number[],
-      outcome: row.outcome as EpisodeOutcome,
-      failure_reason: (row.failure_reason as string | undefined) ?? undefined,
+      outcome: row.outcome,
+      failure_reason: row.failure_reason ?? undefined,
       lessons: parseJson(row.lessons) as string[],
       artifacts_produced: parseJson(row.artifacts_produced) as string[],
-      confidence_final: Number(row.confidence_final),
-      duration_ms: Number(row.duration_ms),
-      loop_count: Number(row.loop_count),
+      confidence_final: row.confidence_final,
+      duration_ms: row.duration_ms,
+      loop_count: row.loop_count,
       strategies_used: parseJson(row.strategies_used) as string[],
       strategies_that_worked: parseJson(row.strategies_that_worked) as string[],
       strategies_that_failed: parseJson(row.strategies_that_failed) as string[],
-      created_at: Number(row.created_at),
+      created_at: row.created_at,
     };
   }
 }
@@ -214,8 +239,16 @@ export class EpisodicMemory {
       try {
         this.backend = new PostgresBackend(dbUrl);
         return;
-      } catch {
-        // pg not installed or connection string invalid — fall through to JSON
+      } catch (err: unknown) {
+        const detail = err instanceof Error ? err.message : String(err);
+        const missingPg = /Cannot find module ['"]pg['"]/.test(detail);
+        if (missingPg) {
+          logger.debug('[EpisodicMemory] Optional pg not installed, using JSON file');
+        } else {
+          logger.warn('[EpisodicMemory] Postgres backend unavailable, using JSON file', {
+            error: detail,
+          });
+        }
       }
     }
     this.backend = new JsonFileBackend(jsonFilePath);
@@ -282,7 +315,7 @@ export class EpisodicMemory {
 
 /**
  * Produce a 384-dim placeholder embedding from a string.
- * This is replaced at runtime by the AI-proxy layer (Ollama nomic-embed-text).
+ * This is replaced at runtime by the AI-proxy layer (Local LLM upstream nomic-embed-text).
  * The placeholder uses character-code bucketing so short strings still produce
  * a non-zero vector that can be compared for unit tests.
  */

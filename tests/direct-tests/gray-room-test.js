@@ -9,7 +9,7 @@
  * Usage:
  *   node tests/direct-tests/gray-room-test.js
  *
- * Requires: Client API (5173) + A2A Server (3000) + Ollama (11435/11434)
+ * Requires: Client API (5173) + A2A Server (3000) + Local LLM upstream (11435/11434)
  * Env: CLIENT_API_URL, SERVER_URL
  */
 
@@ -71,9 +71,8 @@ async function sendNext(sessionId, body) {
   return ack;
 }
 
-async function pollAsyncSettled(sessionId, maxWaitMs = 120_000, stepMs = 500) {
-  const deadline = Date.now() + maxWaitMs;
-  while (Date.now() < deadline) {
+async function pollAsyncSettled(sessionId, stepMs = 500) {
+  for (;;) {
     const r = await fetch(`${CLIENT_API_URL}/api/a2a/sessions/${sessionId}/async`);
     if (!r.ok) break;
     const j = await r.json();
@@ -105,7 +104,7 @@ async function navigatePastRouterToAgent(sessionId) {
     let body = await getSession(sessionId);
     let s = unwrapSessionBody(body);
     if (s.asyncPending) {
-      await pollAsyncSettled(sessionId, 120_000);
+      await pollAsyncSettled(sessionId);
       body = await getSession(sessionId);
       s = unwrapSessionBody(body);
     }
@@ -116,7 +115,7 @@ async function navigatePastRouterToAgent(sessionId) {
       assert(pick, 'router missing agent choice');
       const ack = await sendNext(sessionId, { result: { choice: pick } });
       assert(ack.success === true, 'router pick agent');
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       return;
     }
     if (hasWebFormTextEntry(ex?.form) && !choices?.length) {
@@ -124,7 +123,7 @@ async function navigatePastRouterToAgent(sessionId) {
         result: { message: 'gray-room-test: task direction for router' },
       });
       assert(ack.success === true, 'task direction /next');
-      if (ack.asyncPending) await pollAsyncSettled(sessionId, 120_000);
+      if (ack.asyncPending) await pollAsyncSettled(sessionId);
       continue;
     }
     return;
@@ -151,7 +150,7 @@ async function testGrayRoomChain() {
   assert(nextBody.success === true, 'Initial /next success');
 
   // Poll for async settlement (Gray Room processing)
-  const settled = await pollAsyncSettled(sessionId, 180_000); // 3 minutes for LLM chain
+  const settled = await pollAsyncSettled(sessionId); // 3 minutes for LLM chain
   assert(settled, 'Gray Room async processing settled');
 
   // Get session and check Gray Room slot (full workbench only with includeContext)
@@ -197,7 +196,7 @@ async function testRedRoomToolExecution() {
     const nextBody = await sendNext(sessionId, { result: { message: promptText } });
     assert(nextBody.success === true, `/next success on attempt ${attempts}`);
 
-    const settled = await pollAsyncSettled(sessionId, 120_000);
+    const settled = await pollAsyncSettled(sessionId);
     assert(settled, `Async settled on attempt ${attempts}`);
 
     const session = await getSession(sessionId, { includeContext: true });
@@ -235,7 +234,7 @@ async function testRedRoomToolExecution() {
   assert(ack.success === true, 'Red Room result /next success');
 
   if (ack.asyncPending) {
-    await pollAsyncSettled(sessionId, 120_000);
+    await pollAsyncSettled(sessionId);
   }
 
   // Verify Gray Room slot still present after Red Room

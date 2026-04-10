@@ -86,7 +86,6 @@ expect(storage.getItem('test')).toBe('data');
 
 - `POST /api/v1/invoke` - создание запроса
 - `GET /api/v1/requests/:id/status` - получение статуса
-- `GET /api/v1/sse/:sessionId` - Server-Sent Events
 
 ### Конфигурация
 

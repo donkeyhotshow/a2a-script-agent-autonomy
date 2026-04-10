@@ -1,0 +1,77 @@
+{
+  "sessionId": "sess_1775661165158",
+  "steps": [
+    {
+      "step": 1,
+      "hasServerResponse": true,
+      "hasClientResult": false
+    },
+    {
+      "step": 2,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 3,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 4,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 5,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 6,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 7,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 8,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 9,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 10,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 11,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 12,
+      "hasServerResponse": true,
+      "hasClientResult": true
+    },
+    {
+      "step": 13,
+      "hasServerResponse": false,
+      "hasClientResult": true
+    }
+  ],
+  "updatedAt": "2026-04-09T10:30:03.620Z",
+  "createdAt": "2026-04-08T15:12:45.162Z",
+  "currentStep": 13,
+  "mode": "agent",
+  "promiseId": "prom_6ab9397f-3e24-4ea2-8c68-29f74b548c81",
+  "promiseStatus": "processing",
+  "status": "active"
+}

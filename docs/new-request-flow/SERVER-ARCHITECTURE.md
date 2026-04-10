@@ -68,7 +68,7 @@ The A2A Server is a **stateless** HTTP service that processes requests and retur
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
 │                       EXTERNAL AI HUB (ai-integration)                       │
-│  - Proxy on **11434** → Ollama **11435**                                    │
+│  - Proxy on **11434** → Local LLM upstream **11435**                                    │
 │  - Async promise support (promiseId)                                        │
 │  - ML simulation capabilities                                               │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -87,7 +87,6 @@ The A2A Server is a **stateless** HTTP service that processes requests and retur
 | `index.ts` | `POST /api/v1/invoke`, `GET /metrics`, … | Invoke + metrics (mounted under `/api/v1`) |
 | `requests.routes.ts` | `POST /api/v1/requests`, `GET /:id/status`, `GET /:id/result` | Request handling |
 | `actions.routes.ts` | `GET /api/v1/actions/:id` | Action definitions |
-| `sse.routes.ts` | `GET /api/v1/sse/:sessionId` | Server-Sent Events |
 | `health.routes.ts` | `GET /health`, `GET /health/live` | Health checks |
 
 #### 2. Services (`a2a-server/src/services/`)
@@ -100,7 +99,7 @@ The A2A Server is a **stateless** HTTP service that processes requests and retur
 | [`context-manager.service.ts`](a2a-server/src/services/context-manager.service.ts) | Context parsing and management |
 | [`phase-machine.service.ts`](a2a-server/src/services/phase-machine.service.ts) | AI-Action phase management |
 | [`llm-adapter.ts`](a2a-server/src/services/llm-adapter.ts) | LLM communication |
-| [`ollama-adapter.ts`](a2a-server/src/services/ollama-adapter.ts) | Ollama-specific adapter |
+| [`compat_llm-adapter.ts`](a2a-server/src/services/compat_llm-adapter.ts) | Local LLM upstream-specific adapter |
 | [`neuron-activator.service.ts`](a2a-server/src/services/neuron-activator.service.ts) | Auto-detection of actions |
 
 #### 3. Actions (`a2a-server/src/actions/`)
@@ -266,7 +265,7 @@ Variations exist only in simulations for testing different user scenarios (agent
 ┌────────────────────────────────────────────────┼────────────────────────────┐
 │                    AI Integration (Proxy)      │                            │
 │  ┌─────────────┐    ┌─────────────┐    ┌──────┴──────┐                     │
-│  │ promises.py │◀───│proxy_handler│◀───│ollama_manager│                    │
+│  │ promises.py │◀───│proxy_handler│◀───│compat_llm_manager│                    │
 │  │             │───▶│             │───▶│              │                    │
 │  └─────────────┘    └─────────────┘    └─────────────┘                     │
 └─────────────────────────────────────────────────────────────────────────────┘
@@ -284,16 +283,16 @@ Contract and Hub endpoints: [PROTOCOL.md → Async flow](PROTOCOL.md#async-flow-
 
 | Provider | Configuration | Adapter |
 |----------|--------------|---------|
-| Ollama | `OLLAMA_MODEL`, `AI_HUB_URL` | `ollama-adapter.ts` |
+| Local LLM upstream | `LOCAL_LLM_MODEL`, `AI_HUB_URL` | `compat_llm-adapter.ts` |
 | OpenAI | `OPENAI_API_KEY`, `OPENAI_MODEL` | `llm-adapter.ts` |
 | Placeholder | `LLM_PROVIDER=placeholder` | `llm-adapter.ts` |
 
 ### Configuration
 
 ```typescript
-// Ollama
+// Local LLM upstream
 {
-  provider: 'ollama',
+  provider: 'compat_llm',
   model: 'qwen3:8b',
   url: 'http://localhost:11435',
   pollIntervalMs: 2000,
@@ -361,7 +360,7 @@ REQUEST_PROCESSOR_INTERVAL_MS=5000
 **AI Hub (ai-integration)**:
 ```
 PROXY_PORT=11434
-OLLAMA_HOST=http://localhost:11435
+LOCAL_LLM_UPSTREAM_URL=http://localhost:11435
 SIMULATION_ENABLED=false
 AI_HUB_CONFIG=path/to/config.json
 ```
@@ -373,8 +372,8 @@ AI_HUB_CONFIG=path/to/config.json
 | Server | 3000 | HTTP API |
 | Client API | 5173 (`/api/a2a/*`) or 3001 (SDK) | HTTP API for web |
 | Web UI | 5173 | Vite dev server |
-| AI Hub Proxy | 11434 | Proxy / promise flow → Ollama |
-| Ollama | 11435 | Local LLM |
+| AI Hub Proxy | 11434 | Proxy / promise flow → Local LLM upstream |
+| Local LLM upstream | 11435 | Local LLM |
 
 ### Startup
 

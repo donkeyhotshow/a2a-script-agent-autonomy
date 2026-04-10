@@ -14,18 +14,18 @@ Loads the architecture configuration from a JSON file.
 **Output:** `{ config: object }`
 
 ```typescript
-import fs from 'fs/promises';
+import fs from 'node:fs/promises';
 import path from 'path';
 
 export default async function run(input: { configPath?: string; rootDir: string }): Promise<{ config: any }> {
-  const configPath = input.configPath || path.join(input.rootDir, 'config', 'architecture-rules.json');
-  try {
-    const configContent = await fs.readFile(configPath, 'utf-8');
-    const config = JSON.parse(configContent);
-    return { config };
-  } catch (error) {
-    throw new Error(`Failed to load architecture config from ${configPath}: ${error.message}`);
-  }
+   const configPath = input.configPath || path.join(input.rootDir, 'config', 'architecture-rules.json');
+   try {
+     const content = await fs.readFile(configPath, 'utf-8');
+     const config = JSON.parse(content);
+     return { config };
+   } catch (error) {
+     throw new Error(`Failed to load architecture config from ${configPath}: ${error.message}`);
+   }
 }
 ```
 
@@ -37,7 +37,7 @@ Analyzes all JavaScript and TypeScript files in the src directory for architectu
 **Output:** `{ violations: Array<{ file: string; import: string; fromLayer: string; toLayer: string; rule: string }> }`
 
 ```typescript
-import fs from 'fs/promises';
+import fs from 'node:fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { glob } from 'glob';

@@ -44,6 +44,9 @@ Mirror of `response.json` for prompt pipeline / `sim:check-md`.
     "file-exists": {
       "path": "utils/helpers.js"
     }
+  },
+  "result": {
+    "completed": false
   }
 }
 ```

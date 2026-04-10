@@ -62,7 +62,7 @@ export class ProgressiveRetriever {
 
             const trace: ServerInterruptTraceEvent = {
                 kind: 'sidecar_llm',
-                purpose: 'progressive_retrieval',
+                purpose: 'auto_rag_page',
                 ok: true,
                 meta: `hits=${hits.length}`,
             };
@@ -87,7 +87,7 @@ export class ProgressiveRetriever {
             logger.warn('[Interrupt:progressive_rag] failed', { error: msg });
             const trace: ServerInterruptTraceEvent = {
                 kind: 'sidecar_llm',
-                purpose: 'progressive_retrieval',
+                purpose: 'auto_rag_page',
                 ok: false,
                 meta: msg.slice(0, 120),
             };

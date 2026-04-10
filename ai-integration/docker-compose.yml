@@ -1,15 +1,15 @@
 version: '3.8'
 
 services:
-  ollama:
-    image: ollama/ollama:latest
-    container_name: ai-integration-ollama
+  compat_llm:
+    image: compat_llm/compat_llm:latest
+    container_name: ai-integration-compat_llm
     ports:
       - "11434:11434"
     volumes:
-      - ollama_data:/root/.ollama
+      - compat_llm_data:/root/.compat_llm
     environment:
-      - OLLAMA_HOST=0.0.0.0:11434
+      - LOCAL_LLM_UPSTREAM_URL=0.0.0.0:11434
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
@@ -27,7 +27,7 @@ services:
       - "11434:11434"
     environment:
       - PROXY_PORT=11434
-      - OLLAMA_HOST=http://ollama:11435
+      - LOCAL_LLM_UPSTREAM_URL=http://compat_llm:11435
       - STORAGE_DIR=proxy_logs
       - LOG_LEVEL=INFO
       - DAEMON_ENABLED=true
@@ -37,7 +37,7 @@ services:
     volumes:
       - ./proxy_logs:/app/proxy_logs
     depends_on:
-      ollama:
+      compat_llm:
         condition: service_healthy
     restart: unless-stopped
     healthcheck:
@@ -56,7 +56,7 @@ services:
       - "11436:11434"
     environment:
       - PROXY_PORT=11434
-      - OLLAMA_HOST=http://host.docker.internal:11435
+      - LOCAL_LLM_UPSTREAM_URL=http://host.docker.internal:11435
       - STORAGE_DIR=proxy_logs
       - LOG_LEVEL=DEBUG
       - DAEMON_ENABLED=true
@@ -68,5 +68,5 @@ services:
       - dev
 
 volumes:
-  ollama_data:
+  compat_llm_data:
     driver: local

@@ -1,0 +1,1 @@
+Anchor node-terminal; enumerate full list from SOURCE obrabotano\ when expanding queue.

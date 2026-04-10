@@ -1,13 +1,14 @@
 import {Router, Request, Response, NextFunction} from 'express';
-import Ajv from 'ajv';
+import Ajv, { ValidateFunction } from 'ajv';
 import {readFileSync} from 'node:fs';
 import {dirname, join} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {invoke} from '../services/utils/invoke.service.js';
 import requestsRouter from './requests.routes.js';
 import type { FileBlock } from '../types/index.js';
+import {logger} from '../utils/logger.js';
 
-const ajv = new (Ajv as any)({strict: false, allErrors: true, validateFormats: false});
+const ajv = new Ajv({strict: false, allErrors: true, validateFormats: false});
 
 const router = Router();
 
@@ -21,25 +22,28 @@ const SERVER_INVOKE_REQUEST_SCHEMA_PATH = join(
     '../../../docs/new-request-flow/json-schemas/server-invoke-request.schema.json'
 );
 
-let validateInvokeRequestBody: ((data: unknown) => boolean) | null = null;
+let validateInvokeRequestBody: ValidateFunction<unknown> | null = null;
 try {
     const schema = JSON.parse(readFileSync(SERVER_INVOKE_REQUEST_SCHEMA_PATH, 'utf-8'));
     validateInvokeRequestBody = ajv.compile(schema);
 } catch (err) {
-    // If schemas are missing in a dev checkout, keep previous behavior rather than crash.
-    console.warn('[invoke route] Failed to compile server-invoke-request.schema.json', err);
+    // Fail fast in production when schema is missing; in dev (SKIP_AUTH=1), warn and skip validation.
+    if (process.env.SKIP_AUTH !== '1') {
+        throw new Error(`[invoke route] Fatal: Failed to compile server-invoke-request.schema.json: ${err}`);
+    }
+    console.warn('[invoke route] Failed to compile server-invoke-request.schema.json (dev mode)', err);
 }
 
 function validateInvokeRequest(body: unknown): { valid: boolean; errors?: string[] } {
     if (!validateInvokeRequestBody) return { valid: true };
     const ok = validateInvokeRequestBody(body);
     if (ok) return {valid: true};
-    const e = (validateInvokeRequestBody as any).errors as Array<{message?: string}> | null | undefined;
+    const e = validateInvokeRequestBody.errors ?? null;
     return {
         valid: false,
         errors: (e ?? [])
             .map((x) => x.message)
-            .filter(Boolean) as string[],
+            .filter(Boolean),
     };
 }
 
@@ -58,7 +62,6 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
             selectedAction?: { actionId: string };
             stepId?: string;
             stepResult?: unknown;
-            sync?: boolean;
         };
 
         const validation = validateInvokeRequest(body);
@@ -75,7 +78,9 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
         
         const clientId = 'anonymous';
         const resultKeys = body.result && typeof body.result === 'object' ? Object.keys(body.result) : [];
-        console.log('[a2a-server] /invoke received', { resultKeys, task: body.task?.slice(0, 50) });
+        if (process.env.DEBUG_INVOKE === '1') {
+            logger.debug('[a2a-server] /invoke received', { resultKeys, task: body.task?.slice(0, 50) });
+        }
         
         const invokeResult = await invoke(clientId, {
             task: body.task,
@@ -87,51 +92,18 @@ router.post('/invoke', async (req: Request, res: Response, next: NextFunction): 
             stepId: body.stepId,
             stepResult: body.stepResult,
             result: body.result as Record<string, unknown> | undefined,
-            sync: body.sync,
         });
 
-        // Sync chain timed out or could not attach a terminal payload — must poll by promiseId, not empty sync JSON.
         const pid = invokeResult.promiseId;
-        const incomplete =
-            typeof pid === 'string' &&
-            pid.length > 0 &&
-            invokeResult.execute === undefined &&
-            invokeResult.message === undefined &&
-            invokeResult.context === undefined;
-        if (incomplete) {
-            res.json({
-                success: true,
-                data: {
-                    promiseId: pid,
-                    status: 'pending',
-                    pollUrl: `/requests/${pid}`,
-                }
-            });
-            return;
+        if (process.env.DEBUG_INVOKE === '1') {
+            logger.debug('[a2a-server] /invoke returning promiseId', { promiseId: pid });
         }
-
-        // Synchronous response
-        if (invokeResult.sync || body.sync) {
-            res.json({
-                success: true,
-                data: {
-                    sync: true,
-                    execute: invokeResult.execute,
-                    message: invokeResult.message,
-                    context: invokeResult.context,
-                }
-            });
-            return;
-        }
-
-        // Async response with promiseId
-        console.log('[a2a-server] /invoke returning promiseId', { promiseId: invokeResult.promiseId });
         res.json({
             success: true,
             data: {
-                promiseId: invokeResult.promiseId,
+                promiseId: pid,
                 status: 'pending',
-                pollUrl: `/requests/${invokeResult.promiseId}`,
+                pollUrl: `/requests/${pid}`,
             }
         });
     } catch (error) {

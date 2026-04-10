@@ -7,20 +7,13 @@
  * - execute.script (step execution)
  * - result with action-key shape
  *
- * SYNC/ASYNC Handling:
- * - Simple tasks (no LLM required) are processed synchronously, returning execute immediately
- * - Complex tasks (LLM required) return promiseId for async processing
+ * ASYNC-only: POST /api/v1/invoke always returns promiseId; clients poll GET …/requests/:id/result.
  */
 
 import {parseContextBlock} from '../../protocol/context-parser.js';
 import type {ContextBlock, FileBlock} from '../../types/index.js';
 import {CURRENT_PROTOCOL_VERSION} from '../../protocol/versioning/protocol-versions.js';
-import {
-    requestService,
-    type RequestResult,
-    humanizeUpstreamErrorMessage,
-} from '../core/request/request.service.js';
-import {processRequestByPromiseId} from '../core/request-processor/request-processor.service.js';
+import {requestService} from '../core/request/request.service.js';
 import {resolveExecution, resolveResultObject} from '../core/request-processor/normalization.js';
 import {ACTION_TO_SCHEMA} from '../../config/router-static.js';
 import {trackRequestStart} from './pipeline-observability.service.js';
@@ -56,104 +49,26 @@ export interface InvokeInput {
     stepResult?: unknown;  // result with action-key shape: { "script": {...}, "read-file": {...} }
     result?: Record<string, unknown>;  // action-key result: { choice: "..." } or { message: "..." }
     code_blocks?: FileBlock[];
-    sync?: boolean;  // force synchronous processing for testing/simulations
 }
 
 export interface InvokeResult {
     promiseId?: string;
-    execute?: Record<string, unknown>;
-    context?: Record<string, unknown>;
-    message?: string;
-    sync?: boolean;
 }
 
-async function waitTerminalRequest(promiseId: string, maxMs: number): Promise<RequestResult | null> {
-    const deadline = Date.now() + maxMs;
-    while (Date.now() < deadline) {
-        const row = await requestService.getResult(promiseId);
-        // Storage may not be visible for a tick after create — retry instead of aborting sync chain.
-        if (!row) {
-            await new Promise((r) => setTimeout(r, 30));
-            continue;
-        }
-        if (row.status === 'completed' || row.status === 'failed') {
-            return row;
-        }
-        if (row.status === 'pending') {
-            await processRequestByPromiseId(promiseId);
-        } else {
-            await new Promise((r) => setTimeout(r, 30));
-        }
-    }
-    return null;
-}
-
-function syncFailureUserMessage(terminal: RequestResult): string | undefined {
-    const pr = terminal.result as Record<string, unknown> | undefined;
-    if (typeof pr?.error === 'string') {
-        return humanizeUpstreamErrorMessage(pr.error);
-    }
-    const te = terminal.error as Record<string, unknown> | null | undefined;
-    if (te && typeof te.message === 'string') {
-        return humanizeUpstreamErrorMessage(te.message);
-    }
-    return undefined;
-}
-
-async function runSyncInvokeChain(rootPromiseId: string): Promise<InvokeResult> {
-    let current = rootPromiseId;
-    const hopMax = 16;
-    const waitMs = 120_000;
-
-    for (let hop = 0; hop < hopMax; hop++) {
-        const terminal = await waitTerminalRequest(current, waitMs);
-        if (!terminal) {
-            return {promiseId: rootPromiseId};
-        }
-
-        const pr = terminal.result as Record<string, unknown> | undefined;
-
-        if (terminal.status === 'failed') {
-            const ex = pr?.execute as Record<string, unknown> | undefined;
-            return {
-                sync: true,
-                execute:
-                    ex && typeof ex === 'object'
-                        ? ex
-                        : ({wait: {message: 'Request failed'}} as Record<string, unknown>),
-                context: pr?.context as Record<string, unknown> | undefined,
-                message: syncFailureUserMessage(terminal),
-            };
-        }
-
-        const follow =
-            pr && typeof pr['followUpRequestId'] === 'string'
-                ? (pr['followUpRequestId'] as string)
-                : '';
-        if (follow) {
-            current = follow;
-            continue;
-        }
-
-        const ex = pr?.execute as Record<string, unknown> | undefined;
-        return {
-            sync: true,
-            execute:
-                ex && typeof ex === 'object'
-                    ? ex
-                    : ({wait: {message: 'Working…'}} as Record<string, unknown>),
-            context: pr?.context as Record<string, unknown> | undefined,
-        };
-    }
-
-    return {promiseId: rootPromiseId};
-}
-
+/**
+ * Stateless server: only **server-issued** `srv_sess_*` ids are sticky across invokes.
+ * Client / storage ids (`sess_*`, bare UUIDs, etc.) must not be echoed — replace with a new `srv_sess_*`.
+ */
 function ensureContextSessionId(ctx: Record<string, unknown>): string {
     const current = typeof ctx['session_id'] === 'string' ? ctx['session_id'].trim() : '';
-    if (current && current.toLowerCase() !== 'stateless') {
+    if (current.startsWith('srv_sess_') && current.length > 'srv_sess_'.length) {
         ctx['session_id'] = current;
         return current;
+    }
+    // Anonymous / missing session: stable id so prompts (and ai-integration L3 keys) match across runs.
+    if (current === '' || current.toLowerCase() === 'stateless') {
+        ctx['session_id'] = 'srv_sess_stateless';
+        return 'srv_sess_stateless';
     }
     const generated = `srv_sess_${randomUUID()}`;
     ctx['session_id'] = generated;
@@ -229,18 +144,23 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
         if ((result as Record<string, unknown>).choice) {
             ctx['choice_id'] = (result as Record<string, unknown>).choice;
         }
-        // Parse task from result.message for action processor (Client API sends result.message)
+        // Parse result.message: current user line. For dialog, keep context.task as the session task (first line).
         const msg = (result as Record<string, unknown>).message;
         if (msg && typeof msg === 'string') {
             ctx['message'] = msg;
-            ctx['task'] = msg;
+            const exec = ctx['execution'] as {action?: string} | undefined;
+            const existingTask = ctx['task'];
+            const isDialog = exec?.action === 'dialog';
+            if (!(isDialog && typeof existingTask === 'string' && existingTask.trim().length > 0)) {
+                ctx['task'] = msg;
+            }
         }
     }
 
     applyRouterTransformSchemaHint(ctx);
 
-    ensureContextSessionId(ctx);
     stripClientStorageIdsFromContext(ctx);
+    ensureContextSessionId(ctx);
 
     const topLlm =
         typeof input.llmModel === 'string' && input.llmModel.trim()
@@ -250,7 +170,11 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
         ctx['llmModel'] = topLlm;
     }
 
-    const message = input.message ?? input.task ?? (result && typeof result === 'object' ? (result as Record<string, unknown>).message as string : undefined);
+    const resultMessage =
+        result && typeof result === 'object' && typeof (result as Record<string, unknown>).message === 'string'
+            ? ((result as Record<string, unknown>).message as string)
+            : undefined;
+    const message = input.message ?? resultMessage ?? input.task;
 
     const {promiseId} = await requestService.create({
         clientId,
@@ -261,16 +185,6 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
     
     // Track request start for observability
     trackRequestStart(promiseId);
-
-    const explicitSync = input.sync === true;
-    const explicitAsync = input.sync === false;
-    const envDefaultSync =
-        process.env.DEFAULT_SYNC_MODE === '1' || process.env.DEFAULT_SYNC_MODE === 'true';
-    const useSync = explicitSync || (envDefaultSync && !explicitAsync);
-
-    if (useSync) {
-        return runSyncInvokeChain(promiseId);
-    }
 
     return {promiseId};
 }

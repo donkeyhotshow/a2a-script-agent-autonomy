@@ -13,6 +13,7 @@ import {
     loadSessionIdsFromPanelState,
     type PersistedSession
 } from './session-storage.js';
+import { logger } from '../utils/logger.js';
 
 export interface SessionServiceOptions {
     defaultTimeout?: number;
@@ -78,9 +79,9 @@ export class SessionService {
             }
         }
         if (stubCount > 0) {
-            console.log(`[SESSION] Created ${stubCount} stub session(s) from panel state`);
+            logger.info(`Created ${stubCount} stub session(s) from panel state`);
         }
-        console.log(`[SESSION] Loaded ${persisted.length} session(s) from storage`);
+        logger.info(`Loaded ${persisted.length} session(s) from storage`);
     }
 
     private normalizePersistedSession(s: PersistedSession): SessionDetail | null {
@@ -107,7 +108,7 @@ export class SessionService {
 
     private persistSession(session: SessionDetail): void {
         saveSessionToStorage(session as unknown as PersistedSession).catch((err) => {
-            console.error('[SESSION SERVICE] CRITICAL: Failed to persist session:', session.id, err);
+            logger.error('CRITICAL: Failed to persist session', { sessionId: session.id, error: err });
         });
     }
 
@@ -151,7 +152,7 @@ export class SessionService {
         this.sessions.set(sessionId, session);
         this.persistSession(session);
 
-        console.log(`[SESSION] Created session: ${sessionId} with ${messages.length} message(s)`);
+        logger.info(`Created session`, { sessionId, messageCount: messages.length });
         return session;
     }
 
@@ -208,7 +209,7 @@ export class SessionService {
         this.sessions.set(sessionId, updatedSession);
         this.persistSession(updatedSession);
 
-        console.log(`[SESSION] Updated session: ${sessionId}`);
+        logger.debug(`Updated session`, { sessionId });
         return updatedSession;
     }
 
@@ -255,7 +256,7 @@ export class SessionService {
             messageCount: messages.length
         });
 
-        console.log(`[SESSION] Added ${role} message to session: ${sessionId}, total messages: ${messages.length}`);
+        logger.debug(`Added message to session`, { sessionId, role, totalMessages: messages.length });
         return updatedSession;
     }
 
@@ -400,9 +401,11 @@ export class SessionService {
             // Clean up sessions that are older than maxAge and not active
             if (sessionAge > maxAge && session.status !== 'active') {
                 this.sessions.delete(sessionId);
-                deleteSessionFromStorage(sessionId).catch(() => {});
+                deleteSessionFromStorage(sessionId).catch((err) => {
+                    logger.error('deleteSessionFromStorage failed during cleanup', { sessionId, error: err });
+                });
                 cleanedCount++;
-                console.log(`[SESSION] Cleaned up old session: ${sessionId}`);
+                logger.info(`Cleaned up old session`, { sessionId });
             }
         }
 
@@ -454,7 +457,7 @@ export class SessionService {
      */
     public close(): void {
         this.sessions.clear();
-        console.log('[SESSION] Session service closed');
+        logger.info('Session service closed');
     }
 
     /**
@@ -464,8 +467,10 @@ export class SessionService {
         const existed = this.sessions.has(sessionId);
         if (existed) {
             this.sessions.delete(sessionId);
-            deleteSessionFromStorage(sessionId).catch(() => {});
-            console.log(`[SESSION] Deleted session: ${sessionId}`);
+            deleteSessionFromStorage(sessionId).catch((err) => {
+                logger.error('deleteSessionFromStorage failed', { sessionId, error: err });
+            });
+            logger.info(`Deleted session`, { sessionId });
         }
         return existed;
     }

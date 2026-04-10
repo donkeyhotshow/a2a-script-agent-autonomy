@@ -1,6 +1,7 @@
-import { randomUUID } from 'crypto';
-import { promises as fs } from 'fs';
+import { randomUUID } from 'node:crypto';
+import { promises as fs } from 'node:fs';
 import { join } from 'path';
+import { logger } from '../../utils/logger.js';
 
 export interface StateActionPair {
   state_hash: string;
@@ -19,7 +20,7 @@ export class ExperienceBank {
 
   constructor(filePath: string = process.env['EXPERIENCE_BANK_PATH'] ?? DEFAULT_EXPERIENCE_PATH) {
     this.filePath = filePath;
-    this.load().catch(() => {});
+    void this.load();
   }
 
   private async load(): Promise<void> {
@@ -28,9 +29,18 @@ export class ExperienceBank {
       const parsed = JSON.parse(data);
       if (Array.isArray(parsed)) {
         this.store.set('global_experiences', parsed);
+      } else {
+        logger.warn('[ExperienceBank] store file is not an array; starting empty', {
+          path: this.filePath,
+        });
       }
-    } catch {
-      // File doesn't exist or invalid JSON
+    } catch (err: unknown) {
+      const code = (err as NodeJS.ErrnoException)?.code;
+      if (code === 'ENOENT') return;
+      logger.error('[ExperienceBank] load failed', {
+        path: this.filePath,
+        error: err instanceof Error ? err.message : String(err),
+      });
     }
   }
 

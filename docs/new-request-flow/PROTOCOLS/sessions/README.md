@@ -4,6 +4,8 @@
 
 Сессия представляет собой контекст выполнения задачи пользователя. В A2A протоколе сессия связывает все этапы выполнения от инициации до завершения.
 
+**HTTP (Web / Vite):** префикс **`/api/a2a/sessions`** — норматив. Standalone Client API дублирует те же маршруты на **`/api/sessions`** (см. [`ADR-0028`](../../../adr/ADR-0028-client-api-deployment-modes.md)).
+
 ## Жизненный цикл сессии
 
 ```mermaid
@@ -34,9 +36,9 @@ stateDiagram-v2
 }
 ```
 
-### Response (Sync Mode)
+### Пример ответа (снимок сессии)
 
-**Server → Client API:**
+**Client API → клиент** (типичный JSON сессии после создания; не сырой ack `POST /api/v1/invoke`, который даёт только `promiseId`):
 ```json
 {
   "sessionId": "sess_abc123",
@@ -82,7 +84,7 @@ stateDiagram-v2
 ### Получение сессии
 
 ```http
-GET /api/sessions/:sessionId
+GET /api/a2a/sessions/:sessionId
 ```
 
 **Response:**
@@ -106,7 +108,7 @@ GET /api/sessions/:sessionId
 ### Завершение сессии
 
 ```http
-DELETE /api/sessions/:sessionId
+DELETE /api/a2a/sessions/:sessionId
 ```
 
 **Response:**

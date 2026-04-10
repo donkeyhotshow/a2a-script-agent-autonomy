@@ -1,47 +1,51 @@
-# DEV_STATE - a2a-client (2026-04-03)
+# DEV_STATE — a2a-client (2026-04-08)
 
-Stack готов, задач нет.
-
-**2026-04-03 (a2a-client-web-scoped-package):** Implemented phases 2, 4, 5, 6 of @a2a-client web package scoping:
-- **Phase 2:** Updated `packages/web/package.json` with proper `name`, `version`, `type`, `files`, `exports`, and `scripts`. Added build configuration using Vite lib mode via `vite.config.prod.ts`. Added basic test and lint configurations.
-- **Phase 4:** Verified workspaces configuration in root `package.json` already includes `packages/*` and `shared`, covering both `@a2a-client/web` and `@a2a-client/vite-plugin`. Root scripts remain unchanged as they properly delegate to workspace packages.
-- **Phase 5:** Added basic test files (`packages/web/js/tests/basic.test.js` and `packages/vite-plugin/js/tests/basic.test.js`). Confirmed Vitest configuration includes these paths. Added ESLint config for web package.
-- **Phase 6:** Confirmed npm scope `@a2a-client` is used consistently. Both packages have `private: true` appropriate for monorepo development. `files` arrays are properly scoped to avoid publishing unintended files (e.g., no `storage/` or secrets). Versioning approach to be documented upon first publish.
-
-**2026-04-03 (async → form):** After `GET …/async` completes, `action-executor` clears `promisePending` and applies poll `execute` before `GET …/sessions` hydrates; async completion sets persisted `session.status` to `active` when a follow-up `execute` exists; `saveNewSession` passes `execute` into `saveSessionIndex` so index `status` stays `active`; `deriveSessionStage` maps agent + task `form.input` to `dialog-input`; `getActiveAsyncWork` index fallback treats any step `execute` as terminal (not only `form.choices`). **Re-hydrate:** `promiseResolved` now `await`s `pullSessionSnapshot` and re-applies poll `execute` so a lagging `GET …/sessions` cannot leave the UI on a stale form.
-
-**2026-04-03:** Dialog/loader — `session-data.setExecute` stops the session loader for any terminal `execute` without `wait` (not only actionable forms), so message-only replies unblock the panel. `action-executor.submit` sync path clears `promisePending`, treats missing `accepted` as OK, and calls `stopLoader` except when hydrated `execute.wait` is set.
-
-**2026-04-03 (S18):** Web shell **`packages/web`** (`@a2a-client/web`: `files`/`exports`/`build`). **`@a2a-client/vite-plugin`**: physical tree **`packages/vite-plugin/`** (`index.js` entry; was `vite-plugin-a2a/` + root `vite-plugin-a2a.js`). **S18b:** Plugin must not use `../packages/execution` or `../shared` relatives (breaks when resolved via `node_modules/@a2a-client/vite-plugin`). Use **`@a2a/execution`** + **`@a2a-client/shared`** (`shared/package.json`, workspace `shared`). Root depends on **`file:packages/vite-plugin`**. **`resolveId`** maps HTML `/shared/*` to repo `shared/`; `/shared` middleware runs first in dev.
-
-**2026-04-03 (session `/next`):** `step-routes-dialog-flow.js` sends `sync: true` on the first task beat (`execution.action === task`, `step === new`, user message) so `/invoke` returns router `execute` immediately; overwrites `context.task` with the latest submit (no stale task). Pairs with server `DEFAULT_SYNC_MODE` support.
+**Rules Q&A:** [`../docs/PROJECT-RULES-QA.md`](../docs/PROJECT-RULES-QA.md) · [`../AGENTS.md`](../AGENTS.md)
 
 ---
 
-## AI-Integration Work Lock
-- Status: UNBLOCKED
+## Role for the north star
+
+This module **owns session persistence and the Client API** (`/api/a2a/*`). Task Monitor and manual operators must go through **5173** (or standalone SDK with the same contract): create session → `/next` → poll **`GET …/async`** until settled; hydrate with **`GET …/sessions/{id}`** when debugging router/forms. **Hub promise queue** (vertex **C**): **`/api/a2a/hub/*`** proxies to **`AI_HUB_URL`** (`promises/pending`, `promises/errors`, `promise/{id}/retry|execute`, `DELETE …`) — Web UI **Hub queue** button; see [`ai-integration/docs/api-reference/PROXY_API.md`](../ai-integration/docs/api-reference/PROXY_API.md).
+
+**Triangle vertex A** — [`docs/TRIANGLE-WORKFLOW.md`](../docs/TRIANGLE-WORKFLOW.md). Triage labels often starting here: **Blue** / **Orange** / **Teal** ([`GLOSSARY.md`](../GLOSSARY.md) *Alerts*).
 
 ---
 
-## Pre-existing Issues
+## Session correctness (what must work)
 
-| Issue | Status | Notes |
-|-------|--------|-------|
-| Test failures: 0 failed | Fixed | Resolved import path issues in packages/rag/tests/rag.test.js |
+- **Async-only:** no sync invoke flag; after `/next`, drive **`/async`** (and promise polling helpers) until terminal — see root [`AGENTS.md`](../AGENTS.md). **`POST …/next` while a step still has in-flight `server-promise.json` → `409` `async_pending`** (no overlapping turns; router beats stay valid). Evidence: `npx vitest run tests/unit/step-routes-next-async-pending.test.js` (2026-04-07).
+- **Router:** if latest `execute.form` has **`choices`**, next body uses **`result.choice`** / shorthand `task` as choice id; otherwise **`result.message`** / `task` as text — [`AGENTS.md`](../AGENTS.md) *Router dialog*.
+- **Storage:** `a2a-client/storage/sessions/{id}/{step}/` — rebuild from highest step with `server-response.json` when investigating monitor sessions.
+- **Session cleanup:** No age-based pruning — `npm run cleanup:sessions` (or root `cleanup:sessions-only` / `cleanup:state`) wipes **all** session trees; monitor then keeps **one** session id per task file until completion ([`MONITOR-QUICK-START.md`](../MONITOR-QUICK-START.md)).
+- **Agent tool chain (`chain-guards` + `agent-rag-chain`):** `execute['run-script']` must chain when the model sends **`command`** (shell one-liner) as well as **`scriptId`** (registry). Previously only `scriptId` validated — sessions stuck on `tool_run_script` with no `context.result`. Evidence: `tests/direct-tests/chain-guards-message-plus-tool.test.mjs`.
+- **GET `/sessions/:id/async?includeContext=1`:** Task Monitor’s `pollAsync` now requests **`includeContext=1`**; Vite adds **`context.execution`** to the JSON when present so **`step`/`action`** are visible (web `execute` projection omits them). Without this, `agentToolPhaseStart` / stall keys never saw `tool_*` and runs could spin until poll timeout.
 
 ---
 
-## Architecture
+## Stack / integration lock
 
-Client API - хранит сессии и управляет состоянием:
-- Step-based storage (нумерованные папки)
-- Vite plugin для `/api/a2a/*` endpoints
+- **AI-Integration work lock:** UNBLOCKED (hub required for LLM path).
 
 ---
 
 ## Ports
 
-| Порт | Компонент |
-|------|-----------|
-| 5173 | Vite Dev Server + Web UI |
-| 3001 | Standalone Client API (опционально) |
+| Port | Use |
+|------|-----|
+| 5173 | Vite + Client API (default Task Monitor target) |
+| 3001 | Standalone Client API (optional) |
+
+---
+
+## Verify after changes
+
+```bash
+cd a2a-client && npm test
+```
+
+**Hub proxy:** Vite `tests/unit/hub-promise-routes.test.js` (middleware); SDK router `tests/integration/hub-proxy-client-api.test.js` (Express `createHubProxyRouter`). Smoke: `node scripts/smoke-client-api.mjs` hits `/api/a2a/hub/promises/pending`.
+
+After edits to **`packages/embedding/src`**, run **`cd packages/embedding && npx tsc`** so Vitest (which loads **`dist/`**) matches source. **`shared/api-helpers.js`** re-exports the repo-root [`shared/api-helpers.js`](../shared/api-helpers.js) for `packages/sdk` relative imports.
+
+Deep API checklist: [`docs/api-testing-plan.md`](docs/api-testing-plan.md) · [`docs/OPERATOR-CURL.md`](../docs/OPERATOR-CURL.md).

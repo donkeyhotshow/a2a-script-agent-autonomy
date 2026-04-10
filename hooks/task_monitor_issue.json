@@ -1,21 +1,7 @@
 {
   "hookId": "task_monitor_issue",
   "type": "task_monitor_issue",
-  "taskName": "ai-integration-configuration-system-plan.md",
-  "status": "failed",
-  "error": "No result in completed session",
-  "stage": "action=agent | step=new | status=idle | awaiting router form",
-  "stageDetail": "message=What would you like me to do?",
-  "context": {
-    "sessionId": "sess_1775164603502",
-    "promiseId": null,
-    "stage": "action=agent | step=new | status=idle | awaiting router form",
-    "stageDetail": "message=What would you like me to do?",
-    "lastActivity": "2026-04-02T21:16:43.537Z"
-  },
-  "suggestedActions": [
-    "Review task description for clarity",
-    "Check session context and execution state"
-  ],
-  "createdAt": "2026-04-02T21:16:43.537Z"
+  "errors": [],
+  "lastUpdated": "2026-04-08T12:00:00.000Z",
+  "createdAt": "2026-04-08T12:00:00.000Z"
 }

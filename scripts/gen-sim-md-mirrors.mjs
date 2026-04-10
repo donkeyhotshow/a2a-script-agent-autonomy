@@ -6,24 +6,19 @@
 import { readdirSync, readFileSync, writeFileSync, statSync, existsSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { dirname } from 'node:path';
+import { walkDirsRecursive } from '../../a2a-server/src/fs-utils/recursive-directory-walker.js';
+import { getRepoRoot } from '../../a2a-server/src/fs-utils/repo-root.js';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const REPO_ROOT = getRepoRoot();
 const SIMULATION_ROOTS = [
-    join(__dirname, '..', 'simulations', 'sync'),
-    join(__dirname, '..', 'simulations', 'async'),
+    join(REPO_ROOT, 'simulations', 'sync'),
+    join(REPO_ROOT, 'simulations', 'async'),
 ];
 const STEP_RE = /^\d+(?:-sub-\d+)?$/;
 
+// Using utility function from @/fs-utils/recursive-directory-walker.js
 function scan(dir) {
-    const out = [];
-    for (const name of readdirSync(dir, { withFileTypes: true })) {
-        const p = join(dir, name.name);
-        if (!name.isDirectory()) continue;
-        if (STEP_RE.test(name.name)) out.push(p);
-        else out.push(...scan(p));
-    }
-    return out;
+    return walkDirsRecursive(dir, (name) => STEP_RE.test(name));
 }
 
 let n = 0;

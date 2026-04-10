@@ -1,0 +1,405 @@
+{
+  "schemaVersion": "1",
+  "id": "catalog-from-documentation",
+  "title": "Answers grounded in current repository documentation",
+  "questions": [
+    {
+      "id": "default-client-api-base-dev",
+      "text": "What is the default dev base URL for the Client API (sessions, /api/a2a)?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "http://localhost:5173 — same origin as the Vite web app; paths under /api/a2a/*.",
+        "sources": [
+          { "path": "AGENTS.md", "section": "Unified manual path — Create a new session" },
+          { "path": "AGENTS.md", "section": "Sessions, tests, and agent mode" }
+        ]
+      }
+    },
+    {
+      "id": "port-a2a-server-default",
+      "text": "Which TCP port does the A2A Server use by default?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "3000 (default PORT).",
+        "sources": [
+          { "path": "AGENTS.md", "section": "Environment Variables — PORT" },
+          { "path": "AGENTS.md", "section": "Ports" }
+        ]
+      }
+    },
+    {
+      "id": "port-ai-integration",
+      "text": "Which port is AI Integration (proxy to Local LLM upstream)?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "11434.",
+        "sources": [{ "path": "AGENTS.md", "section": "Ports — Architecture diagram" }]
+      }
+    },
+    {
+      "id": "port-local-llm-upstream",
+      "text": "Which port is the Local LLM upstream in the default stack diagram?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "11435.",
+        "sources": [{ "path": "AGENTS.md", "section": "Ports" }]
+      }
+    },
+    {
+      "id": "windows-full-stack-restart",
+      "text": "On Windows, how should you restart the live coordinated stack?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "Run start-all.bat from the repository root only — not per-package npm run dev inside a2a-server, a2a-client, or ai-integration.",
+        "sources": [
+          { "path": "README.md", "section": "Live stack: start and restart" },
+          { "path": "AGENTS.md", "section": "Windows live stack restart" }
+        ]
+      }
+    },
+    {
+      "id": "test-encryption-key-length",
+      "text": "Required length for ENCRYPTION_KEY in tests?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "Exactly 32 characters.",
+        "sources": [
+          { "path": "AGENTS.md", "section": "Critical Rules — Testing" },
+          { "path": "AGENTS.md", "section": "Environment Variables — ENCRYPTION_KEY" }
+        ]
+      }
+    },
+    {
+      "id": "test-database-name",
+      "text": "Which database name should tests use (not production server DB)?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "a2a_test (not a2a_server).",
+        "sources": [{ "path": "AGENTS.md", "section": "Critical Rules — Testing" }]
+      }
+    },
+    {
+      "id": "a2a-server-session-storage",
+      "text": "Does a2a-server persist multi-step client sessions, or what does invoke do instead?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "No client session persistence on the server. a2a-server is stateless: it accepts POST /api/v1/invoke, creates an async request row (ticket) keyed by promiseId, returns that promise immediately, and exposes terminal execute/context only via polling (GET /api/v1/requests/{promiseId}/result). Folder-based session history lives in the Client API (a2a-client/storage/sessions/).",
+        "sources": [
+          { "path": "a2a-server/README.md", "section": "Current Architecture" },
+          { "path": "README.md", "section": "Key Changes — Stateless A2A Server" },
+          { "path": "docs/new-request-flow/PROTOCOL.md", "section": "Обзор — ВАЖНО" },
+          { "path": "AGENTS.md", "section": "A2A Protocol — Request Flows" }
+        ]
+      }
+    },
+    {
+      "id": "invoke-immediate-response",
+      "text": "What does POST /api/v1/invoke return before polling completes?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "A promiseId (async); terminal execute/context arrive from GET /api/v1/requests/{promiseId}/result (or Client API GET …/async), not inline on the POST.",
+        "sources": [{ "path": "AGENTS.md", "section": "A2A Protocol — Request Flows" }]
+      }
+    },
+    {
+      "id": "action-key-shape-rule",
+      "text": "How many action-type keys may appear in one execute or one result object?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "Exactly one — action-key shape: a single key per execute/result object (e.g. execute.script, result.read-file).",
+        "sources": [
+          { "path": "AGENTS.md", "section": "Critical Rules — Action-Key Shape" },
+          { "path": "GLOSSARY.md", "section": "Action-Key Shape" }
+        ]
+      }
+    },
+    {
+      "id": "server-context-session-id-prefix",
+      "text": "What prefix does the stateless server use for context.session_id?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "srv_sess_* — server-assigned; the client does not forward its storage sessionId as the server session token.",
+        "sources": [{ "path": "AGENTS.md", "section": "Context Fields — context.session_id" }]
+      }
+    },
+    {
+      "id": "client-strips-storage-ids",
+      "text": "Before proxying to the server, does the Client API send projectId or storage sessionId?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "No — those are stripped so the stateless server does not receive client storage/session project identifiers.",
+        "sources": [{ "path": "AGENTS.md", "section": "Invoke payload privacy" }]
+      }
+    },
+    {
+      "id": "schema-debugging-entry",
+      "text": "Where should schema / execute-shape issues be reproduced first?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "tests/direct-tests (see tests/direct-tests/README.md) before session e2e or full sims.",
+        "sources": [
+          { "path": "AGENTS.md", "section": "Critical Rules — Schema Debugging Entry Point" },
+          { "path": "docs/OPERATOR-CURL.md", "section": "Schema debugging first step" }
+        ]
+      }
+    },
+    {
+      "id": "manual-stack-integration-surface",
+      "text": "What HTTP surface is the normative manual path for driving sessions after start-all?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "Client API (POST /api/a2a/sessions, /next, GET /async) — not POST /api/v1/invoke alone.",
+        "sources": [
+          { "path": "AGENTS.md", "section": "Unified manual path (Client API)" },
+          { "path": "docs/OPERATOR-CURL.md", "section": "What the operator does not do" }
+        ]
+      }
+    },
+    {
+      "id": "glossary-router",
+      "text": "How is the Router defined in this repo?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "Keyword-based routing (dialog / agent / task-decomposition and registry actions when keywords match).",
+        "sources": [{ "path": "GLOSSARY.md", "section": "Router" }]
+      }
+    },
+    {
+      "id": "glossary-web-dto",
+      "text": "What is Web DTO?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "Client-sanitized execute (form only, not raw tool calls in the client-facing projection).",
+        "sources": [{ "path": "GLOSSARY.md", "section": "Web DTO" }]
+      }
+    },
+    {
+      "id": "browser-calls-server-direct",
+      "text": "For the web UI, should the browser call http://localhost:3000 directly?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "No — same origin as Vite; use /api/a2a/* (Client API). The Client API forwards to a2a-server under the hood.",
+        "sources": [{ "path": "docs/OPERATOR-CURL.md", "section": "Web access and a2a-server" }]
+      }
+    },
+    {
+      "id": "get-session-includecontext-production",
+      "text": "What happens to GET /api/a2a/sessions/:id?includeContext=1 when NODE_ENV=production?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "403 on both Vite Client API and standalone SDK (per ADR-0028 operator notes).",
+        "sources": [{ "path": "docs/OPERATOR-CURL.md", "section": "GET session JSON shape" }]
+      }
+    },
+    {
+      "id": "jwt-secret-length",
+      "text": "Minimum length for JWT_SECRET (with ENCRYPTION_KEY for auth issues)?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "32+ characters (together with 32-char ENCRYPTION_KEY) — see AGENTS debugging / Common Issues.",
+        "sources": [{ "path": "AGENTS.md", "section": "Common Issues — 401 / 400" }]
+      }
+    },
+    {
+      "id": "async-only-no-queue-disable",
+      "text": "May operators disable PROMISE_DAEMON_ONLY or add a sync invoke shortcut to unstick work?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "No — async end-to-end; use the promise-queue daemon or POST …/promise/<id>/execute; do not disable the queue as a workaround.",
+        "sources": [{ "path": "AGENTS.md", "section": "Async-only transport (MANDATORY)" }]
+      }
+    },
+    {
+      "id": "poll-timeout-unbounded",
+      "text": "Should polling GET /api/v1/requests/{id}/result or GET …/async use a max-attempt wall cap?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "Normatively no arbitrary cap — wait until status is terminal (completed/failed/cancelled) or async is settled; only backoff between polls.",
+        "sources": [{ "path": "AGENTS.md", "section": "PromiseId polling (normative)" }]
+      }
+    },
+    {
+      "id": "standalone-sdk-port-secondary",
+      "text": "Which port does the standalone SDK Client API typically use (secondary to Vite 5173)?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "Often 3001 (or another PORT) — same contract as Vite /api/a2a; primary web path remains 5173 same-origin.",
+        "sources": [
+          { "path": "docs/adr/ADR-0028-client-api-deployment-modes.md", "section": "Decision" },
+          { "path": "docs/SYSTEM_STARTUP.md", "section": "Architecture" }
+        ]
+      }
+    },
+    {
+      "id": "post-next-ack-promiseid",
+      "text": "Does POST …/sessions/{id}/next echo promiseId in the ack?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "No — use asyncPending then GET …/async; promiseId is not echoed on the next ack.",
+        "sources": [{ "path": "docs/adr/ADR-0028-client-api-deployment-modes.md", "section": "Consequences" }]
+      }
+    },
+    {
+      "id": "env-a2a-server-url-dev",
+      "text": "What is the canonical dev value for A2A_SERVER_URL?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "http://localhost:3000 (base origin for /api/v1/invoke).",
+        "sources": [{ "path": "docs/ENV-MATRIX.md", "section": "URLs and Endpoints — A2A_SERVER_URL" }]
+      }
+    },
+    {
+      "id": "env-ai-hub-url-dev",
+      "text": "What is the canonical dev value for AI_HUB_URL (ai-integration)?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "http://localhost:11434.",
+        "sources": [{ "path": "docs/ENV-MATRIX.md", "section": "URLs and Endpoints — AI_HUB_URL" }]
+      }
+    },
+    {
+      "id": "skip-auth-production",
+      "text": "Is SKIP_AUTH=1 acceptable in production?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "No — dev/test bypass only; production should require real auth (see ENV-MATRIX baseline rules).",
+        "sources": [{ "path": "docs/ENV-MATRIX.md", "section": "Auth and Sync Flags — SKIP_AUTH" }]
+      }
+    },
+    {
+      "id": "gray-room-enabled-default",
+      "text": "When A2A_GRAY_ROOM_ENABLED is unset, is Gray Room on or off?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "On by default (unset or 1); set 0/false/off to skip interrupt expansion.",
+        "sources": [{ "path": "docs/ENV-MATRIX.md", "section": "Polling and Time Budgets — A2A_GRAY_ROOM_ENABLED" }]
+      }
+    },
+    {
+      "id": "simulations-canonical-files",
+      "text": "Which files are the authoritative simulation contract per step?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "request.json and response.json (plus received.json where applicable) under simulations/sync/ and simulations/async/.",
+        "sources": [{ "path": "simulations/SCHEMA.md", "section": "Authoritative contract" }]
+      }
+    },
+    {
+      "id": "received-json-meaning",
+      "text": "What does received.json represent in the simulation pipeline?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "Client API → Web: sanitized execute (Web DTO) after projection — what the UI should render.",
+        "sources": [{ "path": "simulations/SCHEMA.md", "section": "received.json vs response.json" }]
+      }
+    },
+    {
+      "id": "glossary-rooms-vs-alerts",
+      "text": "Are Gray Room and Gray alert the same concept?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "No — Rooms are runtime pipeline phases; colored alerts are triage labels (where to look first).",
+        "sources": [{ "path": "GLOSSARY.md", "section": "Rooms vs alerts" }]
+      }
+    },
+    {
+      "id": "promise-daemon-start-all",
+      "text": "What does start-all.bat start on Windows related to PROMISE_DAEMON_ONLY?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "A promise-queue-daemon window that polls the hub on 11434 and POST /promise/<id>/execute when PROMISE_DAEMON_ONLY is on (default).",
+        "sources": [{ "path": "docs/SYSTEM_STARTUP.md", "section": "Quick Start — Windows" }]
+      }
+    },
+    {
+      "id": "dialog-retry-delay-default",
+      "text": "Default REQUEST_RETRY_DELAY_MS (dialog deferral before re-queue is eligible)?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "15000 ms.",
+        "sources": [{ "path": "AGENTS.md", "section": "Environment Variables — REQUEST_RETRY_DELAY_MS" }]
+      }
+    },
+    {
+      "id": "dialog-max-retries-default",
+      "text": "Default REQUEST_MAX_RETRIES per promiseId (dialog deferral)?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "15.",
+        "sources": [{ "path": "AGENTS.md", "section": "Environment Variables — REQUEST_MAX_RETRIES" }]
+      }
+    },
+    {
+      "id": "triangle-vertices-abc",
+      "text": "In the triangle workflow, what do vertices A, B, and C represent?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "A = Client API (sessions, /next, /async, storage); B = a2a-server (invoke/transforms); C = ai-integration (LLM path). Local LLM upstream sits behind C.",
+        "sources": [{ "path": "docs/TRIANGLE-WORKFLOW.md", "section": "Triangle — three layers" }]
+      }
+    },
+    {
+      "id": "triangle-gate-c1",
+      "text": "Triangle loop step C1: which health URL and OK signal?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "GET ${AI_HUB_URL}/health — default host http://localhost:11434 — OK means HTTP 200.",
+        "sources": [{ "path": "docs/TRIANGLE-WORKFLOW.md", "section": "0 — Stack gates — C1" }]
+      }
+    },
+    {
+      "id": "web-polling-without-promiseid",
+      "text": "Does the browser need the A2A promiseId to poll session progress?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "No — transport ids stay server-side; the Client API resolves in-flight work (use GET …/async).",
+        "sources": [{ "path": "a2a-client/docs/WEB_UI_PROTOCOL.md", "section": "Principles — Transport ids stay server-side" }]
+      }
+    },
+    {
+      "id": "web-dto-context-omitted",
+      "text": "In the normal Web DTO from GET /sessions/:id, is context included?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "No — context is omitted unless ?includeContext=1 (debug).",
+        "sources": [{ "path": "a2a-client/docs/WEB_UI_PROTOCOL.md", "section": "Glossary — Web DTO" }]
+      }
+    },
+    {
+      "id": "get-async-poll-shape",
+      "text": "What does GET /api/a2a/sessions/{id}/async expose about promiseId?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "Preferred web poll; response body has no promiseId — the id stays server-internal.",
+        "sources": [{ "path": "a2a-client/docs/WEB_UI_PROTOCOL.md", "section": "HTTP — GET …/async" }]
+      }
+    },
+    {
+      "id": "router-choices-detection",
+      "text": "When does the Client API treat the prior step as “has choices” for /next?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "When execute.form.choices is a non-empty array OR execute.form.meta.routerChoices is set (router parity).",
+        "sources": [{ "path": "a2a-client/docs/WEB_UI_PROTOCOL.md", "section": "Choice detection (must match /next)" }]
+      }
+    },
+    {
+      "id": "dialog-deferral-transformschema-terminal",
+      "text": "Are transformSchema required validation failures deferred like hub-down dialog errors?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "No — they stay terminal (failed immediately); not treated as deferrable infra retry.",
+        "sources": [{ "path": "docs/PROMISE-RETRY-DIALOG.md", "section": "Explicit validation stays terminal" }]
+      }
+    },
+    {
+      "id": "protocol-wrong-result-shape",
+      "text": "Per PROTOCOL.md action-key examples, is { \"result\": { \"content\": \"...\" } } valid?",
+      "status": "answered_from_docs",
+      "answer": {
+        "text": "No — wrong shape; result must use the action-key wrapper (e.g. a named action key), not a bare content field.",
+        "sources": [{ "path": "docs/new-request-flow/PROTOCOL.md", "section": "Action-key shape — examples" }]
+      }
+    }
+  ]
+}

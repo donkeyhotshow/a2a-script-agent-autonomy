@@ -39,21 +39,40 @@ export const INTERRUPT_TRACE_CONTEXT_PATH = 'context.workbench.slots.interruptTr
 /**
  * Merge interrupt trace into `context.workbench.slots`. Preserves other `slots` / `workbench` keys.
  */
+function workbenchWithSections(
+    wb: Record<string, unknown>,
+    patch: Record<string, unknown>
+): Record<string, unknown> {
+    const rawSec = wb['sections'];
+    const sections =
+        rawSec && typeof rawSec === 'object' && !Array.isArray(rawSec)
+            ? (rawSec as Record<string, unknown>)
+            : {};
+    return {
+        ...wb,
+        ...patch,
+        sections: {...sections, ...(patch['sections'] as Record<string, unknown> | undefined)},
+    };
+}
+
+function normalizeWorkbenchRecord(wb: unknown): Record<string, unknown> {
+    return wb && typeof wb === 'object' && !Array.isArray(wb) ? (wb as Record<string, unknown>) : {};
+}
+
 export function mergeInterruptTraceIntoContext(
     context: Record<string, unknown>,
     trace: ServerInterruptTraceEvent[]
 ): Record<string, unknown> {
-    const wb = (context['workbench'] as Record<string, unknown>) ?? {};
+    const wb = normalizeWorkbenchRecord(context['workbench']);
     const slots = (wb['slots'] as Record<string, unknown>) ?? {};
     return {
         ...context,
-        workbench: {
-            ...wb,
+        workbench: workbenchWithSections(wb, {
             slots: {
                 ...slots,
                 [INTERRUPT_TRACE_SLOT_KEY]: trace,
             },
-        },
+        }),
     };
 }
 
@@ -64,16 +83,15 @@ export function mergeGrayRoomSlotIntoContext(
     context: Record<string, unknown>,
     envelope: GrayRoomControlEnvelope
 ): Record<string, unknown> {
-    const wb = (context['workbench'] as Record<string, unknown>) ?? {};
+    const wb = normalizeWorkbenchRecord(context['workbench']);
     const slots = (wb['slots'] as Record<string, unknown>) ?? {};
     return {
         ...context,
-        workbench: {
-            ...wb,
+        workbench: workbenchWithSections(wb, {
             slots: {
                 ...slots,
                 [GRAY_ROOM_SLOT_KEY]: envelope,
             },
-        },
+        }),
     };
 }

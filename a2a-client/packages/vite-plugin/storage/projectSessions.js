@@ -1,6 +1,15 @@
 import fs from 'fs';
 import path from 'path';
+import { compareSessionCreatedAtDesc } from '@a2a-client/shared/session-sort.mjs';
+import { getProjectDotA2aSessionsDir } from '@a2a-client/shared/project-sessions-dir.mjs';
 import { loadProjects } from './projects.js';
+
+/** Same idea as newSessions.normalizeSessionIdForDir — session JSON may use numeric id. */
+function normalizeSessionIdForFile(id) {
+  if (id == null) return '';
+  const s = typeof id === 'string' ? id : String(id);
+  return s.trim();
+}
 
 export function normalizeProjectPath(p) {
   if (typeof p !== 'string' || !p.trim()) return '';
@@ -66,12 +75,22 @@ export function findSessionProjectPath(cwd, sessionId) {
 }
 
 export function getSessionsDir(projectPath) {
-  return path.join(projectPath, '.a2a', 'sessions');
+  if (typeof projectPath !== 'string' || !projectPath.trim()) {
+    return null;
+  }
+  try {
+    return getProjectDotA2aSessionsDir(projectPath.trim());
+  } catch {
+    return null;
+  }
 }
 
 export function listSessions(projectPath) {
+  if (typeof projectPath !== 'string' || !projectPath.trim()) {
+    return [];
+  }
   const dir = getSessionsDir(projectPath);
-  if (!fs.existsSync(dir)) return [];
+  if (!dir || !fs.existsSync(dir)) return [];
   return fs.readdirSync(dir)
     .filter((f) => f.endsWith('.json'))
     .map((f) => {
@@ -85,11 +104,20 @@ export function listSessions(projectPath) {
       }
     })
     .filter(Boolean)
-    .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    .sort(compareSessionCreatedAtDesc);
 }
 
 export function loadSession(projectPath, sessionId) {
-  const file = path.join(getSessionsDir(projectPath), `${sessionId}.json`);
+  if (typeof projectPath !== 'string' || !projectPath.trim()) {
+    return null;
+  }
+  const sid = normalizeSessionIdForFile(sessionId);
+  if (!sid) {
+    return null;
+  }
+  const dir = getSessionsDir(projectPath);
+  if (!dir) return null;
+  const file = path.join(dir, `${sid}.json`);
   if (!fs.existsSync(file)) return null;
   try {
     return JSON.parse(fs.readFileSync(file, 'utf8'));
@@ -100,19 +128,45 @@ export function loadSession(projectPath, sessionId) {
 }
 
 export function saveSession(projectPath, session) {
+  if (typeof projectPath !== 'string' || !projectPath.trim()) {
+    throw new Error('[projectSessions] saveSession: projectPath must be a non-empty string');
+  }
+  const sid = normalizeSessionIdForFile(session?.id);
+  if (!sid) {
+    throw new Error('[projectSessions] saveSession: session.id is required');
+  }
   const dir = getSessionsDir(projectPath);
+  if (!dir) {
+    throw new Error('[projectSessions] saveSession: invalid projectPath');
+  }
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true});
-  const file = path.join(dir, `${session.id}.json`);
-  fs.writeFileSync(file, JSON.stringify(session, null, 2));
+  const file = path.join(dir, `${sid}.json`);
+  const payload = session && typeof session === 'object' ? { ...session, id: sid } : { id: sid };
+  fs.writeFileSync(file, JSON.stringify(payload, null, 2));
 }
 
 export function deleteSession(projectPath, sessionId) {
-  const file = path.join(getSessionsDir(projectPath), `${sessionId}.json`);
+  if (typeof projectPath !== 'string' || !projectPath.trim()) {
+    return;
+  }
+  const sid = normalizeSessionIdForFile(sessionId);
+  if (!sid) {
+    return;
+  }
+  const dir = getSessionsDir(projectPath);
+  if (!dir) return;
+  const file = path.join(dir, `${sid}.json`);
   if (fs.existsSync(file)) fs.unlinkSync(file);
 }
 
 export function getProjectPathForSessions(cwd) {
-  return resolveSessionProjectPath(cwd, {});
+  const resolved = resolveSessionProjectPath(cwd, {});
+  if (typeof resolved === 'string' && resolved.trim()) {
+    return resolved;
+  }
+  const fb = typeof cwd === 'string' && cwd.trim() ? cwd : process.cwd();
+  const n = normalizeProjectPath(fb);
+  return n && n.trim() ? n : process.cwd();
 }
 
 /**
@@ -131,14 +185,16 @@ export function resolveProjectPathForApi(cwd, sessionId, sources = {}) {
   if (projectRoot) {
     try {
       return resolveSessionProjectPath(cwd, { projectRoot });
-    } catch {
+    } catch (e) {
+      console.error('[projectSessions] resolve projectRoot failed:', projectRoot, e?.message || e);
       return null;
     }
   }
   if (projectId) {
     try {
       return resolveSessionProjectPath(cwd, { projectId });
-    } catch {
+    } catch (e) {
+      console.error('[projectSessions] resolve projectId failed:', projectId, e?.message || e);
       return null;
     }
   }

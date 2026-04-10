@@ -40,12 +40,14 @@ async function main() {
     const rag = createRAG({ projectPath: PROJECT_PATH });
     
     // Check if index exists
-    const indexPath = path.join(PROJECT_PATH, '.a2a', 'index', 'rag-files.json');
-    let indexExists = false;
-    try {
-        await fs.access(indexPath);
-        indexExists = true;
-    } catch {}
+     const indexPath = path.join(PROJECT_PATH, '.a2a', 'index', 'rag-files.json');
+     let indexExists = false;
+     try {
+         await fs.access(indexPath);
+         indexExists = true;
+     } catch (err) {
+         // Silently ignore file access errors - index doesn't exist
+     }
     
     if (!indexExists) {
         console.log('Index not found. Indexing project (this may take a while)...');
@@ -128,9 +130,10 @@ async function loadQueriesFromSimulations() {
                 });
             }
         }
-    } catch (err) {
-        console.error('Error loading queries:', err.message);
-    }
+     } catch (err) {
+         // Handle error loading queries but continue with empty queries array
+         console.error('Error loading queries:', err.message);
+     }
     
     return queries;
 }
@@ -146,10 +149,12 @@ async function createComparison(queries, projectResults) {
         );
         
         let simResults = null;
-        try {
-            const content = await fs.readFile(simResultFile, 'utf-8');
-            simResults = JSON.parse(content);
-        } catch {}
+         try {
+             const content = await fs.readFile(simResultFile, 'utf-8');
+             simResults = JSON.parse(content);
+         } catch (err) {
+             // Silently ignore file read errors - simulation results may not exist
+         }
         
         comparison.push({
             query: result.query,

@@ -57,15 +57,15 @@ a2a-script-agent/
 - `confirmSession(sessionId, files)` - підтвердити
 - `invoke(markdown, context, files)` - викликати дію
 
-**Поточні endpoints API Server:**
+**Поточні endpoints Client API (Vite: префікс `/api/a2a`; SDK також монтує `/api/sessions/*`):**
 
-- `POST /api/sessions` - створити сесію
-- `GET /api/sessions` - список сесій
-- `GET /api/sessions/:sessionId` - отримати сесію
-- `POST /api/sessions/:sessionId/action` - вибрати дію
-- `POST /api/sessions/:sessionId/next` - наступний крок
-- `POST /api/sessions/:sessionId/result` - відправити результат
-- `POST /api/sessions/:sessionId/cancel` - відмінити сесію
+- `POST /api/a2a/sessions` - створити сесію
+- `GET /api/a2a/sessions` - список сесій
+- `GET /api/a2a/sessions/:sessionId` - отримати сесію
+- `POST /api/a2a/sessions/:sessionId/action` - вибрати дію (SDK)
+- `POST /api/a2a/sessions/:sessionId/next` - наступний крок (ack + подальший poll `/async`)
+- `GET /api/a2a/sessions/:sessionId/async` - опитати async
+- `POST /api/a2a/sessions/:sessionId/cancel` - відмінити сесію
 - `POST /api/terminal/execute` - виконати команду
 - `POST /api/terminal/action` - дія терміналу
 - `POST /api/fs/scan` - сканувати директорію

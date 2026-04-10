@@ -33,9 +33,8 @@ const AgentCard: FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  // NEXT_PUBLIC_* vars are statically replaced by Next.js at build time.
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const apiBase: string = (globalThis as any)?.process?.env?.['NEXT_PUBLIC_A2A_API_URL'] ?? '';
+  // NEXT_PUBLIC_* vars are available on the client-side via process.env
+  const apiBase = process.env.NEXT_PUBLIC_A2A_API_URL ?? '';
   const agentCardUrl = `${apiBase}/.well-known/agent.json`;
 
   useEffect(() => {

@@ -11,4 +11,4 @@ Implement or explicitly defer each ⏳ row: client modal behavior for waiting/ap
 
 ## Completion
 
-- [ ] Done
+[X] Completed

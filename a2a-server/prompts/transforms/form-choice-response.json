@@ -13,7 +13,11 @@
             "outcome": "completed",
             "message": "Auto mode selected",
             "execute": {
-              "message": "Автоматичний режим вибрано. Очікуйте виконання..."
+              "form": {
+                "title": "Автоматичний режим вибрано",
+                "description": "Очікуйте виконання...",
+                "input": [{ "name": "message", "type": "text", "label": "Message", "required": true }]
+              }
             }
           }
         },
@@ -86,14 +90,16 @@
             "outcome": "ai_action_ready",
             "message": "Agent mode selected",
             "context": {
-              "action": "agent",
               "execution": {
-                "step": "request",
-                "progress": 0
+                "action": "agent",
+                "step": "start"
+              },
+              "workbench": {
+                "sections": {}
               }
             },
             "execute": {
-              "message": "Agent режим активовано. LLM адаптується до вашої задачі..."
+              "message": "Режим агента: модель обробляє `context.task` і agent prompt; окрема форма вводу не показується."
             },
             "aiActions": {
               "action": "agent",
@@ -110,7 +116,11 @@
             "outcome": "completed",
             "message": "Task decomposition mode selected",
             "execute": {
-              "message": "Декомпозиція задачі. Розбиття на підзадачі..."
+              "form": {
+                "title": "Декомпозиція задачі",
+                "description": "Розбиття на підзадачі...",
+                "input": [{ "name": "message", "type": "text", "label": "Message", "required": true }]
+              }
             }
           }
         },
@@ -121,14 +131,16 @@
             "outcome": "ai_action_ready",
             "message": "${choice_id} mode → agent",
             "context": {
-              "action": "agent",
               "execution": {
-                "step": "request",
-                "progress": 0
+                "action": "agent",
+                "step": "start"
+              },
+              "workbench": {
+                "sections": {}
               }
             },
             "execute": {
-              "message": "Перенаправлення на Agent режим..."
+              "message": "Режим агента: модель обробляє `context.task` і agent prompt; окрема форма вводу не показується."
             },
             "aiActions": {
               "action": "agent",
@@ -145,14 +157,16 @@
             "outcome": "ai_action_ready",
             "message": "${choice_id} mode → agent",
             "context": {
-              "action": "agent",
               "execution": {
-                "step": "request",
-                "progress": 0
+                "action": "agent",
+                "step": "start"
+              },
+              "workbench": {
+                "sections": {}
               }
             },
             "execute": {
-              "message": "Перенаправлення на Agent режим..."
+              "message": "Режим агента: модель обробляє `context.task` і agent prompt; окрема форма вводу не показується."
             },
             "aiActions": {
               "action": "agent",
@@ -169,14 +183,16 @@
             "outcome": "ai_action_ready",
             "message": "${choice_id} mode → agent",
             "context": {
-              "action": "agent",
               "execution": {
-                "step": "request",
-                "progress": 0
+                "action": "agent",
+                "step": "start"
+              },
+              "workbench": {
+                "sections": {}
               }
             },
             "execute": {
-              "message": "Перенаправлення на Agent режим..."
+              "message": "Режим агента: модель обробляє `context.task` і agent prompt; окрема форма вводу не показується."
             },
             "aiActions": {
               "action": "agent",
@@ -193,14 +209,16 @@
             "outcome": "ai_action_ready",
             "message": "${choice_id} mode → agent",
             "context": {
-              "action": "agent",
               "execution": {
-                "step": "request",
-                "progress": 0
+                "action": "agent",
+                "step": "start"
+              },
+              "workbench": {
+                "sections": {}
               }
             },
             "execute": {
-              "message": "Перенаправлення на Agent режим..."
+              "message": "Режим агента: модель обробляє `context.task` і agent prompt; окрема форма вводу не показується."
             },
             "aiActions": {
               "action": "agent",
@@ -217,14 +235,16 @@
             "outcome": "ai_action_ready",
             "message": "${choice_id} mode → agent",
             "context": {
-              "action": "agent",
               "execution": {
-                "step": "request",
-                "progress": 0
+                "action": "agent",
+                "step": "start"
+              },
+              "workbench": {
+                "sections": {}
               }
             },
             "execute": {
-              "message": "Перенаправлення на Agent режим..."
+              "message": "Режим агента: модель обробляє `context.task` і agent prompt; окрема форма вводу не показується."
             },
             "aiActions": {
               "action": "agent",
@@ -241,14 +261,16 @@
             "outcome": "ai_action_ready",
             "message": "${choice_id} mode → agent",
             "context": {
-              "action": "agent",
               "execution": {
-                "step": "request",
-                "progress": 0
+                "action": "agent",
+                "step": "start"
+              },
+              "workbench": {
+                "sections": {}
               }
             },
             "execute": {
-              "message": "Перенаправлення на Agent режим..."
+              "message": "Режим агента: модель обробляє `context.task` і agent prompt; окрема форма вводу не показується."
             },
             "aiActions": {
               "action": "agent",
@@ -266,7 +288,11 @@
           "outcome": "completed",
           "message": "Choice selected",
           "execute": {
-            "message": "Вибрано: ${choice_id}"
+            "form": {
+              "title": "Вибір зроблено",
+              "description": "Вибрано: ${choice_id}",
+              "input": [{ "name": "message", "type": "text", "label": "Message", "required": true }]
+            }
           }
         }
       }

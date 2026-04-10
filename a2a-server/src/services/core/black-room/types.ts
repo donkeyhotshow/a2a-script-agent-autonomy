@@ -41,7 +41,8 @@ export interface AlgorithmResult {
 }
 
 export interface BlackRoomExecutionOptions {
-    ollamaUrl?: string;
+    /** AI Integration hub base (default: `A2A_BLACK_ROOM_AI_HUB_URL` or `AI_HUB_URL`). */
+    aiHubUrl?: string;
     defaultModel?: string;
     timeoutMs?: number;
     maxRetries?: number;

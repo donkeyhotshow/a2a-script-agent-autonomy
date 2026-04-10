@@ -34,10 +34,10 @@ Pipeline that prepares request/response payloads for prompts and protocol output
 ## AI & Machine Learning
 
 ### LLM (Large Language Model)
-AI models like those from Ollama used for natural language processing and code analysis.
+AI models like those from Local LLM upstream used for natural language processing and code analysis.
 
 ### External AI Hub
-External service interface (typically Ollama) providing AI capabilities through standardized endpoints.
+External service interface (typically Local LLM upstream) providing AI capabilities through standardized endpoints.
 
 ### RAG (Retrieval-Augmented Generation)
 AI technique combining information retrieval with language generation for enhanced responses.

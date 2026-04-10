@@ -1,0 +1,33 @@
+{
+  "$proba": {
+    "ignorePaths": [
+      "context.session_id",
+      "context.result",
+      "context.choice_id",
+      "context.message",
+      "context.workbench"
+    ],
+    "inputAbsentPaths": ["context.history"]
+  },
+  "context": {
+    "task": "string",
+    "execution": {
+      "action": "string",
+      "step": "string"
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "string",
+      "description": "string",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "string",
+          "required": true
+        }
+      ]
+    }
+  }
+}

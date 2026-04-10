@@ -1,0 +1,45 @@
+{
+  "step": 5,
+  "timestamp": "2026-04-07T23:33:05.049Z",
+  "execute": {
+    "form": {
+      "title": "Agent Mode",
+      "description": "Enter your task for the agent",
+      "input": [
+        {
+          "name": "task",
+          "type": "text",
+          "label": "Task",
+          "required": true
+        }
+      ]
+    }
+  },
+  "context": {
+    "execution": {
+      "action": "agent",
+      "step": "request"
+    },
+    "task": "Continue until the assigned task is fully done. When finished, give a clear final answer.",
+    "projectId": "p_1771576028988",
+    "history": [
+      {
+        "role": "user",
+        "message": "Implement or explicitly defer each ⏳ row: client modal behavior for waiting/approval states; session/create or persistence path for `conversation_id` if still required. Update ADR-0035 table (✅/deferred) and `DEV_STATE` for touched modules."
+      },
+      {
+        "role": "system",
+        "message": "choice: agent"
+      },
+      {
+        "role": "user",
+        "message": "Continue until the assigned task is fully done. When finished, give a clear final answer."
+      }
+    ],
+    "session_id": "srv_sess_stateless",
+    "workbench": {
+      "sections": {},
+      "slots": {}
+    }
+  }
+}

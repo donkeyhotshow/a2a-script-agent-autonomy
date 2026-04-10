@@ -39,5 +39,8 @@
     "file-exists": {
       "path": "utils/helpers.js"
     }
+  },
+  "result": {
+    "completed": false
   }
 }

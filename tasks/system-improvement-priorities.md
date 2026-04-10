@@ -2,7 +2,7 @@
 
 **Status:** backlog  
 **Tracked in:** [`work/STATE.md`](../work/STATE.md) (row SYS)  
-**Self-Upgrade process:** Run the daemon script `monitor-and-process-tasks.js` or manually conduct dialog via API with the agent for system analysis and improvement. See [GLOSSARY.md](../GLOSSARY.md) for full definition.  
+**Self-Upgrade process:** Run the daemon script `tests/monitor-and-process-tasks.js` or manually conduct dialog via API with the agent for system analysis and improvement. See [GLOSSARY.md](../GLOSSARY.md) for full definition.  
 **How to run the full prompt index + API loop:** [`START-FULL-SPECTRUM.md`](../START-FULL-SPECTRUM.md) · [`prompts-to-agent-mode/ONE-PIPELINE.md`](../prompts-to-agent-mode/ONE-PIPELINE.md)
 
 ## Priorities (ordered)

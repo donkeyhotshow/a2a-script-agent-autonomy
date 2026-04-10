@@ -24,7 +24,7 @@
   "status_code": 200,
   "elapsed_ms": 3542,
   "headers": {
-    "Server": "ollama",
+    "Server": "compat_llm",
     "Date": "Tue, 24 Feb 2026 12:21:17 GMT",
     "Content-Type": "application/json",
     "Content-Length": "359",
@@ -39,9 +39,9 @@
 {
   "ai_hub_config": "C:\\workspace\\org-carrier\\a2a-script-agent\\ai-integration\\docs\\ai-hub.config.example.json",
   "ai_hub_rules": 3,
-  "ollama_available": false,
-  "ollama_host": "http://localhost:11435",
-  "ollama_port": 11435,
+  "local_llm_upstream_available": false,
+  "local_llm_upstream_host": "http://localhost:11435",
+  "local_llm_upstream_port": 11435,
   "promise": {
     "dir": "proxy_logs\\promises",
     "max_workers": 8,
@@ -73,7 +73,7 @@
   "status_code": 200,
   "elapsed_ms": 4038,
   "headers": {
-    "Server": "ollama",
+    "Server": "compat_llm",
     "Date": "Tue, 24 Feb 2026 12:21:21 GMT",
     "Content-Type": "application/json",
     "Content-Length": "226",
@@ -125,7 +125,7 @@
   "status_code": 200,
   "elapsed_ms": 8,
   "headers": {
-    "Server": "ollama",
+    "Server": "compat_llm",
     "Date": "Tue, 24 Feb 2026 12:21:21 GMT",
     "Content-Type": "application/json",
     "Content-Length": "882",
@@ -224,7 +224,7 @@
   "status_code": 200,
   "elapsed_ms": 58,
   "headers": {
-    "Server": "ollama",
+    "Server": "compat_llm",
     "Date": "Tue, 24 Feb 2026 12:21:21 GMT",
     "Content-Type": "application/json",
     "Content-Length": "135",
@@ -270,7 +270,7 @@
   "status_code": 202,
   "elapsed_ms": 13,
   "headers": {
-    "Server": "ollama",
+    "Server": "compat_llm",
     "Date": "Tue, 24 Feb 2026 12:21:21 GMT",
     "Content-Type": "application/json",
     "Content-Length": "70",
@@ -304,7 +304,7 @@
       "status_code": 200,
       "elapsed_ms": 28,
       "headers": {
-        "Server": "ollama",
+        "Server": "compat_llm",
         "Date": "Tue, 24 Feb 2026 12:21:21 GMT",
         "Content-Type": "application/json",
         "Content-Length": "131",
@@ -330,7 +330,7 @@
       "status_code": 200,
       "elapsed_ms": 19,
       "headers": {
-        "Server": "ollama",
+        "Server": "compat_llm",
         "Date": "Tue, 24 Feb 2026 12:21:22 GMT",
         "Content-Type": "application/json",
         "Content-Length": "143",

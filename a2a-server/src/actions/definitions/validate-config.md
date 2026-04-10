@@ -14,16 +14,16 @@ Validates a single configuration file against its JSON schema.
 **Output:** `{ valid: boolean }`
 
 ```typescript
-import fs from 'fs/promises';
+import fs from 'node:fs/promises';
 import Ajv from 'ajv';
 
 export default async function run(input: { configPath: string; schemaPath: string }): Promise<{ valid: boolean }> {
-  const { configPath, schemaPath } = input;
-  const ajv = new Ajv({ allErrors: true, verbose: true });
-  
-  try {
-    // Load schema
-    const schemaContent = await fs.readFile(schemaPath, 'utf-8');
+   const { configPath, schemaPath } = input;
+   const ajv = new Ajv({ allErrors: true, verbose: true });
+   
+   try {
+     // Load schema
+     const schemaContent = await fs.readFile(schemaPath, 'utf-8');
     const schema = JSON.parse(schemaContent);
     const validate = ajv.compile(schema);
     
@@ -55,12 +55,12 @@ Validates multiple configuration files against their respective schemas.
 **Output:** `{ allValid: boolean }`
 
 ```typescript
-import fs from 'fs/promises';
+import fs from 'node:fs/promises';
 import path from 'path';
 
 export default async function run(input: { validations: Array<{ config: string; schema: string }>; projectRoot: string }): Promise<{ allValid: boolean }> {
-  const { validations, projectRoot } = input;
-  let allValid = true;
+   const { validations, projectRoot } = input;
+   let allValid = true;
 
   for (const { config, schema } of validations) {
     try {

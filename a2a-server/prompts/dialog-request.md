@@ -15,6 +15,8 @@ ${flowControlHint}
 
 ## Response Format
 
+Top-level **`completed`** is copied to **`result.completed`** after transforms. **Dialog** exits Gray Room on the user-facing response path (no agent syndicate / SIEGE step on that branch). Still use **`completed: false`** while the conversation continues, and **`true`** only when you consider the thread fully resolved.
+
 ### A — Continue the conversation (default and REQUIRED)
 
 Put the assistant line **only** under **`execute.message`** (not a top-level **`message`** field). Response transforms append that line to `context.history` (see `append-to-array` coalesce in dialog pipeline). **`execute`** may contain **`message`** and **`form`** together for this pattern.

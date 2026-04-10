@@ -30,10 +30,10 @@ export async function proxyToA2AServer(requestBody) {
             };
         }
 
-        if (data.data?.promiseId) {
-            const r = await pollA2ARequestResult(data.data.promiseId, {
+        const proxiedPromiseId = data?.data?.promiseId;
+        if (proxiedPromiseId) {
+            const r = await pollA2ARequestResult(proxiedPromiseId, {
                 baseUrl: A2A_URL,
-                maxPolls: 30,
                 intervalMs: 1000,
                 headers: { 'x-skip-auth': 'true' },
             });

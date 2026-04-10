@@ -17,8 +17,14 @@ export function createProjectRoutes({ cwd }) {
         const p = url.pathname.slice(API_PREFIX.length);
 
         if (req.method === 'GET' && p === '/projects') {
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ projects: loadProjects(cwd) }));
+            try {
+                const projects = loadProjects(cwd);
+                res.setHeader('Content-Type', 'application/json');
+                res.end(JSON.stringify({ projects }));
+            } catch (e) {
+                console.error('[projects] Failed to load projects:', e?.message || e);
+                res.writeHead(500).end(JSON.stringify({ error: 'Failed to load projects configuration' }));
+            }
             return;
         }
 
@@ -31,7 +37,14 @@ export function createProjectRoutes({ cwd }) {
                     const newProjects = d.projects ?? (Array.isArray(d) ? d : null);
                     if (Array.isArray(newProjects)) {
                         // Load existing projects and filter out duplicates by ID
-                        const existingProjects = loadProjects(cwd);
+                        let existingProjects;
+                        try {
+                            existingProjects = loadProjects(cwd);
+                        } catch (e) {
+                            console.error('[projects] Failed to load existing projects:', e?.message || e);
+                            res.writeHead(500).end(JSON.stringify({ error: 'Failed to load projects configuration' }));
+                            return;
+                        }
                         const existingIds = new Set(existingProjects.map(p => p.id));
                         
                         // Add only new projects that don't already exist
@@ -70,7 +83,12 @@ export function createProjectRoutes({ cwd }) {
             if (fs.existsSync(indexDir)) {
                 const ragFile = path.join(indexDir, 'rag-files.json');
                 if (fs.existsSync(ragFile)) {
-                    out.index = JSON.parse(fs.readFileSync(ragFile, 'utf8'));
+                    try {
+                        out.index = JSON.parse(fs.readFileSync(ragFile, 'utf8'));
+                    } catch (e) {
+                        console.error('[projects] Failed to parse rag-files.json:', ragFile, e?.message || e);
+                        // Continue with empty index
+                    }
                 }
             }
             res.setHeader('Content-Type', 'application/json');
@@ -80,7 +98,14 @@ export function createProjectRoutes({ cwd }) {
 
         const fileMatch = p.match(/^\/projects\/([^/]+)\/files\/(.+)$/);
         if (req.method === 'GET' && fileMatch) {
-            const projects = loadProjects(cwd);
+            let projects;
+            try {
+                projects = loadProjects(cwd);
+            } catch (e) {
+                console.error('[projects] Failed to load projects:', e?.message || e);
+                res.writeHead(500).end(JSON.stringify({ error: 'Failed to load projects configuration' }));
+                return;
+            }
             const proj = projects.find((x) => x.id === fileMatch[1]);
             if (!proj?.path) {
                 res.writeHead(404).end('Not found');

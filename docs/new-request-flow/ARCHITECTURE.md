@@ -18,7 +18,7 @@ doc:
 > **Транспорт:** Web ↔ Client API ↔ Server — **async flow с `promiseId`**. Server возвращает `promiseId`,
 > Client API опрашивает статус до `completed`, затем возвращает `execute.*` в Web.
 > 
-> **См.:** [PROTOCOL.md](PROTOCOL.md)
+> **См.:** [PROTOCOL.md](PROTOCOL.md). Полная диаграмма слоёв и портов — [DATA-FLOW.md](DATA-FLOW.md) (здесь — только блок-схема ролей).
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -141,7 +141,7 @@ doc:
 
 ## External AI Hub
 
-Прокси **ai-integration** (**:11434** → Ollama **:11435**), async через **`promiseId`**. Поток и таблица endpoint’ов: [PROTOCOL.md → Async flow](PROTOCOL.md#async-flow-promiseid); интеграция на стороне сервера: [SERVER-ARCHITECTURE.md → External AI Hub Integration](SERVER-ARCHITECTURE.md#external-ai-hub-integration).
+Прокси **ai-integration** (**:11434** → Local LLM upstream **:11435**), async через **`promiseId`**. Поток и таблица endpoint’ов: [PROTOCOL.md → Async flow](PROTOCOL.md#async-flow-promiseid); интеграция на стороне сервера: [SERVER-ARCHITECTURE.md → External AI Hub Integration](SERVER-ARCHITECTURE.md#external-ai-hub-integration).
 
 ## Потоки данных
 
@@ -153,11 +153,11 @@ doc:
 
 ## Порты
 
-Сводная таблица: [DATA-FLOW.md → компоненты и порты](DATA-FLOW.md#component-ports); краткий перечень: [AGENTS.md → Default Ports](../../AGENTS.md#default-ports).
+Сводная таблица: [DATA-FLOW.md → компоненты и порты](DATA-FLOW.md#component-ports); краткий перечень: [AGENTS-REFERENCE.md → Ports](../AGENTS-REFERENCE.md#ports).
 
 ## Переменные окружения
 
-Сервер, клиент, ключи, AI: [AGENTS.md → Environment Variables](../../AGENTS.md#environment-variables).
+Сервер, клиент, ключи, AI: [AGENTS-REFERENCE.md → Environment Variables](../AGENTS-REFERENCE.md#environment-variables).
 
 ## Следующие шаги
 

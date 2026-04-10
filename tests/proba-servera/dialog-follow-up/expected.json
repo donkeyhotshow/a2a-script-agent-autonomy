@@ -1,0 +1,40 @@
+{
+  "$proba": {
+    "ignorePaths": ["context.workbench"]
+  },
+  "context": {
+    "task": "string",
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "string"
+      },
+      {
+        "role": "assistant",
+        "message": "string"
+      },
+      {
+        "role": "user",
+        "message": "string"
+      },
+      {
+        "role": "assistant",
+        "message": "string"
+      }
+    ]
+  },
+  "execute": {
+    "message": "string",
+    "form": {
+      "textarea": {
+        "name": "string",
+        "label": "string",
+        "required": true
+      }
+    }
+  }
+}

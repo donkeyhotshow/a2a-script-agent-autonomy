@@ -3,12 +3,22 @@ Model Resolver Module
 Handles model name resolution and alias mapping
 """
 import logging
+import os
 from typing import Optional, Tuple, Dict, Any, List
 
 from .ai_hub_config import _normalize_model_key, _extract_prompt, _match_when, _build_simulated_body
 from .promises import _json_bytes
 
 logger = logging.getLogger(__name__)
+
+
+def _append_model_debug_log(storage_dir: str, line: str) -> None:
+    path = os.path.join(storage_dir, "debug.log")
+    try:
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(line)
+    except OSError as e:
+        logger.warning("model_resolver: cannot write debug log %s: %s", path, e)
 
 
 def resolve_model_name(requested_model: Optional[str], config: dict) -> Tuple[Optional[str], Optional[str]]:
@@ -136,16 +146,18 @@ def get_requested_and_resolved_model(body_json: Optional[Dict], forward_args: Di
     requested_model = None
     resolved_model = None
     
-    # Debug logging
-    debug_file = STORAGE_DIR + '/debug.log'
-    with open(debug_file, 'a') as f:
-        f.write(f"[DEBUG] body_json type: {type(body_json)}, value: {body_json}\n")
-    
+    _append_model_debug_log(
+        STORAGE_DIR,
+        f"[DEBUG] body_json type: {type(body_json)}, value: {body_json}\n",
+    )
+
     if method in ['POST', 'PUT', 'PATCH'] and isinstance(body_json, dict):
         # Check for simulate in body
         direct_simulate = body_json.get('simulate')
-        with open(debug_file, 'a') as f:
-            f.write(f"[DEBUG] direct_simulate: {direct_simulate}\n")
+        _append_model_debug_log(
+            STORAGE_DIR,
+            f"[DEBUG] direct_simulate: {direct_simulate}\n",
+        )
         
         # Get model from body
         model_val = body_json.get('model')

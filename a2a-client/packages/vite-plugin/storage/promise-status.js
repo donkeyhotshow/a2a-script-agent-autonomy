@@ -1,9 +1,13 @@
+import { isRecoverableAsyncSnapshot } from '@a2a-client/shared/client-api-envelope.mjs';
+
 /**
  * Promise polling states that mean async work is still in flight (step server-promise.json).
  */
 export function isActivePromiseStatus(status) {
     return status === 'pending' || status === 'processing' || status === 'waiting';
 }
+
+export { isRecoverableAsyncSnapshot };
 
 /**
  * Terminal state for GET /api/v1/requests/:id/result inner payload (same rules as promise poll in stepRoutes).

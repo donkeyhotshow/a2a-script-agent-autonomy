@@ -1,4 +1,4 @@
-# Апгрейд ai-integration (Ollama Proxy)
+# Апгрейд ai-integration (Local LLM upstream Proxy)
 
 Цель апгрейда: сделать прокси более управляемым и безопасным без правок клиентского кода — через конфиг:
 
@@ -54,14 +54,14 @@
 
 ### 4) Виртуальные модели (presence в /api/tags и /api/show)
 
-Если вы хотите "притвориться", что в Ollama установлена модель (чтобы клиенты видели её в списке моделей и могли
+Если вы хотите "притвориться", что в Local LLM upstream установлена модель (чтобы клиенты видели её в списке моделей и могли
 получить метаданные),
 используйте `virtual_models` в конфиге.
 
 Прокси:
 
-- добавляет виртуальные модели в `GET /api/tags` (и вернёт только виртуальные модели, если Ollama недоступна);
-- отдаёт `GET /api/show?model=<name>` из конфига, не ходя в Ollama.
+- добавляет виртуальные модели в `GET /api/tags` (и вернёт только виртуальные модели, если Local LLM upstream недоступна);
+- отдаёт `GET /api/show?model=<name>` из конфига, не ходя в Local LLM upstream.
 
 ## Конфиг (schema file)
 
@@ -99,7 +99,7 @@ bash
 curl -s http://localhost:11435/api/generate -H "Content-Type: application/json" -d "{\"model\":\"BIG-MODEL\",\"prompt\":\"hi\"}"
 ```
 
-В Ollama уйдёт `model=qwen3:8b`.
+В Local LLM upstream уйдёт `model=qwen3:8b`.
 
 ### Promise (async)
 
@@ -133,7 +133,7 @@ curl -i http://localhost:11434/promise/<promiseId>/response
 
 ### Симуляция
 
-Правило (пример): если промпт содержит `SIMULATE:` — не ходить в Ollama, вернуть ответ сами.
+Правило (пример): если промпт содержит `SIMULATE:` — не ходить в Local LLM upstream, вернуть ответ сами.
 
 ```
 json
@@ -144,7 +144,7 @@ json
       "when": { "path_regex": "^api/generate$", "prompt_contains": ["SIMULATE:"] },
       "then": {
         "type": "simulate",
-        "builder": "ollama.generate",
+        "builder": "compat_llm.generate",
         "text": "SIMULATED: {prompt}",
         "delay_ms": 50
       }
@@ -156,8 +156,8 @@ json
 ### Симуляция присутствия модели `rnj-L` (как "топовая Mistral")
 
 См. пример в `docs/ai-hub.config.example.json` (`virtual_models.rnj-L`).
-Примечание: чтобы "не палиться", заполняйте `tags/show` данными в формате Ollama (реалистичные
-`digest/size/details/license/modelfile`) и не добавляйте произвольные поля, которых нет в ответах Ollama.
+Примечание: чтобы "не палиться", заполняйте `tags/show` данными в формате Local LLM upstream (реалистичные
+`digest/size/details/license/modelfile`) и не добавляйте произвольные поля, которых нет в ответах Local LLM upstream.
 
 ### Скрипт для прогона запросов и отчёта в Markdown
 
@@ -181,7 +181,7 @@ python generate_virtual_model_report.py --start-proxy --proxy-port 11434 --confi
 ## Перспективы (roadmap)
 
 - Плагины/хуки на Python для сложной логики (не только rules JSON).
-- Поддержка нескольких провайдеров (Ollama/OpenAI/Anthropic/…): единый роутинг по `provider + model`.
+- Поддержка нескольких провайдеров (Local LLM upstream/OpenAI/Anthropic/…): единый роутинг по `provider + model`.
 - Очередь задач для promises (Redis/RabbitMQ) + гарантированная доставка/перезапуск.
 - Нормальная поддержка стриминга (proxy streaming + логирование чанков).
 - Безопасность: токены, ACL, rate limiting, аудит, маскирование секретов/PII в логах.

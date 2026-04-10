@@ -4,8 +4,16 @@
  */
 
 import * as path from 'path';
+import { randomUUID } from 'crypto';
 import {logger} from '../../../utils/logger.js';
 import {RequestFileStorage} from './request-file-storage.js';
+import {sanitizeRequestResultForStorage} from './client-visible-context.js';
+
+/** Re-export for tests and callers; implementation lives in `utils/errors.ts`. */
+export {
+    CLIENT_SAFE_PROCESSING_ERROR,
+    sanitizeErrorMessage as humanizeUpstreamErrorMessage,
+} from '../../../utils/errors.js';
 
 export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
@@ -62,34 +70,18 @@ export function isRetryableError(err: string): boolean {
 }
 
 /**
- * User-visible copy for invoke/session paths. Never mention proxy, Ollama, or ports — details stay in server logs.
+ * Dialog/LLM pipeline failures that should re-queue the same promiseId (pending + retryAfter)
+ * instead of terminal `failed`, so clients keep polling until the hub/transform recovers or max retries.
+ * Explicit client/validation errors stay terminal (not listed here).
  */
-export const CLIENT_SAFE_PROCESSING_ERROR = "We couldn't complete this step. Please try again.";
-
-/**
- * Map upstream/network failures to a client-safe string. Non-infrastructure messages pass through.
- */
-export function humanizeUpstreamErrorMessage(raw: string): string {
-    const s = String(raw ?? '').trim();
-    if (!s) return CLIENT_SAFE_PROCESSING_ERROR;
-    const low = s.toLowerCase();
-    if (low === 'fetch failed' || low === 'failed to fetch') {
-        return CLIENT_SAFE_PROCESSING_ERROR;
-    }
-    if (/econnrefused|connect econnrefused/i.test(s)) {
-        return CLIENT_SAFE_PROCESSING_ERROR;
-    }
-    if (/etimedout|timed out/i.test(s) && !/read\s+(timed?\s*out|timeout)/i.test(s)) {
-        return CLIENT_SAFE_PROCESSING_ERROR;
-    }
-    if (isRetryableError(s)) {
-        return CLIENT_SAFE_PROCESSING_ERROR;
-    }
-    if (/llm response fetch failed|^llm error:/i.test(s)) {
-        return CLIENT_SAFE_PROCESSING_ERROR;
-    }
-    return s;
+export function shouldDeferDialogProcessorFailure(err: string): boolean {
+    const e = String(err ?? '').trim();
+    if (!e) return true;
+    if (e === 'transformSchema required') return false;
+    return true;
 }
+
+
 
 let storageSingleton: RequestFileStorage | null = null;
 function getRequestStorage(): RequestFileStorage {
@@ -106,8 +98,8 @@ export class RequestService {
      * Create a new request and return promiseId
      */
     async create(data: CreateRequestData): Promise<{ promiseId: string; id: string }> {
-        const id = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-        const promiseId = `prom_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const id = `req_${randomUUID()}`;
+        const promiseId = `prom_${randomUUID()}`;
 
         const req: RequestResult = {
             id,
@@ -175,7 +167,9 @@ export class RequestService {
         req.status = status;
         if (status === 'processing') req.startedAt = now;
         if (status === 'completed' || status === 'failed') req.completedAt = now;
-        if (result !== undefined) req.result = result;
+        if (result !== undefined) {
+            req.result = sanitizeRequestResultForStorage(result);
+        }
         if (error !== undefined) req.error = error;
         if ((status === 'completed' || status === 'failed') && result !== undefined) {
             const outCtx = result['context'] as Record<string, unknown> | undefined;
@@ -327,11 +321,13 @@ export class RequestService {
     }
 
     /**
-     * Claim a specific pending request (for sync /invoke — same transition as getNextPending).
+     * Claim a specific pending request (async pipeline — same transition as getNextPending).
      */
     async claimPendingByPromiseId(promiseId: string): Promise<RequestResult | null> {
         const req = await getRequestStorage().load(promiseId);
         if (!req || req.status !== 'pending') return null;
+        const ra = req.retryAfter;
+        if (ra && new Date(ra).getTime() > Date.now()) return null;
         req.status = 'processing';
         req.startedAt = new Date();
         (req as RequestResult).retryAfter = undefined;
@@ -395,6 +391,27 @@ export class RequestService {
         (req.context as Record<string, unknown>).llmPromiseId = llmPromiseId;
         await getRequestStorage().save(req);
         return true;
+    }
+
+    /** Remove hub LLM promise id so dialog can start a fresh `/api/chat?promise=1` (e.g. proxy lost record). */
+    async clearLlmPromiseId(promiseId: string): Promise<boolean> {
+        const req = await getRequestStorage().load(promiseId);
+        if (!req) return false;
+        const c = req.context as Record<string, unknown>;
+        delete c.llmPromiseId;
+        await getRequestStorage().save(req);
+        return true;
+    }
+
+    /** Bump counter when clearing a dead hub promise; caps automatic re-submits. */
+    async incrementHubLlmResubmitCount(promiseId: string): Promise<number> {
+        const req = await getRequestStorage().load(promiseId);
+        if (!req) return 0;
+        const c = req.context as Record<string, unknown>;
+        const next = (Number(c.hubLlmResubmitCount) || 0) + 1;
+        c.hubLlmResubmitCount = next;
+        await getRequestStorage().save(req);
+        return next;
     }
 
     /**

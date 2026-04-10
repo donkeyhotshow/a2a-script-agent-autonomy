@@ -1,0 +1,23 @@
+{
+  "id": "workflow-preference",
+  "title": "How should we proceed?",
+  "questions": [
+    {
+      "id": "priority",
+      "text": "What is the priority for this iteration?",
+      "options": [
+        { "id": "speed", "label": "Speed — ship minimal fix first" },
+        { "id": "quality", "label": "Quality — tests and docs before merge" },
+        { "id": "balance", "label": "Balance — small steps with checks" }
+      ]
+    },
+    {
+      "id": "scope",
+      "text": "Scope of changes?",
+      "options": [
+        { "id": "single-file", "label": "Single file or module only" },
+        { "id": "cross-module", "label": "Cross-module (client + server, etc.)" }
+      ]
+    }
+  ]
+}

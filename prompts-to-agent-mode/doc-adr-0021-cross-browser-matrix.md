@@ -11,4 +11,4 @@ Define and document (or automate) the full cross-browser matrix; align with exis
 
 ## Completion
 
-- [ ] Done
+[X] Completed

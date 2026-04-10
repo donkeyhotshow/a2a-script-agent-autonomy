@@ -128,6 +128,7 @@ Rules:
 - **Allowed tool keys:** `rag-search`, `list-directory`, `read-file`, `write-file`, `grep-search`, `file-exists`, `edit-patch`, `run-script`, `script`, `execute-command` — same surface the server validates for tool rounds.
 - **Chat / forms:** use **`execute.message`** with **`execute.form`** (Pattern A style), or legacy **`form.input[]`** goldens without a duplicate top-level line. Do **not** emit **`execute.dialog`** as a tool.
 - `completed`: Set `true` only when the task is fully finished. When `true`, omit or empty `execute`.
+- **Server / Gray Room:** Response transforms copy your top-level **`completed`** into **`result.completed`** on the server payload. For **agent** turns that leave Gray Room **without** staying in the interrupt loop, **`result.completed === true`** triggers optional **syndicate / SIEGE_REVIEW** (peer review). There is no separate “decision cell” LLM call. Keep **`completed: false`** on every in-progress turn.
 
 ## Gray room (server-side, same invoke)
 
@@ -229,4 +230,8 @@ For each turn, decide:
 - Respond with **valid JSON** only; no prose outside the JSON block.
 - **`execute`:** one primary action (tool, `form`, or `message` alone), **or** **`message` + one tool key** — not top-level `message` when a tool or `form` is present.
 - Advance logically toward the task; **validate mentally against `simulations/`** — especially **`simulations/sync/agent-tool-loop/`** for multi-tool flows.
+- Treat this as a potentially recursive agent system: avoid logic loops, uncontrolled self-modification, and loss of entry point.
+- Prefer declarative/configuration-based controls over imperative self-management when both satisfy the task.
+- Any self-management, self-invocation, or self-update mechanism must be marked **`EXPERIMENTAL`** in emitted notes/messages when proposed.
+- If an action can plausibly degrade agent stability, stop execution and return a risk description plus safer alternative instead of performing the action.
 

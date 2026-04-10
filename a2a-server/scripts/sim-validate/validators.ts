@@ -179,6 +179,7 @@ export function normalizeServerInvokeRequest(data: unknown): unknown {
     if (ctx && typeof ctx === 'object' && !Array.isArray(ctx)) {
         const c = ctx as Record<string, unknown>;
         delete c.llmPromiseId;
+        delete c.hubLlmResubmitCount;
         const ex0 = c.execution;
         if (ex0 && typeof ex0 === 'object' && !Array.isArray(ex0)) {
             const e0 = ex0 as Record<string, unknown>;
@@ -227,6 +228,7 @@ export function normalizeServerInvokeResponse(data: unknown): unknown {
     if (ctx && typeof ctx === 'object' && !Array.isArray(ctx)) {
         const c = ctx as Record<string, unknown>;
         delete c.llmPromiseId;
+        delete c.hubLlmResubmitCount;
         const ex = c.execution;
         if (ex && typeof ex === 'object' && !Array.isArray(ex)) {
             const e = ex as Record<string, unknown>;

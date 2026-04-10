@@ -6,7 +6,7 @@ Universal LLM wrapper with support for multiple providers and automatic fallback
 
 | Provider | Type | Free Tier | API Key Required |
 |----------|------|-----------|------------------|
-| **Ollama** | Local | Unlimited | No |
+| **Local LLM upstream** | Local | Unlimited | No |
 | **OpenRouter** | OpenAI-compatible | 5000 credits | Yes |
 | **Groq** | OpenAI-compatible | Daily limits | Yes |
 | **HuggingFace** | Custom | 1000 req/month | Yes |
@@ -52,7 +52,7 @@ HF_TOKEN=hf_...
 COHERE_API_KEY=...
 
 # Router Settings
-DEFAULT_PROVIDER=ollama
+DEFAULT_PROVIDER=compat_llm
 ENABLE_FALLBACK=true
 PROVIDERS_CONFIG=config/providers.json
 ```
@@ -64,8 +64,8 @@ Create `config/providers.json`:
 ```json
 {
   "providers": {
-    "ollama": {
-      "type": "ollama",
+    "compat_llm": {
+      "type": "compat_llm",
       "url": "http://localhost:11435",
       "enabled": true,
       "priority": 1,
@@ -83,8 +83,8 @@ Create `config/providers.json`:
       }
     }
   },
-  "default_provider": "ollama",
-  "fallback_chain": ["ollama", "groq", "openrouter"]
+  "default_provider": "compat_llm",
+  "fallback_chain": ["compat_llm", "groq", "openrouter"]
 }
 ```
 
@@ -113,14 +113,14 @@ curl http://localhost:11435/v1/providers
 When a provider fails, the router automatically tries the next provider in the chain:
 
 ```
-Request → Ollama (fails) → Groq (fails) → OpenRouter (succeeds)
+Request → Local LLM upstream (fails) → Groq (fails) → OpenRouter (succeeds)
 ```
 
 Configure the fallback chain in `providers.json`:
 
 ```json
 {
-  "fallback_chain": ["ollama", "groq", "openrouter"]
+  "fallback_chain": ["compat_llm", "groq", "openrouter"]
 }
 ```
 
@@ -132,7 +132,7 @@ Check provider health:
 status = router.get_provider_status()
 print(status)
 # {
-#   "ollama": {"health": "healthy", "models": [...]},
+#   "compat_llm": {"health": "healthy", "models": [...]},
 #   "groq": {"health": "healthy", "models": [...]},
 # }
 ```
@@ -151,9 +151,9 @@ Request → ProviderRouter → Provider Chain
                               ↓
                     ┌─────────┴─────────┐
                     ↓                   ↓
-              OllamaProvider    OpenAICompatibleProvider
+              Local LLM upstreamProvider    OpenAICompatibleProvider
                     ↑                   ↑
-            Local Ollama      OpenRouter/Groq/Cohere
+            Local Local LLM upstream      OpenRouter/Groq/Cohere
 ```
 
 ## Testing

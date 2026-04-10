@@ -348,8 +348,8 @@ const responseMd = await fs.readFile(replayPath, 'utf-8');
 
 ```typescript
 // Создание promise в AI Hub
-const { promiseId } = await createOllamaPromise({
-  model: getOllamaModel(),
+const { promiseId } = await createLocal LLM upstreamPromise({
+  model: getLocal LLM upstreamModel(),
   prompt,
   stream: false,
 });
@@ -723,7 +723,7 @@ a2a-server/
 │   ├── services/
 │   │   └── ai/
 │   │       ├── llm-adapter.ts   # Task 28: LLM Adapter
-│   │       ├── ollama-adapter.ts
+│   │       ├── compat_llm-adapter.ts
 │   │       └── ai-service.ts
 │   ├── response/                # Task 29: Response parser
 │   │   ├── parser.ts
@@ -819,8 +819,8 @@ pipelines:
 | Variable | Описание | Пример |
 |----------|----------|--------|
 | `LLM_REPLAY_DIR` | Директория для replay-режима | `simulations/dialog/3` |
-| `LLM_PROVIDER` | Провайдер LLM | `ollama`, `openai`, `proxy` |
-| `OLLAMA_MODEL` | Модель Ollama | `qwen3:8b` |
+| `LLM_PROVIDER` | Провайдер LLM | `compat_llm`, `openai`, `proxy` |
+| `LOCAL_LLM_MODEL` | Модель Local LLM upstream | `qwen3:8b` |
 | `OPENAI_MODEL` | Модель OpenAI | `gpt-4o-mini` |
 | `AI_PROXY_URL` | URL AI Hub | `http://localhost:11434` |
 | `LOG_LLM_DIR` | Директория для логов LLM | `logs/llm` |

@@ -6,12 +6,19 @@
 
 import * as path from 'path';
 import {logger} from '../../../utils/logger.js';
+import {resolveAiHubBaseUrl} from '../../../utils/ai-hub-url.js';
+import {mkdtempOsTmp} from '../../../utils/mkdtemp-os-tmp.js';
 import {runPromptsTransform} from '../../../transform/index.js';
-import {fetchLlmResponse, pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
+import {
+    extractLlmTextFromHubResponseBody,
+    initAiHubChatPromise,
+    pollReadyThenFetch,
+    resolveLlmPromiseRecovery,
+} from '../../../daemon/llm-hub-poll.js';
 import {requestService} from '../request/request.service.js';
 import {resolveMainDialogLlmModelFromEnv} from './llm-model-resolver.js';
+import {toInvokeShapeForPromptsTransform} from './normalization.js';
 
-const DEFAULT_AI_HUB = 'http://localhost:11434';
 const DEFAULT_MODEL = resolveMainDialogLlmModelFromEnv();
 
 export interface LlmCallOptions {
@@ -28,15 +35,17 @@ export interface LlmCallResult {
     responseMd?: string;
     llmPromiseId?: string;
     error?: string;
+    /** Execute from request transform (e.g., initial form from dialog-request.json) */
+    requestTransformExecute?: Record<string, unknown>;
+    /** Context updates from request transform */
+    requestTransformContext?: Record<string, unknown>;
 }
 
 /**
  * Создает временную директорию для трансформов
  */
 export async function createDialogTransformOutputDir(): Promise<string> {
-    const {mkdtemp} = await import('fs/promises');
-    const {tmpdir} = await import('os');
-    return mkdtemp(path.join(tmpdir(), 'a2a-dialog-transform-'));
+    return mkdtempOsTmp('a2a-dialog-transform-');
 }
 
 /**
@@ -47,19 +56,8 @@ export async function runRequestTransforms(
     schemaName: string,
     ctx: Record<string, unknown>,
     outputDir: string
-): Promise<{success: boolean; files?: Record<string, string>; error?: string}> {
-    // Most server processors persist a "flat" context object (execution/task/history at root).
-    // Prompts/transforms expect an invoke-shaped payload with `context` + top-level `result`
-    // so that `result.message` can be folded into history before prompt render.
-    const invokeShape: Record<string, unknown> =
-        ctx && typeof ctx === 'object' && !Array.isArray(ctx) && 'context' in ctx
-            ? ctx
-            : {
-                  context: ctx,
-                  task: (ctx['task'] as string | undefined) ?? (ctx['message'] as string | undefined),
-                  message: ctx['message'],
-                  result: (ctx['result'] as Record<string, unknown> | undefined) ?? {},
-              };
+): Promise<{success: boolean; files?: Record<string, string>; execute?: Record<string, unknown>; context?: Record<string, unknown>; error?: string}> {
+    const invokeShape = toInvokeShapeForPromptsTransform(ctx);
     const transformResult = await runPromptsTransform(
         promptsTransformsPath,
         schemaName,
@@ -79,18 +77,32 @@ export async function runRequestTransforms(
         return {success: false, error: 'Request transform did not produce request.md'};
     }
 
-    return {success: true, files};
+    // Return execute and context from transform output (e.g., dialog-request.json sets initial form)
+    const execute = (transformResult.output?.execute as Record<string, unknown>) ?? {};
+    const context = (transformResult.output?.context as Record<string, unknown>) ?? {};
+
+    return {success: true, files, execute, context};
 }
 
 /**
- * Подготавливает сообщения для LLM из трансформов
+ * Подготавливает сообщения для LLM из `system.md` / `request.md`.
+ * When `systemInstructionOverride` is non-empty, system content is
+ * `{override}\n---\n{system.md}` (gray-room parity).
  */
-export function prepareLlmMessages(files: Record<string, string>): Array<{role: string; content: string}> {
+export function prepareLlmMessages(
+    files: Record<string, string>,
+    systemInstructionOverride?: string
+): Array<{role: string; content: string}> {
     const messages: Array<{role: string; content: string}> = [];
-    const systemMd = files['system.md'];
-
-    if (typeof systemMd === 'string' && systemMd.trim().length > 0) {
-        messages.push({role: 'system', content: systemMd});
+    const rawSystem = files['system.md'];
+    const systemMdFromDisk = typeof rawSystem === 'string' ? rawSystem : '';
+    const override =
+        typeof systemInstructionOverride === 'string' && systemInstructionOverride.trim().length > 0
+            ? systemInstructionOverride.trim()
+            : '';
+    const finalSystem = override ? `${override}\n---\n${systemMdFromDisk}` : systemMdFromDisk;
+    if (finalSystem.trim().length > 0) {
+        messages.push({role: 'system', content: finalSystem});
     }
 
     const requestMd = files['request.md'];
@@ -109,34 +121,16 @@ export async function initLlmPromise(
     model: string,
     messages: Array<{role: string; content: string}>,
     promiseId: string
-): Promise<{success: boolean; promiseId?: string; error?: string}> {
-    const chatRes = await fetch(`${base}/api/chat?promise=1`, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-Server-Promise-Id': promiseId,
-        },
-        body: JSON.stringify({
-            model,
-            messages,
-            stream: false,
-        }),
-    });
-
-    if (chatRes.status !== 202) {
-        const errText = await chatRes.text();
-        logger.error('[DialogRequestProcessor] LLM promise init failed', {status: chatRes.status, error: errText});
-        return {success: false, error: `LLM error: ${chatRes.status} ${errText.slice(0, 200)}`};
+): Promise<{success: boolean; promiseId?: string; inlineResponseBody?: string; error?: string}> {
+    const r = await initAiHubChatPromise(base, promiseId, {model, messages, stream: false});
+    if (r.ok) {
+        return {success: true, promiseId: r.llmPromiseId, inlineResponseBody: r.inlineResponseBody};
     }
-
-    const initData = (await chatRes.json()) as {promiseId?: string; status?: string};
-    const llmPromiseId = initData?.promiseId;
-
-    if (!llmPromiseId) {
+    if (r.reason === 'missing_llm_promise_id') {
         return {success: false, error: 'No promiseId in LLM response'};
     }
-
-    return {success: true, promiseId: llmPromiseId};
+    logger.error('[DialogRequestProcessor] LLM promise init failed', {status: r.status, error: r.bodyText});
+    return {success: false, error: `LLM error: ${r.status} ${r.bodyText.slice(0, 200)}`};
 }
 
 /**
@@ -149,11 +143,11 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
         schemaName,
         ctx,
         promiseId,
-        base = DEFAULT_AI_HUB,
+        base,
         model = DEFAULT_MODEL
     } = options;
 
-    const normalizedBase = base.replace(/\/$/, '');
+    const normalizedBase = resolveAiHubBaseUrl(base);
 
     try {
         await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_request_transform'});
@@ -164,12 +158,18 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
             promptsTransformsPath, schemaName, ctx, outputDir
         );
 
+        // Store request transform results for fallback (used when LLM unavailable or transform failed)
+        const requestTransformExecute = transformResult.execute;
+        const requestTransformContext = transformResult.context;
+
         if (!transformResult.success || !transformResult.files) {
             await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
             const te = transformResult.error;
             return {
                 success: false,
                 error: typeof te === 'string' ? te : te,
+                requestTransformExecute,
+                requestTransformContext,
             };
         }
 
@@ -185,6 +185,8 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
             return {
                 success: false,
                 error: typeof ie === 'string' ? ie : ie,
+                requestTransformExecute,
+                requestTransformContext,
             };
         }
 
@@ -194,20 +196,36 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
         await requestService.updateLlmPromiseId(promiseId, llmPromiseId);
         logger.info('[DialogRequestProcessor] Polling promise', {llmPromiseId});
 
-        // 5. Poll for response
-        const responseMd = await pollReadyThenFetch(normalizedBase, llmPromiseId, {
-            a2aPromiseId: promiseId,
-        });
-        if (!responseMd) {
+        // 5. Poll for response (or use hub inline body on disk-cache hit)
+        const rawResponseMd =
+            initResult.inlineResponseBody ??
+            (await pollReadyThenFetch(normalizedBase, llmPromiseId, {
+                a2aPromiseId: promiseId,
+            }));
+        if (!rawResponseMd?.trim()) {
+            await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
+            // Return request transform execute as fallback (allows form display even without LLM)
+            return {
+                success: false,
+                error: 'LLM response fetch failed',
+                requestTransformExecute,
+                requestTransformContext,
+            };
+        }
+        // Disk-cache 200 returns full provider JSON; unwrap choices[0].message.content before response transforms.
+        const responseMd = extractLlmTextFromHubResponseBody(rawResponseMd);
+        if (!responseMd?.trim()) {
             await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
             return {
                 success: false,
                 error: 'LLM response fetch failed',
+                requestTransformExecute,
+                requestTransformContext,
             };
         }
 
         await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_response_ready'});
-        return {success: true, responseMd, llmPromiseId};
+        return {success: true, responseMd, llmPromiseId, requestTransformExecute, requestTransformContext};
     } catch (err) {
         logger.error('[DialogRequestProcessor] LLM call failed', {error: String(err)});
         await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
@@ -227,16 +245,8 @@ export async function recoverLlmPromise(
     llmPromiseId: string
 ): Promise<string | null> {
     try {
-        const normalizedBase = base.replace(/\/$/, '');
-        const res = await fetch(`${normalizedBase}/promises/status`);
-
-        if (!res.ok) return null;
-
-        const data = (await res.json()) as {ready?: Array<{promiseId?: string}>};
-        if (!(data.ready ?? []).some((p) => p.promiseId === llmPromiseId)) return null;
-
-        const responseMd = await fetchLlmResponse(normalizedBase, llmPromiseId);
-        return responseMd;
+        const r = await resolveLlmPromiseRecovery(base, llmPromiseId);
+        return r.kind === 'ready' ? r.responseMd : null;
     } catch (err) {
         logger.error('LLM promise recovery failed', err);
         return null;

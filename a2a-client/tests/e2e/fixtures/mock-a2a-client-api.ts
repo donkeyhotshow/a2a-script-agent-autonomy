@@ -6,7 +6,7 @@ import {fixtures} from './index.js';
 
 export async function installMockA2aClientApi(page: Page): Promise<void> {
     /** In-memory list so POST /sessions is visible on the next GET /sessions (taskbar refresh). */
-    const sessionsList: Array<Record<string, unknown>> = [...fixtures.sessions.data];
+    const sessionsList: Array<Record<string, unknown>> = [...fixtures.sessions.sessions];
 
     await page.route('**/api/a2a/projects', async (route) => {
         await route.fulfill({
@@ -26,7 +26,11 @@ export async function installMockA2aClientApi(page: Page): Promise<void> {
             return route.fulfill({
                 status: 200,
                 contentType: 'application/json',
-                body: JSON.stringify({sessions: sessionsList})
+                body: JSON.stringify({
+                    success: true,
+                    sessions: sessionsList,
+                    count: sessionsList.length
+                })
             });
         }
 

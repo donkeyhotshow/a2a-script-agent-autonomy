@@ -19,6 +19,7 @@
 
 import type { OrchestratorState } from '../core/orchestrator-kernel.js';
 import { globalEventBus } from '../core/event-bus.js';
+import { logger } from '../../utils/logger.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -113,7 +114,10 @@ async function tryConnectRedis(): Promise<RedisClient | null> {
     // Probe with a harmless command
     await (client as unknown as { ping(): Promise<string> }).ping();
     return client;
-  } catch {
+  } catch (err: unknown) {
+    logger.debug('[ToolTracker] Redis connect/ping failed', {
+      error: err instanceof Error ? err.message : String(err),
+    });
     return null;
   }
 }
@@ -224,7 +228,10 @@ export class ToolTracker {
       try {
         const keys = await this.redis.keys(`${KEY_PREFIX}*`);
         toolNames = keys.map((k) => k.slice(KEY_PREFIX.length));
-      } catch {
+      } catch (err: unknown) {
+        logger.warn('[ToolTracker] Redis keys() failed, falling back to in-memory', {
+          error: err instanceof Error ? err.message : String(err),
+        });
         this.redis = null;
       }
     }

@@ -1,5 +1,5 @@
 """
-Main entry point for the Ollama Proxy
+Main entry point for the Local LLM upstream Proxy
 Run with: python -m proxy
 or: python proxy.py
 """
@@ -22,16 +22,18 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from proxy import app
 from proxy.config import PROXY_PORT, HEALTH_CHECK_INTERVAL
-from proxy.ollama_manager import get_ollama_host_port, check_port_occupied, get_ollama_manager
+from proxy.local_llm_manager import get_local_llm_upstream_host_port, check_port_occupied, get_local_llm_manager
 from proxy.utils import kill_ports
 from proxy.daemon import start_daemon, stop_daemon
 from proxy.config import CLEANUP_INTERVAL_HOURS, ENABLE_CLEANUP
+from proxy.logging_setup import ensure_file_log_handler
 
-# Configure logging
+# Configure logging (console + file under ai-integration/logs/)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
 )
+ensure_file_log_handler()
 logger = logging.getLogger('ai-proxy')
 
 
@@ -49,8 +51,8 @@ class GracefulShutdown:
         try:
             import threading
             self._lock = threading.Lock()
-        except ImportError:
-            pass
+        except ImportError as e:
+            logger.warning("threading unavailable — shutdown lock disabled: %s", e)
     
     @property
     def is_shutting_down(self) -> bool:
@@ -87,15 +89,15 @@ class GracefulShutdown:
             logger.info(f"Reason: {reason}")
         logger.info(f"{'=' * 50}")
         
-        # Остановить Ollama если она была запущена прокси
-        mgr = get_ollama_manager()
+        # Остановить Local LLM upstream если она была запущена прокси
+        mgr = get_local_llm_manager()
         if mgr.process is not None and mgr.started_by_proxy:
-            logger.info("Stopping Ollama (started by proxy)...")
+            logger.info("Stopping Local LLM upstream (started by proxy)...")
             try:
                 result = mgr.stop()
-                logger.info(f"Ollama stopped: {result}")
+                logger.info(f"Local LLM upstream stopped: {result}")
             except Exception as e:
-                logger.error(f"Error stopping Ollama: {e}")
+                logger.error("Error stopping Local LLM upstream: %s", e, exc_info=True)
         
         # Ждем завершения активных запросов
         drain_start = time.time()
@@ -173,7 +175,7 @@ def main():
         asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())
     
     print(f"{'=' * 50}")
-    print(f"Ollama Proxy Service")
+    print(f"Local LLM upstream Proxy Service")
     print(f"{'=' * 50}")
     
     _install_cleanup_handlers()
@@ -185,55 +187,55 @@ def main():
         enable_cleanup=ENABLE_CLEANUP,
     )
     
-    # Проверяем порт Ollama
-    ollama_host, ollama_port = get_ollama_host_port()
+    # Проверяем порт Local LLM upstream
+    local_llm_upstream_host, local_llm_upstream_port = get_local_llm_upstream_host_port()
     print(f"\nПроверка портов:")
     print(f"  - Прокси порт: {PROXY_PORT}")
-    print(f"  - Ollama хост: {ollama_host}:{ollama_port}")
+    print(f"  - Local LLM upstream хост: {local_llm_upstream_host}:{local_llm_upstream_port}")
     print(f"  - Health check interval: {HEALTH_CHECK_INTERVAL}s")
     
     # Автоматически убиваем процессы на обоих портах при старте
-    kill_ports(PROXY_PORT, ollama_port)
+    kill_ports(PROXY_PORT, local_llm_upstream_port)
     
-    if check_port_occupied(ollama_host, ollama_port):
-        print(f"  [OK] Ollama available on port {ollama_port}")
+    if check_port_occupied(local_llm_upstream_host, local_llm_upstream_port):
+        print(f"  [OK] Local LLM upstream available on port {local_llm_upstream_port}")
     else:
-        if ollama_port == 11434:
-            print(f"  [!] Ollama port same as proxy port (11434)")
-            print(f"    Ollama might be conflict. Please check manually.")
+        if local_llm_upstream_port == 11434:
+            print(f"  [!] Local LLM upstream port same as proxy port (11434)")
+            print(f"    Local LLM upstream might be conflict. Please check manually.")
         else:
-            print(f"  [X] Ollama NOT available on port {ollama_port}")
-            print(f"    Attempting to start Ollama automatically...")
-            mgr = get_ollama_manager()
+            print(f"  [X] Local LLM upstream NOT available on port {local_llm_upstream_port}")
+            print(f"    Attempting to start Local LLM upstream automatically...")
+            mgr = get_local_llm_manager()
             started = mgr.start()
-            if started.get('status') in {'started', 'already_running'} and check_port_occupied(ollama_host, ollama_port):
-                print(f"  [OK] Ollama available! ({started.get('status')})")
+            if started.get('status') in {'started', 'already_running'} and check_port_occupied(local_llm_upstream_host, local_llm_upstream_port):
+                print(f"  [OK] Local LLM upstream available! ({started.get('status')})")
             else:
-                print(f"  [X] Could not start Ollama automatically")
-                print(f"    Please start Ollama manually or check OLLAMA_HOST")
+                print(f"  [X] Could not start Local LLM upstream automatically")
+                print(f"    Please start Local LLM upstream manually or check LOCAL_LLM_UPSTREAM_URL")
     
     print(f"\nЗапуск прокси на порту {PROXY_PORT}...")
     print(f"Health endpoints:")
     print(f"  - /health       - Liveness probe")
-    print(f"  - /health/ollama - Ollama availability")
+    print(f"  - /health/local-llm-upstream - local HTTP LLM availability")
     print(f"  - /health/ready  - Readiness probe")
     print(f"  - /metrics       - Prometheus metrics")
     print(f"{'=' * 50}")
     
     try:
         from werkzeug.serving import WSGIRequestHandler
-        from proxy.config import OLLAMA_SERVER_HEADER
+        from proxy.config import LOCAL_LLM_SERVER_HEADER
         
-        class OllamaRequestHandler(WSGIRequestHandler):
-            server_version = OLLAMA_SERVER_HEADER
+        class LocalLlmUpstreamRequestHandler(WSGIRequestHandler):
+            server_version = LOCAL_LLM_SERVER_HEADER
             sys_version = ""
             
             def version_string(self) -> str:
-                return OLLAMA_SERVER_HEADER
+                return LOCAL_LLM_SERVER_HEADER
         
-        app.run(host='0.0.0.0', port=PROXY_PORT, debug=False, request_handler=OllamaRequestHandler)
+        app.run(host='0.0.0.0', port=PROXY_PORT, debug=False, request_handler=LocalLlmUpstreamRequestHandler)
     except Exception as e:
-        logger.error(f"Failed to start server: {e}")
+        logger.error("Failed to start server with custom request handler: %s", e, exc_info=True)
         app.run(host='0.0.0.0', port=PROXY_PORT, debug=False)
 
 

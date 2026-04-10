@@ -88,11 +88,11 @@ $apiEndpoints = @(
         Optional = $true
     },
     @{
-        Name = "Ollama API Tags"
+        Name = "Local LLM upstream API Tags"
         Url = "http://localhost:11435/api/tags"
         Method = "GET"
         ExpectedStatus = 200
-        Service = "Ollama"
+        Service = "Local LLM upstream"
     }
 )
 
@@ -125,7 +125,7 @@ foreach ($endpoint in $apiEndpoints) {
                     Write-Info "  First model: $($tagsData.models[0].name)"
                 }
             } catch {
-                Write-Info "  Could not parse Ollama tags JSON"
+                Write-Info "  Could not parse Local LLM upstream tags JSON"
             }
         }
         $results[$endpoint.Name] = "PASS"

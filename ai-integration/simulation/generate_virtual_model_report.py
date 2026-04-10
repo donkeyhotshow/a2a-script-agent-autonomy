@@ -9,12 +9,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import time
 import os
 import subprocess
 from typing import Any, Optional
 
 import requests
+
+_log = logging.getLogger(__name__)
 
 
 def _now_iso() -> str:
@@ -28,7 +31,13 @@ def _json_dumps(obj: Any) -> str:
 def _safe_json(resp: requests.Response) -> Optional[Any]:
     try:
         return resp.json()
-    except Exception:
+    except Exception as e:
+        _log.warning(
+            "response JSON parse failed status=%s url=%s: %s",
+            resp.status_code,
+            getattr(resp, "url", ""),
+            e,
+        )
         return None
 
 
@@ -119,6 +128,7 @@ def main() -> int:
     parser.add_argument("--proxy-port", type=int, default=11436, help="Proxy port when using --start-proxy")
     parser.add_argument("--config", default="docs/ai-hub.config.example.json", help="AI_HUB_CONFIG path when using --start-proxy")
     args = parser.parse_args()
+    logging.basicConfig(level=logging.WARNING, format="%(levelname)s %(name)s: %(message)s")
 
     base_url = args.base_url.rstrip("/")
     proc: subprocess.Popen | None = None
@@ -128,7 +138,7 @@ def main() -> int:
         env = os.environ.copy()
         env["AI_HUB_CONFIG"] = cfg_path
         env["PROXY_PORT"] = str(args.proxy_port)
-        env.setdefault("OLLAMA_HOST", "http://localhost:11435")
+        env.setdefault("LOCAL_LLM_UPSTREAM_URL", "http://localhost:11435")
         env.setdefault("FORWARD_TIMEOUT_SECONDS", "2")
 
         base_url = f"http://localhost:{args.proxy_port}"
@@ -228,11 +238,12 @@ def main() -> int:
             try:
                 proc.terminate()
                 proc.wait(timeout=5)
-            except Exception:
+            except Exception as e:
+                _log.warning("subprocess terminate/wait failed: %s", e, exc_info=True)
                 try:
                     proc.kill()
-                except Exception:
-                    pass
+                except Exception as e2:
+                    _log.warning("subprocess kill failed: %s", e2, exc_info=True)
 
     content = "\n".join(blocks)
     with open(args.out, "w", encoding="utf-8") as f:
