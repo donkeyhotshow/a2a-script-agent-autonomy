@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { loadProjects, saveProjects } from '@a2a-client/storage/projects.ts';
-import { safePath } from '../utils/server.ts';
+import { safePath } from '@a2a-client/shared/safe-path.mjs';
 const API_PREFIX = '/api/a2a';
 const PROJECT_PREFIX = `${API_PREFIX}/projects`;
 export function createProjectRoutes({ cwd }) {

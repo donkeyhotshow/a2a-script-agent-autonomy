@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { getStorageKvRoot, ensureDir } from './root.js';
+import { getStorageKvRoot, ensureDir } from './root.ts';
 
 function kvNamespacePath(namespace) {
   return path.join(getStorageKvRoot(), namespace);

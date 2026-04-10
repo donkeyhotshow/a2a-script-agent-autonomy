@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { getStorageSessionsRoot } from './root.js';
+import { getStorageSessionsRoot } from './root.ts';
 
 /** Normalize id for filesystem paths (session-index may store numeric id from legacy JSON). */
 export function normalizeSessionIdForDir(sessionId) {

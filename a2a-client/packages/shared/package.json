@@ -4,6 +4,9 @@
   "private": true,
   "type": "module",
   "description": "Cross-module contracts and API utilities (api-helpers, envelopes)",
+  "scripts": {
+    "build": "cp src/*.js . && cp src/*.mjs ."
+  },
   "exports": {
     "./api-helpers.js": "./src/api-helpers.js",
     "./api-helpers.d.ts": "./src/api-helpers.d.ts",
@@ -11,7 +14,19 @@
     "./internal-client-action-keys.mjs": "./src/internal-client-action-keys.mjs",
     "./safe-path.mjs": "./src/safe-path.mjs",
     "./projects-document.mjs": "./src/projects-document.mjs",
-    "./agent-rag-chain-depth.mjs": "./src/agent-rag-chain-depth.mjs"
+    "./agent-rag-chain-depth.mjs": "./src/agent-rag-chain-depth.mjs",
+    "./node-errors.js": "./node-errors.js",
+    "./session-sort.js": "./src/session-sort.js",
+    "./project-sessions-dir.js": "./src/project-sessions-dir.js",
+    "./session-id.js": "./src/session-id.js",
+    "./session-stage-derive.js": "./src/session-stage-derive.js",
+    "./router-submit.js": "./src/router-submit.js",
+    "./next-invoke-pipeline.js": "./src/next-invoke-pipeline.js",
+    "./kv-unwrap.js": "./src/kv-unwrap.js",
+    "./context-invoke-patch.mjs": "./src/context-invoke-patch.mjs",
+    "./a2a-invoke-builders.mjs": "./src/a2a-invoke-builders.mjs",
+    "./dialog-invoke-history.mjs": "./src/dialog-invoke-history.mjs",
+    "./a2a-server-base.js": "./src/a2a-server-base.js"
   },
   "typesVersions": {
     ">=4.0": {

@@ -1,4 +1,8 @@
-# DEV_STATE — a2a-server (2026-04-08)
+# DEV_STATE — a2a-server (2026-04-10)
+
+**Rules:** [../../AGENTS.md](../../AGENTS.md), [../../GLOSSARY.md](../../GLOSSARY.md)\n**Rules Q&A:** [`../docs/PROJECT-RULES-QA.md`](../docs/PROJECT-RULES-QA.md)
+
+---
 
 **Rules:** [../../AGENTS.md](../../AGENTS.md), [../../GLOSSARY.md](../../GLOSSARY.md)\n**Rules Q&A:** [`../docs/PROJECT-RULES-QA.md`](../docs/PROJECT-RULES-QA.md)
 
@@ -61,5 +65,34 @@ cd a2a-server && npm run sim:validate -- --all --json
 ```
 
 Repo-root **`npm run test:before-start`** runs indirect (Mama) checks, then **`tests/indirect-tests/run-server-unit-tests.ps1`** (full `a2a-server` Vitest), then **`npm run test:monitor`**, then **`npm run verify:audit-session-storage`** (session-storage task regen + accuracy).
+
+## Evidence - Task Completion
+
+**2026-04-10**: Completed backup-cleanup-comprehensive task:
+
+- Removed all `.import-fix-backup` and `.comprehensive-fix-backup` files
+- Updated `.gitignore` to ignore migration backup artifacts
+- Verified clean state with `git status`
+
+**2026-04-10**: Completed cleanup-backup-artifacts task:
+
+- Verified no remaining `.import-fix-backup` or `.comprehensive-fix-backup` files exist
+- Confirmed `.gitignore` already contains patterns for these file types
+
+**2026-04-10**: Completed dedup-config-validation task:
+
+- Created centralized config-validator.ts and config-validator.js modules
+- Removed duplicate validation functions from index.ts, loader.ts, and index.js
+- Updated all files to import validation functions from the centralized module
+- Verified no duplicate function exports remain
+
+**2026-04-10**: Completed dedup-request-validation task:
+
+- Created centralized validators.ts and validators.js in protocol package
+- Removed duplicate validateRequestToServer from SDK session-routes-shared.ts
+- Removed duplicate isRequestLike from protocol entity.guards.ts (kept other guards)
+- Updated server routes to import validateInvokeRequest from protocol
+- Updated SDK to import validateRequestToServer from protocol
+- Updated protocol barrel exports to include validation functions
 
 Docs: [`docs/GRAY-ROOM.md`](docs/GRAY-ROOM.md) · [`simulations/SERVER-CONTRACT.md`](../simulations/SERVER-CONTRACT.md)

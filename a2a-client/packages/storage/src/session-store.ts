@@ -4,22 +4,22 @@ import { compareSessionCreatedAtDesc } from '@a2a-client/shared/session-sort.mjs
 import {
   isActivePromiseStatus,
   isRecoverableAsyncSnapshot,
-} from './promise-status.js';
-import { getStorageKvRoot } from './root.js';
+} from './promise-status.ts';
+import { getStorageKvRoot } from './root.ts';
 import {
   deriveSessionMode,
   loadSessionIndex,
   reconcileSessionIndexFromDisk,
   saveSessionIndex,
-} from './session-index-store.js';
-import { loadNewStep, saveNewStep } from './session-step-io.js';
+} from './session-index-store.ts';
+import { loadNewStep, saveNewStep } from './session-step-io.ts';
 import {
   getNewSessionsDir,
   getNewSessionDir,
   getNewStepDir,
   listNewSteps,
   normalizeSessionIdForDir,
-} from './session-paths.js';
+} from './session-paths.ts';
 
 function pruneUiStateForMissingSessions(existingSessionIds) {
   if (!existingSessionIds || typeof existingSessionIds.has !== 'function') return;

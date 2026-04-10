@@ -1,7 +1,7 @@
-import { listSessions, loadSession, saveSession, deleteSession, getProjectPathForSessions, resolveSessionProjectPath, findSessionProjectPath } from '@a2a-client/storage/projectSessions.js';
+import { listSessions, loadSession, saveSession, deleteSession, getProjectPathForSessions, resolveSessionProjectPath, findSessionProjectPath } from '@a2a-client/storage/projectSessions.ts';
 import fs from 'fs';
 import path from 'node:path';
-import { listNewSessions, loadNewSession, saveNewSession, deleteNewSession, saveNewStep, getNewSessionDir, } from '@a2a-client/storage/src/newSessions.ts';
+import { listNewSessions, loadNewSession, saveNewSession, deleteNewSession, saveNewStep, getNewSessionDir, } from '@a2a-client/storage/newSessions.ts';
 import { getStorageMode, isValidSessionId } from '../utils/server.ts';
 import { collectSessionMessagesFlat, attachPromiseMeta, toPublicSession, getActiveAsyncWork, getProjectModeInflightPromise, } from './utils/session-projection-dto.js';
 import { pickInitialExecution } from './utils/session-create-initial.js';

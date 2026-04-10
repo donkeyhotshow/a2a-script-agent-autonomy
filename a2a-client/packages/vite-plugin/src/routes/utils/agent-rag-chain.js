@@ -12,7 +12,7 @@ import http from 'http';
 import fs from 'fs';
 import { buildStepRecord, extractA2aExecute, mergeResponseContext, sanitizeContextForServer, sanitizeInvokeBodyForA2aUpstream, } from './builders.js';
 import { getMaxRagChainDepth } from '@a2a-client/shared/agent-rag-chain-depth.js';
-import { getProjectPathForSessions } from '@a2a-client/storage/projectSessions.js';
+import { getProjectPathForSessions } from '@a2a-client/storage/projectSessions.ts';
 import * as stepHandlers from '../handlers/step-handlers.js';
 import { resolveUnderProjectRoot } from '@a2a-client/execution/path-sandbox.js';
 import { runClientExecuteCommand } from '@a2a-client/execution/run-agent-command.js';

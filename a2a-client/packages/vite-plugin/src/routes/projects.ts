@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { loadProjects, saveProjects } from '@a2a-client/storage/src/projects.js';
-import { getProjectPathForSessions } from '@a2a-client/storage/src/projectSessions.js';
+import { loadProjects, saveProjects } from '@a2a-client/storage/projects.ts';
+import { getProjectPathForSessions } from '@a2a-client/storage/projectSessions.ts';
 import { safePath } from '../utils/server.js';
 
 const API_PREFIX = '/api/a2a';

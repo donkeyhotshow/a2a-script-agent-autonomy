@@ -11,14 +11,14 @@ export {
    getStepFilePath,
    listNewSteps,
    registerStepSessionsParent,
- } from '@a2a-client/storage/src/session-paths.mjs';
+  } from './session-paths.ts';
 
 export {
   deriveSessionMode,
   loadSessionIndex,
   reconcileSessionIndexFromDisk,
   saveSessionIndex,
-} from './session-index-store.js';
+} from './session-index-store.ts';
 
 export {
   deleteNewSession,
@@ -30,7 +30,7 @@ export {
   rewindSessionAfterStep,
   rewindSessionLastStep,
   saveNewSession,
-} from './session-store.js';
+} from './session-store.ts';
 
 export {
   dropStaleServerPromiseForStep,
@@ -50,4 +50,4 @@ export {
   saveStepFile,
   validateSessionStorage,
   validateStepStorage,
-} from './session-step-io.js';
+} from './session-step-io.ts';

@@ -2,15 +2,15 @@ import fs from 'fs';
 import pathMod from 'path';
 import http from 'http';
 import { buildExecuteProjection } from './utils/execute-projection-dto.js';
-import { isPromisePollComplete } from '@a2a-client/storage/src/promise-status.js';
+import { isPromisePollComplete } from '@a2a-client/storage/promise-status.ts';
 import * as stepHandlers from './handlers/step-handlers.js';
 import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.js';
 import { maybeChainAgentTools } from './step-routes-agent-flow.js';
 import { finalizeSession } from './persistence-manager.js';
 import { unwrapA2aResponse } from './utils/builders.js';
 import { normalizePromisePollStatus, isRecoverableAsyncSnapshot, } from '@a2a-client/shared/client-api-envelope.js';
-import { resolveProjectPathForApi, loadSession, saveSession } from '@a2a-client/storage/src/projectSessions.js';
-import { registerStepSessionsParent } from '@a2a-client/storage/src/newSessions.js';
+import { resolveProjectPathForApi, loadSession, saveSession } from '@a2a-client/storage/projectSessions.ts';
+import { registerStepSessionsParent } from '@a2a-client/storage/newSessions.ts';
 import { getActiveAsyncWork } from './utils/session-projection-dto.js';
 function projectSessionStepsParent(projectPath) {
     return pathMod.join(projectPath, '.a2a', 'session-steps');

@@ -5,8 +5,8 @@ export { routerFormHasChoices, normalizeRouterStepSubmit, buildSubmitResult, val
 import { toPublicSession, attachPromiseMeta, } from './utils/session-projection-dto.js';
 import { buildExecuteProjection } from './utils/execute-projection-dto.js';
 import * as stepHandlers from './handlers/step-handlers.js';
-import { resolveProjectPathForApi, loadSession } from '@a2a-client/storage/projectSessions.js';
-import { registerStepSessionsParent } from '@a2a-client/storage/newSessions.js';
+import { resolveProjectPathForApi, loadSession } from '@a2a-client/storage/projectSessions.ts';
+import { registerStepSessionsParent } from '@a2a-client/storage/newSessions.ts';
 function projectSessionStepsParent(projectPath) {
     return pathMod.join(projectPath, '.a2a', 'session-steps');
 }

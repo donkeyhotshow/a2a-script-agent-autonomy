@@ -110,19 +110,19 @@ export function createActionsRoutes({ cwd }) {
                 // Debug: log what we're working with
                 console.log('[actions] cwd:', cwd, 'process.cwd():', process.cwd());
                 
-                let actionsPath = path.join(basePath, '..', 'a2a-server', 'src', 'actions', 'definitions');
+                let actionsPath = path.join(basePath, '..', 'a2a-server', 'packages', 'actions', 'src', 'definitions');
                 
-                // Fallback: check if we're at project root (no a2a-client suffix)
+                 // Fallback: check if we're at project root (no a2a-client suffix)
                 if (!fs.existsSync(actionsPath)) {
-                    const altPath = path.join(basePath, 'a2a-server', 'src', 'actions', 'definitions');
+                    const altPath = path.join(basePath, 'a2a-server', 'packages', 'actions', 'src', 'definitions');
                     if (fs.existsSync(altPath)) {
                         actionsPath = altPath;
                     }
                 }
                 
-                // Fallback: check parent of parent
+                 // Fallback: check parent of parent
                 if (!fs.existsSync(actionsPath)) {
-                    const parentPath = path.join(basePath, '..', '..', 'a2a-server', 'src', 'actions', 'definitions');
+                    const parentPath = path.join(basePath, '..', '..', 'a2a-server', 'packages', 'actions', 'src', 'definitions');
                     if (fs.existsSync(parentPath)) {
                         actionsPath = parentPath;
                     }

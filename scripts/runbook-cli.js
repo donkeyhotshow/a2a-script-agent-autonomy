@@ -440,9 +440,8 @@ function buildPowerShellStartArgs(service) {
     $cwd = '${escapePowerShellSingleQuote(cwd)}';
     $log = '${escapePowerShellSingleQuote(logfile)}';
     Set-Location -LiteralPath $cwd;
-    $cmdWithRedirect = '${escapePowerShellSingleQuote(command)} >> "$log" 2>&1';
-    $args = @('/c', $cmdWithRedirect);
-    $proc = Start-Process -FilePath 'cmd.exe' -ArgumentList $args -PassThru;
+    $args = @('/c', '${escapePowerShellSingleQuote(command)}');
+    $proc = Start-Process -FilePath 'cmd.exe' -ArgumentList $args -WorkingDirectory $cwd -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError $log -PassThru;
     Write-Output $proc.Id;
   `;
   return ['powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', psCommand]];

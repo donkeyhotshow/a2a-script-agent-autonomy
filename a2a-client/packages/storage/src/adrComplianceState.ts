@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { normalizeProjectPath, projectPathsEqual } from './projectSessions.js';
+import { normalizeProjectPath, projectPathsEqual } from './projectSessions.ts';
 
 /** Normative default per methodology/adr-compliance-orchestrator.md */
 export const ADR_COMPLIANCE_STATE_RELATIVE = path.join('.a2a', 'adr-compliance-state.json');

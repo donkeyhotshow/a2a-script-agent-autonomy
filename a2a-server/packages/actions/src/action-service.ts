@@ -63,7 +63,7 @@ export class ActionService {
     async initialize(): Promise<void> {
         if (this.initialized) return;
         try {
-            await this.registry.loadFromDirectory(path.resolve(process.cwd(), 'src/actions/definitions'));
+            await this.registry.loadFromDirectory(path.resolve(process.cwd(), 'packages/actions/src/definitions'));
             this.initialized = true;
         } catch (error) {
             logger.error('[ActionService] Init error:', error);

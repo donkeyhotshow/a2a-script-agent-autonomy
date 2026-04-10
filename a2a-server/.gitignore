@@ -65,3 +65,8 @@ uploads/
 
 # Debug
 .pnp.*
+
+# Migration backup artifacts
+*.import-fix-backup
+*.comprehensive-fix-backup
+.kilo/scripts/duplicates/backups/

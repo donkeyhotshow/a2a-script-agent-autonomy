@@ -5,9 +5,9 @@
 import {describe, it, expect} from 'vitest';
 import path from 'path';
 import {parseAllActionsFromDirectory} from '../../src/actions/action-parser.js';
-import {AUTO_AI_ACTION_IDS} from '../../src/actions/definitions/auto-ai-index.js';
+import {AUTO_AI_ACTION_IDS} from '../../../packages/actions/src/definitions/auto-ai-index.js';
 
-const DEFINITIONS_DIR = path.resolve(process.cwd(), 'src/actions/definitions');
+const DEFINITIONS_DIR = path.resolve(process.cwd(), 'packages/actions/src/definitions');
 
 describe('definitions load', () => {
     it('loads all MD files from definitions (recursive)', async () => {

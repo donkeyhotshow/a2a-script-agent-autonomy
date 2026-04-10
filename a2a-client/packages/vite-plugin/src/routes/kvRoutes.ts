@@ -1,5 +1,5 @@
 import { SAFE_SEGMENT } from '../utils/server.js';
-import { kvGet, kvSet, kvDelete, kvKeys, kvClear } from '@a2a-client/storage/src/kv.js';
+import { kvGet, kvSet, kvDelete, kvKeys, kvClear } from '@a2a-client/storage/kv.ts';
 
 const STORAGE_PREFIX = '/api/storage';
 
