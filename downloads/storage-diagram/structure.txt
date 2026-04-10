@@ -1,0 +1,92 @@
++=============================================================================+
+|                         DIAGRAM #1                                          |
+|                    @a2a-client/storage PACKAGE STRUCTURE                     |
++=============================================================================+
+|                                                                             |
+|  [storage] a2a-client/packages/storage                                       |
+|  +-- package.json                                                           |
+|  +-- tsconfig.json                                                          |
+|  +-- README.md                                                             |
+|  +-- [src]                              (17 files)                          |
+|      +-- session-store.ts         = Core session persistence                 |
+|      +-- session-index-store.ts   = Session indexing                         |
+|      +-- session-step-io.ts        = Step-based I/O                         |
+|      +-- session-paths.ts        = Path resolution                        |
+|      +-- session-paths.mjs       = ESM path resolution                   |
+|      +-- session-promise-read.ts   = Promise reads                          |
+|      +-- session-id.ts          = Session ID utilities                  |
+|      +-- session-sort.mjs       = Sorting logic                          |
+|      +-- session-stage-derive.mjs = Stage derivation                      |
+|      +-- promise-status.ts      = Promise state tracking                 |
+|      +-- newSessions.ts         = New session management                |
+|      +-- projectSessions.ts      = Project session handling              |
+|      +-- projects.ts           = Project management                    |
+|      +-- kv.ts                = Key-value storage                   |
+|      +-- root.ts              = Root path resolution                 |
+|      +-- adrComplianceState.ts = ADR compliance tracking             |
+|      +-- index.ts              = Main exports                        |
+|                                                                             |
+|  [tests/sessions]                       (70+ test sessions)               |
+|      +-- sess_1775205671113/                                             |
+|      |   +-- request-to-server.json                                      |
+|      +-- sess_1775205668306/                                             |
+|      |   +-- request-to-server.json                                      |
+|      |   +-- client-result.json                                          |
+|      +-- sess_1775201623455/                                             |
+|      |   +-- client-result.json                                          |
+|      +-- test_1774576172891/                                             |
+|      |   +-- request-to-server.json                                      |
+|      |   +-- client-result.json                                          |
+|      +-- ... (many more test sessions)                                   |
+|                                                                             |
++=============================================================================+
+
+                        EXPORTS DEPENDENCY GRAPH
+
+                         ┌─────────────────┐
+                         │    index.ts     │  ← Main entry (exports all)
+                         └────────┬────────┘
+                                  │
+         ┌───────────────────────┼───────────────────────┐
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌────────────────┐    ┌────────────────┐    ┌────────────────┐
+│ session-store  │    │ session-index  │    │      kv        │
+│   - persist    │    │    - index     │    │   - keyval     │
+└────────────────┘    └────────────────┘    └────────────────┘
+         │                       │                       │
+         ▼                       ▼                       ▼
+┌────────────────┐    ┌────────────────┐    ┌────────────────┐
+│ session-paths  │    │ session-paths  │    │      root      │
+│   - resolve    │    │   - mjs ver     │    │   - root      │
+└────────────────┘    └────────────────┘    └────────────────┘
+                                  │
+                                  ▼
+                         ┌────────────────┐
+                         │ promise-status │
+                         │ session-id     │
+                         └────────────────┘
+
+
+                    MODULE RELATIONSHIPS
+
+    ┌─────────────────────────────────────────────────────────────┐
+    │                                                             │
+    │  ┌──────────────┐      ┌──────────────┐      ┌──────────────┐│
+    │  │  projects   │─────▶│projectSessions│─────▶│newSessions ││
+    │  │  (proj_id)  │      │ (proj+sess)  │      │ (create)  ││
+    │  └──────────────┘      └──────────────┘      └──────────────┘│
+    │                               │                        │       │
+    │                               ▼                        ▼       │
+    │                     ┌──────────────────┐   ┌──────────────┐  │
+    │                     │  session-store   │◀─▶│adrCompliance│  │
+    │                     │   (persist)      │   │   State     │  │
+    │                     └──────────────────┘   └──────────────┘  │
+    │                               │                              │
+    │                               ▼                              │
+    │                     ┌──────────────────┐                  │
+    │                     │ session-index    │◀─┴─┌──────────────┐│
+    │                     │   (lookup)     │    │session-paths││
+    │                     └──────────────────┘    │session-id ││
+    │                                                   └──────────┘ │
+    └─────────────────────────────────────────────────────────────┘

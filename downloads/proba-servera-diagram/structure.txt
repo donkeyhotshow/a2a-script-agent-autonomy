@@ -1,0 +1,124 @@
++=============================================================================+
+|                         DIAGRAM #2                                          |
+|                    tests/integration/proba-servera STRUCTURE                 |
++=============================================================================+
+│                                                                             │
+│  📁 tests/integration/proba-servera                    (Integration Test Suite)          │
+│  ├── 📄 validate.mts                   ← Test runner                      │
+│  ├── 📄 cache-api-smoke.mjs            ← L3 cache smoke test              │
+│  ├── 📄 README.md                    ← Documentation                      │
+│  ├── 📄 AUTHORING.md               ← Test authoring guide              │
+│  ├── 📄 REGRESSIONS.md             ← Regression tracking                 │
+│  └── 📄 LLM-CACHE-PATHS.md       ← LLM cache path reference          │
+│                                                                             │
+│  TEST CASES BY CATEGORY                                                     │
+│  ══════════════════════════════                                             │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ 🔵 DIALOG TESTS (5 cases)                                             │   │
+│  ├─────────────────────────────────────────────────────────────────────┤   │
+│  │ dialog-select/       | dialog-message/    | dialog-message-only/   │   │
+│  │   ├─ input.json      |   ├─ input.json    |   ├─ input.json         │   │
+│  │   ├─ expected.json   |   ├─ expected.json│   ├─ expected.json      │   │
+│  │   └─ output.json     |   ├─ output.json   │   └─ output.json       │   │
+│  │ dialog-interrupt/    | dialog-follow-up/ │                          │   │
+│  │   ├─ input.json      |   ├─ input.json   │                          │   │
+│  │   ├─ expected.json   |   ├─ expected.json│                          │   │
+│  │   ├─ output.json     │   ├─ output.json   │                          │   │
+│  │   └─ (error-report) │   └─ error-report │                          │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ 🟢 AGENT TOOL TESTS (10 cases)                                       │   │
+���  ├─────────────────────────────────────────────────────────────────────┤   │
+│  │ agent-tool-call/     | agent-tool-read_file│ agent-tool-write_file │   │
+│  │ agent-tool-edit_patch│ agent-tool-grep_search│ agent-tool-rag_search│   │
+│  │ agent-tool-file_exists│ agent-tool-list_directory│ agent-tool-run_script│  │
+│  │ agent-tool-execute_command/                                           │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ 🟡 AGENT & WORKSPACE TESTS (2 cases)                                  │   │
+│  ├─────────────────────────────────────────────────────────────────────┤   │
+│  │ agent-select/        | agent-workspace-chain/                        │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ 🟠 ROUTER & SCRIPT TESTS (3 cases)                                   │   │
+│  ├─────────────────────────────────────────────────────────────────────┤   │
+│  │ router-new-task/     | script-select/       | invoke-client-session-privacy/│
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  TOTAL: 20 test cases × 3 files each = 60+ fixture files                   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+
+                        TEST EXECUTION FLOW
+
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │                                                                     │
+    │   ┌──────────┐    ┌──────────┐    ┌──────────┐    ┌──────────┐  │
+    │   │ validate │───▶│  load    │───▶│ invoke() │───▶│ compare  │  │
+    │   │   .mts   │    │ input.json│   │ (inproc) │    │ expected │  │
+    │   └──────────┘    └──────────┘    └──────────��    ��──────────┘  │
+    │        │                                       │              │   │
+    │        │           ┌───────────────────────────┘              │   │
+    │        ▼           ▼                                          ▼   │
+    │   ┌──────────┐  ┌────────────┐                       ┌─────────┐ │
+    │   │  config  │  │a2a-server  │                       │ output  │ │
+    │   │ registry │──│ invoke()   │                       │ .json   │ │
+    │   └──────────┘  └────────────┘                       └─────────┘ │
+    │                                                                     │
+    └─────────────────────────────────────────────────────────────────────┘
+
+
+                    TEST FILE CONVENTIONS
+
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │                                                                     │
+    │   {case}/                                                          │
+    │   ├── 📄 input.json        ← Invoke payload                         │
+    │   │   {                                                                   │
+    │   │     "context": { ... },                                         │
+    │   │     "task": "..."                                              │
+    │   │   }                                                               │
+    │   │                                                                   │
+    │   ├── 📄 expected.json    ← Key-structure template                 │
+    │   │   {                                                                   │
+    │   │     "context": { "execution": { ... } },                      │
+    │   │     "outcome": "completed"                                     │
+    │   │   }                                                               │
+    │   │                                                                   │
+    │   ├── 📄 output.json     ← Generated output (runner creates)      │
+    │   │   {                                                                   │
+    │   │     "context": { ... },                                         │
+    │   │     "outcome": "completed",                                    │
+    │   │     "execute": { ... }                                        │
+    │   │   }                                                               │
+    │   │                                                                   │
+    │   └── 📄 error-report.md ← Structure diffs (on failure)           │
+    │                                                                     │
+    └─────────────────────────────────────────────────────────────────────┘
+
+
+                    INTEGRATION POINTS
+
+    ┌─────────────────────────────────────────────────────────────────────┐
+    │                                                             │
+    │  ┌────────────────��─��     ┌──────────────────┐          │
+    │  │  a2a-server    │────▶│ POST /api/v1/invoke│          │
+    │  │  (in-process) │     └──────────────────┘          │
+    │  └──────────────────┘              │                 │
+    │         │                               ▼                 │
+    │         │                    ┌──────────────────┐      │
+    │         │                    │   AI Hub / LLM   │      │
+    │         │                    │ (Gray Room)      │      │
+    │         │                    └──────────────────┘      │
+    │         │                               │                 │
+    │         │                               ▼                 │
+    │         │                    ┌──────────────────┐      │
+    │         └─────────────────▶│  L3 Disk Cache  │◀─────│
+    │                            └──────────────────┘      │
+    │                                                             │
+    └─────────────────────────────────────────────────────────────┘
