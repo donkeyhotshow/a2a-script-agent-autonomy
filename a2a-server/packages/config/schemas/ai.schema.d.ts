@@ -18,6 +18,7 @@ export declare const aiConfigSchema: z.ZodObject<{
     openaiApiKey: z.ZodOptional<z.ZodString>;
     openaiModel: z.ZodDefault<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
+    aiHubUrl: string;
     localLlmUpstreamUrl: string;
     localLlmModel: string;
     localLlmTimeout: number;
@@ -25,14 +26,14 @@ export declare const aiConfigSchema: z.ZodObject<{
     localLlmKeepAlive: string;
     localLlmIdleTimeout: number;
     localLlmAutoStart: boolean;
-    llmProvider: "" | "openai" | "local_hub";
+    llmProvider: "" | "local_hub" | "openai";
     useLocalLlm: boolean;
-    aiHubUrl: string;
     pollIntervalMs: number;
     pollTimeoutMs: number;
     openaiModel: string;
     openaiApiKey?: string | undefined;
 }, {
+    aiHubUrl?: string | undefined;
     localLlmUpstreamUrl?: string | undefined;
     localLlmModel?: string | undefined;
     localLlmTimeout?: number | undefined;
@@ -40,9 +41,8 @@ export declare const aiConfigSchema: z.ZodObject<{
     localLlmKeepAlive?: string | undefined;
     localLlmIdleTimeout?: number | undefined;
     localLlmAutoStart?: string | boolean | undefined;
-    llmProvider?: "" | "openai" | "local_hub" | undefined;
+    llmProvider?: "" | "local_hub" | "openai" | undefined;
     useLocalLlm?: string | boolean | undefined;
-    aiHubUrl?: string | undefined;
     pollIntervalMs?: number | undefined;
     pollTimeoutMs?: number | undefined;
     openaiApiKey?: string | undefined;

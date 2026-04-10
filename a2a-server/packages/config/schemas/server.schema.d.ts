@@ -8,12 +8,12 @@ export declare const serverConfigSchema: z.ZodObject<{
     defaultEmail: z.ZodDefault<z.ZodString>;
     defaultPassword: z.ZodDefault<z.ZodString>;
 }, "strip", z.ZodTypeAny, {
-    nodeEnv: "development" | "production" | "test";
+    nodeEnv: "test" | "development" | "production";
     host: string;
     defaultEmail: string;
     defaultPassword: string;
 }, {
-    nodeEnv?: "development" | "production" | "test" | undefined;
+    nodeEnv?: "test" | "development" | "production" | undefined;
     host?: string | undefined;
     defaultEmail?: string | undefined;
     defaultPassword?: string | undefined;

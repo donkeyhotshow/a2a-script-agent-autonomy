@@ -68,6 +68,7 @@ export declare const appConfigSchema: z.ZodObject<{
         openaiApiKey: z.ZodOptional<z.ZodString>;
         openaiModel: z.ZodDefault<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
+        aiHubUrl: string;
         localLlmUpstreamUrl: string;
         localLlmModel: string;
         localLlmTimeout: number;
@@ -75,14 +76,14 @@ export declare const appConfigSchema: z.ZodObject<{
         localLlmKeepAlive: string;
         localLlmIdleTimeout: number;
         localLlmAutoStart: boolean;
-        llmProvider: "" | "openai" | "local_hub";
+        llmProvider: "" | "local_hub" | "openai";
         useLocalLlm: boolean;
-        aiHubUrl: string;
         pollIntervalMs: number;
         pollTimeoutMs: number;
         openaiModel: string;
         openaiApiKey?: string | undefined;
     }, {
+        aiHubUrl?: string | undefined;
         localLlmUpstreamUrl?: string | undefined;
         localLlmModel?: string | undefined;
         localLlmTimeout?: number | undefined;
@@ -90,9 +91,8 @@ export declare const appConfigSchema: z.ZodObject<{
         localLlmKeepAlive?: string | undefined;
         localLlmIdleTimeout?: number | undefined;
         localLlmAutoStart?: string | boolean | undefined;
-        llmProvider?: "" | "openai" | "local_hub" | undefined;
+        llmProvider?: "" | "local_hub" | "openai" | undefined;
         useLocalLlm?: string | boolean | undefined;
-        aiHubUrl?: string | undefined;
         pollIntervalMs?: number | undefined;
         pollTimeoutMs?: number | undefined;
         openaiApiKey?: string | undefined;
@@ -126,12 +126,12 @@ export declare const appConfigSchema: z.ZodObject<{
         defaultEmail: z.ZodDefault<z.ZodString>;
         defaultPassword: z.ZodDefault<z.ZodString>;
     }, "strip", z.ZodTypeAny, {
-        nodeEnv: "development" | "production" | "test";
+        nodeEnv: "test" | "development" | "production";
         host: string;
         defaultEmail: string;
         defaultPassword: string;
     }, {
-        nodeEnv?: "development" | "production" | "test" | undefined;
+        nodeEnv?: "test" | "development" | "production" | undefined;
         host?: string | undefined;
         defaultEmail?: string | undefined;
         defaultPassword?: string | undefined;
@@ -196,11 +196,11 @@ export declare const appConfigSchema: z.ZodObject<{
         logLevel: z.ZodDefault<z.ZodEnum<["error", "warn", "info", "debug"]>>;
         logFormat: z.ZodDefault<z.ZodEnum<["json", "pretty", "text"]>>;
     }, "strip", z.ZodTypeAny, {
-        logLevel: "error" | "warn" | "info" | "debug";
-        logFormat: "json" | "pretty" | "text";
+        logLevel: "error" | "info" | "debug" | "warn";
+        logFormat: "json" | "text" | "pretty";
     }, {
-        logLevel?: "error" | "warn" | "info" | "debug" | undefined;
-        logFormat?: "json" | "pretty" | "text" | undefined;
+        logLevel?: "error" | "info" | "debug" | "warn" | undefined;
+        logFormat?: "json" | "text" | "pretty" | undefined;
     }>;
     rateLimit: z.ZodObject<{
         windowMs: z.ZodDefault<z.ZodNumber>;
@@ -222,19 +222,6 @@ export declare const appConfigSchema: z.ZodObject<{
         concurrency?: number | undefined;
         indexingConcurrency?: number | undefined;
     }>;
-    ml: z.ZodObject<{
-        embeddingDimension: z.ZodDefault<z.ZodNumber>;
-        chunkMaxTokens: z.ZodDefault<z.ZodNumber>;
-        chunkOverlapTokens: z.ZodDefault<z.ZodNumber>;
-    }, "strip", z.ZodTypeAny, {
-        embeddingDimension: number;
-        chunkMaxTokens: number;
-        chunkOverlapTokens: number;
-    }, {
-        embeddingDimension?: number | undefined;
-        chunkMaxTokens?: number | undefined;
-        chunkOverlapTokens?: number | undefined;
-    }>;
     session: z.ZodObject<{
         timeoutMs: z.ZodDefault<z.ZodNumber>;
         maxInactiveMs: z.ZodDefault<z.ZodNumber>;
@@ -253,6 +240,16 @@ export declare const appConfigSchema: z.ZodObject<{
         intervalMs?: number | undefined;
     }>;
 }, "strip", z.ZodTypeAny, {
+    server: {
+        nodeEnv: "test" | "development" | "production";
+        host: string;
+        defaultEmail: string;
+        defaultPassword: string;
+    };
+    logging: {
+        logLevel: "error" | "info" | "debug" | "warn";
+        logFormat: "json" | "text" | "pretty";
+    };
     ports: {
         serverPort: number;
         clientApiPort: number;
@@ -270,6 +267,7 @@ export declare const appConfigSchema: z.ZodObject<{
         postgresDb: string;
     };
     ai: {
+        aiHubUrl: string;
         localLlmUpstreamUrl: string;
         localLlmModel: string;
         localLlmTimeout: number;
@@ -277,9 +275,8 @@ export declare const appConfigSchema: z.ZodObject<{
         localLlmKeepAlive: string;
         localLlmIdleTimeout: number;
         localLlmAutoStart: boolean;
-        llmProvider: "" | "openai" | "local_hub";
+        llmProvider: "" | "local_hub" | "openai";
         useLocalLlm: boolean;
-        aiHubUrl: string;
         pollIntervalMs: number;
         pollTimeoutMs: number;
         openaiModel: string;
@@ -292,12 +289,6 @@ export declare const appConfigSchema: z.ZodObject<{
         skipAuth: boolean;
         apiKeyPrefix: string;
         encryptionKey?: string | undefined;
-    };
-    server: {
-        nodeEnv: "development" | "production" | "test";
-        host: string;
-        defaultEmail: string;
-        defaultPassword: string;
     };
     proxy: {
         proxyHost: string;
@@ -319,10 +310,6 @@ export declare const appConfigSchema: z.ZodObject<{
         fileCachePath: string;
         maxFileSizeMb: number;
     };
-    logging: {
-        logLevel: "error" | "warn" | "info" | "debug";
-        logFormat: "json" | "pretty" | "text";
-    };
     rateLimit: {
         windowMs: number;
         maxRequests: number;
@@ -330,11 +317,6 @@ export declare const appConfigSchema: z.ZodObject<{
     queue: {
         concurrency: number;
         indexingConcurrency: number;
-    };
-    ml: {
-        embeddingDimension: number;
-        chunkMaxTokens: number;
-        chunkOverlapTokens: number;
     };
     session: {
         timeoutMs: number;
@@ -344,6 +326,16 @@ export declare const appConfigSchema: z.ZodObject<{
         intervalMs: number;
     };
 }, {
+    server: {
+        nodeEnv?: "test" | "development" | "production" | undefined;
+        host?: string | undefined;
+        defaultEmail?: string | undefined;
+        defaultPassword?: string | undefined;
+    };
+    logging: {
+        logLevel?: "error" | "info" | "debug" | "warn" | undefined;
+        logFormat?: "json" | "text" | "pretty" | undefined;
+    };
     ports: {
         serverPort?: number | undefined;
         clientApiPort?: number | undefined;
@@ -361,6 +353,7 @@ export declare const appConfigSchema: z.ZodObject<{
         postgresDb?: string | undefined;
     };
     ai: {
+        aiHubUrl?: string | undefined;
         localLlmUpstreamUrl?: string | undefined;
         localLlmModel?: string | undefined;
         localLlmTimeout?: number | undefined;
@@ -368,9 +361,8 @@ export declare const appConfigSchema: z.ZodObject<{
         localLlmKeepAlive?: string | undefined;
         localLlmIdleTimeout?: number | undefined;
         localLlmAutoStart?: string | boolean | undefined;
-        llmProvider?: "" | "openai" | "local_hub" | undefined;
+        llmProvider?: "" | "local_hub" | "openai" | undefined;
         useLocalLlm?: string | boolean | undefined;
-        aiHubUrl?: string | undefined;
         pollIntervalMs?: number | undefined;
         pollTimeoutMs?: number | undefined;
         openaiApiKey?: string | undefined;
@@ -383,12 +375,6 @@ export declare const appConfigSchema: z.ZodObject<{
         encryptionKey?: string | undefined;
         skipAuth?: string | boolean | undefined;
         apiKeyPrefix?: string | undefined;
-    };
-    server: {
-        nodeEnv?: "development" | "production" | "test" | undefined;
-        host?: string | undefined;
-        defaultEmail?: string | undefined;
-        defaultPassword?: string | undefined;
     };
     proxy: {
         proxyHost?: string | undefined;
@@ -410,10 +396,6 @@ export declare const appConfigSchema: z.ZodObject<{
         fileCachePath?: string | undefined;
         maxFileSizeMb?: number | undefined;
     };
-    logging: {
-        logLevel?: "error" | "warn" | "info" | "debug" | undefined;
-        logFormat?: "json" | "pretty" | "text" | undefined;
-    };
     rateLimit: {
         windowMs?: number | undefined;
         maxRequests?: number | undefined;
@@ -421,11 +403,6 @@ export declare const appConfigSchema: z.ZodObject<{
     queue: {
         concurrency?: number | undefined;
         indexingConcurrency?: number | undefined;
-    };
-    ml: {
-        embeddingDimension?: number | undefined;
-        chunkMaxTokens?: number | undefined;
-        chunkOverlapTokens?: number | undefined;
     };
     session: {
         timeoutMs?: number | undefined;

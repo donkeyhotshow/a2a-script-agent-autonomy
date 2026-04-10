@@ -1,5 +1,5 @@
 import { logger } from '../../utils/logger.js';
-import { contextDiscoveryService } from '../../../../features/gray-room/context/context-discovery.service.js';
+import { contextDiscoveryService } from '../../../../features/gray-room/components/context/context-discovery.service.ts';
 
 /**
  * MCP 28-Tool Registry (ADR-0075)
