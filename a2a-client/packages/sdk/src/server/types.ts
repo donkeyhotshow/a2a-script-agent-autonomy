@@ -15,4 +15,4 @@ export {
     createSession,
     validateSessionData,
     sanitizeSessionForClient,
-} from '@a2a/types';
+} from '@a2a-client/types';

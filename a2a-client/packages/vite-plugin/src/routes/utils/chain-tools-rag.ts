@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { pathToFileURL } from 'url';
-import { DEFAULT_RAG_SEARCH_MAX_RESULTS } from '@a2a/shared/agent-rag-chain-depth.js';
+import { DEFAULT_RAG_SEARCH_MAX_RESULTS } from '@a2a-client/shared/agent-rag-chain-depth.js';
 
 export async function runClientRagSearchForExecute(cwd, projectPath, ragPayload) {
     const query = ragPayload && typeof ragPayload.query === 'string' ? ragPayload.query : '';

@@ -1,5 +1,5 @@
 {
-  "name": "@a2a/storage",
+  "name": "@a2a-client/storage",
   "version": "1.0.0",
   "private": true,
   "type": "module",

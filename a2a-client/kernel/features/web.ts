@@ -10,7 +10,7 @@ import {
   ProjectManager,
   TaskFlow,
   TemplateLoader
-} from '@a2a/web';
+} from '@a2a-client/web';
 
 export async function initialize(): Promise<void> {
   // Initialize web application components

@@ -1,5 +1,5 @@
 {
-  "name": "@a2a/execution",
+  "name": "@a2a-client/execution",
   "version": "1.0.0",
   "description": "A2A Execution - unified package for fs-utils, terminal and script-runner",
   "type": "module",
@@ -19,7 +19,7 @@
     "test": "echo 'Tests to be implemented'"
   },
   "keywords": [
-    "a2a",
+    "a2a-client",
     "execution",
     "filesystem",
     "terminal",

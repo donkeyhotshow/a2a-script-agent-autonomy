@@ -1,5 +1,5 @@
 {
-  "name": "@a2a/json",
+  "name": "@a2a-client/json",
   "version": "1.0.0",
   "description": "Unified JSON Parser for A2A Protocol - Parse, validate and convert server responses to VueFlow",
   "main": "dist/index.js",
@@ -16,7 +16,7 @@
     "test": "echo \"No tests configured\" && exit 0"
   },
   "keywords": [
-    "a2a",
+    "a2a-client",
     "json",
     "parser",
     "vueflow",
@@ -25,7 +25,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@a2a/types": "*",
+    "@a2a-client/types": "*",
     "zod": "^3.22.4"
   },
   "devDependencies": {

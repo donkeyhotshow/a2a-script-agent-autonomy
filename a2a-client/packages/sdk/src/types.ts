@@ -17,7 +17,7 @@ export {
     createSession,
     validateSessionData,
     sanitizeSessionForClient,
-} from '@a2a/types';
+} from '@a2a-client/types';
 
 /**
  * Async client types for handling long-running operations with promiseId support

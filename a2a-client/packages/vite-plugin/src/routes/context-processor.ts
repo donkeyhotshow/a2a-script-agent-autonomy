@@ -2,4 +2,4 @@ export {
      mergeContext,
      processTaskAndContext,
      prepareServerRequest,
- } from '@a2a/shared/next-invoke-pipeline.mjs';
+ } from '@a2a-client/shared/next-invoke-pipeline.mjs';

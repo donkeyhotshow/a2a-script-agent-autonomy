@@ -7,7 +7,7 @@ import {
    getNewStepDir,
    listNewSteps,
    normalizeSessionIdForDir,
- } from '@a2a/storage/src/session-paths.mjs';
+ } from '@a2a-client/storage/src/session-paths.mjs';
 
 /**
  * Derive session mode from session data.

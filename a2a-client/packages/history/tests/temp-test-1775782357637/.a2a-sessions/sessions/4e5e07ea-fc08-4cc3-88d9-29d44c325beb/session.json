@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "id": "4e5e07ea-fc08-4cc3-88d9-29d44c325beb",
+    "name": "Test Session",
+    "createdAt": "2026-04-10T00:52:37.641Z",
+    "updatedAt": "2026-04-10T00:52:37.641Z",
+    "status": "active",
+    "tags": [],
+    "projectPath": "C:\\workspace\\org-carrier\\a2a-script-agent\\a2a-client\\packages\\history\\tests\\temp-test-1775782357637\\.a2a-sessions"
+  },
+  "plans": [],
+  "tasks": [],
+  "context": {
+    "exchangeLog": [
+      {
+        "id": "126688e1-9245-45ca-b66d-cd1b8eb3e189",
+        "type": "request",
+        "content": {
+          "type": "form",
+          "content": "test"
+        },
+        "timestamp": "2026-04-10T00:52:37.648Z",
+        "metadata": {
+          "userId": "test-user"
+        }
+      }
+    ],
+    "messages": []
+  }
+}

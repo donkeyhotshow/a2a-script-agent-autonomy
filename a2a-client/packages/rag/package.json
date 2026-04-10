@@ -1,5 +1,5 @@
 {
-  "name": "@a2a/rag",
+  "name": "@a2a-client/rag",
   "version": "1.0.0",
   "description": "RAG Indexing and Search Module for A2A - Local indexing and search capabilities for code projects",
   "main": "dist/index.js",
@@ -15,7 +15,7 @@
     "demo": "tsx demo/all-features-demo.ts"
   },
   "keywords": [
-    "a2a",
+    "a2a-client",
     "rag",
     "indexing",
     "search",
@@ -26,8 +26,8 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@a2a/embedding": "*",
-    "@a2a/execution": "*",
+    "@a2a-client/embedding": "*",
+    "@a2a-client/execution": "*",
     "chokidar": "^3.5.3"
   },
   "devDependencies": {

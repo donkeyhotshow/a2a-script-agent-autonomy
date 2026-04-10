@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { compareSessionCreatedAtDesc } from '@a2a/storage/src/session-sort.mjs';
-import { getProjectDotA2aSessionsDir } from '@a2a/storage/src/session-paths.mjs';
+import { compareSessionCreatedAtDesc } from '@a2a-client/storage/src/session-sort.mjs';
+import { getProjectDotA2aSessionsDir } from '@a2a-client/storage/src/session-paths.mjs';
 import { loadProjects } from './projects.js';
 
 /** Same idea as newSessions.normalizeSessionIdForDir — session JSON may use numeric id. */

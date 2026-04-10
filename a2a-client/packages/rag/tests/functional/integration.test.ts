@@ -38,7 +38,7 @@ jest.mock('chokidar', () => ({
 }));
 
 // Mock embedding client
-jest.mock('@a2a/embedding', () => ({
+jest.mock('@a2a-client/embedding', () => ({
   createEmbeddingClient: () => ({
     embed: jest.fn(async (content: string) => {
       // Simple mock: create a deterministic vector based on content hash

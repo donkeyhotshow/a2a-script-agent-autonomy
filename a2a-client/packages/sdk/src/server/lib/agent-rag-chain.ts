@@ -3,7 +3,7 @@
  * Server is async-only: if chained POST /invoke returns promiseId, chain stops; caller polls /result and continues elsewhere.
  */
 
-import { RAGSearcher } from '@a2a/rag';
+import { RAGSearcher } from '@a2a-client/rag';
 import { saveRequestToServer, saveServerResponse } from '../services/step-storage.js';
 import { serverFetch, getServerBaseUrl } from '../services/upstream.service.js';
 import { loadProjects } from '../services/projects.service.js';
@@ -17,7 +17,7 @@ import { parseA2aInvokeResponse } from '../../client-api-envelope.js';
 import {
     getMaxRagChainDepth,
     DEFAULT_RAG_SEARCH_MAX_RESULTS,
-} from '@a2a/shared/agent-rag-chain-depth.mjs';
+} from '@a2a-client/shared/agent-rag-chain-depth.mjs';
 
 export { extractA2aExecute as extractExecuteFromEnvelope };
 

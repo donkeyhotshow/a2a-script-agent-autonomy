@@ -1,4 +1,4 @@
-import { isRecoverableAsyncSnapshot } from '@a2a/shared/client-api-envelope.mjs';
+import { isRecoverableAsyncSnapshot } from '@a2a-client/shared/client-api-envelope.mjs';
 
 /**
  * Promise polling states that mean async work is still in flight (step server-promise.json).

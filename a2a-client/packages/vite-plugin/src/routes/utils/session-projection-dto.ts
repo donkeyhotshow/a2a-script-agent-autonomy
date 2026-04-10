@@ -5,7 +5,7 @@
 import fs from 'fs';
 import path from 'path';
 import * as stepHandlers from '../handlers/step-handlers.js';
-import { isActivePromiseStatus, isRecoverableAsyncSnapshot } from '../@a2a-client/storage/promise-status.js';
+import { isActivePromiseStatus, isRecoverableAsyncSnapshot } from '@a2a-client/storage/promise-status.ts';
 import { buildExecuteProjection, buildWebExecute } from './execute-projection-dto.js';
 import { collectSessionMessagesFlat } from './message-timeline.js';
 import { deriveSessionStage } from './session-stage-machine.js';
@@ -15,7 +15,7 @@ import {
     getNewSessionDir,
     registerStepSessionsParent,
     findOpenAsyncStepWithoutResponse,
-} from '../@a2a-client/storage/newSessions.js';
+} from '@a2a-client/storage/newSessions.js';
 import http from 'http';
 
 function hasProjectedExecutePayload(ex) {

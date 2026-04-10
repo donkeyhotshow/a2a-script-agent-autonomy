@@ -3,7 +3,7 @@
  * No routing, no fs, no proxy - just data processing
  */
 
-import { mergeResponseContext } from '@a2a/shared/a2a-invoke-builders.js';
+import { mergeResponseContext } from '@a2a-client/shared/a2a-invoke-builders.js';
 import { isValidSessionId } from '../middleware/validators.js';
 import { buildExecuteProjection } from '../utils/execute-projection-dto.js';
 import {
@@ -21,7 +21,7 @@ import {
     loadServerPromise,
     loadStepFile,
     getNewSessionLatestStep,
-} from '@a2a/storage/src/newSessions.ts';
+} from '@a2a-client/storage/src/newSessions.ts';
 
 // Re-export isValidSessionId for external usage
 export { isValidSessionId };

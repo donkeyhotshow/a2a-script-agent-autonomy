@@ -7,9 +7,9 @@
 
 import * as fs from 'fs/promises';
 import path from 'path';
-import { isNodeEnoent } from '@a2a/shared/node-errors.js';
+import { isNodeEnoent } from '@a2a-client/shared/node-errors.js';
 
-export { unwrapKvStoredValue } from '@a2a/shared/kv-unwrap.js';
+export { unwrapKvStoredValue } from '@a2a-client/shared/kv-unwrap.js';
 export { isNodeEnoent };
 
 // ============================================================================

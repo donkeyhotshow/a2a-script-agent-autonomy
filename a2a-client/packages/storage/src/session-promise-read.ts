@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { getNewStepDir, normalizeSessionIdForDir } from '@a2a/storage/src/session-paths.mjs';
+import { getNewStepDir, normalizeSessionIdForDir } from '@a2a-client/storage/src/session-paths.mjs';
 
 /**
  * Read server-promise.json for a step (leaf helper — avoids circular imports with step-io).

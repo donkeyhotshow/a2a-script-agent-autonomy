@@ -1,5 +1,5 @@
 {
-  "name": "@a2a/history",
+  "name": "@a2a-client/history",
   "version": "1.0.0",
   "private": true,
   "type": "module",

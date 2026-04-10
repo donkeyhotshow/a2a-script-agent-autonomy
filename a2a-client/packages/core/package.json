@@ -1,5 +1,5 @@
 {
-  "name": "@a2a/core",
+  "name": "@a2a-client/core",
   "version": "1.0.0",
   "private": true,
   "type": "module",

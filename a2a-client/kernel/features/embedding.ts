@@ -1,5 +1,5 @@
 // Embedding feature module
-import { createEmbeddingClient, EmbeddingConfig } from '@a2a/embedding';
+import { createEmbeddingClient, EmbeddingConfig } from '@a2a-client/embedding';
 
 let embeddingClient: ReturnType<typeof createEmbeddingClient> | null = null;
 

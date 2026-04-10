@@ -11,7 +11,7 @@ export {
    getStepFilePath,
    listNewSteps,
    registerStepSessionsParent,
- } from '@a2a/storage/src/session-paths.mjs';
+ } from '@a2a-client/storage/src/session-paths.mjs';
 
 export {
   deriveSessionMode,

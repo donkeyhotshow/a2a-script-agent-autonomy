@@ -1,8 +1,8 @@
 import fs from 'fs';
 import pathMod from 'path';
 import * as stepHandlers from './handlers/step-handlers.js';
-import { loadSession, saveSession, resolveProjectPathForApi } from '@a2a/storage/src/projectSessions.ts';
-import { registerStepSessionsParent } from '@a2a/storage/src/newSessions.ts';
+import { loadSession, saveSession, resolveProjectPathForApi } from '@a2a-client/storage/src/projectSessions.ts';
+import { registerStepSessionsParent } from '@a2a-client/storage/src/newSessions.ts';
 
 export function validateSessionId(sessionId) {
     return stepHandlers.isValidSessionId(sessionId);

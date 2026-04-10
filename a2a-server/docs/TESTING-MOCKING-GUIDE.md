@@ -311,7 +311,7 @@ describe("API Integration Tests", () => {
 });
 ```
 
-### Mock Client ([`tests/helpers/mock-client.ts`](tests/helpers/mock-client.ts))
+### Mock Client ([`packages/server/tests/helpers/mock-client.ts`](packages/server/tests/helpers/mock-client.ts))
 
 Mock клиент для тестирования взаимодействия с A2A сервером.
 
@@ -364,7 +364,7 @@ describe("Client Tests", () => {
 
 ## Тесты без мокирования
 
-### Реальные интеграционные тесты ([`tests/integration/real-integration.test.ts`](tests/integration/real-integration.test.ts))
+### Реальные интеграционные тесты ([`packages/server/tests/integration/real-integration.test.ts`](packages/server/tests/integration/real-integration.test.ts))
 
 Тестирование с реальной БД и сервером.
 

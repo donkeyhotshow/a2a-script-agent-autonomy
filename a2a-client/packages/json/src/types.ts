@@ -14,4 +14,4 @@ export {
   createSession,
   validateSessionData,
   sanitizeSessionForClient as sanitizeSessionForJSON,
-} from '@a2a/types';
+} from '@a2a-client/types';

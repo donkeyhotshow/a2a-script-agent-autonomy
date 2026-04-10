@@ -6,7 +6,7 @@ import {
   FileScanner,
   IgnoreDetector,
   PathSandbox
-} from '@a2a/execution';
+} from '@a2a-client/execution';
 
 let fileScanner: FileScanner | null = null;
 let ignoreDetector: IgnoreDetector | null = null;

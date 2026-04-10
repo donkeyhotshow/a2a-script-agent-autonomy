@@ -1,5 +1,5 @@
 /**
- * Tests for @a2a/embedding
+ * Tests for @a2a-client/embedding
  */
 
 const {EmbeddingClient, createEmbeddingClient, DIMENSIONS, DEFAULT_MODELS} = require('../dist/index');

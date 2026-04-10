@@ -1,4 +1,4 @@
-import { SessionStorage } from '../session-storage.js';
+import { SessionStorage } from '../src/session-storage.js';
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';

@@ -4,9 +4,9 @@
 >
 > **См.:** [ARCHITECTURE.md](ARCHITECTURE.md), [PROTOCOL.md](PROTOCOL.md)
 >
-> **Note:** Legacy **`@a2a/api-client`** — в **`@a2a/sdk`**. Используйте:
+> **Note:** Legacy **`@a2a-client/api-client`** — в **`@a2a-client/sdk`**. Используйте:
 > ```typescript
-> import { ApiClient } from '@a2a/sdk/client';
+> import { ApiClient } from '@a2a-client/sdk/client';
 > ```
 
 ## Обзор
@@ -18,7 +18,7 @@ API Client (`a2a-client/packages/sdk`) — это HTTP-клиент для вз�
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                      API CLIENT                                   │
-│                 (@a2a/sdk)                                │
+│                 (@a2a-client/sdk)                                │
 │  ┌─────────────────────────────────────────────────────────────┐│
 │  │  ApiClient                                                 ││
 │  │  - request()          - низкоуровневые HTTP запросы       ││
@@ -70,14 +70,9 @@ API Client (`a2a-client/packages/sdk`) — это HTTP-клиент для вз�
 ### Конструктор
 
 ```typescript
-import {ApiClient} from '@a2a/sdk';
+import {ApiClient} from '@a2a-client/sdk';
 
 const client = new ApiClient({
-    serverUrl?: string;    // По умолчанию: http://localhost:3000/api/v1
-    token?: string;        // JWT токен
-    clientId?: string;     // ID клиента
-    timeout?: number;      // Таймаут в мс (по умолчанию: 30000)
-});
 ```
 
 ### Методы
@@ -223,18 +218,7 @@ const card = await client.createCardByProject(
 ### Конструктор
 
 ```typescript
-import {AsyncApiClient} from '@a2a/sdk/client';
-
-const asyncClient = new AsyncApiClient({
-    serverUrl?: string;
-    token?: string;
-    clientId?: string;
-    timeout?: number;
-    polling?: {
-        interval?: number;      // Интервал опроса (по умолчанию: 5000ms)
-        maxAttempts?: number;   // Макс. попыток (по умолчанию: 720)
-    };
-});
+import {AsyncApiClient} from '@a2a-client/sdk/client';
 ```
 
 ### PromisePoller

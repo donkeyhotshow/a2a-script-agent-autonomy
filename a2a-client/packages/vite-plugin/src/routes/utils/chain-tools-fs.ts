@@ -1,7 +1,7 @@
 import { promises as fsp } from 'fs';
 import path from 'path';
 import { isNodeEnoent } from '@a2a-client/shared/node-errors.js';
-import { resolveUnderProjectRoot } from '@a2a/execution/path-sandbox.js';
+import { resolveUnderProjectRoot } from '@a2a-client/execution/path-sandbox.js';
 
 function escapeRegexLiteral(s) {
     return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');

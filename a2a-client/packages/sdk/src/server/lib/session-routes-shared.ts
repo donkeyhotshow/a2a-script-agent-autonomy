@@ -11,7 +11,7 @@ import { extractA2aExecute, sanitizeInvokeBodyForA2aUpstream } from './a2a-invok
 import { pickInvokeContextPatch } from './context-invoke-patch.js';
 import { sanitizeApiRecordExecuteFields } from './web-execute-dto.js';
 import { parseA2aInvokeResponse } from '../../client-api-envelope.js';
-import { deriveSessionStage } from '@a2a/shared/session-stage-derive.js';
+import { deriveSessionStage } from '@a2a-client/shared/session-stage-derive.js';
 
 /** Vite `toMinimalNextAck` parity: success ack omits transport `promiseId`; use `asyncPending` + GET `/async`. */
 export function buildMinimalNextAck(step: number, promiseId: string | null) {

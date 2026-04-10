@@ -18,13 +18,13 @@ import {
     sanitizeContextForServer,
     sanitizeInvokeBodyForA2aUpstream,
 } from './builders.js';
-import { getMaxRagChainDepth } from '@a2a/shared/agent-rag-chain-depth.js';
-import { getProjectPathForSessions } from '../@a2a-client/storage/projectSessions.js';
+import { getMaxRagChainDepth } from '@a2a-client/shared/agent-rag-chain-depth.js';
+import { getProjectPathForSessions } from '@a2a-client/storage/projectSessions.js';
 import * as stepHandlers from '../handlers/step-handlers.js';
-import { resolveUnderProjectRoot } from '@a2a/execution/path-sandbox.js';
-import { runClientExecuteCommand } from '@a2a/execution/run-agent-command.js';
-import { runClientEditPatch } from '@a2a/execution/run-agent-edit-patch.js';
-import { runClientRegisteredScript } from '@a2a/execution/run-agent-registered-script.js';
+import { resolveUnderProjectRoot } from '@a2a-client/execution/path-sandbox.js';
+import { runClientExecuteCommand } from '@a2a-client/execution/run-agent-command.js';
+import { runClientEditPatch } from '@a2a-client/execution/run-agent-edit-patch.js';
+import { runClientRegisteredScript } from '@a2a-client/execution/run-agent-registered-script.js';
 
 import { getValidatedToolKey } from './chain-guards.js';
 import { runClientRagSearchForExecute } from './chain-tools-rag.js';

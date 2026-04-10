@@ -1,5 +1,5 @@
 /**
- * @a2a/embedding - Embedding client for semantic search.
+ * @a2a-client/embedding - Embedding client for semantic search.
  * Supports local HTTP embeddings, OpenAI, Cohere, Voyage AI, mock.
  */
 

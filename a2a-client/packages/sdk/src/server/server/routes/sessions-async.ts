@@ -19,12 +19,12 @@ import {
     normalizeRouterStepSubmit,
     routerFormHasChoices,
     validateSubmitResult,
-} from '@a2a/shared/router-submit.js';
+} from '@a2a-client/shared/router-submit.js';
 import {
     mergeContext,
     prepareServerRequest,
     processTaskAndContext,
-} from '@a2a/shared/next-invoke-pipeline.js';
+} from '@a2a-client/shared/next-invoke-pipeline.js';
 
 const router = Router();
 

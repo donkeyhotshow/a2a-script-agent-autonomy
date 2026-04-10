@@ -7,8 +7,8 @@
 import path from 'path';
 import * as fs from 'fs/promises';
 import type { Session, Project } from '../models/session.model.js';
-import { compareSessionCreatedAtDesc } from '@a2a/shared/session-sort.js';
-import { getProjectDotA2aSessionsDir } from '@a2a/shared/project-sessions-dir.js';
+import { compareSessionCreatedAtDesc } from '@a2a-client/shared/session-sort.js';
+import { getProjectDotA2aSessionsDir } from '@a2a-client/shared/project-sessions-dir.js';
 import { writeJsonFile, getStorageSessionsRoot, isNodeEnoent } from './storage.js';
 import { loadProjects, saveProjects } from './projects.service.js';
 

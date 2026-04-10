@@ -29,7 +29,7 @@ import type {Chunk} from '../../src/chunk-manager.js';
 const EDGE_CASE_DIR = path.join(DEFAULT_CONFIG.outputDir, 'edge-case-test');
 
 // Mock embedding client
-jest.mock('@a2a/embedding', () => ({
+jest.mock('@a2a-client/embedding', () => ({
   createEmbeddingClient: () => ({
     embed: jest.fn(async (content: string) => {
       const hash = content.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { compareSessionCreatedAtDesc } from '@a2a/shared/session-sort.mjs';
+import { compareSessionCreatedAtDesc } from '@a2a-client/shared/session-sort.mjs';
 import {
   isActivePromiseStatus,
   isRecoverableAsyncSnapshot,

@@ -19,7 +19,7 @@ import {
   normalizeSessionIdForDir,
   getNewSessionsDir,
   getNewSessionDir
-} from '@a2a/storage';
+} from '@a2a-client/storage';
 
 export async function initialize(): Promise<void> {
   // Initialize storage components
