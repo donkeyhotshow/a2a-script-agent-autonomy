@@ -32,7 +32,7 @@
 ```
 ┌─────────────┐     ┌──────────────┐     ┌─────────────┐     ┌─────────────────┐
 │   Web UI    │────▶│  Client API  │────▶│ a2a-server  │────▶│ External AI Hub │
-│  (port 5173)│     │ (port 3001)  │     │ (port 3000) │     │  (ai-integration)│
+│  (port 5173)│     │ (port 3001)  │     │ (port 3000) │     │  (a2a-ai-hub)│
 └─────────────┘     └──────────────┘     └─────────────┘     └─────────────────┘
                                                                           
                                           Stateless - no database
@@ -298,7 +298,7 @@ steps:
                               X-Promise: <id>       ▼
                                                     │
 ┌───────────────────────────────────────────────────┼─────────┐
-│              ai-integration/proxy                 │         │
+│              a2a-ai-hub/proxy                 │         │
 │  ┌─────────────┐    ┌─────────────┐    ┌─────────┴──────┐  │
 │  │ promises.py │───▶│proxy_handler│───▶│ compat_llm_manager │  │
 │  │             │◀───│             │◀───│                │  │
@@ -541,7 +541,7 @@ simulations/
 | Переменная | Описание |
 |------------|----------|
 | `LLM_PROVIDER` | `compat_llm` / `openai` / auto |
-| `AI_HUB_URL` | URL ai-integration proxy |
+| `AI_HUB_URL` | URL a2a-ai-hub proxy |
 | `LOCAL_LLM_MODEL` | `qwen3:8b` |
 | `OPENAI_API_KEY` | OpenAI API ключ |
 | `POLL_INTERVAL_MS` | `2000` - интервал polling |
@@ -600,7 +600,7 @@ services:
       - compat_llm_data:/root/.compat_llm
 
   ai-proxy:
-    build: ./ai-integration
+    build: ./a2a-ai-hub
     ports: ["11434:11435"]
     environment:
       - LOCAL_LLM_UPSTREAM_URL=http://compat_llm:11435

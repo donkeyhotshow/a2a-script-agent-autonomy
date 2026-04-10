@@ -23,11 +23,11 @@ param(
 
 # Service definitions: name -> { port, processes, patterns }
 $Services = @{
-    'ai-integration' = @{
+    'a2a-ai-hub' = @{
         Port = 11434
         PidKey = 'AI_INTEGRATION_PID'
         Processes = @('python.exe', 'uvicorn.exe')
-        Patterns = @('uvicorn', 'ai-integration', 'proxy.asgi')
+        Patterns = @('uvicorn', 'a2a-ai-hub', 'proxy.asgi')
     }
     'a2a-server' = @{
         Port = 3000

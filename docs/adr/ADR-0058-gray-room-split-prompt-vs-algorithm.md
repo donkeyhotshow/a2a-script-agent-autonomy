@@ -21,7 +21,7 @@ Introduce **two-mode Gray Room** with explicit split between:
 | **Prompt Mode** | Natural language instructions, strategy, reasoning | Paid API (high capability) | Primary agent request |
 | **Algorithm Mode** | Deterministic execution, pattern matching, edits | Local Local LLM upstream (fast/cheap) | `interrupt.reason: "algorithm_invoke"` |
 
-The **Black Room** (previously planned as `ai-integration` proxy loop) becomes the **execution container** for Algorithm Mode — a local Local LLM upstream instance with pre-loaded "algorithm numbers" (fine-tuned or prompted models for specific tasks).
+The **Black Room** (previously planned as `a2a-ai-hub` proxy loop) becomes the **execution container** for Algorithm Mode — a local Local LLM upstream instance with pre-loaded "algorithm numbers" (fine-tuned or prompted models for specific tasks).
 
 ## Architecture
 
@@ -52,7 +52,7 @@ Client → Primary invoke (agent mode)
 
 ### 2. Black Room (Algorithm Mode) Details
 
-**Location:** `ai-integration` proxy layer or dedicated `black-room-orchestrator.ts`
+**Location:** `a2a-ai-hub` proxy layer or dedicated `black-room-orchestrator.ts`
 
 **Algorithm Invocation Protocol:**
 ```json
@@ -160,7 +160,7 @@ A2A_ALGORITHM_REGISTRY_PATH=./prompts/algorithms/
 
 - [ADR-0029-server-interrupt-loop.md](./ADR-0029-server-interrupt-loop.md) — Original Gray Room
 - [a2a-server/docs/GRAY-ROOM.md](../../a2a-server/docs/GRAY-ROOM.md) — Current implementation
-- [ai-integration/docs/BLACK-ROOM.md](../../ai-integration/docs/BLACK-ROOM.md) — Algorithm mode details (in ai-integration)
+- [a2a-ai-hub/docs/BLACK-ROOM.md](../../a2a-ai-hub/docs/BLACK-ROOM.md) — Algorithm mode details (in a2a-ai-hub)
 
 ## Open Questions
 

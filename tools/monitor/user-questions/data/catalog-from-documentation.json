@@ -28,7 +28,7 @@
       }
     },
     {
-      "id": "port-ai-integration",
+      "id": "port-a2a-ai-hub",
       "text": "Which port is AI Integration (proxy to Local LLM upstream)?",
       "status": "answered_from_docs",
       "answer": {
@@ -50,7 +50,7 @@
       "text": "On Windows, how should you restart the live coordinated stack?",
       "status": "answered_from_docs",
       "answer": {
-        "text": "Run start-all.bat from the repository root only — not per-package npm run dev inside a2a-server, a2a-client, or ai-integration.",
+        "text": "Run start-all.bat from the repository root only — not per-package npm run dev inside a2a-server, a2a-client, or a2a-ai-hub.",
         "sources": [
           { "path": "README.md", "section": "Live stack: start and restart" },
           { "path": "AGENTS.md", "section": "Windows live stack restart" }
@@ -250,7 +250,7 @@
     },
     {
       "id": "env-ai-hub-url-dev",
-      "text": "What is the canonical dev value for AI_HUB_URL (ai-integration)?",
+      "text": "What is the canonical dev value for AI_HUB_URL (a2a-ai-hub)?",
       "status": "answered_from_docs",
       "answer": {
         "text": "http://localhost:11434.",
@@ -334,7 +334,7 @@
       "text": "In the triangle workflow, what do vertices A, B, and C represent?",
       "status": "answered_from_docs",
       "answer": {
-        "text": "A = Client API (sessions, /next, /async, storage); B = a2a-server (invoke/transforms); C = ai-integration (LLM path). Local LLM upstream sits behind C.",
+        "text": "A = Client API (sessions, /next, /async, storage); B = a2a-server (invoke/transforms); C = a2a-ai-hub (LLM path). Local LLM upstream sits behind C.",
         "sources": [{ "path": "docs/TRIANGLE-WORKFLOW.md", "section": "Triangle — three layers" }]
       }
     },

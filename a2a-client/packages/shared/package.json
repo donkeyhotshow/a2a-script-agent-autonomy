@@ -14,6 +14,7 @@
     "./internal-client-action-keys.mjs": "./src/internal-client-action-keys.mjs",
     "./safe-path.mjs": "./src/safe-path.mjs",
     "./projects-document.mjs": "./src/projects-document.mjs",
+    "./projects-document.js": "./src/projects-document.mjs",
     "./agent-rag-chain-depth.mjs": "./src/agent-rag-chain-depth.mjs",
     "./node-errors.js": "./node-errors.js",
     "./session-sort.js": "./src/session-sort.js",

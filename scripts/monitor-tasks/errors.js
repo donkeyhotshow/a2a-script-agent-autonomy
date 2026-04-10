@@ -230,7 +230,7 @@ class ErrorClassifier {
       promiseCheck: 'curl http://localhost:3000/api/v1/requests/{promiseId}/result',
       logsClient: 'cat a2a-client/logs/*.log | tail -100',
       logsServer: 'cat a2a-server/logs/*.log | tail -100',
-      logsAiHub: 'cat ai-integration/proxy_logs/*.log | tail -100'
+      logsAiHub: 'cat a2a-ai-hub/proxy_logs/*.log | tail -100'
     };
 
     this.diagnosticScripts = {

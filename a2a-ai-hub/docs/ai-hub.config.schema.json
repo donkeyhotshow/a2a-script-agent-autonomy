@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "ai-integration/ai-hub.config.schema.json",
+  "$id": "a2a-ai-hub/ai-hub.config.schema.json",
   "title": "AI Hub Proxy Config",
   "type": "object",
   "additionalProperties": true,

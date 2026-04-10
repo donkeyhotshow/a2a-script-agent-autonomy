@@ -187,4 +187,4 @@ See the [AGENTS.md](../AGENTS.md) for the complete operational checklist and age
 | [ENV-MATRIX.md](ENV-MATRIX.md) | Environment matrix |
 | [agent-iteration-traps.md](agent-iteration-traps.md) | Why iteration stops (low-context); mitigations (Cursor vs Client API driver) |
 | [prompts-to-agent-mode/README.md](../prompts-to-agent-mode/README.md) | Indexed task prompts; live stack = Client API + `mode: "agent"` |
-| Module state files | [a2a-client/DEV_STATE.md](../a2a-client/DEV_STATE.md), [a2a-server/DEV_STATE.md](../a2a-server/DEV_STATE.md), [ai-integration/DEV_STATE.md](../ai-integration/DEV_STATE.md) |
+| Module state files | [a2a-client/DEV_STATE.md](../a2a-client/DEV_STATE.md), [a2a-server/DEV_STATE.md](../a2a-server/DEV_STATE.md), [a2a-ai-hub/DEV_STATE.md](../a2a-ai-hub/DEV_STATE.md) |

@@ -1,6 +1,6 @@
 ## LLM Hub Polling (A2A Server → AI Hub)
 
-This document describes how the server polls the AI Hub (ai-integration / Local LLM upstream proxy) for LLM promise completion and which environment variables control the behavior.
+This document describes how the server polls the AI Hub (a2a-ai-hub / Local LLM upstream proxy) for LLM promise completion and which environment variables control the behavior.
 
 ### Env variables and precedence
 
@@ -28,9 +28,9 @@ Polling implementation lives in `src/daemon/llm-hub-poll.ts`:
 
 The poller loops on **`GET {AI_HUB_URL}/promise/{llmPromiseId}`** until the JSON body reports `status: "done"` (HTTP 200), then fetches **`GET …/promise/{id}/response`** (or `body_raw` when `responseMode` is `raw_json`). It does **not** depend on `GET /promises/status`’s bulk `ready` list, so completion matches the `resolveLlmPromiseRecovery` path in `llm-hub-poll.ts`. If the promise stays `202` pending until the timeout window, it throws `LLM promise timeout`.
 
-### Timeout budget and ai-integration alignment
+### Timeout budget and a2a-ai-hub alignment
 
-The ai-integration daemon config (`ai-integration/proxy/config.py`) uses:
+The a2a-ai-hub daemon config (`a2a-ai-hub/proxy/config.py`) uses:
 
 - `PROMISE_TTL_SECONDS` (default `86400`, i.e. 24h) — lifetime of a promise record.
 - Daemon poll/execute settings (`DAEMON_POLL_INTERVAL`, `DAEMON_EXECUTE_TIMEOUT`, etc.) — control how often and how long background workers execute pending promises.
@@ -56,5 +56,5 @@ These values give:
 
 - ~2s polling cadence.
 - 1h timeout budget per LLM promise.
-- Upper bound aligned with ai-integration default `PROMISE_TTL_SECONDS` (24h).
+- Upper bound aligned with a2a-ai-hub default `PROMISE_TTL_SECONDS` (24h).
 

@@ -1,6 +1,6 @@
 /**
  * Background polling: A2A Server → AI Hub (LLM proxy).
- * Waits until ai-integration reports the LLM promise ready, then fetches response body.
+ * Waits until a2a-ai-hub reports the LLM promise ready, then fetches response body.
  */
 
 import {requestService} from '../services/core/request/request.service.js';
@@ -262,7 +262,7 @@ export async function initAiHubChatPromise(
 /**
  * Poll until the hub marks `llmPromiseId` done, then GET `/promise/:id/response`.
  *
- * Uses **`GET /promise/:id`** (canonical status per ai-integration) instead of relying on
+ * Uses **`GET /promise/:id`** (canonical status per a2a-ai-hub) instead of relying on
  * `GET /promises/status` “ready” list, which scans the whole promises directory and can
  * miss a just-completed id under load or race with listing.
  */

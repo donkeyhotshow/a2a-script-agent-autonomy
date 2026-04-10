@@ -119,7 +119,7 @@ Algorithm execution mode for deterministic operations on **local Local LLM upstr
 - **"normal cycle"** -> regular message flow.
 - **"red room"** -> Client auto-replies to tool `execute`, then full cycle.
 - **"gray room"** (Трансмутация) -> Серверная цепочка LLM-вызовов перед возвратом клиенту: compress_history (сжатие истории), thinking (структурированное мышление), auto_rag_page (RAG поиск), auto_read_file (авто-чтение файлов), clarify (уточнение).
-- **"black room"** -> (Planned) `ai-integration` proxy loop.
+- **"black room"** -> (Planned) `a2a-ai-hub` proxy loop.
 - **"expert"** -> **Code module** (client): console-script handler; normalizes build/test/tool logs into structured input—not an LLM persona.
 - **"professional"** -> **Code module** (client): RAG hit post-processing (ranking, snippets, clustering, optional micro-synthesis)—not an LLM persona.
 - **"analyst"** / **"ignore autodetector"** -> **Code module** (client/host): recursive walk = ignore detection + structure metrics for safe list/read—not an LLM persona.

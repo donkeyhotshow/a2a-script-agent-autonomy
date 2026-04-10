@@ -40,7 +40,7 @@ Session storage is **not** here — see [a2a-client/DEV_STATE.md](../a2a-client/
 
 ---
 
-## AI-Integration lock
+## a2a-ai-hub lock
 
 UNBLOCKED.
 

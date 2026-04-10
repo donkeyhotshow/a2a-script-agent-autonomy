@@ -19,7 +19,7 @@ Goldens in `simulations/` exercise the **A2A server + transforms + Client API** 
 |----------|-------------------------|
 | **`request.md`** | **Authoring truth** for this step’s assumed LLM turn: paste the prompt the server would send. Until the server persists `model` on invoke, document intent in the **header** (see below). |
 | **`response.md`** | Fixture LLM output; **not** tied to a real provider — treat as synthetic. |
-| **`request.json`** | Client API → Server invoke; may gain optional `context` fields for **`model` / provider** when multi-provider selection is implemented (track: `ai-integration/DEV_STATE.md`, `tasks/pending/multi-provider-model-selection.md`). |
+| **`request.json`** | Client API → Server invoke; may gain optional `context` fields for **`model` / provider** when multi-provider selection is implemented (track: `a2a-ai-hub/DEV_STATE.md`, `tasks/pending/multi-provider-model-selection.md`). |
 | **`server-transforms-*.json`** | Deterministic server ops; no provider. |
 
 ## Recommended `request.md` header (optional, human-readable)
@@ -47,4 +47,4 @@ Use **`synthetic`** when the markdown is a minimal stub not matching a real prov
 
 - [`SCHEMA.md`](SCHEMA.md) — pipeline and file roles  
 - [`tasks/pending/multi-provider-model-selection.md`](../tasks/pending/multi-provider-model-selection.md)  
-- [`ai-integration/DEV_STATE.md`](../ai-integration/DEV_STATE.md)
+- [`a2a-ai-hub/DEV_STATE.md`](../a2a-ai-hub/DEV_STATE.md)

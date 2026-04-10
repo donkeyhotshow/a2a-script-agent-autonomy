@@ -19,7 +19,7 @@ This repository is an **autonomous operator workstation** for AI-assisted develo
 | **Windows** | **`npm run dev`** — starts all services using the runbook CLI |
 | **Linux / macOS** | **`npm run dev`** — same rule |
 
-Do **not** use `npm run dev`, `npm start`, or equivalent **inside** `a2a-server`, `a2a-client`, `ai-integration`, or nested packages to refresh the live stack. That skips kill/port checks and PID bookkeeping and leads to duplicate listeners and broken `.pids.txt`.
+Do **not** use `npm run dev`, `npm start`, or equivalent **inside** `a2a-server`, `a2a-client`, `a2a-ai-hub`, or nested packages to refresh the live stack. That skips kill/port checks and PID bookkeeping and leads to duplicate listeners and broken `.pids.txt`.
 
 The `npm run dev` uses `scripts/runbook-cli.js start` to manage all services locally.
 
@@ -208,7 +208,7 @@ npm run sim:validate
 ```
 ├── a2a-client/          # Web UI and client packages
 ├── a2a-server/          # Server API and services
-├── ai-integration/      # AI Hub proxy (Python)
+├── a2a-ai-hub/      # AI Hub proxy (Python)
 ├── scripts/runbook-cli.js # Service orchestration
 ├── scripts/             # Orchestrator and utilities
 │   └── orchestrator.js  # Unified service manager

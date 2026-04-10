@@ -73,7 +73,7 @@ NPM пакети всередині monorepo:
 
 ---
 
-## External AI Hub (`ai-integration/`)
+## External AI Hub (`a2a-ai-hub/`)
 
 Проксі до Local LLM upstream: **Hub :11434** → **Local LLM upstream :11435**, async `promiseId`. Дерево каталогів і інтеграція з сервером: [SERVER-ARCHITECTURE.md](SERVER-ARCHITECTURE.md#external-ai-hub-integration); контракт promise / endpoints: [PROTOCOL.md](PROTOCOL.md#async-flow-promiseid).
 
@@ -122,7 +122,7 @@ simulations/
 | Server          | 3000  | A2A Server HTTP API                     |
 | Client API      | 5173 (`/api/a2a/*` на Vite) або 3001 (standalone SDK) | Сесії, проксі на сервер |
 | Web UI          | 5173  | Vite dev server                         |
-| AI Hub (ai-integration) | 11434 | Проксі / async promise до Local LLM upstream |
+| AI Hub (a2a-ai-hub) | 11434 | Проксі / async promise до Local LLM upstream |
 | Local LLM upstream          | 11435 | Локальна LLM                            |
 
 ---

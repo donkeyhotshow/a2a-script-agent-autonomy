@@ -113,7 +113,7 @@
         {
           "id": "fix-vue-imports",
           "label": "Исправить сломанные импорты в Vue файлах.",
-          "description": "*Priority:** 10 **Планы:** [ai-integration docs](../../../../ai-integration/docs/README.md)."
+          "description": "*Priority:** 10 **Планы:** [a2a-ai-hub docs](../../../../a2a-ai-hub/docs/README.md)."
         },
         {
           "id": "dialog",

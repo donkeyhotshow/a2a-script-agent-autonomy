@@ -90,7 +90,7 @@ Client Request → Request Service → Queue → Request Processor → Phase Mac
 - Context-aware prompt generation
 
 **Promise-Based Integration:**
-- Integration with ai-integration service
+- Integration with a2a-ai-hub service
 - Polling-based status checking
 - Timeout and error handling
 - Progress tracking and cancellation

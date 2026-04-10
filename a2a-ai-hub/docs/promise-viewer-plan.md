@@ -9,7 +9,7 @@
 
 ```mermaid
 graph TB
-    subgraph "ai-integration"
+    subgraph "a2a-ai-hub"
         A[proxy.py<br/>Flask app] --> B[Web UI<br/>promise-viewer.html]
         B --> A
         A --> C[promises/<br/>pending requests]
@@ -123,8 +123,8 @@ graph TB
 
 ## Файлы для создания/изменения:
 
-1. **ai-integration/proxy.py** - добавить новые endpoints
-2. **ai-integration/web/promise-viewer.html** - создать HTML страницу
+1. **a2a-ai-hub/proxy.py** - добавить новые endpoints
+2. **a2a-ai-hub/web/promise-viewer.html** - создать HTML страницу
 
 ## Реализация
 

@@ -403,7 +403,7 @@ async function tick(): Promise<void> {
     if (result?.outcome === "failed") {
       logger.warn("[RequestProcessor] Request failed, continuing...");
     }
-    // When idle, revive retryable failed requests (e.g. after ai-integration starts)
+    // When idle, revive retryable failed requests (e.g. after a2a-ai-hub starts)
     if (!result) {
       await requestService.scheduleRetryForFailed();
       await requestService.reviveFailedAfterCooldown();

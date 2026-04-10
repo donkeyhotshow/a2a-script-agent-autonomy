@@ -37,7 +37,7 @@ interface LLMProvider {
 
 **Supported Providers:**
 - **OpenAI** - GPT-4, GPT-3.5 with full feature support
-- **Local LLM upstream** - Local LLMs with ai-integration service
+- **Local LLM upstream** - Local LLMs with a2a-ai-hub service
 - **Placeholder** - Mock responses for development/testing
 
 **Provider Selection Strategy:**
@@ -80,7 +80,7 @@ interface LLMConfig {
 
 ### 3. Promise-Based Integration
 
-**ai-integration Service Integration:**
+**a2a-ai-hub Service Integration:**
 - **Promise creation** for long-running LLM calls
 - **Polling mechanism** for status checking
 - **Progress tracking** for user feedback

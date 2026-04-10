@@ -1,6 +1,6 @@
 # AI Integration Documentation Plan
 
-**Moved from:** ai-integration/plans/documentation-plan.md (DOC-STATE).
+**Moved from:** a2a-ai-hub/plans/documentation-plan.md (DOC-STATE).
 
 > **Status:** In progress (original).
 

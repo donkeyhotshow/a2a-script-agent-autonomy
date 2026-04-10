@@ -1,6 +1,6 @@
-# Testing (ai-integration)
+# Testing (a2a-ai-hub)
 
-From the **`ai-integration`** directory (repo: `a2a-script-agent/ai-integration`):
+From the **`a2a-ai-hub`** directory (repo: `a2a-script-agent/a2a-ai-hub`):
 
 ```bash
 pip install -r requirements.txt

@@ -24,7 +24,7 @@ Yellow alert scan: follow docs/YELLOW-ALERT-SCAN.md. Scope: repo root (or PATH: 
 
 ## What the agent must do
 
-1. **Scope** — Agree path(s): single package (`a2a-server/`, `a2a-client/`, `ai-integration/`) or whole repo; exclude `node_modules/`, `dist/`, build artifacts, large generated trees unless relevant.
+1. **Scope** — Agree path(s): single package (`a2a-server/`, `a2a-client/`, `a2a-ai-hub/`) or whole repo; exclude `node_modules/`, `dist/`, build artifacts, large generated trees unless relevant.
 2. **Mechanical pass** — Use repo search tools (`rg`/grep) for markers and risky patterns from [Pattern hints](#pattern-hints). Note hits with file + line.
 3. **Semantic pass** — Read hot paths (request processor, Client API routes, transforms) for: duplicated logic, error swallowing, inconsistent async, schema drift vs [`AGENTS.md`](../AGENTS.md) action-key rules.
 4. **Cross-check** — If findings touch contracts, point to [`tests/direct-tests/validators/README.md`](../tests/direct-tests/validators/README.md) scripts that could **verify** (not replace) the issue.

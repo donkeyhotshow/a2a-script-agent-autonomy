@@ -20,11 +20,11 @@
  * key-structure pass; checked precisely in `collectDirectiveErrors`.
  *
  * Optional: PROBA_SERVERA_USE_HTTP=1 → fetch http://localhost:3000/api/v1/invoke (legacy).
- * Stack gate (default): probes ai-integration + Local LLM upstream (+ a2a-server if HTTP mode).
+ * Stack gate (default): probes a2a-ai-hub + Local LLM upstream (+ a2a-server if HTTP mode).
  *   Skip: PROBA_SERVERA_SKIP_STACK_CHECK=1. Probe timeout: PROBA_STACK_PROBE_MS (ms) — not applied to promiseId poll loops.
  *   Single case: PROBA_SERVERA_ONLY=<folder-name> (e.g. script-select).
- *   L3 cache warm: PROBA_WARM_CACHE=1 — invoke-only pass before the normal run (fills ai-integration disk cache).
- *   Hub cache grep: set LLM_DISK_CACHE_LOG=1 on ai-integration, then grep `llm_disk_cache` in its log after validate.
+ *   L3 cache warm: PROBA_WARM_CACHE=1 — invoke-only pass before the normal run (fills a2a-ai-hub disk cache).
+ *   Hub cache grep: set LLM_DISK_CACHE_LOG=1 on a2a-ai-hub, then grep `llm_disk_cache` in its log after validate.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -65,7 +65,7 @@ async function probeUrl(url: string, ms = STACK_PROBE_MS): Promise<boolean> {
 }
 
 /**
- * Proba-servera hits the real LLM chain (ai-integration → Local LLM upstream). If those are down,
+ * Proba-servera hits the real LLM chain (a2a-ai-hub → Local LLM upstream). If those are down,
  * results are meaningless noise — exit before running cases.
  * Opt out: PROBA_SERVERA_SKIP_STACK_CHECK=1
  */
@@ -99,7 +99,7 @@ async function assertProbaStackOrExit(): Promise<void> {
   const lines = [
     '',
     'Proba-servera aborted: required services are not reachable.',
-    `  ai-integration  ${integrationHealth}  →  ${intOk ? 'OK' : 'FAIL'}`,
+    `  a2a-ai-hub  ${integrationHealth}  →  ${intOk ? 'OK' : 'FAIL'}`,
     `  Local LLM upstream          ${upstreamTagsUrlConst}  →  ${upstreamTagsOk ? 'OK' : 'FAIL'}`,
   ];
   if (httpMode) {
@@ -114,7 +114,7 @@ async function assertProbaStackOrExit(): Promise<void> {
     `    ${logServer}`,
     `    ${logWeb}`,
     `    ${logClientApi}`,
-    '    ai-integration: separate console window titled "ai-integration" (uvicorn stdout)',
+    '    a2a-ai-hub: separate console window titled "a2a-ai-hub" (uvicorn stdout)',
     '',
     'Skip this gate (CI / offline):  set PROBA_SERVERA_SKIP_STACK_CHECK=1',
     ''

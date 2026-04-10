@@ -22,7 +22,7 @@ dist/
 simulations/**/invoke-capture.json
 .env*
 
-# Local operator cheatsheet only — never commit real keys (see ai-integration/FREE_LLM_KEYS.md)
+# Local operator cheatsheet only — never commit real keys (see a2a-ai-hub/FREE_LLM_KEYS.md)
 **/FREE_LLM_KEYS.local.md
 
 # Vitest JSON scratch from human-review runners

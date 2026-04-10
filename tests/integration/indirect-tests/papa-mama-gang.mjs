@@ -85,7 +85,7 @@ async function papaShift() {
                 );
             } else {
                 console.log(
-                    '🧔 PAPA: skip verify:proba-cache-api (ai-integration :11434 /health not OK)\n'
+                    '🧔 PAPA: skip verify:proba-cache-api (a2a-ai-hub :11434 /health not OK)\n'
                 );
             }
         } catch (e) {

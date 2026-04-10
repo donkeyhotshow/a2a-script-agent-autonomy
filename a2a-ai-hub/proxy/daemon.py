@@ -99,7 +99,7 @@ class PromiseDaemon:
         adapter = HTTPAdapter(max_retries=retry_strategy)
         session.mount("http://", adapter)
         session.mount("https://", adapter)
-        session.headers.update({"User-Agent": "ai-integration-builtin-daemon/1.0"})
+        session.headers.update({"User-Agent": "a2a-ai-hub-builtin-daemon/1.0"})
         return session
     
     def start(self) -> None:

@@ -686,7 +686,7 @@ class TaskMonitorCore {
   }
 
   /**
-   * When ai-integration runs with PROMISE_DAEMON_ONLY=true, LLM calls with ?promise=1 stay pending
+   * When a2a-ai-hub runs with PROMISE_DAEMON_ONLY=true, LLM calls with ?promise=1 stay pending
    * until the promise daemon or a manual POST /promise/{id}/execute runs. Warn and optionally block.
    */
   async promptPromiseManualGateIfNeeded() {
@@ -725,7 +725,7 @@ class TaskMonitorCore {
       `${data.storage_dir || 'proxy_logs'}/promises/ until something executes them.`,
       '',
       'Options (async contract — keep PROMISE_DAEMON_ONLY on):',
-      `  1) Keep the promise-queue daemon running (stack start / ai-integration daemon).`,
+      `  1) Keep the promise-queue daemon running (stack start / a2a-ai-hub daemon).`,
       `  2) Execute manually: GET ${this.aiHubUrl}/promises/pending then`,
       `     POST ${this.aiHubUrl}/promise/<promiseId>/execute`,
       `  3) Do not switch the proxy to synchronous forwarding; draining this queue is the supported path.`,
@@ -734,7 +734,7 @@ class TaskMonitorCore {
       `  GET ${this.aiHubUrl}/promise/<promiseId>/request`,
       `  UI: ${this.aiHubUrl}/ui/promises/view`,
       '',
-      'Docs: ai-integration/docs/workflows/WORKFLOWS.md — MONITOR-QUICK-START.md (promise gate)',
+      'Docs: a2a-ai-hub/docs/workflows/WORKFLOWS.md — MONITOR-QUICK-START.md (promise gate)',
       '='.repeat(72),
       ''
     ];

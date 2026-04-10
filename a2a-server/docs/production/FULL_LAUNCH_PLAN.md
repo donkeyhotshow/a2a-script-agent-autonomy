@@ -12,7 +12,7 @@
 ### 1.1 Установленные компоненты
 - Docker + Docker Compose (только для AI Integration)
 - Node.js 18+ (для a2a-server и a2a-client)
-- Python 3.9+ (для ai-integration прокси)
+- Python 3.9+ (для a2a-ai-hub прокси)
 - **LLM backend** — по желанию: локальный HTTP-совместимый сервер и/или внешние провайдеры в конфиге прокси; репозиторий **`start-all` / `runbook-cli` не поднимает** отдельный «local LLM» процесс
 
 ### 1.2 Требуемые порты
@@ -41,12 +41,12 @@
 curl http://localhost:11435/api/tags
 ```
 
-Без доступного backend для прокси LLM-запросы из стека не выполнятся — либо поднимите upstream, либо настройте внешний провайдер в ai-integration.
+Без доступного backend для прокси LLM-запросы из стека не выполнятся — либо поднимите upstream, либо настройте внешний провайдер в a2a-ai-hub.
 
 ### ЭТАП 2: Запуск AI Integration (прокси)
 
 ```bash
-cd ai-integration
+cd a2a-ai-hub
 pip install -r requirements.txt
 python -m proxy
 ```
@@ -117,7 +117,7 @@ npm run dev
 ## 3. Упрощенный запуск (все скриптом)
 
 ```bash
-# start-all поднимает ai-integration (:11434), a2a-server, client-api, web-ui — без отдельного старта Local LLM.
+# start-all поднимает a2a-ai-hub (:11434), a2a-server, client-api, web-ui — без отдельного старта Local LLM.
 # При необходимости поднимите upstream до/после и проверьте GET http://localhost:11434/health
 
 ./start-all.bat  # Windows
@@ -189,7 +189,7 @@ curl http://localhost:11434/health
 # Затем проверьте upstream из конфига (часто 11435):
 curl http://localhost:11435/api/tags
 ```
-Сверьте `LOCAL_LLM_UPSTREAM_URL` и провайдеры в ai-integration; репозиторий не стартует upstream за вас.
+Сверьте `LOCAL_LLM_UPSTREAM_URL` и провайдеры в a2a-ai-hub; репозиторий не стартует upstream за вас.
 
 ### Проблема: Сессии не сохраняются
 

@@ -28,7 +28,7 @@ except ImportError:
     HAS_PYDANTIC = False
     _config_log.warning("pydantic not installed — using legacy configuration")
 
-# Always resolve ai-integration/.env (this file lives at ai-integration/proxy/config.py).
+# Always resolve a2a-ai-hub/.env (this file lives at a2a-ai-hub/proxy/config.py).
 _AI_INTEGRATION_ENV = Path(__file__).resolve().parent.parent / '.env'
 _ENV_FILE_TUPLE = (
     (str(_AI_INTEGRATION_ENV), '.env')

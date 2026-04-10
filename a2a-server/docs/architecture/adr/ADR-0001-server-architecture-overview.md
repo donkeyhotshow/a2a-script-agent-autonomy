@@ -47,7 +47,7 @@ Adopt a layered architecture with clear separation of concerns and modular desig
 
 ### 4. Communication Patterns
 - **RESTful API** for synchronous operations
-- **Promise-based integration** with ai-integration service
+- **Promise-based integration** with a2a-ai-hub service
 - **Action protocol** for client-side operations
 
 ### 5. State Management

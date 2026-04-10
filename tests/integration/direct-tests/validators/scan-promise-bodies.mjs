@@ -1,4 +1,4 @@
-// Scan ai-integration/proxy_logs/promises/*/body.md for LLM JSON contract issues
+// Scan a2a-ai-hub/proxy_logs/promises/*/body.md for LLM JSON contract issues
 // (top-level message + tool, duplicate execute.message, etc.).
 // Run from repo root: node tests/direct-tests/validators/scan-promise-bodies.mjs
 
@@ -8,7 +8,7 @@ import { fileURLToPath } from 'url';
 import { analyzeLlmExecuteShape } from './lib/check-llm-execute-shape.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PROMISES_DIR = path.join(__dirname, '..', '..', '..', 'ai-integration', 'proxy_logs', 'promises');
+const PROMISES_DIR = path.join(__dirname, '..', '..', '..', 'a2a-ai-hub', 'proxy_logs', 'promises');
 
 function extractJsonFromBody(md) {
   const m = md.match(/```json\s*([\s\S]*?)\s*```/);

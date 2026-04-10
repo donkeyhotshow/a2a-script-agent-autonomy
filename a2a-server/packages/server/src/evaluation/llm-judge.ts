@@ -2,7 +2,7 @@
  * LLMJudge — ADR-0065: LLM-as-Judge self-evaluation layer.
  *
  * Evaluates agent outputs against the goal before the DELIVERING transition.
- * Calls the existing AI proxy (ai-integration on :11434) with a structured
+ * Calls the existing AI proxy (a2a-ai-hub on :11434) with a structured
  * evaluation prompt. Falls back to a rule-based judge when the proxy is
  * unavailable.
  *

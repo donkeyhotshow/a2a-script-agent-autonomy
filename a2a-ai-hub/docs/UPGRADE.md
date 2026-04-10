@@ -1,4 +1,4 @@
-# Апгрейд ai-integration (Local LLM upstream Proxy)
+# Апгрейд a2a-ai-hub (Local LLM upstream Proxy)
 
 Цель апгрейда: сделать прокси более управляемым и безопасным без правок клиентского кода — через конфиг:
 

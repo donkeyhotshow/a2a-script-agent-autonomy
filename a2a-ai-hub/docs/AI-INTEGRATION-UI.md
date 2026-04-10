@@ -1,7 +1,7 @@
-# AI-Integration Web UI & Promise Diagnostics
+# a2a-ai-hub Web UI & Promise Diagnostics
 
 ## Зачем
-`ai-integration` уже управляет всеми вызовами к Local LLM upstream и хранит асинхронные `promiseId`. Веб-интерфейс позволяет быстро просматривать `pending` обещания, копировать запрос, вручную подставлять ответ или переслать запрос дальше — это ускоряет отладку и выкатку новых моделей.
+`a2a-ai-hub` уже управляет всеми вызовами к Local LLM upstream и хранит асинхронные `promiseId`. Веб-интерфейс позволяет быстро просматривать `pending` обещания, копировать запрос, вручную подставлять ответ или переслать запрос дальше — это ускоряет отладку и выкатку новых моделей.
 
 ## Что нужно сделать
 - Прокси должен выгружать новые endpoints:
@@ -9,7 +9,7 @@
   - `GET /promise/<promise_id>/request` — JSON тела запроса (`headers`, `body`, `method`, `path`).
   - `POST /promise/<promise_id>/answer` — вручную установить результат (код, тип содержимого, тело).
   - `POST /promise/<promise_id>/execute` — форвардит запрос к реальному Local LLM upstream и сохраняет ответ через `.promises`.
-  - Статические файлы `ai-integration/web/*.html|.js` выдаются через `@app.route('/web/<path:filename>')`.
+  - Статические файлы `a2a-ai-hub/web/*.html|.js` выдаются через `@app.route('/web/<path:filename>')`.
 - Web UI (`promise-viewer.html`) должна:<br>
   1. Запрашивать `pending` promises и показывать первый.
   2. Показывать `request` и позволять копировать его, запускать `execute`, вставлять ответ вручную и утверждать его.
@@ -17,19 +17,19 @@
   4. Работать без специальной авторизации (или через `SKIP_AUTH`).
 
 ## Быстрое продвижение
-1. Создать файл `ai-integration/web/promise-viewer.html` и дополняющий JS/CSS; использовать Fetch API для новых endpoints.
+1. Создать файл `a2a-ai-hub/web/promise-viewer.html` и дополняющий JS/CSS; использовать Fetch API для новых endpoints.
 2. Убедиться, что UI подхватывает трассы из `proxy_logs/promises/<id>/` для LLM (и при необходимости legacy `proxy_logs/requests/request_*`).
 3. Подключить страницы к `start-all.*` и `docs/SYSTEM_STARTUP.md` (UI доступен по `http://localhost:11434/web/promise-viewer.html`).
 4. Добавить smoke-test: `curl http://localhost:11434/promises/pending` после запуска стека.
 
 ## Promise queue daemon
 
-Для сценариев без UI (либо когда нужно сразу одобрять тикеты и собирать вывод qwen), используется скрипт `ai-integration/scripts/promise_queue_daemon.py`.
+Для сценариев без UI (либо когда нужно сразу одобрять тикеты и собирать вывод qwen), используется скрипт `a2a-ai-hub/scripts/promise_queue_daemon.py`.
 Он циклично вызывает `/promises/pending`, автоматически запускает `/promise/<promiseId>/execute`, ждёт `/promise/<promiseId>/response` и печатает превью результата.
 
 Пример запуска:
 ```
-python ai-integration/scripts/promise_queue_daemon.py --interval 3 --log-level DEBUG
+python a2a-ai-hub/scripts/promise_queue_daemon.py --interval 3 --log-level DEBUG
 ```
 
 Опции:
@@ -41,5 +41,5 @@ python ai-integration/scripts/promise_queue_daemon.py --interval 3 --log-level D
 Скрипт полезен, когда нужно держать очередь promise «обработанной» без ручного клика на веб-интерфейсе: он сам одобряет запрос, а затем пишет стрим из Local LLM upstream/Qwen в лог.
 
 ## Расширенные ссылки
-- Подробный план API/UI и workflow — `ai-integration/docs/promise-viewer-plan.md`.
+- Подробный план API/UI и workflow — `a2a-ai-hub/docs/promise-viewer-plan.md`.
 - Связать с `docs/production/PROD_TESTS.md` (ссылка ниже), чтобы прогревать стек и открывать веб-интерфейс до запуска `prod-test`.

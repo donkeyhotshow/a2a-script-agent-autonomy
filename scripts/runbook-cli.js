@@ -25,38 +25,38 @@ const SERVICES = {
     restartPolicy: {enabled: false}
   },
 
-  'ai-integration': {
+  'a2a-ai-hub': {
     port: 11434,
     startCmd: 'python scripts/ensure-providers-config.py && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port 11434',
     cwd: 'a2a-ai-hub',
     healthEndpoint: '/health',
     dependencies: ['runbook-status'],
-    logfile: path.join(__dirname, '..', 'logs', 'ai-integration.log')
+    logfile: path.join(__dirname, '..', 'logs', 'a2a-ai-hub.log')
   },
   'a2a-server': {
     port: 3000,
     startCmd: 'npm run dev:no-auth',
     cwd: 'a2a-server',
     healthEndpoint: '/health',
-    dependencies: ['ai-integration'],
+    dependencies: ['a2a-ai-hub'],
     logfile: path.join(__dirname, '..', 'a2a-server', 'logs', 'server.log')
   },
-  'client-api': {
-    port: 3001,
-    startCmd: 'npx cross-env PORT=3001 WS_PORT=3002 SKIP_AUTH=1 tsx watch src/server/index.ts',
-    cwd: path.join('a2a-client', 'packages', 'sdk'),
-    healthEndpoint: '/api/a2a/projects',
-    dependencies: ['a2a-server'],
-    logfile: path.join(__dirname, '..', 'a2a-client', 'logs', 'client-api.log')
-  },
-  'web-ui': {
-    port: 5173,
-    startCmd: 'npx vite --port 5173',
-    cwd: 'a2a-client',
-    healthEndpoint: '/api/a2a/projects',
-    dependencies: ['client-api'],
-    logfile: path.join(__dirname, '..', 'a2a-client', 'logs', 'web-ui.log')
-  }
+   'client-api': {
+     port: 3001,
+     startCmd: 'npx tsx src/server/index.ts',
+     cwd: path.join('a2a-client', 'packages', 'sdk'),
+     healthEndpoint: '/api/a2a/projects',
+     dependencies: ['a2a-server'],
+     logfile: path.join(__dirname, '..', 'a2a-client', 'logs', 'client-api.log')
+   },
+   'web-ui': {
+     port: 5173,
+     startCmd: 'npm run dev',
+     cwd: 'a2a-client',
+     healthEndpoint: '/api/a2a/projects',
+     dependencies: ['client-api'],
+     logfile: path.join(__dirname, '..', 'a2a-client', 'logs', 'web-ui.log')
+   }
 };
 
 const PID_FILE = path.join(__dirname, '..', '.pids.txt');

@@ -1,4 +1,4 @@
-# DEV_STATE — ai-integration (2026-04-07)
+# DEV_STATE — a2a-ai-hub (2026-04-07)
 
 **Rules Q&A:** [`../docs/PROJECT-RULES-QA.md`](../docs/PROJECT-RULES-QA.md) · [`../AGENTS.md`](../AGENTS.md)
 
@@ -41,7 +41,7 @@ curl http://localhost:11435/api/tags
 ## Verify
 
 ```bash
-cd ai-integration && pytest
+cd a2a-ai-hub && pytest
 ```
 
 **Promise queue:** `tests/conftest.py` stops the in-process hub daemon between tests; `pytest tests/test_promise_queue_semantics.py` covers pending vs error + `/promises/errors`.

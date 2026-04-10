@@ -1,4 +1,4 @@
-# AGENTS instructions for ai-integration
+# AGENTS instructions for a2a-ai-hub
 Поддерживайте прозрачный, итеративный режим изучения и доработки проекта, организуя работу через следующие секции.
 
 ## Текущее состояние

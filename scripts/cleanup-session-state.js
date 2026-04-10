@@ -9,7 +9,7 @@
  *
  * Clears: **all** client session trees under `a2a-client/storage/sessions/*` (no age-based pruning),
  * hub proxy logs, in-flight promise snapshots, server request snapshots.
- * Intentionally skipped: `ai-integration/storage/cache` (LLM disk cache) — keep commented out.
+ * Intentionally skipped: `a2a-ai-hub/storage/cache` (LLM disk cache) — keep commented out.
  *
  * Flags:
  *   --fresh          Also remove Task Monitor JSON (`task-monitor-state.json` + completed ledger); then same dirs as default.
@@ -84,9 +84,9 @@ async function main() {
 
   const allTargets = [
     'a2a-client/storage/sessions',
-    'ai-integration/proxy_logs',
+    'a2a-ai-hub/proxy_logs',
     'proxy_logs',
-    'ai-integration/storage/promises',
+    'a2a-ai-hub/storage/promises',
     'a2a-server/storage/requests',
   ];
   const targets = sessionsOnly ? ['a2a-client/storage/sessions'] : allTargets;

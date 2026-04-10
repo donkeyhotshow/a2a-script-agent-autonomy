@@ -1,4 +1,4 @@
-# ai-integration — background daemon
+# a2a-ai-hub — background daemon
 
 | Module | Responsibility |
 |--------|------------------|
