@@ -1,0 +1,10 @@
+{
+  "projectId": "proj-orch-001",
+  "sessionId": "sess-orch-001",
+  "result": {
+    "read-file": {
+      "path": "docs/adr/ADR-0027-documentation-canonical-sources.md",
+      "content": "ADR-0027 canonical map summary: status accepted 2026-03-24, links protocol and simulation docs."
+    }
+  }
+}

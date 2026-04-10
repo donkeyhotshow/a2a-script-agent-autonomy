@@ -1,0 +1,16 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "render-markdown",
+      "templateRef": "simulations/task-decomposition/4/request.md",
+      "data": "$out",
+      "outputFile": "request.md"
+    }
+  ]
+}

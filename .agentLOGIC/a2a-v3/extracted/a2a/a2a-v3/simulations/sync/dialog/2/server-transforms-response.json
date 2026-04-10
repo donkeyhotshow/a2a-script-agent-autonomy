@@ -1,0 +1,16 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "parse-json-from-md",
+      "fromFile": "response.md",
+      "jsonPath": "$",
+      "to": "$rankedIds"
+    },
+    {
+      "op": "set",
+      "path": "$.execute.form.choices",
+      "value": "$rankedIds"
+    }
+  ]
+}

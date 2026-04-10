@@ -1,0 +1,177 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://a2a-script-agent/new-request-flow/json-schemas/web-client-api-response.schema.json",
+  "title": "Client API → Web Response",
+  "description": "Response body from Client API to Web UI (port 3001). Mirrors server responses with session context.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sessionId", "status", "context"],
+  "properties": {
+    "sessionId": {
+      "type": "string",
+      "description": "Session identifier (sess_xxx)."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "ready", "in_progress", "waiting_confirmation", "completed", "error", "cancelled"],
+      "description": "Current session status."
+    },
+    "context": {
+      "type": "object",
+      "description": "Execution context to be echoed back in next request.",
+      "required": ["task"],
+      "properties": {
+        "task": { "type": "string" },
+        "execution": {
+          "type": "object",
+          "properties": {
+            "action": { "type": "string" },
+            "step": { "type": "string" },
+            "status": { "type": "string", "enum": ["completed"] }
+          }
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "role": { "type": "string" },
+              "message": { "type": "string" }
+            }
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "execute": {
+      "type": "object",
+      "description": "Commands for client or web UI (action-key shape).",
+      "properties": {
+        "form": {
+          "type": "object",
+          "properties": {
+            "title": { "type": "string" },
+            "choices": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "required": ["id", "label"],
+                "properties": {
+                  "id": { "type": "string" },
+                  "label": { "type": "string" }
+                }
+              }
+            },
+            "input": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "type": { "type": "string" },
+                  "label": { "type": "string" },
+                  "placeholder": { "type": "string" },
+                  "required": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "message": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "object" }
+          ]
+        },
+        "script": {
+          "type": "object",
+          "properties": {
+            "input": { "type": "object" },
+            "output": { "type": "string" },
+            "code": { "type": "string" }
+          }
+        },
+        "read-file": {
+          "type": "object",
+          "properties": {
+            "path": { "type": "string" }
+          }
+        },
+        "write-file": {
+          "type": "object",
+          "properties": {
+            "path": { "type": "string" },
+            "content": { "type": "string" }
+          }
+        },
+        "rag-search": {
+          "type": "object",
+          "properties": {
+            "query": { "type": "string" }
+          }
+        },
+        "execute-command": {
+          "type": "object",
+          "properties": {
+            "command": { "type": "string" }
+          }
+        },
+        "list-directory": {
+          "type": "object",
+          "properties": {
+            "path": { "type": "string" }
+          }
+        },
+        "grep-search": {
+          "type": "object",
+          "properties": {
+            "pattern": { "type": "string" },
+            "path": { "type": "string" }
+          }
+        }
+      },
+      "additionalProperties": true
+    },
+    "actions": {
+      "type": "array",
+      "description": "Legacy: list of available actions (prefer execute.form.choices).",
+      "items": {
+        "type": "object",
+        "properties": {
+          "action": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "priority": { "type": "number" },
+          "matchScore": { "type": "number" }
+        }
+      }
+    },
+    "fallbackActions": {
+      "type": "array",
+      "description": "Legacy: fallback action options.",
+      "items": {
+        "type": "object",
+        "properties": {
+          "mode": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "fallbackType": { "type": "string" }
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "description": "Optional top-level result for final step (e.g. completed flag, action-key payloads).",
+      "additionalProperties": true
+    },
+    "error": {
+      "type": "object",
+      "description": "Error details (present on error status).",
+      "properties": {
+        "code": { "type": "string" },
+        "message": { "type": "string" },
+        "details": { "type": "object" }
+      }
+    }
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "title": "Готово! Виправлено 50 файлів",
+      "choices": [
+        {
+          "id": "done",
+          "label": "OK"
+        }
+      ]
+    }
+  },
+  "result": {
+    "completed": true,
+    "fixed_count": 50
+  }
+}

@@ -1,0 +1,211 @@
+#!/usr/bin/env tsx
+
+/**
+ * Скрипт для запуска всех симуляций в директории
+ *
+ * Использование:
+ *   npx tsx scripts/run-all-simulations.ts <simulations-dir>
+ *
+ * Пример:
+ *   npx tsx scripts/run-all-simulations.ts ../simulations/dialog
+ *
+ * Результат:
+ *   - Находит все папки с request.json
+ *   - Запускает каждую симуляцию
+ *   - Сохраняет ответы в invoke-capture.json (не golden)
+ */
+
+import {readFileSync, writeFileSync, existsSync, readdirSync, statSync} from 'node:fs';
+import {join} from 'node:path';
+import type {InvokeInput} from '../src/services/utils/invoke.service.js';
+
+const simBaseDir = process.argv[2];
+if (!simBaseDir) {
+    console.error('Usage: npx tsx scripts/run-all-simulations.ts <simulations-dir>');
+    console.error('Example: npx tsx scripts/run-all-simulations.ts ../simulations/dialog');
+    process.exit(1);
+}
+
+console.log(`\n🔄 Running all simulations in: ${simBaseDir}\n`);
+
+// Найти все папки с request.json
+function findSimulationDirs(baseDir: string): string[] {
+    const dirs: string[] = [];
+
+    try {
+        const entries = readdirSync(baseDir);
+
+        for (const entry of entries) {
+            const fullPath = join(baseDir, entry);
+            const stat = statSync(fullPath);
+
+            if (stat.isDirectory()) {
+                const requestPath = join(fullPath, 'request.json');
+                if (existsSync(requestPath)) {
+                    dirs.push(fullPath);
+                } else {
+                    // Рекурсивно ищем в подпапках
+                    const subDirs = findSimulationDirs(fullPath);
+                    dirs.push(...subDirs);
+                }
+            }
+        }
+    } catch (err: any) {
+        console.error(`Error reading directory: ${err.message}`);
+    }
+
+    // Сортируем по имени
+    return dirs.sort();
+}
+
+const simDirs = findSimulationDirs(simBaseDir);
+
+if (simDirs.length === 0) {
+    console.error('❌ No simulations found');
+    process.exit(1);
+}
+
+console.log(`📊 Found ${simDirs.length} simulations:\n`);
+simDirs.forEach((dir, i) => {
+    console.log(`   ${i + 1}. ${dir}`);
+});
+console.log('');
+
+// Вызываем серверный код напрямую
+async function runAllSimulations() {
+    const {invoke} = await import('../src/services/utils/invoke.service.js');
+    const {requestService} = await import('../src/services/core/request/request.service.js');
+    const {actionRegistry} = await import('../src/actions/action-registry.js');
+    try {
+        await actionRegistry.loadFromDirectory();
+        console.log(`[ActionRegistry] Loaded ${actionRegistry.count} actions\n`);
+    } catch (e) {
+        console.warn('[ActionRegistry] load failed — router may use static choices only\n', e);
+    }
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < simDirs.length; i++) {
+        const simDir = simDirs[i];
+        const requestPath = join(simDir, 'request.json');
+        const responsePath = join(simDir, 'invoke-capture.json');
+
+        console.log(`\n[${i + 1}/${simDirs.length}] 📁 ${simDir}`);
+
+        // Читаем request.json
+        let requestData: any;
+        try {
+            const requestContent = readFileSync(requestPath, 'utf-8');
+            requestData = JSON.parse(requestContent);
+        } catch (err: any) {
+            console.error(`   ❌ Error reading request.json: ${err.message}`);
+            failCount++;
+            continue;
+        }
+
+        // Разные форматы запросов
+        const message = requestData.task ||
+            requestData.message ||
+            requestData.context?.task ||
+            requestData.context?.message ||
+            'N/A';
+
+        // Контекст - базовый формат
+        const context = requestData.context?.version
+            ? requestData.context
+            : {
+                version: '1.0',
+                session_id: 'stateless',
+                ...requestData.context
+            };
+
+        console.log(`   📝 Task: ${message}`);
+        console.log(`   📝 Action: ${requestData.action || 'N/A'}`);
+
+        try {
+            const invokeInput: Record<string, unknown> = {context};
+            if (requestData.task) invokeInput.task = requestData.task;
+            else if (requestData.message) invokeInput.message = requestData.message;
+            if (requestData.action) invokeInput.action = requestData.action;
+            if (requestData.selectedAction) invokeInput.selectedAction = requestData.selectedAction;
+            if (requestData.result && typeof requestData.result === 'object') {
+                if (requestData.stepId) {
+                    invokeInput.stepId = requestData.stepId;
+                    invokeInput.stepResult = requestData.result;
+                } else {
+                    invokeInput.result = requestData.result;
+                }
+            }
+
+            const {promiseId} = await invoke('simulation-client', invokeInput as InvokeInput);
+
+            console.log(`   🔄 Promise ID: ${promiseId}`);
+
+            // Ждем результат (polling)
+            let result = null;
+            const maxAttempts = 60;
+            const delay = 500;
+
+            for (let attempt = 0; attempt < maxAttempts; attempt++) {
+                await new Promise(resolve => setTimeout(resolve, delay));
+
+                result = await requestService.getResult(promiseId);
+
+                if (result && result.status === 'completed') {
+                    console.log(`   ✅ Status: completed (attempt ${attempt + 1})`);
+                    break;
+                }
+            }
+
+            if (!result) {
+                console.error('   ❌ No result after timeout');
+                failCount++;
+                continue;
+            }
+
+            // Форматируем даты
+            const formatDate = (d: any) => d?.toISOString ? d.toISOString() : d;
+
+            // Формируем ответ
+            const response = {
+                success: result.status === 'completed',
+                data: {
+                    id: result.id,
+                    promiseId: result.promiseId,
+                    clientId: result.clientId,
+                    status: result.status,
+                    priority: result.priority,
+                    context: result.context,
+                    message: result.message,
+                    codeBlocks: result.codeBlocks,
+                    result: result.result,
+                    error: result.error,
+                    createdAt: formatDate(result.createdAt),
+                    startedAt: formatDate(result.startedAt),
+                    completedAt: formatDate(result.completedAt),
+                }
+            };
+
+            // Сохраняем с отступами
+            writeFileSync(responsePath, JSON.stringify(response, null, 2));
+            console.log(`   💾 Saved to: ${responsePath}`);
+            console.log(`   📊 Outcome: ${result.result?.['outcome'] || 'N/A'}`);
+
+            successCount++;
+
+        } catch (err: any) {
+            console.error(`   ❌ Error: ${err.message}`);
+            failCount++;
+        }
+
+        // Небольшая пауза между симуляциями
+        await new Promise(resolve => setTimeout(resolve, 200));
+    }
+
+    console.log('\n' + '='.repeat(50));
+    console.log(`📈 Results: ${successCount} success, ${failCount} failed`);
+    console.log('='.repeat(50) + '\n');
+}
+
+runAllSimulations();

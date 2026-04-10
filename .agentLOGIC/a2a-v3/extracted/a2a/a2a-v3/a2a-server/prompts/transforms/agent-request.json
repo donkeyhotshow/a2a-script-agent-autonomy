@@ -1,0 +1,77 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "switch",
+      "discriminator": "$.context.execution.step",
+      "cases": {
+        "plan": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history", "workbench"]
+        },
+        "analyze": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history", "workbench", "scratchpad"]
+        },
+        "execute": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history", "scratchpad", "files", "workbench"]
+        },
+        "review": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history", "scratchpad", "files", "workbench"]
+        },
+        "dialog": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history", "workbench"]
+        },
+        "completed": {
+          "op": "pick-context",
+          "include": ["execution", "task", "history", "workbench"]
+        }
+      },
+      "default": {
+        "op": "pick-context",
+        "include": ["execution", "task", "history", "workbench", "scratchpad"]
+      }
+    },
+    {
+      "op": "switch",
+      "discriminator": "$.context.execution.step",
+      "cases": {
+        "execute": {
+          "op": "summarize-files",
+          "maxLines": 60
+        },
+        "review": {
+          "op": "summarize-files",
+          "maxLines": 120
+        },
+        "analyze": {
+          "op": "summarize-files",
+          "maxLines": 120
+        }
+      },
+      "default": {
+        "op": "drop",
+        "path": "$.context.files"
+      }
+    },
+    {
+      "op": "truncate-section",
+      "path": "context.workbench.sections",
+      "maxChars": 12000
+    },
+    {
+      "op": "render-markdown",
+      "templateRef": "a2a-server/prompts/{{TEMPLATE_NAME}}",
+      "data": "$out",
+      "outputFile": "request.md"
+    }
+  ]
+}

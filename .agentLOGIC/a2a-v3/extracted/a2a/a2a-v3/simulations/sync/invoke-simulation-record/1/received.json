@@ -1,0 +1,7 @@
+{
+  "projectId": "golden-sim",
+  "sessionId": "sess-sim-1",
+  "execute": {
+    "message": "Started simulation: invoke-simulation-record"
+  }
+}

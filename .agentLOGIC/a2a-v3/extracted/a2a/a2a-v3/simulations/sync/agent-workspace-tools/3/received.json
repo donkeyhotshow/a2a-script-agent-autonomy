@@ -1,0 +1,10 @@
+{
+  "projectId": "golden-wt",
+  "sessionId": "sess-wt-1",
+  "execute": {
+    "message": "Applying patch…",
+    "attachments": {
+      "editPatchPath": "src/main.ts"
+    }
+  }
+}

@@ -1,0 +1,202 @@
+/* A2A Script Agent — App-level styles */
+/* Design tokens and keyframes are in components/base.css */
+
+@import url('./components/base.css');
+
+/* ── Modal Overlay ──────────────────────────────────────────── */
+.modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 10, 15, 0.8);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-xl);
+  animation: fade-in 0.2s ease;
+}
+
+.modal.active,
+.modal.show {
+  display: flex !important;
+}
+
+/* ── Modal Content ──────────────────────────────────────────── */
+.modal-content {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-lg), var(--shadow-glow);
+  max-width: 520px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  animation: slide-up 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.modal-content.modal-large { max-width: 800px; }
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-lg) var(--space-xl);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.modal-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  letter-spacing: -0.3px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.modal-close:hover {
+  color: var(--color-text-primary);
+  background: var(--color-bg-hover);
+}
+
+.modal-body {
+  padding: var(--space-xl);
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-xl);
+  border-top: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* ── Projects Toolbar ───────────────────────────────────────── */
+.projects-toolbar {
+  margin-bottom: var(--space-lg);
+}
+
+/* ── Session Context Menu ───────────────────────────────────── */
+.session-context-menu {
+  position: fixed;
+  background: var(--surface, #1e1e2e);
+  border: 1px solid var(--border, #313244);
+  border-radius: 4px;
+  padding: 4px 0;
+  z-index: 10000;
+  min-width: 120px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  display: none;
+}
+
+.session-context-menu.visible {
+  display: block;
+}
+
+.context-menu-item {
+  padding: 8px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary, #cdd6f4);
+}
+
+.context-menu-item:hover {
+  background: var(--surface-light, #252536);
+}
+
+/* ── Taskbar ───────────────────────────────────────────────────── */
+.taskbar-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  gap: 4px;
+}
+
+.taskbar-sessions-wrapper {
+  flex: 1;
+  overflow: hidden;
+  height: 100%;
+}
+
+/* ── Floating Window (Panel) ─────────────────────────────────── */
+.pui-panel {
+  position: fixed;
+  background: var(--bg-primary, #1e1e1e);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.pui-panel.expanded {
+  /* expanded state */
+}
+
+.pui-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: var(--bg-secondary, #252526);
+  border-bottom: 1px solid var(--border-color, #333);
+  cursor: move;
+  user-select: none;
+}
+
+.pui-panel-title {
+  font-weight: 500;
+  color: var(--text-primary, #fff);
+}
+
+.pui-panel-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  font-size: 18px;
+  padding: 0 4px;
+}
+
+.pui-panel-content {
+  flex: 1;
+  overflow: auto;
+  padding: 12px;
+}
+
+/* ── Offscreen Indicator ─────────────────────────────────────── */
+.offscreen-indicator {
+  position: absolute;
+  z-index: 100;
+  cursor: pointer;
+}
+
+.offscreen-indicator.offscreen-left {
+  left: 0;
+}
+
+.offscreen-indicator.offscreen-right {
+  right: 0;
+}

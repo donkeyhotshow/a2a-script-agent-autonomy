@@ -1,0 +1,11 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "script": {
+      "broken_imports_count": 50,
+      "files_saved_locally": true,
+      "message": "Знайдено 50 файлів з зламаними імпортами. Зберігаю список локально для покрокової обробки."
+    }
+  }
+}

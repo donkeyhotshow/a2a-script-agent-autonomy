@@ -1,0 +1,29 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "fix-vue-imports",
+        "step": "vue-import-escalate",
+        "status": "completed"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.result",
+      "value": {
+        "completed": true,
+        "action": "fix-vue-imports",
+        "handoff_mode": "coder",
+        "unresolved_count": 2
+      }
+    }
+  ]
+}

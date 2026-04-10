@@ -1,0 +1,40 @@
+{
+  "context": {
+    "task": "диалог",
+    "workbench": {
+      "sections": {}
+    },
+    "execution": {
+      "action": "dialog",
+      "step": "completed"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "hello world"
+      },
+      {
+        "role": "assistant",
+        "message": "hello world"
+      },
+      {
+        "role": "user",
+        "message": "Дякую!"
+      }
+    ]
+  },
+  "execute": {
+    "form": {
+      "title": "Будь ласка!",
+      "description": "Звертайся ще, коли знадобиться допомога.",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  }
+}

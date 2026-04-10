@@ -1,0 +1,23 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.task",
+      "valueFrom": "$.task"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "task",
+        "step": "router"
+      }
+    }
+  ]
+}

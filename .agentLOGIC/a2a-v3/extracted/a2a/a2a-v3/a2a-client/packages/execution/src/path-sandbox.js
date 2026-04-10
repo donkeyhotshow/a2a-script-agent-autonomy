@@ -1,0 +1,20 @@
+import path from 'node:path';
+
+/**
+ * Resolve a relative path under a project root; reject traversal outside the root.
+ * @param {string} projectPath
+ * @param {string} rel
+ * @returns {string|null} absolute path or null
+ */
+export function resolveUnderProjectRoot(projectPath, rel) {
+    if (typeof rel !== 'string' || !rel.trim()) {
+        return null;
+    }
+    const root = path.resolve(projectPath);
+    const abs = path.resolve(root, rel);
+    const normRoot = root.endsWith(path.sep) ? root : root + path.sep;
+    if (abs !== root && !abs.startsWith(normRoot)) {
+        return null;
+    }
+    return abs;
+}

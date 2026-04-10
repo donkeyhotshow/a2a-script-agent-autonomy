@@ -1,0 +1,18 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "result": {
+    "rag-search": {
+      "results": [
+        {
+          "file": "resources/js/utils/helpers.js",
+          "score": 0.92,
+          "snippet": "export { helper, formatDate }"
+        }
+      ],
+      "files": [
+        "resources/js/utils/helpers.js"
+      ]
+    }
+  }
+}

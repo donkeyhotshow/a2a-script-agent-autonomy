@@ -1,0 +1,64 @@
+{
+  "context": {
+    "task": "Golden: resilience contract (paginated RAG drain, read-file queue, human gate).",
+    "execution": {
+      "action": "agent",
+      "step": "read_queue"
+    },
+    "workbench": {
+      "sections": {}
+    },
+    "files": {
+      "pkg/a.md": "# A\nfirst chunk\n",
+      "pkg/b.md": "# B\nsecond chunk\n"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Golden: resilience contract (paginated RAG drain, read-file queue, human gate)."
+      },
+      {
+        "role": "assistant",
+        "step": "human_gate",
+        "message": "Confirmed: starting paginated RAG (page 1)."
+      },
+      {
+        "role": "system",
+        "message": "RAG page 1: docs/RAG.md, docs/OPS.md (hasMore true)"
+      },
+      {
+        "role": "assistant",
+        "step": "rag_drain",
+        "message": "Draining RAG page 2 (final page)."
+      },
+      {
+        "role": "system",
+        "message": "RAG page 2: docs/TAIL.md (hasMore false)"
+      },
+      {
+        "role": "assistant",
+        "step": "read_queue",
+        "message": "RAG drain complete; reading pkg/a.md first."
+      },
+      {
+        "role": "system",
+        "message": "Read pkg/a.md (6 lines)"
+      },
+      {
+        "role": "assistant",
+        "step": "read_queue",
+        "message": "Queueing pkg/b.md."
+      },
+      {
+        "role": "system",
+        "message": "Read pkg/b.md (6 lines)"
+      }
+    ]
+  },
+  "result": {
+    "read-file": {
+      "path": "pkg/b.md",
+      "content": "# B\nsecond chunk\n"
+    }
+  }
+}

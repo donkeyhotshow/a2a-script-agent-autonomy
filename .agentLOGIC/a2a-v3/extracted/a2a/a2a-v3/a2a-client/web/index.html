@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A2A Script Agent - Task</title>
+    <base id="app-base" href="/">
+    <script>
+        (function () {
+            var path = location.pathname.replace(/\/index\.html$/i, '').replace(/\/$/, '') || '';
+            if (path) document.getElementById('app-base').href = path + '/';
+        })();
+    </script>
+    <link rel="stylesheet" href="css/app.css">
+    <link rel="stylesheet" href="css/components/floating-panel.css">
+    <link rel="stylesheet" href="css/components/notifications.css">
+    <link rel="stylesheet" href="css/components/projects.css">
+    <link rel="stylesheet" href="css/components/error-handler.css">
+    <link rel="stylesheet" href="css/components/terminal.css">
+    <link rel="stylesheet" href="css/components/storage.css">
+    <link rel="stylesheet" href="css/components/taskbar.css">
+    <link rel="stylesheet" href="css/components/session-window.css">
+    <link rel="stylesheet" href="css/components/task-flow.css">
+    <link rel="stylesheet" href="css/components/modal-utils.css">
+</head>
+<body>
+<div id="app" class="app-container">
+    <div id="header-container"></div>
+    <main class="app-main" role="main">
+        <p class="app-main-hint">Enter a task above and click Send. Result appears in the panel.</p>
+
+    </main>
+
+</div>
+
+<!-- Settings Modal -->
+<div id="settingsModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Settings</h2>
+            <button type="button" class="modal-close" id="closeSettingsModal" aria-label="Close settings">&times;</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="settingsApiUrl">Client API URL</label>
+                <input type="text" id="settingsApiUrl" value="/api" placeholder="/api or http://localhost:3001/api" class="form-input" autocomplete="off" />
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="cancelSettings">Cancel</button>
+            <button type="button" class="btn btn-primary" id="saveSettings">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Chain Status Modal -->
+<div id="chainStatusModal" class="modal" style="display: none;">
+    <div class="modal-content modal-large">
+        <div class="modal-header">
+            <h2>System Chain Status</h2>
+            <button type="button" class="modal-close" id="closeChainStatusModal" aria-label="Close system status">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p class="chain-status-intro">Snapshot of the critical subsystems that keep the agent chain responsive.</p>
+            <div class="chain-status-grid" id="chainStatusList" role="list"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" id="refreshChainStatus">Refresh</button>
+            <button type="button" class="btn btn-secondary" id="cancelChainStatus">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Notifications -->
+<div id="notificationsPanel" class="notifications-panel" style="display: none;">
+    <div class="notifications-header">
+        <span>Notifications</span>
+        <button type="button" id="clearNotifications" aria-label="Clear notifications">&times;</button>
+    </div>
+    <div class="notifications-list" id="notificationsList"></div>
+</div>
+
+<!-- ===== New Unified Architecture ===== -->
+
+<!-- Shared fetch/session helpers (must run before deferred api-integration.js) -->
+<script type="module" src="../shared/api-helpers.js"></script>
+
+<!-- 0. Storage API -->
+<script src="js/storage.js"></script>
+<script src="js/active-session-storage.js"></script>
+
+<!-- 0.5 Web daemons (before session-store) -->
+<script src="js/daemons/emitter.js"></script>
+<script src="js/daemons/dialog-loader.js"></script>
+<script src="js/daemons/dialog-promise-poll.js"></script>
+
+<!-- SessionStore stack: classic deps first; module installs Normalizers; defer runs after so new SessionStore() sees Normalizers -->
+<script src="js/html-utils.js"></script>
+<script src="js/session-data.js"></script>
+<!-- apiIntegration is loaded via defer script below -->
+<script type="module" src="js/install-normalizers.mjs"></script>
+<script defer src="js/session-store.js"></script>
+<script defer src="js/session-store-resolver.js"></script>
+<script defer src="js/task-flow/utils.js"></script>
+
+<!-- 4. Simplified Panel System -->
+
+
+<!-- 6. CLI Command Handler -->
+
+<!-- ===== Application Modules ===== -->
+<script defer src="js/template-loader.js"></script>
+<script defer src="js/api-integration.js"></script>
+<script defer src="js/client-action-runner.js"></script>
+<script defer src="js/action-executor.js"></script>
+<script defer src="js/error-handler-telemetry.js"></script>
+<script defer src="js/error-handler-recovery.js"></script>
+<script defer src="js/error-handler-ui.js"></script>
+<script defer src="js/error-handler.js?v=4"></script>
+<!-- Modular TaskFlow -->
+<script defer src="js/task-flow/render-utils.js"></script>
+<script defer src="js/task-flow/render-blocks.js"></script>
+<script defer src="js/task-flow/render-form.js"></script>
+<script defer src="js/task-flow/render-layout.js"></script>
+<script defer src="js/task-flow/render.js"></script>
+<script defer src="js/task-flow/loader.js"></script>
+<script defer src="js/task-flow/panel-gateway.js"></script>
+<script defer src="js/task-flow/tasks.js"></script>
+<script defer src="js/task-flow/messages.js"></script>
+<script defer src="js/task-flow/init.js"></script>
+<script defer src="js/task-flow/index.js"></script>
+<script defer src="js/resolve-web-script-url.js"></script>
+<script defer src="js/app-task.js"></script>
+
+<script>
+    // Canonical startup owner: js/app-task.js -> js/app/initialization.js
+    window.FORCE_SESSION_STORE = true;
+</script>
+</body>
+</html>

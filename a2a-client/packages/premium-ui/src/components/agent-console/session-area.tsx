@@ -1,11 +1,11 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import { getSession, getMessages, type SessionPhase } from "@/lib/mock-data";
 import SessionHeader from "./session-header";
 import SessionPhaseStrip from "./session-phase-strip";
 import MessageList from "./message-list";
-import Composer from "./composer";
+import Composer, { type ProviderConfig } from "./composer";
 import PreflightView from "./preflight-view";
 import ValidationView from "./validation-view";
 
@@ -55,6 +55,21 @@ export default function SessionArea({
     );
   }
 
+  const handleSubmit = (message: string, providerConfig: ProviderConfig) => {
+    // Pass llmModel to session creation via Client API
+    const llmModel =
+      providerConfig.provider === "groq"
+        ? providerConfig.groqModel
+        : providerConfig.ollamaModel;
+
+    console.log("[Composer] submit", { message, provider: providerConfig.provider, llmModel });
+
+    if (runPreflight) {
+      setPreflightOpen(true);
+    }
+    // TODO: wire to POST /api/a2a/sessions with { mode: "agent", task: message, llmModel }
+  };
+
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Top header */}
@@ -84,11 +99,7 @@ export default function SessionArea({
         <Composer
           onPreflightToggle={setRunPreflight}
           preflightEnabled={runPreflight}
-          onSubmit={(message) => {
-            if (runPreflight) {
-              setPreflightOpen(true);
-            }
-          }}
+          onSubmit={handleSubmit}
         />
       </div>
 
@@ -96,30 +107,18 @@ export default function SessionArea({
       {preflightOpen && (
         <PreflightView
           sessionId={selectedSession}
-          onApprove={() => {
-            setPreflightOpen(false);
-          }}
-          onSkip={() => {
-            setPreflightOpen(false);
-          }}
-          onClose={() => {
-            setPreflightOpen(false);
-          }}
+          onApprove={() => setPreflightOpen(false)}
+          onSkip={() => setPreflightOpen(false)}
+          onClose={() => setPreflightOpen(false)}
         />
       )}
 
       {validationOpen && (
         <ValidationView
           sessionId={selectedSession}
-          onApprove={() => {
-            setValidationOpen(false);
-          }}
-          onReject={() => {
-            setValidationOpen(false);
-          }}
-          onClose={() => {
-            setValidationOpen(false);
-          }}
+          onApprove={() => setValidationOpen(false)}
+          onReject={() => setValidationOpen(false)}
+          onClose={() => setValidationOpen(false)}
         />
       )}
     </div>

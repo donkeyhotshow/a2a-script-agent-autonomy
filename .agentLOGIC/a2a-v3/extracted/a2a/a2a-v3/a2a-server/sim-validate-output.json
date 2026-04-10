@@ -1,0 +1,1057 @@
+﻿
+> a2a-server@1.0.0 sim:validate
+> tsx scripts/sim-validate.ts --all --json
+
+{
+  "valid": true,
+  "structuralValid": true,
+  "contractComplete": false,
+  "warningCount": 380,
+  "simulations": [
+    {
+      "name": "sync/agent/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-analyze/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-analyze\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-analyze/2",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-analyze\\2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-analyze/3",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-analyze\\3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-analyze/4",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-analyze\\4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-analyze/5",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-analyze\\5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-analyze/6",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-analyze\\6",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-analyze/7",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-analyze\\7",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-analyze/8",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-analyze\\8",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-auto-ai/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-auto-ai\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-auto-ai/2",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-auto-ai\\2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-auto-ai/3",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-auto-ai\\3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-auto-ai/4",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-auto-ai\\4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-auto-ai/5",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-auto-ai\\5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-auto-ai/6",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-auto-ai\\6",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-auto-ai/7",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-auto-ai\\7",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder/10",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder\\10",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder/2",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder\\2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder/3",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder\\3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder/4",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder\\4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder/5",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder\\5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder/6",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder\\6",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder/7",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder\\7",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder/8",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder\\8",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder/9",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder\\9",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder-smart/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder-smart\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder-smart/2",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder-smart\\2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder-smart/3",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder-smart\\3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder-smart/4",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder-smart\\4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder-smart/5",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder-smart\\5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder-smart/6",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder-smart\\6",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder-smart/7",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder-smart\\7",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder-smart/8",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder-smart\\8",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-coder-smart/9",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-coder-smart\\9",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-workspace-tools/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-workspace-tools\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-workspace-tools/2",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-workspace-tools\\2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-workspace-tools/3",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-workspace-tools\\3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/agent-workspace-tools/4",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\agent-workspace-tools\\4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/dialog/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\dialog\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/dialog/2",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\dialog\\2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/dialog/3",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\dialog\\3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/dialog/4",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\dialog\\4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-laravel-namespaces-and-uses/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-laravel-namespaces-and-uses\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-laravel-namespaces-and-uses/2",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-laravel-namespaces-and-uses\\2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-laravel-namespaces-and-uses/3",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-laravel-namespaces-and-uses\\3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-laravel-namespaces-and-uses/4",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-laravel-namespaces-and-uses\\4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-laravel-namespaces-and-uses/5",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-laravel-namespaces-and-uses\\5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-laravel-namespaces-and-uses/6",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-laravel-namespaces-and-uses\\6",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports/2",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports\\2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports/3",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports\\3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports/4",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports\\4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports/5",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports\\5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports-batched/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports-batched\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports-batched/2",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports-batched\\2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports-batched/3",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports-batched\\3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports-batched/4",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports-batched\\4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports-batched/5",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports-batched\\5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports-batched/6",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports-batched\\6",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports-batched/7",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports-batched\\7",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports-batched/8",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports-batched\\8",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports-decline/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports-decline\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports-decline/2",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports-decline\\2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports-decline/3",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports-decline\\3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports-decline/4",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports-decline\\4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports-decline/5",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports-decline\\5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/fix-vue-imports-decline/6",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\fix-vue-imports-decline\\6",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/interrupt-thinking/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\interrupt-thinking\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/invoke-form-confirmation/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\invoke-form-confirmation\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/invoke-simulation-record/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\invoke-simulation-record\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/orchestrator-dialog/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\orchestrator-dialog\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/orchestrator-dialog/2",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\orchestrator-dialog\\2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/orchestrator-dialog/3",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\orchestrator-dialog\\3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/orchestrator-dialog/4",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\orchestrator-dialog\\4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/phpunit-deprecations/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\phpunit-deprecations\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/phpunit-deprecations/2",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\phpunit-deprecations\\2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/phpunit-deprecations/3",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\phpunit-deprecations\\3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/phpunit-deprecations/4",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\phpunit-deprecations\\4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/phpunit-deprecations/5",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\phpunit-deprecations\\5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/resilience-contract/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\resilience-contract\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/resilience-contract/2",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\resilience-contract\\2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/resilience-contract/3",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\resilience-contract\\3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/resilience-contract/4",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\resilience-contract\\4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/resilience-contract/5",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\resilience-contract\\5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/resilience-contract/6",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\resilience-contract\\6",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/task-decomposition/1",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\task-decomposition\\1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/task-decomposition/2",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\task-decomposition\\2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/task-decomposition/3",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\task-decomposition\\3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/task-decomposition/4",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\task-decomposition\\4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/task-decomposition/5",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\task-decomposition\\5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/task-decomposition/6",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\task-decomposition\\6",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/task-decomposition/7",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\task-decomposition\\7",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/task-decomposition/8",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\task-decomposition\\8",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: server-transforms-request.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation",
+        "server-transforms-response.json: server-transforms-response.json: AJV schema check skipped (lenient); use --strict for full server-transform.schema validation"
+      ],
+      "warningCount": 4
+    },
+    {
+      "name": "sync/task-decomposition/9",
+      "path": "C:\\workspace\\org-carrier\\a2a-script-agent\\simulations\\sync\\task-decomposition\\9",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "warningCount": 4
+    }
+  ]
+}

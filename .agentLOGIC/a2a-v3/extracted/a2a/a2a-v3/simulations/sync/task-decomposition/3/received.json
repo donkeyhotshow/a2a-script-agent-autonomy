@@ -1,0 +1,15 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "form": {
+      "input": [
+        {
+          "name": "proceed",
+          "type": "submit",
+          "label": "Generate subtasks"
+        }
+      ]
+    }
+  }
+}

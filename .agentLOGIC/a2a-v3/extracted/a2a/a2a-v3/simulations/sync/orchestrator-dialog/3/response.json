@@ -1,0 +1,27 @@
+{
+  "context": {
+    "task": "orchestrate ADR review",
+    "workbench": {
+      "sections": {}
+    },
+    "execution": {
+      "action": "orchestrator-dialog",
+      "step": "read-adr"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "Read ADR-0027 and tell me how to check documentation consistency across canonical sources."
+      },
+      {
+        "role": "assistant",
+        "message": "I will read ADR-0027 to capture the canonical documentation map before recommending audit steps."
+      }
+    ]
+  },
+  "execute": {
+    "read-file": {
+      "path": "docs/adr/ADR-0027-documentation-canonical-sources.md"
+    }
+  }
+}

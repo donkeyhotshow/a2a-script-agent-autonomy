@@ -41,6 +41,9 @@ import {repoMapService} from '../../context/repo-map.service.js';
 import {llmService} from '../../llm/llm-service.js';
 import {OrchestratorKernel} from '../orchestrator-kernel.js';
 import type {OrchestratorState, OrchestratorEvent} from '../orchestrator-kernel.js';
+import {globalSkillsRegistry} from '../../skills/skills-registry.js';
+import {OperationCostTracker} from '../operation-cost-tracker.js';
+import {formatTaskNotification} from '../coordinator-contract.js';
 
 const DEFAULT_AI_HUB = 'http://localhost:11434';
 
@@ -93,6 +96,15 @@ export class GrayRoomOrchestrator {
         // BUG-1 FIX: Declare FSM kernel and currentState (was missing, causing ReferenceError)
         const kernel = new OrchestratorKernel('EXECUTING', promiseId);
         let currentState: OrchestratorState = 'EXECUTING';
+
+        // --- OPENHARNESS INTEGRATION (Skills & Cost Tracking) ---
+        const costTracker = new OperationCostTracker();
+        const skill = globalSkillsRegistry.detectRelevantSkill((workingCtx['task'] as string) || '');
+        if (skill) {
+            logger.info('[GrayRoom] Relevant skill detected and injected', { skillName: skill.name });
+            workingCtx['skill_context'] = skill.content;
+        }
+        // --------------------------------------------------------
 
         const controller = new AbortController();
         GrayRoomOrchestrator.activeControllers.set(promiseId, controller);
@@ -517,6 +529,24 @@ export class GrayRoomOrchestrator {
                     rawOutput.context as Record<string, unknown> | undefined,
                     nextCtx
                 );
+
+                // --- OPENHARNESS INTEGRATION (Final Notification XML) ---
+                const costSummary = costTracker.summary;
+                const notification = formatTaskNotification({
+                    taskId: promiseId,
+                    status: 'completed',
+                    summary: `Task completed in ${turn} turns. ${costSummary.llmCallCount} LLM calls.`,
+                    result: (mergedInner['summary'] as string) || 'No explicit summary provided',
+                    usage: {
+                        totalTokens: costSummary.totalTokens,
+                        toolUses: turn, // Approximate
+                        llmCalls: costSummary.llmCallCount,
+                    }
+                });
+                mergedInner['task_notification_xml'] = notification;
+                mergedInner['cost_summary'] = costSummary;
+                // --------------------------------------------------------
+
                 const res: ProcessResult = {
                     outcome: 'completed',
                     context: mergedInner,
@@ -613,12 +643,21 @@ export class GrayRoomOrchestrator {
                 return;
             }
 
-            const nextMd = await pollReadyThenFetch(this.aiHubUrl, subLlmId);
-            if (!nextMd) {
+            const llmFetchResult = await pollReadyThenFetch(this.aiHubUrl, subLlmId);
+            if (!llmFetchResult) {
                 resolve({outcome: 'failed', error: 'LLM response fetch failed (gray room)'} as ProcessResult);
                 return;
             }
-            md = nextMd;
+            
+            // Record usage for cost tracking
+            costTracker.record({
+                inputTokens: llmFetchResult.usage?.input_tokens,
+                outputTokens: llmFetchResult.usage?.output_tokens,
+                model: llmFetchResult.model || llmModel,
+                phase: turn === 0 ? 'primary' : 'interrupt'
+            });
+
+            md = llmFetchResult.content;
             turn++;
             
             // -- INTENT GATE TURN COUNT (ADR-0050) --

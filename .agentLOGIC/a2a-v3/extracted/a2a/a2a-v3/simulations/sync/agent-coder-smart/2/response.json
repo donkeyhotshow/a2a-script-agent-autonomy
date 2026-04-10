@@ -1,0 +1,22 @@
+{
+  "context": {
+    "task": "створи задачу і виконай",
+    "execution": {
+      "action": "agent",
+      "step": "user-request"
+    },
+    "history": []
+  },
+  "execute": {
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  }
+}

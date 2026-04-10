@@ -9,6 +9,7 @@
  */
 
 import {EventEmitter} from 'events';
+import {evaluatePathRules, defaultPathRules} from './policy/path-rules.config.js';
 
 /**
  * Конфигурация безопасности для execute
@@ -231,6 +232,26 @@ export class ExecuteSecurityService extends EventEmitter {
             };
         }
 
+        return {allowed: true};
+    }
+
+    /**
+     * Checks a file path against path-level permission rules.
+     * Blocks writes to .env, node_modules, .git, and system paths.
+     * Inspired by OpenHarness PermissionChecker path_rules pattern.
+     */
+    checkFilePathSecurity(filePath: string): SecurityCheckResult {
+        if (!filePath || typeof filePath !== 'string') {
+            return {allowed: true};
+        }
+        const decision = evaluatePathRules(filePath, defaultPathRules);
+        if (!decision.allowed) {
+            return {
+                allowed: false,
+                error: `Write to protected path denied: ${decision.reason} (${filePath})`,
+                code: 'PROTECTED_PATH',
+            };
+        }
         return {allowed: true};
     }
 

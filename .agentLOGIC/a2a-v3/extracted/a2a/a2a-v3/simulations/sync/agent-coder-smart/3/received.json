@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Searching the codebase…",
+    "attachments": {
+      "ragQuery": "логінування API автентифікація тести"
+    }
+  }
+}

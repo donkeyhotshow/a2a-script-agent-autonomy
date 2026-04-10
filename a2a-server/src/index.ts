@@ -11,6 +11,8 @@ import {globalArtifactStore} from './services/core/artifact-store.js';
 import {llmService} from './services/llm/llm-service.js';
 import {ultraContextService} from './services/context/ultracontext.service.js';
 import {peerRelay} from './services/p2p/relay.js';
+import {globalSkillsRegistry} from './services/skills/skills-registry.js';
+import './services/core/hooks/security-guidance.hook.js';
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -23,6 +25,13 @@ async function bootstrap(): Promise<void> {
         logger.error('[Bootstrap] Action registry load failed — router will use empty registry / fallback', {
             error: err instanceof Error ? err.message : String(err),
         });
+    }
+
+    // Load available skills
+    try {
+        globalSkillsRegistry.load();
+    } catch (err) {
+        logger.warn('[Bootstrap] Skills failed to load', { error: String(err) });
     }
 
     try {

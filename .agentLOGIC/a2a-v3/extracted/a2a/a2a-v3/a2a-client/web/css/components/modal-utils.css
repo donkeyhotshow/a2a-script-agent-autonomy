@@ -1,0 +1,59 @@
+/* Modal and Popup Utilities */
+
+/* Base overlay/modal styles with proper visibility handling */
+.overlay,
+.popup,
+.dialog {
+  display: none;
+}
+
+/* Active states */
+.modal.active,
+.modal.show,
+.overlay.active,
+.overlay.show,
+.popup.active,
+.popup.show,
+.dialog.active,
+.dialog.show,
+.notifications-panel.active,
+.notifications-panel.show,
+.error-modal-overlay.active,
+.error-modal-overlay.show {
+  display: flex !important;
+}
+
+/* Modals are centered by default */
+.modal,
+.modal-overlay,
+.error-modal-overlay {
+  align-items: center;
+  justify-content: center;
+}
+
+/* Modal sizes */
+.modal-content.modal-small  { max-width: 360px; }
+.modal-content.modal-medium { max-width: 560px; }
+.modal-content.modal-large  { max-width: 800px; }
+.modal-content.modal-xl     { max-width: 1000px; }
+
+/* Popup/dropdown positioning */
+.popup              { position: absolute; z-index: 1000; }
+.popup.popup-top    { bottom: 100%; margin-bottom: 8px; }
+.popup.popup-bottom { top: 100%;    margin-top: 8px; }
+.popup.popup-left   { right: 100%;  margin-right: 8px; }
+.popup.popup-right  { left: 100%;   margin-left: 8px; }
+
+/* Toast container */
+.toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 10001;
+  pointer-events: none;
+}
+
+.toast-container .toast { pointer-events: auto; }

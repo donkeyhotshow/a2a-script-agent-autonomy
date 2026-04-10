@@ -1,0 +1,12 @@
+{
+  "context": {
+    "task": "знайти застарілі PHPUnit методи",
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  },
+  "result": {
+    "message": "знайти застарілі PHPUnit методи"
+  }
+}

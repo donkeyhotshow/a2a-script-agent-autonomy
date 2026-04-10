@@ -1,0 +1,237 @@
+# GitLab CI Integration for Unified Documentation Workflow
+stages:
+  - documentation-check
+  - documentation-workflow
+  - documentation-report
+
+variables:
+  NODE_VERSION: "18"
+  WORKFLOW_PRIORITY: "medium"
+
+# Documentation quality check stage
+documentation-check:
+  stage: documentation-check
+  image: node:$NODE_VERSION
+  before_script:
+    - npm ci
+  script:
+    - echo "🔍 Checking documentation quality..."
+    - node .clinerules/scripts/cli.js report
+    - node .clinerules/scripts/test-unified-workflow.js
+  only:
+    - main
+    - develop
+    - merge_requests
+  allow_failure: true
+
+# System validation stage
+validation:
+  stage: documentation-check
+  image: node:$NODE_VERSION
+  before_script:
+    - npm ci
+  script:
+    - echo "🔍 Running system validation..."
+    - node scripts/validate-system.js --lint
+  only:
+    - main
+    - develop
+    - merge_requests
+  allow_failure: true
+
+# Main documentation workflow stage
+documentation-workflow:
+  stage: documentation-workflow
+  image: node:$NODE_VERSION
+  before_script:
+    - npm ci
+  script:
+    - echo "🚀 Starting documentation workflow..."
+    - node .clinerules/scripts/workflow-engine.js --start --priority $WORKFLOW_PRIORITY
+    - echo "⏳ Monitoring workflow progress..."
+    
+    # Monitor workflow for up to 2 hours
+    - |
+      for i in {1..240}; do
+        STATUS=$(node .clinerules/scripts/workflow-engine.js --status --json 2>/dev/null)
+        if [ $? -eq 0 ]; then
+          CURRENT_PHASE=$(echo "$STATUS" | jq -r '.current_phase')
+          PROGRESS=$(echo "$STATUS" | jq -r '.progress_percentage')
+          echo "Progress: $PROGRESS% - Phase: $CURRENT_PHASE"
+      
+          if [ "$CURRENT_PHASE" = "completed" ]; then
+            echo "✅ Workflow completed successfully!"
+            break
+          fi
+        fi
+      
+        if [ $i -eq 240 ]; then
+          echo "❌ Workflow did not complete within 2 hours"
+          exit 1
+        fi
+      
+        sleep 30
+      done
+  only:
+    - schedules
+    - main
+  when: manual
+  artifacts:
+    paths:
+      - .clinerules/
+    expire_in: 1 week
+
+# Documentation reporting stage
+documentation-report:
+  stage: documentation-report
+  image: node:$NODE_VERSION
+  before_script:
+    - npm ci
+  script:
+    - echo "📊 Generating documentation reports..."
+    - node .clinerules/scripts/workflow-engine.js --report --format json > workflow-report.json
+    - node .clinerules/scripts/workflow-engine.js --report --format markdown > workflow-report.md
+    - node .clinerules/scripts/dashboard.js --export --format markdown > dashboard-report.md
+    - echo "📄 Reports generated successfully"
+  dependencies:
+    - documentation-workflow
+  only:
+    - schedules
+    - main
+  artifacts:
+    paths:
+      - workflow-report.json
+      - workflow-report.md
+      - dashboard-report.md
+      - .clinerules/test-report.json
+    expire_in: 1 month
+
+# Emergency documentation workflow
+documentation-emergency:
+  stage: documentation-workflow
+  image: node:$NODE_VERSION
+  before_script:
+    - npm ci
+  script:
+    - echo "🚨 Starting emergency documentation workflow..."
+    - node .clinerules/scripts/workflow-engine.js --start --priority high
+    - echo "⏳ Monitoring emergency workflow progress..."
+    
+    # Monitor for up to 1 hour for emergency workflows
+    - |
+      for i in {1..120}; do
+        STATUS=$(node .clinerules/scripts/workflow-engine.js --status --json 2>/dev/null)
+        if [ $? -eq 0 ]; then
+          CURRENT_PHASE=$(echo "$STATUS" | jq -r '.current_phase')
+          PROGRESS=$(echo "$STATUS" | jq -r '.progress_percentage')
+          echo "Progress: $PROGRESS% - Phase: $CURRENT_PHASE"
+      
+          if [ "$CURRENT_PHASE" = "completed" ]; then
+            echo "✅ Emergency workflow completed successfully!"
+            break
+          fi
+        fi
+      
+        if [ $i -eq 120 ]; then
+          echo "❌ Emergency workflow did not complete within 1 hour"
+          exit 1
+        fi
+      
+        sleep 30
+      done
+  when: manual
+  only:
+    - main
+    - develop
+  environment:
+    name: emergency-documentation
+    url: https://your-docs-site.com
+  artifacts:
+    paths:
+      - .clinerules/
+    expire_in: 1 week
+
+# Documentation cleanup workflow
+documentation-cleanup:
+  stage: documentation-workflow
+  image: node:$NODE_VERSION
+  before_script:
+    - npm ci
+  script:
+    - echo "🧹 Starting documentation cleanup workflow..."
+    - node .clinerules/scripts/workflow-engine.js --start --priority low
+    - echo "⏳ Monitoring cleanup workflow progress..."
+    
+    # Monitor for up to 4 hours for cleanup workflows
+    - |
+      for i in {1..480}; do
+        STATUS=$(node .clinerules/scripts/workflow-engine.js --status --json 2>/dev/null)
+        if [ $? -eq 0 ]; then
+          CURRENT_PHASE=$(echo "$STATUS" | jq -r '.current_phase')
+          PROGRESS=$(echo "$STATUS" | jq -r '.progress_percentage')
+          echo "Progress: $PROGRESS% - Phase: $CURRENT_PHASE"
+      
+          if [ "$CURRENT_PHASE" = "completed" ]; then
+            echo "✅ Cleanup workflow completed successfully!"
+            break
+          fi
+        fi
+      
+        if [ $i -eq 480 ]; then
+          echo "❌ Cleanup workflow did not complete within 4 hours"
+          exit 1
+        fi
+      
+        sleep 30
+      done
+  when: manual
+  only:
+    - main
+  environment:
+    name: documentation-cleanup
+  artifacts:
+    paths:
+      - .clinerules/
+    expire_in: 1 week
+
+# Scheduled daily workflow
+documentation-daily:
+  stage: documentation-workflow
+  image: node:$NODE_VERSION
+  before_script:
+    - npm ci
+  script:
+    - echo "📅 Starting scheduled daily documentation workflow..."
+    - node .clinerules/scripts/workflow-engine.js --start --priority medium
+    - echo "⏳ Monitoring daily workflow progress..."
+    
+    # Monitor for up to 3 hours for daily workflows
+    - |
+      for i in {1..360}; do
+        STATUS=$(node .clinerules/scripts/workflow-engine.js --status --json 2>/dev/null)
+        if [ $? -eq 0 ]; then
+          CURRENT_PHASE=$(echo "$STATUS" | jq -r '.current_phase')
+          PROGRESS=$(echo "$STATUS" | jq -r '.progress_percentage')
+          echo "Progress: $PROGRESS% - Phase: $CURRENT_PHASE"
+      
+          if [ "$CURRENT_PHASE" = "completed" ]; then
+            echo "✅ Daily workflow completed successfully!"
+            break
+          fi
+        fi
+      
+        if [ $i -eq 360 ]; then
+          echo "❌ Daily workflow did not complete within 3 hours"
+          exit 1
+        fi
+      
+        sleep 30
+      done
+  only:
+    - schedules
+  environment:
+    name: daily-documentation
+  artifacts:
+    paths:
+      - .clinerules/
+    expire_in: 1 week

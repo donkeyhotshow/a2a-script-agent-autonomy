@@ -1,0 +1,84 @@
+# Mixin: code-analyzer
+# Analyze code files using regex patterns
+
+mixin: code-analyzer
+description: "Find code patterns in files using regex"
+version: 1.0
+
+# Input schema
+input:
+  files:
+    type: array
+    description: "Array of file paths to analyze"
+  pattern:
+    type: string
+    description: "Regex pattern to search for"
+  flags:
+    type: string
+    optional: true
+    description: "Regex flags (e.g., 'gm')"
+
+# Output schema
+output:
+  matches:
+    type: array
+    description: "Array of match objects"
+
+# Default implementation
+script: |
+  import { readFileSync, existsSync } from 'node:fs';
+
+  interface Match {
+    file: string;
+    line: number;
+    column: number;
+    content: string;
+    match: string;
+  }
+
+  interface Input {
+    files: string[];
+    pattern: string;
+    flags?: string;
+  }
+
+  interface Output {
+    matches: Match[];
+  }
+
+  export default async function run(input: Input): Promise<Output> {
+    const matches: Match[] = [];
+    const regex = new RegExp(input.pattern, input.flags || 'g');
+
+    for (const file of input.files) {
+      if (!existsSync(file)) continue;
+
+      const content = readFileSync(file, 'utf-8');
+      const lines = content.split('\n');
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        let match: RegExpExecArray | null;
+  
+        // Reset regex state for each line
+        regex.lastIndex = 0;
+  
+        while ((match = regex.exec(line)) !== null) {
+          matches.push({
+            file,
+            line: i + 1,
+            column: match.index + 1,
+            content: line.trim(),
+            match: match[0],
+          });
+  
+          // Prevent infinite loop for zero-width matches
+          if (match.index === regex.lastIndex) {
+            regex.lastIndex++;
+          }
+        }
+      }
+    }
+
+    return { matches };
+  }

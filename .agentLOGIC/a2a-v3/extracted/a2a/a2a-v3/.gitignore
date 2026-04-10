@@ -1,0 +1,23 @@
+
+output/
+
+node_modules/
+
+dist/
+
+# Project-specific log folders
+**/logs/
+
+# Legacy root-level logs (to be cleaned up)
+*.log
+
+# Runtime state - PIDs change on every application start
+
+# Session/storage in project folder (legacy - now uses ~/.a2a-client)
+
+.pids.txt
+a2a-client/storage/
+
+# Sim invoke capture (merge into response.json for goldens; see simulations/SCHEMA.md)
+simulations/**/invoke-capture.json
+.env*

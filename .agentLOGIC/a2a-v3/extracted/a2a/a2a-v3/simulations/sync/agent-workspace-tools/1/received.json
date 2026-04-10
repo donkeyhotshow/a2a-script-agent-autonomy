@@ -1,0 +1,11 @@
+{
+  "projectId": "golden-wt",
+  "sessionId": "sess-wt-1",
+  "execute": {
+    "message": "Searching in files…",
+    "attachments": {
+      "grepPattern": "createApp",
+      "grepPath": "src"
+    }
+  }
+}

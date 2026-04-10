@@ -1,0 +1,10 @@
+{
+  "projectId": "golden-wt",
+  "sessionId": "sess-wt-1",
+  "execute": {
+    "message": "Checking path…",
+    "attachments": {
+      "fileExistsPath": "src/main.ts"
+    }
+  }
+}

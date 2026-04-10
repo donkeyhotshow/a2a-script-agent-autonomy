@@ -1,0 +1,21 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "parse-json-from-md",
+      "fromFile": "response.md",
+      "jsonPath": "$",
+      "to": "$llm"
+    },
+    {
+      "op": "copy",
+      "from": "$llm.context",
+      "to": "$.context"
+    },
+    {
+      "op": "copy",
+      "from": "$llm.execute",
+      "to": "$.execute"
+    }
+  ]
+}

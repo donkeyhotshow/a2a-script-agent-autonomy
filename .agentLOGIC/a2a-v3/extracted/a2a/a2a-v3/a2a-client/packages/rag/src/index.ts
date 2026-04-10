@@ -1,0 +1,123 @@
+/**
+ * @a2a/rag - RAG Indexing and Search Module
+ */
+
+import {RAGIndexer} from './indexer';
+import {RAGSearcher} from './searcher';
+import {ChunkManager} from './chunk-manager';
+import {TFIDFService} from './tfidf';
+import {RAGIntegrator} from './rag-integrator';
+import {SemanticSearcher} from './semantic-search';
+import {BM25Scorer, createBM25Scorer} from './bm25';
+import {RerankerClient, createReranker} from './reranker';
+import {HybridSearcher, createHybridSearcher} from './hybrid-search';
+import {MeilisearchClient, createMeilisearchClient} from './meilisearch-client';
+import {ASTChunker, createASTChunker} from './ast-chunker';
+import {QueryUnderstandingEngine, createQueryUnderstandingEngine, INTENT_TYPES} from './query-understanding';
+import {SearchSuggestionsEngine, createSuggestionsEngine, QueryExpander, createQueryExpander} from './suggestions';
+import {CodeSimilarityEngine, createSimilarityEngine} from './code-similarity';
+import type {FileRelevanceModel} from './file-relevance';
+
+export interface RAGConfig {
+    projectPath?: string;
+    includePatterns?: string[];
+    excludePatterns?: string[];
+    useTFIDF?: boolean;
+    useBM25?: boolean;
+    useSemantic?: boolean;
+    maxDepth?: number;
+    maxFiles?: number;
+    embeddingModel?: string;
+    embeddingProvider?: string;
+    /**
+     * Optional ML model used to adjust per-file relevance.
+     * If not provided, only heuristics are used.
+     */
+    fileRelevanceModel?: FileRelevanceModel;
+    /**
+     * Enable AST-based chunking for supported languages
+     * @default true
+     */
+    useAST?: boolean;
+    /**
+     * Fallback to regex chunking if AST parsing fails
+     * @default true
+     */
+    fallbackToRegex?: boolean;
+    /**
+     * Default TTL for query cache in milliseconds
+     * @default undefined (caching disabled)
+     */
+    queryCacheTTL?: number;
+    /**
+     * Enable relevance feedback learning from clicks
+     * @default true
+     */
+    relevanceFeedback?: boolean;
+}
+
+export interface RAGInstance {
+    indexer: RAGIndexer;
+    searcher: RAGSearcher;
+    chunks: ChunkManager;
+    tfidf: TFIDFService;
+}
+
+export function createRAG(config: RAGConfig = {}): RAGInstance {
+    const projectPath = config.projectPath ?? process.cwd();
+    const indexerConfig = {...config, projectPath};
+    const indexer = new RAGIndexer(indexerConfig as import('./indexer').RAGIndexerConfig);
+    const searcher = new RAGSearcher({
+        projectPath,
+        fileRelevanceModel: config.fileRelevanceModel,
+        queryCacheTTL: config.queryCacheTTL,
+        relevanceFeedback: config.relevanceFeedback,
+    });
+    const chunks = new ChunkManager({
+        useAST: config.useAST,
+        fallbackToRegex: config.fallbackToRegex,
+    });
+    const tfidf = new TFIDFService();
+    return {indexer, searcher, chunks, tfidf};
+}
+
+export type {RAGIndexerConfig} from './indexer';
+export type {SearchFilters} from './searcher/types.js';
+export type {SuggestionItem} from './suggestions.js';
+export {
+    RAGIndexer,
+    RAGSearcher,
+    ChunkManager,
+    TFIDFService,
+    RAGIntegrator,
+    SemanticSearcher,
+    BM25Scorer,
+    createBM25Scorer,
+    RerankerClient,
+    createReranker,
+    HybridSearcher,
+    createHybridSearcher,
+    MeilisearchClient,
+    createMeilisearchClient,
+    ASTChunker,
+    createASTChunker,
+    QueryUnderstandingEngine,
+    createQueryUnderstandingEngine,
+    INTENT_TYPES,
+    SearchSuggestionsEngine,
+    createSuggestionsEngine,
+    QueryExpander,
+    createQueryExpander,
+    CodeSimilarityEngine,
+    createSimilarityEngine,
+};
+export {RAGWatchManager, createWatchManager} from './watch-manager.js';
+export {
+    RAGClientService,
+    createRAGClientService,
+    type ProtocolRAGConfig,
+    type ProtocolSearchInput,
+    type ProtocolSearchOutput,
+    type ProtocolIndexOutput,
+    type ProtocolHealthOutput,
+} from './protocol-integration.js';

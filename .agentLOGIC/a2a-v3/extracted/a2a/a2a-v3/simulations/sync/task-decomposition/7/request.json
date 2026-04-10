@@ -1,0 +1,20 @@
+{
+  "context": {
+    "task": "add auth and refactor API",
+    "execution": {
+      "action": "task-decomposition",
+      "step": "write-doc"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "add auth and refactor API"
+      }
+    ]
+  },
+  "result": {
+    "write-file": {
+      "path": ".carrier/tasks/task-1.md"
+    }
+  }
+}

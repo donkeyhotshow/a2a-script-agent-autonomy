@@ -1,0 +1,21 @@
+scripts/direct-tests/
+scripts/tests/
+
+output/
+
+node_modules/
+
+dist/
+
+# Project-specific log folders
+**/logs/
+
+# Legacy root-level logs (to be cleaned up)
+*.log
+
+# Runtime state - PIDs change on every application start
+
+# Session/storage in project folder (legacy - now uses ~/.a2a-client)
+
+.pids.txt
+a2a-client/storage/

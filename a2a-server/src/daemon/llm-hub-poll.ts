@@ -5,11 +5,33 @@
 
 import {requestService} from '../services/core/request/request.service.js';
 
-export async function fetchLlmResponse(base: string, llmPromiseId: string): Promise<string | null> {
+export interface LlmFetchResult {
+    content: string;
+    usage?: {
+        input_tokens?: number;
+        output_tokens?: number;
+    };
+    model?: string;
+}
+
+export async function fetchLlmResponse(base: string, llmPromiseId: string): Promise<LlmFetchResult | null> {
     const bodyRes = await fetch(`${base}/promise/${llmPromiseId}/response`);
     if (!bodyRes.ok) return null;
-    const chatData = (await bodyRes.json()) as {message?: {content?: string}};
-    return chatData?.message?.content ?? null;
+    const chatData = (await bodyRes.json()) as {
+        message?: {content?: string};
+        usage?: {prompt_tokens?: number; completion_tokens?: number};
+        model?: string;
+    };
+    if (!chatData?.message?.content) return null;
+
+    return {
+        content: chatData.message.content,
+        usage: chatData.usage ? {
+            input_tokens: chatData.usage.prompt_tokens,
+            output_tokens: chatData.usage.completion_tokens,
+        } : undefined,
+        model: chatData.model,
+    };
 }
 
 function readEnvMs(name: string, fallback: number, maxCap: number): number {
@@ -32,7 +54,7 @@ export async function pollReadyThenFetch(
     base: string,
     llmPromiseId: string,
     opts?: LlmPollOpts
-): Promise<string | null> {
+): Promise<LlmFetchResult | null> {
     const pollIntervalMs = readEnvMs('LLM_POLL_INTERVAL_MS', parseInt(process.env.POLL_INTERVAL_MS || '2000', 10) || 2000, 120_000);
     const pollTimeoutMs = readEnvMs(
         'LLM_POLL_TIMEOUT_MS',

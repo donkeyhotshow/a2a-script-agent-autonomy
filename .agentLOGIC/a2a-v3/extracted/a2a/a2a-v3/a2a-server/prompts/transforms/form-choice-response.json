@@ -1,0 +1,280 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "switch",
+      "exactOnly": true,
+      "discriminator": "$.choice_id",
+      "cases": {
+        "auto": {
+          "op": "set",
+          "path": "$.formProcessResult",
+          "value": {
+            "outcome": "completed",
+            "message": "Auto mode selected",
+            "execute": {
+              "message": "Автоматичний режим вибрано. Очікуйте виконання..."
+            }
+          }
+        },
+        "manual": {
+          "op": "set",
+          "path": "$.formProcessResult",
+          "value": {
+            "outcome": "completed",
+            "message": "Manual mode selected",
+            "execute": {
+              "form": {
+                "title": "Ручний режим вибрано. Кроки будуть показані для підтвердження.",
+                "choices": [
+                  { "id": "confirm", "label": "Підтвердити" },
+                  { "id": "cancel", "label": "Скасувати" }
+                ]
+              }
+            }
+          }
+        },
+        "ai": {
+          "op": "set",
+          "path": "$.formProcessResult",
+          "value": {
+            "outcome": "completed",
+            "message": "AI mode selected",
+            "execute": {
+              "form": {
+                "title": "AI режим вибрано. Генерація дій через LLM...",
+                "choices": [
+                  { "id": "generate", "label": "Згенерувати дії" },
+                  { "id": "refine", "label": "Уточнити задачу" }
+                ]
+              }
+            }
+          }
+        },
+        "dialog": {
+          "op": "set",
+          "path": "$.formProcessResult",
+          "value": {
+            "outcome": "completed",
+            "message": "Dialog mode selected",
+            "context": {
+              "execution": {
+                "action": "dialog",
+                "step": "request"
+              },
+              "task": "диалог"
+            },
+            "execute": {
+              "message": "Виберіть режим 'діалог' для спілкування з AI. Введіть ваше повідомлення нижче.",
+              "form": {
+                "input": [
+                  {
+                    "name": "message",
+                    "type": "text",
+                    "label": "Повідомлення",
+                    "required": true
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "agent": {
+          "op": "set",
+          "path": "$.formProcessResult",
+          "value": {
+            "outcome": "ai_action_ready",
+            "message": "Agent mode selected",
+            "context": {
+              "action": "agent",
+              "execution": {
+                "step": "request",
+                "progress": 0
+              }
+            },
+            "execute": {
+              "message": "Agent режим активовано. LLM адаптується до вашої задачі..."
+            },
+            "aiActions": {
+              "action": "agent",
+              "mode": "llm-driven",
+              "step": "start",
+              "completed": false
+            }
+          }
+        },
+        "task-decomposition": {
+          "op": "set",
+          "path": "$.formProcessResult",
+          "value": {
+            "outcome": "completed",
+            "message": "Task decomposition mode selected",
+            "execute": {
+              "message": "Декомпозиція задачі. Розбиття на підзадачі..."
+            }
+          }
+        },
+        "auto-ai": {
+          "op": "set",
+          "path": "$.formProcessResult",
+          "value": {
+            "outcome": "ai_action_ready",
+            "message": "${choice_id} mode → agent",
+            "context": {
+              "action": "agent",
+              "execution": {
+                "step": "request",
+                "progress": 0
+              }
+            },
+            "execute": {
+              "message": "Перенаправлення на Agent режим..."
+            },
+            "aiActions": {
+              "action": "agent",
+              "mode": "llm-driven",
+              "step": "start",
+              "completed": false
+            }
+          }
+        },
+        "auto-ai-v2": {
+          "op": "set",
+          "path": "$.formProcessResult",
+          "value": {
+            "outcome": "ai_action_ready",
+            "message": "${choice_id} mode → agent",
+            "context": {
+              "action": "agent",
+              "execution": {
+                "step": "request",
+                "progress": 0
+              }
+            },
+            "execute": {
+              "message": "Перенаправлення на Agent режим..."
+            },
+            "aiActions": {
+              "action": "agent",
+              "mode": "llm-driven",
+              "step": "start",
+              "completed": false
+            }
+          }
+        },
+        "coder": {
+          "op": "set",
+          "path": "$.formProcessResult",
+          "value": {
+            "outcome": "ai_action_ready",
+            "message": "${choice_id} mode → agent",
+            "context": {
+              "action": "agent",
+              "execution": {
+                "step": "request",
+                "progress": 0
+              }
+            },
+            "execute": {
+              "message": "Перенаправлення на Agent режим..."
+            },
+            "aiActions": {
+              "action": "agent",
+              "mode": "llm-driven",
+              "step": "start",
+              "completed": false
+            }
+          }
+        },
+        "coder-smart": {
+          "op": "set",
+          "path": "$.formProcessResult",
+          "value": {
+            "outcome": "ai_action_ready",
+            "message": "${choice_id} mode → agent",
+            "context": {
+              "action": "agent",
+              "execution": {
+                "step": "request",
+                "progress": 0
+              }
+            },
+            "execute": {
+              "message": "Перенаправлення на Agent режим..."
+            },
+            "aiActions": {
+              "action": "agent",
+              "mode": "llm-driven",
+              "step": "start",
+              "completed": false
+            }
+          }
+        },
+        "coder-smart-v2": {
+          "op": "set",
+          "path": "$.formProcessResult",
+          "value": {
+            "outcome": "ai_action_ready",
+            "message": "${choice_id} mode → agent",
+            "context": {
+              "action": "agent",
+              "execution": {
+                "step": "request",
+                "progress": 0
+              }
+            },
+            "execute": {
+              "message": "Перенаправлення на Agent режим..."
+            },
+            "aiActions": {
+              "action": "agent",
+              "mode": "llm-driven",
+              "step": "start",
+              "completed": false
+            }
+          }
+        },
+        "analyze": {
+          "op": "set",
+          "path": "$.formProcessResult",
+          "value": {
+            "outcome": "ai_action_ready",
+            "message": "${choice_id} mode → agent",
+            "context": {
+              "action": "agent",
+              "execution": {
+                "step": "request",
+                "progress": 0
+              }
+            },
+            "execute": {
+              "message": "Перенаправлення на Agent режим..."
+            },
+            "aiActions": {
+              "action": "agent",
+              "mode": "llm-driven",
+              "step": "start",
+              "completed": false
+            }
+          }
+        }
+      },
+      "default": {
+        "op": "set",
+        "path": "$.formProcessResult",
+        "value": {
+          "outcome": "completed",
+          "message": "Choice selected",
+          "execute": {
+            "message": "Вибрано: ${choice_id}"
+          }
+        }
+      }
+    },
+    {
+      "op": "copy",
+      "from": "$.task",
+      "to": "$.formProcessResult.context.task"
+    }
+  ]
+}

@@ -1,0 +1,3540 @@
+
+> sim:validate
+> npm --prefix a2a-server run sim:validate -- --all --strict --json
+
+
+> a2a-server@1.0.0 sim:validate
+> tsx scripts/sim-validate.ts --all --strict --json
+
+{
+  "valid": true,
+  "simulations": [
+    {
+      "name": "agent/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-analyze/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-analyze/2",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-analyze/3",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-analyze/4",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-analyze/5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-analyze/6",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-analyze/7",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-analyze/8",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-auto-ai/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-auto-ai/2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-auto-ai/3",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-auto-ai/4",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-auto-ai/5",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-auto-ai/6",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-auto-ai/7",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder/10",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder/2",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder/3",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder/4",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder/5",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder/6",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder/7",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder/8",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder/9",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder-smart/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder-smart/2",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder-smart/3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder-smart/4",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder-smart/5",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder-smart/6",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder-smart/7",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder-smart/8",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-coder-smart/9",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-workspace-tools/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-workspace-tools/2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-workspace-tools/3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "agent-workspace-tools/4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "dialog/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "dialog/2",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "dialog/3",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "dialog/4",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-laravel-namespaces-and-uses/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-laravel-namespaces-and-uses/2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-laravel-namespaces-and-uses/3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-laravel-namespaces-and-uses/4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-laravel-namespaces-and-uses/5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-laravel-namespaces-and-uses/6",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports/2",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports/3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports/4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports/5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports-batched/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports-batched/2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports-batched/3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports-batched/4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports-batched/5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports-batched/6",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports-batched/7",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports-batched/8",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports-decline/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports-decline/2",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports-decline/3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports-decline/4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports-decline/5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "fix-vue-imports-decline/6",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "interrupt-thinking/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "invoke-form-confirmation/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "invoke-simulation-record/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "orchestrator-dialog/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "orchestrator-dialog/2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "orchestrator-dialog/3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "orchestrator-dialog/4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "phpunit-deprecations/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "phpunit-deprecations/2",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "phpunit-deprecations/3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "phpunit-deprecations/4",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "phpunit-deprecations/5",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "task-decomposition/1",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "task-decomposition/2",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "task-decomposition/3",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "task-decomposition/4",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "task-decomposition/5",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "task-decomposition/6",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "task-decomposition/7",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "task-decomposition/8",
+      "valid": true,
+      "errors": [],
+      "warnings": [],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    },
+    {
+      "name": "task-decomposition/9",
+      "valid": true,
+      "errors": [],
+      "warnings": [
+        "server-transforms-request.json: Optional file not found: server-transforms-request.json",
+        "server-transforms-response.json: Optional file not found: server-transforms-response.json"
+      ],
+      "files": [
+        {
+          "file": "request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "response.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "client.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "received.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-request.json",
+          "valid": true,
+          "errors": []
+        },
+        {
+          "file": "server-transforms-response.json",
+          "valid": true,
+          "errors": []
+        }
+      ]
+    }
+  ]
+}

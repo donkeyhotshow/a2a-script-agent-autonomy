@@ -1,0 +1,34 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://a2a-protocol.org/schemas/message.schema.json",
+  "title": "A2A Message",
+  "description": "Base message object for user and assistant messages in A2A protocol",
+  "type": "object",
+  "required": ["role"],
+  "properties": {
+    "role": {
+      "type": "string",
+      "enum": ["user", "assistant", "system"],
+      "description": "Role of the message sender"
+    },
+    "content": {
+      "type": "string",
+      "description": "Message content text"
+    },
+    "name": {
+      "type": "string",
+      "description": "Optional name identifier for the message sender"
+    }
+  },
+  "additionalProperties": false,
+  "examples": [
+    {
+      "role": "user",
+      "content": "виправити імпорти у vue компонентах"
+    },
+    {
+      "role": "assistant",
+      "content": "Виявлено 3 зламаних імпорти. Розпочинаю виправлення..."
+    }
+  ]
+}

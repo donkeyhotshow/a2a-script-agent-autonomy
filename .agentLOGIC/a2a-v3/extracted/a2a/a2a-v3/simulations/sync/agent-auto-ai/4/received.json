@@ -1,0 +1,10 @@
+{
+  "projectId": "123",
+  "sessionId": "456",
+  "execute": {
+    "message": "Listing directory…",
+    "attachments": {
+      "listDirectoryPath": "src/"
+    }
+  }
+}

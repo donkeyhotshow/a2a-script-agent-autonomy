@@ -1,0 +1,9 @@
+{
+  "projects": [
+    {
+      "id": "client-local",
+      "name": "Локальный клиент",
+      "path": "c:/workspace/org-carrier/a2a-script-agent"
+    }
+  ]
+}

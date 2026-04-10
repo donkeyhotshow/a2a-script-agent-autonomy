@@ -1,0 +1,43 @@
+{
+  "name": "@a2a/sdk",
+  "version": "1.0.0",
+  "description": "A2A SDK - объединенный пакет для клиента и сервера",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./client": "./src/client/index.ts",
+    "./server": "./src/server/index.ts"
+  },
+  "scripts": {
+    "dev": "..\\..\\..\\scripts\\start-client-api.bat",
+    "build": "node -e \"try{require('fs').rmSync('dist',{recursive:true,force:true})}catch(e){}\" && esbuild \"src/**/*.ts\" --outdir=dist --platform=node --format=esm --sourcemap --log-level=warning",
+    "start": "node dist/server/index.js",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "a2a",
+    "sdk",
+    "client",
+    "server"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@a2a/rag": "*",
+    "cors": "^2.8.6",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "node-fetch": "^3.3.2",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0",
+    "typescript": "^5.3.3",
+    "tsx": "^4.19.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -1,0 +1,133 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://a2a-script-agent/new-request-flow/json-schemas/client-result.schema.json",
+  "title": "Client Result Objects",
+  "description": "Action-key shaped result objects returned by client to server (per simulations/SCHEMA.md). Each key is an action type with its result data.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "script": {
+      "type": "object",
+      "description": "Result from DSL script execution.",
+      "additionalProperties": true
+    },
+    "read-file": {
+      "type": "object",
+      "description": "Result from file read operation.",
+      "required": ["path", "content"],
+      "properties": {
+        "path": { "type": "string" },
+        "content": { "type": "string" },
+        "error": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "write-file": {
+      "type": "object",
+      "description": "Result from file write operation.",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string" },
+        "success": { "type": "boolean" },
+        "bytesWritten": { "type": "number" },
+        "error": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "rag-search": {
+      "type": "object",
+      "description": "Result from RAG search operation.",
+      "required": ["results"],
+      "properties": {
+        "query": { "type": "string" },
+        "results": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["file", "score", "snippet"],
+            "properties": {
+              "file": { "type": "string" },
+              "score": { "type": "number" },
+              "snippet": { "type": "string" }
+            }
+          }
+        },
+        "files": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "execute-command": {
+      "type": "object",
+      "description": "Result from shell command execution.",
+      "required": ["command", "exitCode"],
+      "properties": {
+        "command": { "type": "string" },
+        "exitCode": { "type": "number" },
+        "stdout": { "type": "string" },
+        "stderr": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "list-directory": {
+      "type": "object",
+      "description": "Result from directory listing operation.",
+      "required": ["path"],
+      "properties": {
+        "path": { "type": "string" },
+        "entries": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "type": "string" },
+              "type": { "type": "string", "enum": ["file", "directory"] },
+              "size": { "type": "number" }
+            }
+          }
+        },
+        "error": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "grep-search": {
+      "type": "object",
+      "description": "Result from grep search operation.",
+      "required": ["pattern"],
+      "properties": {
+        "pattern": { "type": "string" },
+        "matches": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "file": { "type": "string" },
+              "line": { "type": "number" },
+              "content": { "type": "string" }
+            }
+          }
+        },
+        "files": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "additionalProperties": true
+    },
+    "choice": {
+      "type": "string",
+      "description": "ID of selected choice from execute.form.choices (e.g., fix-vue-imports, auto-ai)."
+    },
+    "message": {
+      "type": "string",
+      "description": "Free text message from user (execute.form.textarea → result.message)."
+    },
+    "action": {
+      "type": "string",
+      "description": "Legacy field for selected action. New flows should prefer result.choice."
+    }
+  }
+}
+

@@ -1,0 +1,28 @@
+{
+  "type": "pipeline",
+  "steps": [
+    {
+      "op": "copy",
+      "from": "$",
+      "to": "$out"
+    },
+    {
+      "op": "set",
+      "path": "$.context.execution",
+      "value": {
+        "action": "task",
+        "step": "router"
+      }
+    },
+    {
+      "op": "set",
+      "path": "$.context.vue_imports_partial_carryover",
+      "value": true
+    },
+    {
+      "op": "set",
+      "path": "$.context.previous_action_attempt",
+      "value": "fix-vue-imports"
+    }
+  ]
+}

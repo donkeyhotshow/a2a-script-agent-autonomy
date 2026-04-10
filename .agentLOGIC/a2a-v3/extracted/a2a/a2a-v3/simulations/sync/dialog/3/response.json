@@ -1,0 +1,36 @@
+{
+  "context": {
+    "task": "диалог",
+    "workbench": {
+      "sections": {}
+    },
+    "execution": {
+      "action": "dialog",
+      "step": "request"
+    },
+    "history": [
+      {
+        "role": "user",
+        "message": "hello world"
+      },
+      {
+        "role": "assistant",
+        "message": "hello world"
+      }
+    ]
+  },
+  "execute": {
+    "form": {
+      "title": "Діалог",
+      "description": "hello world",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Повідомлення",
+          "required": true
+        }
+      ]
+    }
+  }
+}

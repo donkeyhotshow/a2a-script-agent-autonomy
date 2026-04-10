@@ -1,0 +1,14 @@
+{
+  "context": {
+    "task": "Golden: FormRequestProcessor confirmation submit.",
+    "execution": {
+      "action": "task",
+      "step": "form_submit"
+    },
+    "form_id": "confirmation",
+    "form_submission": {}
+  },
+  "execute": {
+    "message": "Form \"Підтвердження\" submitted successfully"
+  }
+}

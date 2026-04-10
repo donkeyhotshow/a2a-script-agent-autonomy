@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://a2a-script-agent/new-request-flow/json-schemas/server-invoke-response-pending.schema.json",
+  "title": "Server Invoke Response - Pending (promiseId)",
+  "description": "Asynchronous response variant for POST /api/v1/invoke when Server delegates work to External AI Hub and returns promiseId (see SIMULATION-LLM-PROXY.md).",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "promiseId": {
+      "type": "string",
+      "description": "Identifier of async LLM request."
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending"],
+      "description": "Always 'pending' for this schema."
+    }
+  },
+  "required": ["promiseId", "status"]
+}
+

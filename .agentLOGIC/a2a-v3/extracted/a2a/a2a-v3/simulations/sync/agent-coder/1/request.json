@@ -1,0 +1,12 @@
+{
+  "context": {
+    "task": "допоможи розібратись з кодом",
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  },
+  "result": {
+    "message": "допоможи розібратись з кодом"
+  }
+}

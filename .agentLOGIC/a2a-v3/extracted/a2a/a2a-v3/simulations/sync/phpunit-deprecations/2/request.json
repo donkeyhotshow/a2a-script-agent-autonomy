@@ -1,0 +1,12 @@
+{
+  "context": {
+    "task": "знайти застарілі PHPUnit методи",
+    "execution": {
+      "action": "phpunit-deprecations",
+      "step": "scan-phpunit"
+    }
+  },
+  "result": {
+    "choice": "phpunit-deprecations"
+  }
+}
