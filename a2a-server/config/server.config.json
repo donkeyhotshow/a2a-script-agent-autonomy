@@ -1,0 +1,12 @@
+{
+  "_comment": "Non-secret server defaults. All values can be overridden by environment variables of the same name.",
+  "REQUEST_RETRY_DELAY_MS": 15000,
+  "REQUEST_MAX_RETRIES": 15,
+  "GRAY_ROOM_MAX_INTERRUPTS": 8,
+  "GRAY_ROOM_LLM_TIMEOUT_MS": 120000,
+  "SESSION_CLEANUP_INTERVAL_MS": 3600000,
+  "MAX_HISTORY_LENGTH": 50,
+  "RAG_DEFAULT_LIMIT": 10,
+  "RAG_MAX_LIMIT": 50,
+  "POLICY_LOG_VIOLATIONS": true
+}

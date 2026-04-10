@@ -80,7 +80,7 @@ export function resolveTransformSchema(ctx: Record<string, unknown>): string | n
     const dialogInitColdStart =
         action === 'dialog' && step === 'init' && !res?.message && ACTION_TO_SCHEMA['dialog'];
     if (dialogInitColdStart) {
-        return ACTION_TO_SCHEMA['dialog'];
+        return ACTION_TO_SCHEMA['dialog'] ?? null;
     }
     const hasMessage = res?.message ?? ctx['task'] ?? ctx['message'];
     if (action && hasMessage && ACTION_TO_SCHEMA[action]) {

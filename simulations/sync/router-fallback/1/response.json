@@ -1,0 +1,34 @@
+{
+  "context": {
+    "task": "zxywqmnop_unmatched_keyword_12345",
+    "workbench": {
+      "sections": {}
+    },
+    "execution": {
+      "action": "task",
+      "step": "router"
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Choose how to process this task",
+      "choices": [
+        {
+          "id": "dialog",
+          "label": "AI Dialog",
+          "description": "Free-form chat with the AI assistant."
+        },
+        {
+          "id": "agent",
+          "label": "Agent Mode",
+          "description": "Autonomous agent executes the task step by step."
+        },
+        {
+          "id": "task-decomposition",
+          "label": "Task Decomposition",
+          "description": "Break the task into subtasks and execute sequentially."
+        }
+      ]
+    }
+  }
+}

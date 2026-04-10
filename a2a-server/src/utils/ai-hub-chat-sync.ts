@@ -25,6 +25,7 @@ export type AiHubSyncChatBody = AiHubChatRequestBody;
 /** Local LLM upstream `/api/chat` JSON (proxy may add eval counters). */
 export type AiHubChatResponseJson = {
     message?: {content?: string};
+    model?: string;
     prompt_eval_count?: number;
     eval_count?: number;
 };

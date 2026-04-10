@@ -95,7 +95,12 @@ export async function mergeServerRagPageIntoContext(
             },
         };
         if (entries.length > 0) {
-            nextInner['history'] = history;
+            const ragHistoryEntry = {
+                role: 'system',
+                message: formatRagHitsForHistory(entries, query),
+            };
+            const existingHistory = Array.isArray(innerCtx['history']) ? [...innerCtx['history']] : [];
+            nextInner['history'] = [...existingHistory, ragHistoryEntry];
         }
 
         return {

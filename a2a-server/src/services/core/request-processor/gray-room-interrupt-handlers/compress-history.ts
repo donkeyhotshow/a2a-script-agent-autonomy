@@ -1,49 +1,48 @@
 import {resolveGrayRoomLlmModelFromContext} from '../llm-model-resolver.js';
-import { AgentSwing } from '../../agent-swing.js';
-import { pollReadyThenFetch } from '../../../../daemon/llm-hub-poll.js';
-import { logger } from '../../../../utils/logger.js';
-import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../../transform/types.js';
-import {BaseGrayRoomHandler} from './base-handler.js';
+import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../../transform/types.js';
 
 /**
  * Handle compress_history interrupt
  * Compresses conversation history into 3-7 short entries
  */
-export class HandleCompressHistory extends BaseGrayRoomHandler {
-  protected async handleInterrupt(
+import { AgentSwing } from '../../agent-swing.js';
+import { pollReadyThenFetch } from '../../../../daemon/llm-hub-poll.js';
+import { logger } from '../../../../utils/logger.js';
+
+export async function handleCompressHistory(
     interrupt: InterruptDirective,
-    ctx: GrayRoomContext,
+    ctx: Record<string, unknown>,
     promiseId: string,
     aiHubUrl: string,
     model: string,
     trace: ServerInterruptTraceEvent[]
-  ): Promise<{ nextCtx: GrayRoomContext; continueLoop: boolean }> {
-    let nextCtx: GrayRoomContext = { ...ctx };
-    const history = nextCtx.history || nextCtx.context?.history || [];
+): Promise<{ nextCtx: Record<string, unknown>; continueLoop: boolean }> {
+    let nextCtx = { ...ctx };
+    const history = (nextCtx['history'] as any[]) || (nextCtx['context'] as any)?.history || [];
     
     if (!Array.isArray(history) || history.length === 0) {
         trace.push({ kind: 'sidecar_llm', purpose: 'compress_history', ok: true, meta: 'skipped_empty_history' });
-        return { nextCtx: ctx, continueLoop: false };
+        return { nextCtx, continueLoop: false };
     }
     
     try {
         const swing = new AgentSwing();
         const result = await swing.compressWithLookahead(
             history, 
-            ctx, 
+            nextCtx, 
             promiseId, 
             aiHubUrl, 
             model, 
             pollReadyThenFetch
         );
         
-        const innerCtx = ctx.context ?? {};
-        nextCtx = { ...ctx, history: result.best_history, context: {...innerCtx, history: result.best_history} };
-        trace.push({
-            kind: 'sidecar_llm',
-            purpose: 'compress_history',
-            ok: true,
-            meta: `from=${history.length} to=${result.best_history.length} score=${result.score.toFixed(2)} options=${result.options_considered}`
+        const innerCtx = (nextCtx['context'] as Record<string, unknown>) ?? {};
+        nextCtx = { ...nextCtx, history: result.best_history, context: {...innerCtx, history: result.best_history} };
+        trace.push({ 
+            kind: 'sidecar_llm', 
+            purpose: 'compress_history', 
+            ok: true, 
+            meta: `from=${history.length} to=${result.best_history.length} score=${result.score.toFixed(2)} options=${result.options_considered}` 
         });
     } catch (err) {
         logger.warn('[GrayRoom:compress_history] AgentSwing Failed', { error: String(err) });
@@ -51,18 +50,4 @@ export class HandleCompressHistory extends BaseGrayRoomHandler {
     }
     
     return { nextCtx, continueLoop: false };
-  }
-}
-
-// Export a function for backward compatibility
-export async function handleCompressHistory(
-  interrupt: InterruptDirective,
-  ctx: Record<string, unknown>,
-  promiseId: string,
-  aiHubUrl: string,
-  model: string,
-  trace: ServerInterruptTraceEvent[]
-): Promise<{ nextCtx: Record<string, unknown>; continueLoop: boolean }> {
-  const handler = new HandleCompressHistory();
-  return handler.handle(interrupt, ctx, promiseId, aiHubUrl, model, trace);
 }

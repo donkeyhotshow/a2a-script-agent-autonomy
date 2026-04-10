@@ -1,0 +1,41 @@
+{
+  "context": {
+    "projectId": "default",
+    "clientSessionId": "sess_gray_room_algo_invoke",
+    "task": "Run fibonacci algorithm to compute fib(10)",
+    "execution": {
+      "action": "agent",
+      "step": "algorithm_complete"
+    },
+    "workbench": {
+      "sections": {
+        "algorithm_result": {
+          "algorithm_id": "fibonacci",
+          "input": { "n": 10 },
+          "result": 55,
+          "status": "completed",
+          "duration_ms": 12
+        }
+      },
+      "slots": {
+        "interruptTrace": [
+          {
+            "kind": "black_room_start",
+            "algorithmId": "fibonacci",
+            "timestamp": "2026-04-06T22:00:00.000Z"
+          },
+          {
+            "kind": "black_room_complete",
+            "algorithmId": "fibonacci",
+            "status": "completed",
+            "durationMs": 12,
+            "tokenCount": 0
+          }
+        ]
+      }
+    }
+  },
+  "execute": {
+    "message": "Algorithm fibonacci completed successfully. Result: fib(10) = 55"
+  }
+}

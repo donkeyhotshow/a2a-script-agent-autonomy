@@ -236,7 +236,7 @@ export class SimulationRequestProcessor extends BaseRequestProcessor {
                 // Validate execute shape based on schema type (agent or dialog)
                 this.validateTransformExecute(
                     schemaName,
-                    responseData.execute,
+                    responseData.execute as ProcessResult['execute'] | undefined,
                     'simulation.response',
                     responseData
                 );

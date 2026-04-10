@@ -1,0 +1,25 @@
+{
+  "projectId": "default",
+  "execute": {
+    "form": {
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Next instruction (optional)",
+          "required": false
+        }
+      ]
+    }
+  },
+  "context": {
+    "workbench": {
+      "sections": {
+        "scriptResult": {
+          "action": "fix-vue-imports",
+          "status": "completed"
+        }
+      }
+    }
+  }
+}

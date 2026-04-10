@@ -6,6 +6,7 @@ export type FormValidationError = {
     field: string;
     message: string;
     code: string;
+    severity: 'error' | 'warning' | 'info';
 };
 
 interface FormFieldLike {
@@ -27,6 +28,7 @@ export async function validateFormData(
                 field: field.id,
                 message: `${field.label} is required`,
                 code: 'required',
+                severity: 'error',
             });
         }
     }

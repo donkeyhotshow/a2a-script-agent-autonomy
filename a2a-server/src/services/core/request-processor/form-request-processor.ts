@@ -66,6 +66,7 @@ export interface FormValidationError {
     field: string;
     message: string;
     code: string;
+    severity: 'error' | 'warning' | 'info';
 }
 
 /**
@@ -206,8 +207,6 @@ export class FormRequestProcessor extends BaseRequestProcessor {
 
         return {
             outcome: 'completed',
-            message: 'Form submitted successfully',
-            submission,
             execute: {
                 message: `Form "${form.title}" submitted successfully`
             }
@@ -259,14 +258,6 @@ export class FormRequestProcessor extends BaseRequestProcessor {
 
         const result: ProcessResult = {
             outcome: 'completed',
-            message: 'Form definition',
-            form: {
-                id: form.id,
-                title: form.title,
-                description: form.description,
-                fields: form.fields,
-                choices: form.choices
-            },
             execute: {
                 form: {
                     title: form.title,
@@ -290,8 +281,9 @@ export class FormRequestProcessor extends BaseRequestProcessor {
 
         const result: ProcessResult = {
             outcome: 'completed',
-            message: 'Available forms',
-            forms: availableForms
+            execute: {
+                message: `Available forms: ${availableForms.map(f => f.title).join(', ')}`
+            }
         };
 
         return result;

@@ -3,9 +3,6 @@ output/
 
 node_modules/
 
-# Vite / Vitest cache under node_modules (e.g. results.json)
-node_modules/.vite/
-
 dist/
 
 # Project-specific log folders
@@ -19,17 +16,15 @@ dist/
 # Session/storage in project folder (legacy - now uses ~/.a2a-client)
 
 .pids.txt
+a2a-client/storage/
+
 # Sim invoke capture (merge into response.json for goldens; see simulations/SCHEMA.md)
 simulations/**/invoke-capture.json
 .env*
 
-# Local operator cheatsheet only — never commit real keys (see ai-integration/FREE_LLM_KEYS.md)
-**/FREE_LLM_KEYS.local.md
+# Cursor hook ticker (regenerated every N minutes locally)
+hooks/CURSOR_AGENT_SIGNAL.json
+hooks/CURSOR_AGENT_SIGNAL.md
 
 # Vitest JSON scratch from human-review runners
 **/tests/human-review/.last-vitest.json
-tests/proba-servera/**/output.json
-
-
-# Direct-tests: runtime session/promise IDs for cleanup-artifacts (copy from artifacts-registry.json.example)
-tests/direct-tests/artifacts-registry.json

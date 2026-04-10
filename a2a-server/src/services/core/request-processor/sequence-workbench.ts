@@ -119,7 +119,7 @@ export function applySequenceStepComplete(
     const operationHistory = Array.isArray(prevOp) ? [...prevOp] : [];
     operationHistory.push(opEntry);
 
-    const sec = {...(sections as Record<string, unknown>), sequence: updatedSequence};
+    const sec: Record<string, unknown> = {...(sections as Record<string, unknown>), sequence: updatedSequence};
     const pendingAfter = updatedSequence.steps.slice(updatedSequence.headIndex).filter((s) => s.status !== 'complete');
 
     if (pendingAfter.length <= 2) {

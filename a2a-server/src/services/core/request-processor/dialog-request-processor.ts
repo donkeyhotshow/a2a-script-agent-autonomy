@@ -240,8 +240,7 @@ function ensureDialogExecuteWhenMissing(
     result.context = baseCtx as RequestContextBlock;
     result.execute = {
         form: {
-            title: 'Dialog',
-            description: text,
+            title: text,
             input: [
                 {
                     name: 'message',
@@ -371,7 +370,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
             const hasHistory = Array.isArray(ctx['history']) && ctx['history'].length > 0;
             if (schemaName === 'dialog' && !hasHistory && !resolveResultObject(ctx)?.message) {
                 return {
-                    outcome: 'success',
+                    outcome: 'completed',
                     execute: {
                         form: {
                             input: [
@@ -416,7 +415,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                     if (r.context && typeof r.context === 'object' && !Array.isArray(r.context)) {
                         const sessionIdValue = ctx['session_id'];
                         if (sessionIdValue && typeof sessionIdValue === 'string') {
-                            r.context = {...r.context, session_id: sessionIdValue};
+                            r.context = {...r.context, session_id: sessionIdValue} as typeof r.context;
                         }
                     }
                     // Same normalization as after grayRoom.runLoop (recovery skips that path).
@@ -487,7 +486,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                     if (execFromTransform) {
                         await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_form_fallback'});
                         return {
-                            outcome: 'success',
+                            outcome: 'completed',
                             execute: llmResult.requestTransformExecute,
                             context: {
                                 ...ctx,
@@ -532,7 +531,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
                         grayRoomResult.context = {
                             ...grayRoomResult.context,
                             session_id: sessionIdValue,
-                        };
+                        } as typeof grayRoomResult.context;
                     }
                 }
 

@@ -28,7 +28,7 @@ export class ProgressiveRetriever {
         try {
             // Layer 1: Summary Layer (query ArtifactStore)
             let hits: any[] = [];
-            const summaryHits = await globalArtifactStore.query({ query });
+            const summaryHits = await globalArtifactStore.query({});
             if (summaryHits.length > 0) {
                 hits = summaryHits.map(h => ({ source: 'summary_layer', type: h.artifact_type, content: h.summary }));
             }

@@ -1,0 +1,39 @@
+{
+  "context": {
+    "task": "S14-parity: script mode must return workbench.sections in same format as agent",
+    "execution": {
+      "action": "fix-vue-imports",
+      "step": "completed",
+      "status": "completed"
+    },
+    "workbench": {
+      "sections": {
+        "scriptResult": {
+          "action": "fix-vue-imports",
+          "status": "completed",
+          "files_changed": 1,
+          "patches": [
+            {
+              "file": "src/App.vue",
+              "from": "./Missing",
+              "to": "@/components/Missing"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "execute": {
+    "form": {
+      "title": "Script completed",
+      "input": [
+        {
+          "name": "message",
+          "type": "text",
+          "label": "Next instruction (optional)",
+          "required": false
+        }
+      ]
+    }
+  }
+}

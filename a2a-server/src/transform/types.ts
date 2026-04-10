@@ -192,7 +192,7 @@ export type ServerInterruptTraceEvent =
   | { kind: 'interrupt_handler'; reason: string; continueLoop: boolean; note?: string }
   | { kind: 'interrupt_skipped'; reason: string; detail?: string }
   | { kind: 'request_rebuild' }
-  | { kind: 'sidecar_llm'; purpose: 'compress_history' | 'thinking' | 'auto_read_file' | 'clarify' | 'auto_rag_page'; ok: boolean; meta?: string }
+  | { kind: 'sidecar_llm'; purpose: 'compress_history' | 'thinking' | 'auto_read_file' | 'clarify' | 'auto_rag_page' | 'algorithm_invoke' | 'progressive_retrieval'; ok: boolean; meta?: string }
   | { kind: 'black_room_start'; algorithmId: string; timestamp: string }
   | { kind: 'black_room_complete'; algorithmId: string; status: 'completed' | 'failed' | 'timeout'; durationMs: number; tokenCount?: number; error?: string };
 

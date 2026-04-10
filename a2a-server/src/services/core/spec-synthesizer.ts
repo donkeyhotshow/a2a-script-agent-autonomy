@@ -31,11 +31,7 @@ export class SpecSynthesizer {
             }
 
             if (gaps.length > 0) {
-                await globalArtifactStore.record({
-                    id: `gap-analysis-${Date.now()}`,
-                    type: 'SPEC_GAP_REPORT',
-                    payload: { gaps, timestamp: new Date().toISOString() }
-                });
+                logger.warn('[SpecSynthesizer] Gaps detected', { count: gaps.length, gaps });
             }
 
         } catch (err) {
@@ -48,8 +44,8 @@ export class SpecSynthesizer {
     private async searchInCode(root: string, query: string): Promise<boolean> {
         // In a real implementation, this would use codebase_search or embeddings.
         // For now, we simulate a check by looking for key terms in artifacts.
-        const artifacts = await globalArtifactStore.query({ type: 'task_completion' });
-        return artifacts.some(a => JSON.stringify(a.payload).includes(query));
+        const artifacts = await globalArtifactStore.query({});
+        return artifacts.some(a => JSON.stringify(a.data).includes(query));
     }
 }
 

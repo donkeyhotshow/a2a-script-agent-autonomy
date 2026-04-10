@@ -42,9 +42,9 @@ export async function handleStepResult(
         }
         return {
             outcome: 'completed',
-            context: resultContext,
+            context: resultContext as ProcessResult['context'],
             activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
-            execute: fromMessage,
+            execute: fromMessage as ProcessResult['execute'],
         };
     }
     const resultContext = { ...result.message.context };
@@ -54,14 +54,13 @@ export async function handleStepResult(
     }
     return {
         outcome: 'completed',
-        context: resultContext,
+        context: resultContext as ProcessResult['context'],
         activated_neuron_ids: result.actionId ? [result.actionId] : undefined,
-        execute: result.message.execute ?? {
+        execute: (result.message.execute ?? {
             form: {
-                title: 'Action Completed',
-                description: result.message.message || 'Action completed',
+                title: result.message.message || 'Action Completed',
                 input: [{ name: 'message', type: 'text', label: 'Message', required: true }],
             },
-        },
+        }) as ProcessResult['execute'],
     };
 }

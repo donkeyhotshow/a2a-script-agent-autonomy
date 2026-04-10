@@ -50,7 +50,7 @@ function extractFilePath(code: string, error: string): string | null {
   const fileMatch = error.match(/at .+\s+\(([^:]+):\d+:\d+\)/) || 
                     error.match(/([^/\s]+\.(ts|js|tsx|jsx)):/) ||
                     code.match(/file:\s*["']([^"']+)["']/);
-  return fileMatch ? fileMatch[1] : null;
+  return fileMatch ? (fileMatch[1] ?? null) : null;
 }
 
 /**

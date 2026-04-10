@@ -1,0 +1,12 @@
+{
+  "context": {
+    "task": "Run fibonacci algorithm to compute fib(10)",
+    "execution": {
+      "action": "agent",
+      "step": "idle"
+    },
+    "workbench": {
+      "sections": {}
+    }
+  }
+}

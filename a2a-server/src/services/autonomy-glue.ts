@@ -19,7 +19,7 @@
 
 import type { OrchestratorState } from './core/orchestrator-kernel.js';
 import { globalEventBus } from './core/event-bus.js';
-import { globalToolTracker } from './monitoring/tool-tracker.js';
+import { toolTracker } from './monitoring/tool-tracker.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -85,7 +85,7 @@ export class AutonomyGlue {
     }
 
     // ── 2. Tool hints ──────────────────────────────────────────────────────
-    const hints = await globalToolTracker.routingHints(
+    const hints = await toolTracker.routingHints(
       DEFAULT_CANDIDATE_TOOLS as unknown as string[],
       fsmState,
     );

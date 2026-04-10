@@ -1,1 +1,17 @@
-[]
+[
+  {
+    "policy_id": "P-W001",
+    "severity": "warn",
+    "description": "Warn when an execute object violates the single-action-key shape contract (action-key shape).",
+    "message": "Execute shape violation: execute block should contain exactly one action-type key",
+    "actions": ["delete", "write-file", "edit-patch", "script", "read-file", "rag-search"]
+  },
+  {
+    "policy_id": "P-W003",
+    "severity": "warn",
+    "description": "Warn when the autonomous loop count approaches the block threshold (P003 blocks at 15).",
+    "message": "Loop count approaching limit — consider pausing for human review",
+    "max_loop_count": 10
+  }
+]
+

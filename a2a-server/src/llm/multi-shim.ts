@@ -1,3 +1,5 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore — litellm is an optional peer dependency; install it for production use
 import { LiteLLM } from 'litellm';
 
 const SHIM = new LiteLLM({
