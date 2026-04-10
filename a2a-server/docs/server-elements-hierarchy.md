@@ -24,41 +24,41 @@ flowchart TB
     subgraph Client["Клиент"]
         UI[Web UI / Client API]
     end
-    
+
     subgraph Server["a2a-server"]
         subgraph Endpoints["API Endpoints"]
             INVOKE[/api/v1/invoke]
             STATUS[/api/v1/requests/:promiseId/status]
             RESULT[/api/v1/requests/:promiseId/result]
         end
-        
+
         subgraph Engine["Simulation Engine"]
             REQ_PIPE[Request Pipeline]
             LLM[LLM Adapter]
             RESP_PIPE[Response Pipeline]
         end
-        
+
         subgraph Transform["Transform DSL"]
             TE[Transform Executor]
             OPS[Operations]
         end
-        
+
         subgraph Storage["Storage Layer"]
             REQ[Request Storage]
             LOGS[LLM Logs]
         end
     end
-    
+
     subgraph Config["Configuration"]
         PIPELINES[Pipelines]
         TEMPLATES[Templates]
         REGISTRY[Action Registry]
     end
-    
+
     subgraph External["External"]
         AI_HUB[AI Hub]
     end
-    
+
     UI -->|request.json| INVOKE
     INVOKE -->|lookup action| REGISTRY
     REGISTRY -->|get pipelines| PIPELINES
@@ -66,15 +66,15 @@ flowchart TB
     REQ_PIPE -->|transform| TE
     TE --> OPS
     TEMPLATES -->|render| TE
-    
+
     TE -->|request.md| LLM
     LLM -->|call| AI_HUB
     AI_HUB -->|promiseId| LLM
-    
+
     LLM -->|response.md| RESP_PIPE
     RESP_PIPE -->|transform| TE
     TE -->|response.json| RESULT
-    
+
     LLM -->|log| LOGS
     REQ_PIPE -->|store| REQ
 ```
@@ -89,14 +89,14 @@ Transform DSL executor — это интерпретатор JSON-пайплай
 
 ### 2.2 Поддерживаемые операции
 
-| Операция | Описание | Параметры |
-|----------|----------|------------|
-| `copy` | Глубокое копирование данных из одной позиции JSONPath в другую | `from`, `to` |
-| `set` | Установка значения по JSONPath | `path`, `value` или `valueFrom` |
-| `append-to-array` | Добавление элемента в массив | `to`, `value` |
-| `parse-json-from-md` | Извлечение JSON из markdown | `fromFile`, `jsonPath`, `to` |
-| `render-markdown` | Рендеринг markdown-шаблона | `templateRef`, `data`, `outputFile` |
-| `switch` | Условное ветвление | `discriminator`, `cases`, `default` |
+| Операция             | Описание                                                       | Параметры                           |
+| -------------------- | -------------------------------------------------------------- | ----------------------------------- |
+| `copy`               | Глубокое копирование данных из одной позиции JSONPath в другую | `from`, `to`                        |
+| `set`                | Установка значения по JSONPath                                 | `path`, `value` или `valueFrom`     |
+| `append-to-array`    | Добавление элемента в массив                                   | `to`, `value`                       |
+| `parse-json-from-md` | Извлечение JSON из markdown                                    | `fromFile`, `jsonPath`, `to`        |
+| `render-markdown`    | Рендеринг markdown-шаблона                                     | `templateRef`, `data`, `outputFile` |
+| `switch`             | Условное ветвление                                             | `discriminator`, `cases`, `default` |
 
 ### 2.3 API трансформера
 
@@ -104,21 +104,21 @@ Transform DSL executor — это интерпретатор JSON-пайплай
 // a2a-server/src/transform/types.ts
 
 export interface TransformPipeline {
-  type: 'pipeline';
+  type: "pipeline";
   steps: TransformStep[];
 }
 
-export type TransformStep = 
-  | CopyOperation 
-  | SetOperation 
-  | AppendToArrayOperation 
-  | ParseJsonFromMdOperation 
-  | RenderMarkdownOperation 
+export type TransformStep =
+  | CopyOperation
+  | SetOperation
+  | AppendToArrayOperation
+  | ParseJsonFromMdOperation
+  | RenderMarkdownOperation
   | SwitchOperation;
 
 export interface TransformContext {
-  input: Record<string, unknown>;   // $ - входные данные
-  $out: Record<string, unknown>;   // $out - выходные данные
+  input: Record<string, unknown>; // $ - входные данные
+  $out: Record<string, unknown>; // $out - выходные данные
   baseDir?: string;
   fs?: TransformFileSystem;
 }
@@ -140,7 +140,7 @@ export interface TransformOptions {
 export async function runTransformPipeline(
   pipeline: TransformPipeline,
   input: Record<string, unknown>,
-  options?: TransformOptions
+  options?: TransformOptions,
 ): Promise<TransformResult>;
 ```
 
@@ -188,7 +188,7 @@ Templates — это markdown-шаблоны для генерации LLM-promp
 
 ### 3.2 Каноническая структура request.md
 
-```markdown
+````markdown
 ## System Prompt
 
 <роль и инструкции для LLM>
@@ -198,6 +198,7 @@ Templates — это markdown-шаблоны для генерации LLM-promp
 ```json
 <ожидаемая схема ответа>
 ```
+````
 
 ## Current State
 
@@ -208,7 +209,8 @@ Templates — это markdown-шаблоны для генерации LLM-promp
 ## Constraints
 
 <правила валидации>
-```
+
+````
 
 ### 3.3 Доступные шаблоны
 
@@ -238,14 +240,14 @@ export interface TemplateContext {
 
 export class TemplateRegistry {
   private templates: Map<string, TemplateRef> = new Map();
-  
+
   register(id: string, ref: TemplateRef): void;
-  
+
   get(id: string): TemplateRef | undefined;
-  
+
   render(id: string, data: TemplateContext): string;
 }
-```
+````
 
 ### 3.5 Расположение файлов
 
@@ -264,7 +266,7 @@ a2a-server/
 
 ### 3.6 Пример шаблона
 
-```markdown
+````markdown
 ## System Prompt
 
 Ти AI-асистент для діалогу з користувачем. Твоя задача — відповідати на повідомлення та підтримувати розмову.
@@ -276,6 +278,7 @@ a2a-server/
   "message": "твоя відповідь користувачу"
 }
 ```
+````
 
 ## Current State
 
@@ -288,7 +291,8 @@ a2a-server/
 - Відповідай тільки валідним JSON
 - Не додавай коментарі
 - Використовуй українську мову
-```
+
+````
 
 ---
 
@@ -330,7 +334,7 @@ export interface LLMOutput {
 export interface LLMAdapter {
   callLLM(input: LLMInput): Promise<LLMOutput>;
 }
-```
+````
 
 ### 4.3 Режим Replay
 
@@ -338,8 +342,8 @@ export interface LLMAdapter {
 
 ```typescript
 // Логика replay
-const replayPath = resolve(LLM_REPLAY_DIR, simulationId, step, 'response.md');
-const responseMd = await fs.readFile(replayPath, 'utf-8');
+const replayPath = resolve(LLM_REPLAY_DIR, simulationId, step, "response.md");
+const responseMd = await fs.readFile(replayPath, "utf-8");
 ```
 
 ### 4.4 Promise-based Async Flow
@@ -449,11 +453,11 @@ export interface ParsedResponse {
 
 ### 6.1 Обзор endpoints
 
-| Endpoint | Метод | Описание |
-|----------|-------|----------|
-| `/api/v1/invoke` | POST | Создание запроса |
-| `/api/v1/requests/:promiseId/status` | GET | Статус запроса |
-| `/api/v1/requests/:promiseId/result` | GET | Результат запроса |
+| Endpoint                             | Метод | Описание          |
+| ------------------------------------ | ----- | ----------------- |
+| `/api/v1/invoke`                     | POST  | Создание запроса  |
+| `/api/v1/requests/:promiseId/status` | GET   | Статус запроса    |
+| `/api/v1/requests/:promiseId/result` | GET   | Результат запроса |
 
 ### 6.2 Flow диаграмма
 
@@ -466,11 +470,11 @@ sequenceDiagram
     participant T as Transform
     participant L as LLM Adapter
     participant S as Storage
-    
+
     C->>E: POST /invoke {task/context}
     E->>R: lookup action/step
     R->>E: return pipelines
-    
+
     rect rgb(240, 248, 255)
     Note over E: Request Pipeline
     E->>P: load request pipeline
@@ -479,30 +483,30 @@ sequenceDiagram
     T->>T: render templates
     T-->>P: request.md
     end
-    
+
     alt LLM Flow
         P->>L: callLLM(request.md)
         L->>L: create promise
         L-->>E: promiseId (202)
         E-->>C: 202 {promiseId, status: pending}
-        
+
         loop Poll
             C->>E: GET /status
             E->>S: get status
             E-->>C: status
         end
-        
+
         C->>E: GET /result
         E->>L: wait promise
         L-->>E: response.md
-        
+
         rect rgb(255, 248, 240)
         Note over E: Response Pipeline
         E->>P: load response pipeline
         P->>T: runTransform(response.md, pipeline)
         T-->>P: response.json
         end
-        
+
         E-->>C: response.json
     else Sync Flow
         P-->>E: response.json
@@ -517,7 +521,7 @@ sequenceDiagram
 
 export interface ActionConfig {
   id: string;
-  type: 'action' | 'ai-action';
+  type: "action" | "ai-action";
   requestPipeline?: string;
   responsePipeline?: string;
   template?: string;
@@ -531,11 +535,11 @@ export interface StepConfig {
 
 export class ActionRegistry {
   private actions: Map<string, ActionConfig> = new Map();
-  
+
   register(config: ActionConfig): void;
-  
+
   get(actionId: string): ActionConfig | undefined;
-  
+
   getPipeline(actionId: string, step: string): TransformPipeline | undefined;
 }
 ```
@@ -554,7 +558,7 @@ actions:
       request:
         pipeline: pipelines/dialog-llm.yaml
         requiresLlm: true
-      
+
   coder:
     type: ai-action
     template: prompts/coder-request.md
@@ -572,7 +576,7 @@ export interface RequestState {
   promiseId: string;
   action: string;
   step: string;
-  status: 'pending' | 'processing' | 'completed' | 'failed';
+  status: "pending" | "processing" | "completed" | "failed";
   requestMd?: string;
   responseMd?: string;
   result?: Record<string, unknown>;
@@ -581,7 +585,7 @@ export interface RequestState {
 }
 
 export interface RequestStorage {
-  create(state: Omit<RequestState, 'id'>): Promise<RequestState>;
+  create(state: Omit<RequestState, "id">): Promise<RequestState>;
   get(id: string): Promise<RequestState | undefined>;
   update(id: string, state: Partial<RequestState>): Promise<RequestState>;
   delete(id: string): Promise<void>;
@@ -599,7 +603,7 @@ Golden tests обеспечивают регрессионное тестиро�
 ### 7.2 Test Harness
 
 ```typescript
-// a2a-server/tests/golden/harness.ts
+// a2a-server/packages/server/tests/golden/harness.ts
 
 export interface SimulationStep {
   path: string;
@@ -619,13 +623,13 @@ export interface TestResult {
 
 export class GoldenTestHarness {
   async loadSimulation(path: string): Promise<SimulationStep>;
-  
+
   async runRequestTransform(input: object, pipeline: object): Promise<string>;
-  
+
   async runResponseTransform(input: string, pipeline: object): Promise<object>;
-  
+
   async compareRequestMd(actual: string, expected: string): Promise<boolean>;
-  
+
   async compareResponseJson(actual: object, expected: object): Promise<boolean>;
 }
 ```
@@ -635,27 +639,27 @@ export class GoldenTestHarness {
 ```typescript
 // a2a-server/tests/golden/dialog.test.ts
 
-describe('Golden Tests: dialog', () => {
+describe("Golden Tests: dialog", () => {
   const harness = new GoldenTestHarness();
-  
-  it('generates matching request.md for step 3', async () => {
-    const step = await harness.loadSimulation('simulations/dialog/3');
+
+  it("generates matching request.md for step 3", async () => {
+    const step = await harness.loadSimulation("simulations/dialog/3");
     const actual = await harness.runRequestTransform(
       step.requestJson,
-      step.requestTransform
+      step.requestTransform,
     );
-    
+
     const match = await harness.compareRequestMd(actual, step.requestMd);
     expect(match).toBe(true);
   });
-  
-  it('generates matching response.json for step 3', async () => {
-    const step = await harness.loadSimulation('simulations/dialog/3');
+
+  it("generates matching response.json for step 3", async () => {
+    const step = await harness.loadSimulation("simulations/dialog/3");
     const actual = await harness.runResponseTransform(
       step.responseMd,
-      step.responseTransform
+      step.responseTransform,
     );
-    
+
     const match = await harness.compareResponseJson(actual, step.responseJson);
     expect(match).toBe(true);
   });
@@ -664,14 +668,14 @@ describe('Golden Tests: dialog', () => {
 
 ### 7.4 Покрытие тестами
 
-| Simulation | Steps | Type | Coverage |
-|------------|-------|------|----------|
-| dialog | 6 | ai-action | Full |
-| coder | 8 | ai-action | Full |
-| auto-ai | TBD | ai-action | Full |
-| analyze | TBD | ai-action | Full |
-| fix-vue-imports | 5 | action | Partial |
-| phpunit-deprecations | 5 | action | Partial |
+| Simulation           | Steps | Type      | Coverage |
+| -------------------- | ----- | --------- | -------- |
+| dialog               | 6     | ai-action | Full     |
+| coder                | 8     | ai-action | Full     |
+| auto-ai              | TBD   | ai-action | Full     |
+| analyze              | TBD   | ai-action | Full     |
+| fix-vue-imports      | 5     | action    | Partial  |
+| phpunit-deprecations | 5     | action    | Partial  |
 
 ### 7.5 CI интеграция
 
@@ -679,8 +683,8 @@ describe('Golden Tests: dialog', () => {
 # package.json
 {
   "scripts": {
-    "test:golden": "vitest run tests/golden",
-    "test:sim": "vitest run tests/simulation-based.test.ts"
+    "test:golden": "vitest run packages/server/tests/golden",
+    "test:sim": "vitest run packages/server/tests/simulation-based.test.ts"
   }
 }
 ```
@@ -752,38 +756,44 @@ a2a-server/
 // a2a-server/src/registry/pipeline-registry.ts
 
 export interface PipelineRegistryConfig {
-  pipelines: Record<string, {
-    request?: string;
-    response?: string;
-    steps?: Record<string, {
+  pipelines: Record<
+    string,
+    {
       request?: string;
       response?: string;
-    }>;
-  }>;
+      steps?: Record<
+        string,
+        {
+          request?: string;
+          response?: string;
+        }
+      >;
+    }
+  >;
 }
 
 export class PipelineRegistry {
   constructor(private config: PipelineRegistryConfig) {}
-  
+
   getRequestPipeline(action: string, step?: string): string | undefined {
     const actionConfig = this.config.pipelines[action];
     if (!actionConfig) return actionConfig?.request;
-    
+
     if (step && actionConfig.steps?.[step]?.request) {
       return actionConfig.steps[step].request;
     }
-    
+
     return actionConfig.request;
   }
-  
+
   getResponsePipeline(action: string, step?: string): string | undefined {
     const actionConfig = this.config.pipelines[action];
     if (!actionConfig) return actionConfig?.response;
-    
+
     if (step && actionConfig.steps?.[step]?.response) {
       return actionConfig.steps[step].response;
     }
-    
+
     return actionConfig.response;
   }
 }
@@ -801,7 +811,7 @@ pipelines:
       request:
         request: pipelines/dialog-request.yaml
         response: pipelines/dialog-response.yaml
-      
+
   coder:
     request: pipelines/coder-request.yaml
     response: pipelines/coder-response.yaml
@@ -816,14 +826,14 @@ pipelines:
 
 ## 10. Environment Variables
 
-| Variable | Описание | Пример |
-|----------|----------|--------|
-| `LLM_REPLAY_DIR` | Директория для replay-режима | `simulations/dialog/3` |
-| `LLM_PROVIDER` | Провайдер LLM | `compat_llm`, `openai`, `proxy` |
-| `LOCAL_LLM_MODEL` | Модель Local LLM upstream | `qwen3:8b` |
-| `OPENAI_MODEL` | Модель OpenAI | `gpt-4o-mini` |
-| `AI_PROXY_URL` | URL AI Hub | `http://localhost:11434` |
-| `LOG_LLM_DIR` | Директория для логов LLM | `logs/llm` |
+| Variable          | Описание                     | Пример                          |
+| ----------------- | ---------------------------- | ------------------------------- |
+| `LLM_REPLAY_DIR`  | Директория для replay-режима | `simulations/dialog/3`          |
+| `LLM_PROVIDER`    | Провайдер LLM                | `compat_llm`, `openai`, `proxy` |
+| `LOCAL_LLM_MODEL` | Модель Local LLM upstream    | `qwen3:8b`                      |
+| `OPENAI_MODEL`    | Модель OpenAI                | `gpt-4o-mini`                   |
+| `AI_PROXY_URL`    | URL AI Hub                   | `http://localhost:11434`        |
+| `LOG_LLM_DIR`     | Директория для логов LLM     | `logs/llm`                      |
 
 ---
 
@@ -839,9 +849,7 @@ pipelines:
       "action": "dialog",
       "step": "request"
     },
-    "history": [
-      { "role": "user", "message": "hello world" }
-    ]
+    "history": [{ "role": "user", "message": "hello world" }]
   },
   "result": {
     "message": "hello world"
@@ -851,7 +859,7 @@ pipelines:
 
 ### 11.2 request.md (LLM input)
 
-```markdown
+````markdown
 ## System Prompt
 
 Ти AI-асистент для діалогу...
@@ -863,6 +871,7 @@ pipelines:
   "message": "твоя відповідь"
 }
 ```
+````
 
 ## Current State
 
@@ -877,7 +886,8 @@ pipelines:
   }
 }
 ```
-```
+
+````
 
 ### 11.3 response.md (LLM output)
 
@@ -888,8 +898,9 @@ pipelines:
 {
   "message": "Привіт! Як справи?"
 }
-```
-```
+````
+
+````
 
 ### 11.4 response.json (выходной)
 
@@ -917,7 +928,7 @@ pipelines:
     }
   }
 }
-```
+````
 
 ---
 
@@ -930,41 +941,41 @@ classDiagram
         +loadPipeline(path) TransformPipeline
         +validatePipeline(pipeline) string[]
     }
-    
+
     class TemplateRegistry {
         +register(id, ref) void
         +get(id) TemplateRef
         +render(id, data) string
     }
-    
+
     class LLMAdapter {
         +callLLM(input) Promise~LLMOutput~
     }
-    
+
     class ResponseParser {
         +parse(responseMd, schema) ParsedResponse
         +buildExecute(parsed, actionType) ExecuteObject
     }
-    
+
     class ActionRegistry {
         +register(config) void
         +get(actionId) ActionConfig
         +getPipeline(actionId, step) TransformPipeline
     }
-    
+
     class RequestStorage {
         +create(state) Promise~RequestState~
         +get(id) Promise~RequestState~
         +update(id, state) Promise~RequestState~
     }
-    
+
     class GoldenTestHarness {
         +loadSimulation(path) SimulationStep
         +runRequestTransform(input, pipeline) string
         +runResponseTransform(input, pipeline) object
         +compareRequestMd(actual, expected) boolean
     }
-    
+
     TransformExecutor --> TemplateRegistry: uses
     TransformExecutor --> LLMAdapter: calls
     LLMAdapter --> ResponseParser: parses output
@@ -984,22 +995,22 @@ flowchart LR
         A[Action Registry] --> P[Pipeline Registry]
         P --> T[Templates]
     end
-    
+
     subgraph Core["Ядро"]
         T --> TE[Transform Executor]
         TE --> RP[Response Parser]
     end
-    
+
     subgraph AI["AI Layer"]
         RP --> LLM[LLM Adapter]
         LLM --> LOG[LLM Logger]
     end
-    
+
     subgraph API["API Layer"]
         LLM --> RS[Request Storage]
         RS --> EP[Endpoints]
     end
-    
+
     subgraph Tests["Тестирование"]
         EP --> GT[Golden Tests]
         GT --> TE

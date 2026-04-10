@@ -82,53 +82,53 @@ The A2A Server is a **stateless** HTTP service that processes requests and retur
 
 #### 1. Routes (`a2a-server/src/routes/`)
 
-| Route File | Endpoints | Description |
-|------------|-----------|-------------|
-| `index.ts` | `POST /api/v1/invoke`, `GET /metrics`, … | Invoke + metrics (mounted under `/api/v1`) |
-| `requests.routes.ts` | `POST /api/v1/requests`, `GET /:id/status`, `GET /:id/result` | Request handling |
-| `actions.routes.ts` | `GET /api/v1/actions/:id` | Action definitions |
-| `health.routes.ts` | `GET /health`, `GET /health/live` | Health checks |
+| Route File           | Endpoints                                                     | Description                                |
+| -------------------- | ------------------------------------------------------------- | ------------------------------------------ |
+| `index.ts`           | `POST /api/v1/invoke`, `GET /metrics`, …                      | Invoke + metrics (mounted under `/api/v1`) |
+| `requests.routes.ts` | `POST /api/v1/requests`, `GET /:id/status`, `GET /:id/result` | Request handling                           |
+| `actions.routes.ts`  | `GET /api/v1/actions/:id`                                     | Action definitions                         |
+| `health.routes.ts`   | `GET /health`, `GET /health/live`                             | Health checks                              |
 
 #### 2. Services (`a2a-server/src/services/`)
 
-| Service | Purpose |
-|---------|---------|
+| Service                                                                                | Purpose                                      |
+| -------------------------------------------------------------------------------------- | -------------------------------------------- |
 | [`request-processor.service.ts`](a2a-server/src/services/request-processor.service.ts) | Main request processing, timer-based polling |
-| [`request.service.ts`](a2a-server/src/services/request.service.ts) | Request CRUD operations |
-| [`invoke.service.ts`](a2a-server/src/services/invoke.service.ts) | Request invocation |
-| [`context-manager.service.ts`](a2a-server/src/services/context-manager.service.ts) | Context parsing and management |
-| [`phase-machine.service.ts`](a2a-server/src/services/phase-machine.service.ts) | AI-Action phase management |
-| [`llm-adapter.ts`](a2a-server/src/services/llm-adapter.ts) | LLM communication |
-| [`compat_llm-adapter.ts`](a2a-server/src/services/compat_llm-adapter.ts) | Local LLM upstream-specific adapter |
-| [`neuron-activator.service.ts`](a2a-server/src/services/neuron-activator.service.ts) | Auto-detection of actions |
+| [`request.service.ts`](a2a-server/src/services/request.service.ts)                     | Request CRUD operations                      |
+| [`invoke.service.ts`](a2a-server/src/services/invoke.service.ts)                       | Request invocation                           |
+| [`context-manager.service.ts`](a2a-server/src/services/context-manager.service.ts)     | Context parsing and management               |
+| [`phase-machine.service.ts`](a2a-server/src/services/phase-machine.service.ts)         | AI-Action phase management                   |
+| [`llm-adapter.ts`](a2a-server/src/services/llm-adapter.ts)                             | LLM communication                            |
+| [`compat_llm-adapter.ts`](a2a-server/src/services/compat_llm-adapter.ts)               | Local LLM upstream-specific adapter          |
+| [`neuron-activator.service.ts`](a2a-server/src/services/neuron-activator.service.ts)   | Auto-detection of actions                    |
 
 #### 3. Actions (`a2a-server/src/actions/`)
 
-| Component | Purpose |
-|-----------|---------|
-| [`action-registry.ts`](a2a-server/src/actions/action-registry.ts) | Registry of available Actions |
-| [`action-processor.ts`](a2a-server/src/actions/action-processor.ts) | Action execution logic |
-| [`action-executor.ts`](a2a-server/src/actions/action-executor.ts) | Step execution |
-| [`action-service.ts`](a2a-server/src/actions/action-service.ts) | Action management |
+| Component                                                           | Purpose                       |
+| ------------------------------------------------------------------- | ----------------------------- |
+| [`action-registry.ts`](a2a-server/src/actions/action-registry.ts)   | Registry of available Actions |
+| [`action-processor.ts`](a2a-server/src/actions/action-processor.ts) | Action execution logic        |
+| [`action-executor.ts`](a2a-server/src/actions/action-executor.ts)   | Step execution                |
+| [`action-service.ts`](a2a-server/src/actions/action-service.ts)     | Action management             |
 
 #### 4. Protocol (`a2a-server/src/protocol/`)
 
-| Component | Purpose |
-|-----------|---------|
-| [`context-parser.ts`](a2a-server/src/protocol/context-parser.ts) | Parse incoming context |
-| [`message-builder.ts`](a2a-server/src/protocol/message-builder.ts) | Build server responses |
+| Component                                                                | Purpose                    |
+| ------------------------------------------------------------------------ | -------------------------- |
+| [`context-parser.ts`](a2a-server/src/protocol/context-parser.ts)         | Parse incoming context     |
+| [`message-builder.ts`](a2a-server/src/protocol/message-builder.ts)       | Build server responses     |
 | [`file-block-handler.ts`](a2a-server/src/protocol/file-block-handler.ts) | Handle file content blocks |
 
 #### 5. Neurons (`a2a-server/src/neurons/`)
 
 Neurons are auto-detection components that activate based on project context:
 
-| Neuron | Trigger | Purpose |
-|--------|---------|---------|
-| `project-context-detector.neuron.ts` | Project structure | Detect project type |
-| `task-semantic-analyzer.neuron.ts` | Task description | Analyze task semantics |
-| `external-ai-trigger.neuron.ts` | AI action requests | Trigger LLM calls |
-| `lint-*.neuron.ts` | File patterns | Run linters |
+| Neuron                               | Trigger            | Purpose                |
+| ------------------------------------ | ------------------ | ---------------------- |
+| `project-context-detector.neuron.ts` | Project structure  | Detect project type    |
+| `task-semantic-analyzer.neuron.ts`   | Task description   | Analyze task semantics |
+| `external-ai-trigger.neuron.ts`      | AI action requests | Trigger LLM calls      |
+| `lint-*.neuron.ts`                   | File patterns      | Run linters            |
 
 ---
 
@@ -139,12 +139,14 @@ Neurons are auto-detection components that activate based on project context:
 **Definition**: Hardcoded sequence of steps where the server completely controls execution flow.
 
 **Characteristics**:
+
 - Steps are defined in Action definition (YAML or MD)
 - Server determines next step from previous `result`
 - No LLM involvement during execution (only for initial matching)
 - Predictable, algorithmic flow
 
 **Structure**:
+
 ```json
 {
   "context": {
@@ -165,6 +167,7 @@ Neurons are auto-detection components that activate based on project context:
 ```
 
 **Life Cycle**:
+
 ```
 request.json → response.json (execute."script", step: "detect")
      ↑________________↓
@@ -175,10 +178,10 @@ request.json (result.script) → response.json (execute."script", step: "resolve
 
 **Built-in Actions**:
 
-| Action | Steps | Description |
-|--------|-------|-------------|
-| `fix-vue-imports` | detect → resolve → apply → cleanup | Fix Vue import paths |
-| `phpunit-deprecations` | scan → analyze → report | Detect PHPUnit deprecations |
+| Action                 | Steps                              | Description                 |
+| ---------------------- | ---------------------------------- | --------------------------- |
+| `fix-vue-imports`      | detect → resolve → apply → cleanup | Fix Vue import paths        |
+| `phpunit-deprecations` | scan → analyze → report            | Detect PHPUnit deprecations |
 
 **Definition Location**: `a2a-server/src/actions/definitions/`
 
@@ -187,12 +190,14 @@ request.json (result.script) → response.json (execute."script", step: "resolve
 **Definition**: Dynamic steps where the LLM chooses the next action based on context.
 
 **Characteristics**:
+
 - Steps are not in fixed sequence
-- Server shows list of *available* steps
+- Server shows list of _available_ steps
 - Next step determined from LLM response
 - Each step can be a separate LLM request
 
 **Structure**:
+
 ```json
 {
   "context": {
@@ -209,6 +214,7 @@ request.json (result.script) → response.json (execute."script", step: "resolve
 ```
 
 **Life Cycle**:
+
 ```
 request.json → request.md (LLM prompt) → response.md (LLM output)
                                            ↓
@@ -220,12 +226,13 @@ request.json → request.md (LLM prompt) → response.md (LLM output)
 
 **Unified Agent Mode**:
 
-| Mode | Purpose | Description |
-|------|---------|-------------|
-| `dialog` | Simple dialog | Direct LLM conversation without tools |
-| `agent` | Unified AI agent | LLM-driven with dynamic tool selection (rag-search, read-file, write-file, execute-command, etc.) |
+| Mode     | Purpose          | Description                                                                                       |
+| -------- | ---------------- | ------------------------------------------------------------------------------------------------- |
+| `dialog` | Simple dialog    | Direct LLM conversation without tools                                                             |
+| `agent`  | Unified AI agent | LLM-driven with dynamic tool selection (rag-search, read-file, write-file, execute-command, etc.) |
 
 All AI-driven modes now use the single `agent` mode, which dynamically determines:
+
 - **step**: plan, analyze, execute, review, completed
 - **tool**: rag-search, read-file, write-file, execute-command, dialog, form, script
 
@@ -233,14 +240,14 @@ Variations exist only in simulations for testing different user scenarios (agent
 
 ### Comparison
 
-| Aspect | Actions | Agent Mode |
-|--------|---------|------------|
-| Step Definition | Hardcoded in definition | Dynamic, from LLM |
-| Step Switching | Server automatic | LLM determines |
-| LLM Required | No (only for matching) | Yes, every step |
-| `execution.step` | Specific step name | plan/analyze/execute/review/completed |
-| Complexity | Simple, algorithmic | Complex, reasoning-based |
-| Examples | fix-vue-imports, phpunit-deprecations | agent (any tool combination) |
+| Aspect           | Actions                               | Agent Mode                            |
+| ---------------- | ------------------------------------- | ------------------------------------- |
+| Step Definition  | Hardcoded in definition               | Dynamic, from LLM                     |
+| Step Switching   | Server automatic                      | LLM determines                        |
+| LLM Required     | No (only for matching)                | Yes, every step                       |
+| `execution.step` | Specific step name                    | plan/analyze/execute/review/completed |
+| Complexity       | Simple, algorithmic                   | Complex, reasoning-based              |
+| Examples         | fix-vue-imports, phpunit-deprecations | agent (any tool combination)          |
 
 ---
 
@@ -281,11 +288,11 @@ Contract and Hub endpoints: [PROTOCOL.md → Async flow](PROTOCOL.md#async-flow-
 
 ### Supported LLM Providers
 
-| Provider | Configuration | Adapter |
-|----------|--------------|---------|
-| Local LLM upstream | `LOCAL_LLM_MODEL`, `AI_HUB_URL` | `compat_llm-adapter.ts` |
-| OpenAI | `OPENAI_API_KEY`, `OPENAI_MODEL` | `llm-adapter.ts` |
-| Placeholder | `LLM_PROVIDER=placeholder` | `llm-adapter.ts` |
+| Provider           | Configuration                    | Adapter                 |
+| ------------------ | -------------------------------- | ----------------------- |
+| Local LLM upstream | `LOCAL_LLM_MODEL`, `AI_HUB_URL`  | `compat_llm-adapter.ts` |
+| OpenAI             | `OPENAI_API_KEY`, `OPENAI_MODEL` | `llm-adapter.ts`        |
+| Placeholder        | `LLM_PROVIDER=placeholder`       | `llm-adapter.ts`        |
 
 ### Configuration
 
@@ -321,24 +328,24 @@ Normative rules and examples: [PROTOCOL.md → Action-key shape](PROTOCOL.md#act
 
 ### Simulation Types Mapping
 
-| Simulation | Type | Server Component |
-|------------|------|------------------|
-| `fix-vue-imports` | Action | `action-registry.ts` |
-| `phpunit-deprecations` | Action | `action-registry.ts` |
-| `dialog` | AI-Action | `phase-machine.service.ts` |
-| `coder` | AI-Action | `phase-machine.service.ts` |
-| `coder-smart` | AI-Action | `phase-machine.service.ts` |
-| `auto-ai` | AI-Action | `phase-machine.service.ts` |
+| Simulation             | Type      | Server Component           |
+| ---------------------- | --------- | -------------------------- |
+| `fix-vue-imports`      | Action    | `action-registry.ts`       |
+| `phpunit-deprecations` | Action    | `action-registry.ts`       |
+| `dialog`               | AI-Action | `phase-machine.service.ts` |
+| `coder`                | AI-Action | `phase-machine.service.ts` |
+| `coder-smart`          | AI-Action | `phase-machine.service.ts` |
+| `auto-ai`              | AI-Action | `phase-machine.service.ts` |
 
 ### Running Simulations
 
-| Script | Purpose |
-|--------|---------|
-| `sim-run.ts` | Run a single simulation |
-| `sim-create.ts` | Create new simulation |
+| Script            | Purpose                    |
+| ----------------- | -------------------------- |
+| `sim-run.ts`      | Run a single simulation    |
+| `sim-create.ts`   | Create new simulation      |
 | `sim-validate.ts` | Validate simulation format |
-| `sim-compare.ts` | Compare simulations |
-| `sim-report.ts` | Generate reports |
+| `sim-compare.ts`  | Compare simulations        |
+| `sim-report.ts`   | Generate reports           |
 
 ---
 
@@ -347,6 +354,7 @@ Normative rules and examples: [PROTOCOL.md → Action-key shape](PROTOCOL.md#act
 ### Environment Variables
 
 **Server (.env)**:
+
 ```
 PORT=3000
 JWT_SECRET=your-32-character-minimum-secret-key
@@ -358,6 +366,7 @@ REQUEST_PROCESSOR_INTERVAL_MS=5000
 > **Note:** Server is stateless - no database required. All state is stored by Client API.
 
 **AI Hub (ai-integration)**:
+
 ```
 PROXY_PORT=11434
 LOCAL_LLM_UPSTREAM_URL=http://localhost:11435
@@ -367,13 +376,13 @@ AI_HUB_CONFIG=path/to/config.json
 
 ### Ports
 
-| Component | Port | Description |
-|-----------|------|-------------|
-| Server | 3000 | HTTP API |
-| Client API | 5173 (`/api/a2a/*`) or 3001 (SDK) | HTTP API for web |
-| Web UI | 5173 | Vite dev server |
-| AI Hub Proxy | 11434 | Proxy / promise flow → Local LLM upstream |
-| Local LLM upstream | 11435 | Local LLM |
+| Component          | Port                              | Description                               |
+| ------------------ | --------------------------------- | ----------------------------------------- |
+| Server             | 3000                              | HTTP API                                  |
+| Client API         | 5173 (`/api/a2a/*`) or 3001 (SDK) | HTTP API for web                          |
+| Web UI             | 5173                              | Vite dev server                           |
+| AI Hub Proxy       | 11434                             | Proxy / promise flow → Local LLM upstream |
+| Local LLM upstream | 11435                             | Local LLM                                 |
 
 ### Startup
 
@@ -408,30 +417,30 @@ GET /api/v1/health/ready             - Readiness probe
 
 ### Related Documentation
 
-| Document | Description |
-|----------|-------------|
-| [ARCHITECTURE.md](ARCHITECTURE.md) | General system architecture |
-| [PROTOCOL.md](PROTOCOL.md) | Communication protocol |
-| [DATA-FLOW.md](DATA-FLOW.md) | Complete data flow diagram |
-| [SESSION-FLOW.md](SESSION-FLOW.md) | Session flow details |
-| [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md) | Simulation format |
+| Document                                     | Description                 |
+| -------------------------------------------- | --------------------------- |
+| [ARCHITECTURE.md](ARCHITECTURE.md)           | General system architecture |
+| [PROTOCOL.md](PROTOCOL.md)                   | Communication protocol      |
+| [DATA-FLOW.md](DATA-FLOW.md)                 | Complete data flow diagram  |
+| [SESSION-FLOW.md](SESSION-FLOW.md)           | Session flow details        |
+| [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md) | Simulation format           |
 
 ### Server-Specific Documentation
 
-| Document | Description |
-|----------|-------------|
+| Document                                                                             | Description                  |
+| ------------------------------------------------------------------------------------ | ---------------------------- |
 | [a2a-server/docs/detailed-architecture.md](a2a-server/docs/detailed-architecture.md) | Detailed server architecture |
-| [a2a-server/docs/entry-points.md](a2a-server/docs/entry-points.md) | Entry points & root context |
-| [a2a-server/docs/action-api.md](a2a-server/docs/action-api.md) | Action API |
-| [simulations/SCHEMA.md](../../simulations/SCHEMA.md) | Canonical simulation schema |
-| [simulations/REFERENCE.md](../../simulations/REFERENCE.md) | Action reference |
+| [a2a-server/docs/entry-points.md](a2a-server/docs/entry-points.md)                   | Entry points & root context  |
+| [a2a-server/docs/action-api.md](a2a-server/docs/action-api.md)                       | Action API                   |
+| [simulations/SCHEMA.md](../../simulations/SCHEMA.md)                                 | Canonical simulation schema  |
+| [simulations/REFERENCE.md](../../simulations/REFERENCE.md)                           | Action reference             |
 
 ### AI Integration
 
-| Document | Description |
-|----------|-------------|
-| [ai-integration/README.md](../../ai-integration/README.md) | AI Hub documentation |
-| [ai-integration/docs/UPGRADE.md](../../ai-integration/docs/UPGRADE.md) | Upgrade guide |
+| Document                                                               | Description          |
+| ---------------------------------------------------------------------- | -------------------- |
+| [ai-integration/README.md](../../ai-integration/README.md)             | AI Hub documentation |
+| [ai-integration/docs/UPGRADE.md](../../ai-integration/docs/UPGRADE.md) | Upgrade guide        |
 
 ---
 
@@ -448,7 +457,7 @@ GET /api/v1/health/ready             - Readiness probe
 
 1. Create definition in `src/actions/definitions/`
 2. Register in `src/actions/action-registry.ts`
-3. Add tests in `tests/`
+3. Add tests in `packages/server/tests/`
 4. Create simulation in `simulations/`
 
 ### Adding New AI-Actions

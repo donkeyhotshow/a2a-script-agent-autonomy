@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {buildWebExecute} from '../../shared/web-execute-dto.mjs';
+import {buildWebExecute} from '../src/web-execute-dto.mjs';
 
 /** Web DTO must not forward arbitrary extra execute keys (single action-key contract for tools). */
 describe('human-review: buildWebExecute', () => {

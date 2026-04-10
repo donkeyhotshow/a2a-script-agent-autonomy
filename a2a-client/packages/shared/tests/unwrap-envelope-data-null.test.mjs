@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {unwrapEnvelope} from '../../shared/client-api-envelope.mjs';
+import {unwrapEnvelope} from '../src/client-api-envelope.mjs';
 
 /** `data: null` should not hide a valid `session` sibling (common partial JSON / cleared slot). */
 describe('human-review: unwrapEnvelope', () => {

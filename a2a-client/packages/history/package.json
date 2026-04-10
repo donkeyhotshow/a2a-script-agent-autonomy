@@ -1,0 +1,13 @@
+{
+  "name": "@a2a/history",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "History management",
+  "exports": {
+    "./index.ts": "./src/index.ts",
+    "./history-manager.ts": "./src/history-manager.ts",
+    "./session-storage.ts": "./src/session-storage.ts",
+    "./types.ts": "./src/types.ts"
+  }
+}

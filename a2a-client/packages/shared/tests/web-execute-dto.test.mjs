@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { buildWebExecute } from '../../shared/web-execute-dto.mjs';
+import { buildWebExecute } from '../src/web-execute-dto.mjs';
 
 describe('buildWebExecute', () => {
     it('maps rag-search to message + attachments.ragQuery', () => {

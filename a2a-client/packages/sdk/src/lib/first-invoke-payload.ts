@@ -3,7 +3,7 @@
  * Matches `simulations/agent/1/request.json` pattern: `context.execution` + `result.message`.
  */
 
-import { sanitizeContextForServer } from '../../../packages/core/a2a-invoke-builders.js';
+import { sanitizeContextForServer } from '@a2a/core/a2a-invoke-builders.js';
 
 export const ROUTER_NEW_TASK_EXECUTION = { action: 'task' as const, step: 'new' as const };
 

@@ -5,6 +5,7 @@
 ## Overview
 
 This guide documents the testing infrastructure in a2a-server, covering:
+
 - Mock-based tests (fast, deterministic)
 - Real integration tests (full system validation)
 - Simulation-based tests (golden standard testing)
@@ -14,18 +15,19 @@ This guide documents the testing infrastructure in a2a-server, covering:
 
 Проект использует многоуровневую систему тестов:
 
-| Тип | Расположение | Описание | Скорость |
-|-----|--------------|----------|----------|
-| **Unit** | [`tests/unit/`](tests/unit/) | Тестирование отдельных функций и сервисов | ⚡ Fast |
-| **Integration** | [`tests/integration/`](tests/integration/) | Тестирование взаимодействия компонентов | 🟡 Medium |
-| **E2E** | [`tests/e2e/`](tests/e2e/) | Полные end-to-end сценарии | 🔴 Slow |
-| **Simulation-based** | [`tests/simulation/`](tests/simulation/) | Тестирование через симуляции (поддержка legacy и step-based форматов) | ⚡ Fast |
+| Тип                  | Расположение                                                               | Описание                                                              | Скорость  |
+| -------------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------- | --------- |
+| **Unit**             | [`packages/server/tests/unit/`](packages/server/tests/unit/)               | Тестирование отдельных функций и сервисов                             | ⚡ Fast   |
+| **Integration**      | [`packages/server/tests/integration/`](packages/server/tests/integration/) | Тестирование взаимодействия компонентов                               | 🟡 Medium |
+| **E2E**              | [`packages/server/tests/e2e/`](packages/server/tests/e2e/)                 | Полные end-to-end сценарии                                            | 🔴 Slow   |
+| **Simulation-based** | [`packages/server/tests/simulation/`](packages/server/tests/simulation/)   | Тестирование через симуляции (поддержка legacy и step-based форматов) | ⚡ Fast   |
 
 ### Форматы симуляций
 
 Система тестирования поддерживает два формата симуляций:
 
 **Legacy формат:**
+
 ```
 simulations/
 ├── simulation-name/
@@ -34,6 +36,7 @@ simulations/
 ```
 
 **Step-based формат:**
+
 ```
 simulations/
 ├── simulation-name/
@@ -53,15 +56,18 @@ simulations/
 ### Тесты с моками (Mock-based)
 
 **Преимущества:**
+
 - Быстрые и стабильные
 - Не зависят от внешних сервисов
 - Легко воспроизводят сценарии
 
 **Недостатки:**
+
 - Не проверяют реальное поведение
 - Могут пропустить интеграционные проблемы
 
 **Использование:**
+
 ```bash
 # Запуск тестов с моками
 npm run test
@@ -70,14 +76,17 @@ npm run test
 ### Тесты без моков (Real)
 
 **Преимущества:**
+
 - Проверяют реальное поведение системы
 - Выявляют интеграционные проблемы
 
 **Недостатки:**
+
 - Медленные
 - Зависят от внешних сервисов (БД, Redis, LLM)
 
 **Использование:**
+
 ```bash
 # Запуск интеграционных тестов
 SKIP_AUTH=1 npm run test:integration
@@ -87,212 +96,218 @@ SKIP_AUTH=1 npm run test:integration
 
 ## Тесты с мокированием
 
-### Моки LLM ([`tests/mocks/llm/`](tests/mocks/llm/))
+### Моки LLM ([`packages/server/tests/mocks/llm/`](packages/server/tests/mocks/llm/))
 
 Моки LLM позволяют тестировать AI-driven сценарии без реальных вызовов к LLM провайдерам.
 
 #### Использование Mock LLM Adapter
 
 ```typescript
-import { setupLLMMock, mockLLMResponse, mockLLMCanonicalResponse, createCanonicalResponse } from '../mocks/llm/mock-llm-adapter.js';
+import {
+  setupLLMMock,
+  mockLLMResponse,
+  mockLLMCanonicalResponse,
+  createCanonicalResponse,
+} from "../mocks/llm/mock-llm-adapter.js";
 
-describe('AI Service Tests', () => {
-    let mockCallLLM: any;
-    
-    beforeEach(() => {
-        const { mockCallLLM: mock } = setupLLMMock({
-            verbose: true,
-            defaultResponse: createCanonicalResponse({
-                step: 'completed',
-                message: 'Test response',
-                execute: { 'message': { text: 'Done' } },
-                completed: true
-            })
-        });
-        mockCallLLM = mock;
+describe("AI Service Tests", () => {
+  let mockCallLLM: any;
+
+  beforeEach(() => {
+    const { mockCallLLM: mock } = setupLLMMock({
+      verbose: true,
+      defaultResponse: createCanonicalResponse({
+        step: "completed",
+        message: "Test response",
+        execute: { message: { text: "Done" } },
+        completed: true,
+      }),
     });
-    
-    it('should process LLM response', async () => {
-        // Установить специфичный ответ
-        mockLLMCanonicalResponse('call_123', {
-            step: 'execute',
-            message: 'Creating file',
-            execute: { 'write-file': { path: '/test.txt', content: 'hello' } },
-            completed: false
-        });
-        
-        const response = await mockCallLLM({ context: {} });
-        const parsed = JSON.parse(response);
-        
-        expect(parsed.step).toBe('execute');
+    mockCallLLM = mock;
+  });
+
+  it("should process LLM response", async () => {
+    // Установить специфичный ответ
+    mockLLMCanonicalResponse("call_123", {
+      step: "execute",
+      message: "Creating file",
+      execute: { "write-file": { path: "/test.txt", content: "hello" } },
+      completed: false,
     });
+
+    const response = await mockCallLLM({ context: {} });
+    const parsed = JSON.parse(response);
+
+    expect(parsed.step).toBe("execute");
+  });
 });
 ```
 
 #### Replay Mode (чтение из файлов)
 
 ```typescript
-import { createReplayProvider } from '../mocks/llm/mock-llm-adapter.js';
+import { createReplayProvider } from "../mocks/llm/mock-llm-adapter.js";
 
-it('should use replay responses', async () => {
-    const replayProvider = await createReplayProvider({
-        replayDir: './tests/fixtures/simulations/hello-world',
-        fallbackToReal: false
-    });
-    
-    const response = await replayProvider({ context: {} });
-    // response будет прочитано из response.md файла
+it("should use replay responses", async () => {
+  const replayProvider = await createReplayProvider({
+    replayDir: "./packages/server/tests/fixtures/simulations/hello-world",
+    fallbackToReal: false,
+  });
+
+  const response = await replayProvider({ context: {} });
+  // response будет прочитано из response.md файла
 });
 ```
 
-### Моки HTTP ([`tests/mocks/http/`](tests/mocks/http/))
+### Моки HTTP ([`packages/server/tests/mocks/http/`](packages/server/tests/mocks/http/))
 
 Моки HTTP позволяют перехватывать fetch запросы.
 
 #### Использование MockFetch
 
 ```typescript
-import { MockFetch, setupMockFetch } from '../mocks/http/mock-fetch.js';
+import { MockFetch, setupMockFetch } from "../mocks/http/mock-fetch.js";
 
-describe('HTTP Client Tests', () => {
-    let mockFetch: MockFetch;
-    
-    beforeEach(() => {
-        mockFetch = setupMockFetch({ verbose: true });
-        
-        // Добавить мок responses
-        mockFetch.addMock({
-            url: 'https://api.example.com/data',
-            response: {
-                ok: true,
-                status: 200,
-                json: async () => ({ result: 'test data' })
-            }
-        });
+describe("HTTP Client Tests", () => {
+  let mockFetch: MockFetch;
+
+  beforeEach(() => {
+    mockFetch = setupMockFetch({ verbose: true });
+
+    // Добавить мок responses
+    mockFetch.addMock({
+      url: "https://api.example.com/data",
+      response: {
+        ok: true,
+        status: 200,
+        json: async () => ({ result: "test data" }),
+      },
     });
-    
-    it('should return mocked response', async () => {
-        const fetchFn = mockFetch.getMock();
-        const response = await fetchFn('https://api.example.com/data');
-        const data = await response.json();
-        
-        expect(data.result).toBe('test data');
-        expect(mockFetch.wasRequested('https://api.example.com/data')).toBe(true);
+  });
+
+  it("should return mocked response", async () => {
+    const fetchFn = mockFetch.getMock();
+    const response = await fetchFn("https://api.example.com/data");
+    const data = await response.json();
+
+    expect(data.result).toBe("test data");
+    expect(mockFetch.wasRequested("https://api.example.com/data")).toBe(true);
+  });
+
+  it("should support wildcard URLs", () => {
+    mockFetch.addMock({
+      url: "https://api.example.com/*",
+      response: {
+        ok: true,
+        status: 200,
+        json: async () => ({ wildcard: true }),
+      },
     });
-    
-    it('should support wildcard URLs', () => {
-        mockFetch.addMock({
-            url: 'https://api.example.com/*',
-            response: {
-                ok: true,
-                status: 200,
-                json: async () => ({ wildcard: true })
-            }
-        });
-    });
+  });
 });
 ```
 
 #### Common Mocks
 
 ```typescript
-import { commonMocks } from '../mocks/http/mock-fetch.js';
+import { commonMocks } from "../mocks/http/mock-fetch.js";
 
 // Использование предустановленных моков
 mockFetch.addMock({
-    url: 'https://api.example.com/item/1',
-    response: commonMocks.okJson({ id: 1, name: 'Item' })
+  url: "https://api.example.com/item/1",
+  response: commonMocks.okJson({ id: 1, name: "Item" }),
 });
 
 mockFetch.addMock({
-    url: 'https://api.example.com/missing',
-    response: commonMocks.notFound()
+  url: "https://api.example.com/missing",
+  response: commonMocks.notFound(),
 });
 
 mockFetch.addMock({
-    url: 'https://api.example.com/error',
-    response: commonMocks.error(500, 'Server Error')
+  url: "https://api.example.com/error",
+  response: commonMocks.error(500, "Server Error"),
 });
 ```
 
-### Моки файловой системы ([`tests/mocks/filesystem/`](tests/mocks/filesystem/))
+### Моки файловой системы ([`packages/server/tests/mocks/filesystem/`](packages/server/tests/mocks/filesystem/))
 
 Моки FS позволяют тестировать файловые операции без реального диска.
 
 #### Использование MockFS
 
 ```typescript
-import { MockFS, createMockFs } from '../mocks/filesystem/mock-fs.js';
+import { MockFS, createMockFs } from "../mocks/filesystem/mock-fs.js";
 
-describe('Filesystem Tests', () => {
-    let mockFs: MockFS;
-    
-    beforeEach(() => {
-        mockFs = new MockFS();
-        
-        // Добавить тестовые файлы
-        mockFs.addFiles({
-            '/project/package.json': {
-                content: JSON.stringify({ name: 'test', version: '1.0.0' })
-            },
-            '/project/src/index.ts': {
-                content: 'console.log("hello");'
-            }
-        });
+describe("Filesystem Tests", () => {
+  let mockFs: MockFS;
+
+  beforeEach(() => {
+    mockFs = new MockFS();
+
+    // Добавить тестовые файлы
+    mockFs.addFiles({
+      "/project/package.json": {
+        content: JSON.stringify({ name: "test", version: "1.0.0" }),
+      },
+      "/project/src/index.ts": {
+        content: 'console.log("hello");',
+      },
     });
-    
-    it('should read mocked file', () => {
-        const content = mockFs.readFileSyncText('/project/package.json');
-        const pkg = JSON.parse(content);
-        
-        expect(pkg.name).toBe('test');
-    });
-    
-    it('should track file operations', () => {
-        mockFs.readFileSyncText('/project/src/index.ts');
-        
-        expect(mockFs.wasCalled('readFileSync')).toBe(true);
-        expect(mockFs.getCallCount('readFileSync')).toBe(1);
-    });
+  });
+
+  it("should read mocked file", () => {
+    const content = mockFs.readFileSyncText("/project/package.json");
+    const pkg = JSON.parse(content);
+
+    expect(pkg.name).toBe("test");
+  });
+
+  it("should track file operations", () => {
+    mockFs.readFileSyncText("/project/src/index.ts");
+
+    expect(mockFs.wasCalled("readFileSync")).toBe(true);
+    expect(mockFs.getCallCount("readFileSync")).toBe(1);
+  });
 });
 ```
 
-### Mock Server ([`tests/helpers/mock-server.ts`](tests/helpers/mock-server.ts))
+### Mock Server ([`packages/server/tests/helpers/mock-server.ts`](packages/server/tests/helpers/mock-server.ts))
 
 Легковесный Express сервер для тестирования HTTP API.
 
 ```typescript
-import { MockA2AServer, commonMockResponses } from '../helpers/mock-server.js';
+import { MockA2AServer, commonMockResponses } from "../helpers/mock-server.js";
 
-describe('API Integration Tests', () => {
-    let server: MockA2AServer;
-    
-    beforeAll(async () => {
-        server = new MockA2AServer({ verbose: true });
-        
-        // Настроить мок responses
-        server.mockInvokeResponse(commonMockResponses.invokeSuccess('promise-123'));
-        
-        await server.start();
-    });
-    
-    afterAll(async () => {
-        await server.stop();
-    });
-    
-    it('should respond to invoke request', async () => {
-        const response = await server.request()
-            .post('/api/v1/invoke')
-            .send({ context: {}, message: 'test' });
-        
-        expect(response.status).toBe(201);
-        expect(response.body.success).toBe(true);
-    });
-    
-    it('should track requests', () => {
-        const requests = server.getRequests();
-        expect(requests.length).toBeGreaterThan(0);
-    });
+describe("API Integration Tests", () => {
+  let server: MockA2AServer;
+
+  beforeAll(async () => {
+    server = new MockA2AServer({ verbose: true });
+
+    // Настроить мок responses
+    server.mockInvokeResponse(commonMockResponses.invokeSuccess("promise-123"));
+
+    await server.start();
+  });
+
+  afterAll(async () => {
+    await server.stop();
+  });
+
+  it("should respond to invoke request", async () => {
+    const response = await server
+      .request()
+      .post("/api/v1/invoke")
+      .send({ context: {}, message: "test" });
+
+    expect(response.status).toBe(201);
+    expect(response.body.success).toBe(true);
+  });
+
+  it("should track requests", () => {
+    const requests = server.getRequests();
+    expect(requests.length).toBeGreaterThan(0);
+  });
 });
 ```
 
@@ -301,45 +316,47 @@ describe('API Integration Tests', () => {
 Mock клиент для тестирования взаимодействия с A2A сервером.
 
 ```typescript
-import { MockA2AClient, commonScenarios } from '../helpers/mock-client.js';
+import { MockA2AClient, commonScenarios } from "../helpers/mock-client.js";
 
-describe('Client Tests', () => {
-    let client: MockA2AClient;
-    
-    beforeEach(() => {
-        client = new MockA2AClient({ verbose: true });
-        
-        // Добавить сценарии
-        client.addScenario(commonScenarios.immediateComplete({
-            'message': { text: 'Operation completed' }
-        }));
+describe("Client Tests", () => {
+  let client: MockA2AClient;
+
+  beforeEach(() => {
+    client = new MockA2AClient({ verbose: true });
+
+    // Добавить сценарии
+    client.addScenario(
+      commonScenarios.immediateComplete({
+        message: { text: "Operation completed" },
+      }),
+    );
+  });
+
+  it("should invoke request", async () => {
+    const response = await client.invoke({
+      context: { version: "1.0" },
+      message: "Create a file",
     });
-    
-    it('should invoke request', async () => {
-        const response = await client.invoke({
-            context: { version: '1.0' },
-            message: 'Create a file'
-        });
-        
-        expect(response.success).toBe(true);
-        expect(response.data.status).toBe('completed');
+
+    expect(response.success).toBe(true);
+    expect(response.data.status).toBe("completed");
+  });
+
+  it("should support pending then complete scenario", async () => {
+    const scenarios = commonScenarios.pendingThenComplete("promise-123", {
+      message: { text: "Done" },
     });
-    
-    it('should support pending then complete scenario', async () => {
-        const scenarios = commonScenarios.pendingThenComplete('promise-123', {
-            'message': { text: 'Done' }
-        });
-        
-        scenarios.forEach(s => client.addScenario(s));
-        
-        // Первый вызов - pending
-        const pending = await client.invoke({ context: {}, message: 'test' });
-        expect(pending.data.status).toBe('pending');
-        
-        // Второй вызов - completed  
-        const complete = await client.getTaskStatus('promise-123');
-        expect(complete.status).toBe('completed');
-    });
+
+    scenarios.forEach((s) => client.addScenario(s));
+
+    // Первый вызов - pending
+    const pending = await client.invoke({ context: {}, message: "test" });
+    expect(pending.data.status).toBe("pending");
+
+    // Второй вызов - completed
+    const complete = await client.getTaskStatus("promise-123");
+    expect(complete.status).toBe("completed");
+  });
 });
 ```
 
@@ -352,6 +369,7 @@ describe('Client Tests', () => {
 Тестирование с реальной БД и сервером.
 
 **Требования:**
+
 - PostgreSQL с базой `a2a_test`
 - Redis
 - `SKIP_AUTH=1` для пропуска аутентификации
@@ -389,23 +407,25 @@ npm test -- --update
 
 ```typescript
 // Автоматическая очистка после тестов
-describe('Real Filesystem', () => {
-    let tempDir: string;
-    
-    beforeEach(async () => {
-        tempDir = path.join(os.tmpdir(), `test-${Date.now()}`);
-        await fs.mkdir(tempDir, { recursive: true });
-    });
-    
-    afterEach(async () => {
-        await fs.rm(tempDir, { recursive: true, force: true });
-    });
-    
-    it('should create file', async () => {
-        await fs.writeFile(path.join(tempDir, 'test.txt'), 'content');
-        const exists = await fs.access(path.join(tempDir, 'test.txt')).then(() => true);
-        expect(exists).toBe(true);
-    });
+describe("Real Filesystem", () => {
+  let tempDir: string;
+
+  beforeEach(async () => {
+    tempDir = path.join(os.tmpdir(), `test-${Date.now()}`);
+    await fs.mkdir(tempDir, { recursive: true });
+  });
+
+  afterEach(async () => {
+    await fs.rm(tempDir, { recursive: true, force: true });
+  });
+
+  it("should create file", async () => {
+    await fs.writeFile(path.join(tempDir, "test.txt"), "content");
+    const exists = await fs
+      .access(path.join(tempDir, "test.txt"))
+      .then(() => true);
+    expect(exists).toBe(true);
+  });
 });
 ```
 
@@ -413,26 +433,26 @@ describe('Real Filesystem', () => {
 
 ## Когда какой тип тестов использовать
 
-| Сценарий | Тип тестов |
-|----------|-------------|
-| Тестирование парсинга симуляций | **Mocks** - LLM моки |
-| Тестирование transform runtime | **Mocks** - полностью изолированные |
-| Тестирование API контрактов | **Snapshot** - валидация схем |
-| Тестирование файловых операций | **Real FS** - интеграционные |
-| E2E тестирование пользовательских сценариев | **E2E** - реальные вызовы |
-| Тестирование работы с БД | **Real integration** - с a2a_test |
+| Сценарий                                    | Тип тестов                          |
+| ------------------------------------------- | ----------------------------------- |
+| Тестирование парсинга симуляций             | **Mocks** - LLM моки                |
+| Тестирование transform runtime              | **Mocks** - полностью изолированные |
+| Тестирование API контрактов                 | **Snapshot** - валидация схем       |
+| Тестирование файловых операций              | **Real FS** - интеграционные        |
+| E2E тестирование пользовательских сценариев | **E2E** - реальные вызовы           |
+| Тестирование работы с БД                    | **Real integration** - с a2a_test   |
 
 ---
 
 ## Переменные окружения для тестов
 
-| Переменная | Описание | Пример |
-|------------|----------|--------|
-| `SKIP_AUTH=1` | Пропуск аутентификации | `SKIP_AUTH=1 npm test` |
-| `TEST_LLM_PROVIDER=mock` | Использовать мок LLM | `TEST_LLM_PROVIDER=mock npm test` |
-| `RECORD_HTTP=1` | Записывать HTTP ответы | `RECORD_HTTP=1 npm run test:integration` |
-| `LLM_REPLAY_DIR` | Директория для replay | `LLM_REPLAY_DIR=./tests/fixtures/llm npm test` |
-| `ENCRYPTION_KEY` | Ключ шифрования (32 символа) | `test-key-12345678901234567890` |
+| Переменная               | Описание                     | Пример                                         |
+| ------------------------ | ---------------------------- | ---------------------------------------------- |
+| `SKIP_AUTH=1`            | Пропуск аутентификации       | `SKIP_AUTH=1 npm test`                         |
+| `TEST_LLM_PROVIDER=mock` | Использовать мок LLM         | `TEST_LLM_PROVIDER=mock npm test`              |
+| `RECORD_HTTP=1`          | Записывать HTTP ответы       | `RECORD_HTTP=1 npm run test:integration`       |
+| `LLM_REPLAY_DIR`         | Директория для replay        | `LLM_REPLAY_DIR=./tests/fixtures/llm npm test` |
+| `ENCRYPTION_KEY`         | Ключ шифрования (32 символа) | `test-key-12345678901234567890`                |
 
 > **Примечание:** Сервер stateless - не требует базы данных для тестов.
 
@@ -541,77 +561,86 @@ a2a-server/tests/
 ### Пример: Тестирование симуляции с моками
 
 ```typescript
-import { setupLLMMock, mockLLMCanonicalResponse } from '../mocks/llm/mock-llm-adapter.js';
+import {
+  setupLLMMock,
+  mockLLMCanonicalResponse,
+} from "../mocks/llm/mock-llm-adapter.js";
 
-describe('Hello World Simulation', () => {
-    beforeEach(() => {
-        setupLLMMock();
-        
-        // Мок для первого вызова LLM
-        mockLLMCanonicalResponse('call_1', {
-            step: 'execute',
-            message: 'Creating hello world file',
-            execute: { 'write-file': { path: '/workspace/hello.js', content: 'console.log("Hello!");' } },
-            completed: false
-        });
-        
-        // Мок для второго вызова (завершение)
-        mockLLMCanonicalResponse('call_2', {
-            step: 'completed',
-            message: 'File created successfully',
-            execute: { 'message': { text: 'Done!' } },
-            completed: true
-        });
+describe("Hello World Simulation", () => {
+  beforeEach(() => {
+    setupLLMMock();
+
+    // Мок для первого вызова LLM
+    mockLLMCanonicalResponse("call_1", {
+      step: "execute",
+      message: "Creating hello world file",
+      execute: {
+        "write-file": {
+          path: "/workspace/hello.js",
+          content: 'console.log("Hello!");',
+        },
+      },
+      completed: false,
     });
-    
-    it('should process simulation request', async () => {
-        // Тест логики обработки симуляции
-        const result = await processSimulation({
-            context: { sessionId: 'test-123' },
-            message: 'Create hello world'
-        });
-        
-        expect(result.status).toBe('completed');
+
+    // Мок для второго вызова (завершение)
+    mockLLMCanonicalResponse("call_2", {
+      step: "completed",
+      message: "File created successfully",
+      execute: { message: { text: "Done!" } },
+      completed: true,
     });
+  });
+
+  it("should process simulation request", async () => {
+    // Тест логики обработки симуляции
+    const result = await processSimulation({
+      context: { sessionId: "test-123" },
+      message: "Create hello world",
+    });
+
+    expect(result.status).toBe("completed");
+  });
 });
 ```
 
 ### Пример: Тестирование с Mock Server
 
 ```typescript
-import { MockA2AServer } from '../helpers/mock-server.js';
+import { MockA2AServer } from "../helpers/mock-server.js";
 
-describe('Request Processing', () => {
-    let server: MockA2AServer;
-    
-    beforeAll(async () => {
-        server = new MockA2AServer({ port: 3456 });
-        
-        // Мок успешного invoke
-        server.mockInvokeResponse({
-            status: 201,
-            body: {
-                success: true,
-                data: { id: 'req-1', promiseId: 'promise-1', status: 'pending' }
-            }
-        });
-        
-        await server.start();
+describe("Request Processing", () => {
+  let server: MockA2AServer;
+
+  beforeAll(async () => {
+    server = new MockA2AServer({ port: 3456 });
+
+    // Мок успешного invoke
+    server.mockInvokeResponse({
+      status: 201,
+      body: {
+        success: true,
+        data: { id: "req-1", promiseId: "promise-1", status: "pending" },
+      },
     });
-    
-    afterAll(async () => {
-        await server.stop();
-    });
-    
-    it('should track all requests', async () => {
-        await server.request()
-            .post('/api/v1/invoke')
-            .send({ context: {}, message: 'test' });
-        
-        expect(server.wasRequested('POST', '/api/v1/invoke')).toBe(true);
-        
-        const lastRequest = server.getLastRequest();
-        expect(lastRequest?.body.message).toBe('test');
-    });
+
+    await server.start();
+  });
+
+  afterAll(async () => {
+    await server.stop();
+  });
+
+  it("should track all requests", async () => {
+    await server
+      .request()
+      .post("/api/v1/invoke")
+      .send({ context: {}, message: "test" });
+
+    expect(server.wasRequested("POST", "/api/v1/invoke")).toBe(true);
+
+    const lastRequest = server.getLastRequest();
+    expect(lastRequest?.body.message).toBe("test");
+  });
 });
 ```

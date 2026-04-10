@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {pickInvokeContextPatch} from '../../shared/context-invoke-patch.mjs';
+import {pickInvokeContextPatch} from '../src/context-invoke-patch.mjs';
 
 /** Null workbench from upstream should mean “no patch”, not explicit null overwrite of local state. */
 describe('human-review: pickInvokeContextPatch', () => {
