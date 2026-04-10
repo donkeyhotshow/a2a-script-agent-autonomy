@@ -15,7 +15,7 @@ import {
   shouldDeferDialogProcessorFailure,
   type RequestResult,
 } from "../../request/request.service.js";
-import { logger } from '@a2a/server-utils/logger.js';
+import { logger } from '../../../server-utils/logger.js';
 import { resolveAiHubBaseUrl } from "../../utils/ai-hub-url.js";
 import { requestProcessorLatencyHistogram } from "../../utils/metrics.js";
 import type {
@@ -37,11 +37,11 @@ import type { RequestType } from "./base-processor.js";
 import {
   LLM_PIPELINE_ACTIONS,
   type LlmPipelineAction,
-} from "../../../config/router-static.js";
+} from "../../server-config/router-static.js";
 import { resolveExecution, resolveResultObject } from "./normalization.js";
 import { detectFrameworksFromCodeBlocks } from "./framework-from-codeblocks.js";
 import { readDialogHubLlmResubmitMax } from "./gray-room-trigger.js";
-import { features } from "../../../config/index.js";
+import { features } from "../../server-config/index.js";
 
 export { LLM_PIPELINE_ACTIONS, type LlmPipelineAction };
 
