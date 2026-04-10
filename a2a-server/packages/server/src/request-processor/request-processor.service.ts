@@ -14,8 +14,8 @@ import {
   isRetryableError,
   shouldDeferDialogProcessorFailure,
   type RequestResult,
-} from "../../request/request.service";
-import { logger } from '../utils/logger.js';
+} from "@a2a/request";
+import { logger } from '../../lib/logger.js';
 import { resolveAiHubBaseUrl } from "../utils/ai-hub-url.js";
 import { requestProcessorLatencyHistogram } from "../utils/metrics.js";
 import type {

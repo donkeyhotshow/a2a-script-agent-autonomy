@@ -109,10 +109,10 @@ describe('CircuitBreaker', () => {
 describe('withCircuitBreaker', () => {
     it('wraps fn and shares breaker instance', async () => {
         const {execute, breaker} = withCircuitBreaker(
-            async (x: number) => x + 1,
+            async () => 2,
             {failureThreshold: 5, resetTimeout: 60_000, successThreshold: 1}
         );
-        await expect(execute(1)).resolves.toBe(2);
+        await expect(execute()).resolves.toBe(2);
         expect(breaker.getState()).toBe('CLOSED');
     });
 });

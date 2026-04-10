@@ -7,7 +7,6 @@ export const ConfigSchema = z.object({
   // Features to enable
   features: z.object({
     rag: z.boolean().default(false),
-    embedding: z.boolean().default(false),
     execution: z.boolean().default(false),
     web: z.boolean().default(false),
     storage: z.boolean().default(false),

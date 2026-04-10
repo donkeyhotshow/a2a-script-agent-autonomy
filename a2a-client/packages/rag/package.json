@@ -5,6 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
+    "./*": "./*",
     ".": "./dist/index.js",
     "./meilisearch-defaults": "./dist/meilisearch-defaults.js"
   },
@@ -26,7 +27,6 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@a2a-client/embedding": "*",
     "@a2a-client/execution": "*",
     "chokidar": "^3.5.3"
   },

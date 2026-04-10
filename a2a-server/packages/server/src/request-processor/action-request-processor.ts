@@ -9,9 +9,9 @@
  */
 
 import {logger} from '@a2a/server-utils/logger.js';
-import {actionProcessor} from '../actions/action-processor.js';
-import {actionRegistry} from '../actions/action-registry.js';
-import type {ActionDefinition} from '../actions/types.js';
+import {actionProcessor} from '../../../actions/src'/action-processor.js';
+import {actionRegistry} from '../../../actions/src'/action-registry.js';
+import type {ActionDefinition} from '../../../actions/src'/types.js';
 import type {
     RequestContext,
     ProcessResult,

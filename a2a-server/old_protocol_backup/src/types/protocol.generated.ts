@@ -7,11 +7,8 @@
  */
 export type ActionKeyShape = Record<string, any>;
 
-export interface ExecutionContext {
-  action: string;
-  step?: string;
-  progress?: Record<string, any>;
-}
+// Импорт канонического интерфейса из общего пакета типов
+import type { ExecutionContext } from '@a2a/types/protocol';
 
 export interface FormChoice {
   id: string;

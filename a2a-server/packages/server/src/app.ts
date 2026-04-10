@@ -6,6 +6,7 @@ import compression from 'compression';
 import {requestLogger} from './utils/logger.js';
 import {errorHandler} from './middleware/error.middleware.js';
 import {registryAuth} from './middleware/registry-auth.middleware.js';
+import {csrfGuard} from './middleware/csrf.middleware.js';
 import routes from './routes/index.js';
 import sessionsRouter from './routes/sessions.routes.js';
 import {register} from './utils/metrics.js';
@@ -51,10 +52,10 @@ app.get('/metrics', registryAuth, async (_req: Request, res: Response) => {
 
 app.use('/api/v1', routes);
 app.use('/api/a2a/sessions', sessionsRouter);
-app.use('/api/registry/register', registryAuth, registryRegisterRouter);
-app.use('/api/registry/route', registryAuth, registryRouteRouter);
+app.use('/api/registry/register', csrfGuard, registryAuth, registryRegisterRouter);
+app.use('/api/registry/route', csrfGuard, registryAuth, registryRouteRouter);
 app.use('/api/registry', registryAuth, registryHealthRouter);
-app.use('/api/tools', toolsEvolveRouter);
+app.use('/api/tools', csrfGuard, toolsEvolveRouter);
 
 app.use((_req: Request, res: Response) => {
     res.status(404).json({success: false, error: {code: 'NOT_FOUND', message: 'Not found'}});

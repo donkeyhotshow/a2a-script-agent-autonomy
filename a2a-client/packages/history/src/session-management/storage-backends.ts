@@ -7,6 +7,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import type { SessionData } from './types.js';
+import { checkPathAccess } from '../../../execution/src/fs-access.js';
 
 /**
  * File System Storage Backend
@@ -59,15 +60,15 @@ export class FileStorageBackend {
     }
   }
 
-  async exists(sessionId: string): Promise<boolean> {
-    try {
-      const sessionFile = path.join(this.sessionsDir, sessionId, 'session.json');
-      await fs.access(sessionFile);
-      return true;
-    } catch {
-      return false;
-    }
-  }
+   async exists(sessionId: string): Promise<boolean> {
+     try {
+       const sessionFile = path.join(this.sessionsDir, sessionId, 'session.json');
+       const hasAccess = await checkPathAccess(sessionFile);
+       return hasAccess;
+     } catch {
+       return false;
+     }
+   }
 }
 
 /**

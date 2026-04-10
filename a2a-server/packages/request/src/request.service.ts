@@ -13,7 +13,7 @@ import {sanitizeRequestResultForStorage} from './client-visible-context.js';
 export {
     CLIENT_SAFE_PROCESSING_ERROR,
     sanitizeErrorMessage as humanizeUpstreamErrorMessage,
-} from '../../utils/errors.js';
+} from '../../../lib/errors.js';
 
 export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 

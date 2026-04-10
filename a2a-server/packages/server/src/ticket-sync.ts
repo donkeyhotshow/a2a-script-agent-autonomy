@@ -167,7 +167,17 @@ export class TicketSync {
 
   private _slug(sessionId: string): string {
     // Replace characters unsafe for filenames
-    return sessionId.replace(/[^a-zA-Z0-9_\-]/g, '_');
+    const slug = sessionId.replace(/[^a-zA-Z0-9_\-]/g, '_');
+    if (!slug) throw new Error('sessionId produced an empty slug');
+    return slug;
+  }
+
+  private _assertContained(filePath: string): void {
+    const resolved = path.resolve(filePath);
+    const base = path.resolve(this.baseDir) + path.sep;
+    if (!resolved.startsWith(base)) {
+      throw new Error(`Path traversal detected: ${filePath}`);
+    }
   }
 
   private _mutatePlan(plan: ExecutionPlan, goalId: string, status: GoalStatus): ExecutionPlan {
@@ -284,6 +294,12 @@ export class TicketSync {
   }
 
   private _writeAsync(filePath: string, content: string): void {
+    try {
+      this._assertContained(filePath);
+    } catch (e) {
+      logger.error(`[ticket-sync] Blocked write outside baseDir: ${String(e)}`);
+      return;
+    }
     fs.writeFile(filePath, content, 'utf8', (err) => {
       if (err) {
         logger.warn(`[ticket-sync] Failed to write ${filePath}: ${String(err)}`);
@@ -292,6 +308,12 @@ export class TicketSync {
   }
 
   private _unlinkAsync(filePath: string): void {
+    try {
+      this._assertContained(filePath);
+    } catch (e) {
+      logger.error(`[ticket-sync] Blocked unlink outside baseDir: ${String(e)}`);
+      return;
+    }
     fs.unlink(filePath, (err) => {
       if (err && (err as NodeJS.ErrnoException).code !== 'ENOENT') {
         logger.warn(`[ticket-sync] Failed to remove ${filePath}: ${String(err)}`);

@@ -4,7 +4,7 @@
  */
 
 import { existsSync, readdirSync, statSync } from 'fs';
-import { join, relative, sep } from 'path';
+import { join, relative, resolve, sep } from 'path';
 
 /**
  * Recursively list all files in a directory with optional filtering
@@ -26,9 +26,14 @@ export function walkFilesRecursive(dir, options = {}) {
 
   if (!existsSync(dir)) return out;
 
+  // Resolve once so all containment checks use a stable absolute root
+  const resolvedBase = resolve(base) + sep;
+
   const entries = readdirSync(dir, { withFileTypes: true });
   for (const entry of entries) {
     const full = join(dir, entry.name);
+    // CWE-22/23: skip any entry whose resolved path escapes the base directory
+    if (!resolve(full).startsWith(resolvedBase)) continue;
     const stats = statSync(full);
 
     if (entry.isDirectory()) {

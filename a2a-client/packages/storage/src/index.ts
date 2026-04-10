@@ -11,3 +11,4 @@ export * from './session-promise-read.ts';
 export * from './session-step-io.ts';
 export * from './promise-status.ts';
 export * from './newSessions.ts';
+export * from './utils.ts';

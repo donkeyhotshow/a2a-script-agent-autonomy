@@ -499,6 +499,8 @@ export interface TransformOptions {
   fs?: TransformFileSystem;
   /** Template renderer function */
   renderTemplate?: (template: string, data: Record<string, unknown>) => string;
+  /** Absolute root that simulationDir must be confined to (CWE-22/23) */
+  simulationsRoot?: string;
 }
 
 /**

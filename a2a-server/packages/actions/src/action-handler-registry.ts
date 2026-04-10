@@ -40,7 +40,13 @@ const DEFAULT_HANDLERS: Record<ActionType, ActionHandler> = {
         } as handlers.FileExistsActionInput);
     },
     'list-directory': async (input, _context) => handlers.executeListDirectory(input as { dirPath: string; recursive?: boolean }),
-    'execute-command': async (input, _context) => handlers.executeCommand(input as handlers.ExecuteCommandInput),
+    'execute-command': async (input, _context) => {
+        const params = input as handlers.ExecuteCommandInput;
+        if (params.shell === true) {
+            throw new Error('Shell execution must be explicitly enabled via ALLOW_HIGH_RISK_COMMANDS');
+        }
+        return handlers.executeCommand(params);
+    },
     'grep-search': async (input, _context) => handlers.executeGrepSearch(input as handlers.GrepSearchInput),
     'edit-patch': async (input, _context) => handlers.executeEditPatch(input as handlers.EditPatchInput),
     'run-script': async (input, _context) => handlers.executeRunScript(input as handlers.RunScriptInput),
@@ -89,6 +95,15 @@ class ActionHandlerRegistry {
         input: unknown,
         context: ActionHandlerContext
     ): Promise<unknown> {
+        // CWE-94: validate actionType against known allowlist before dispatch
+        const VALID_ACTION_TYPES = new Set<ActionType>([
+            'read-file', 'write-file', 'file-exists', 'list-directory',
+            'execute-command', 'grep-search', 'edit-patch', 'run-script',
+        ]);
+        if (!VALID_ACTION_TYPES.has(actionType as ActionType)) {
+            throw new Error(`Unknown action type: ${actionType}`);
+        }
+
         const handler = this.getHandler(actionType);
 
         if (!handler) {

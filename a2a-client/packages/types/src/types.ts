@@ -8,6 +8,11 @@
  */
 
 /**
+ * Universal nullable type - represents value of type T or null
+ */
+export type Nullable<T> = T | null;
+
+/**
  * Session model for A2A Client
  * Supports both legacy and new protocol
  */

@@ -5,6 +5,7 @@
 
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { checkPathAccess } from './fs-access.js';
 
 const DEFAULT_IGNORE_FILES = ['.gitignore', '.cursorignore', '.a2aignore'];
 
@@ -88,18 +89,20 @@ export class IgnoreDetector {
 
         const ignoreFilesToCheck = [...DEFAULT_IGNORE_FILES, ...this.customIgnoreFiles];
 
-        for (const ignoreFile of ignoreFilesToCheck) {
-            const fullPath = path.join(this.projectPath, ignoreFile);
-            try {
-                await fs.access(fullPath);
-                const content = await fs.readFile(fullPath, 'utf-8');
-                const patterns = this._parseIgnoreFile(content, ignoreFile);
-                this.ignorePatterns.push(...patterns);
-                this.ignoreFilesFound.push({name: ignoreFile, path: fullPath, patterns: patterns.length});
-            } catch {
-                // file doesn't exist
-            }
-        }
+         for (const ignoreFile of ignoreFilesToCheck) {
+             const fullPath = path.join(this.projectPath, ignoreFile);
+             try {
+                 const hasAccess = await checkPathAccess(fullPath);
+                 if (hasAccess) {
+                     const content = await fs.readFile(fullPath, 'utf-8');
+                     const patterns = this._parseIgnoreFile(content, ignoreFile);
+                     this.ignorePatterns.push(...patterns);
+                     this.ignoreFilesFound.push({name: ignoreFile, path: fullPath, patterns: patterns.length});
+                 }
+             } catch {
+                 // file doesn't exist
+             }
+         }
 
         await this._scanForIgnoreFiles(this.projectPath);
         this._initialized = true;
@@ -113,24 +116,20 @@ export class IgnoreDetector {
                 if (!entry.isDirectory()) continue;
                 const fullPath = path.join(dirPath, entry.name);
                 if (this._isCommonIgnoredDir(entry.name)) continue;
-                for (const ignoreFile of DEFAULT_IGNORE_FILES) {
-                    const ignoreFilePath = path.join(fullPath, ignoreFile);
-                    try {
-                        await fs.access(ignoreFilePath);
-                        const content = await fs.readFile(ignoreFilePath, 'utf-8');
-                        const patterns = this._parseIgnoreFile(content, ignoreFile);
-                        const dirPrefix = path.relative(this.projectPath, fullPath);
-                        const prefixedPatterns = patterns.map((p) => ({
-                            ...p,
-                            pattern: `${dirPrefix}/${p.pattern}`,
-                            originalPattern: p.pattern,
-                            isRootAnchored: false,
-                        }));
-                        this.ignorePatterns.push(...prefixedPatterns);
-                        this.ignoreFilesFound.push({name: ignoreFile, path: ignoreFilePath, patterns: patterns.length});
-                    } catch {
-                        // skip
-                    }
+                 for (const ignoreFile of DEFAULT_IGNORE_FILES) {
+                     const ignoreFilePath = path.join(fullPath, ignoreFile);
+                     try {
+                         const hasAccess = await checkPathAccess(ignoreFilePath);
+                         if (hasAccess) {
+                             const content = await fs.readFile(ignoreFilePath, 'utf-8');
+                             const patterns = this._parseIgnoreFile(content, ignoreFile);
+                             this.ignorePatterns.push(...patterns);
+                             this.ignoreFilesFound.push({name: ignoreFile, path: ignoreFilePath, patterns: patterns.length});
+                         }
+                     } catch {
+                         // file doesn't exist
+                     }
+                 }
                 }
                 await this._scanForIgnoreFiles(fullPath);
             }

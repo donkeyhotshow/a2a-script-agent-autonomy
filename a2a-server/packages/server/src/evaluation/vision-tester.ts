@@ -19,10 +19,10 @@
  */
 
 import { ArtifactStore, createArtifactWriteInput } from '../core/artifact-store.js';
-import { executeMcpCall } from '../actions/handlers/mcp-call.js';
+import { executeMcpCall } from '../../../actions/src'/handlers/mcp-call.js';
 import { logger } from '@a2a/server-utils/logger.js';
-import { resolveAiHubBaseUrlWithModuleEnv } from '../utils/ai-hub-url.js';
-import { fetchAiHubGenerateText } from '../utils/ai-hub-generate.js';
+import { resolveAiHubBaseUrlWithModuleEnv } from '../../lib/ai-hub-url.js';
+import { fetchAiHubGenerateText } from '../../lib/ai-hub-generate.js';
 import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────

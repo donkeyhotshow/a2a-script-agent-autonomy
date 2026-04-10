@@ -7,7 +7,7 @@
 import {logger} from '@a2a/server-utils/logger.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
 import type {RequestContextBlock} from '../../types/index.js';
-import {isAgentSchemaName, lastAssistantMessageFromContext} from '../utils/agent-utils.js';
+import {isAgentSchemaName, lastAssistantMessageFromContext} from '../../lib/agent-utils.js';
 
 
 function countAssistantTurns(history: unknown): number {

@@ -94,11 +94,9 @@ function getGrayRoomMaxTurns() {
 export function shouldUseGrayRoom(ctx, flowControlHint) {
     return computeGrayRoomTrigger(ctx, flowControlHint);
 }
-/** Max hub LLM promise resubmits before failing (`DIALOG_HUB_LLM_RESUBMIT_MAX`, default 2). */
-export function readDialogHubLlmResubmitMax() {
-    const n = parseInt(process.env.DIALOG_HUB_LLM_RESUBMIT_MAX || '2', 10);
-    return Number.isFinite(n) && n >= 0 ? n : 2;
-}
+
+export { readDialogHubLlmResubmitMax } from '../../../../lib/env-utils.js';
+
 /** Interrupt budget for `GrayRoomOrchestrator` (env `A2A_MAX_INTERRUPT_TURNS` or `A2A_GRAY_ROOM_MAX_TURNS`). */
 export function readGrayRoomInterruptBudget() {
     const raw = process.env.A2A_MAX_INTERRUPT_TURNS;

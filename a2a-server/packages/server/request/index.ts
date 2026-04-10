@@ -1,1 +1,1 @@
-export * from './request.service.js';
+export * from '@a2a/request';

@@ -157,15 +157,13 @@ export class CircuitBreakerOpenError extends Error {
 /**
  * Create a function with circuit breaker
  */
-export function withCircuitBreaker<T extends (...args: unknown[]) => Promise<unknown>>(
-    fn: T,
+export function withCircuitBreaker(
+    fn: () => Promise<unknown>,
     breakerOptions?: Partial<CircuitBreakerOptions>
-): { execute: T; breaker: CircuitBreaker } {
+): { execute: () => Promise<unknown>; breaker: CircuitBreaker } {
     const breaker = new CircuitBreaker(breakerOptions);
-    
-    const execute = (async (...args: unknown[]) => {
-        return breaker.execute(() => fn(...args) as Promise<unknown>);
-    }) as T;
-    
-    return { execute, breaker };
+    return {
+        execute: () => breaker.execute(fn),
+        breaker,
+    };
 }

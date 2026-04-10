@@ -21,10 +21,12 @@ export type ResultKey = typeof VALID_RESULT_KEYS[number];
 /**
  * Validation result type
  */
-export interface ValidationResult {
-  success: boolean;
-  errors?: string[];
-}
+import type { ActionValidationResult } from '@server/types/validation.interfaces.js';
+
+/**
+ * @deprecated Use canonical ActionValidationResult from @server/types
+ */
+export type ValidationResult = ActionValidationResult;
 
 /**
  * Validate action-key shape (single key per execute/result).

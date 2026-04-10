@@ -5,7 +5,7 @@
  */
 
 import {logger} from '@a2a/server-utils/logger.js';
-import {resolveAiHubBaseUrl} from '../utils/ai-hub-url.js';
+import {resolveAiHubBaseUrl} from '../../lib/ai-hub-url.js';
 import {getPromptsTransformsPath} from '../../transform/index.js';
 import {resolveLlmPromiseRecovery} from '../daemon/llm-hub-poll.js';
 import {GrayRoomOrchestrator} from './gray-room-orchestrator.js';

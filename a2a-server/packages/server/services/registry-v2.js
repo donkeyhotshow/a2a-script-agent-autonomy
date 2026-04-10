@@ -14,6 +14,7 @@
  */
 
 import { logger } from '../../lib/logger.js';
+import { RateLimiter } from '../../../../src/rateLimiter.js';
 
 // ── Public interfaces ─────────────────────────────────────────────────────────
 
@@ -72,14 +73,13 @@ const DEFAULT_MAX_LOAD = 10;
 /** Maximum number of agents allowed in the registry */
 const MAX_AGENTS = 1000;
 
-/** Minimum time between registrations for the same agentId (rate limiting) */
-const REGISTER_RATE_LIMIT_MS = 10_000;
+// Rate limiter for agent registrations (10 seconds minimum between registrations for same agentId)
+const registerRateLimiter = new RateLimiter(10_000);
 
 // ── Registry implementation ───────────────────────────────────────────────────
 
 class AgentRegistryV2 {
   private readonly agents = new Map<string, AgentRecord>();
-  private readonly lastRegisters = new Map<string, number>();
   private pollerHandle: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
@@ -88,43 +88,42 @@ class AgentRegistryV2 {
 
   // ── Mutations ──────────────────────────────────────────────────────────────
 
-  /**
-   * Register or re-register an agent.  Re-registration resets health to
-   * 'online' and updates all fields.
-   */
-  register(reg: AgentRegistration): AgentRecord {
-    const now = Date.now();
+   /**
+    * Register or re-register an agent.  Re-registration resets health to
+    * 'online' and updates all fields.
+    */
+   register(reg: AgentRegistration): AgentRecord {
+     // Rate limiting: prevent rapid registrations from the same agentId
+     if (!registerRateLimiter.isAllowed(reg.agentId)) {
+       const timeUntilAllowed = registerRateLimiter.timeUntilAllowed(reg.agentId);
+       throw new Error(`Rate limited: cannot register agent ${reg.agentId} again so soon (try again in ${timeUntilAllowed}ms)`);
+     }
 
-    // Rate limiting: prevent rapid registrations from the same agentId
-    const lastRegister = this.lastRegisters.get(reg.agentId);
-    if (lastRegister && now - lastRegister < REGISTER_RATE_LIMIT_MS) {
-      throw new Error(`Rate limited: cannot register agent ${reg.agentId} again so soon`);
-    }
+     const now = Date.now();
 
-    // Evict offline agents to free up space
-    this.evictOfflineAgents();
+     // Evict offline agents to free up space
+     this.evictOfflineAgents();
 
-    // Check capacity
-    if (this.agents.size >= MAX_AGENTS) {
-      throw new Error(`Registry at capacity (${MAX_AGENTS}), cannot register new agent`);
-    }
+     // Check capacity
+     if (this.agents.size >= MAX_AGENTS) {
+       throw new Error(`Registry at capacity (${MAX_AGENTS}), cannot register new agent`);
+     }
 
-    const existing = this.agents.get(reg.agentId);
-    const record: AgentRecord = {
-      agentId: reg.agentId,
-      caps: reg.caps,
-      endpoint: reg.endpoint,
-      healthEndpoint: reg.healthEndpoint ?? '',
-      maxLoad: reg.maxLoad ?? DEFAULT_MAX_LOAD,
-      health: 'online',
-      load: existing?.load ?? 0,
-      heartbeat: now,
-    };
-    this.agents.set(reg.agentId, record);
-    this.lastRegisters.set(reg.agentId, now);
-    logger.info('[RegistryV2] Agent registered', { agentId: reg.agentId, caps: reg.caps });
-    return record;
-  }
+     const existing = this.agents.get(reg.agentId);
+     const record: AgentRecord = {
+       agentId: reg.agentId,
+       caps: reg.caps,
+       endpoint: reg.endpoint,
+       healthEndpoint: reg.healthEndpoint ?? '',
+       maxLoad: reg.maxLoad ?? DEFAULT_MAX_LOAD,
+       health: 'online',
+       load: existing?.load ?? 0,
+       heartbeat: now,
+     };
+     this.agents.set(reg.agentId, record);
+     logger.info('[RegistryV2] Agent registered', { agentId: reg.agentId, caps: reg.caps });
+     return record;
+   }
 
   /**
    * Update the heartbeat timestamp for an agent, restoring it to 'online'.

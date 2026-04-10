@@ -68,18 +68,8 @@ export interface ExecuteCommand {
     // promiseId + status polling and renders waiting UI independently.
 }
 
-export interface ValidationResult {
-    valid: boolean;
-    errors: ValidationError[];
-}
-
-export interface ValidationError {
-    field: string;
-    code: string;
-    message: string;
-    severity: 'error' | 'warning' | 'info';
-    path?: string[];
-}
+import type { ValidationResult, ValidationError } from '../types/validation.interfaces.js';
+export type { ValidationResult, ValidationError };
 
 
 

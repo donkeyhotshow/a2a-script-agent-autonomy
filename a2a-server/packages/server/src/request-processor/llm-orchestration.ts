@@ -6,8 +6,8 @@
 
 import * as path from 'path';
 import {logger} from '@a2a/server-utils/logger.js';
-import {resolveAiHubBaseUrl} from '../utils/ai-hub-url.js';
-import {mkdtempOsTmp} from '../utils/mkdtemp-os-tmp.js';
+import {resolveAiHubBaseUrl} from '../../lib/ai-hub-url.js';
+import {mkdtempOsTmp} from '../../lib/mkdtemp-os-tmp.js';
 import {runPromptsTransform} from '../../transform/index.js';
 import {
     extractLlmTextFromHubResponseBody,
@@ -15,7 +15,7 @@ import {
     pollReadyThenFetch,
     resolveLlmPromiseRecovery,
 } from '../daemon/llm-hub-poll.js';
-import {requestService} from '../request/request.service.js';
+import {requestService} from '@a2a/request';
 import {resolveMainDialogLlmModelFromEnv} from './llm-model-resolver.js';
 import {toInvokeShapeForPromptsTransform} from './normalization.js';
 

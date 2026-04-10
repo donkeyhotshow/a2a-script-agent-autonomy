@@ -4,6 +4,7 @@
 
 import { promises as fsp } from 'node:fs';
 import { resolveUnderProjectRoot } from './path-sandbox.js';
+import { checkPathAccess } from './fs-access.js';
 
 function applyReplace(lines, operation) {
     const startLine = operation.startLine;
@@ -143,17 +144,26 @@ export async function runClientEditPatch(projectPath, payload) {
         };
     }
 
-    try {
-        await fsp.access(fullPath);
-    } catch {
-        return {
-            success: false,
-            path: rel,
-            operationsApplied: 0,
-            linesChanged: 0,
-            error: 'File does not exist',
-        };
-    }
+     try {
+         const hasAccess = await checkPathAccess(fullPath);
+         if (!hasAccess) {
+             return {
+                 success: false,
+                 path: rel,
+                 operationsApplied: 0,
+                 linesChanged: 0,
+                 error: 'File does not exist',
+             };
+         }
+     } catch {
+         return {
+             success: false,
+             path: rel,
+             operationsApplied: 0,
+             linesChanged: 0,
+             error: 'File does not exist',
+         };
+     }
 
     let backupPath;
     if (payload.backup === true) {

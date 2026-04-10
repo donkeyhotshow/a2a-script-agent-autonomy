@@ -3,6 +3,7 @@ import path from 'path';
 import { compareSessionCreatedAtDesc } from '@a2a-client/storage/session-sort.mjs';
 import { getProjectDotA2aSessionsDir } from '@a2a-client/storage/session-paths.ts';
 import { loadProjects } from './projects.ts';
+import { pathExists, joinPaths, ensureDir } from '@a2a-client/execution/fs-utils';
 
 /** Same idea as newSessions.normalizeSessionIdForDir — session JSON may use numeric id. */
 function normalizeSessionIdForFile(id) {
@@ -86,26 +87,28 @@ export function getSessionsDir(projectPath) {
 }
 
 export function listSessions(projectPath) {
-  if (typeof projectPath !== 'string' || !projectPath.trim()) {
-    return [];
-  }
-  const dir = getSessionsDir(projectPath);
-  if (!dir || !fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir)
-    .filter((f) => f.endsWith('.json'))
-    .map((f) => {
-      try {
-        const raw = fs.readFileSync(path.join(dir, f), 'utf8');
-        const s = JSON.parse(raw);
-        return {id: s.id, title: s.title || s.id, createdAt: s.createdAt};
-      } catch (err) {
-        console.error(`[projectSessions] Failed to parse session file ${f}:`, err);
-        return null;
-      }
-    })
-    .filter(Boolean)
-    .sort(compareSessionCreatedAtDesc);
-}
+   if (typeof projectPath !== 'string' || !projectPath.trim()) {
+     return [];
+   }
+   const dir = getSessionsDir(projectPath);
+   if (!dir || !pathExists(dir)) return [];
+   return fs.readdirSync(dir)
+     .filter((f) => f.endsWith('.json'))
+     .map((f) => {
+       try {
+         const raw = fs.readFileSync(joinPaths(dir, f), 'utf8');
+         const s = JSON.parse(raw);
+         return {id: s.id, title: s.title || s.id, createdAt: s.createdAt};
+       } catch (err) {
+         console.error(`[projectSessions] Failed to parse session file ${f}:`, err);
+         return null;
+       }
+     })
+     .filter(Boolean)
+     .sort(compareSessionCreatedAtDesc);
+ }
+
+import { readJsonFileSync, writeJsonFileSync } from './utils.ts';
 
 export function loadSession(projectPath, sessionId) {
   if (typeof projectPath !== 'string' || !projectPath.trim()) {
@@ -118,46 +121,40 @@ export function loadSession(projectPath, sessionId) {
   const dir = getSessionsDir(projectPath);
   if (!dir) return null;
   const file = path.join(dir, `${sid}.json`);
-  if (!fs.existsSync(file)) return null;
-  try {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
-  } catch (err) {
-    console.error(`[projectSessions] Failed to parse session ${sessionId}:`, err);
-    return null;
-  }
+  return readJsonFileSync(file, 'projectSessions');
 }
 
 export function saveSession(projectPath, session) {
-  if (typeof projectPath !== 'string' || !projectPath.trim()) {
-    throw new Error('[projectSessions] saveSession: projectPath must be a non-empty string');
-  }
-  const sid = normalizeSessionIdForFile(session?.id);
-  if (!sid) {
-    throw new Error('[projectSessions] saveSession: session.id is required');
-  }
-  const dir = getSessionsDir(projectPath);
-  if (!dir) {
-    throw new Error('[projectSessions] saveSession: invalid projectPath');
-  }
-  if (!fs.existsSync(dir)) fs.mkdirSync(dir, {recursive: true});
-  const file = path.join(dir, `${sid}.json`);
-  const payload = session && typeof session === 'object' ? { ...session, id: sid } : { id: sid };
-  fs.writeFileSync(file, JSON.stringify(payload, null, 2));
-}
+   if (typeof projectPath !== 'string' || !projectPath.trim()) {
+     throw new Error('[projectSessions] saveSession: projectPath must be a non-empty string');
+   }
+   const sid = normalizeSessionIdForFile(session?.id);
+   if (!sid) {
+     throw new Error('[projectSessions] saveSession: session.id is required');
+   }
+   const dir = getSessionsDir(projectPath);
+   if (!dir) {
+     throw new Error('[projectSessions] saveSession: invalid projectPath');
+   }
+   if (!pathExists(dir)) ensureDir(dir);
+   const file = joinPaths(dir, `${sid}.json`);
+   const payload = session && typeof session === 'object' ? { ...session, id: sid } : { id: sid };
+   fs.writeFileSync(file, JSON.stringify(payload, null, 2));
+ }
 
 export function deleteSession(projectPath, sessionId) {
-  if (typeof projectPath !== 'string' || !projectPath.trim()) {
-    return;
-  }
-  const sid = normalizeSessionIdForFile(sessionId);
-  if (!sid) {
-    return;
-  }
-  const dir = getSessionsDir(projectPath);
-  if (!dir) return;
-  const file = path.join(dir, `${sid}.json`);
-  if (fs.existsSync(file)) fs.unlinkSync(file);
-}
+   if (typeof projectPath !== 'string' || !projectPath.trim()) {
+     return;
+   }
+   const sid = normalizeSessionIdForFile(sessionId);
+   if (!sid) {
+     return;
+   }
+   const dir = getSessionsDir(projectPath);
+   if (!dir) return;
+   const file = joinPaths(dir, `${sid}.json`);
+   if (pathExists(file)) fs.unlinkSync(file);
+ }
 
 export function getProjectPathForSessions(cwd) {
   const resolved = resolveSessionProjectPath(cwd, {});

@@ -5,8 +5,8 @@
 
 import {requestService} from '../services/core/request/request.service.js';
 import {logger} from '../../lib/logger.js';
-import {resolveAiHubBaseUrl} from '../utils/ai-hub-url.js';
-import {AI_HUB_JSON_HEADERS, type AiHubChatRequestBody} from '../utils/ai-hub-chat-sync.js';
+import {resolveAiHubBaseUrl} from '../../lib/ai-hub-url.js';
+import {AI_HUB_JSON_HEADERS, type AiHubChatRequestBody} from '../../lib/ai-hub-chat-sync.js';
 import {tryParseJsonFromLlmText} from '../../lib/strip-markdown-json-fence.js';
 
 /** Hub /api/chat uses `message.content`; /api/generate uses top-level `response`. */

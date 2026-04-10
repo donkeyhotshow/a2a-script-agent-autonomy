@@ -19,6 +19,7 @@ import {
   TFIDFService,
   ChunkManager,
 } from '../../src/index.js';
+import { MathUtils } from '../../src/math-utils.js';
 import {TestDataGenerator} from '../../test-data/generator.js';
 import {
   TYPESCRIPT_QUERIES,
@@ -51,7 +52,7 @@ interface QueryVector {
 }
 
 // Mock embedding client for semantic tests
-jest.mock('@a2a-client/embedding', () => ({
+jest.mock('../../src/embedding-client.ts', () => ({
   createEmbeddingClient: () => ({
     embed: jest.fn(async (content: string) => {
       const hash = content.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -73,10 +74,7 @@ describe('RAG Accuracy Metrics', () => {
 
   // Helper: Calculate cosine similarity between two vectors
   const cosineSimilarity = (vecA: number[], vecB: number[]): number => {
-    const dotProduct = vecA.reduce((sum, a, i) => sum + a * vecB[i], 0);
-    const magnitudeA = Math.sqrt(vecA.reduce((sum, a) => sum + a * a, 0));
-    const magnitudeB = Math.sqrt(vecB.reduce((sum, b) => sum + b * b, 0));
-    return dotProduct / (magnitudeA * magnitudeB);
+    return MathUtils.cosineSimilarity(vecA, vecB);
   };
 
   // Helper: Calculate Precision@K

@@ -26,10 +26,20 @@ export type SessionStatus =
  * @see docs/new-request-flow/PROTOCOL.md#contextfields
  */
 export interface ExecutionContext {
-  action: string;    // ID действия
-  step: string;      // ID текущего шага
+  /** ID действия (обязательное поле, присутствует во всех версиях) */
+  action: string;
+  
+  /** ID текущего шага (опциональное для обратной совместимости) */
+  step?: string;
+  
+  /** Статус выполнения (совместимость с новым протоколом) */
   status?: 'completed';
-  progress?: number;
+  
+  /** Прогресс выполнения:
+   * - number (0-100) - новый формат
+   * - Record<string, any> - старый формат (обратная совместимость)
+   */
+  progress?: number | Record<string, any>;
 }
 
 /**

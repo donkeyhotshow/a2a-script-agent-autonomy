@@ -5,6 +5,7 @@
   "type": "module",
   "main": "./src/index.js",
   "exports": {
+    "./*": "./*",
     ".": "./src/index.js",
     "./fs-utils": "./src/index.js",
     "./terminal": "./src/terminal/terminal-handler.cjs",

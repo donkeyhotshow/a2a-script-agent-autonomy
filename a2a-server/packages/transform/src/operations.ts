@@ -287,9 +287,14 @@ async function applyParseJsonFromMd(
   
   // Resolve file path
   const baseDir = context.baseDir || process.cwd();
-  const filePath = path.isAbsolute(fromFile) 
-    ? fromFile 
+  const resolvedBase = path.resolve(baseDir);
+  const filePath = path.isAbsolute(fromFile)
+    ? fromFile
     : path.resolve(baseDir, fromFile);
+
+  if (!filePath.startsWith(resolvedBase + path.sep) && filePath !== resolvedBase) {
+    throw new Error(`Path traversal detected in fromFile: ${fromFile}`);
+  }
   
   // Read file
   let content: string;
@@ -355,14 +360,21 @@ async function applyRenderMarkdown(
   // Get template content
   let template: string;
   const baseDir = context.baseDir || process.cwd();
-  
+  const resolvedBase = path.resolve(baseDir);
+  const containedIn = (p: string) =>
+    p.startsWith(resolvedBase + path.sep) || p === resolvedBase;
+
   // Check if templateRef is a file path or a special reference
   if (templateRef.includes('#')) {
     // Handle template references like "simulations/agent-coder/3/request.md"
-    const templatePath = templateRef.startsWith('/') 
-      ? templateRef 
+    const templatePath = templateRef.startsWith('/')
+      ? templateRef
       : path.resolve(baseDir, templateRef);
-    
+
+    if (!containedIn(templatePath)) {
+      throw new Error(`Path traversal detected in templateRef: ${templateRef}`);
+    }
+
     if (context.fs) {
       template = await context.fs.readFile(templatePath, 'utf-8');
     } else {
@@ -371,6 +383,11 @@ async function applyRenderMarkdown(
   } else {
     // Try as file path
     const templatePath = path.resolve(baseDir, templateRef);
+
+    if (!containedIn(templatePath)) {
+      throw new Error(`Path traversal detected in templateRef: ${templateRef}`);
+    }
+
     if (context.fs) {
       template = await context.fs.readFile(templatePath, 'utf-8');
     } else {
@@ -393,7 +410,12 @@ async function applyRenderMarkdown(
 
   // Write output file
   const outputBaseDir = context.outputDir || baseDir;
+  const resolvedOutputBase = path.resolve(outputBaseDir);
   const outputPath = path.resolve(outputBaseDir, outputFile);
+
+  if (!outputPath.startsWith(resolvedOutputBase + path.sep) && outputPath !== resolvedOutputBase) {
+    throw new Error(`Path traversal detected in outputFile: ${outputFile}`);
+  }
 
   if (context.fs) {
     await context.fs.writeFile(outputPath, rendered);

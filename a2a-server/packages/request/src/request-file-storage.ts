@@ -65,8 +65,19 @@ export class RequestFileStorage {
         await fs.mkdir(this.storageDir, { recursive: true });
     }
 
+    private assertSafeId(promiseId: string): void {
+        if (!/^[a-zA-Z0-9_-]+$/.test(promiseId)) {
+            throw new Error(`Invalid promiseId: ${promiseId}`);
+        }
+    }
+
     private filePath(promiseId: string): string {
-        return path.join(this.storageDir, `${promiseId}.json`);
+        this.assertSafeId(promiseId);
+        const resolved = path.resolve(this.storageDir, `${promiseId}.json`);
+        if (!resolved.startsWith(path.resolve(this.storageDir) + path.sep)) {
+            throw new Error(`Path traversal detected for promiseId: ${promiseId}`);
+        }
+        return resolved;
     }
 
     async save(req: Omit<RequestResult, 'createdAt' | 'startedAt' | 'completedAt'> & {
@@ -98,10 +109,13 @@ export class RequestFileStorage {
                     err !== null &&
                     (err as Error).name === 'SyntaxError');
             if (isJson) {
-                const quarantine = path.join(
+                const quarantine = path.resolve(
                     this.storageDir,
-                    `${promiseId}.corrupt.${Date.now()}.json`,
+                    `${path.basename(promiseId)}.corrupt.${Date.now()}.json`,
                 );
+                if (!quarantine.startsWith(path.resolve(this.storageDir) + path.sep)) {
+                    throw new Error(`Path traversal detected in quarantine path for promiseId: ${promiseId}`);
+                }
                 try {
                     await fs.rename(file, quarantine);
                 } catch {
