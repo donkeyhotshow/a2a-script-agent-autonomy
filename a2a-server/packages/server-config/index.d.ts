@@ -16,60 +16,6 @@
 import { appConfigSchema, databaseConfigSchema, aiHubConfigSchema, securityConfigSchema, serverConfigSchema, storageConfigSchema, loggingConfigSchema, rateLimitConfigSchema, queueConfigSchema, sessionConfigSchema, requestProcessorConfigSchema, featuresConfigSchema } from "./schema.js";
 import type { AppConfig } from "./types.js";
 /**
- * Validates configuration and returns typed config object.
- * Throws error with detailed message if validation fails.
- */
-export declare function validateConfig(): AppConfig;
-/**
- * Validates configuration without throwing.
- * Returns result object with success status and either config or errors.
- */
-export declare function validateConfigSafe(): {
-    success: true;
-    config: AppConfig;
-    errors: null;
-} | {
-    success: false;
-    config: null;
-    errors: string[];
-};
-/**
- * Validates only port configuration.
- * Useful for service startup validation.
- */
-export declare function validatePorts(): {};
-/**
- * Validates only database configuration.
- */
-export declare function validateDatabase(): {
-    databaseUrl: string;
-    redisUrl: string;
-    postgresUser: string;
-    postgresPassword: string;
-    postgresDb: string;
-};
-/**
- * Validates only security configuration.
- */
-export declare function validateSecurity(): {
-    jwtSecret: string;
-    jwtExpiresIn: string;
-    jwtRefreshExpiresIn: string;
-    skipAuth: boolean;
-    apiKeyPrefix: string;
-    encryptionKey?: string | undefined;
-};
-/**
- * Validates only AI Hub configuration.
- */
-export declare function validateAIHub(): {
-    aiHubUrl: string;
-    pollIntervalMs: number;
-    pollTimeoutMs: number;
-    openaiModel: string;
-    openaiApiKey?: string | undefined;
-};
-/**
  * Validated configuration object.
  * Throws on startup if configuration is invalid.
  */

@@ -6,10 +6,10 @@ export declare const loggingConfigSchema: z.ZodObject<{
     logLevel: z.ZodDefault<z.ZodEnum<["error", "warn", "info", "debug"]>>;
     logFormat: z.ZodDefault<z.ZodEnum<["json", "pretty", "text"]>>;
 }, "strip", z.ZodTypeAny, {
-    logLevel: "error" | "warn" | "info" | "debug";
+    logLevel: "info" | "error" | "warn" | "debug";
     logFormat: "json" | "pretty" | "text";
 }, {
-    logLevel?: "error" | "warn" | "info" | "debug" | undefined;
+    logLevel?: "info" | "error" | "warn" | "debug" | undefined;
     logFormat?: "json" | "pretty" | "text" | undefined;
 }>;
 export type LoggingConfig = z.infer<typeof loggingConfigSchema>;

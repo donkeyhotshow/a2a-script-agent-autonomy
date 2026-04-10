@@ -74,7 +74,7 @@ npm run test:gang
 
 3. **Papa (when you need “it really talks”):**
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\tests\direct-tests\run-post-start-all.ps1
+   powershell -ExecutionPolicy Bypass -File .\tests\direct-tests\run-post-
    # Or subset: node tests/direct-tests/e2e-dialog-test.js --only=routerAgentNoLoop
    ```
    See [`tests/direct-tests/README.md`](tests/direct-tests/README.md).

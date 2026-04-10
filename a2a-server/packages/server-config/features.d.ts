@@ -70,7 +70,6 @@ export declare class FeatureManager {
         embeddings: boolean;
         rag: boolean;
         agentSwing: boolean;
-        episodicMemory: boolean;
     };
     /**
      * Check if monitoring features are enabled

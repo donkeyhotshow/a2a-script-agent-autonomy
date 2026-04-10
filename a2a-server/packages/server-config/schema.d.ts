@@ -100,10 +100,10 @@ export declare const loggingConfigSchema: z.ZodObject<{
     logLevel: z.ZodDefault<z.ZodEnum<["error", "warn", "info", "debug"]>>;
     logFormat: z.ZodDefault<z.ZodEnum<["json", "pretty", "text"]>>;
 }, "strip", z.ZodTypeAny, {
-    logLevel: "error" | "warn" | "info" | "debug";
+    logLevel: "info" | "error" | "warn" | "debug";
     logFormat: "json" | "pretty" | "text";
 }, {
-    logLevel?: "error" | "warn" | "info" | "debug" | undefined;
+    logLevel?: "info" | "error" | "warn" | "debug" | undefined;
     logFormat?: "json" | "pretty" | "text" | undefined;
 }>;
 export declare const rateLimitConfigSchema: z.ZodObject<{
@@ -220,17 +220,14 @@ export declare const featuresConfigSchema: z.ZodDefault<z.ZodObject<{
         enabled: z.ZodDefault<z.ZodDefault<z.ZodEffects<z.ZodUnion<[z.ZodBoolean, z.ZodString]>, boolean, string | boolean>>>;
         rag: z.ZodDefault<z.ZodDefault<z.ZodEffects<z.ZodUnion<[z.ZodBoolean, z.ZodString]>, boolean, string | boolean>>>;
         agentSwing: z.ZodDefault<z.ZodDefault<z.ZodEffects<z.ZodUnion<[z.ZodBoolean, z.ZodString]>, boolean, string | boolean>>>;
-        episodicMemory: z.ZodDefault<z.ZodDefault<z.ZodEffects<z.ZodUnion<[z.ZodBoolean, z.ZodString]>, boolean, string | boolean>>>;
     }, "strip", z.ZodTypeAny, {
         enabled: boolean;
         rag: boolean;
         agentSwing: boolean;
-        episodicMemory: boolean;
     }, {
         enabled?: string | boolean | undefined;
         rag?: string | boolean | undefined;
         agentSwing?: string | boolean | undefined;
-        episodicMemory?: string | boolean | undefined;
     }>>;
     monitoring: z.ZodDefault<z.ZodObject<{
         enabled: z.ZodDefault<z.ZodDefault<z.ZodEffects<z.ZodUnion<[z.ZodBoolean, z.ZodString]>, boolean, string | boolean>>>;
@@ -307,7 +304,6 @@ export declare const featuresConfigSchema: z.ZodDefault<z.ZodObject<{
         enabled: boolean;
         rag: boolean;
         agentSwing: boolean;
-        episodicMemory: boolean;
     };
     security: {
         validation: boolean;
@@ -368,7 +364,6 @@ export declare const featuresConfigSchema: z.ZodDefault<z.ZodObject<{
         enabled?: string | boolean | undefined;
         rag?: string | boolean | undefined;
         agentSwing?: string | boolean | undefined;
-        episodicMemory?: string | boolean | undefined;
     } | undefined;
     security?: {
         validation?: string | boolean | undefined;
@@ -522,10 +517,10 @@ export declare const appConfigSchema: z.ZodObject<{
         logLevel: z.ZodDefault<z.ZodEnum<["error", "warn", "info", "debug"]>>;
         logFormat: z.ZodDefault<z.ZodEnum<["json", "pretty", "text"]>>;
     }, "strip", z.ZodTypeAny, {
-        logLevel: "error" | "warn" | "info" | "debug";
+        logLevel: "info" | "error" | "warn" | "debug";
         logFormat: "json" | "pretty" | "text";
     }, {
-        logLevel?: "error" | "warn" | "info" | "debug" | undefined;
+        logLevel?: "info" | "error" | "warn" | "debug" | undefined;
         logFormat?: "json" | "pretty" | "text" | undefined;
     }>;
     rateLimit: z.ZodObject<{
@@ -642,17 +637,14 @@ export declare const appConfigSchema: z.ZodObject<{
             enabled: z.ZodDefault<z.ZodDefault<z.ZodEffects<z.ZodUnion<[z.ZodBoolean, z.ZodString]>, boolean, string | boolean>>>;
             rag: z.ZodDefault<z.ZodDefault<z.ZodEffects<z.ZodUnion<[z.ZodBoolean, z.ZodString]>, boolean, string | boolean>>>;
             agentSwing: z.ZodDefault<z.ZodDefault<z.ZodEffects<z.ZodUnion<[z.ZodBoolean, z.ZodString]>, boolean, string | boolean>>>;
-            episodicMemory: z.ZodDefault<z.ZodDefault<z.ZodEffects<z.ZodUnion<[z.ZodBoolean, z.ZodString]>, boolean, string | boolean>>>;
         }, "strip", z.ZodTypeAny, {
             enabled: boolean;
             rag: boolean;
             agentSwing: boolean;
-            episodicMemory: boolean;
         }, {
             enabled?: string | boolean | undefined;
             rag?: string | boolean | undefined;
             agentSwing?: string | boolean | undefined;
-            episodicMemory?: string | boolean | undefined;
         }>>;
         monitoring: z.ZodDefault<z.ZodObject<{
             enabled: z.ZodDefault<z.ZodDefault<z.ZodEffects<z.ZodUnion<[z.ZodBoolean, z.ZodString]>, boolean, string | boolean>>>;
@@ -729,7 +721,6 @@ export declare const appConfigSchema: z.ZodObject<{
             enabled: boolean;
             rag: boolean;
             agentSwing: boolean;
-            episodicMemory: boolean;
         };
         security: {
             validation: boolean;
@@ -790,7 +781,6 @@ export declare const appConfigSchema: z.ZodObject<{
             enabled?: string | boolean | undefined;
             rag?: string | boolean | undefined;
             agentSwing?: string | boolean | undefined;
-            episodicMemory?: string | boolean | undefined;
         } | undefined;
         security?: {
             validation?: string | boolean | undefined;
@@ -876,7 +866,7 @@ export declare const appConfigSchema: z.ZodObject<{
         maxFileSizeMb: number;
     };
     logging: {
-        logLevel: "error" | "warn" | "info" | "debug";
+        logLevel: "info" | "error" | "warn" | "debug";
         logFormat: "json" | "pretty" | "text";
     };
     rateLimit: {
@@ -906,7 +896,6 @@ export declare const appConfigSchema: z.ZodObject<{
             enabled: boolean;
             rag: boolean;
             agentSwing: boolean;
-            episodicMemory: boolean;
         };
         security: {
             validation: boolean;
@@ -992,7 +981,7 @@ export declare const appConfigSchema: z.ZodObject<{
         maxFileSizeMb?: number | undefined;
     };
     logging: {
-        logLevel?: "error" | "warn" | "info" | "debug" | undefined;
+        logLevel?: "info" | "error" | "warn" | "debug" | undefined;
         logFormat?: "json" | "pretty" | "text" | undefined;
     };
     rateLimit: {
@@ -1022,7 +1011,6 @@ export declare const appConfigSchema: z.ZodObject<{
             enabled?: string | boolean | undefined;
             rag?: string | boolean | undefined;
             agentSwing?: string | boolean | undefined;
-            episodicMemory?: string | boolean | undefined;
         } | undefined;
         security?: {
             validation?: string | boolean | undefined;

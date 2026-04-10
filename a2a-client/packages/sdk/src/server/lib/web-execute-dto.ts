@@ -1,7 +1,7 @@
 import {
     buildWebExecute as buildWebExecuteImpl,
     sanitizeApiRecordExecuteFields as sanitizeApiRecordExecuteFieldsImpl,
-} from '../../../../../shared/web-execute-dto.js';
+} from '@a2a-client/shared/web-execute-dto.mjs';
 
 export type BuildWebExecuteOptions = { context?: unknown };
 

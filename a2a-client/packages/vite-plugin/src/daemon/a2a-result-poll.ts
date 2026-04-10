@@ -6,7 +6,7 @@
  * with improved error handling, retry logic, and configurable options.
  */
 
-import { isPromisePollComplete } from '@a2a-client/storage/src/promise-status.js';
+import { isPromisePollComplete } from '@a2a-client/storage/promise-status.ts';
 import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.js';
 
 function defaultBaseUrl() {

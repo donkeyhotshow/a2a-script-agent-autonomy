@@ -34,7 +34,7 @@ node tests/direct-tests/e2e-dialog-test.js --only=clientProjects,serverHealth,se
 
 If Vite returns **`503` / `A2A server unavailable`** on `/next` under load, the harness **retries** Client API fetches (`E2E_FETCH_RETRIES`, `E2E_FETCH_RETRY_BASE_MS`, optional `E2E_CASE_COOLDOWN_MS` between cases) — see the header comment in `e2e-dialog-test.js`.
 
-**Manual full direct suite (Papa):** [`run-post-start-all.ps1`](run-post-start-all.ps1) — hub (`run-checks.ps1` with Client **3001** / Web **5173**), Vitest, `router-choice-transition.test.mjs`, full `e2e-dialog-test.js`, `gray-room-test.js`, `test-dialog-flow.ps1`, `test-agent-flow.ps1`, `server-invoke-agent.ps1`. Set **`A2A_POST_START_SKIP_HEAVY=1`** to skip LLM-heavy steps (hub + Vitest + router + short e2e subset only). **`start-all.bat` does not run this** — see [PAPA-MAMA.md](../../PAPA-MAMA.md).
+**Manual full direct suite (Papa):** [`run-post-`](run-post-) — hub (`run-checks.ps1` with Client **3001** / Web **5173**), Vitest, `router-choice-transition.test.mjs`, full `e2e-dialog-test.js`, `gray-room-test.js`, `test-dialog-flow.ps1`, `test-agent-flow.ps1`, `server-invoke-agent.ps1`. Set **`A2A_POST_START_SKIP_HEAVY=1`** to skip LLM-heavy steps (hub + Vitest + router + short e2e subset only). **`start-all.bat` does not run this** — see [PAPA-MAMA.md](../../PAPA-MAMA.md).
 
 ---
 
@@ -51,7 +51,7 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 | [validators/verify-gray-room-state.mjs](validators/verify-gray-room-state.mjs) | `npm run verify:gray-room -- <snapshot.json>` — sequence / workbench snapshot |
 | [validators/audit-sim-choice-descriptions.mjs](validators/audit-sim-choice-descriptions.mjs) | `npm run audit:sim-choice-descriptions` — simulation `choices[].description` |
 | [run-checks.ps1](run-checks.ps1) | Hub: health checks by scope (LLM, ServerLLM, ClientServer, …) |
-| [run-post-start-all.ps1](run-post-start-all.ps1) | Chains hub + Vitest + node + PS1 flows; run manually after the stack is up ([PAPA-MAMA.md](../../PAPA-MAMA.md)) |
+| [run-post-](run-post-) | Chains hub + Vitest + node + PS1 flows; run manually after the stack is up ([PAPA-MAMA.md](../../PAPA-MAMA.md)) |
 | [scripts/](scripts/) | Runners → `scripts/tests/` and root `scripts/` (prod-test, pre-release, web-ui-smoke-report) |
 | [dialog/](dialog/) | Dialog flow with direct Local LLM upstream (bypass a2a-ai-hub timeout) |
 | [rag/](rag/), [sdk/](sdk/), [a2a-ai-hub/](a2a-ai-hub/), [server/](server/) | Runners → packages (RAG, SDK, AI, sim) |

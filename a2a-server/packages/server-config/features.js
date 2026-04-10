@@ -106,7 +106,6 @@ export class FeatureManager {
             embeddings: this.isEnabled("ai.embeddings"),
             rag: this.isEnabled("ai.rag"),
             agentSwing: this.isEnabled("ai.agentSwing"),
-            episodicMemory: this.isEnabled("ai.episodicMemory"),
         };
     }
     /**

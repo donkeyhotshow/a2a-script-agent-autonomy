@@ -161,7 +161,6 @@ export const featuresConfigSchema = z
         enabled: booleanSchema.default(true),
         rag: booleanSchema.default(true),
         agentSwing: booleanSchema.default(true),
-        episodicMemory: booleanSchema.default(true),
     })
         .default({}),
     // Monitoring and observability

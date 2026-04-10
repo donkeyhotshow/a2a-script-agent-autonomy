@@ -6,4 +6,4 @@ export {
     startRequestProcessor,
     stopRequestProcessor,
     processOneRequest,
-} from '../services/core/request-processor/request-processor.service.js';
+} from '../../server/src/request-processor/request-processor.service.js';

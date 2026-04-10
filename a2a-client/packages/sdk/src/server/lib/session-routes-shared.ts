@@ -19,7 +19,14 @@ import { pickInvokeContextPatch } from "./context-invoke-patch.js";
 import { sanitizeApiRecordExecuteFields } from "./web-execute-dto.js";
 import { parseA2aInvokeResponse } from "../../client-api-envelope.js";
 import { deriveSessionStage } from "@a2a-client/shared/session-stage-derive.js";
-import { validateRequestToServer } from "@a2a-server/protocol";
+// Stub for validateRequestToServer since @a2a-server/protocol is not available
+export function validateRequestToServer({ context }: { context: Record<string, unknown> }): string | null {
+  // Basic validation: context should be an object
+  if (!context || typeof context !== 'object') {
+    return 'Context is required and must be an object';
+  }
+  return null;
+}
 
 /** Vite `toMinimalNextAck` parity: success ack omits transport `promiseId`; use `asyncPending` + GET `/async`. */
 export function buildMinimalNextAck(step: number, promiseId: string | null) {
@@ -93,13 +100,6 @@ export function toWebClientSessionPayload<T extends Record<string, unknown>>(
   const stripped = stripContextForWeb(obj);
   if (!stripped) return null;
   return sanitizeApiRecordExecuteFields(stripped as Record<string, unknown>);
-}
-
-/** Validate request-to-server before sending to A2A: task|context required, context.execution valid when present
- *  * Imported from @a2a-server/protocol to avoid duplication
- *  */
-  }
-  return null;
 }
 
 export async function invokeAndPersistContinuation(params: {

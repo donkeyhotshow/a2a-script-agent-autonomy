@@ -9,9 +9,9 @@ import {registryAuth} from './middleware/registry-auth.middleware.js';
 import routes from './routes/index.js';
 import sessionsRouter from './routes/sessions.routes.js';
 import {register} from './utils/metrics.js';
-import registryRegisterRouter from './api/registry/register.js';
-import registryRouteRouter from './api/registry/route.js';
-import registryHealthRouter from './api/registry/health.js';
+import registryRegisterRouter from './registry/register.js';
+import registryRouteRouter from './registry/route.js';
+import registryHealthRouter from './registry/health.js';
 import toolsEvolveRouter from './api/tools-evolve.js';
 
 const app: Express = express();

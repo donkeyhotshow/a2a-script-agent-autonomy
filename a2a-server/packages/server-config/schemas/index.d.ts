@@ -34,8 +34,8 @@ export declare const appConfigSchema: z.ZodObject<{
         redisPort?: number | undefined;
     }>;
     database: z.ZodObject<{
-        databaseUrl: z.ZodOptional<z.ZodOptional<z.ZodDefault<z.ZodString>> | z.ZodOptional<z.ZodString>>;
-        redisUrl: z.ZodOptional<z.ZodOptional<z.ZodDefault<z.ZodString>> | z.ZodOptional<z.ZodString>>;
+        databaseUrl: z.ZodOptional<z.ZodOptional<z.ZodString> | z.ZodOptional<z.ZodDefault<z.ZodString>>>;
+        redisUrl: z.ZodOptional<z.ZodOptional<z.ZodString> | z.ZodOptional<z.ZodDefault<z.ZodString>>>;
         postgresUser: z.ZodOptional<z.ZodOptional<z.ZodDefault<z.ZodString>>>;
         postgresPassword: z.ZodOptional<z.ZodOptional<z.ZodDefault<z.ZodString>>>;
         postgresDb: z.ZodOptional<z.ZodOptional<z.ZodDefault<z.ZodString>>>;
@@ -196,10 +196,10 @@ export declare const appConfigSchema: z.ZodObject<{
         logLevel: z.ZodDefault<z.ZodEnum<["error", "warn", "info", "debug"]>>;
         logFormat: z.ZodDefault<z.ZodEnum<["json", "pretty", "text"]>>;
     }, "strip", z.ZodTypeAny, {
-        logLevel: "error" | "warn" | "info" | "debug";
+        logLevel: "info" | "error" | "warn" | "debug";
         logFormat: "json" | "pretty" | "text";
     }, {
-        logLevel?: "error" | "warn" | "info" | "debug" | undefined;
+        logLevel?: "info" | "error" | "warn" | "debug" | undefined;
         logFormat?: "json" | "pretty" | "text" | undefined;
     }>;
     rateLimit: z.ZodObject<{
@@ -307,7 +307,7 @@ export declare const appConfigSchema: z.ZodObject<{
         maxFileSizeMb: number;
     };
     logging: {
-        logLevel: "error" | "warn" | "info" | "debug";
+        logLevel: "info" | "error" | "warn" | "debug";
         logFormat: "json" | "pretty" | "text";
     };
     rateLimit: {
@@ -393,7 +393,7 @@ export declare const appConfigSchema: z.ZodObject<{
         maxFileSizeMb?: number | undefined;
     };
     logging: {
-        logLevel?: "error" | "warn" | "info" | "debug" | undefined;
+        logLevel?: "info" | "error" | "warn" | "debug" | undefined;
         logFormat?: "json" | "pretty" | "text" | undefined;
     };
     rateLimit: {

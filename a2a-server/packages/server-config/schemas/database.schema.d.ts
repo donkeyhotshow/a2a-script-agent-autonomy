@@ -3,8 +3,8 @@
  */
 import { z } from 'zod';
 export declare const databaseConfigSchema: z.ZodObject<{
-    databaseUrl: z.ZodOptional<z.ZodOptional<z.ZodDefault<z.ZodString>> | z.ZodOptional<z.ZodString>>;
-    redisUrl: z.ZodOptional<z.ZodOptional<z.ZodDefault<z.ZodString>> | z.ZodOptional<z.ZodString>>;
+    databaseUrl: z.ZodOptional<z.ZodOptional<z.ZodString> | z.ZodOptional<z.ZodDefault<z.ZodString>>>;
+    redisUrl: z.ZodOptional<z.ZodOptional<z.ZodString> | z.ZodOptional<z.ZodDefault<z.ZodString>>>;
     postgresUser: z.ZodOptional<z.ZodOptional<z.ZodDefault<z.ZodString>>>;
     postgresPassword: z.ZodOptional<z.ZodOptional<z.ZodDefault<z.ZodString>>>;
     postgresDb: z.ZodOptional<z.ZodOptional<z.ZodDefault<z.ZodString>>>;
