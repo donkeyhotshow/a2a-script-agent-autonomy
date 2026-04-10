@@ -24,44 +24,35 @@ const SERVICES = {
     logfile: path.join(__dirname, '..', 'logs', 'runbook-status.log'),
     restartPolicy: {enabled: false}
   },
-  'postgres': {
-    port: 5432,
-    startCmd: 'start "postgres" cmd /c "pg_ctl start -D \\"C:\\\\Program Files\\\\PostgreSQL\\\\16\\\\data\\" -l ..\\\\logs\\\\postgres.log"',
-    healthEndpoint: '/health',
-    dependencies: [],
-    logfile: path.join(__dirname, '..', 'logs', 'postgres.log')
-  },
-  'redis': {
-    port: 6379,
-    startCmd: 'start "redis" cmd /c "redis-server.exe > ..\\\\logs\\\\redis.log 2>&1"',
-    healthEndpoint: '/health',
-    dependencies: [],
-    logfile: path.join(__dirname, '..', 'logs', 'redis.log')
-  },
+
   'ai-integration': {
     port: 11434,
-    startCmd: 'start "ai-integration" /d "a2a-ai-hub" cmd /c "python scripts/ensure-providers-config.py && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port 11434 > ..\\\\..\\\\logs\\\\ai-integration.log 2>&1"',
+    startCmd: 'python scripts/ensure-providers-config.py && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port 11434',
+    cwd: 'a2a-ai-hub',
     healthEndpoint: '/health',
-    dependencies: ['runbook-status', 'postgres', 'redis'],
+    dependencies: ['runbook-status'],
     logfile: path.join(__dirname, '..', 'logs', 'ai-integration.log')
   },
   'a2a-server': {
     port: 3000,
-    startCmd: 'start "a2a-server" /d "a2a-server" cmd /c "npm run dev:no-auth > logs\\\\server.log 2>&1"',
+    startCmd: 'npm run dev:no-auth',
+    cwd: 'a2a-server',
     healthEndpoint: '/health',
     dependencies: ['ai-integration'],
     logfile: path.join(__dirname, '..', 'a2a-server', 'logs', 'server.log')
   },
   'client-api': {
     port: 3001,
-    startCmd: 'start "client-api" /d "a2a-client\\\\packages\\\\sdk" cmd /c "npx cross-env PORT=3001 WS_PORT=3002 SKIP_AUTH=1 tsx watch src/server/index.ts > ..\\\\..\\\\logs\\\\client-api.log 2>&1"',
+    startCmd: 'npx cross-env PORT=3001 WS_PORT=3002 SKIP_AUTH=1 tsx watch src/server/index.ts',
+    cwd: path.join('a2a-client', 'packages', 'sdk'),
     healthEndpoint: '/api/a2a/projects',
     dependencies: ['a2a-server'],
     logfile: path.join(__dirname, '..', 'a2a-client', 'logs', 'client-api.log')
   },
   'web-ui': {
     port: 5173,
-    startCmd: 'start "web-ui" /d "a2a-client" cmd /c "npx vite --port 5173 > logs\\\\web-ui.log 2>&1"',
+    startCmd: 'npx vite --port 5173',
+    cwd: 'a2a-client',
     healthEndpoint: '/api/a2a/projects',
     dependencies: ['client-api'],
     logfile: path.join(__dirname, '..', 'a2a-client', 'logs', 'web-ui.log')
@@ -436,6 +427,26 @@ function killProcess(pid) {
   } catch {}
 }
 
+function escapePowerShellSingleQuote(value) {
+  return value.replace(/'/g, "''");
+}
+
+function buildPowerShellStartArgs(service) {
+  const cwd = path.resolve(__dirname, '..', service.cwd || '.');
+  const logfile = path.resolve(service.logfile);
+  const command = service.startCmd;
+  const psCommand = `
+    $ErrorActionPreference = 'Stop';
+    $cwd = '${escapePowerShellSingleQuote(cwd)}';
+    $log = '${escapePowerShellSingleQuote(logfile)}';
+    Set-Location -LiteralPath $cwd;
+    $args = @('/c', '${escapePowerShellSingleQuote(command)}');
+    $proc = Start-Process -FilePath 'cmd.exe' -ArgumentList $args -WorkingDirectory $cwd -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError $log -PassThru;
+    Write-Output $proc.Id;
+  `;
+  return ['powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', psCommand]];
+}
+
 async function startService(serviceName) {
   const service = SERVICES[serviceName];
   if (!service.startCmd.trim()) {
@@ -444,22 +455,39 @@ async function startService(serviceName) {
   }
   log(`Starting ${serviceName}...`);
   fs.mkdirSync(path.dirname(service.logfile), { recursive: true });
-  const child = spawn(service.startCmd, { shell: true, stdio: 'inherit', cwd: path.join(__dirname, '..') });
-  // Wait for the background process to start
-  await new Promise(r => setTimeout(r, 2000));
-  // Capture PID from netstat
-  try {
-    const netstat = execSync(`netstat -ano | findstr :${service.port} | findstr LISTENING`, { encoding: 'utf8' });
-    const lines = netstat.trim().split('\n');
-    if (lines.length > 0) {
-      const parts = lines[0].trim().split(/\s+/);
-      const pid = parseInt(parts[4]);
-      if (pid) savePid(serviceName, pid);
+
+  if (process.platform === 'win32') {
+    const [cmd, args] = buildPowerShellStartArgs(service);
+    const child = spawn(cmd, args, {
+      cwd: path.join(__dirname, '..'),
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true
+    });
+
+    let output = '';
+    let errorOutput = '';
+    child.stdout.on('data', (data) => { output += data.toString(); });
+    child.stderr.on('data', (data) => { errorOutput += data.toString(); });
+
+    const exitCode = await new Promise((resolve, reject) => {
+      child.on('error', reject);
+      child.on('exit', resolve);
+    });
+
+    if (exitCode !== 0) {
+      log(`✗ ${serviceName} failed to launch PowerShell wrapper: ${errorOutput.trim() || `exit ${exitCode}`}`);
+      return false;
     }
-  } catch (e) {
-    // Ignore
+
+    const pid = parseInt(output.trim(), 10);
+    if (!Number.isInteger(pid) || pid <= 0) {
+      log(`✗ ${serviceName} PowerShell wrapper did not return a PID: ${output.trim()}`);
+    }
+  } else {
+    spawn(service.startCmd, { shell: true, stdio: 'inherit', cwd: path.resolve(__dirname, '..', service.cwd || '.') });
   }
-  // Wait for health
+
+  // Wait for port and health
   let healthy = false;
   for (let i = 0; i < 30; i++) {
     await new Promise(r => setTimeout(r, 1000));
@@ -468,6 +496,22 @@ async function startService(serviceName) {
       break;
     }
   }
+
+  // Capture PID from netstat after service binds
+  if (healthy) {
+    try {
+      const netstat = execSync(`netstat -ano | findstr :${service.port} | findstr LISTENING`, { encoding: 'utf8' });
+      const lines = netstat.trim().split('\n');
+      if (lines.length > 0) {
+        const parts = lines[0].trim().split(/\s+/);
+        const listeningPid = parseInt(parts[4]);
+        if (listeningPid) savePid(serviceName, listeningPid);
+      }
+    } catch (e) {
+      // Ignore if the process has not yet bound to the port
+    }
+  }
+
   if (healthy) {
     log(`✓ ${serviceName} started`);
   } else {
@@ -482,28 +526,12 @@ async function startServiceCli(serviceName) {
     log(`${serviceName} has no start command, skipping`);
     return;
   }
-  // Check if already running
   if (await checkHealth(serviceName)) {
     log(`${serviceName} already running`);
     return;
   }
-  log(`Starting ${serviceName}...`);
-  fs.mkdirSync(path.dirname(service.logfile), { recursive: true });
-  // Start background process
-  const child = spawn(service.startCmd, { shell: true, stdio: 'inherit', cwd: path.join(__dirname, '..'), detached: true });
-  child.unref(); // Allow parent process to exit independently
-  // Wait for health check
-  let healthy = false;
-  for (let i = 0; i < 30; i++) {
-    await new Promise(r => setTimeout(r, 1000));
-    if (await checkHealth(serviceName)) {
-      healthy = true;
-      break;
-    }
-  }
-  if (healthy) {
-    log(`✓ ${serviceName} started`);
-  } else {
+  const healthy = await startService(serviceName);
+  if (!healthy) {
     log(`✗ ${serviceName} failed to start - check logs: ${service.logfile}`);
     process.exit(1);
   }

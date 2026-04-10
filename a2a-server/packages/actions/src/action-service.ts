@@ -7,7 +7,7 @@
 import * as path from 'path';
 import { ActionDefinition, ActionMatch, ActionOutcome, ExecutionState, SubAction } from './types.js';
 import { ActionRegistry, actionRegistry } from './action-registry.js';
-import { ActionExecutor, StepResult } from './action-executor.js';
+import { ActionExecutor, StepResult } from './action-executor.ts';
 import { logger } from '../../lib/logger.js';
 
 /**

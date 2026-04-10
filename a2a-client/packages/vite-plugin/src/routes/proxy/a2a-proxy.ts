@@ -3,7 +3,7 @@
  */
 
 import { pollA2ARequestResult } from '../../daemon/a2a-result-poll.js';
-import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.ts';
+import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.js';
 
 const A2A_URL = getA2aServerBaseUrl();
 

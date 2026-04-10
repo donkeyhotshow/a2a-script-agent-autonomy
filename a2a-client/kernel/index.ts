@@ -1,4 +1,4 @@
-import { loadConfig, Config } from './config';
+import { loadConfig, Config } from './config.js';
 
 /**
  * Feature modules - these are dynamically imported based on config

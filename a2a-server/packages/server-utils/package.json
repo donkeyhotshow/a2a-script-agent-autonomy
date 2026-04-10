@@ -1,0 +1,29 @@
+{
+  "name": "@a2a/server-utils",
+  "version": "1.0.0",
+  "description": "Pure utility functions for A2A server",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js",
+    "./logger": "./dist/logger.js",
+    "./strip-markdown-json-fence": "./dist/strip-markdown-json-fence.js",
+    "./validation": "./dist/validation.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "vitest run",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix"
+  },
+  "dependencies": {
+    "@a2a/server-config": "workspace:*",
+    "bcrypt": "^5.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.38",
+    "typescript": "^5.3.3",
+    "vitest": "^2.1.9"
+  }
+}

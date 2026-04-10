@@ -5,7 +5,7 @@
 import fs from 'fs';
 import path from 'path';
 import * as stepHandlers from '../handlers/step-handlers.js';
-import { isActivePromiseStatus, isRecoverableAsyncSnapshot } from '@a2a-client/storage/promise-status.ts';
+import { isActivePromiseStatus, isRecoverableAsyncSnapshot } from '@a2a-client/storage/promise-status.js';
 import { buildExecuteProjection, buildWebExecute } from './execute-projection-dto.js';
 import { collectSessionMessagesFlat } from './message-timeline.js';
 import { deriveSessionStage } from './session-stage-machine.js';

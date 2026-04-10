@@ -13,9 +13,9 @@
  * 5. Переходим к следующему шагу
  */
 
-import {ActionService, ActionResponseSimulation} from './action-service.js';
+import {ActionService, ActionResponseSimulation} from './action-service.ts';
 import {ActionDefinition, SubAction} from './types.js';
-import type {ContextBlock, ServerMessage, Task, TaskStatus, TaskType} from '../types/index.js';
+import type {ContextBlock, ServerMessage, Task, TaskStatus, TaskType} from '@a2a/server-protocol/types.js';
 
 /**
  * Результат обработки action

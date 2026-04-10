@@ -6,9 +6,9 @@
 
 import * as path from 'path';
 import {access} from 'node:fs/promises';
-import {ActionDefinition, ActionMatch} from './types.js';
-import {parseAllActionsFromDirectory} from './action-parser.js';
-import {logger} from '../../lib/logger.js';
+import {ActionDefinition, ActionMatch} from './types.ts';
+import {parseAllActionsFromDirectory} from './action-parser.ts';
+import {logger} from '../../lib/logger.ts';
 
 export type ActionRegistryBootstrapPolicy = 'fail-fast' | 'lenient';
 

@@ -1,0 +1,14 @@
+{
+  "lastChecked": "2026-04-10T15:03:43.772Z",
+  "processedTasks": [],
+  "currentTask": null,
+  "sessionId": null,
+  "status": "health-check-failed",
+  "activeTasks": {},
+  "taskSessions": {},
+  "taskRuntime": {},
+  "promiseQueue": {
+    "knownErrorIds": {},
+    "lastMaintenanceAt": null
+  }
+}

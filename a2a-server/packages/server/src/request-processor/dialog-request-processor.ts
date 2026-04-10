@@ -32,7 +32,7 @@ import { tryParseJsonFromLlmText } from "@a2a/server-utils";
 import { resolveLlmModelFromContext } from "./llm-model-resolver.js";
 import { requestService } from "@a2a/server-request";
 import { CognitionBase } from "./cognition-base.js";
-import { EpisodicMemory } from "@a2a/server-memory";
+
 import { globalDesignReasoner } from "./hierarchical-design-reasoner.js";
 import { getPromptsTransformsPath } from "./transform/index.js";
 import {
@@ -466,40 +466,31 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
 
       if (!ctx["llmPromiseId"]) {
         if (allowContextAugment) {
-          // Check if cognition injection is enabled via feature flag
-          const cognitionInjectionEnabled =
-            process.env.COGNITION_INJECTION_ENABLED === "1" ||
-            process.env.COGNITION_INJECTION_ENABLED === "true";
+          // Внедрение априорных знаний через CognitionBase
+          try {
+            const cognition = new CognitionBase();
+            const topic =
+              (ctx["task"] as string) ||
+              (ctx["message"] as string) ||
+              "general";
+            const sessionId = (ctx["session_id"] as string) || "startup";
 
-          if (cognitionInjectionEnabled) {
-            // Внедрение априорных знаний через CognitionBase (ADR-0062)
-            try {
-              const cognition = new CognitionBase();
-              const episodic = new EpisodicMemory();
-              const topic =
-                (ctx["task"] as string) ||
-                (ctx["message"] as string) ||
-                "general";
-              const sessionId = (ctx["session_id"] as string) || "startup";
+            const priors = await cognition.injectPriors(
+              topic,
+              sessionId,
+              { query: async () => [] }, // LessonStore stub
+              { query: async () => [] }, // PatternStore stub
+            );
 
-              const priors = await cognition.injectPriors(
-                topic,
-                sessionId,
-                { query: async () => [] }, // LessonStore stub
-                { query: async () => [] }, // PatternStore stub
-                episodic,
-              );
-
-              const priorStr = cognition.formatForContext(priors);
-              if (priorStr && typeof ctx["message"] === "string") {
-                ctx["message"] = ctx["message"] + "\n\n" + priorStr;
-              }
-            } catch (err) {
-              logger.warn(
-                "[DialogRequestProcessor] CognitionBase injection failed",
-                { error: String(err) },
-              );
+            const priorStr = cognition.formatForContext(priors);
+            if (priorStr && typeof ctx["message"] === "string") {
+              ctx["message"] = ctx["message"] + "\n\n" + priorStr;
             }
+          } catch (err) {
+            logger.warn(
+              "[DialogRequestProcessor] CognitionBase injection failed",
+              { error: String(err) },
+            );
           }
         }
 

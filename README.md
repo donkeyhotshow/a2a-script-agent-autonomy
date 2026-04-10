@@ -47,21 +47,15 @@ Open **[`START-FULL-SPECTRUM.md`](START-FULL-SPECTRUM.md)** and copy the **Agent
 ## Quick Start
 
 ```bash
-# 1. Prerequisites
-# Install PostgreSQL and Redis locally
-# On Windows: Install PostgreSQL from https://www.postgresql.org/download/windows/
-# On Windows: Install Redis from https://redis.io/download
-
-# 2. Setup
+# 1. Setup
 cp .env.example .env
-# Edit .env with your secrets
 
-# 3. Install
+# 2. Install
 npm install
 cd a2a-server && npm install && cd ..
 cd a2a-client && npm install && cd ..
 
-# 4. Run (repository root only)
+# 3. Run (repository root only)
 npm run dev
 ```
 
@@ -71,7 +65,7 @@ npm run dev
 
 | Command | Purpose |
 |---------|---------|
-| `npm run dev` | Start all services (Server + Client + AI + Databases) using runbook CLI |
+| `npm run dev` | Start all services (Server + Client + AI) using runbook CLI |
 | `node scripts/runbook-cli.js start` | Manual start with verification |
 | `node scripts/runbook-cli.js stop` | Stop all services |
 | `node scripts/runbook-cli.js status` | Check service status |
@@ -80,8 +74,6 @@ npm run dev
 Use `npm run dev` from the repository root to start the full stack. The runbook CLI manages service lifecycle, health checks, and dependencies.
 
 Services include:
-- PostgreSQL (port 5432)
-- Redis (port 6379)
 - AI Integration (port 11434)
 - A2A Server (port 3000)
 - Client API (port 3001)
@@ -96,8 +88,7 @@ See [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md) for detailed port managem
 ### Health Gating with Exponential Backoff
 
 Services start in dependency order with automatic retry:
-1. **Infrastructure**: PostgreSQL → Redis → (Local LLM upstream if proxy needed)
-2. **Backend**: Server (waits for PostgreSQL + Redis)
+1. **Backend**: AI Integration → A2A Server
 3. **Client**: Client API → Web UI (waits for Server)
 4. **AI**: Proxy (waits for Local LLM upstream)
 

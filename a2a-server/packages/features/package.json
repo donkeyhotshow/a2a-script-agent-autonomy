@@ -12,8 +12,8 @@
     "prepare": "npm run build"
   },
   "dependencies": {
-    "@a2a/server-utils": "workspace:*",
-    "@a2a/server-protocol": "workspace:*",
+    "@a2a/utils": "workspace:*",
+    "@a2a/protocol": "workspace:*",
     "@a2a/server-core": "workspace:*"
   },
   "devDependencies": {

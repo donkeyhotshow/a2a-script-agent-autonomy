@@ -7,7 +7,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import {ActionDefinition, SubAction, ActionContext, DSLDefinition} from './types.js';
-import {tryParseJsonFromLlmText} from '../../lib/strip-markdown-json-fence.js';
+import {tryParseJsonFromLlmText} from '../../../utils/src/lib/strip-markdown-json-fence.ts';
 
 /**
  * Parse a primitive type from a string value

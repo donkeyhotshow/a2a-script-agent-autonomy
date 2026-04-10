@@ -3,7 +3,7 @@ import pathMod from 'path';
 import http from 'http';
 
 import { buildExecuteProjection } from './utils/execute-projection-dto.js';
-import { isPromisePollComplete } from '@a2a-client/storage/src/promise-status.ts';
+import { isPromisePollComplete } from '@a2a-client/storage/src/promise-status.js';
 import * as stepHandlers from './handlers/step-handlers.js';
 import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.js';
 import { maybeChainAgentTools } from './step-routes-agent-flow.js';
@@ -13,8 +13,8 @@ import {
    normalizePromisePollStatus,
    isRecoverableAsyncSnapshot,
    } from '@a2a-client/shared/client-api-envelope.js';
-import { resolveProjectPathForApi, loadSession, saveSession } from '@a2a-client/storage/src/projectSessions.ts';
-import { registerStepSessionsParent } from '@a2a-client/storage/src/newSessions.ts';
+import { resolveProjectPathForApi, loadSession, saveSession } from '@a2a-client/storage/src/projectSessions.js';
+import { registerStepSessionsParent } from '@a2a-client/storage/src/newSessions.js';
 import { getActiveAsyncWork } from './utils/session-projection-dto.js';
 
 function projectSessionStepsParent(projectPath) {

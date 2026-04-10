@@ -56,6 +56,7 @@
     "validate:proba-servera": "tsx tests/proba-servera/validate.mts",
     "verify:proba-cache-api": "node tests/proba-servera/cache-api-smoke.mjs",
     "test:human-review:all": "node runbook/scripts/run-human-review-all.mjs",
+    "fix-imports:direct": "node scripts/fix-imports-direct.mjs",
     "postinstall": "echo 'No root node_modules needed! Use: cd a2a-server && npm i; cd ../a2a-client && npm i etc.' && exit 0"
   },
   "devDependencies": {

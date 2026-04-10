@@ -43,7 +43,6 @@ import {
 } from "./llm-model-resolver.js";
 import { globalArtifactStore } from "../artifact-store.js";
 import { DedicatedAnalyzer } from "../analyzer.js";
-import { globalExperienceBank } from "../../memory/experience-bank.js";
 import { globalMcpRegistry } from "../../mcp/registry.js";
 
 // Import trigger detection logic
@@ -216,22 +215,7 @@ export class GrayRoomOrchestrator {
         }
         // --------------------------------------------
 
-        // -- EXPERIENCE BANK (PRE) --
-        try {
-          const exprs = await globalExperienceBank.getRelevantExperiences(
-            JSON.stringify(workingCtx).slice(0, 500),
-          );
-          if (exprs.length > 0) {
-            workingCtx["relevant_experiences"] = exprs.map(
-              (e) => e.action_payload,
-            );
-          }
-        } catch (err) {
-          logger.warn("[GrayRoom] ExperienceBank get failure", {
-            error: String(err),
-          });
-        }
-        // --------------------------
+
 
         touchGrayRoom({
           phase: "response_transform",
@@ -486,21 +470,7 @@ export class GrayRoomOrchestrator {
           },
         };
 
-        // -- EXPERIENCE BANK (POST) --
-        try {
-          await globalExperienceBank.recordTurn(
-            (workingCtx["session_id"] as string) || "unknown",
-            `turn-${turn}`,
-            JSON.stringify(workingCtx),
-            { type: "interrupt", payload: interrupt.reason },
-            insights.confidence_delta,
-          );
-        } catch (err) {
-          logger.warn("[GrayRoom] ExperienceBank record failure", {
-            error: String(err),
-          });
-        }
-        // ------------------------------------------------
+
 
         logger.info("[GrayRoom] Iteration start", {
           turn,

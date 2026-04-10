@@ -5,9 +5,9 @@
   "description": "A2A (Agent-to-Agent) Server - Intelligent code analysis and transformation server (stateless edition)",
   "main": "dist/index.js",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
-    "dev:local": "cross-env NODE_ENV=development tsx watch src/index.ts",
-    "dev:no-auth": "cross-env SKIP_AUTH=1 tsx watch src/index.ts",
+    "dev": "tsx watch packages/server/src/index.ts",
+    "dev:local": "cross-env NODE_ENV=development tsx watch packages/server/src/index.ts",
+    "dev:no-auth": "cross-env SKIP_AUTH=1 tsx watch packages/server/src/index.ts",
     "claude": "tsx bin/a2a-claude.ts",
     "tui": "tsx bin/handler-tui.ts",
     "build": "tsc",
@@ -37,18 +37,16 @@
     "sim:check-md:fix": "node scripts/check-sim-md-json-drift.mjs --fix",
     "sim:quality": "tsx scripts/sim-quality-gate.ts",
     "sim:contract-report": "tsx scripts/sim-contract-report.ts",
-    "gate:cleanup": "tsx scripts/cleanup-gate.ts"
-  },
-  "workspaces": [
-    "packages/*"
-  ],
-  "scripts": {
+    "gate:cleanup": "tsx scripts/cleanup-gate.ts",
     "build": "npm run build --workspaces --if-present",
     "build:deps": "npm run build --workspace=@a2a/server-config && npm run build --workspace=@a2a/server-utils && npm run build --workspace=@a2a/server-protocol && npm run build --workspace=@a2a/server-transform && npm run build --workspace=@a2a/server-core",
     "build:services": "npm run build --workspace=@a2a/server-llm && npm run build --workspace=@a2a/server-p2p && npm run build --workspace=@a2a/server-daemon && npm run build --workspace=@a2a/server-actions",
     "build:app": "npm run build --workspace=@a2a/server",
     "clean": "npm run clean --workspaces --if-present && rm -rf dist/"
   },
+  "workspaces": [
+    "packages/*"
+  ],
   "keywords": [
     "a2a",
     "agent-to-agent",

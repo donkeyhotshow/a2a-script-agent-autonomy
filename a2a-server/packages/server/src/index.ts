@@ -1,8 +1,8 @@
 import http from "node:http";
 import { existsSync } from "node:fs";
 import app from "./app.js";
-import { config } from "../packages/config/index.js";
-import { logger } from "./utils/logger.js";
+import { config } from "../../config/index.js";
+import { logger } from "@a2a/server-utils/logger.js";
 import {
   startRequestProcessor,
   stopRequestProcessor,
