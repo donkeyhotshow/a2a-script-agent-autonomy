@@ -44,7 +44,7 @@ export default function WaitingCard({ waitingState }: WaitingCardProps) {
         </div>
         <div>
           <p className="text-muted-foreground font-medium text-xs">Expires</p>
-          <WaitingCountdown expiresAt={waitingState.expiresAt} />
+          <p className="mt-0 text-xs">{new Date(waitingState.expiresAt).toLocaleString()}</p>
         </div>
         <div className="col-span-2">
           <p className="text-muted-foreground font-medium text-xs">Target</p>
@@ -122,27 +122,5 @@ export default function WaitingCard({ waitingState }: WaitingCardProps) {
         )}
       </div>
     </div>
-  );
-}
-
-function WaitingCountdown({ expiresAt }: { expiresAt: string }) {
-  const [remaining, setRemaining] = React.useState(0);
-  
-  React.useEffect(() => {
-    const update = () => {
-      const diff = new Date(expiresAt).getTime() - Date.now();
-      setRemaining(Math.max(0, Math.floor(diff / 1000)));
-    };
-    update();
-    const timer = setInterval(update, 1000);
-    return () => clearInterval(timer);
-  }, [expiresAt]);
-
-  const isUrgent = remaining < 300; // < 5 min
-  
-  return (
-    <p className={`mt-0 text-xs font-mono ${isUrgent ? "text-red-500 animate-pulse font-bold" : ""}`}>
-      {Math.floor(remaining / 60)}m {remaining % 60}s
-    </p>
   );
 }

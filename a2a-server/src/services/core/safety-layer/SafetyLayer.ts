@@ -1,116 +1,65 @@
-/**
- * SafetyLayer — ADR-0035
- *
- * Intercept hook that sits between extractInterrupt() and applyInterrupt()
- * in GrayRoomOrchestrator.runLoop(). Three deterministic components run in
- * priority order (cheapest first):
- *
- *   1. ContextValidator  (SHA-256, CPU-only, < 1 ms) — synchronous
- *   2. LoopDetector      (Map lookup, < 1 ms)         — synchronous
- *   3. ConfidenceTracer  (extracts from thinkingSlot) — synchronous*
- *      * A real LLM sidecar call can be added by subclassing ConfidenceTracer
- *
- * Pipeline:
- *   request.json → … → extractInterrupt()
- *                     → SafetyLayer.intercept()  ← YOU ARE HERE
- *                     → applyInterrupt()          (only when decision === 'continue')
- */
 import { LoopDetector } from './LoopDetector.js';
 import { ContextValidator } from './ContextValidator.js';
-import { ConfidenceTracer } from './ConfidenceTracer.js';
-import type { LOOP_SIGNAL, CONFIDENCE_TRACE, IntegrityResult, WAITING_STATE, SafetyTurn } from './types.js';
-import { globalEventBus } from '../event-bus.js';
+import { SafetySignalSeverity, SafetyInterceptResult, LoopSignal } from './types.js';
 
-export type InterceptDecision =
-  | { decision: 'continue' }
-  | { decision: 'interrupt'; kind: 'loop'; signal: LOOP_SIGNAL }
-  | { decision: 'stop'; kind: 'integrity'; result: IntegrityResult }
-  | { decision: 'wait'; kind: 'confidence'; waitingState: WAITING_STATE; trace: CONFIDENCE_TRACE };
-
-export interface SafetyLayerOptions {
-  /** Skip ContextValidator check (useful in tests). Default: false */
-  skipIntegrityCheck?: boolean;
-  /** Only run ConfidenceTracer when thinkingSlot is present. Default: true */
-  requireThinkingSlot?: boolean;
-}
-
+/**
+ * SafetyLayer
+ * 
+ * The main orchestrator for autonomous agent safety.
+ * Intercepts internal turns to detect loops, context drift, and confidence drops.
+ */
 export class SafetyLayer {
-  private readonly loopDetector: LoopDetector;
-  private readonly contextValidator: ContextValidator;
-  private readonly confidenceTracer: ConfidenceTracer;
-  private readonly opts: Required<SafetyLayerOptions>;
+    private loopDetector: LoopDetector;
+    private contextValidator: ContextValidator;
 
-  constructor(opts: SafetyLayerOptions = {}) {
-    this.loopDetector = new LoopDetector();
-    this.contextValidator = new ContextValidator();
-    this.confidenceTracer = new ConfidenceTracer();
-    this.opts = {
-      skipIntegrityCheck: false,
-      requireThinkingSlot: true,
-      ...opts,
-    };
-  }
-
-  /**
-   * Intercept a turn after extractInterrupt(), before applyInterrupt().
-   *
-   * Returns:
-   *   { decision: 'continue' }         — safe to call applyInterrupt()
-   *   { decision: 'interrupt', ... }   — loop detected; log and re-enter wait state
-   *   { decision: 'stop', ... }        — context integrity violated; hard stop
-   *   { decision: 'wait', ... }        — confidence below gate; request human approval
-   */
-  intercept(turn: SafetyTurn, sessionId?: string): InterceptDecision {
-    // ── 1. Context integrity (fastest, runs first) ─────────────────────────
-    if (!this.opts.skipIntegrityCheck && turn.context) {
-      const integrity = this.contextValidator.validate(turn.context, turn.contextHash);
-      if (!integrity.valid) {
-        return { decision: 'stop', kind: 'integrity', result: integrity };
-      }
+    constructor() {
+        this.loopDetector = new LoopDetector();
+        this.contextValidator = new ContextValidator();
     }
 
-    // ── 2. Loop detection ──────────────────────────────────────────────────
-    const loopSignal = this.loopDetector.check(
-      turn.interruptReason,
-      turn.outcomeClass,
-      turn.contextHash,
-      turn.turnId
-    );
+    /**
+     * Intercept the agent's turn to perform safety checks.
+     * 
+     * @param turn - Content of the current turn (action, reasoning)
+     * @param context - Full application context
+     * @returns SafetyInterceptResult
+     */
+    public async intercept(
+        action: string, 
+        outcomeClass: string, 
+        context: Record<string, unknown>
+    ): Promise<SafetyInterceptResult> {
+        // 1. Check for loops
+        const loopSignal = this.loopDetector.detect(action, outcomeClass, context);
+        
+        if (loopSignal) {
+            if (loopSignal.severity === 'critical') {
+                return {
+                    shouldInterrupt: true,
+                    signal: loopSignal,
+                    action: 'stop',
+                };
+            }
+            if (loopSignal.severity === 'moderate') {
+                return {
+                    shouldInterrupt: true,
+                    signal: loopSignal,
+                    action: 'clarify',
+                };
+            }
+        }
 
-    if (loopSignal?.severity === 'critical') {
-      return { decision: 'interrupt', kind: 'loop', signal: loopSignal };
+        // 2. Default: continue
+        return {
+            shouldInterrupt: false,
+            action: 'continue',
+        };
     }
 
-    // ── 3. Confidence tracing (only when thinking slot is available) ───────
-    const hasThinkingSlot = !!turn.thinkingSlot && Object.keys(turn.thinkingSlot).length > 0;
-    if (hasThinkingSlot || !this.opts.requireThinkingSlot) {
-      const { trace, waitingState } = this.confidenceTracer.trace(
-        turn.thinkingSlot,
-        turn.interruptReason,
-        0,   // correction_attempts: caller should track and pass in
-        sessionId
-      );
-
-      if (waitingState) {
-        return { decision: 'wait', kind: 'confidence', waitingState, trace };
-      }
+    /**
+     * Reset safety state (e.g., when a new task starts).
+     */
+    public reset(): void {
+        this.loopDetector.reset();
     }
-
-    const interceptResult: InterceptDecision = { decision: 'continue' };
-
-    setImmediate(() => {
-      globalEventBus.publish({
-        type: 'SAFETY_INTERCEPT',
-        session_id: sessionId ?? 'unknown',
-        payload: { decision: interceptResult.decision },
-      });
-    });
-
-    return interceptResult;
-  }
-
-  /** Reset per-session state (call when a new session starts). */
-  resetSession(): void {
-    this.loopDetector.reset();
-  }
 }

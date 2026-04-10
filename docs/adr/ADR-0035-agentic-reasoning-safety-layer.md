@@ -637,6 +637,3 @@ gray_room_session_success_rate
 - **ADR-0031:** [Action-Key Shape](./ADR-0031-action-key-shape.md) — execute/result contract
 - **Simulations schema:** [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md)
 - **Gray Room docs:** [`a2a-server/docs/GRAY-ROOM.md`](../../a2a-server/docs/GRAY-ROOM.md)
-
-
----

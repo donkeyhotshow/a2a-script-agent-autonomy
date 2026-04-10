@@ -1,63 +1,66 @@
 /**
- * Safety Layer types — ADR-0035
- *
- * Shared interfaces used by LoopDetector, ContextValidator, ConfidenceTracer
- * and the SafetyLayer orchestrator.
+ * Safety Layer Types & Interfaces
+ * Following ADR-0036 "Safety Layer" specification.
  */
 
-// ── Lightweight artifact payloads (server-side, no frontend dependency) ────
+export type SafetySignalSeverity = 'info' | 'moderate' | 'critical';
 
-export interface LOOP_SIGNAL {
-  triple: [string, string, string];
-  repeat_count: number;
-  severity: 'info' | 'warning' | 'critical';
-  downgrade_action?: 'pause' | 'stop';
+/**
+ * Signal emitted when a potential loop is detected.
+ */
+export interface LoopSignal {
+    /** Unique reason/key for the loop (e.g., tool + path) */
+    reason: string;
+    /** Outcome classification (success/failure/no-change) */
+    outcomeClass: string;
+    /** Context hash at the time of detection */
+    contextHash: string;
+    /** Current repetition count */
+    count: number;
+    /** Severity level based on count */
+    severity: SafetySignalSeverity;
+    /** Timestamp of detection */
+    timestamp: string;
 }
 
-export interface CONFIDENCE_TRACE {
-  routing_point: string;
-  confidence: number;
-  gate_threshold: number;
-  decision: 'proceed' | 'wait' | 'handoff' | 'stop' | 'downgrade';
-  recommendation: 'PROCEED' | 'SELF_CORRECT' | 'WAIT_HUMAN' | 'ABORT';
-  correction_attempts?: number;
-  reason_code?: string;
+/**
+ * Result of a safety intercept check.
+ */
+export interface SafetyInterceptResult {
+    /** Whether execution should be interrupted */
+    shouldInterrupt: boolean;
+    /** Signal details if interrupted or warned */
+    signal?: LoopSignal;
+    /** Suggested next step (e.g., 'stop', 'clarify', 'continue') */
+    action: 'continue' | 'stop' | 'clarify';
 }
 
-export interface IntegrityResult {
-  valid: boolean;
-  expected_hash: string;
-  actual_hash: string;
-  context_size_bytes: number;
+/**
+ * Trace of confidence and reasoning progress.
+ */
+export interface ConfidenceTrace {
+    /** Current confidence score (0-1) */
+    score: number;
+    /** Justification for the score */
+    justification: string;
+    /** Missing evidence or gaps identified */
+    gaps: string[];
+    /** Timestamp of trace */
+    timestamp: string;
 }
 
-export interface WAITING_STATE {
-  reason: string;
-  reason_code: string;
-  expires_at: string;
-  approval_type: string;
-  checkpoint_id: string;
-  required_inputs?: Array<{
+/**
+ * Durable waiting state for HITL (Human-In-The-Loop).
+ */
+export interface WaitingState {
+    /** Unique ID for the waiting state */
     id: string;
-    label: string;
-    type: 'text' | 'choice' | 'confirm';
-    options?: string[];
-  }>;
-}
-
-// ── Turn descriptor passed to SafetyLayer.intercept() ──────────────────────
-
-export interface SafetyTurn {
-  /** Reason string from the last InterruptDirective */
-  interruptReason: string;
-  /** Coarse outcome classification of the last LLM / transform cycle */
-  outcomeClass: 'success' | 'fail' | 'partial' | 'noop';
-  /** SHA-256 hex of the current serialised context */
-  contextHash: string;
-  /** Monotonically increasing turn counter within the session */
-  turnId: string;
-  /** Optional thinking-slot content extracted from the LLM output */
-  thinkingSlot?: Record<string, unknown>;
-  /** Full serialised context (used by ContextValidator) */
-  context?: Record<string, unknown>;
+    /** Type of clarification needed ('clarify', 'confirm', 'input') */
+    type: 'clarify' | 'confirm' | 'input';
+    /** Message for the user */
+    message: string;
+    /** Optional data for the UI form */
+    form?: Record<string, unknown>;
+    /** Timestamp when entered waiting state */
+    timestamp: string;
 }

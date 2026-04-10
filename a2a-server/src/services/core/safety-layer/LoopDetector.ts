@@ -1,69 +1,66 @@
+import { crypto } from 'node:crypto';
+import { LoopSignal, SafetySignalSeverity } from './types.js';
+
 /**
- * LoopDetector — ADR-0035 component 1
- *
- * Detects repeated (interruptReason, outcomeClass, contextHash) triples.
- * CPU-only, < 1 ms per check via Map lookup.
+ * LoopDetector
+ * 
+ * Detects repetitive execution patterns in the agent's internal turns.
+ * Matches by [reason + outcome_class + context_hash].
  */
-import type { LOOP_SIGNAL } from './types.js';
-
-interface HistoryEntry {
-  count: number;
-  lastTurnId: string;
-}
-
-/** Triples that fire a warning before escalating to critical. */
-const WARNING_THRESHOLD = 2;
-/** Triples at this count trigger a CRITICAL LOOP_SIGNAL. */
-const CRITICAL_THRESHOLD = 3;
-
 export class LoopDetector {
-  private readonly history = new Map<string, HistoryEntry>();
+    private history: Map<string, number> = new Map();
+    private readonly MODERATE_THRESHOLD = 3;
+    private readonly CRITICAL_THRESHOLD = 5;
 
-  /**
-   * Record a turn and check for looping patterns.
-   *
-   * @returns LOOP_SIGNAL if a loop was detected, null otherwise.
-   */
-  check(
-    interruptReason: string,
-    outcomeClass: string,
-    contextHash: string,
-    turnId: string
-  ): LOOP_SIGNAL | null {
-    // Build a canonical triple key — order matters for identity
-    const key = `${interruptReason}|${outcomeClass}|${contextHash}`;
-    const existing = this.history.get(key);
-    const count = (existing?.count ?? 0) + 1;
-    this.history.set(key, { count, lastTurnId: turnId });
+    /**
+     * Detect if the current pattern is repeating.
+     * 
+     * @param reason - The action/tool being called (e.g., "read-file:package.json")
+     * @param outcomeClass - Classification of the result (e.g., "success", "no-change")
+     * @param context - The current request context for hashing
+     * @returns LoopSignal if repetition is detected, null otherwise
+     */
+    public detect(reason: string, outcomeClass: string, context: Record<string, unknown>): LoopSignal | null {
+        const contextHash = this.calculateHash(context);
+        const key = `${reason}|${outcomeClass}|${contextHash}`;
+        
+        const currentCount = (this.history.get(key) || 0) + 1;
+        this.history.set(key, currentCount);
 
-    if (count >= CRITICAL_THRESHOLD) {
-      return {
-        triple: [interruptReason, outcomeClass, contextHash],
-        repeat_count: count,
-        severity: 'critical',
-        downgrade_action: 'stop',
-      };
+        if (currentCount >= this.MODERATE_THRESHOLD) {
+            const severity: SafetySignalSeverity = currentCount >= this.CRITICAL_THRESHOLD ? 'critical' : 'moderate';
+            
+            return {
+                reason,
+                outcomeClass,
+                contextHash,
+                count: currentCount,
+                severity,
+                timestamp: new Date().toISOString(),
+            };
+        }
+
+        return null;
     }
 
-    if (count >= WARNING_THRESHOLD) {
-      return {
-        triple: [interruptReason, outcomeClass, contextHash],
-        repeat_count: count,
-        severity: 'warning',
-        downgrade_action: 'pause',
-      };
+    /**
+     * Clear the detection history.
+     */
+    public reset(): void {
+        this.history.clear();
     }
 
-    return null;
-  }
-
-  /** Reset all history (call at session start). */
-  reset(): void {
-    this.history.clear();
-  }
-
-  /** Return current size for observability. */
-  get size(): number {
-    return this.history.size;
-  }
+    /**
+     * Calculate a SHA256 hash of the context to detect stable states.
+     */
+    private calculateHash(data: unknown): string {
+        try {
+            // Simplified hash: we only care about workbench and parts of execution
+            const relevantData = JSON.stringify(data);
+            return crypto.createHash('sha256').update(relevantData).digest('hex');
+        } catch (e) {
+            // Fallback for circular structures or encoding errors
+            return `error-hash-${Date.now()}`;
+        }
+    }
 }

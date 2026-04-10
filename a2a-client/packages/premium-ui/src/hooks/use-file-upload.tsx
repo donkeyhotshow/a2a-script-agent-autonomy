@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, ChangeEvent } from "react";
 import { toast } from "sonner";
 import { ContentBlock } from "@langchain/core/messages";
-import { fileToContentBlock } from "@/lib/multimodal-utils.ts";
+import { fileToContentBlock } from "@/lib/multimodal-utils";
 
 export const SUPPORTED_FILE_TYPES = [
   "image/jpeg",

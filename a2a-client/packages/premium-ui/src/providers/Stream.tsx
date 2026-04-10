@@ -5,7 +5,7 @@ import React, {
   useState,
   useEffect,
 } from "react";
-import { useA2AStream } from "@/hooks/useA2AStream.ts";
+import { useA2AStream } from "@/hooks/useA2AStream";
 import { type Message } from "@langchain/langgraph-sdk";
 import {
   uiMessageReducer,
@@ -21,7 +21,7 @@ import { A2ALogoSVG } from "@/components/icons/a2a-logo";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { ArrowRight } from "lucide-react";
-import { PasswordInput } from "@/components/ui/password-input.tsx";
+import { PasswordInput } from "@/components/ui/password-input";
 import { getApiKey } from "@/lib/api-key";
 import { useThreads } from "./Thread";
 import { toast } from "sonner";

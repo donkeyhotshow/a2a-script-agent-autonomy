@@ -2,7 +2,6 @@
 
 import React, { useState } from "react";
 import { type Artifact } from "@/lib/mock-data";
-import { useQueryState } from 'nuqs';
 
 interface EvidenceChipProps {
   artifact: Artifact;
@@ -30,7 +29,6 @@ const ARTIFACT_ICONS: Record<string, string> = {
 };
 
 export default function EvidenceChip({ artifact }: EvidenceChipProps) {
-  const [, setInspector] = useQueryState('inspector');
   const [showPreview, setShowPreview] = useState(false);
   const icon = ARTIFACT_ICONS[artifact.type] || "📎";
 
@@ -43,7 +41,7 @@ export default function EvidenceChip({ artifact }: EvidenceChipProps) {
   return (
     <>
       <button
-        onClick={() => setInspector(artifact.id)}
+        onClick={() => setShowPreview(!showPreview)}
         className={`px-2 py-0.5 rounded text-xs font-medium border flex items-center gap-1 hover:opacity-80 transition-opacity cursor-pointer ${
           severityColor[artifact.severity]
         }`}

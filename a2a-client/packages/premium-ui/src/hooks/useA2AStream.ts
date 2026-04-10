@@ -10,9 +10,7 @@ export function useA2AStream(options: {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
-  const [firstTokenReceived, setFirstTokenReceived] = useState(false);
   const pollInterval = useRef<NodeJS.Timeout | null>(null);
-  const prevMessageLength = useRef(0);
 
   const fetchSession = useCallback(async (id: string) => {
     try {
@@ -40,21 +38,8 @@ export function useA2AStream(options: {
     }
   }, [options.threadId, fetchSession]);
 
-  useEffect(() => {
-    if (
-      messages.length !== prevMessageLength.current &&
-      messages?.length &&
-      messages[messages.length - 1].type === "ai"
-    ) {
-      setFirstTokenReceived(true);
-    }
-
-    prevMessageLength.current = messages.length;
-  }, [messages, setFirstTokenReceived, prevMessageLength]);
-
   const submit = useCallback(async (data: any) => {
     setIsLoading(true);
-    setFirstTokenReceived(false); // Reset when submitting new message
     try {
       const threadId = options.threadId;
       if (!threadId) {
@@ -86,38 +71,19 @@ export function useA2AStream(options: {
     } finally {
       setIsLoading(false);
     }
-  }, [options, fetchSession, setFirstTokenReceived]);
+  }, [options, fetchSession]);
 
   const stop = useCallback(() => {
     if (pollInterval.current) clearInterval(pollInterval.current);
     setIsLoading(false);
   }, []);
 
-  const interrupt = useCallback(async () => {
-    if (!options.threadId) return;
-    
-    try {
-      // Send interrupt signal via Client API
-      await fetch(`${options.apiUrl}/api/a2a/sessions/${options.threadId}/interrupt`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
-      });
-      
-      // Clear polling interval as we're interrupting
-      if (pollInterval.current) clearInterval(pollInterval.current);
-      setIsLoading(false);
-    } catch (e) {
-      setError(e as Error);
-    }
-  }, [options.apiUrl, options.threadId, pollInterval, setError, setIsLoading]);
-
-    return {
-      messages,
-      isLoading,
-      error,
-      submit,
-      stop,
-      firstTokenReceived,
-      interrupt,
-    };
+  return {
+    messages,
+    isLoading,
+    error,
+    submit,
+    stop,
+    interrupt: null, // Placeholder for A2A HITL
+  };
 }

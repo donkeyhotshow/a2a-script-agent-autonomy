@@ -75,43 +75,15 @@ export default function SessionHeader({
           >
             ◾
           </button>
-           {session.currentPhase === "validate" && (
-             <button
-               onClick={onValidationOpen}
-               className="px-2 py-0.5 text-xs font-medium bg-foreground text-background rounded hover:opacity-80 transition-opacity"
-             >
-               Validate
-             </button>
-           )}
-           {session.status === "running" && (
-             <button
-               onClick={async () => {
-                 if (confirm("Halt active task?")) {
-                   const res = await fetch(`/api/a2a/sessions/${session.id}/halt`, { method: "DELETE" });
-                   if (res.ok) alert("Halted");
-                 }
-               }}
-               className="px-2 py-0.5 text-xs font-medium bg-red-500 text-white rounded hover:opacity-80 transition-opacity"
-               title="Halt Session (ADR-0072)"
-             >
-               Halt
-             </button>
-           )}
-           <button
-             onClick={async () => {
-               const res = await fetch(`/api/a2a/sessions/${session.id}/trajectory`);
-               if (res.ok) {
-                 const data = await res.json();
-                 await navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-                 alert("Trajectory copied to clipboard (ADR-0076)");
-               }
-             }}
-             className="px-2 py-0.5 text-xs font-medium border border-border rounded hover:bg-foreground/5 transition-colors"
-             title="Copy Trajectory (ADR-0076)"
-           >
-             ❐ Copy
-           </button>
-         </div>
+          {session.currentPhase === "validate" && (
+            <button
+              onClick={onValidationOpen}
+              className="px-2 py-0.5 text-xs font-medium bg-foreground text-background rounded hover:opacity-80 transition-opacity"
+            >
+              Validate
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
