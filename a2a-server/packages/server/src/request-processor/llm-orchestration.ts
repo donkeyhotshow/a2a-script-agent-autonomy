@@ -6,16 +6,16 @@
 
 import * as path from 'path';
 import {logger} from '@a2a/server-utils/logger.js';
-import {resolveAiHubBaseUrl} from '../../utils/ai-hub-url.js';
-import {mkdtempOsTmp} from '../../utils/mkdtemp-os-tmp.js';
+import {resolveAiHubBaseUrl} from '../utils/ai-hub-url.js';
+import {mkdtempOsTmp} from '../utils/mkdtemp-os-tmp.js';
 import {runPromptsTransform} from '../../transform/index.js';
 import {
     extractLlmTextFromHubResponseBody,
     initAiHubChatPromise,
     pollReadyThenFetch,
     resolveLlmPromiseRecovery,
-} from '../../daemon/llm-hub-poll.js';
-import {requestService} from '../../request/request.service.js';
+} from '../daemon/llm-hub-poll.js';
+import {requestService} from '../request/request.service.js';
 import {resolveMainDialogLlmModelFromEnv} from './llm-model-resolver.js';
 import {toInvokeShapeForPromptsTransform} from './normalization.js';
 

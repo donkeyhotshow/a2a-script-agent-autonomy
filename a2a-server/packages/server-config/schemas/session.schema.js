@@ -7,4 +7,3 @@ export const sessionConfigSchema = z.object({
     timeoutMs: intSchema(60000, 86400000, 3600000),
     maxInactiveMs: intSchema(60000, 43200000, 1800000),
 });
-//# sourceMappingURL=session.schema.js.map

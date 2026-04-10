@@ -11,4 +11,3 @@ export const securityConfigSchema = z.object({
     skipAuth: booleanSchema.default(false),
     apiKeyPrefix: z.string().default('sk_a2a_'),
 });
-//# sourceMappingURL=security.schema.js.map

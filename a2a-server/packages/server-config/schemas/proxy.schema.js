@@ -17,4 +17,3 @@ export const proxyConfigSchema = z.object({
     healthCheckInterval: intSchema(1, 300, 5),
     healthCheckTimeout: intSchema(1, 300, 5),
 });
-//# sourceMappingURL=proxy.schema.js.map

@@ -8,4 +8,3 @@ export const serverConfigSchema = z.object({
     defaultEmail: z.string().email().default('dev@localhost'),
     defaultPassword: z.string().default('dev'),
 });
-//# sourceMappingURL=server.schema.js.map

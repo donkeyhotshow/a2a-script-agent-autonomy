@@ -10,4 +10,3 @@ export const databaseConfigSchema = z.object({
     postgresPassword: z.string().default('a2a_secret').optional(),
     postgresDb: z.string().default('a2a_server').optional(),
 }).partial();
-//# sourceMappingURL=database.schema.js.map

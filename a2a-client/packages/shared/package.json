@@ -8,6 +8,7 @@
     "build": "cp src/*.js . && cp src/*.mjs ."
   },
   "exports": {
+    "./*.mjs": "./*.mjs",
     "./api-helpers.js": "./api-helpers.js",
     "./api-helpers.d.ts": "./api-helpers.d.ts",
     "./client-api-envelope.mjs": "./client-api-envelope.mjs",
@@ -22,14 +23,17 @@
     "./web-execute-dto.js": "./web-execute-dto.mjs",
     "./node-errors.js": "./node-errors.js",
     "./session-sort.js": "./session-sort.js",
+    "./session-sort.mjs": "./session-sort.mjs",
     "./project-sessions-dir.js": "./project-sessions-dir.js",
     "./session-id.js": "./session-id.js",
     "./session-stage-derive.js": "./session-stage-derive.js",
+    "./session-stage-derive.mjs": "./session-stage-derive.mjs",
     "./router-submit.js": "./router-submit.js",
     "./next-invoke-pipeline.js": "./next-invoke-pipeline.js",
     "./kv-unwrap.js": "./kv-unwrap.js",
     "./context-invoke-patch.mjs": "./context-invoke-patch.mjs",
     "./a2a-invoke-builders.mjs": "./a2a-invoke-builders.mjs",
+    "./a2a-invoke-builders.js": "./a2a-invoke-builders.mjs",
     "./dialog-invoke-history.mjs": "./dialog-invoke-history.mjs",
     "./a2a-server-base.js": "./a2a-server-base.js"
   },

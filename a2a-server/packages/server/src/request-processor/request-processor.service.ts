@@ -16,8 +16,8 @@ import {
   type RequestResult,
 } from "../../request/request.service";
 import { logger } from '../utils/logger.js';
-import { resolveAiHubBaseUrl } from "../../utils/ai-hub-url.js";
-import { requestProcessorLatencyHistogram } from "../../utils/metrics.js";
+import { resolveAiHubBaseUrl } from "../utils/ai-hub-url.js";
+import { requestProcessorLatencyHistogram } from "../utils/metrics.js";
 import type {
   RequestContext,
   ProcessResult,

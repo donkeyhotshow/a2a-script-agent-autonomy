@@ -1,0 +1,149 @@
+# Mixin: session-context-collector
+# Collect and manage session context from previous interactions
+
+mixin: session-context-collector
+description: "Collect and manage session context from previous interactions and project history"
+version: "1.0"
+
+# Input schema
+input:
+  sessionId:
+    type: string
+    description: "Current session ID"
+  projectId:
+    type: string
+    optional: true
+    description: "Project identifier for context scoping"
+  keywords:
+    type: array
+    optional: true
+    description: "Keywords to search for in historical context"
+  maxContexts:
+    type: number
+    optional: true
+    description: "Maximum number of historical contexts to retrieve"
+  includeMetadata:
+    type: boolean
+    optional: true
+    description: "Include metadata about context sources"
+
+# Output schema
+output:
+  contexts:
+    type: array
+    description: "Array of relevant historical contexts"
+  hasHistory:
+    type: boolean
+    description: "Whether any historical context was found"
+  summary:
+    type: string
+    description: "Summarized context information"
+  metadata:
+    type: object
+    optional: true
+    description: "Metadata about collected contexts"
+
+# Default implementation
+script: |
+  interface Input {
+    sessionId: string;
+    projectId?: string;
+    keywords?: string[];
+    maxContexts?: number;
+    includeMetadata?: boolean;
+  }
+
+  interface ContextItem {
+    id: string;
+    session_id: string;
+    timestamp: string;
+    content: string;
+    keywords: string[];
+    relevance?: number;
+  }
+
+  interface ContextMetadata {
+    totalAvailable: number;
+    matched: number;
+    searchKeywords: string[];
+    searchTime: string;
+  }
+
+  interface Output {
+    contexts: ContextItem[];
+    hasHistory: boolean;
+    summary: string;
+    metadata?: ContextMetadata;
+  }
+
+  export default async function run(input: Input): Promise<Output> {
+    const {
+      sessionId,
+      projectId,
+      keywords = [],
+      maxContexts = 5,
+      includeMetadata = false
+    } = input;
+
+    // In a real implementation, this would query a database or storage
+    // For this mixin, we provide the structure and default behavior
+
+    const contexts: ContextItem[] = [];
+
+    // Mock implementation - would be replaced with actual storage query
+    // This demonstrates the expected structure
+    const mockContexts: ContextItem[] = [
+      {
+        id: 'ctx_001',
+        session_id: 'prev_session_001',
+        timestamp: new Date(Date.now() - 86400000).toISOString(),
+        content: 'Previous work on similar functionality',
+        keywords: ['import', 'fix', 'typescript']
+      },
+      {
+        id: 'ctx_002',
+        session_id: 'prev_session_002',
+        timestamp: new Date(Date.now() - 172800000).toISOString(),
+        content: 'Related refactoring work',
+        keywords: ['refactor', 'cleanup']
+      }
+    ];
+
+    // Filter by keywords if provided
+    let filteredContexts = mockContexts;
+    if (keywords.length > 0) {
+      filteredContexts = mockContexts.filter(ctx =>
+        ctx.keywords.some(k => keywords.includes(k))
+      );
+    }
+
+    // Sort by timestamp (newest first)
+    filteredContexts.sort((a, b) =>
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+    );
+
+    // Limit to maxContexts
+    const limitedContexts = filteredContexts.slice(0, maxContexts);
+
+    // Generate summary
+    const summary = limitedContexts.length > 0
+      ? `Found ${limitedContexts.length} relevant context(s) from previous sessions`
+      : 'No relevant historical context found';
+
+    const result: Output = {
+      contexts: limitedContexts,
+      hasHistory: limitedContexts.length > 0,
+      summary
+    };
+
+    if (includeMetadata) {
+      result.metadata = {
+        totalAvailable: mockContexts.length,
+        matched: limitedContexts.length,
+        searchKeywords: keywords,
+        searchTime: new Date().toISOString()
+      };
+    }
+
+    return result;
+  }

@@ -1,5 +1,5 @@
 import { createLogger } from '@a2a/server-utils/logger.js';
-import { hashSha256 } from '../../utils/crypto.js';
+import { hashSha256 } from '../utils/crypto.js';
 import { LoopDetector } from './safety-layer/LoopDetector.js';
 
 const logger = createLogger('SafetyLayer');

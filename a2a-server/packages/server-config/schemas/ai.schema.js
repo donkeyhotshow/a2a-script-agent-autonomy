@@ -19,4 +19,3 @@ export const aiConfigSchema = z.object({
     openaiApiKey: z.string().optional(),
     openaiModel: z.string().default('gpt-4o-mini'),
 });
-//# sourceMappingURL=ai.schema.js.map
