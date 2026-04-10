@@ -37,7 +37,7 @@ import type {Chunk} from '../../src/chunk-manager.js';
 const TEST_DIR = path.join(DEFAULT_CONFIG.outputDir, 'functional-search-test');
 
 // Mock embedding client for semantic search tests
-jest.mock('@a2a/embedding', () => ({
+jest.mock('@a2a-client/embedding', () => ({
   createEmbeddingClient: () => ({
     embed: jest.fn(async (content: string) => {
       // Simple mock: create a deterministic vector based on content hash

@@ -1,0 +1,70 @@
+# Base Template: base-fix
+# Abstract base template for all fix-type actions
+
+base: base-fix
+version: "1.0"
+description: "Base template for fix-type actions with standard validation and application flow"
+abstract: true
+
+# Common mixins for all fix actions
+mixins:
+  - file-collector
+  - file-validator
+  - patch-applier
+
+# Default context
+context:
+  type: fix_action
+  requires_confirmation: true
+  supports_dry_run: true
+
+# Default steps that all fix actions inherit
+steps:
+  - id: validate-environment
+    description: "Validate execution environment"
+    script: |
+      interface Input {
+        rootDir?: string;
+      }
+
+      interface Output {
+        valid: boolean;
+        errors: string[];
+        rootDir: string;
+      }
+
+      import { existsSync } from 'node:fs';
+      import { resolve } from 'node:path';
+
+      export default async function run(input: Input): Promise<Output> {
+        const errors: string[] = [];
+        const rootDir = input.rootDir || process.cwd();
+        const resolvedRoot = resolve(rootDir);
+
+        if (!existsSync(resolvedRoot)) {
+          errors.push(`Root directory not found: ${resolvedRoot}`);
+        }
+
+        return {
+          valid: errors.length === 0,
+          errors,
+          rootDir: resolvedRoot
+        };
+      }
+    output: env_validation
+
+  - id: collect-files
+    description: "Collect files for processing"
+    $mixin: file-collector
+    if: "{{ validate-environment.valid }}"
+    input:
+      rootDir: "{{ validate-environment.rootDir }}"
+    output: collected_files
+
+  - id: validate-files
+    description: "Validate collected files"
+    $mixin: file-validator
+    input:
+      files: "{{ collect-files.files }}"
+      checkExistence: true
+    output: file_validation

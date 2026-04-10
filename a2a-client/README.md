@@ -1,6 +1,50 @@
 # a2a-client
 
-Client web UI, Vite plugin, and packages (SDK, RAG, types, …).
+Client-side monorepo containing web UI, Vite plugin, and SDK packages.
+
+## Structure
+
+```
+a2a-client/
+├── kernel/           # Main application - entry point, configuration, and features
+│   ├── index.ts      # Main application entry point
+│   ├── config.ts     # Configuration schema and loading
+│   └── features/     # Feature modules (rag, embedding, execution, web, storage)
+├── packages/         # Client SDK packages
+│   ├── core/         # **Base directory** - Core client functionality, utilities, and shared logic
+│   ├── embedding/    # Embedding services
+│   ├── execution/    # Script execution
+│   ├── history/      # History management
+│   ├── json/         # JSON utilities
+│   ├── protocol/     # Protocol definitions
+│   ├── rag/          # RAG functionality
+│   ├── sdk/          # Main SDK package
+│   ├── shared/       # Shared utilities
+│   ├── storage/      # Storage services
+│   ├── types/        # Type definitions
+│   ├── vite-plugin/  # Vite plugin for client API routes
+│   └── web/          # Web UI components
+├── package.json      # Client workspace root
+└── vitest.config.ts  # Test configuration
+```
+
+## Application Structure
+
+The client application is located in the `kernel/` directory and follows a modular architecture:
+
+- **Configuration System**: The application reads configuration from JSON files or environment variables to determine which features to activate
+- **Feature Activation**: Based on configuration, specific features (RAG, embedding, execution, web, storage) are dynamically loaded and initialized
+- **Lifecycle Management**: The application provides start/stop methods for all enabled features
+
+### Configuration
+
+The application uses a schema-based configuration system (via Zod) that validates:
+- Feature flags (rag, embedding, execution, web, storage)
+- API settings (timeout, retries, delays)
+- Polling intervals
+- Logger configuration
+
+Features are activated based on boolean flags in the configuration. The main application class (`A2AClientApplication`) loads the configuration, initializes the enabled features, and manages their lifecycle.
 
 **Live stack:** Start or restart the full coordinated system from the **repository root** with `.\start-all.bat` (Windows) or `./start-all.sh` (Linux/macOS). Do not use `npm run dev` under `web/`, `packages/*`, or elsewhere in this tree as the primary way to restart the whole stack — that duplicates processes and breaks PID tracking.
 

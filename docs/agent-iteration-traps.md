@@ -21,10 +21,7 @@ Use this short loop on every cycle so work does not stall on vague prompts or pe
 
 ### Evidence rule (mandatory)
 
-- **Do not conclude from theory only.** Each loop must add at least one practical artifact: command output, session id + async status, test/sim result, or a concrete diff.
-- **If practical evidence is missing, create it first.** Run a minimal experiment (single task, single endpoint, single failing test) and log the result before decisions.
-- **Write evidence in state.** Add short proof lines to `DEV_STATE` (what was run, what changed, what failed/passed).
-- **No evidence = no closure.** Treat evidence gaps as an open item, not as completion.
+See root [`AGENTS.md`](../AGENTS.md) *Evidence-first loop*.
 
 ## 1. Misread of “done” or empty work
 

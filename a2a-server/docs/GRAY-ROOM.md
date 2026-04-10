@@ -2,10 +2,10 @@
 
 **Gray room** is the product name for **server-only extra work** inside one logical invoke: extra LLM calls and transforms **before** the client sees a final `execute` / context. The implementation still uses the internal name **interrupt loop** in code (`processDialogResponseWithInterruptLoop`, logs, env `A2A_MAX_INTERRUPT_TURNS`).
 
-| Room | Who acts | Client round-trips |
-|------|----------|--------------------|
-| **Red room** | Client auto-completes tool `execute`, then sends next turn | One user-visible step per tool cycle |
-| **Gray room** | Server runs substeps (compress, thinking, re-LLM) | **None** — client gets one response after the chain finishes |
+| Room           | Who acts                                                                    | Client round-trips                                                                                                                                                        |
+| -------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Red room**   | Client auto-completes tool `execute`, then sends next turn                  | One user-visible step per tool cycle                                                                                                                                      |
+| **Gray room**  | Server runs substeps (compress, thinking, re-LLM)                           | **None** — client gets one response after the chain finishes                                                                                                              |
 | **Black room** | Algorithm Mode — local Local LLM upstream execution for deterministic tasks | Proposed per [ADR-0058](../../docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md), see [BLACK-ROOM.md](../../ai-integration/docs/BLACK-ROOM.md) (in ai-integration) |
 
 **Status:** Implemented as an **overlay** on one invoke: [`DialogRequestProcessor`](../src/services/core/request-processor/dialog-request-processor.ts) delegates to [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts). Interrupt trace for the client is merged via [`mergeInterruptTraceIntoContext`](../src/transform/interrupt-trace-contract.ts) (see § Concept Boundary).
@@ -28,7 +28,7 @@ Client → Server
 
 ### No `interrupt`: completion flag and syndicate review
 
-When the response transform yields **no** `interrupt`, the loop still finishes through the same merge path — but **non-dialog** schemas (`agent`, `coder`, `analyze`, `auto-ai`, …) may run **IntentGate** (ADR-0050) and, if transform output has **`result.completed === true`** (copied from the primary LLM JSON field **`completed`** in `agent-response.json` / `coder-response.json` / …), **`executeSyndicateReview`** (SIEGE_REVIEW). **Dialog** returns to the client on this branch **before** those checks — no syndicate on that exit. There is **no** separate “decision cell” hub call (superseded ADR-0088). See [`agent-request.md`](../prompts/agent-request.md) and [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) (*Optional `result` on `response.json`*).
+When the response transform yields **no** `interrupt`, the loop still finishes through the same merge path — but **non-dialog** schemas (`agent`, `coder`, `analyze`, `auto-ai`, …) may run **IntentGate** (ADR-0050) and, if transform output has **`result.completed === true`** (copied from the primary LLM JSON field **`completed`** in `agent-response.json` / `coder-response.json` / …), **`executeSyndicateReview`** (SIEGE_REVIEW). **Dialog** returns to the client on this branch **before** those checks — no syndicate on that exit. There is **no** separate “decision cell” hub call (superseded ADR-0088). See [`agent-request.md`](../prompts/agent-request.md) and [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) (_Optional `result` on `response.json`_).
 
 ## Concept Boundary
 
@@ -36,24 +36,24 @@ When the response transform yields **no** `interrupt`, the loop still finishes t
 
 ### Overlay characteristics
 
-| Aspect | Implementation |
-|--------|----------------|
-| **Core mechanism** | Same `InterruptDirective` handling via `applyInterrupt` in [`gray-room-orchestrator.ts`](../src/services/core/request-processor/gray-room-orchestrator.ts) |
-| **Trigger detection** | `detectGrayRoomTrigger()` — checks explicit flag → env toggle → policy |
-| **Loop execution** | `GrayRoomOrchestrator.runLoop()` — same interrupt budget, transform, LLM cycle |
-| **Result merging** | `mergeTraceIntoResult()` → [`mergeInterruptTraceIntoContext`](../src/transform/interrupt-trace-contract.ts) — writes `context.workbench.slots.interruptTrace` only |
+| Aspect                | Implementation                                                                                                                                                     |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Core mechanism**    | Same `InterruptDirective` handling via `applyInterrupt` in [`gray-room-orchestrator.ts`](../src/services/core/request-processor/gray-room-orchestrator.ts)         |
+| **Trigger detection** | `detectGrayRoomTrigger()` — checks explicit flag → env toggle → policy                                                                                             |
+| **Loop execution**    | `GrayRoomOrchestrator.runLoop()` — same interrupt budget, transform, LLM cycle                                                                                     |
+| **Result merging**    | `mergeTraceIntoResult()` → [`mergeInterruptTraceIntoContext`](../src/transform/interrupt-trace-contract.ts) — writes `context.workbench.slots.interruptTrace` only |
 
 ### Trigger resolution order (`computeGrayRoomTrigger`)
 
-Single source of truth: [`computeGrayRoomTrigger()`](../src/services/core/request-processor/gray-room-orchestrator.ts) (exported wrappers: `detectGrayRoomTrigger`, `shouldUseGrayRoom`). Unit tests: [`tests/gray-room-trigger.test.ts`](../tests/gray-room-trigger.test.ts).
+Single source of truth: [`computeGrayRoomTrigger()`](../src/services/core/request-processor/gray-room-orchestrator.ts) (exported wrappers: `detectGrayRoomTrigger`, `shouldUseGrayRoom`). Unit tests: [`packages/server/tests/gray-room-trigger.test.ts`](../packages/server/tests/gray-room-trigger.test.ts).
 
-| Step | Condition | If true |
-|------|-----------|---------|
-| 1 | `context.execution.grayRoomRequested === true` | **On** — `source: explicit_flag` (stops here) |
-| 2 | `flowControlHint` is `gray-room` or `gray_room` (call arg or `ctx.flowControlHint`) | **On** — `source: explicit_flag` |
-| 3 | `A2A_GRAY_ROOM_ENABLED` is an explicit opt-out token (`0`, `false`, `no`, `off`) | **Off** — `source: disabled` (unless step 1–2 already matched) |
-| 4 | `A2A_GRAY_ROOM_ENABLED` is unset, or set to an enable token (`1`, `true`, `yes`) — see `getGrayRoomEnabled()` | **On** — `source: env_enabled` |
-| 5 | Else: `execution.action` policy | `dialog` → `policy_dialog`; `agent` / `coder` / `auto-ai` / `analyze` → `policy_agent`; `task-decomposition` / `task` → `policy_task_decomposition`; otherwise **Off** — `disabled` |
+| Step | Condition                                                                                                     | If true                                                                                                                                                                             |
+| ---- | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1    | `context.execution.grayRoomRequested === true`                                                                | **On** — `source: explicit_flag` (stops here)                                                                                                                                       |
+| 2    | `flowControlHint` is `gray-room` or `gray_room` (call arg or `ctx.flowControlHint`)                           | **On** — `source: explicit_flag`                                                                                                                                                    |
+| 3    | `A2A_GRAY_ROOM_ENABLED` is an explicit opt-out token (`0`, `false`, `no`, `off`)                              | **Off** — `source: disabled` (unless step 1–2 already matched)                                                                                                                      |
+| 4    | `A2A_GRAY_ROOM_ENABLED` is unset, or set to an enable token (`1`, `true`, `yes`) — see `getGrayRoomEnabled()` | **On** — `source: env_enabled`                                                                                                                                                      |
+| 5    | Else: `execution.action` policy                                                                               | `dialog` → `policy_dialog`; `agent` / `coder` / `auto-ai` / `analyze` → `policy_agent`; `task-decomposition` / `task` → `policy_task_decomposition`; otherwise **Off** — `disabled` |
 
 Env values that are neither enable nor disable tokens (e.g. arbitrary strings) fall through: gray room is off until **policy** (step 5) applies for known actions.
 
@@ -66,12 +66,12 @@ Env values that are neither enable nor disable tokens (e.g. arbitrary strings) f
 
 ### Limitations (Concept-level)
 
-| Limitation | Description |
-|------------|-------------|
-| **No client steps** | Gray room runs entirely server-side; no new client round-trips |
-| **Server-only** | Cannot trigger client-side actions; only LLM + transforms |
-| **Action-Key Shape** | All `execute`/`result` payloads must use single action-type key |
-| **Overlay on interrupt** | Requires existing interrupt loop; cannot run standalone |
+| Limitation               | Description                                                     |
+| ------------------------ | --------------------------------------------------------------- |
+| **No client steps**      | Gray room runs entirely server-side; no new client round-trips  |
+| **Server-only**          | Cannot trigger client-side actions; only LLM + transforms       |
+| **Action-Key Shape**     | All `execute`/`result` payloads must use single action-type key |
+| **Overlay on interrupt** | Requires existing interrupt loop; cannot run standalone         |
 
 ### Terminology alignment
 
@@ -85,13 +85,13 @@ Gray room does **not** introduce a second transform pipeline. It uses the **same
 
 ### Primary invoke → first `schemaName`
 
-| Step | Code / data |
-|------|-------------|
-| Router / client | `execution.action` is one of [`LLM_PIPELINE_ACTIONS`](../../shared/router-static-choices.json) (`dialog`, `agent`, `task-decomposition`, …) **or** `context.transformSchema` is set explicitly. |
-| Map action → default schema folder | [`ACTION_TO_SCHEMA`](../../shared/router-static-choices.json) in [`router-static.ts`](../src/config/router-static.ts) (loaded from `shared/router-static-choices.json`). |
-| Resolve full schema string | [`resolveTransformSchema()`](../src/services/core/request-processor/normalization.ts): priority `context.transformSchema`, else `ACTION_TO_SCHEMA[action]` when `result.message` / `task` / `message` is present. |
-| Folder name for transforms | [`extractSchemaName()`](../src/services/core/request-processor/normalization.ts) — first path segment (e.g. `dialog/3` → `dialog`). That value is the initial `schemaName` passed into [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts). |
-| Caller | [`DialogRequestProcessor.doProcess()`](../src/services/core/request-processor/dialog-request-processor.ts) computes `schemaName` and passes it to `runLoop`; recovery path uses the same (`response-path.ts` uses the same `resolveTransformSchema` + `extractSchemaName`). |
+| Step                               | Code / data                                                                                                                                                                                                                                                                                  |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Router / client                    | `execution.action` is one of [`LLM_PIPELINE_ACTIONS`](../../shared/router-static-choices.json) (`dialog`, `agent`, `task-decomposition`, …) **or** `context.transformSchema` is set explicitly.                                                                                              |
+| Map action → default schema folder | [`ACTION_TO_SCHEMA`](../../shared/router-static-choices.json) in [`router-static.ts`](../src/config/router-static.ts) (loaded from `shared/router-static-choices.json`).                                                                                                                     |
+| Resolve full schema string         | [`resolveTransformSchema()`](../src/services/core/request-processor/normalization.ts): priority `context.transformSchema`, else `ACTION_TO_SCHEMA[action]` when `result.message` / `task` / `message` is present.                                                                            |
+| Folder name for transforms         | [`extractSchemaName()`](../src/services/core/request-processor/normalization.ts) — first path segment (e.g. `dialog/3` → `dialog`). That value is the initial `schemaName` passed into [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts). |
+| Caller                             | [`DialogRequestProcessor.doProcess()`](../src/services/core/request-processor/dialog-request-processor.ts) computes `schemaName` and passes it to `runLoop`; recovery path uses the same (`response-path.ts` uses the same `resolveTransformSchema` + `extractSchemaName`).                  |
 
 ### Inside `runLoop`: `activeSchemaName` and `interrupt.schema`
 
@@ -108,12 +108,12 @@ Adding **`prompts/transforms/<your-name>/`** (with `server-transforms-*.json` an
 
 ## Orchestration loop (runtime)
 
-| Stage | Behavior |
-|-------|----------|
-| **Entry** | [`DialogRequestProcessor.doProcess()`](../src/services/core/request-processor/dialog-request-processor.ts) runs the LLM, then always calls [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts). Recovery uses [`recoverDialogFromLlmPromise()`](../src/services/core/request-processor/response-path.ts) → same `runLoop`. |
-| **Per iteration** | `runResponseTransform` → `extractInterrupt` → if **none**: non-dialog → optional IntentGate + syndicate if **`result.completed`**; **dialog** → immediate return; then `mergeTraceIntoResult` and return. If `interrupt` and `when` satisfied → budget → `applyInterrupt` → if `continueLoop`, rebuild `request.md` via `runPromptsTransform`, then main LLM again. |
-| **Budget** | `A2A_MAX_INTERRUPT_TURNS` (default 10) on the orchestrator; per-interrupt `maxTurns` clamps via `min`. At 0 with interrupt still present → `context.interrupt_truncated: true` and return. |
-| **Merge to client** | Final `ProcessResult` gets `mergeInterruptTraceIntoContext` → [`interrupt-trace-contract.ts`](../src/transform/interrupt-trace-contract.ts) only; `workbench` / `history` come from transform output and handlers. |
+| Stage               | Behavior                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Entry**           | [`DialogRequestProcessor.doProcess()`](../src/services/core/request-processor/dialog-request-processor.ts) runs the LLM, then always calls [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts). Recovery uses [`recoverDialogFromLlmPromise()`](../src/services/core/request-processor/response-path.ts) → same `runLoop`. |
+| **Per iteration**   | `runResponseTransform` → `extractInterrupt` → if **none**: non-dialog → optional IntentGate + syndicate if **`result.completed`**; **dialog** → immediate return; then `mergeTraceIntoResult` and return. If `interrupt` and `when` satisfied → budget → `applyInterrupt` → if `continueLoop`, rebuild `request.md` via `runPromptsTransform`, then main LLM again.         |
+| **Budget**          | `A2A_MAX_INTERRUPT_TURNS` (default 10) on the orchestrator; per-interrupt `maxTurns` clamps via `min`. At 0 with interrupt still present → `context.interrupt_truncated: true` and return.                                                                                                                                                                                  |
+| **Merge to client** | Final `ProcessResult` gets `mergeInterruptTraceIntoContext` → [`interrupt-trace-contract.ts`](../src/transform/interrupt-trace-contract.ts) only; `workbench` / `history` come from transform output and handlers.                                                                                                                                                          |
 
 ### Hub promise recovery (`recovered: true`)
 
@@ -121,15 +121,15 @@ When `runLoop` is entered from **recovery** (hub `llmPromiseId` already finished
 
 ### Error paths (sidecar / sub-LLM)
 
-| Failure | Outcome |
-|---------|---------|
-| **Response transform** (`runResponseTransform` → `runPromptsTransform` failure) | `ProcessResult` `outcome: 'failed'` — loop stops; no partial client merge beyond error. |
-| **Follow-up request rebuild** (`runPromptsTransform` for next turn) | Same — `failed` with message. |
-| **Main LLM after interrupt** (chat `!== 202` or poll timeout) | `failed` with short error text. |
-| **`compress_history` / `thinking` sidecar LLM** | Caught; trace row `sidecar_llm` with `ok: false`; `compress_history` still returns `continueLoop: false` with best-effort context; `thinking` returns `continueLoop: true` even if thinking slots empty. |
-| **`auto_read_file`** | Missing path → trace `missing_path`; read failure → `ok: false`, context unchanged for that file. |
-| **`auto_rag_page`** | See [`mergeServerRagPageIntoContext`](../src/services/rag/auto-rag-page-server.ts); merge-only if query/path missing. |
-| **Transform execute shape** | `warnOnInvalidExecute` — logs or throws if strict mode env. |
+| Failure                                                                         | Outcome                                                                                                                                                                                                  |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Response transform** (`runResponseTransform` → `runPromptsTransform` failure) | `ProcessResult` `outcome: 'failed'` — loop stops; no partial client merge beyond error.                                                                                                                  |
+| **Follow-up request rebuild** (`runPromptsTransform` for next turn)             | Same — `failed` with message.                                                                                                                                                                            |
+| **Main LLM after interrupt** (chat `!== 202` or poll timeout)                   | `failed` with short error text.                                                                                                                                                                          |
+| **`compress_history` / `thinking` sidecar LLM**                                 | Caught; trace row `sidecar_llm` with `ok: false`; `compress_history` still returns `continueLoop: false` with best-effort context; `thinking` returns `continueLoop: true` even if thinking slots empty. |
+| **`auto_read_file`**                                                            | Missing path → trace `missing_path`; read failure → `ok: false`, context unchanged for that file.                                                                                                        |
+| **`auto_rag_page`**                                                             | See [`mergeServerRagPageIntoContext`](../src/services/rag/auto-rag-page-server.ts); merge-only if query/path missing.                                                                                    |
+| **Transform execute shape**                                                     | `warnOnInvalidExecute` — logs or throws if strict mode env.                                                                                                                                              |
 
 ## Isolation and scheduling (policy) — GR-S-05
 
@@ -154,10 +154,10 @@ When `runLoop` is entered from **recovery** (hub `llmPromiseId` already finished
 
 ## JSON schemas (reference)
 
-| File | Role |
-|------|------|
-| [`interrupt-directive.schema.json`](../../docs/new-request-flow/json-schemas/interrupt-directive.schema.json) | `interrupt` object shape (GR-S-09); `sim-validate` validates `interrupt` when present on `response.json`. |
-| [`server-interrupt-substep-request.schema.json`](../../docs/new-request-flow/json-schemas/server-interrupt-substep-request.schema.json) / [`server-interrupt-substep-response.schema.json`](../../docs/new-request-flow/json-schemas/server-interrupt-substep-response.schema.json) | Loose fixtures for `N-sub-M` (GR-S-10); optional future strict validation. |
+| File                                                                                                                                                                                                                                                                                | Role                                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| [`interrupt-directive.schema.json`](../../docs/new-request-flow/json-schemas/interrupt-directive.schema.json)                                                                                                                                                                       | `interrupt` object shape (GR-S-09); `sim-validate` validates `interrupt` when present on `response.json`. |
+| [`server-interrupt-substep-request.schema.json`](../../docs/new-request-flow/json-schemas/server-interrupt-substep-request.schema.json) / [`server-interrupt-substep-response.schema.json`](../../docs/new-request-flow/json-schemas/server-interrupt-substep-response.schema.json) | Loose fixtures for `N-sub-M` (GR-S-10); optional future strict validation.                                |
 
 ## Observability (planned) — GR-S-14
 
@@ -190,26 +190,26 @@ The **response** transform must place `interrupt` on the same object that carrie
 }
 ```
 
-| Field | Type | Purpose |
-|--------|------|---------|
-| `reason` | string | **Required.** Selects handler in `applyInterrupt`. |
-| `maxTurns` | number | Per-interrupt cap merged with the global budget: before each handled interrupt, `interruptBudget = min(remaining global budget, maxTurns)` when `maxTurns` is a non‑negative number. |
-| `schema` | string | Optional alternate transform folder name for the **next** follow-up turn (`request.md` rebuild + next `response.md` transform) when `continueLoop` is true. |
-| `context` | object | Shallow-merged over the current invoke context before the interrupt handler runs. |
-| `data` | object | Handler-specific payload (e.g. merged into context for `auto_rag_page`). |
-| `when` | object | Optional gates: **`historyMinLength`** / **`historyMaxLength`** vs current dialog history. If not satisfied, the server skips the interrupt (same as no `interrupt`); trace gets `interrupt_skipped`. |
+| Field      | Type   | Purpose                                                                                                                                                                                               |
+| ---------- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `reason`   | string | **Required.** Selects handler in `applyInterrupt`.                                                                                                                                                    |
+| `maxTurns` | number | Per-interrupt cap merged with the global budget: before each handled interrupt, `interruptBudget = min(remaining global budget, maxTurns)` when `maxTurns` is a non‑negative number.                  |
+| `schema`   | string | Optional alternate transform folder name for the **next** follow-up turn (`request.md` rebuild + next `response.md` transform) when `continueLoop` is true.                                           |
+| `context`  | object | Shallow-merged over the current invoke context before the interrupt handler runs.                                                                                                                     |
+| `data`     | object | Handler-specific payload (e.g. merged into context for `auto_rag_page`).                                                                                                                              |
+| `when`     | object | Optional gates: **`historyMinLength`** / **`historyMaxLength`** vs current dialog history. If not satisfied, the server skips the interrupt (same as no `interrupt`); trace gets `interrupt_skipped`. |
 
 ## Implemented `reason` values
 
-| `reason` | Behavior | `continueLoop` |
-|----------|----------|----------------|
-| `compress_history` | Calls AI Hub with a compress prompt when history is non-empty (optional skip: env **`A2A_COMPRESS_HISTORY_MIN_ENTRIES`** — if `> 0`, skip when `history.length <=` that value). On success replaces **top-level** `history` and `context.history`. | `false` — server returns **one** `ProcessResult` built from **updated context** and the **same** primary LLM `execute` / message. |
-| `thinking` | Calls AI Hub; parsed JSON stored under `context.workbench.slots.thinking`. | `true` — runs **request transform → main LLM → response transform** again with updated context. |
-| `auto_rag_page` | Merges `data`, sets `_interrupt_reason`, then **re-enters** the main loop (`continueLoop: true`). If **`data.query`** is non-empty and **`data.projectPath`** or env **`A2A_RAG_PROJECT_PATH`** is set, the server runs **`@a2a/rag`** (`createRAGClientService` → `initialize` → `search`), appends hits to **`context.ragResults`**, and adds **`context._server_rag_page`**. If query or path is missing, behavior is merge-only (no server search). | `true` |
-| `auto_read_file` | Reads `data.filePath` or `data.path` via the workspace `read-file` handler; merges into `context.files`. | `false` — returns with updated context and the same primary `execute`. |
-| `clarify` | Stores `data` under `context.workbench.slots.clarify`. | `false` — same as `auto_read_file` for loop semantics. |
-| `algorithm_invoke` | Routes to **Black Room** (Algorithm Mode) for deterministic execution on local Local LLM upstream. Requires `interrupt.algorithmId` and merges results into `context.workbench.slots.blackRoomContext`. | `false` — returns with algorithm results merged into context. |
-| *(anything else)* | Logged; loop stops; client gets current result **without** `interrupt` consumption beyond that. | `false` |
+| `reason`           | Behavior                                                                                                                                                                                                                                                                                                                                                                                                                                                | `continueLoop`                                                                                                                    |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| `compress_history` | Calls AI Hub with a compress prompt when history is non-empty (optional skip: env **`A2A_COMPRESS_HISTORY_MIN_ENTRIES`** — if `> 0`, skip when `history.length <=` that value). On success replaces **top-level** `history` and `context.history`.                                                                                                                                                                                                      | `false` — server returns **one** `ProcessResult` built from **updated context** and the **same** primary LLM `execute` / message. |
+| `thinking`         | Calls AI Hub; parsed JSON stored under `context.workbench.slots.thinking`.                                                                                                                                                                                                                                                                                                                                                                              | `true` — runs **request transform → main LLM → response transform** again with updated context.                                   |
+| `auto_rag_page`    | Merges `data`, sets `_interrupt_reason`, then **re-enters** the main loop (`continueLoop: true`). If **`data.query`** is non-empty and **`data.projectPath`** or env **`A2A_RAG_PROJECT_PATH`** is set, the server runs **`@a2a/rag`** (`createRAGClientService` → `initialize` → `search`), appends hits to **`context.ragResults`**, and adds **`context._server_rag_page`**. If query or path is missing, behavior is merge-only (no server search). | `true`                                                                                                                            |
+| `auto_read_file`   | Reads `data.filePath` or `data.path` via the workspace `read-file` handler; merges into `context.files`.                                                                                                                                                                                                                                                                                                                                                | `false` — returns with updated context and the same primary `execute`.                                                            |
+| `clarify`          | Stores `data` under `context.workbench.slots.clarify`.                                                                                                                                                                                                                                                                                                                                                                                                  | `false` — same as `auto_read_file` for loop semantics.                                                                            |
+| `algorithm_invoke` | Routes to **Black Room** (Algorithm Mode) for deterministic execution on local Local LLM upstream. Requires `interrupt.algorithmId` and merges results into `context.workbench.slots.blackRoomContext`.                                                                                                                                                                                                                                                 | `false` — returns with algorithm results merged into context.                                                                     |
+| _(anything else)_  | Logged; loop stops; client gets current result **without** `interrupt` consumption beyond that.                                                                                                                                                                                                                                                                                                                                                         | `false`                                                                                                                           |
 
 ## Loop limits and truncation
 

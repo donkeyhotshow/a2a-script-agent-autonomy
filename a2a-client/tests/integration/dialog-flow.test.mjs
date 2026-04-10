@@ -283,7 +283,7 @@ describe('Dialog Flow Integration', () => {
                 messages: [
                     { role: 'assistant', content: 'Hello!' }
                 ],
-                context: { session_id: session.id }
+                context: {}
             };
             
             store.addStep(session.id, stepData);
@@ -605,4 +605,3 @@ describe('End-to-End Integration Scenarios', () => {
         });
     });
 });
-

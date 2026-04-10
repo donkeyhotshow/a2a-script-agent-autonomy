@@ -1,12 +1,12 @@
 /**
- * @a2a/json - Unified JSON Parser for A2A Protocol
+ * @a2a-client/json - Unified JSON Parser for A2A Protocol
  *
  * A package for parsing, validating and converting server responses
  * to VueFlow-compatible nodes and edges.
  *
  * @example
  * ```typescript
- * import { parseResponse, convertToVueFlowGraph } from '@a2a/json';
+ * import { parseResponse, convertToVueFlowGraph } from '@a2a-client/json';
  *
  * // Parse server response
  * const parsed = parseResponse(jsonData);

@@ -50,8 +50,6 @@ export type Session = {
     updatedAt: string;
     /** Session messages/history */
     messages?: unknown[];
-    /** Protocol version */
-    version?: string;
     /** Current execution state */
     execution?: SessionExecution;
 };

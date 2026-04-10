@@ -33,9 +33,19 @@
 | **Yellow alert (scan)** | Команда для ИИ: скан кода на недочёты/костыли/недорешения — [`docs/YELLOW-ALERT-SCAN.md`](docs/YELLOW-ALERT-SCAN.md); в глоссарии: [Yellow alert (scan)](#yellow-alert-scan--жёлтая-тревога-скан) vs [operator](#yellow-alert-operator--жёлтая-тревога-оператор) |
 | **Task Monitor Modules** | Модульная архитектура: `task-monitor-core.js` (конфигурация, состояние, логирование), `task-monitor-api.js` (Client API вызовы), `task-monitor-processing.js` (обработка задач), `task-monitor-daemon.js` (daemon режим), `task-monitor-utils.js` (утилиты), `task-monitor-validation.js` (валидация), `errors.js` (классификация ошибок) |
 
+## Server-Specific Terms (merged from a2a-server/GLOSSARY.md)
+| Term | Definition |
+|------|------------|
+| **Request Processor** | Core component handling incoming requests, managing execution queues, task processing |
+| **Action Registry** | Manages available actions, definitions, execution params |
+| **Action Executor** | Executes specific actions and manages lifecycle |
+| **Transform Pipeline** | Prepares request/response payloads for prompts/protocol |
+
+**Note:** Module glossaries merged here. See [a2a-server/GLOSSARY.md](a2a-server/GLOSSARY.md) for history.
+
 ## Alerts (тревоги)
 
-**Alerts** are **triage labels**: they answer *where to look first* or *what kind of work this is*. They are **not** runtime flags unless you add your own. **Do not confuse** them with **Rooms** (Gray / Red / Black **Room** = pipeline phases — see [Rooms vs alerts](#rooms-vs-alerts)).
+**Alerts** are **triage labels**
 
 ### How alerts are used
 

@@ -149,7 +149,7 @@ export function createAuthMiddleware(options: AuthMiddlewareOptions = {}) {
             }
 
             // Validate session ID if present in request
-            const sessionId = req.params.sessionId || req.body?.session_id;
+            const sessionId = req.params.sessionId;
             if (sessionId && sessionId !== payload.sessionId) {
                 res.status(403).json({
                     success: false,

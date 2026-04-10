@@ -1,1 +1,1 @@
-export { pickInvokeContextPatch } from '../../../../../shared/context-invoke-patch.mjs';
+export { pickInvokeContextPatch } from '../../../../../shared/context-invoke-patch.js';

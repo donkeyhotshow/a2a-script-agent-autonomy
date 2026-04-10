@@ -182,53 +182,9 @@ Press `Ctrl+C` to stop all services gracefully. The orchestrator will:
 
 ---
 
-## Project Status (2026-03-06)
+## Project Status
 
-*Last updated: 2026-03-06*
-
-### Recently Completed
-- ✅ **Port Management System** - Dynamic allocation, conflict detection, health gating automation
-- ✅ **Unified Service Orchestrator** - Health gating with exponential backoff, graceful shutdown
-- ✅ **12 Major Tasks** - Web Integration, Simulation Framework, Server Refactoring
-- ✅ **3 Refactoring Tasks** - request-processor, message-builder, context-parser
-- ✅ **Server Analysis** - Inventory check aligned with simulations
-- ✅ **Server Improvements** - Storage API, log rotation, rate limiting, performance monitoring, test fixes
-
-### Server Enhancement Summary (2026-03-06)
-
-Recent server improvements include:
-
-#### 🔧 **Storage API**
-- CRUD operations for file-based storage (`/api/v1/storage/*`)
-- Input validation and size limits (10MB max)
-- Automatic cleanup of old files (30+ days)
-- Enhanced error handling and security
-
-#### 📊 **Monitoring & Observability**
-- Daily log rotation with compression (7-14 day retention)
-- Performance metrics collection (memory, uptime, throughput)
-- Access logging with request duration tracking
-- Prometheus-compatible metrics endpoints
-
-#### 🛡️ **Security & Performance**
-- Configurable rate limiting (200 req/min default)
-- Input validation and sanitization
-- Enhanced error responses with specific error codes
-- Memory usage monitoring and alerts
-
-#### 🧪 **Testing Improvements**
-- Fixed simulation-based tests (legacy + step-based format support)
-- Enhanced test reliability and coverage
-- CLI testing API for remote web client control
-
-### Current Status: Server Production Ready
-
-The a2a-server component is now production-ready with:
-- Comprehensive API coverage
-- Robust error handling and validation
-- Performance monitoring and optimization
-- Automated maintenance (log rotation, cleanup)
-- Full test coverage
+See [DEV_STATE.md](DEV_STATE.md) for current project status, recent changes, and development progress.
 
 ### Documentation
 

@@ -1,0 +1,354 @@
+# A2A AI Hub Proxy (Z.AI first, Local LLM upstream optional)
+
+**Live stack:** Start or restart the **whole** coordinated stack from the repo root: **`.\start-all.bat`** (Windows) or **`./start-all.sh`** (Linux/macOS). The proxy routes requests to the configured providers (Z.AI by default, with Local LLM upstream/Groq/OpenRouter fallbacks) and logs every call with optional simulation hooks.
+
+**Documentation index:** [`docs/README.md`](docs/README.md) — providers/`api_keys`, API reference, testing, troubleshooting.
+
+Самостоятельный прокси объединяет несколько LLM-поставщиков: по умолчанию это Z.AI (`glm-4.7-flash`), а локальная Local LLM upstream выступает как дополнительный источник моделей, который добавляется в `/api/tags` только если доступен.
+
+## Возможности
+
+- **Маршрутизация между провайдерами**: Z.AI (по умолчанию) + fallback (Local LLM upstream, Groq, OpenRouter, HuggingFace, Cohere и т.д.) — правила задаются в `AI_HUB_CONFIG` / `providers.json`.
+- **Логирование**: LLM `POST`/`PUT`/`PATCH` (chat/generate/embeddings) — трассы в `proxy_logs/promises/<promiseId>/`. Прочие пути по-прежнему могут писать в `proxy_logs/requests/request_*` (`request.json` / `response.json`).
+- **ML-симуляция**: Симуляции rnj-L / rnj-1 и правила `simulate`/`set_model`.
+- **Маппинг моделей + конфигурация**: `AI_HUB_CONFIG` + `providers.json` позволяют переадресовать `model`, вставлять `virtual_models` и наблюдать `api/tags`.
+- **Async Promises**: Поддержка `promiseId` → `POST /api/promises/create` → потом `result`. При **`PROMISE_DAEMON_ONLY=true`** (по умолчанию) реальный форвард на провайдера выполняет **очередь/daemon** или ручной **`POST /promise/<id>/execute`**; см. [`docs/workflows/WORKFLOWS.md`](docs/workflows/WORKFLOWS.md). Поле **`promise_daemon_only`** в **`GET /health`** использует Task Monitor (см. корневой **`MONITOR-QUICK-START.md`**).
+- **LLM Response Formatting**: Автоматическое форматирование ответов LLM в стабильный Markdown формат с распознаванием кода, JSON и структурированного контента. Доступно через `/promise/<id>/response_formatted` эндпоинт с fallback на raw ответы.
+- **Local LLM upstreamManager**: Управление локальным Local LLM upstream (старт/стоп/health) — используется только при необходимости.
+
+### Политика авторизации (без форварда)
+
+- Клиентские сервисы (Web UI, a2a-server, любые внешние клиенты) **не должны** прокидывать свои `Authorization` / `API-Key` заголовки до LLM.
+- Proxy сам собирает upstream‑хедеры для провайдера (например, `Authorization: Bearer …` для Z.AI) на основе **`config/providers.json`** (`api_keys` и провайдеры); см. [`docs/configuration/PROVIDERS_AND_API_KEYS.md`](docs/configuration/PROVIDERS_AND_API_KEYS.md). Ключи **не** должны храниться в `.env`, если политика команды — только JSON-конфиг.
+- Входящие auth‑хедеры используются только для аутентификации самого клиента (если включено), но **никогда не пробрасываются** дальше в Z.AI/Local LLM upstream — это сознательно запрещённый сценарий.
+
+## Установка
+
+### Вариант 1: Ручная установка
+
+```bash
+pip install -r requirements.txt
+```
+
+### Вариант 2: Docker (рекомендуется)
+
+```bash
+# Запуск с Docker Compose
+./docker-run.sh start
+
+# Или вручную
+docker-compose up -d
+
+# Проверка статуса
+./docker-run.sh status
+```
+
+### Вариант 3: Разработка
+
+```bash
+# Установка с инструментами разработки
+pip install -r requirements.txt
+pip install pytest black isort mypy flake8
+
+# Или через Docker в режиме разработки
+./docker-run.sh dev
+```
+
+## Запуск
+
+```
+bash
+# Запуск через модуль (рекомендуется)
+python -m proxy
+
+# Или через __main__
+python -m proxy --port 11434 --compat_llm-host http://localhost:11435
+
+# С включенной симуляцией
+set SIMULATION_ENABLED=true
+python -m proxy
+```
+
+## Конфигурация
+
+Пул ключей и провайдеры: **`config/providers.json`** — подробно [`docs/configuration/PROVIDERS_AND_API_KEYS.md`](docs/configuration/PROVIDERS_AND_API_KEYS.md).
+
+**Первый запуск после clone:** `python scripts/ensure-providers-config.py` (копирует `config/providers.example.json` → `config/providers.json`, если файла нет), затем вставьте ключи Z.AI в JSON. Файл `config/providers.json` в `.gitignore`.
+
+Переменные окружения:
+
+| Переменная              | По умолчанию           | Описание                        |
+|-------------------------|------------------------|---------------------------------|
+| PROXY_PORT              | 11434                  | Порт прокси                     |
+| DEFAULT_PROVIDER        | z_ai                    | Имя провайдера по умолчанию (можно переопределить через `providers.json`). |
+| Z_AI_BASE_URL           | https://api.z.ai/api/paas/v4/ | Базовый URL для Z.AI (по умолчанию). |
+| Z_AI_MODEL              | glm-4.7-flash           | Модель Z.AI по умолчанию.        |
+| Z_AI_API_KEY            | -                       | Опционально; основной источник ключей — `config/providers.json` → `api_keys` (см. [`docs/configuration/PROVIDERS_AND_API_KEYS.md`](docs/configuration/PROVIDERS_AND_API_KEYS.md)). |
+| LOCAL_LLM_UPSTREAM_URL             | http://localhost:11435 | Хост локальной Local LLM upstream (фолбэк, необязательный). |
+| STORAGE_DIR             | proxy_logs             | Папка для логов                 |
+| SIMULATION_ENABLED      | false                  | Включить ML симуляцию           |
+| SIMULATION_DATA_PATH    | simulation_data        | Папка данных симуляции          |
+| AI_HUB_CONFIG           | -                      | JSON-конфиг маппинга/симуляции  |
+| FORWARD_TIMEOUT_SECONDS | 60                     | Таймаут проксирования           |
+| LOCAL_LLM_AUTO_START       | true                   | Автозапуск Local LLM upstream               |
+| LOCAL_LLM_IDLE_TIMEOUT     | 300                    | Секунд до остановки Idle Local LLM upstream |
+| HEALTH_CHECK_INTERVAL   | 5                      | Интервал health check (сек)     |
+| LOG_LEVEL               | INFO                   | Уровень логирования             |
+| LOG_FORMAT              | json                   | Формат логов (json/text)        |
+
+## Health Check Endpoints
+
+### `/health` - Liveness Probe
+Базовая проверка работоспособности прокси.
+
+```json
+{
+  "status": "running",
+  "proxy_port": 11434,
+  "local_llm_upstream_host": "http://localhost:11435",
+  "local_llm_upstream_available": true
+}
+```
+
+### `/health/compat_llm` - Local LLM upstream Availability
+Проверка доступности Local LLM upstream. Возвращает HTTP 503 если Local LLM upstream недоступна.
+
+```json
+{
+  "status": "healthy",
+  "local_llm_upstream_available": true,
+  "local_llm_upstream_url": "http://localhost:11435",
+  "local_llm_upstream_pid": 12345,
+  "idle_seconds": 120
+}
+```
+
+### `/health/ready` - Readiness Probe
+Проверка готовности прокси к обработке запросов. Возвращает HTTP 200 если доступен текущий default-провайдер (Z.AI по умолчанию). Если по умолчанию стоит `compat_llm`, то поведение прежнее: при недоступной Local LLM upstream — HTTP 503.
+
+```json
+{
+  "status": "ready",
+  "local_llm_upstream_available": true,
+  "cache_status": "active"
+}
+```
+
+## Metrics Endpoint
+
+### `/metrics` - Prometheus Metrics
+Возвращает метрики в формате Prometheus.
+
+| Метрика | Тип | Описание |
+|---------|-----|----------|
+| `ai_proxy_requests_total` | counter | Общее количество запросов |
+| `ai_proxy_request_duration_seconds` | histogram | Гистограмма времени обработки |
+| `ai_proxy_errors_total` | counter | Общее количество ошибок |
+| `local_llm_model_loaded` | gauge | Загружена ли модель (1/0) |
+| `ai_proxy_uptime_seconds` | gauge | Время работы (сек) |
+
+## Graceful Shutdown
+
+Прокси поддерживает graceful shutdown:
+- Обработка SIGTERM/SIGINT сигналов
+- Ожидание завершения активных запросов (до 30 сек)
+- Корректная остановка Local LLM upstream (если запущена прокси)
+- Логирование процесса shutdown
+
+## Структура проекта
+
+```
+ai-integration/
+├── proxy/                      # Модуль прокси
+│   ├── __init__.py             # Flask app
+│   ├── __main__.py             # Точка входа
+│   ├── config.py               # Конфигурация
+│   ├── routes.py               # Маршруты API
+│   ├── proxy_handler.py        # Обработка запросов
+│   ├── compat_llm_manager.py       # Управление Local LLM upstream
+│   ├── promises.py            # Async promises
+│   ├── ai_hub_config.py        # AI Hub конфиг
+│   ├── views.py                # Дополнительные view
+│   └── utils.py                # Утилиты
+│
+├── simulation/                 # ML симуляция
+│   ├── config.py              # Конфигурация
+│   ├── storage.py             # Хранение данных
+│   ├── learner.py              # Обучение эмбеддингов
+│   ├── engine.py               # Движок симуляции
+│   ├── prompt_manager.py      # Управление промптами
+│   └── learning_queue.py       # Очередь обучения
+│
+├── scripts/                    # Утилиты
+│   ├── train.py               # Обучение индекса
+│   ├── benchmark.py           # Бенчмарки
+│   ├── migrate.py             # Миграция данных
+│   └── learning_queue.py       # Управление очередью
+│
+├── docs/                       # Документация
+│   ├── UPGRADE.md             # Апгрейд гайд
+│   └── ai-hub.config.example.json
+│
+└── proxy_logs/                # Логи запросов
+    └── requests/                  # Папка для запросов
+        └── request_*/
+            ├── request.json
+            └── response.json
+```
+
+## API Endpoints
+
+### Базовые
+
+- `GET /health` - Проверка здоровья
+- `GET /api/tags` - Список моделей
+- `POST /api/generate` - Генерация (streaming)
+- `POST /api/chat` - Чат (streaming)
+
+### Promises
+
+- `POST /api/promises/create` - Создать promise
+- `GET /api/promises/<id>/status` - Статус promise
+- `GET /api/promises/<id>/result` - Получить результат
+
+---
+
+`GET /api/tags` собирает единый список: модели из конфигурации включённых облачных провайдеров (например Z.AI), затем живой ответ `LOCAL_LLM_UPSTREAM_URL/api/tags` (если сервер доступен), затем `virtual_models` из AI Hub config. У каждой записи есть поле `provider` (`z_ai`, `compat_llm`, `virtual`, …) для выбора бэкенда.
+
+### Симуляция (когда SIMULATION_ENABLED=true)
+
+- `GET /simulation/status` - Статус симуляции
+- `POST /simulation/test` - Тест симуляции
+- `POST /simulation/force-real` - Форсировать реальный Local LLM upstream
+
+## Scripts
+
+```
+bash
+# Обучение модели
+python -m scripts.train build      # Построить индекс с нуля
+python -m scripts.train update    # Обновить индекс
+python -m scripts.train stats     # Показать статистику
+python -m scripts.train test      # Тест модели
+
+# Бенчмарки
+python -m scripts.benchmark --all
+
+# Миграция
+python -m scripts.migrate --version
+
+# Управление очередью обучения
+python -m scripts.learning_queue list --status pending
+python -m scripts.learning_queue stats
+python -m scripts.learning_queue approve <id>
+```
+
+## Docker
+
+### Быстрый старт
+
+```bash
+# Клонировать репозиторий
+git clone <repository-url>
+cd ai-integration
+
+# Запустить сервисы
+./docker-run.sh start
+
+# Проверить статус
+curl http://localhost:11434/health
+```
+
+### Команды Docker
+
+```bash
+# Сборка образов
+./docker-run.sh build
+
+# Запуск сервисов
+./docker-run.sh start
+
+# Остановка сервисов
+./docker-run.sh stop
+
+# Перезапуск
+./docker-run.sh restart
+
+# Просмотр логов
+./docker-run.sh logs
+
+# Статус сервисов
+./docker-run.sh status
+
+# Запуск тестов
+./docker-run.sh test
+
+# Очистка
+./docker-run.sh clean
+
+# Режим разработки (с горячей перезагрузкой)
+./docker-run.sh dev
+```
+
+### Структура сервисов
+
+- **compat_llm**: LLM сервер (порт 11435)
+- **ai-integration**: Прокси с демоном (порт 11434)
+- **ai-integration-dev**: Режим разработки (порт 11438)
+
+### Переменные окружения
+
+```bash
+# Основные настройки
+LOCAL_LLM_UPSTREAM_URL=http://compat_llm:11435
+PROXY_PORT=11434
+
+# Очистка
+ENABLE_CLEANUP=true
+PROMISE_RETENTION_DAYS=7
+LOG_RETENTION_DAYS=30
+
+# Логирование
+LOG_LEVEL=INFO
+```
+
+## Testing scripts
+
+- `python -m scripts.test_ai_integration` — runs proxy/compat_llm health checks, then verifies the promise daemon by reusing the promise-chain helper; add `--skip-promise` if the daemon is temporarily unavailable.
+- `python -m scripts.tests.promise_chain` — focused promise-chain smoke test (creates a promise with `?promise=1` and waits for the daemon to intercept it) that can also be used inside CI workflows.
+- `python -m scripts.tests.daemon_resilience` — validates daemon resilience across provider disconnect/reconnect (`/compat_llm/stop` -> health/daemon checks -> `/compat_llm/start`).
+- `python scripts/test_promise_daemon.py` — standalone CLI that checks `/health`, sends `?promise=1`, waits for the daemon to complete it, and then retrieves `/promise/<id>/response`; accepts `--host`, `--port`, `--timeout`, `--path`, `--model`, and `--prompt`.
+- `python -m scripts.test_ai_integration_chain` — single command that walks health → metrics → optional simulation probes → optional promise chain → optional proxy_logs inspection (use `--skip-*` / `--check-logs` as needed).
+
+## Model normalization
+
+All POST/PUT/PATCH payloads that include a `model` field are rewritten to `qwen3:8b` before being forwarded to Local LLM upstream. That override happens after alias resolution and simulation/routing rules — downstream components can still read the original `requested_model`, but every proxied call hits `qwen3:8b`.
+
+## ML Симуляция
+
+Система обучается на истории взаимодействий с rnj-1 и может симулировать ответы как rnj-L когда уверенность высока:
+
+```
+Уверенность >= 0.75 → rnj-L симуляция (быстро, <200ms)
+Уверенность < 0.75  → Реальный rnj-1 (медленнее, точнее)
+```
+
+Для работы симуляции установите дополнительные зависижки:
+
+```
+bash
+pip install sentence-transformers faiss-cpu numpy scikit-learn torch
+```
+
+## Документация
+
+См. `docs/UPGRADE.md` и пример конфига `docs/ai-hub.config.example.json`.
+
+## Project workflow & documentation links
+
+- `[AGENTS.md](AGENTS.md)` — правила ведения итераций, структура Scratchpad/plan/TODO.
+- `[DEV_STATE.md](DEV_STATE.md)` — живой журнал текущей работы: план, статус, заметки и важные файлы.
+- `[TODO.md](TODO.md)` — актуальные задачи с владельцами и сроками.
+- `[docs/ci-cd-proxy-scenarios.md](docs/ci-cd-proxy-scenarios.md)` — CI/CD-потоки, health/metrics и secrets для релизов.
+- `[docs/promise-viewer-plan.md](docs/promise-viewer-plan.md)` — требования к UI promise viewer, включая provider panel.
+- `[config/providers.json](config/providers.json)` — провайдеры, fallback, timeouts, ключи, которые UI/CI должны учитывать.

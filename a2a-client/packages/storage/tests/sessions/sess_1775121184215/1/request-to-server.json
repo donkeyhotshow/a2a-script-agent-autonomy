@@ -1,0 +1,14 @@
+{
+  "step": 1,
+  "context": {
+    "version": "2.0",
+    "session_id": "sess_1775121184215",
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  },
+  "result": {
+    "message": "Run task-decomposition for a small repo quality check, then finish with verified results."
+  }
+}

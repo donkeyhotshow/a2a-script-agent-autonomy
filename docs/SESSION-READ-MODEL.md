@@ -2,6 +2,20 @@
 
 Data flow: server artifacts → client session store → renderer
 
+### Session Storage Format
+
+```
+a2a-client/storage/sessions/{sessionId}/
+├── {stepNum}/
+│   ├── client-result.json       (user input/choice)
+│   ├── request-to-server.json   (payload sent)
+│   ├── server-response.json     (execute/context/result)
+│   ├── server-promise.json      (optional, async pending)
+│   └── messages.json            (conversation slice)
+```
+
+**Rebuild from highest step with server-response.json.**
+
 ### Server Payloads
 
 | Artifact | Location | Purpose |

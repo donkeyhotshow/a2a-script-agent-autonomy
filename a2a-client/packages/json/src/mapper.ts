@@ -29,6 +29,8 @@ import {
  */
 let nodeCounter = 0;
 
+const CONTEXT_NODE_ID = 'context';
+
 /**
  * Reset node counter (useful for testing)
  */
@@ -59,12 +61,11 @@ export function convertToVueFlowNodes(response: UnifiedResponse): VueFlowNode[] 
 
         // Context node
         nodes.push({
-            id: `context_${result.context.session_id}`,
+            id: CONTEXT_NODE_ID,
             type: 'context',
             position: calculatePosition(index++),
             data: {
                 label: 'Context',
-                sessionId: result.context.session_id,
                 tasks: result.context.tasks?.length || 0,
                 status: 'loaded',
             },
@@ -222,7 +223,7 @@ export function convertToVueFlowEdges(response: UnifiedResponse, nodes?: VueFlow
 
     if (isActionProposalResponse(response)) {
         const result = response.result;
-        const contextId = `context_${result.context.session_id}`;
+        const contextId = CONTEXT_NODE_ID;
 
         // Edges from context to each proposed action
         if (result.proposedActions) {

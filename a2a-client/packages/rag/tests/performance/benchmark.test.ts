@@ -50,7 +50,7 @@ interface ScalabilityResult {
 }
 
 // Mock embedding client for semantic search tests
-jest.mock('@a2a/embedding', () => ({
+jest.mock('@a2a-client/embedding', () => ({
   createEmbeddingClient: () => ({
     embed: jest.fn(async (content: string) => {
       const hash = content.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);

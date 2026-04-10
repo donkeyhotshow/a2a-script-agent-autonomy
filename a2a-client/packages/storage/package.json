@@ -1,0 +1,25 @@
+{
+  "name": "@a2a-client/storage",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Session storage path and sorting utilities",
+  "exports": {
+    "./session-paths.mjs": "./src/session-paths.mjs",
+    "./session-sort.mjs": "./src/session-sort.mjs",
+    "./session-stage-derive.mjs": "./src/session-stage-derive.mjs",
+    "./session-id.js": "./src/session-id.js",
+    "./adrComplianceState.ts": "./src/adrComplianceState.ts",
+    "./kv.ts": "./src/kv.ts",
+    "./newSessions.ts": "./src/newSessions.ts",
+    "./projectSessions.ts": "./src/projectSessions.ts",
+    "./projects.ts": "./src/projects.ts",
+    "./promise-status.ts": "./src/promise-status.ts",
+    "./root.ts": "./src/root.ts",
+    "./session-index-store.ts": "./src/session-index-store.ts",
+    "./session-paths.ts": "./src/session-paths.ts",
+    "./session-promise-read.ts": "./src/session-promise-read.ts",
+    "./session-step-io.ts": "./src/session-step-io.ts",
+    "./session-store.ts": "./src/session-store.ts"
+  }
+}

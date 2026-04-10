@@ -3,7 +3,7 @@
  * Matches `simulations/agent/1/request.json` pattern: `context.execution` + `result.message`.
  */
 
-import { sanitizeContextForServer } from '../../../../shared/a2a-invoke-builders.mjs';
+import { sanitizeContextForServer } from '@a2a-client/core/a2a-invoke-builders.js';
 
 export const ROUTER_NEW_TASK_EXECUTION = { action: 'task' as const, step: 'new' as const };
 
@@ -18,7 +18,6 @@ export function buildInitialInvokeRequestBody(opts: {
     result: { message: string };
 } {
     const rawContext: Record<string, unknown> = {
-        version: '2.0',
         execution: { ...ROUTER_NEW_TASK_EXECUTION },
         ...(opts.extraContext || {}),
     };
@@ -27,3 +26,4 @@ export function buildInitialInvokeRequestBody(opts: {
         result: { message: opts.task },
     };
 }
+

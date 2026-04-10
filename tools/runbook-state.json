@@ -1,0 +1,10 @@
+{
+  "services": {
+    "runbook-status": {
+      "healthy": true,
+      "restarts": 0
+    }
+  },
+  "daemonPid": 5768,
+  "lastMonitor": 0
+}

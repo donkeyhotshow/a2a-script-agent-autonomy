@@ -24,7 +24,7 @@
  *   exportToCSV,
  *   loadConfig,
  *   DEFAULT_CONFIG,
- * } from '@a2a/rag/tests';
+ * } from '@a2a-client/rag/tests';
  * 
  * // Run tests and generate reports
  * const runner = new RAGTestRunner('default', { verbose: true });
@@ -168,7 +168,7 @@ export type {
  * 
  * @example
  * ```typescript
- * import { runTests } from '@a2a/rag/tests';
+ * import { runTests } from '@a2a-client/rag/tests';
  * 
  * const report = await runTests('default', { verbose: true });
  * console.log(`Pass rate: ${report.summary.passRate * 100}%`);
@@ -206,7 +206,7 @@ export async function runTests(
  * 
  * @example
  * ```typescript
- * import { runSmokeTest } from '@a2a/rag/tests';
+ * import { runSmokeTest } from '@a2a-client/rag/tests';
  * 
  * const report = await runSmokeTest();
  * if (report.summary.passRate < 0.8) {
@@ -225,7 +225,7 @@ export async function runSmokeTest(): Promise<import('./types.js').TestReport> {
  * 
  * @example
  * ```typescript
- * import { runPerformanceTests } from '@a2a/rag/tests';
+ * import { runPerformanceTests } from '@a2a-client/rag/tests';
  * 
  * const report = await runPerformanceTests();
  * console.log(`Avg search time: ${report.performance.avgSearchTimeMs}ms`);
@@ -243,7 +243,7 @@ export async function runPerformanceTests(): Promise<import('./types.js').TestRe
  * 
  * @example
  * ```typescript
- * import { generateData, loadConfig } from '@a2a/rag/tests';
+ * import { generateData, loadConfig } from '@a2a-client/rag/tests';
  * 
  * const config = loadConfig({ dataGeneration: { filesPerType: 20 } });
  * const dataset = await generateData(config);
@@ -274,7 +274,7 @@ export async function generateData(
  * 
  * @example
  * ```typescript
- * import { runTests, analyzeResults } from '@a2a/rag/tests';
+ * import { runTests, analyzeResults } from '@a2a-client/rag/tests';
  * 
  * const report = await runTests();
  * const analysis = analyzeResults(report);

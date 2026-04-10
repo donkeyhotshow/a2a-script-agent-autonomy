@@ -17,7 +17,6 @@ export interface Task {
 
 export interface ContextBlock {
     version: '1.0';
-    session_id: string;
     new_task?: string[];
     architectural_features?: string[];
     continue?: boolean;

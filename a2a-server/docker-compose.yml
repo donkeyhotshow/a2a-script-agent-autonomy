@@ -102,22 +102,10 @@ services:
       - a2a-network
     command: npm run dev
 
-  # Optional: Plexe ML Server (if running locally)
-  # plexe:
-  #   image: plexe/plexe-server:latest
-  #   container_name: a2a-plexe
-  #   ports:
-  #     - "8000:8000"
-  #   volumes:
-  #     - plexe_models:/models
-  #   networks:
-  #     - a2a-network
-
 volumes:
   postgres_data:
   redis_data:
   ai_proxy_logs:
-  # plexe_models:
 
 networks:
   a2a-network:

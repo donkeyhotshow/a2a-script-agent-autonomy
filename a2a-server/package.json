@@ -20,8 +20,8 @@
     "test:record": "cross-env TEST_MODE=recording vitest run",
     "test:replay": "cross-env TEST_MODE=replay vitest run",
     "test:real": "cross-env TEST_MODE=real vitest run",
-    "lint": "eslint \"src/**/*.ts\" \"tests/**/*.ts\"",
-    "lint:fix": "eslint \"src/**/*.ts\" \"tests/**/*.ts\" --fix",
+    "lint": "eslint \"packages/server/src/**/*.ts\" \"packages/server/tests/**/*.ts\"",
+    "lint:fix": "eslint \"packages/server/src/**/*.ts\" \"packages/server/tests/**/*.ts\" --fix",
     "format": "prettier --write \"src/**/*.ts\"",
     "sim:create": "tsx scripts/sim-scaffold.ts",
     "sim:run": "tsx scripts/sim-run.ts",
@@ -39,6 +39,16 @@
     "sim:contract-report": "tsx scripts/sim-contract-report.ts",
     "gate:cleanup": "tsx scripts/cleanup-gate.ts"
   },
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "build:deps": "npm run build --workspace=@a2a/server-config && npm run build --workspace=@a2a/server-utils && npm run build --workspace=@a2a/server-protocol && npm run build --workspace=@a2a/server-transform && npm run build --workspace=@a2a/server-core",
+    "build:services": "npm run build --workspace=@a2a/server-llm && npm run build --workspace=@a2a/server-p2p && npm run build --workspace=@a2a/server-daemon && npm run build --workspace=@a2a/server-actions",
+    "build:app": "npm run build --workspace=@a2a/server",
+    "clean": "npm run clean --workspaces --if-present && rm -rf dist/"
+  },
   "keywords": [
     "a2a",
     "agent-to-agent",
@@ -49,6 +59,7 @@
   "license": "MIT",
   "dependencies": {
     "@a2a/rag": "file:../a2a-client/packages/rag",
+    "@a2a/agents": "file:../a2a-agents",
     "@chainsafe/libp2p-gossipsub": "^14.1.2",
     "@chainsafe/libp2p-noise": "^17.0.0",
     "@libp2p/mplex": "^12.0.15",

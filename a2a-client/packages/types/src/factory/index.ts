@@ -14,7 +14,6 @@ import type { ProtocolError } from '../protocol/index.js';
  * Factory options for creating context blocks
  */
 export interface CreateContextBlockOptions {
-    sessionId: string;
     newTask?: string[];
     architecturalFeatures?: string[];
     continue?: boolean;
@@ -30,7 +29,6 @@ export interface CreateContextBlockOptions {
 export function createContextBlock(options: CreateContextBlockOptions): ContextBlock {
     return {
         version: '1.0',
-        session_id: options.sessionId,
         new_task: options.newTask,
         architectural_features: options.architecturalFeatures,
         continue: options.continue,

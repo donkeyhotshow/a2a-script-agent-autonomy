@@ -1,0 +1,52 @@
+{
+  "api_keys": [
+    {
+      "id": "groq-primary",
+      "provider": "groq",
+      "secret": "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",
+      "enabled": true,
+      "priority": 1
+    },
+    {
+      "id": "ollama-local",
+      "provider": "ollama",
+      "secret": "__OLLAMA_LOCAL__",
+      "enabled": true,
+      "priority": 2
+    }
+  ],
+  "providers": {
+    "groq": {
+      "type": "openai",
+      "url": "https://api.groq.com/openai/v1",
+      "api_key": "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",
+      "enabled": true,
+      "priority": 1,
+      "models": [
+        "llama-3.1-8b-instant",
+        "llama3-8b-8192",
+        "mixtral-8x7b-32768",
+        "gemma2-9b-it"
+      ],
+      "fallback_models": {
+        "llama-3.1-8b-instant": "llama-3.1-8b-instant",
+        "qwen3:8b": "llama-3.1-8b-instant"
+      },
+      "timeout": 0,
+      "max_retries": 2
+    },
+    "ollama": {
+      "type": "ollama",
+      "url": "${OLLAMA_HOST:-http://localhost:11435}",
+      "enabled": true,
+      "priority": 2,
+      "models": ["qwen3:8b", "llama3.1:8b"],
+      "timeout": 0,
+      "max_retries": 3
+    }
+  },
+  "default_provider": "groq",
+  "fallback_chain": ["groq", "ollama"],
+  "enable_fallback": true,
+  "provider_timeout": 0
+}

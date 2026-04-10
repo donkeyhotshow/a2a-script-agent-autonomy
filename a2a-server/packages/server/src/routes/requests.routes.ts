@@ -1,0 +1,237 @@
+/**
+ * Requests API - status and result endpoints
+ * GET /requests/:promiseId/status - single status
+ * GET /requests/:promiseId/result - single result
+ * GET /requests/status?ids=id1,id2,id3 - batch status for multiple promiseIds
+ */
+
+import {Router, Request, Response, NextFunction} from 'express';
+import {sanitizeErrorMessage} from '../utils/errors.js';
+import {requestService} from '../services/core/request/request.service.js';
+import {registryAuth} from '../middleware/registry-auth.middleware.js';
+import {clientSafeWorkbench} from '../services/core/request/client-visible-context.js';
+
+const router = Router();
+
+/** Context fields preserved on GET /requests/:id/result (align with simulations/SCHEMA.md). */
+const POLL_CONTEXT_KEYS = [
+    'task',
+    'execution',
+    'history',
+    'workbench',
+    'files',
+    'scratchpad',
+    'scratchpad_ops',
+] as const;
+
+/**
+ * Filter extra top-level noise but keep full protocol execute + canonical context
+ * (workbench, files, scratchpad) so pollers match Client API / goldens.
+ */
+function clientSafeErrorField(err: Record<string, unknown> | null | undefined): Record<string, unknown> | undefined {
+    if (!err || typeof err !== 'object') return undefined;
+    const msg = err['message'];
+    if (typeof msg !== 'string') return err;
+    return {...err, message: sanitizeErrorMessage(msg)};
+}
+
+export function filterResponse(result: Record<string, unknown>): Record<string, unknown> {
+    const filtered: Record<string, unknown> = {};
+
+    if (result.execute !== undefined) {
+        filtered.execute = result.execute;
+    }
+    if (result.context !== undefined) {
+        const ctx = result.context as Record<string, unknown>;
+        const filteredContext: Record<string, unknown> = {};
+
+        for (const key of POLL_CONTEXT_KEYS) {
+            if (ctx[key] !== undefined) {
+                filteredContext[key] =
+                    key === 'workbench' ? clientSafeWorkbench(ctx[key]) : ctx[key];
+            }
+        }
+
+        filtered.context = filteredContext;
+    }
+
+    return filtered;
+}
+
+/** Deep-merge workbench.slots so grayRoom from persisted request context is not dropped. */
+function mergeWorkbenchSlotsForPoll(a: unknown, b: unknown): Record<string, unknown> {
+    const fa = a && typeof a === 'object' && !Array.isArray(a) ? (a as Record<string, unknown>) : {};
+    const fb = b && typeof b === 'object' && !Array.isArray(b) ? (b as Record<string, unknown>) : {};
+    const sa = (fa.slots as Record<string, unknown>) || {};
+    const sb = (fb.slots as Record<string, unknown>) || {};
+    return {...fa, ...fb, slots: {...sa, ...sb}};
+}
+
+/**
+ * `updateStatus` merges `result.context` into `RequestResult.context`. Some paths may differ slightly
+ * from `result.context` on the stored `result` blob; pollers (Client API async) must see the union
+ * so `workbench.slots.grayRoom` reaches session merge (e2e redGrayRoom).
+ */
+export function mergePollContextWithPersisted(
+    responseData: Record<string, unknown>,
+    persisted: Record<string, unknown> | undefined
+): void {
+    if (!persisted || typeof persisted !== 'object' || Array.isArray(persisted)) return;
+    const cur = responseData.context;
+    const merged: Record<string, unknown> =
+        cur && typeof cur === 'object' && !Array.isArray(cur) ? {...(cur as Record<string, unknown>)} : {};
+
+    for (const key of POLL_CONTEXT_KEYS) {
+        if (persisted[key] === undefined) continue;
+        if (key === 'workbench') {
+            merged.workbench = mergeWorkbenchSlotsForPoll(merged.workbench, persisted.workbench);
+        } else if (merged[key] === undefined) {
+            merged[key] = persisted[key];
+        }
+    }
+    if (Object.keys(merged).length > 0) {
+        responseData.context = merged;
+    }
+}
+
+/**
+ * GET /requests/status?ids=id1,id2,id3
+ * Batch status for multiple promiseIds. Client can poll several sessions in one request.
+ */
+router.get('/status', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const idsParam = req.query.ids;
+        if (!idsParam || typeof idsParam !== 'string') {
+            res.status(400).json({
+                success: false,
+                error: {message: 'Query param "ids" required (comma-separated promiseIds)'},
+            });
+            return;
+        }
+        const promiseIds = idsParam.split(',').map((s) => s.trim()).filter(Boolean);
+        if (promiseIds.length === 0) {
+            res.status(400).json({
+                success: false,
+                error: {message: 'At least one promiseId required in ids'},
+            });
+            return;
+        }
+        if (promiseIds.length > 50) {
+            res.status(400).json({
+                success: false,
+                error: {message: 'Max 50 promiseIds per request'},
+            });
+            return;
+        }
+
+        const results = await requestService.getStatusBatch(promiseIds);
+        const items = results.map((r, i) =>
+            r ? {...r, found: true} : {promiseId: promiseIds[i], found: false}
+        );
+
+        res.json({
+            success: true,
+            data: {items},
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * GET /requests/:promiseId/status
+ * Single status (existing behavior)
+ */
+router.get('/:promiseId/status', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const promiseId = String(req.params.promiseId || '');
+        const status = await requestService.getStatus(promiseId);
+        if (!status) {
+            res.status(404).json({
+                success: false,
+                error: {message: 'Request not found'},
+            });
+            return;
+        }
+        res.json({success: true, data: status});
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * GET /requests/:promiseId/result
+ * Full result (when status is completed/failed)
+ */
+router.get('/:promiseId/result', async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const promiseId = String(req.params.promiseId || '');
+        const fullResult = await requestService.getResult(promiseId);
+        if (!fullResult) {
+            res.status(404).json({
+                success: false,
+                error: {message: 'Request not found'},
+            });
+            return;
+        }
+
+        // Always expose request status so pollers see terminal failed/pending (not empty {}).
+        const responseData: Record<string, unknown> = {
+            status: fullResult.status,
+        };
+
+        const reqCtx = fullResult.context as Record<string, unknown> | undefined;
+        const phase = reqCtx?.requestPhase;
+        if (typeof phase === 'string' && phase.length > 0) {
+            responseData.requestPhase = phase;
+        }
+
+        const retryAfterIso = (fullResult as {retryAfter?: string}).retryAfter;
+        if (typeof retryAfterIso === 'string' && retryAfterIso.length > 0) {
+            responseData.retryAfter = retryAfterIso;
+        }
+
+        if (fullResult.result) {
+            Object.assign(responseData, filterResponse(fullResult.result as Record<string, unknown>));
+        }
+        mergePollContextWithPersisted(responseData, fullResult.context as Record<string, unknown> | undefined);
+
+        if (fullResult.error) {
+            const fe = fullResult.error as Record<string, unknown>;
+            responseData.error = clientSafeErrorField(fe) ?? fullResult.error;
+        }
+
+        if (
+            (fullResult.status === 'failed' || fullResult.status === 'cancelled') &&
+            responseData.error === undefined
+        ) {
+            const r = fullResult.result as Record<string, unknown> | null | undefined;
+            const msg = r?.error ?? r?.message;
+            if (msg !== undefined) {
+                responseData.error =
+                    typeof msg === 'string' ? {message: sanitizeErrorMessage(msg)} : msg;
+            }
+        }
+
+        res.json({success: true, data: responseData});
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * POST /requests/:promiseId/halt
+ * Halt an active request
+ */
+router.post('/:promiseId/halt', registryAuth, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        const promiseId = String(req.params.promiseId || '');
+        const { haltRequest } = await import('../services/core/request-processor/request-processor.service.js');
+        const success = haltRequest(promiseId);
+        res.json({ success, message: success ? 'Halted' : 'Request not found or not active' });
+    } catch (error) {
+        next(error);
+    }
+});
+
+export default router;

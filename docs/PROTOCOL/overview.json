@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "A2A Protocol Documentation Structure",
+  "description": "Hierarchical documentation structure for A2A protocol with JSON schemas",
+  "version": "1.0",
+  "last_updated": "2026-04-09T15:08:26+03:00",
+  "structure": {
+    "core": {
+      "description": "Базовые определения полей и простых типов",
+      "files": ["fields.json"],
+      "contains": ["ContextBlock", "Task", "FileBlock", "ProtocolError"]
+    },
+    "nested": {
+      "description": "Сложные вложенные структуры с детальными схемами",
+      "files": ["tasks.json", "execute-commands.json", "request-context.json"],
+      "contains": ["ExecuteCommand", "RequestContextBlock", "TaskArray", "SearchTypes"]
+    },
+    "responses": {
+      "description": "Структуры API ответов и сообщений",
+      "files": ["message-types.json", "api-responses.json", "request-api-result.json"],
+      "contains": ["ClientMessage", "ServerMessage", "ApiResponse", "PaginatedResponse", "RequestApiResult"]
+    },
+    "errors": {
+      "description": "Структуры ошибок и документация проблем",
+      "files": ["protocol-errors.json", "documented-issues.json"],
+      "contains": ["ApiError", "ProtocolError", "documented protocol violations"]
+    }
+  },
+  "navigation": {
+    "start": "core/fields.json - базовые определения",
+    "complex_types": "nested/ - детальные схемы сложных объектов",
+    "api_integration": "responses/ - структуры для API интеграции",
+    "troubleshooting": "errors/ - ошибки и известные проблемы"
+  },
+  "cross_references": {
+    "from_core_to_nested": {
+      "Task": "nested/tasks.json",
+      "ProtocolError": "errors/protocol-errors.json"
+    },
+    "from_responses_to_core": {
+      "ContextBlock": "core/fields.json",
+      "FileBlock": "core/fields.json"
+    }
+  },
+  "identified_issues": []
+}

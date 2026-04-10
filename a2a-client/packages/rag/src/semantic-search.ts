@@ -4,7 +4,7 @@
 
 import {RAGSearcher} from './searcher.js';
 import type {Chunk} from './chunk-manager.js';
-import {createEmbeddingClient} from '@a2a/embedding';
+import {createEmbeddingClient} from '@a2a-client/embedding';
 
 export interface SemanticSearcherConfig extends Record<string, unknown> {
     projectPath?: string;

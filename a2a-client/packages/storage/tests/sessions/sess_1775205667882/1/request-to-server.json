@@ -1,0 +1,14 @@
+{
+  "step": 1,
+  "context": {
+    "version": "2.0",
+    "session_id": "sess_1775205667882",
+    "execution": {
+      "action": "task",
+      "step": "new"
+    }
+  },
+  "result": {
+    "message": "execution object seed"
+  }
+}

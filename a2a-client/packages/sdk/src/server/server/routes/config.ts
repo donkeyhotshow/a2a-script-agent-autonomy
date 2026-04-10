@@ -69,7 +69,6 @@ router.get('/', (req: AuthenticatedRequest, res: Response) => {
             
             // API configuration
             api: {
-                version: config.apiVersion,
                 enableRateLimit: config.enableRateLimit,
                 rateLimitWindow: config.rateLimitWindow,
                 rateLimitMax: config.rateLimitMax

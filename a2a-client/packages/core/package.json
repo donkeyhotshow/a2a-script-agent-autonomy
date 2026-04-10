@@ -1,0 +1,13 @@
+{
+  "name": "@a2a-client/core",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Core client functionality, utilities, and shared logic",
+  "exports": {
+    "./a2a-invoke-builders.js": "./src/a2a-invoke-builders.js",
+    "./context-invoke-patch.mjs": "./src/context-invoke-patch.mjs",
+    "./kv-unwrap.mjs": "./src/kv-unwrap.mjs",
+    "./node-errors.mjs": "./src/node-errors.mjs"
+  }
+}

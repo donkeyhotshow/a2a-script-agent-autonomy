@@ -48,7 +48,6 @@ export interface HistoryEntry {
  */
 export interface ProtocolContextBlock {
   version: '2.0';
-  session_id: string;
   execution?: ExecutionContext;
   history?: HistoryEntry[];
   workbench?: unknown;

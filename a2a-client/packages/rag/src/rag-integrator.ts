@@ -4,8 +4,8 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import {FileScanner, GlobMatcher} from '@a2a/execution/fs-utils';
-import type {ScannedFile} from '@a2a/execution/fs-utils';
+import {FileScanner, GlobMatcher} from '@a2a-client/execution/fs-utils';
+import type {ScannedFile} from '@a2a-client/execution/fs-utils';
 import {RAGIndexer} from './indexer.js';
 import {ChunkManager} from './chunk-manager.js';
 import chokidar from 'chokidar';

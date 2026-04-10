@@ -19,12 +19,12 @@ import {
     normalizeRouterStepSubmit,
     routerFormHasChoices,
     validateSubmitResult,
-} from '@a2a-client/shared/router-submit.mjs';
+} from '@a2a-client/shared/router-submit.js';
 import {
     mergeContext,
     prepareServerRequest,
     processTaskAndContext,
-} from '@a2a-client/shared/next-invoke-pipeline.mjs';
+} from '@a2a-client/shared/next-invoke-pipeline.js';
 
 const router = Router();
 
@@ -89,7 +89,6 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
         const nextStep = stepNum + 1;
         const requestBody = {
             context: {
-                version: '2.0',
                 execution: { action: 'action', step: body.choice },
                 ...session.context,
             },
@@ -121,7 +120,7 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
  * POST /api/sessions/:sessionId/next
  * Continue execution after user response
  *
- * Accepts: same as Vite — `{ result }` or top-level **`task`** shorthand; router normalization + invoke merge via `@a2a-client/shared/next-invoke-pipeline.mjs`.
+ * Accepts: same as Vite — `{ result }` or top-level **`task`** shorthand; router normalization + invoke merge via `@a2a/shared/next-invoke-pipeline.mjs`.
  * Returns: { success, accepted, step, asyncPending } — same as Vite `toMinimalNextAck` (no `promiseId` on the wire).
  */
 router.post('/:sessionId/next', async (req: Request, res: Response) => {

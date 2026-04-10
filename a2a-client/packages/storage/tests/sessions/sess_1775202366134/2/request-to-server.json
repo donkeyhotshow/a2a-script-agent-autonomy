@@ -1,0 +1,15 @@
+{
+  "step": 2,
+  "task": "continue",
+  "context": {
+    "version": "2.0",
+    "session_id": "sess_1775202366134",
+    "execution": {
+      "action": "continue",
+      "step": "next"
+    }
+  },
+  "result": {
+    "message": "continue"
+  }
+}

@@ -3,10 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "A2A Client - indexing, search, agent",
-  "workspaces": [
-    "packages/*",
-    "shared"
-  ],
+  "workspaces": ["packages/*", "kernel/"],
   "scripts": {
     "test": "vitest run",
     "test:human-review": "node scripts/run-human-review.mjs",
@@ -31,8 +28,8 @@
     "lint": "eslint . --ext .vue,.ts,.tsx --fix",
     "type-check": "vue-tsc --noEmit",
     "cli": "tsx ./cli/index.ts",
-    "cleanup:sessions": "node ./scripts/cleanup-sessions.js",
-    "cleanup:sessions:dry-run": "node ./scripts/cleanup-sessions.js --dry-run",
+    "cleanup:sessions": "node ./scripts/cleanup-sessions.mjs",
+    "cleanup:sessions:dry-run": "node ./scripts/cleanup-sessions.mjs --dry-run",
     "repair:session-steps": "node ./scripts/repair-session-step-artifacts.mjs",
     "repair:session-steps:dry-run": "node ./scripts/repair-session-step-artifacts.mjs --dry-run"
   },

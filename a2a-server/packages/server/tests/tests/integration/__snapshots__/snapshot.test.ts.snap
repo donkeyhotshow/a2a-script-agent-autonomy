@@ -1,0 +1,198 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Snapshot Integration Tests > Execute Response Validation > should validate execute with form action > execute-form 1`] = `
+{
+  "id": "exec-4",
+  "jsonrpc": "2.0",
+  "result": {
+    "context": {},
+    "execute": {
+      "form": {
+        "choices": [
+          {
+            "id": "opt1",
+            "label": "Option 1",
+          },
+          {
+            "id": "opt2",
+            "label": "Option 2",
+          },
+        ],
+        "id": "choose_option",
+        "title": "Select an option",
+      },
+    },
+    "promiseId": "promise-exec-4",
+    "status": "form",
+  },
+}
+`;
+
+exports[`Snapshot Integration Tests > Execute Response Validation > should validate execute with read-file action > execute-read-file 1`] = `
+{
+  "id": "exec-2",
+  "jsonrpc": "2.0",
+  "result": {
+    "context": {},
+    "execute": {
+      "read-file": {
+        "content": "export function test() { return true; }",
+        "path": "/test/file.ts",
+      },
+    },
+    "promiseId": "promise-exec-2",
+    "status": "executing",
+  },
+}
+`;
+
+exports[`Snapshot Integration Tests > Execute Response Validation > should validate execute with script action > execute-script 1`] = `
+{
+  "id": "exec-1",
+  "jsonrpc": "2.0",
+  "result": {
+    "context": {},
+    "execute": {
+      "script": {
+        "code": "const fs = require("fs");
+const files = fs.readdirSync(".");",
+        "input": {
+          "command": "ls -la",
+        },
+        "output": "total 64
+drwxr-xr-x  5 user user 4096 Jan 1 00:00 .",
+      },
+    },
+    "promiseId": "promise-exec-1",
+    "status": "executing",
+  },
+}
+`;
+
+exports[`Snapshot Integration Tests > Execute Response Validation > should validate execute with write-file action > execute-write-file 1`] = `
+{
+  "id": "exec-3",
+  "jsonrpc": "2.0",
+  "result": {
+    "context": {},
+    "execute": {
+      "write-file": {
+        "content": "Written content",
+        "path": "/test/output.txt",
+      },
+    },
+    "promiseId": "promise-exec-3",
+    "status": "executing",
+  },
+}
+`;
+
+exports[`Snapshot Integration Tests > Request Schema Validation > should validate execute request format > execute-request 1`] = `
+{
+  "id": "req-2",
+  "jsonrpc": "2.0",
+  "method": "execute",
+  "params": {
+    "choice": {
+      "id": "confirm",
+      "label": "Yes, proceed",
+    },
+    "promiseId": "promise-123",
+  },
+}
+`;
+
+exports[`Snapshot Integration Tests > Request Schema Validation > should validate invoke request format > invoke-request 1`] = `
+{
+  "id": "req-1",
+  "jsonrpc": "2.0",
+  "method": "invoke",
+  "params": {
+    "context": {},
+    "message": "Create a file called test.txt with hello world",
+  },
+}
+`;
+
+exports[`Snapshot Integration Tests > Response Schema Validation > should validate completed response schema > completed-response 1`] = `
+{
+  "id": "test-789",
+  "jsonrpc": "2.0",
+  "result": {
+    "context": {},
+    "data": {
+      "result": {
+        "read-file": {
+          "content": "File content here",
+          "path": "/test/file.txt",
+        },
+      },
+    },
+    "promiseId": "promise-completed-123",
+    "status": "completed",
+  },
+}
+`;
+
+exports[`Snapshot Integration Tests > Response Schema Validation > should validate error response schema > error-response 1`] = `
+{
+  "error": {
+    "code": -32600,
+    "data": {
+      "details": "Missing required field: message",
+    },
+    "message": "Invalid Request",
+  },
+  "id": "test-error",
+  "jsonrpc": "2.0",
+}
+`;
+
+exports[`Snapshot Integration Tests > Response Schema Validation > should validate form response schema > form-response 1`] = `
+{
+  "id": "test-456",
+  "jsonrpc": "2.0",
+  "result": {
+    "context": {},
+    "data": {
+      "form": {
+        "choices": [
+          {
+            "id": "confirm",
+            "label": "Yes, proceed",
+          },
+          {
+            "id": "cancel",
+            "label": "Cancel",
+          },
+          {
+            "id": "skip",
+            "label": "Skip this step",
+          },
+        ],
+        "id": "confirm_action",
+        "input": {
+          "placeholder": "Enter your response",
+          "type": "text",
+        },
+        "title": "Please confirm your action",
+      },
+    },
+    "promiseId": "promise-xyz-789",
+    "status": "form",
+  },
+}
+`;
+
+exports[`Snapshot Integration Tests > Response Schema Validation > should validate pending response schema > pending-response 1`] = `
+{
+  "id": "test-123",
+  "jsonrpc": "2.0",
+  "result": {
+    "context": {},
+    "data": {},
+    "promiseId": "promise-abc-456",
+    "status": "pending",
+  },
+}
+`;

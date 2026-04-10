@@ -1,0 +1,5 @@
+{
+  "result": {
+    "message": "Please start a tool execution for a file operation. For example: execute {\"read-file\":{\"path\":\"README.md\"}}."
+  }
+}

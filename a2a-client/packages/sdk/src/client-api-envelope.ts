@@ -4,14 +4,8 @@
  *
  * Source: `shared/client-api-envelope.mjs` (single module for SDK + Vite).
  */
-export {
-    unwrapEnvelope,
-    unwrapA2aInvokeBody,
-    parseA2aInvokeResponse,
-    normalizePromisePollStatus,
-    validateClientResultPayload,
-    isRecoverableAsyncSnapshot,
-} from '../../../shared/client-api-envelope.mjs';
+export { unwrapEnvelope, unwrapA2aInvokeBody, parseA2aInvokeResponse, normalizePromisePollStatus, validateClientResultPayload, isRecoverableAsyncSnapshot } from '@a2a-client/shared/client-api-envelope.mjs';
 
 /** @deprecated Use unwrapA2aInvokeBody */
-export { unwrapA2aInvokeBody as unwrapA2aSuccessPayload } from '../../../shared/client-api-envelope.mjs';
+export { unwrapA2aInvokeBody as unwrapA2aSuccessPayload } from '@a2a-client/shared/client-api-envelope.mjs';
+

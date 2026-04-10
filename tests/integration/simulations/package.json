@@ -1,0 +1,25 @@
+{
+  "name": "a2a-simulations",
+  "version": "1.0.0",
+  "description": "A2A Server Simulation Runner and Validator",
+  "type": "module",
+  "scripts": {
+    "sim:run": "tsx scripts/run-simulation.ts",
+    "sim:validate": "tsx scripts/sim-validate.ts",
+    "sim:lint": "tsx scripts/sim-lint.ts",
+    "sim:report": "tsx scripts/sim-report.ts",
+    "sim:all": "npm run sim:validate -- --all && npm run sim:lint -- --all && npm run sim:report",
+    "test": "npm run sim:all"
+  },
+  "devDependencies": {
+    "tsx": "^4.7.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "zod": "^3.22.0",
+    "vitest": "^1.0.0"
+  },
+  "dependencies": {},
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

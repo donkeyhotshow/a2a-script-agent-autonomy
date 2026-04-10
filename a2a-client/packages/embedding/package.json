@@ -1,5 +1,5 @@
 {
-  "name": "@a2a/embedding",
+  "name": "@a2a-client/embedding",
   "version": "1.0.0",
   "description": "Embedding client for A2A - Provides embeddings for semantic search",
   "main": "dist/index.js",
@@ -9,7 +9,7 @@
     "test": "jest --bail"
   },
   "keywords": [
-    "a2a",
+    "a2a-client",
     "embedding",
     "semantic",
     "search",
