@@ -10,7 +10,7 @@
 
 import { Router, Request, Response } from 'express';
 import { agentRegistry } from '../../services/registry-v2.js';
-import { logger } from '../../utils/logger.js';
+import { logger } from '@a2a/server-utils/logger.js';
 
 const router = Router();
 

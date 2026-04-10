@@ -1,7 +1,7 @@
 import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
 import { promises as fs } from 'node:fs';
 import { join } from 'path';
-import { logger } from '../../utils/logger.js';
+import { logger } from '@a2a/server-utils/logger.js';
 
 export interface RepoKnowledgePrior {
   topic: string;

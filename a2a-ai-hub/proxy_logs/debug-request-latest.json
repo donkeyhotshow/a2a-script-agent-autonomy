@@ -1,0 +1,29 @@
+{
+  "method": "POST",
+  "url": "https://api.z.ai/api/paas/v4/chat/completions",
+  "headers": {
+    "Content-Type": "application/json",
+    "Accept": "*/*",
+    "Accept-Language": "*",
+    "User-Agent": "node"
+  },
+  "params": {},
+  "body_json": {
+    "model": "glm-4.7-flash",
+    "messages": [
+      {
+        "role": "system",
+        "content": "You are the Architect. Propose a detailed implementation plan."
+      },
+      {
+        "role": "user",
+        "content": "Task: Assign reviewers or mark as exploratory; split Phase 1 into `tasks/*` specs with testable slices, or fold into existing gray-room / ADR-0035 work. Do not leave **Proposed** + **[TBD]** indefinitely without a decision record in the ADR header. — [prompt: doc-adr-0036-master-orchestration-memory-proposed.md]\nContext: {\"session_id\":\"srv_sess_stateless\",\"task\":\"Assign reviewers or mark as exploratory; split Phase 1 into `tasks/*` specs with testable slices, or fold into existing gray-room / ADR-0035 work. Do not leave **Proposed** + **[TBD]** indefinitely without a decision record in the ADR header. — [prompt: doc-adr-0036-master-orchestration-memory-proposed.md]\",\"execution\":{\"action\":\"agent\",\"step\":\"tool_read_file\"},\"history\":[{\"role\":\"user\",\"message\":\"Assign reviewers or mark as exploratory; split Phase 1 i"
+      }
+    ],
+    "stream": false,
+    "options": {
+      "temperature": 0.7,
+      "num_predict": 4096
+    }
+  }
+}

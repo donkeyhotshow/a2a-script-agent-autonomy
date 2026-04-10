@@ -5,9 +5,9 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { logger } from '../../utils/logger.js';
-import { deepCloneJson } from '../../utils/deep-clone-json.js';
-import { pathIsAccessible } from '../../utils/fs-access.js';
+import { logger } from '@a2a/server-utils/logger.js';
+import { deepCloneJson } from '@a2a/server-utils/deep-clone-json.js';
+import { pathIsAccessible } from '@a2a/server-utils/fs-access.js';
 import { prepareInvokePayloadForLlmPrompt } from '../materialize-result-for-llm.js';
 import { attachFlowControlHintToInvokePayload } from '../../prompts/flow-control-hints.js';
 import { attachWorkbenchForLlmPrompt } from '../workbench-normalize.js';

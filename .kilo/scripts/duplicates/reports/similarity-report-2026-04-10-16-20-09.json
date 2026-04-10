@@ -1,0 +1,2188 @@
+{
+  "metadata": {
+    "generatedAt": "2026-04-10T16:20:09.377Z",
+    "similarityThreshold": 0.7,
+    "totalSimilarPairs": 145,
+    "analysisDetails": {
+      "minTokenLength": 50,
+      "algorithm": "Jaccard similarity on tokenized code"
+    }
+  },
+  "similarPairs": [
+    {
+      "pairId": 1,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\validation.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\validation.ts",
+        "size": 4229
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server-utils\\src\\lib\\validation.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\lib\\validation.ts",
+        "size": 4229
+      }
+    },
+    {
+      "pairId": 2,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\task-detail-analyzer.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\task-detail-analyzer.ts",
+        "size": 6451
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server-utils\\src\\lib\\task-detail-analyzer.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\lib\\task-detail-analyzer.ts",
+        "size": 6451
+      }
+    },
+    {
+      "pairId": 3,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\strip-markdown-json-fence.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\strip-markdown-json-fence.ts",
+        "size": 1398
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server-utils\\src\\lib\\strip-markdown-json-fence.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\lib\\strip-markdown-json-fence.ts",
+        "size": 1398
+      }
+    },
+    {
+      "pairId": 4,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\session-compaction.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\session-compaction.ts",
+        "size": 6994
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server\\src\\session-compaction.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\session-compaction.ts",
+        "size": 6994
+      }
+    },
+    {
+      "pairId": 5,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\retry.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\retry.ts",
+        "size": 6880
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server-utils\\src\\lib\\retry.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\lib\\retry.ts",
+        "size": 6880
+      }
+    },
+    {
+      "pairId": 6,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\graph-store.service.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\graph-store.service.ts",
+        "size": 7012
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server\\src\\graph-store.service.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\graph-store.service.ts",
+        "size": 7012
+      }
+    },
+    {
+      "pairId": 7,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\fs-access.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\fs-access.ts",
+        "size": 979
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server-utils\\src\\lib\\fs-access.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\lib\\fs-access.ts",
+        "size": 979
+      }
+    },
+    {
+      "pairId": 8,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\event-bus.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\event-bus.ts",
+        "size": 7496
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server\\src\\event-bus.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\event-bus.ts",
+        "size": 7496
+      }
+    },
+    {
+      "pairId": 9,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\errors.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\errors.ts",
+        "size": 1646
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server-utils\\src\\lib\\errors.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\lib\\errors.ts",
+        "size": 1646
+      }
+    },
+    {
+      "pairId": 10,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\crypto.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\crypto.ts",
+        "size": 3525
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server-utils\\src\\lib\\crypto.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\lib\\crypto.ts",
+        "size": 3525
+      }
+    },
+    {
+      "pairId": 11,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\circuit-breaker.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\circuit-breaker.ts",
+        "size": 4617
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server-utils\\src\\lib\\circuit-breaker.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\lib\\circuit-breaker.ts",
+        "size": 4617
+      }
+    },
+    {
+      "pairId": 12,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\backoff.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\backoff.ts",
+        "size": 4856
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server-utils\\src\\lib\\backoff.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\lib\\backoff.ts",
+        "size": 4856
+      }
+    },
+    {
+      "pairId": 13,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\artifact-validator.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\artifact-validator.ts",
+        "size": 2899
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server\\src\\artifact-validator.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\artifact-validator.ts",
+        "size": 2899
+      }
+    },
+    {
+      "pairId": 14,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\artifact-store.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\artifact-store.ts",
+        "size": 13750
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server\\src\\artifact-store.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\artifact-store.ts",
+        "size": 13754
+      }
+    },
+    {
+      "pairId": 15,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\adaptive-polling.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\adaptive-polling.ts",
+        "size": 2483
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server-utils\\src\\lib\\adaptive-polling.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\lib\\adaptive-polling.ts",
+        "size": 2483
+      }
+    },
+    {
+      "pairId": 16,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server\\src\\tools-evolve-sandbox.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\tools-evolve-sandbox.ts",
+        "size": 4873
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server\\src\\api\\tools-evolve-sandbox.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\api\\tools-evolve-sandbox.ts",
+        "size": 4873
+      }
+    },
+    {
+      "pairId": 17,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\request\\src\\request.service.ts",
+        "fullPath": "a2a-server\\packages\\request\\src\\request.service.ts",
+        "size": 16184
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server\\src\\request\\request.service.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\request\\request.service.ts",
+        "size": 16184
+      }
+    },
+    {
+      "pairId": 18,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\request\\src\\request-file-storage.ts",
+        "fullPath": "a2a-server\\packages\\request\\src\\request-file-storage.ts",
+        "size": 8019
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server\\src\\request\\request-file-storage.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\request\\request-file-storage.ts",
+        "size": 8019
+      }
+    },
+    {
+      "pairId": 19,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\request\\src\\client-visible-context.ts",
+        "fullPath": "a2a-server\\packages\\request\\src\\client-visible-context.ts",
+        "size": 1953
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server\\src\\request\\client-visible-context.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\request\\client-visible-context.ts",
+        "size": 1953
+      }
+    },
+    {
+      "pairId": 20,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\types.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\types.ts",
+        "size": 2541
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\types.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\types.ts",
+        "size": 2541
+      }
+    },
+    {
+      "pairId": 21,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\orchestrator.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\orchestrator.ts",
+        "size": 1979
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\orchestrator.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\orchestrator.ts",
+        "size": 1979
+      }
+    },
+    {
+      "pairId": 22,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\manager.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\manager.ts",
+        "size": 7675
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\manager.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\manager.ts",
+        "size": 7675
+      }
+    },
+    {
+      "pairId": 23,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\logger.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\logger.ts",
+        "size": 592
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\logger.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\logger.ts",
+        "size": 592
+      }
+    },
+    {
+      "pairId": 24,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\index.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\index.ts",
+        "size": 2047
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\index.ts",
+        "size": 2047
+      }
+    },
+    {
+      "pairId": 25,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\config.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\config.ts",
+        "size": 2261
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\config.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\config.ts",
+        "size": 2261
+      }
+    },
+    {
+      "pairId": 26,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\config.production.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\config.production.ts",
+        "size": 3867
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\config.production.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\config.production.ts",
+        "size": 3867
+      }
+    },
+    {
+      "pairId": 27,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\utils.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\utils.ts",
+        "size": 885
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\utils.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\utils.ts",
+        "size": 885
+      }
+    },
+    {
+      "pairId": 28,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\utils.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\utils.ts",
+        "size": 885
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\utils.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\utils.ts",
+        "size": 885
+      }
+    },
+    {
+      "pairId": 29,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\types.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\types.ts",
+        "size": 3088
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\types.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\types.ts",
+        "size": 3088
+      }
+    },
+    {
+      "pairId": 30,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\types.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\types.ts",
+        "size": 3088
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\types.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\types.ts",
+        "size": 3088
+      }
+    },
+    {
+      "pairId": 31,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\types.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\types.ts",
+        "size": 3088
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\types.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\types.d.ts",
+        "size": 3095
+      }
+    },
+    {
+      "pairId": 32,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\index.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\index.ts",
+        "size": 1770
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\index.ts",
+        "size": 1770
+      }
+    },
+    {
+      "pairId": 33,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\index.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\index.ts",
+        "size": 1770
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\index.ts",
+        "size": 1770
+      }
+    },
+    {
+      "pairId": 34,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\index.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\index.ts",
+        "size": 1770
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\index.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\index.d.ts",
+        "size": 1275
+      }
+    },
+    {
+      "pairId": 35,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\action-validator.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\action-validator.ts",
+        "size": 5537
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\action-validator.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\action-validator.ts",
+        "size": 5537
+      }
+    },
+    {
+      "pairId": 36,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\action-validator.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\action-validator.ts",
+        "size": 5537
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-validator.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-validator.ts",
+        "size": 5537
+      }
+    },
+    {
+      "pairId": 37,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server\\src\\registry\\route.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\registry\\route.ts",
+        "size": 1302
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server\\src\\api\\registry\\route.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\api\\registry\\route.ts",
+        "size": 1302
+      }
+    },
+    {
+      "pairId": 38,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server\\src\\registry\\register.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\registry\\register.ts",
+        "size": 1840
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server\\src\\api\\registry\\register.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\api\\registry\\register.ts",
+        "size": 1840
+      }
+    },
+    {
+      "pairId": 39,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server\\src\\registry\\health.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\registry\\health.ts",
+        "size": 2104
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server\\src\\api\\registry\\health.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\api\\registry\\health.ts",
+        "size": 2104
+      }
+    },
+    {
+      "pairId": 40,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\server\\src\\controllers\\auth.controller.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\controllers\\auth.controller.ts",
+        "size": 3719
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server\\src\\controllers\\controllers\\auth.controller.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\controllers\\controllers\\auth.controller.ts",
+        "size": 3719
+      }
+    },
+    {
+      "pairId": 41,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\skills\\SkillRegistry.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\skills\\SkillRegistry.ts",
+        "size": 1404
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\skills\\SkillRegistry.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\skills\\SkillRegistry.ts",
+        "size": 1404
+      }
+    },
+    {
+      "pairId": 42,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\utils.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\utils.ts",
+        "size": 885
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\utils.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\utils.ts",
+        "size": 885
+      }
+    },
+    {
+      "pairId": 43,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\types.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\types.ts",
+        "size": 3088
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\types.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\types.ts",
+        "size": 3088
+      }
+    },
+    {
+      "pairId": 44,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\types.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\types.ts",
+        "size": 3088
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\types.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\types.d.ts",
+        "size": 3095
+      }
+    },
+    {
+      "pairId": 45,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\index.ts",
+        "size": 1770
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\index.ts",
+        "size": 1770
+      }
+    },
+    {
+      "pairId": 46,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\index.ts",
+        "size": 1770
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\index.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\index.d.ts",
+        "size": 1275
+      }
+    },
+    {
+      "pairId": 47,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\action-validator.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\action-validator.ts",
+        "size": 5537
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-validator.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-validator.ts",
+        "size": 5537
+      }
+    },
+    {
+      "pairId": 48,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\action-service.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\action-service.ts",
+        "size": 10176
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-service.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-service.ts",
+        "size": 10176
+      }
+    },
+    {
+      "pairId": 49,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\action-registry.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\action-registry.ts",
+        "size": 5220
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-registry.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-registry.ts",
+        "size": 5220
+      }
+    },
+    {
+      "pairId": 50,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\action-processor.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\action-processor.ts",
+        "size": 9671
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-processor.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-processor.ts",
+        "size": 9671
+      }
+    },
+    {
+      "pairId": 51,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\action-parser.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\action-parser.ts",
+        "size": 12297
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-parser.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-parser.ts",
+        "size": 12297
+      }
+    },
+    {
+      "pairId": 52,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\action-handler-registry.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\action-handler-registry.ts",
+        "size": 5862
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-handler-registry.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-handler-registry.ts",
+        "size": 5862
+      }
+    },
+    {
+      "pairId": 53,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\action-executor.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\action-executor.ts",
+        "size": 3735
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-executor.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-executor.ts",
+        "size": 3735
+      }
+    },
+    {
+      "pairId": 54,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\run-script.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\run-script.ts",
+        "size": 8305
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\run-script.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\run-script.ts",
+        "size": 8305
+      }
+    },
+    {
+      "pairId": 55,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\run-script.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\run-script.ts",
+        "size": 8305
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\run-script.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\run-script.ts",
+        "size": 8305
+      }
+    },
+    {
+      "pairId": 56,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\phpantom.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\phpantom.ts",
+        "size": 4860
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\phpantom.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\phpantom.ts",
+        "size": 4860
+      }
+    },
+    {
+      "pairId": 57,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\phpantom.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\phpantom.ts",
+        "size": 4860
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\phpantom.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\phpantom.ts",
+        "size": 4860
+      }
+    },
+    {
+      "pairId": 58,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\mcp-call.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\mcp-call.ts",
+        "size": 7415
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\mcp-call.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\mcp-call.ts",
+        "size": 7415
+      }
+    },
+    {
+      "pairId": 59,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\mcp-call.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\mcp-call.ts",
+        "size": 7415
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\mcp-call.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\mcp-call.ts",
+        "size": 7415
+      }
+    },
+    {
+      "pairId": 60,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\index.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\index.ts",
+        "size": 1619
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\index.ts",
+        "size": 1619
+      }
+    },
+    {
+      "pairId": 61,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\index.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\index.ts",
+        "size": 1619
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\index.ts",
+        "size": 1619
+      }
+    },
+    {
+      "pairId": 62,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\index.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\index.ts",
+        "size": 1619
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\index.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\index.d.ts",
+        "size": 1274
+      }
+    },
+    {
+      "pairId": 63,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\grep-search.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\grep-search.ts",
+        "size": 7118
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\grep-search.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\grep-search.ts",
+        "size": 7118
+      }
+    },
+    {
+      "pairId": 64,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\grep-search.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\grep-search.ts",
+        "size": 7118
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\grep-search.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\grep-search.ts",
+        "size": 7118
+      }
+    },
+    {
+      "pairId": 65,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations.ts",
+        "size": 615
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations.ts",
+        "size": 615
+      }
+    },
+    {
+      "pairId": 66,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations.ts",
+        "size": 615
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations.ts",
+        "size": 615
+      }
+    },
+    {
+      "pairId": 67,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations.ts",
+        "size": 615
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\file-operations.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\file-operations.d.ts",
+        "size": 635
+      }
+    },
+    {
+      "pairId": 68,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\edit-patch.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\edit-patch.ts",
+        "size": 7675
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\edit-patch.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\edit-patch.ts",
+        "size": 7675
+      }
+    },
+    {
+      "pairId": 69,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\edit-patch.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\edit-patch.ts",
+        "size": 7675
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\edit-patch.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\edit-patch.ts",
+        "size": 7675
+      }
+    },
+    {
+      "pairId": 70,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\definitions\\auto-ai-index.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\definitions\\auto-ai-index.ts",
+        "size": 1472
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\definitions\\auto-ai-index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\definitions\\auto-ai-index.ts",
+        "size": 1472
+      }
+    },
+    {
+      "pairId": 71,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\definitions\\auto-ai-index.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\definitions\\auto-ai-index.ts",
+        "size": 1472
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\definitions\\auto-ai-index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\definitions\\auto-ai-index.ts",
+        "size": 1472
+      }
+    },
+    {
+      "pairId": 72,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-utils.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-utils.ts",
+        "size": 5724
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-utils.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-utils.ts",
+        "size": 5724
+      }
+    },
+    {
+      "pairId": 73,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-trigger.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-trigger.ts",
+        "size": 6656
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-trigger.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-trigger.ts",
+        "size": 6656
+      }
+    },
+    {
+      "pairId": 74,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-orchestrator.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-orchestrator.ts",
+        "size": 34892
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-orchestrator.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-orchestrator.ts",
+        "size": 34892
+      }
+    },
+    {
+      "pairId": 75,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\orchestrator\\gray-room-orchestrator.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\orchestrator\\gray-room-orchestrator.ts",
+        "size": 34849
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\orchestrator\\gray-room-orchestrator.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\orchestrator\\gray-room-orchestrator.ts",
+        "size": 34849
+      }
+    },
+    {
+      "pairId": 76,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\components\\memory\\MuSE.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\components\\memory\\MuSE.ts",
+        "size": 879
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\components\\memory\\MuSE.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\components\\memory\\MuSE.ts",
+        "size": 879
+      }
+    },
+    {
+      "pairId": 77,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\components\\context\\ultracontext.service.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\components\\context\\ultracontext.service.ts",
+        "size": 6649
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\components\\context\\ultracontext.service.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\components\\context\\ultracontext.service.ts",
+        "size": 6649
+      }
+    },
+    {
+      "pairId": 78,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\components\\context\\context-discovery.service.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\components\\context\\context-discovery.service.ts",
+        "size": 2141
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\components\\context\\context-discovery.service.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\components\\context\\context-discovery.service.ts",
+        "size": 2141
+      }
+    },
+    {
+      "pairId": 79,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\index.ts",
+        "size": 452
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\index.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\index.d.ts",
+        "size": 429
+      }
+    },
+    {
+      "pairId": 80,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\run-script.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\run-script.ts",
+        "size": 8305
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\run-script.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\run-script.ts",
+        "size": 8305
+      }
+    },
+    {
+      "pairId": 81,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\phpantom.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\phpantom.ts",
+        "size": 4860
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\phpantom.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\phpantom.ts",
+        "size": 4860
+      }
+    },
+    {
+      "pairId": 82,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\mcp-call.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\mcp-call.ts",
+        "size": 7415
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\mcp-call.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\mcp-call.ts",
+        "size": 7415
+      }
+    },
+    {
+      "pairId": 83,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\index.ts",
+        "size": 1619
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\index.ts",
+        "size": 1619
+      }
+    },
+    {
+      "pairId": 84,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\index.ts",
+        "size": 1619
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\index.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\index.d.ts",
+        "size": 1274
+      }
+    },
+    {
+      "pairId": 85,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\grep-search.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\grep-search.ts",
+        "size": 7118
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\grep-search.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\grep-search.ts",
+        "size": 7118
+      }
+    },
+    {
+      "pairId": 86,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations.ts",
+        "size": 615
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations.ts",
+        "size": 615
+      }
+    },
+    {
+      "pairId": 87,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations.ts",
+        "size": 615
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\file-operations.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\file-operations.d.ts",
+        "size": 635
+      }
+    },
+    {
+      "pairId": 88,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\edit-patch.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\edit-patch.ts",
+        "size": 7675
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\edit-patch.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\edit-patch.ts",
+        "size": 7675
+      }
+    },
+    {
+      "pairId": 89,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\command-execution.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\command-execution.ts",
+        "size": 9216
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\command-execution.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\command-execution.ts",
+        "size": 9216
+      }
+    },
+    {
+      "pairId": 90,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\definitions\\auto-ai-index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\definitions\\auto-ai-index.ts",
+        "size": 1472
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\definitions\\auto-ai-index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\definitions\\auto-ai-index.ts",
+        "size": 1472
+      }
+    },
+    {
+      "pairId": 91,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\write-file.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\write-file.ts",
+        "size": 3480
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\write-file.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\write-file.ts",
+        "size": 3480
+      }
+    },
+    {
+      "pairId": 92,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\write-file.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\write-file.ts",
+        "size": 3480
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\write-file.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\write-file.ts",
+        "size": 3480
+      }
+    },
+    {
+      "pairId": 93,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\types.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\types.ts",
+        "size": 1494
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\types.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\types.ts",
+        "size": 1494
+      }
+    },
+    {
+      "pairId": 94,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\types.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\types.ts",
+        "size": 1494
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\types.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\types.ts",
+        "size": 1494
+      }
+    },
+    {
+      "pairId": 95,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\types.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\types.ts",
+        "size": 1494
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\file-operations\\types.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\file-operations\\types.d.ts",
+        "size": 1521
+      }
+    },
+    {
+      "pairId": 96,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\security.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\security.ts",
+        "size": 1122
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\security.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\security.ts",
+        "size": 1122
+      }
+    },
+    {
+      "pairId": 97,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\security.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\security.ts",
+        "size": 1122
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\security.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\security.ts",
+        "size": 1122
+      }
+    },
+    {
+      "pairId": 98,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\read-file.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\read-file.ts",
+        "size": 2261
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\read-file.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\read-file.ts",
+        "size": 2261
+      }
+    },
+    {
+      "pairId": 99,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\read-file.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\read-file.ts",
+        "size": 2261
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\read-file.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\read-file.ts",
+        "size": 2261
+      }
+    },
+    {
+      "pairId": 100,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\list-directory.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\list-directory.ts",
+        "size": 2817
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\list-directory.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\list-directory.ts",
+        "size": 2817
+      }
+    },
+    {
+      "pairId": 101,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\list-directory.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\list-directory.ts",
+        "size": 2817
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\list-directory.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\list-directory.ts",
+        "size": 2817
+      }
+    },
+    {
+      "pairId": 102,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\file-exists.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\file-exists.ts",
+        "size": 2120
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\file-exists.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\file-exists.ts",
+        "size": 2120
+      }
+    },
+    {
+      "pairId": 103,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\file-exists.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\file-operations\\file-exists.ts",
+        "size": 2120
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\file-exists.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\file-exists.ts",
+        "size": 2120
+      }
+    },
+    {
+      "pairId": 104,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\thinking.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\thinking.ts",
+        "size": 3180
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\thinking.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\thinking.ts",
+        "size": 3180
+      }
+    },
+    {
+      "pairId": 105,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\compress-history.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\compress-history.ts",
+        "size": 2642
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\compress-history.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\compress-history.ts",
+        "size": 2642
+      }
+    },
+    {
+      "pairId": 106,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\clarify.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\clarify.ts",
+        "size": 1314
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\clarify.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\clarify.ts",
+        "size": 1314
+      }
+    },
+    {
+      "pairId": 107,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\base-handler.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\base-handler.ts",
+        "size": 1378
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\base-handler.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\base-handler.ts",
+        "size": 1378
+      }
+    },
+    {
+      "pairId": 108,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\auto-read-file.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\auto-read-file.ts",
+        "size": 2136
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\auto-read-file.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\auto-read-file.ts",
+        "size": 2136
+      }
+    },
+    {
+      "pairId": 109,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\auto-rag-page.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\auto-rag-page.ts",
+        "size": 1547
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\auto-rag-page.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\auto-rag-page.ts",
+        "size": 1547
+      }
+    },
+    {
+      "pairId": 110,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\algorithm-invoke.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\algorithm-invoke.ts",
+        "size": 3744
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\algorithm-invoke.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\algorithm-invoke.ts",
+        "size": 3744
+      }
+    },
+    {
+      "pairId": 111,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\components\\context\\context\\Ultracontext.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\components\\context\\context\\Ultracontext.ts",
+        "size": 2017
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\components\\context\\context\\Ultracontext.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\components\\context\\context\\Ultracontext.ts",
+        "size": 2017
+      }
+    },
+    {
+      "pairId": 112,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\components\\context\\context\\AgentSwing.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\components\\context\\context\\AgentSwing.ts",
+        "size": 2406
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\components\\context\\context\\AgentSwing.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\components\\context\\context\\AgentSwing.ts",
+        "size": 2406
+      }
+    },
+    {
+      "pairId": 113,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\types.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\types.ts",
+        "size": 3088
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\types.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\types.d.ts",
+        "size": 3095
+      }
+    },
+    {
+      "pairId": 114,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\index.ts",
+        "size": 1770
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\index.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\index.d.ts",
+        "size": 1275
+      }
+    },
+    {
+      "pairId": 115,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\write-file.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\write-file.ts",
+        "size": 3480
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\write-file.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\write-file.ts",
+        "size": 3480
+      }
+    },
+    {
+      "pairId": 116,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\types.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\types.ts",
+        "size": 1494
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\types.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\types.ts",
+        "size": 1494
+      }
+    },
+    {
+      "pairId": 117,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\types.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\types.ts",
+        "size": 1494
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\file-operations\\types.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\file-operations\\types.d.ts",
+        "size": 1521
+      }
+    },
+    {
+      "pairId": 118,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\security.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\security.ts",
+        "size": 1122
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\security.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\security.ts",
+        "size": 1122
+      }
+    },
+    {
+      "pairId": 119,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\read-file.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\read-file.ts",
+        "size": 2261
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\read-file.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\read-file.ts",
+        "size": 2261
+      }
+    },
+    {
+      "pairId": 120,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\list-directory.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\list-directory.ts",
+        "size": 2817
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\list-directory.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\list-directory.ts",
+        "size": 2817
+      }
+    },
+    {
+      "pairId": 121,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\file-exists.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\file-operations\\file-exists.ts",
+        "size": 2120
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\file-exists.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\file-exists.ts",
+        "size": 2120
+      }
+    },
+    {
+      "pairId": 122,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\index.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\index.ts",
+        "size": 1619
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\index.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\index.d.ts",
+        "size": 1274
+      }
+    },
+    {
+      "pairId": 123,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations.ts",
+        "size": 615
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\file-operations.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\file-operations.d.ts",
+        "size": 635
+      }
+    },
+    {
+      "pairId": 124,
+      "similarity": 1,
+      "similarityPercent": "100.0",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\types.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\file-operations\\types.ts",
+        "size": 1494
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\file-operations\\types.d.ts",
+        "fullPath": "a2a-server\\packages\\features\\dist\\actions\\src\\actions\\handlers\\file-operations\\types.d.ts",
+        "size": 1521
+      }
+    },
+    {
+      "pairId": 125,
+      "similarity": 0.9951923076923077,
+      "similarityPercent": "99.5",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\command-execution.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\command-execution.ts",
+        "size": 9230
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\handlers\\command-execution.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\handlers\\command-execution.ts",
+        "size": 9216
+      }
+    },
+    {
+      "pairId": 126,
+      "similarity": 0.9951923076923077,
+      "similarityPercent": "99.5",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\handlers\\command-execution.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\handlers\\command-execution.ts",
+        "size": 9230
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\command-execution.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\handlers\\command-execution.ts",
+        "size": 9216
+      }
+    },
+    {
+      "pairId": 127,
+      "similarity": 0.9949748743718593,
+      "similarityPercent": "99.5",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-orchestrator.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-orchestrator.ts",
+        "size": 34892
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\orchestrator\\gray-room-orchestrator.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\orchestrator\\gray-room-orchestrator.ts",
+        "size": 34849
+      }
+    },
+    {
+      "pairId": 128,
+      "similarity": 0.9949748743718593,
+      "similarityPercent": "99.5",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-orchestrator.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-orchestrator.ts",
+        "size": 34892
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\orchestrator\\gray-room-orchestrator.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\orchestrator\\gray-room-orchestrator.ts",
+        "size": 34849
+      }
+    },
+    {
+      "pairId": 129,
+      "similarity": 0.9949748743718593,
+      "similarityPercent": "99.5",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\orchestrator\\gray-room-orchestrator.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\orchestrator\\gray-room-orchestrator.ts",
+        "size": 34849
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-orchestrator.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-orchestrator.ts",
+        "size": 34892
+      }
+    },
+    {
+      "pairId": 130,
+      "similarity": 0.9949748743718593,
+      "similarityPercent": "99.5",
+      "file1": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-orchestrator.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-orchestrator.ts",
+        "size": 34892
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\orchestrator\\gray-room-orchestrator.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\orchestrator\\gray-room-orchestrator.ts",
+        "size": 34849
+      }
+    },
+    {
+      "pairId": 131,
+      "similarity": 0.994413407821229,
+      "similarityPercent": "99.4",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\action-service.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\action-service.ts",
+        "size": 10176
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\action-service.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\action-service.ts",
+        "size": 10176
+      }
+    },
+    {
+      "pairId": 132,
+      "similarity": 0.994413407821229,
+      "similarityPercent": "99.4",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\action-service.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\action-service.ts",
+        "size": 10176
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-service.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-service.ts",
+        "size": 10176
+      }
+    },
+    {
+      "pairId": 133,
+      "similarity": 0.986784140969163,
+      "similarityPercent": "98.7",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\action-parser.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\action-parser.ts",
+        "size": 12310
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\action-parser.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\action-parser.ts",
+        "size": 12297
+      }
+    },
+    {
+      "pairId": 134,
+      "similarity": 0.986784140969163,
+      "similarityPercent": "98.7",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\action-parser.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\action-parser.ts",
+        "size": 12310
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-parser.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-parser.ts",
+        "size": 12297
+      }
+    },
+    {
+      "pairId": 135,
+      "similarity": 0.9858156028368794,
+      "similarityPercent": "98.6",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\action-registry.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\action-registry.ts",
+        "size": 5220
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\action-registry.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\action-registry.ts",
+        "size": 5220
+      }
+    },
+    {
+      "pairId": 136,
+      "similarity": 0.9858156028368794,
+      "similarityPercent": "98.6",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\action-registry.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\action-registry.ts",
+        "size": 5220
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-registry.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-registry.ts",
+        "size": 5220
+      }
+    },
+    {
+      "pairId": 137,
+      "similarity": 0.9811320754716981,
+      "similarityPercent": "98.1",
+      "file1": {
+        "path": "a2a-server\\packages\\server\\src\\tools-evolve.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\tools-evolve.ts",
+        "size": 1892
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server\\src\\api\\tools-evolve.ts",
+        "fullPath": "a2a-server\\packages\\server\\src\\api\\tools-evolve.ts",
+        "size": 1895
+      }
+    },
+    {
+      "pairId": 138,
+      "similarity": 0.9767441860465116,
+      "similarityPercent": "97.7",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\action-executor.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\action-executor.ts",
+        "size": 3735
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\action-executor.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\action-executor.ts",
+        "size": 3735
+      }
+    },
+    {
+      "pairId": 139,
+      "similarity": 0.9767441860465116,
+      "similarityPercent": "97.7",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\action-executor.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\action-executor.ts",
+        "size": 3735
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-executor.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-executor.ts",
+        "size": 3735
+      }
+    },
+    {
+      "pairId": 140,
+      "similarity": 0.9675324675324676,
+      "similarityPercent": "96.8",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\action-handler-registry.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\action-handler-registry.ts",
+        "size": 5875
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\action-handler-registry.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\action-handler-registry.ts",
+        "size": 5862
+      }
+    },
+    {
+      "pairId": 141,
+      "similarity": 0.9675324675324676,
+      "similarityPercent": "96.8",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\action-handler-registry.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\action-handler-registry.ts",
+        "size": 5875
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-handler-registry.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-handler-registry.ts",
+        "size": 5862
+      }
+    },
+    {
+      "pairId": 142,
+      "similarity": 0.9659863945578231,
+      "similarityPercent": "96.6",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\action-processor.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\action-processor.ts",
+        "size": 9683
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\action-processor.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\action-processor.ts",
+        "size": 9671
+      }
+    },
+    {
+      "pairId": 143,
+      "similarity": 0.9659863945578231,
+      "similarityPercent": "96.6",
+      "file1": {
+        "path": "a2a-server\\packages\\actions\\src\\action-processor.ts",
+        "fullPath": "a2a-server\\packages\\actions\\src\\action-processor.ts",
+        "size": 9683
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-processor.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\actions\\src\\actions\\action-processor.ts",
+        "size": 9671
+      }
+    },
+    {
+      "pairId": 144,
+      "similarity": 0.7857142857142857,
+      "similarityPercent": "78.6",
+      "file1": {
+        "path": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\base-handler.d.ts",
+        "fullPath": "a2a-server\\packages\\gray-room\\src\\core\\request-processor\\gray-room-interrupt-handlers\\base-handler.d.ts",
+        "size": 999
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\base-handler.ts",
+        "fullPath": "a2a-server\\packages\\features\\src\\gray-room\\core\\request-processor\\gray-room-interrupt-handlers\\base-handler.ts",
+        "size": 1378
+      }
+    },
+    {
+      "pairId": 145,
+      "similarity": 0.7346938775510204,
+      "similarityPercent": "73.5",
+      "file1": {
+        "path": "a2a-server\\packages\\server-utils\\src\\logger.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\logger.ts",
+        "size": 6202
+      },
+      "file2": {
+        "path": "a2a-server\\packages\\server-utils\\src\\lib\\logger.ts",
+        "fullPath": "a2a-server\\packages\\server-utils\\src\\lib\\logger.ts",
+        "size": 6683
+      }
+    }
+  ]
+}

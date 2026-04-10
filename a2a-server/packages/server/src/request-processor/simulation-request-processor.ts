@@ -8,7 +8,7 @@
  * - Server transform pipeline integration (server-transforms-request.json, server-transforms-response.json)
  */
 
-import {logger} from '../../utils/logger.js';
+import {logger} from '@a2a/server-utils/logger.js';
 import {readFile} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
 import path from 'path';

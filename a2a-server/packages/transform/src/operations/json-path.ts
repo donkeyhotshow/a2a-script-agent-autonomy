@@ -5,8 +5,8 @@
  */
 
 import { JSONPath } from 'jsonpath-plus';
-import { logger } from '../../utils/logger.js';
-import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
+import { logger } from '@a2a/server-utils/logger.js';
+import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence.js';
 import { deepCloneJson } from '../../utils/deep-clone-json.js';
 import { stringifyForTemplate } from './value-helpers.js';
 

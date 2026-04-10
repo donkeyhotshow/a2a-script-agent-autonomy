@@ -20,10 +20,10 @@
 
 import { randomUUID } from 'node:crypto';
 import { ArtifactStore, createArtifactWriteInput } from '../core/artifact-store.js';
-import { logger } from '../../utils/logger.js';
+import { logger } from '@a2a/server-utils/logger.js';
 import { resolveAiHubBaseUrlWithModuleEnv } from '../../utils/ai-hub-url.js';
 import { fetchAiHubGenerateText } from '../../utils/ai-hub-generate.js';
-import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
+import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 

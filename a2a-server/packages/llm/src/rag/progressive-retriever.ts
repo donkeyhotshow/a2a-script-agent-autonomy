@@ -1,4 +1,4 @@
-import { logger } from "../../utils/logger.js";
+import { logger } from '@a2a/server-utils/logger.js';
 import type { ServerInterruptTraceEvent } from "../../transform/types.js";
 import { globalArtifactStore } from "../core/artifact-store.js";
 

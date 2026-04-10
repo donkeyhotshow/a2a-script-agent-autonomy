@@ -15,7 +15,7 @@ import {
   shouldDeferDialogProcessorFailure,
   type RequestResult,
 } from "../../request/request.service.js";
-import { logger } from "../../utils/logger.js";
+import { logger } from '@a2a/server-utils/logger.js';
 import { resolveAiHubBaseUrl } from "../../utils/ai-hub-url.js";
 import { requestProcessorLatencyHistogram } from "../../utils/metrics.js";
 import type {

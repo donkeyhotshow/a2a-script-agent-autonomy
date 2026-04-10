@@ -5,7 +5,7 @@
  */
 
 import * as path from 'path';
-import {logger} from '../../utils/logger.js';
+import {logger} from '@a2a/server-utils/logger.js';
 import {resolveAiHubBaseUrl} from '../../utils/ai-hub-url.js';
 import {mkdtempOsTmp} from '../../utils/mkdtemp-os-tmp.js';
 import {runPromptsTransform} from '../../transform/index.js';

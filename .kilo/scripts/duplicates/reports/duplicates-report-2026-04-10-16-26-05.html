@@ -1,0 +1,1493 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Duplicate Files Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        h1 { color: #333; }
+        table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .group-header { background-color: #e6f3ff; font-weight: bold; }
+        .file-path { font-family: monospace; font-size: 0.9em; color: #666; }
+        .stats { background-color: #fff8dc; padding: 10px; border-radius: 5px; margin: 20px 0; }
+    </style>
+</head>
+<body>
+    <h1>Duplicate Files Report</h1>
+    <div class="stats">
+        <p><strong>Generated:</strong> 10.04.2026, 19:26:05</p>
+        <p><strong>Total Duplicate Groups:</strong> 78</p>
+        <p><strong>Total Duplicate Files:</strong> 174</p>
+        <p><strong>Total Wasted Space:</strong> 427042 bytes</p>
+    </div>
+    
+    <table>
+        <thead>
+            <tr>
+                <th>Group</th>
+                <th>Size (bytes)</th>
+                <th>File Count</th>
+                <th>Wasted Space (bytes)</th>
+                <th>File Paths</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr class="group-header">
+                <td colspan="5">Group 1 (Hash: 7adbe0de526b...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>34898</td>
+                <td>2</td>
+                <td>34898</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\core\request-processor\gray-room-orchestrator.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>34898</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\core\request-processor\gray-room-orchestrator.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 2 (Hash: f10d805dbdff...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>34855</td>
+                <td>2</td>
+                <td>34855</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\core\orchestrator\gray-room-orchestrator.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>34855</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\core\orchestrator\gray-room-orchestrator.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 3 (Hash: 9f8ab5cd6d4a...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>16186</td>
+                <td>2</td>
+                <td>16186</td>
+                <td class="file-path">a2a-server\packages\request\src\request.service.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>16186</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server\src\request\request.service.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 4 (Hash: 12d96f26383e...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>12390</td>
+                <td>2</td>
+                <td>12390</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\action-parser.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>12390</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\action-parser.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 5 (Hash: 2bd4d50545a6...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>11784</td>
+                <td>2</td>
+                <td>11784</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\action-service.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>11784</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\action-service.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 6 (Hash: df46243e8453...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>10265</td>
+                <td>2</td>
+                <td>10265</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\action-processor.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>10265</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\action-processor.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 7 (Hash: 02dee9f3c2f5...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>9216</td>
+                <td>2</td>
+                <td>9216</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\handlers\command-execution.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>9216</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\handlers\command-execution.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 8 (Hash: ce8269b07e38...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>8716</td>
+                <td>2</td>
+                <td>8716</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\event-bus.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>8716</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server\src\event-bus.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 9 (Hash: 1e1b5d409dc9...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>8305</td>
+                <td>3</td>
+                <td>16610</td>
+                <td class="file-path">a2a-server\packages\actions\src\handlers\run-script.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>8305</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\handlers\run-script.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>8305</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\handlers\run-script.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 10 (Hash: f837028ace09...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>8021</td>
+                <td>2</td>
+                <td>8021</td>
+                <td class="file-path">a2a-server\packages\request\src\request-file-storage.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>8021</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server\src\request\request-file-storage.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 11 (Hash: fea4911b6fbd...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>7889</td>
+                <td>3</td>
+                <td>15778</td>
+                <td class="file-path">a2a-server\packages\actions\src\handlers\mcp-call.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>7889</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\handlers\mcp-call.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>7889</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\handlers\mcp-call.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 12 (Hash: d282541ef5fe...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>7675</td>
+                <td>2</td>
+                <td>7675</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\manager.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>7675</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\manager.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 13 (Hash: 975d2e3e0f53...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>7675</td>
+                <td>3</td>
+                <td>15350</td>
+                <td class="file-path">a2a-server\packages\actions\src\handlers\edit-patch.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>7675</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\handlers\edit-patch.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>7675</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\handlers\edit-patch.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 14 (Hash: bf416fa0bb10...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>7313</td>
+                <td>2</td>
+                <td>7313</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\session-compaction.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>7313</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server\src\session-compaction.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 15 (Hash: e8929ed13a2d...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>7118</td>
+                <td>3</td>
+                <td>14236</td>
+                <td class="file-path">a2a-server\packages\actions\src\handlers\grep-search.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>7118</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\handlers\grep-search.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>7118</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\handlers\grep-search.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 16 (Hash: d69485b09d7f...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>7012</td>
+                <td>2</td>
+                <td>7012</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\graph-store.service.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>7012</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server\src\graph-store.service.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 17 (Hash: 859de72c542d...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>6880</td>
+                <td>2</td>
+                <td>6880</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\retry.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>6880</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\lib\retry.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 18 (Hash: 977c2139cbea...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>6658</td>
+                <td>2</td>
+                <td>6658</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\core\request-processor\gray-room-trigger.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>6658</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\core\request-processor\gray-room-trigger.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 19 (Hash: f0c416c16f30...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>6649</td>
+                <td>2</td>
+                <td>6649</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\components\context\ultracontext.service.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>6649</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\components\context\ultracontext.service.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 20 (Hash: 4ba47f2b066d...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>6493</td>
+                <td>2</td>
+                <td>6493</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\task-detail-analyzer.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>6493</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\lib\task-detail-analyzer.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 21 (Hash: 47600365d359...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>5862</td>
+                <td>2</td>
+                <td>5862</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\action-handler-registry.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>5862</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\action-handler-registry.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 22 (Hash: b64b5ac3a4de...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>5724</td>
+                <td>2</td>
+                <td>5724</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\core\request-processor\gray-room-utils.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>5724</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\core\request-processor\gray-room-utils.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 23 (Hash: 0cfa45bae674...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>5537</td>
+                <td>3</td>
+                <td>11074</td>
+                <td class="file-path">a2a-server\packages\actions\src\action-validator.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>5537</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\action-validator.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>5537</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\action-validator.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 24 (Hash: b93083d0204a...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>5220</td>
+                <td>2</td>
+                <td>5220</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\action-registry.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>5220</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\action-registry.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 25 (Hash: 933f1968c33e...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>5099</td>
+                <td>3</td>
+                <td>10198</td>
+                <td class="file-path">a2a-server\packages\actions\src\handlers\phpantom.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>5099</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\handlers\phpantom.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>5099</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\handlers\phpantom.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 26 (Hash: 409b902339f3...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>4879</td>
+                <td>2</td>
+                <td>4879</td>
+                <td class="file-path">a2a-server\packages\server\src\tools-evolve-sandbox.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>4879</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server\src\api\tools-evolve-sandbox.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 27 (Hash: 5e86b63b84f1...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>4856</td>
+                <td>2</td>
+                <td>4856</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\backoff.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>4856</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\lib\backoff.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 28 (Hash: 34b950a14518...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>4617</td>
+                <td>2</td>
+                <td>4617</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\circuit-breaker.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>4617</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\lib\circuit-breaker.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 29 (Hash: 8ca4a603c07e...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>4229</td>
+                <td>2</td>
+                <td>4229</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\validation.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>4229</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\lib\validation.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 30 (Hash: e0c063475a6b...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>3867</td>
+                <td>2</td>
+                <td>3867</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\config.production.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>3867</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\config.production.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 31 (Hash: f42e24b6eb30...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>3744</td>
+                <td>2</td>
+                <td>3744</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\core\request-processor\gray-room-interrupt-handlers\algorithm-invoke.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>3744</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\core\request-processor\gray-room-interrupt-handlers\algorithm-invoke.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 32 (Hash: 684001ca13db...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>3735</td>
+                <td>2</td>
+                <td>3735</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\action-executor.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>3735</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\action-executor.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 33 (Hash: 2a26c1b15887...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>3719</td>
+                <td>2</td>
+                <td>3719</td>
+                <td class="file-path">a2a-server\packages\server\src\controllers\auth.controller.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>3719</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server\src\controllers\controllers\auth.controller.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 34 (Hash: e5a2237733e3...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>3525</td>
+                <td>2</td>
+                <td>3525</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\crypto.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>3525</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\lib\crypto.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 35 (Hash: a50a0e3ec246...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>3480</td>
+                <td>3</td>
+                <td>6960</td>
+                <td class="file-path">a2a-server\packages\actions\src\handlers\file-operations\write-file.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>3480</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\handlers\file-operations\write-file.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>3480</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\handlers\file-operations\write-file.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 36 (Hash: e9c4c92eb871...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>3180</td>
+                <td>2</td>
+                <td>3180</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\core\request-processor\gray-room-interrupt-handlers\thinking.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>3180</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\core\request-processor\gray-room-interrupt-handlers\thinking.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 37 (Hash: 45708cccfceb...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>3088</td>
+                <td>3</td>
+                <td>6176</td>
+                <td class="file-path">a2a-server\packages\actions\src\types.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>3088</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\types.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>3088</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\types.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 38 (Hash: 94fe13e6697c...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>2913</td>
+                <td>2</td>
+                <td>2913</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\artifact-validator.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2913</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server\src\artifact-validator.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 39 (Hash: df4947376e0f...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>2817</td>
+                <td>3</td>
+                <td>5634</td>
+                <td class="file-path">a2a-server\packages\actions\src\handlers\file-operations\list-directory.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2817</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\handlers\file-operations\list-directory.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2817</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\handlers\file-operations\list-directory.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 40 (Hash: a7e5cf3c5dc0...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>2642</td>
+                <td>2</td>
+                <td>2642</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\core\request-processor\gray-room-interrupt-handlers\compress-history.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2642</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\core\request-processor\gray-room-interrupt-handlers\compress-history.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 41 (Hash: 7a9dbe035d53...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>2541</td>
+                <td>2</td>
+                <td>2541</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\types.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2541</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\types.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 42 (Hash: 624e9b3e2451...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>2483</td>
+                <td>2</td>
+                <td>2483</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\adaptive-polling.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2483</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\lib\adaptive-polling.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 43 (Hash: 376fb8bb3073...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>2406</td>
+                <td>2</td>
+                <td>2406</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\components\context\context\AgentSwing.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2406</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\components\context\context\AgentSwing.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 44 (Hash: 3b32317089e9...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>2261</td>
+                <td>2</td>
+                <td>2261</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\config.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2261</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\config.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 45 (Hash: 71dc10149e1b...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>2261</td>
+                <td>3</td>
+                <td>4522</td>
+                <td class="file-path">a2a-server\packages\actions\src\handlers\file-operations\read-file.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2261</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\handlers\file-operations\read-file.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2261</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\handlers\file-operations\read-file.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 46 (Hash: a65a19de2e2e...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>2141</td>
+                <td>2</td>
+                <td>2141</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\components\context\context-discovery.service.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2141</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\components\context\context-discovery.service.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 47 (Hash: 0c985e663869...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>2136</td>
+                <td>2</td>
+                <td>2136</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\core\request-processor\gray-room-interrupt-handlers\auto-read-file.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2136</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\core\request-processor\gray-room-interrupt-handlers\auto-read-file.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 48 (Hash: 64896a31da0b...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>2120</td>
+                <td>3</td>
+                <td>4240</td>
+                <td class="file-path">a2a-server\packages\actions\src\handlers\file-operations\file-exists.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2120</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\handlers\file-operations\file-exists.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2120</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\handlers\file-operations\file-exists.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 49 (Hash: 128598eacd15...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>2104</td>
+                <td>2</td>
+                <td>2104</td>
+                <td class="file-path">a2a-server\packages\server\src\registry\health.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2104</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server\src\api\registry\health.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 50 (Hash: 89993d335dae...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>2047</td>
+                <td>2</td>
+                <td>2047</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\index.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2047</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\index.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 51 (Hash: a276d894a7b0...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>2017</td>
+                <td>2</td>
+                <td>2017</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\components\context\context\Ultracontext.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>2017</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\components\context\context\Ultracontext.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 52 (Hash: db0f75e9d86b...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1979</td>
+                <td>2</td>
+                <td>1979</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\orchestrator.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1979</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\orchestrator.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 53 (Hash: 884b9a6a76f6...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1955</td>
+                <td>2</td>
+                <td>1955</td>
+                <td class="file-path">a2a-server\packages\request\src\client-visible-context.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1955</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server\src\request\client-visible-context.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 54 (Hash: 5a22bc115375...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1840</td>
+                <td>2</td>
+                <td>1840</td>
+                <td class="file-path">a2a-server\packages\server\src\registry\register.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1840</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server\src\api\registry\register.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 55 (Hash: cb2a42de730a...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1770</td>
+                <td>3</td>
+                <td>3540</td>
+                <td class="file-path">a2a-server\packages\actions\src\index.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1770</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\index.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1770</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\index.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 56 (Hash: 6ba1b67858d2...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1648</td>
+                <td>2</td>
+                <td>1648</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\errors.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1648</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\lib\errors.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 57 (Hash: 3310aac60d7e...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1621</td>
+                <td>3</td>
+                <td>3242</td>
+                <td class="file-path">a2a-server\packages\actions\src\handlers\index.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1621</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\handlers\index.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1621</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\handlers\index.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 58 (Hash: 75995833de53...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1547</td>
+                <td>2</td>
+                <td>1547</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\core\request-processor\gray-room-interrupt-handlers\auto-rag-page.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1547</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\core\request-processor\gray-room-interrupt-handlers\auto-rag-page.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 59 (Hash: d6e98e00322a...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1494</td>
+                <td>3</td>
+                <td>2988</td>
+                <td class="file-path">a2a-server\packages\actions\src\handlers\file-operations\types.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1494</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\handlers\file-operations\types.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1494</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\handlers\file-operations\types.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 60 (Hash: 4a2cf9f36f5f...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1472</td>
+                <td>3</td>
+                <td>2944</td>
+                <td class="file-path">a2a-server\packages\actions\src\definitions\auto-ai-index.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1472</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\definitions\auto-ai-index.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1472</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\definitions\auto-ai-index.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 61 (Hash: 1c015e87336d...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1404</td>
+                <td>2</td>
+                <td>1404</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\strip-markdown-json-fence.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1404</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\lib\strip-markdown-json-fence.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 62 (Hash: 672fd52e61ee...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1404</td>
+                <td>2</td>
+                <td>1404</td>
+                <td class="file-path">a2a-server\packages\features\src\skills\SkillRegistry.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1404</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\skills\SkillRegistry.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 63 (Hash: f576293bcd44...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1378</td>
+                <td>2</td>
+                <td>1378</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\core\request-processor\gray-room-interrupt-handlers\base-handler.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1378</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\core\request-processor\gray-room-interrupt-handlers\base-handler.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 64 (Hash: be32106f7ace...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1314</td>
+                <td>2</td>
+                <td>1314</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\core\request-processor\gray-room-interrupt-handlers\clarify.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1314</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\core\request-processor\gray-room-interrupt-handlers\clarify.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 65 (Hash: da7f43e09f8f...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1302</td>
+                <td>2</td>
+                <td>1302</td>
+                <td class="file-path">a2a-server\packages\server\src\registry\route.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1302</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server\src\api\registry\route.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 66 (Hash: 4062ba6d27aa...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>1122</td>
+                <td>3</td>
+                <td>2244</td>
+                <td class="file-path">a2a-server\packages\actions\src\handlers\file-operations\security.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1122</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\handlers\file-operations\security.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>1122</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\handlers\file-operations\security.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 67 (Hash: bca1aaa23c76...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>983</td>
+                <td>2</td>
+                <td>983</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\fs-access.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>983</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\lib\fs-access.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 68 (Hash: f1b07e02d81c...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>885</td>
+                <td>3</td>
+                <td>1770</td>
+                <td class="file-path">a2a-server\packages\actions\src\utils.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>885</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\utils.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>885</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\utils.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 69 (Hash: 1c292c7bace4...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>879</td>
+                <td>2</td>
+                <td>879</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\components\memory\MuSE.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>879</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\components\memory\MuSE.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 70 (Hash: e2a86037a806...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>617</td>
+                <td>3</td>
+                <td>1234</td>
+                <td class="file-path">a2a-server\packages\actions\src\handlers\file-operations.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>617</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\handlers\file-operations.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>617</td>
+                <td>3</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\actions\handlers\file-operations.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 71 (Hash: f04980e4d887...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>592</td>
+                <td>2</td>
+                <td>592</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\logger.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>592</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\logger.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 72 (Hash: 5de241d6811b...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>587</td>
+                <td>2</td>
+                <td>587</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\metrics.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>587</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\lib\metrics.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 73 (Hash: ae3b1814f3a6...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>409</td>
+                <td>2</td>
+                <td>409</td>
+                <td class="file-path">a2a-server\packages\gray-room\src\components\context\context\context-manager.metrics.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>409</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\gray-room\components\context\context\context-manager.metrics.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 74 (Hash: 5348f31ad338...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>389</td>
+                <td>2</td>
+                <td>389</td>
+                <td class="file-path">a2a-client\packages\rag\src\meilisearch-client.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>389</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-client\packages\sdk\src\server\services\meilisearch-client.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 75 (Hash: b346ef80d850...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>346</td>
+                <td>2</td>
+                <td>346</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\mkdtemp-os-tmp.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>346</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\lib\mkdtemp-os-tmp.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 76 (Hash: ebb66e3cca0b...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>236</td>
+                <td>2</td>
+                <td>236</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\deep-clone-json.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>236</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server-utils\src\lib\deep-clone-json.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 77 (Hash: 53757f3208e0...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>213</td>
+                <td>2</td>
+                <td>213</td>
+                <td class="file-path">a2a-server\packages\features\src\skills\custom\dummy.skill.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>213</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\features\src\actions\src\skills\custom\dummy.skill.ts</td>
+            </tr>
+            <tr class="group-header">
+                <td colspan="5">Group 78 (Hash: f912490376de...)</td>
+            </tr>
+            <tr>
+                <td><strong>Primary</strong></td>
+                <td>38</td>
+                <td>2</td>
+                <td>38</td>
+                <td class="file-path">a2a-server\packages\request\src\index.ts</td>
+            </tr>
+            <tr>
+                <td></td>
+                <td>38</td>
+                <td>2</td>
+                <td>0</td>
+                <td class="file-path">a2a-server\packages\server\src\request\index.ts</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>

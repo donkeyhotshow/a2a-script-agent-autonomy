@@ -8,7 +8,7 @@
  * - step_complete - confirming step completion
  */
 
-import {logger} from '../../utils/logger.js';
+import {logger} from '@a2a/server-utils/logger.js';
 import {actionProcessor} from '../../actions/action-processor.js';
 import {actionRegistry} from '../../actions/action-registry.js';
 import type {ActionDefinition} from '../../actions/types.js';

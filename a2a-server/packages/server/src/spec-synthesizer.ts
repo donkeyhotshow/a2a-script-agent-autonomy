@@ -1,4 +1,4 @@
-import { createLogger } from '../../utils/logger.js';
+import { createLogger } from '@a2a/server-utils/logger.js';
 import { globalArtifactStore } from './artifact-store.js';
 import fs from 'node:fs/promises';
 import path from 'path';

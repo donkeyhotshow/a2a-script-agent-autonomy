@@ -3,7 +3,7 @@
  * Disabled - RAG functionality removed from server.
  */
 
-import { logger } from "../../utils/logger.js";
+import { logger } from '@a2a/server-utils/logger.js';
 import type { ServerInterruptTraceEvent } from "../../transform/types.js";
 
 /** Compact RAG hit lines for `context.history` (system role) after server-side `auto_rag_page`. */

@@ -1,4 +1,4 @@
-import { logger } from '../../utils/logger.js';
+import { logger } from '@a2a/server-utils/logger.js';
 import { globalThreadManager } from './thread-manager.js';
 import { globalMcpRegistry } from '../mcp/registry.js';
 

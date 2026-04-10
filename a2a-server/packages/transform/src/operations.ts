@@ -14,7 +14,7 @@
 
 import * as path from 'path';
 import * as fs from 'node:fs/promises';
-import { deepCloneJson } from '../utils/deep-clone-json.js';
+import { deepCloneJson } from '@a2a/server-utils/deep-clone-json.js';
 import {
   query,
   set as jsonPathSet,

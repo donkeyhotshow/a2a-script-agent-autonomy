@@ -6,7 +6,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
 
-import {logger} from '../../utils/logger.js';
+import {logger} from '@a2a/server-utils/logger.js';
 
 export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 

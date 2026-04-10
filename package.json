@@ -21,7 +21,7 @@
     "sim:check-md:fix": "npm --prefix a2a-server run sim:check-md:fix --",
     "gate:cleanup": "npm --prefix a2a-server run gate:cleanup",
     "agent-runner": "node tests/agent-dialog-runner.mjs",
-"central": "node a2a-orchestrator/src/runbook/central-orchestrator.mjs",
+    "central": "node a2a-orchestrator/src/runbook/central-orchestrator.mjs",
     "central:offline": "npm run test:before-start && npm run cross-system:validate && npm run sim:check-md:fail && npm run sim:lint:all && npm run sim:validate -- --all",
     "monitor": "node runbook/monitor-and-process-tasks.js",
     "monitor:daemon": "node runbook/monitor-and-process-tasks.js --daemon",

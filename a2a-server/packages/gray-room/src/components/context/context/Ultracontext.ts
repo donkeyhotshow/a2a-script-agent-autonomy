@@ -1,5 +1,5 @@
-import { logger } from '../../utils/logger.js';
-import { deepCloneJson } from '../../utils/deep-clone-json.js';
+import { logger } from '@a2a/server-utils/logger.js';
+import { deepCloneJson } from '@a2a/server-utils/deep-clone-json.js';
 import crypto from 'node:crypto';
 
 export interface ContextSnapshot {

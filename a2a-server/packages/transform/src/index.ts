@@ -10,7 +10,7 @@
  * 
  * @example
  * ```typescript
- * import { runTransformPipelineFromFile } from './transform/index.js';
+ * import { runTransformPipelineFromFile } from './index.js';
  * 
  * const result = await runTransformPipelineFromFile(
  *   'simulations/agent-coder/3/server-transforms-response.json',
