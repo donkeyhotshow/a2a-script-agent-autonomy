@@ -10,7 +10,7 @@
     "@a2a/agents"
   ],
   "scripts": {
-    "dev": "start-all.bat",
+    "dev": "node scripts/runbook-cli.js start",
     "sim:lint": "npm --prefix a2a-server run sim:lint --",
     "sim:lint:all": "npm --prefix a2a-server run sim:lint:all --",
     "sim:validate": "npm --prefix a2a-server run sim:validate --",

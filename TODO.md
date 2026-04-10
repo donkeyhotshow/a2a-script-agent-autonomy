@@ -1,6 +1,6 @@
 # Runbook CLI Port 3005 Status Server Implementation
 
-Status: In progress
+Status: Completed
 
 ## Steps:
 - [x] 1. Create this TODO.md file
@@ -12,6 +12,6 @@ Status: In progress
   - Add /status endpoint with services overview
 - [x] 3. Test daemon-start: verify binds 3005, curl localhost:3005/status shows status
 - [x] 4. Test duplicate prevention: run cli start multiple times, no restarts
-- [ ] 5. Update TODO.md with completion
-- [ ] 6. attempt_completion
+- [x] 5. Fix CLI hanging issue: script now releases console immediately after starting services
+- [x] 6. Update TODO.md with completion
 
