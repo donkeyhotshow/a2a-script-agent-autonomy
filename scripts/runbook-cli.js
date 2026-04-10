@@ -24,11 +24,25 @@ const SERVICES = {
     logfile: path.join(__dirname, '..', 'logs', 'runbook-status.log'),
     restartPolicy: {enabled: false}
   },
+  'postgres': {
+    port: 5432,
+    startCmd: 'start "postgres" cmd /c "pg_ctl start -D \\"C:\\\\Program Files\\\\PostgreSQL\\\\16\\\\data\\" -l ..\\\\logs\\\\postgres.log"',
+    healthEndpoint: '/health',
+    dependencies: [],
+    logfile: path.join(__dirname, '..', 'logs', 'postgres.log')
+  },
+  'redis': {
+    port: 6379,
+    startCmd: 'start "redis" cmd /c "redis-server.exe > ..\\\\logs\\\\redis.log 2>&1"',
+    healthEndpoint: '/health',
+    dependencies: [],
+    logfile: path.join(__dirname, '..', 'logs', 'redis.log')
+  },
   'ai-integration': {
     port: 11434,
     startCmd: 'start "ai-integration" /d "a2a-ai-hub" cmd /c "python scripts/ensure-providers-config.py && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port 11434 > ..\\\\..\\\\logs\\\\ai-integration.log 2>&1"',
     healthEndpoint: '/health',
-    dependencies: ['runbook-status'],
+    dependencies: ['runbook-status', 'postgres', 'redis'],
     logfile: path.join(__dirname, '..', 'logs', 'ai-integration.log')
   },
   'a2a-server': {
@@ -457,23 +471,42 @@ async function startService(serviceName) {
   if (healthy) {
     log(`✓ ${serviceName} started`);
   } else {
-    log(`✗ ${serviceName} failed to start`);
+    log(`✗ ${serviceName} failed to start - check logs: ${service.logfile}`);
   }
   return healthy;
 }
 
-function startServiceCli(serviceName) {
+async function startServiceCli(serviceName) {
   const service = SERVICES[serviceName];
   if (!service.startCmd.trim()) {
     log(`${serviceName} has no start command, skipping`);
     return;
   }
+  // Check if already running
+  if (await checkHealth(serviceName)) {
+    log(`${serviceName} already running`);
+    return;
+  }
   log(`Starting ${serviceName}...`);
   fs.mkdirSync(path.dirname(service.logfile), { recursive: true });
-  // Start background process without waiting
+  // Start background process
   const child = spawn(service.startCmd, { shell: true, stdio: 'inherit', cwd: path.join(__dirname, '..'), detached: true });
-  child.unref(); // Allow parent process to exit
-  log(`${serviceName} started in background`);
+  child.unref(); // Allow parent process to exit independently
+  // Wait for health check
+  let healthy = false;
+  for (let i = 0; i < 30; i++) {
+    await new Promise(r => setTimeout(r, 1000));
+    if (await checkHealth(serviceName)) {
+      healthy = true;
+      break;
+    }
+  }
+  if (healthy) {
+    log(`✓ ${serviceName} started`);
+  } else {
+    log(`✗ ${serviceName} failed to start - check logs: ${service.logfile}`);
+    process.exit(1);
+  }
 }
 
 function stopService(serviceName) {
@@ -509,16 +542,21 @@ function getDependencyOrder(services) {
 async function startCommand(services) {
   const allServices = services.length ? services : Object.keys(SERVICES);
   const order = getDependencyOrder(allServices);
+  const failures = [];
   for (const name of order) {
-    await startService(name);
+    const success = await startService(name);
+    if (!success) failures.push(name);
+  }
+  if (failures.length > 0) {
+    throw new Error(`Services failed to start: ${failures.join(', ')}`);
   }
 }
 
-function startCommandCli(services) {
+async function startCommandCli(services) {
   const allServices = services.length ? services : Object.keys(SERVICES);
   const order = getDependencyOrder(allServices);
   for (const name of order) {
-    startServiceCli(name);
+    await startServiceCli(name);
   }
 }
 
@@ -569,14 +607,22 @@ if (command === 'daemon-start') {
 } else {
   switch (command) {
     case 'start':
-      startCommandCli(serviceArgs);
+      startCommandCli(serviceArgs).catch(e => {
+        cliLog('Start failed: ' + e.message);
+        process.exit(1);
+      });
       break;
     case 'stop':
       stopCommand(serviceArgs);
       break;
     case 'restart':
       stopCommand(serviceArgs);
-      setTimeout(() => startCommandCli(serviceArgs), 2000);
+      setTimeout(() => {
+        startCommandCli(serviceArgs).catch(e => {
+          cliLog('Restart failed: ' + e.message);
+          process.exit(1);
+        });
+      }, 2000);
       break;
     case 'status':
       showStatus();

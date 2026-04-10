@@ -80,8 +80,6 @@ const COMMAND_TIERS: Record<string, 'read-only' | 'build' | 'network'> = {
     // Network commands (require ALLOW_NETWORK_COMMANDS=1)
     'curl': 'network',
     'wget': 'network',
-    'docker': 'network',
-    'docker-compose': 'network',
 };
 
 // High-risk binaries that require explicit enablement
