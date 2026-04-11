@@ -1,6 +1,6 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
 
-vi.mock('../../src/utils/logger.js', () => ({
+vi.mock('../../src/utils/logger', () => ({
     logger: {info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn()},
 }));
 
@@ -8,7 +8,7 @@ import {
     CircuitBreaker,
     CircuitBreakerOpenError,
     withCircuitBreaker,
-} from '../../src/utils/circuit-breaker.js';
+} from '../../src/utils/circuit-breaker';
 
 describe('CircuitBreaker', () => {
     afterEach(() => {

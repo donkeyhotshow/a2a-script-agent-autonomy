@@ -4,11 +4,11 @@
  * Handles edit-patch action for applying patches to files.
  */
 
-import {logger} from '../../../utils/logger.js';
-import {pathIsAccessible, timestampedBackupPath} from '../../../utils/fs-access.js';
+import {logger} from '../../../utils/logger';
+import {pathIsAccessible, timestampedBackupPath} from '../../../utils/fs-access';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import {validatePath} from './file-operations/security.js';
+import {validatePath} from './file-operations/security';
 
 export interface PatchOperation {
     type: 'replace' | 'insert' | 'delete' | 'replaceContent';

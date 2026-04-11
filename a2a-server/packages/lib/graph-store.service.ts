@@ -10,7 +10,7 @@ import type {
     RecognizedEntity,
     RecognizedRelation,
     EntityTypeName
-} from '../../types/entity.types.js';
+} from '../../types/entity.types';
 
 // ============================================
 // Types

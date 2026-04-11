@@ -4,7 +4,7 @@
  */
 
 import { z } from 'zod';
-import { intSchema } from './helpers.js';
+import { intSchema } from './helpers';
 
 export const queueConfigSchema = z.object({
   concurrency: intSchema(1, 100, 5),

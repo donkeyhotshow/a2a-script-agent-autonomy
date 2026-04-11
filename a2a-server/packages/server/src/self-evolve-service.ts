@@ -1,6 +1,6 @@
-import { logger } from "@a2a/server-utils/logger.js"';
-import { globalThreadManager } from './thread-manager.js';
-import { globalMcpRegistry } from '../mcp/registry.js';
+import { logger } from "@a2a/server-utils/logger"';
+import { globalThreadManager } from './thread-manager';
+import { globalMcpRegistry } from '../mcp/registry';
 
 /**
  * A2A Self-Evolve Service (ADR-0077)
@@ -48,7 +48,7 @@ export class SelfEvolveService {
         // 2. Spawn a background worker to analyze performance (ADR-0074)
         // Note: In real implementation, this would point to an actual analysis script.
         /*
-        await globalThreadManager.spawnWorker('evolve-analyzer', './workers/performance-analyzer.js', {
+        await globalThreadManager.spawnWorker('evolve-analyzer', './workers/performance-analyzer', {
           tools: tools.map(t => t.name)
         });
         */

@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest';
 import {
     AdaptivePolling,
     DEFAULT_ADAPTIVE_POLLING,
-} from '../../src/utils/adaptive-polling.js';
+} from '../../src/utils/adaptive-polling';
 
 describe('AdaptivePolling', () => {
     it('increases interval after emptyThreshold empty polls', () => {

@@ -19,8 +19,8 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { logger } from "@a2a/server-utils/logger.js"';
-import type { ExecutionPlan, Goal, GoalStatus } from './goal-planner.js';
+import { logger } from "@a2a/server-utils/logger"';
+import type { ExecutionPlan, Goal, GoalStatus } from './goal-planner';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 

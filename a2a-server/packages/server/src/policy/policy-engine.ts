@@ -13,7 +13,7 @@
  *
  * Usage:
  * ```ts
- * import { policyEngine } from './policy-engine.js';
+ * import { policyEngine } from './policy-engine';
  *
  * if (policyEngine.isBlocked(ctx)) {
  *   const violations = policyEngine.evaluate(ctx);
@@ -23,13 +23,13 @@
  */
 
 import { readFileSync } from 'node:fs';
-import { logger } from "@a2a/server-utils/logger.js"';
+import { logger } from "@a2a/server-utils/logger"';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
   createArtifactWriteInput,
   globalArtifactStore,
-} from '../core/artifact-store.js';
+} from '../core/artifact-store';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 

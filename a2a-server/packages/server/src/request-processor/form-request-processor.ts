@@ -8,14 +8,14 @@
  * - Interactive form flows
  */
 
-import {logger} from "@a2a/server-utils/logger.js";
+import {logger} from "@a2a/server-utils/logger";
 import type {
     RequestContext,
     ProcessResult,
     ProcessOutcome
-} from './request-processor.interfaces.js';
-import {BaseRequestProcessor, type RequestType} from './base-processor.js';
-import {runFormChoicePipeline} from './form-choice-pipeline.js';
+} from './request-processor.interfaces';
+import {BaseRequestProcessor, type RequestType} from './base-processor';
+import {runFormChoicePipeline} from './form-choice-pipeline';
 
 /**
  * Form field definition
@@ -301,7 +301,7 @@ export class FormRequestProcessor extends BaseRequestProcessor {
      * Validate form data using external validator
      */
     private async validateFormData(form: FormDefinition, data: Record<string, unknown>): Promise<FormValidationError[]> {
-        const { validateFormData } = await import('./validators/form-validator.js');
+        const { validateFormData } = await import('./validators/form-validator');
         return validateFormData(form, data);
     }
 

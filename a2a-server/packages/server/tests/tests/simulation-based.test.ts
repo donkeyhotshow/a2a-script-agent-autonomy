@@ -16,7 +16,7 @@ import {readFileSync, existsSync, readdirSync, statSync} from 'node:fs';
 import {join, dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {describe, it, expect} from 'vitest';
-import {validateInvokeEnvelopeResponse} from '../src/actions/action-validator.js';
+import {validateInvokeEnvelopeResponse} from '../src/actions/action-validator';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -405,7 +405,7 @@ export async function runSimulation(simName: string): Promise<{ success: boolean
     
     try {
         // Import the run script
-        const {runSingleSimulation} = await import('../scripts/sim-run-core.js');
+        const {runSingleSimulation} = await import('../scripts/sim-run-core');
         await runSingleSimulation(simDir, SIMULATIONS_BASE);
         return { success: true };
     } catch (err: any) {

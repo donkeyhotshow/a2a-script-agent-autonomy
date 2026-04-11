@@ -3,7 +3,7 @@
  * Provides fault tolerance by tracking failures and opening circuit
  */
 
-import { logger } from './logger.js';
+import { logger } from './logger';
 
 // ===========================================
 // Types

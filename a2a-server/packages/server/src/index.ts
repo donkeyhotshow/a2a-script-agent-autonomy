@@ -1,17 +1,17 @@
 import http from "node:http";
 import { existsSync } from "node:fs";
-import app from "./app.js";
-import { config } from "../../server-config/index.js";
-import { logger } from "../../server-utils/dist/logger.js";
+import app from "./app";
+import { config } from "../../server-config/index";
+import { logger } from "../../server-utils/src/logger";
 import {
   startRequestProcessor,
   stopRequestProcessor,
-} from "./request-processor/request-processor.service.js";
-import { actionRegistry } from "../../actions/src/action-registry.js";
+} from "./request-processor/request-processor.service";
+import { actionRegistry } from "../../actions/src/action-registry";
 // Removed algorithm registry import - module moved to gray-room package
 const algorithmRegistry = { loadFromDirectory: async () => console.log('Algorithm registry skipped') };
-import { getPromptsTransformsPath } from './index.js';
-import { globalArtifactStore } from "./artifact-store.js";
+import { getPromptsTransformsPath } from './index';
+import { globalArtifactStore } from "./artifact-store";
 
 // Temporary placeholders for missing modules
 const ultraContextService = {};

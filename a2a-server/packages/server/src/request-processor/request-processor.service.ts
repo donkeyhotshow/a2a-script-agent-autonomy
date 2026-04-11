@@ -15,16 +15,16 @@ import {
   shouldDeferDialogProcessorFailure,
   type RequestResult,
 } from "@a2a/server-request";
-import { logger } from '../../lib/logger.js';
-import { resolveAiHubBaseUrl } from "../../../lib/ai-hub-url.js";
-import { requestProcessorLatencyHistogram } from "../utils/metrics.js";
+import { logger } from '../../lib/logger';
+import { resolveAiHubBaseUrl } from "../../../lib/ai-hub-url";
+import { requestProcessorLatencyHistogram } from "../utils/metrics";
 import type {
   RequestContext,
   ProcessResult,
   ProcessOutcome,
   Task,
   TaskAnalysis,
-} from "./request-processor.interfaces.js";
+} from "./request-processor.interfaces";
 import {
   actionRequestProcessor,
   simulationRequestProcessor,
@@ -32,16 +32,16 @@ import {
   dialogRequestProcessor,
   processorRegistry,
   recoverDialogFromLlmPromise,
-} from "./index.js";
-import type { RequestType } from "./base-processor.js";
+} from "./index";
+import type { RequestType } from "./base-processor";
 import {
   LLM_PIPELINE_ACTIONS,
   type LlmPipelineAction,
 } from "../../../server-config/router-static.ts";
-import { resolveExecution, resolveResultObject } from "./normalization.js";
-import { detectFrameworksFromCodeBlocks } from "./framework-from-codeblocks.js";
-import { readDialogHubLlmResubmitMax } from "../../../gray-room/src/core/request-processor/gray-room-trigger.js";
-import { features } from "../../server-config/index.js";
+import { resolveExecution, resolveResultObject } from "./normalization";
+import { detectFrameworksFromCodeBlocks } from "./framework-from-codeblocks";
+import { readDialogHubLlmResubmitMax } from "../../../gray-room/src/core/request-processor/gray-room-trigger";
+import { features } from "../../server-config/index";
 
 export { LLM_PIPELINE_ACTIONS, type LlmPipelineAction };
 
@@ -573,7 +573,7 @@ export function haltRequest(promiseId: string): boolean {
     return false;
   }
 
-  const { GrayRoomOrchestrator } = require("./gray-room-orchestrator.js");
+  const { GrayRoomOrchestrator } = require("./gray-room-orchestrator");
   return GrayRoomOrchestrator.halt(promiseId);
 }
 

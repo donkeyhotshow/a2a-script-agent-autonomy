@@ -1,5 +1,5 @@
-import { logger } from "@a2a/server-utils/logger.js""';
-import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
+import { logger } from "@a2a/server-utils/logger""';
+import { createArtifactWriteInput, globalArtifactStore } from './artifact-store';
 
 export interface DesignManifesto {
     colors: Record<string, string>;

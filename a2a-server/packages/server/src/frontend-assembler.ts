@@ -1,5 +1,5 @@
-import { Graph, getRelationsForEntity } from './graph-store.service.js';
-import { logger } from "@a2a/server-utils/logger.js""';
+import { Graph, getRelationsForEntity } from './graph-store.service';
+import { logger } from "@a2a/server-utils/logger""';
 
 export interface AssemblyPlan {
     order: string[]; // entity IDs in order of implementation

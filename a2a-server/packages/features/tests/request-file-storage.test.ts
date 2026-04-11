@@ -3,7 +3,7 @@ import * as os from 'node:os';
 import * as path from 'node:path';
 import {afterEach, describe, expect, it} from 'vitest';
 
-import {RequestFileStorage} from '../../src/services/core/request/request-file-storage.js';
+import {RequestFileStorage} from '../../src/services/core/request/request-file-storage';
 
 describe('RequestFileStorage', () => {
     let dir: string | undefined;

@@ -1,5 +1,5 @@
-import type { InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext } from '../../../transform/types.js';
-import { BaseGrayRoomHandler } from './base-handler.js';
+import type { InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext } from '../../../transform/types';
+import { BaseGrayRoomHandler } from './base-handler';
 /**
  * Handle compress_history interrupt
  * Compresses conversation history into 3-7 short entries

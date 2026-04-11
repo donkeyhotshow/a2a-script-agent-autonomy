@@ -1,5 +1,5 @@
-import { logger } from "@a2a/server-utils/logger.js"';
-import { contextDiscoveryService } from '../../../../features/gray-room/components/context/context-discovery.service.js';
+import { logger } from "@a2a/server-utils/logger"';
+import { contextDiscoveryService } from '../../../../features/gray-room/components/context/context-discovery.service';
 import { BaseRegistry } from '../../../actions/src/base/base-registry.ts';
 
 /**

@@ -8,40 +8,40 @@
  * - step_complete - confirming step completion
  */
 
-import {logger} from "@a2a/server-utils/logger.js"';
-import {actionProcessor} from '../../../actions/src/action-processor.js';
-import {actionRegistry} from '../../../actions/src/action-registry.js';
-import type {ActionDefinition} from '../../../actions/src/types.js';
+import {logger} from "@a2a/server-utils/logger"';
+import {actionProcessor} from '../../../actions/src/action-processor';
+import {actionRegistry} from '../../../actions/src/action-registry';
+import type {ActionDefinition} from '../../../actions/src/types';
 import type {
     RequestContext,
     ProcessResult,
     ProcessOutcome,
-} from './request-processor.interfaces.js';
-import {BaseRequestProcessor, type RequestType} from './base-processor.js';
+} from './request-processor.interfaces';
+import {BaseRequestProcessor, type RequestType} from './base-processor';
 import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../../../server-config/router-static.ts';
-import {applySequenceStepComplete} from './sequence-workbench.js';
-import {resolveExecution, resolveResultObject} from './normalization.js';
-import {dialogRequestProcessor} from './dialog-request-processor.js';
+import {applySequenceStepComplete} from './sequence-workbench';
+import {resolveExecution, resolveResultObject} from './normalization';
+import {dialogRequestProcessor} from './dialog-request-processor';
 
 // Import extracted handlers
 import {
     handleStepResult as handleStepResultFn
-} from './handlers/step-result-handler.js';
+} from './handlers/step-result-handler';
 import {
     handleRouterChoice as handleRouterChoiceFn,
     pickRouterSubmitChoice as pickRouterSubmitChoiceFn
-} from './handlers/router-choice-handler.js';
+} from './handlers/router-choice-handler';
 import {
     handleTaskRequest as handleTaskRequestFn,
     parseTaskText as parseTaskTextFn,
     analyzeTaskForAutoRouting as analyzeTaskForAutoRoutingFn
-} from './handlers/task-request-handler.js';
+} from './handlers/task-request-handler';
 import {
     handleStepComplete as handleStepCompleteFn
-} from './handlers/step-complete-handler.js';
+} from './handlers/step-complete-handler';
 import {
     handleApproveAction as handleApproveActionFn
-} from './handlers/approve-action-handler.js';
+} from './handlers/approve-action-handler';
 
 /**
  * Action request processor configuration

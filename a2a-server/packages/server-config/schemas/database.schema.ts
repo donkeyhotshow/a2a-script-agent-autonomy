@@ -3,7 +3,7 @@
  */
 
 import { z } from 'zod';
-import { urlSchema } from './helpers.js';
+import { urlSchema } from './helpers';
 
 export const databaseConfigSchema = z.object({
   databaseUrl: urlSchema().optional(),

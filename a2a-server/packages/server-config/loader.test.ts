@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { validateConfig, validateConfigSafe } from './loader.js';
-import type { AppConfig } from './types.js';
+import { validateConfig, validateConfigSafe } from './loader';
+import type { AppConfig } from './types';
 
 const ALL_ENV_KEYS = [
   'SERVER_PORT', 'CLIENT_API_PORT', 'WEB_PORT', 'PROXY_PORT', 'LOCAL_LLM_PORT', 'POSTGRES_PORT', 'REDIS_PORT',

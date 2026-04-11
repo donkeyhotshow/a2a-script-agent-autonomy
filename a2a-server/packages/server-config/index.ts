@@ -5,7 +5,7 @@
  * Provides type-safe configuration with fail-fast validation.
  *
  * Usage:
- *   import { config, validateConfig } from './config/index.js';
+ *   import { config, validateConfig } from './config/index';
  *
  *   // Access validated config
  *   const port = config.ports.serverPort;
@@ -31,9 +31,9 @@ import {
   sessionConfigSchema,
   requestProcessorConfigSchema,
   featuresConfigSchema,
-} from "./schema.js";
-import type { AppConfig, FeaturesConfig } from "./types.js";
-import { createFeatureManager } from "./features.js";
+} from "./schema";
+import type { AppConfig, FeaturesConfig } from "./types";
+import { createFeatureManager } from "./features";
 import {
   formatValidationErrors,
   validateConfig,
@@ -42,7 +42,7 @@ import {
   validateDatabase,
   validateSecurity,
   validateAIHub,
-} from "./config-validator.js";
+} from "./config-validator";
 
 // ===========================================
 // Environment Setup
@@ -253,7 +253,7 @@ export {
   createFeatureManager,
   loadServiceIfEnabled,
   loadMiddlewareIfEnabled,
-} from "./features.js";
+} from "./features";
 
 // ===========================================
 // Default Export

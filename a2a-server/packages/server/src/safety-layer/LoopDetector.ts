@@ -4,7 +4,7 @@
  * Detects repeated (interruptReason, outcomeClass, contextHash) triples.
  * CPU-only, < 1 ms per check via Map lookup.
  */
-import type { LOOP_SIGNAL } from './types.js';
+import type { LOOP_SIGNAL } from './types';
 
 interface HistoryEntry {
   count: number;

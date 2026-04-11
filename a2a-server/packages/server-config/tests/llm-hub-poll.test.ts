@@ -5,7 +5,7 @@ import {
     parseHubCompatChatResponseBody,
     pollReadyThenFetch,
     resolveLlmPromiseRecovery,
-} from '../../src/daemon/llm-hub-poll.js';
+} from '../../src/daemon/llm-hub-poll';
 
 describe('parseHubCompatChatResponseBody', () => {
     it('parses plain JSON', () => {

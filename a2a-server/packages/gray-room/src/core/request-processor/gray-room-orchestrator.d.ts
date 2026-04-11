@@ -1,5 +1,5 @@
-import type { ProcessResult } from "./request-processor.interfaces.js";
-import { GrayRoomOptions } from "./gray-room-utils.js";
+import type { ProcessResult } from "./request-processor.interfaces";
+import { GrayRoomOptions } from "./gray-room-utils";
 export declare class GrayRoomOrchestrator {
     private maxInterruptTurns;
     private aiHubUrl;

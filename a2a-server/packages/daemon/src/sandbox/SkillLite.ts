@@ -1,4 +1,4 @@
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 
 /**
  * Stub “L3” sandbox — **not** isolated. Arbitrary shell execution is disabled until a real sandbox

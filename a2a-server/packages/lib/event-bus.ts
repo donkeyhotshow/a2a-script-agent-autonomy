@@ -247,7 +247,7 @@ export class EventBus {
  * Process-singleton EventBus. Import and use directly in service constructors:
  *
  * ```ts
- * import { globalEventBus } from '../../core/event-bus.js';
+ * import { globalEventBus } from '../../core/event-bus';
  * globalEventBus.publish({ type: 'FSM_TRANSITION', session_id, payload: … });
  * ```
  */

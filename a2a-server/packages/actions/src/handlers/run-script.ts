@@ -4,7 +4,7 @@
  * Handles run-script action for executing predefined scripts.
  */
 
-import {logger} from '../../../utils/logger.js';
+import {logger} from '../../../utils/logger';
 import {spawn} from 'node:child_process';
 
 export interface RunScriptParams {

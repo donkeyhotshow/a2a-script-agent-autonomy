@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {isDialogToolExecutePayload} from '../../src/services/core/request-processor/dialog-request-processor.js';
+import {isDialogToolExecutePayload} from '../../src/services/core/request-processor/dialog-request-processor';
 
 describe('isDialogToolExecutePayload', () => {
   it('is true for a single allowed tool key', () => {

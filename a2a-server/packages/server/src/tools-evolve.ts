@@ -1,13 +1,13 @@
 import express from 'express';
 import fs from 'node:fs';
 import path from 'path';
-import { logger } from '../../lib/logger.js';
-import { SkillRegistry } from '../../../features/src/skills/SkillRegistry.js';
-import { config } from '../../../server-config/index.js';
+import { logger } from '../../lib/logger';
+import { SkillRegistry } from '../../../features/src/skills/SkillRegistry';
+import { config } from '../../../server-config/index';
 import {
   SandboxViolationError,
   validateSkillToolCodeForDeploy,
-} from './tools-evolve-sandbox.js';
+} from './tools-evolve-sandbox';
 
 const router = express.Router();
 const registry = new SkillRegistry(path.join(process.cwd(), 'a2a-server/src/skills/custom'));

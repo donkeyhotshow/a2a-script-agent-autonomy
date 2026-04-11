@@ -1,9 +1,9 @@
-import {logger} from '../../../utils/logger.js';
+import {logger} from '../../../utils/logger';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import type {ListDirActionInput, ListDirActionOutput} from './types.js';
-import {validatePath} from './security.js';
-import {executeAction} from '../../utils.js';
+import type {ListDirActionInput, ListDirActionOutput} from './types';
+import {validatePath} from './security';
+import {executeAction} from '../../utils';
 
 export async function executeListDirectory(
     input: ListDirActionInput

@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest';
 import {
     normalizeContext,
     resolveExecution,
-} from '../src/services/core/request-processor/normalization.js';
+} from '../src/services/core/request-processor/normalization';
 
 describe('resolveExecution', () => {
     it('prefers root execution when both exist', () => {

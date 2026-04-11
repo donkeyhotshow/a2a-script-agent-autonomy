@@ -3,7 +3,7 @@
  * Re-exports all schemas from modular config/schemas/ structure.
  */
 
-export * from "./schemas/index.js";
+export * from "./schemas/index";
 
 // ===========================================
 // Helper Schemas

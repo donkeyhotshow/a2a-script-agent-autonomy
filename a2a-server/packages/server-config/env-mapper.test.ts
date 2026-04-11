@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { mapEnvironmentVariables } from './env-mapper.js';
+import { mapEnvironmentVariables } from './env-mapper';
 import * as dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';

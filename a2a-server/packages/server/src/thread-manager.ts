@@ -1,5 +1,5 @@
 import { Worker } from 'worker_threads';
-import { logger } from "@a2a/server-utils/logger.js"';
+import { logger } from "@a2a/server-utils/logger"';
 import path from 'path';
 
 /**

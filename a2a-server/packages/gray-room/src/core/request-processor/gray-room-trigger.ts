@@ -1,5 +1,5 @@
-import {resolveExecution, resolveHistoryLength} from './gray-room-utils.js';
-import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver.js';
+import {resolveExecution, resolveHistoryLength} from './gray-room-utils';
+import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver';
 
 /** Default value for A2A_GRAY_ROOM_MAX_TURNS */
 const DEFAULT_GRAY_ROOM_MAX_TURNS = 10;
@@ -156,7 +156,7 @@ export function shouldUseGrayRoom(ctx: Record<string, unknown>, flowControlHint?
     return computeGrayRoomTrigger(ctx, flowControlHint);
 }
 
-export { readDialogHubLlmResubmitMax } from '../../../../lib/env-utils.js';
+export { readDialogHubLlmResubmitMax } from '../../../../lib/env-utils';
 
 
 

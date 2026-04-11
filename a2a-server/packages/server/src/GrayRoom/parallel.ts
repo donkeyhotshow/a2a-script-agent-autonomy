@@ -1,4 +1,4 @@
-import { logger } from "@a2a/server-utils/logger.js""';
+import { logger } from "@a2a/server-utils/logger""';
 
 export type TCB = {
   id: string;

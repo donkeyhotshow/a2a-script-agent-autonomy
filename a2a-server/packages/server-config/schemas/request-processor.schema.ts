@@ -3,7 +3,7 @@
  */
 
 import { z } from 'zod';
-import { intSchema } from './helpers.js';
+import { intSchema } from './helpers';
 
 export const requestProcessorConfigSchema = z.object({
   intervalMs: intSchema(100, 60000, 5000),

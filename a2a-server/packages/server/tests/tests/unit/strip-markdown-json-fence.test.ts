@@ -2,7 +2,7 @@ import {describe, expect, it} from 'vitest';
 import {
     stripOuterMarkdownJsonFence,
     tryParseJsonFromLlmText,
-} from '../../src/utils/strip-markdown-json-fence.js';
+} from '../../src/utils/strip-markdown-json-fence';
 
 describe('stripOuterMarkdownJsonFence', () => {
     it('returns plain JSON unchanged', () => {

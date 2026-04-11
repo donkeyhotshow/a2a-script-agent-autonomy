@@ -1,14 +1,14 @@
-import {resolveGrayRoomLlmModelFromContext} from '../llm-model-resolver.js';
+import {resolveGrayRoomLlmModelFromContext} from '../llm-model-resolver';
 import {
     extractLlmTextFromHubResponseBody,
     initAiHubChatPromise,
     pollReadyThenFetch,
-} from '../../../daemon/llm-hub-poll.js';
-import {logger} from "@a2a/server-utils/logger.js""';
-import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils.js';
-import {tryParseJsonFromLlmText} from '../../../utils/strip-markdown-json-fence.js';
-import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../transform/types.js';
-import {BaseGrayRoomHandler} from './base-handler.js';
+} from '../../../daemon/llm-hub-poll';
+import {logger} from "@a2a/server-utils/logger""';
+import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils';
+import {tryParseJsonFromLlmText} from '../../../utils/strip-markdown-json-fence';
+import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../transform/types';
+import {BaseGrayRoomHandler} from './base-handler';
 
 /**
  * Handle thinking interrupt

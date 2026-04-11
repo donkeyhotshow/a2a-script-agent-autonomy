@@ -2,7 +2,7 @@
  * Configuration Schema Index
  * Re-exports all schemas from modular config/schemas/ structure.
  */
-export * from "./schemas/index.js";
+export * from "./schemas/index";
 import { z } from "zod";
 export declare const databaseConfigSchema: z.ZodObject<{
     databaseUrl: z.ZodString | z.ZodDefault<z.ZodString>;

@@ -19,11 +19,11 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { ArtifactStore, createArtifactWriteInput } from '../core/artifact-store.js';
-import { logger } from "@a2a/server-utils/logger.js""';
-import { resolveAiHubBaseUrlWithModuleEnv } from '../../lib/ai-hub-url.js';
-import { fetchAiHubGenerateText } from '../../lib/ai-hub-generate.js';
-import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence.js';
+import { ArtifactStore, createArtifactWriteInput } from '../core/artifact-store';
+import { logger } from "@a2a/server-utils/logger""';
+import { resolveAiHubBaseUrlWithModuleEnv } from '../../lib/ai-hub-url';
+import { fetchAiHubGenerateText } from '../../lib/ai-hub-generate';
+import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 

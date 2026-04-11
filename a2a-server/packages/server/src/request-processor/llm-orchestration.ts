@@ -5,7 +5,7 @@
  */
 
 import * as path from 'path';
-import {logger} from "@a2a/server-utils/logger.js"';
+import {logger} from "@a2a/server-utils/logger"';
 import {resolveAiHubBaseUrl} from '../../../lib/ai-hub-url.ts';
 import {mkdtempOsTmp} from '../../../lib/mkdtemp-os-tmp.ts';
 import {runPromptsTransform} from '../../../transform/src/index.ts';
@@ -16,8 +16,8 @@ import {
     resolveLlmPromiseRecovery,
 } from '../../../daemon/src/daemon/llm-hub-poll.ts';
 import {requestService} from '@a2a/server-request';
-import {resolveMainDialogLlmModelFromEnv} from './llm-model-resolver.js';
-import {toInvokeShapeForPromptsTransform} from './normalization.js';
+import {resolveMainDialogLlmModelFromEnv} from './llm-model-resolver';
+import {toInvokeShapeForPromptsTransform} from './normalization';
 
 const DEFAULT_MODEL = resolveMainDialogLlmModelFromEnv();
 

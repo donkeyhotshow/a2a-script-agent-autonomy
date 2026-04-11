@@ -17,7 +17,7 @@ import {
     branchNameSchema,
     filePathSchema,
     paginationSchema,
-} from '../../src/utils/validation.js';
+} from '../../src/utils/validation';
 
 describe('validation utils', () => {
     describe('isValidJson', () => {
@@ -110,7 +110,7 @@ describe('validation utils', () => {
 
         it('filePathSchema should validate file paths', () => {
             expect(() => filePathSchema.parse('src/index.ts')).not.toThrow();
-            expect(() => filePathSchema.parse('path/to/file.js')).not.toThrow();
+            expect(() => filePathSchema.parse('path/to/file')).not.toThrow();
             expect(() => filePathSchema.parse('path with spaces')).toThrow();
         });
 

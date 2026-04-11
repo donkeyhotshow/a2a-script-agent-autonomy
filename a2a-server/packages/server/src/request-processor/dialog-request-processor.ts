@@ -10,35 +10,35 @@
  * - response-path.ts - обработка путей ответа
  */
 
-import { logger } from "@a2a/server-utils/logger.js"";
-import { resolveAiHubBaseUrl } from '../../../lib/ai-hub-url.js';
+import { logger } from "@a2a/server-utils/logger"";
+import { resolveAiHubBaseUrl } from '../../../lib/ai-hub-url';
 import type { RequestContextBlock } from "@a2a/server-protocol";
 import type {
   RequestContext,
   ProcessResult,
-} from "./request-processor.interfaces.js";
-import { BaseRequestProcessor, type RequestType } from "./base-processor.js";
+} from "./request-processor.interfaces";
+import { BaseRequestProcessor, type RequestType } from "./base-processor";
 import { isDialogToolExecutePayload } from "../../../gray-room/src/core/request-processor/gray-room-utils.ts";
-import { normalizeAgentSpuriousRequestAfterPipeline } from "./agent-spurious-request-normalize.js";
-import { readDialogHubLlmResubmitMax } from "../../../gray-room/src/core/request-processor/gray-room-trigger.js";
+import { normalizeAgentSpuriousRequestAfterPipeline } from "./agent-spurious-request-normalize";
+import { readDialogHubLlmResubmitMax } from "../../../gray-room/src/core/request-processor/gray-room-trigger";
 // import { featureManager } from "@a2a/server-features";
 import {
   resolveTransformSchema,
   normalizeContext,
   extractSchemaName,
   resolveResultObject,
-} from "./normalization.js";
-import { tryParseJsonFromLlmText } from "@a2a/server-utils/strip-markdown-json-fence.js";
-import { resolveLlmModelFromContext } from "./llm-model-resolver.js";
+} from "./normalization";
+import { tryParseJsonFromLlmText } from "@a2a/server-utils/strip-markdown-json-fence";
+import { resolveLlmModelFromContext } from "./llm-model-resolver";
 import { requestService } from "@a2a/server-request";
 import { CognitionBase } from "../cognition-base.ts";
 
 import { globalDesignReasoner } from "../hierarchical-design-reasoner.ts";
-import { getPromptsTransformsPath } from './index.js';
+import { getPromptsTransformsPath } from './index';
 import {
   isAgentSchemaName,
   lastAssistantMessageFromContext,
-} from '../../../server-utils/src/agent-utils.js';
+} from '../../../server-utils/src/agent-utils';
 
 export { isDialogToolExecutePayload };
 export { resolveTransformSchema, normalizeContext, extractSchemaName };
@@ -53,7 +53,7 @@ export {
   recoverLlmPromise,
   type LlmCallOptions,
   type LlmCallResult,
-} from "./llm-orchestration.js";
+} from "./llm-orchestration";
 
 // Re-export из response-path
 export {
@@ -62,7 +62,7 @@ export {
   getLlmPromiseId,
   type ResponsePathResult,
   type RecoverDialogOutcome,
-} from "./response-path.js";
+} from "./response-path";
 
 function dialogFailedWithContext(
   ctx: Record<string, unknown>,
@@ -365,7 +365,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
 
   protected async doProcess(request: RequestContext): Promise<ProcessResult> {
     const { promiseId, context, message: requestMessage } = request;
-    const { executeLlmCall } = await import("./llm-orchestration.js");
+    const { executeLlmCall } = await import("./llm-orchestration");
 
     const ctx = normalizeContext(context, requestMessage);
     if (context.session_id) {
@@ -417,7 +417,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
       const existingLlmId = ctx["llmPromiseId"] as string | undefined;
       if (existingLlmId) {
         const { recoverDialogFromLlmPromise } =
-          await import("./response-path.js");
+          await import("./response-path");
         const recoveryOutcome = await recoverDialogFromLlmPromise(
           promiseId,
           ctx,

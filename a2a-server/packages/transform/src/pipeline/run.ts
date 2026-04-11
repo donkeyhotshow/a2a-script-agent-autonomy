@@ -2,13 +2,13 @@
  * Core transform pipeline execution (context + step loop).
  */
 
-import { applyOperation, createDefaultFileSystem } from '../operations.js';
+import { applyOperation, createDefaultFileSystem } from '../operations';
 import type {
   TransformPipeline,
   TransformContext,
   TransformResult,
   TransformOptions,
-} from '../types.js';
+} from '../types';
 
 export async function runTransformPipeline(
   pipeline: TransformPipeline,

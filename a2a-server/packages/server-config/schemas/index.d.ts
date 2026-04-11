@@ -2,10 +2,10 @@
  * Configuration Schemas - Barrel Export
  * All domain-specific schemas + root appConfigSchema.
  */
-export { portConfigSchema, type PortConfig } from './ports.schema.js';
-export { databaseConfigSchema, type DatabaseConfig } from './database.schema.js';
-export { aiConfigSchema, type AIConfig } from './ai.schema.js';
-export { securityConfigSchema, type SecurityConfig } from './security.schema.js';
+export { portConfigSchema, type PortConfig } from './ports.schema';
+export { databaseConfigSchema, type DatabaseConfig } from './database.schema';
+export { aiConfigSchema, type AIConfig } from './ai.schema';
+export { securityConfigSchema, type SecurityConfig } from './security.schema';
 import { z } from 'zod';
 export declare const appConfigSchema: z.ZodObject<{
     ports: z.ZodObject<{
@@ -413,17 +413,17 @@ export declare const appConfigSchema: z.ZodObject<{
     };
 }>;
 export type AppConfig = z.infer<typeof appConfigSchema>;
-export * from './ports.schema.js';
-export * from './database.schema.js';
-export * from './ai.schema.js';
-export * from './security.schema.js';
-export * from './server.schema.js';
-export * from './proxy.schema.js';
-export * from './storage.schema.js';
-export * from './logging.schema.js';
-export * from './rate-limit.schema.js';
-export * from './queue.schema.js';
-export * from './session.schema.js';
-export * from './request-processor.schema.js';
-export { booleanSchema, intSchema, portSchema, urlSchema, minStringSchema, optionalMinStringSchema } from './helpers.js';
+export * from './ports.schema';
+export * from './database.schema';
+export * from './ai.schema';
+export * from './security.schema';
+export * from './server.schema';
+export * from './proxy.schema';
+export * from './storage.schema';
+export * from './logging.schema';
+export * from './rate-limit.schema';
+export * from './queue.schema';
+export * from './session.schema';
+export * from './request-processor.schema';
+export { booleanSchema, intSchema, portSchema, urlSchema, minStringSchema, optionalMinStringSchema } from './helpers';
 //# sourceMappingURL=index.d.ts.map

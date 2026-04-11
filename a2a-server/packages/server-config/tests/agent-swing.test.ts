@@ -4,15 +4,15 @@ const {initAiHubChatPromise} = vi.hoisted(() => ({
     initAiHubChatPromise: vi.fn(),
 }));
 
-vi.mock('../../src/daemon/llm-hub-poll.js', async (importOriginal) => {
-    const actual = await importOriginal<typeof import('../../src/daemon/llm-hub-poll.js')>();
+vi.mock('../../src/daemon/llm-hub-poll', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../../src/daemon/llm-hub-poll')>();
     return {
         ...actual,
         initAiHubChatPromise,
     };
 });
 
-import {AgentSwing} from '../../src/services/core/agent-swing.js';
+import {AgentSwing} from '../../src/services/core/agent-swing';
 
 describe('AgentSwing.compressWithLookahead', () => {
     const swing = new AgentSwing();

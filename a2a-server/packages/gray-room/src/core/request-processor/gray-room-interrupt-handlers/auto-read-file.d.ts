@@ -1,5 +1,5 @@
-import type { InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext } from '../../../transform/types.js';
-import { BaseGrayRoomHandler } from './base-handler.js';
+import type { InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext } from '../../../transform/types';
+import { BaseGrayRoomHandler } from './base-handler';
 /**
  * Handle auto_read_file interrupt
  * Automatically reads a file and adds its content to context

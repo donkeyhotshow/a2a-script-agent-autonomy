@@ -4,8 +4,8 @@
  * <50 lines
  */
 
-import { validateConfig } from './loader.js';
-import type { AppConfig } from './types.js';
+import { validateConfig } from './loader';
+import type { AppConfig } from './types';
 
 export const config: AppConfig = validateConfig();
 

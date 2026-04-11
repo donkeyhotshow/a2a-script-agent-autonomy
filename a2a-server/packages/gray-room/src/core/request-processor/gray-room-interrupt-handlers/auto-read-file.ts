@@ -1,6 +1,6 @@
-import {executeReadFile} from '../../../actions/handlers/file-operations.js';
-import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../transform/types.js';
-import {BaseGrayRoomHandler} from './base-handler.js';
+import {executeReadFile} from '../../../actions/handlers/file-operations';
+import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../transform/types';
+import {BaseGrayRoomHandler} from './base-handler';
 
 /**
  * Handle auto_read_file interrupt

@@ -1,11 +1,12 @@
 #!/usr/bin/env node
 
-import { spawn, execSync } from 'child_process';
+import { spawn, execFileSync, execSync } from 'child_process';
 import net from 'net';
 import http from 'http';
 import { URL } from 'url';
 import fs from 'fs';
 import * as path from 'path';
+import * as os from 'os';
 import { fileURLToPath } from 'url';
 import { reservePort, releasePort } from './port-manager.js';
 
@@ -24,38 +25,38 @@ const SERVICES = {
     restartPolicy: {enabled: false}
   },
 
-  'a2a-ai-hub': {
+  'ai-integration': {
     port: 11434,
     startCmd: 'python scripts/ensure-providers-config.py && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port 11434',
     cwd: 'a2a-ai-hub',
     healthEndpoint: '/health',
     dependencies: ['runbook-status'],
-    logfile: path.join(__dirname, '..', 'logs', 'a2a-ai-hub.log')
+    logfile: path.join(__dirname, '..', 'logs', 'ai-integration.log')
   },
   'a2a-server': {
     port: 3000,
     startCmd: 'npm run dev:no-auth',
     cwd: 'a2a-server',
     healthEndpoint: '/health',
-    dependencies: ['a2a-ai-hub'],
+    dependencies: ['ai-integration'],
     logfile: path.join(__dirname, '..', 'a2a-server', 'logs', 'server.log')
   },
-   'client-api': {
-     port: 3001,
-     startCmd: 'npx tsx src/server/index.ts',
-     cwd: path.join('a2a-client', 'packages', 'sdk'),
-     healthEndpoint: '/api/a2a/projects',
-     dependencies: ['a2a-server'],
-     logfile: path.join(__dirname, '..', 'a2a-client', 'logs', 'client-api.log')
-   },
-   'web-ui': {
-     port: 5173,
-     startCmd: 'npm run dev',
-     cwd: 'a2a-client',
-     healthEndpoint: '/api/a2a/projects',
-     dependencies: ['client-api'],
-     logfile: path.join(__dirname, '..', 'a2a-client', 'logs', 'web-ui.log')
-   }
+  'client-api': {
+    port: 3001,
+    startCmd: 'npx cross-env PORT=3001 WS_PORT=3002 SKIP_AUTH=1 tsx watch src/server/index.ts',
+    cwd: path.join('a2a-client', 'packages', 'sdk'),
+    healthEndpoint: '/api/a2a/projects',
+    dependencies: ['a2a-server'],
+    logfile: path.join(__dirname, '..', 'a2a-client', 'logs', 'client-api.log')
+  },
+  'web-ui': {
+    port: 5173,
+    startCmd: 'npx vite --port 5173',
+    cwd: 'a2a-client',
+    healthEndpoint: '/api/a2a/projects',
+    dependencies: ['client-api'],
+    logfile: path.join(__dirname, '..', 'a2a-client', 'logs', 'web-ui.log')
+  }
 };
 
 const PID_FILE = path.join(__dirname, '..', '.pids.txt');
@@ -92,7 +93,7 @@ function log(message) {
   currentLog(message);
 }
 
-async function isDaemonRunning() {
+function isDaemonRunning() {
   if (!fs.existsSync(DAEMON_PID_FILE)) return false;
 
   const daemonPidStr = fs.readFileSync(DAEMON_PID_FILE, 'utf8').trim();
@@ -106,7 +107,7 @@ async function isDaemonRunning() {
 
   try {
     process.kill(daemonPid, 0);
-    return await isPortOpen(3005);
+    return isPortOpen(3005); // Check status port occupied
   } catch (e) {
     fs.unlinkSync(DAEMON_PID_FILE);
     if (fs.existsSync(LOCK_FILE)) fs.unlinkSync(LOCK_FILE);
@@ -216,14 +217,15 @@ async function handleCommand(cmd, services) {
         stopCommand(services);
         setTimeout(() => startCommand(services), 2000);
         return {status: 'ok', note: 'async'};
-      case 'status': {
-        const statusLines = [];
+      case 'status':
+        const status = [];
+        const oldLog = log;
         const oldCurrentLog = currentLog;
-        currentLog = (msg) => statusLines.push(msg);
+        currentLog = (msg) => status.push(msg);
         showStatus();
         currentLog = oldCurrentLog;
-        return {status: 'ok', data: statusLines};
-      }
+        log = oldLog;
+        return {status: 'ok', data: status};
       case 'shutdown':
         process.exit(0);
         return {status: 'shutting down'};
@@ -265,7 +267,7 @@ function shutdown() {
     releasePort(3005);
   }
   const running = getRunningServices();
-  Object.values(running).forEach(pid => killProcess(pid));
+  Object.keys(running).forEach(pid => killProcess(pid));
   releaseLock();
   if (fs.existsSync(DAEMON_PID_FILE)) fs.unlinkSync(DAEMON_PID_FILE);
   process.exit(0);
@@ -351,12 +353,11 @@ function runDaemon() {
 
   const monitorInt = setInterval(monitorServices, MONITOR_INTERVAL);
 
-  const shutdownWithCleanup = () => { clearInterval(monitorInt); shutdown(); };
-  process.on('SIGTERM', shutdownWithCleanup);
-  process.on('SIGINT', shutdownWithCleanup);
+  process.on('SIGTERM', shutdown);
+  process.on('SIGINT', shutdown);
   process.on('uncaughtException', (e) => {
     log('Uncaught: ' + e.message);
-    shutdownWithCleanup();
+    shutdown();
   });
 
   return true;
@@ -433,16 +434,14 @@ function escapePowerShellSingleQuote(value) {
 function buildPowerShellStartArgs(service) {
   const cwd = path.resolve(__dirname, '..', service.cwd || '.');
   const logfile = path.resolve(service.logfile);
-  const errfile = logfile.replace(/(\.log)?$/, '.err.log');
   const command = service.startCmd;
   const psCommand = `
     $ErrorActionPreference = 'Stop';
     $cwd = '${escapePowerShellSingleQuote(cwd)}';
     $log = '${escapePowerShellSingleQuote(logfile)}';
-    $err = '${escapePowerShellSingleQuote(errfile)}';
     Set-Location -LiteralPath $cwd;
     $args = @('/c', '${escapePowerShellSingleQuote(command)}');
-    $proc = Start-Process -FilePath 'cmd.exe' -ArgumentList $args -WorkingDirectory $cwd -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError $err -PassThru;
+    $proc = Start-Process -FilePath 'cmd.exe' -ArgumentList $args -WorkingDirectory $cwd -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError $log -PassThru;
     Write-Output $proc.Id;
   `;
   return ['powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', psCommand]];
@@ -483,7 +482,6 @@ async function startService(serviceName) {
     const pid = parseInt(output.trim(), 10);
     if (!Number.isInteger(pid) || pid <= 0) {
       log(`✗ ${serviceName} PowerShell wrapper did not return a PID: ${output.trim()}`);
-      return false;
     }
   } else {
     spawn(service.startCmd, { shell: true, stdio: 'inherit', cwd: path.resolve(__dirname, '..', service.cwd || '.') });
@@ -610,11 +608,15 @@ function showStatus() {
 }
 
 async function proxyCommand(command, serviceArgs) {
-  if (!await isDaemonRunning()) throw new Error('Daemon not running');
+  if (!isDaemonRunning()) throw new Error('Daemon not running');
   const res = await sendIPCCommand({cmd: command, services: serviceArgs});
   if (res.error) throw new Error(res.error);
   return res;
 }
+
+// isPortOpen, checkHealth, getRunningServices, savePid, killProcess, startService, stopService, getDependencyOrder, startCommand, stopCommand, showStatus same as previous
+
+// Main CLI same, with updated paths for cd ../a2a-*
 
 const args = process.argv.slice(2);
 const command = args[0];
@@ -622,47 +624,41 @@ const serviceArgs = args.slice(1);
 
 if (command === 'daemon-start') {
   runDaemon();
+} else if (command === 'daemon-stop') {
+  if (isDaemonRunning()) {
+    sendIPCCommand({cmd: 'shutdown'}).catch(e => log('Shutdown proxy error: ' + e.message));
+  } else {
+    log('No daemon running');
+  }
+} else if (command && isDaemonRunning()) {
+  proxyCommand(command, serviceArgs).then(() => {}).catch(e => cliLog('Proxy error: ' + e.message));
 } else {
-  isDaemonRunning().then(daemonRunning => {
-    if (command === 'daemon-stop') {
-      if (daemonRunning) {
-        sendIPCCommand({cmd: 'shutdown'}).catch(e => log('Shutdown proxy error: ' + e.message));
-      } else {
-        log('No daemon running');
-      }
-      return;
-    }
-    if (daemonRunning) {
-      proxyCommand(command, serviceArgs).then(() => {}).catch(e => cliLog('Proxy error: ' + e.message));
-      return;
-    }
-    switch (command) {
-      case 'start':
+  switch (command) {
+    case 'start':
+      startCommandCli(serviceArgs).catch(e => {
+        cliLog('Start failed: ' + e.message);
+        process.exit(1);
+      });
+      break;
+    case 'stop':
+      stopCommand(serviceArgs);
+      break;
+    case 'restart':
+      stopCommand(serviceArgs);
+      setTimeout(() => {
         startCommandCli(serviceArgs).catch(e => {
-          cliLog('Start failed: ' + e.message);
+          cliLog('Restart failed: ' + e.message);
           process.exit(1);
         });
-        break;
-      case 'stop':
-        stopCommand(serviceArgs);
-        break;
-      case 'restart':
-        stopCommand(serviceArgs);
-        setTimeout(() => {
-          startCommandCli(serviceArgs).catch(e => {
-            cliLog('Restart failed: ' + e.message);
-            process.exit(1);
-          });
-        }, 2000);
-        break;
-      case 'status':
-        showStatus();
-        break;
-      default:
-        console.log('Usage: node scripts/runbook-cli.js [daemon-start|daemon-stop|start|stop|restart|status] [services...]');
-        console.log('Services:', Object.keys(SERVICES).join(', '));
-        console.log('Status: curl http://localhost:3005/status');
-    }
-  });
+      }, 2000);
+      break;
+    case 'status':
+      showStatus();
+      break;
+    default:
+      console.log('Usage: node tools/runbook/runbook-cli.js [daemon-start|daemon-stop|start|stop|restart|status] [services...]');
+      console.log('Services:', Object.keys(SERVICES).join(', '));
+      console.log('Status: curl http://localhost:3005/status');
+  }
 }
 

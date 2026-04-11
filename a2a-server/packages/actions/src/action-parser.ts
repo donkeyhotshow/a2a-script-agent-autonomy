@@ -6,9 +6,9 @@
 
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
-import {ActionDefinition, SubAction, ActionContext, DSLDefinition} from './types.js';
-import {tryParseJsonFromLlmText} from '@a2a/server-utils/strip-markdown-json-fence.js';
-import {logger} from '@a2a/server-utils/logger.js';
+import {ActionDefinition, SubAction, ActionContext, DSLDefinition} from './types';
+import {tryParseJsonFromLlmText} from '@a2a/server-utils/strip-markdown-json-fence';
+import {logger} from '@a2a/server-utils/logger';
 
 /** Strip newlines to prevent CWE-117 log injection */
 const sanitizeForLog = (s: string): string => s.replace(/[\n\r]/g, ' ');

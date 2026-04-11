@@ -4,14 +4,14 @@
  * Функции для восстановления stuck dialog requests и управления путями ответа
  */
 
-import {logger} from "@a2a/server-utils/logger.js"';
+import {logger} from "@a2a/server-utils/logger"';
 import {resolveAiHubBaseUrl} from '../../../lib/ai-hub-url.ts';
 import {getPromptsTransformsPath} from '../../../transform/src/index.ts';
 import {resolveLlmPromiseRecovery} from '../../../daemon/src/daemon/llm-hub-poll.ts';
 import {GrayRoomOrchestrator} from '../../../gray-room/src/core/request-processor/gray-room-orchestrator.ts';
-import {readGrayRoomInterruptBudget, shouldUseGrayRoom} from '../../../gray-room/src/core/request-processor/gray-room-trigger.js';
-import {resolveTransformSchema, extractSchemaName} from './normalization.js';
-import type {ProcessResult} from './request-processor.interfaces.js';
+import {readGrayRoomInterruptBudget, shouldUseGrayRoom} from '../../../gray-room/src/core/request-processor/gray-room-trigger';
+import {resolveTransformSchema, extractSchemaName} from './normalization';
+import type {ProcessResult} from './request-processor.interfaces';
 
 /**
  * Тип результата для response path операций (legacy — см. RecoverDialogOutcome)

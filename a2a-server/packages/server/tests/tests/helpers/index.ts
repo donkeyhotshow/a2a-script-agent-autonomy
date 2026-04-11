@@ -2,15 +2,15 @@
  * Test Helpers
  */
 
-import { getTestConfig, type TestConfig } from '../test-config.js';
-import { setupLLMMock, clearLLMResponses } from '../mocks/llm/index.js';
-import { setupMockFetch, getMockFetch } from '../mocks/http/index.js';
-import { setupMockFs, getMockFs } from '../mocks/filesystem/index.js';
+import { getTestConfig, type TestConfig } from '../test-config';
+import { setupLLMMock, clearLLMResponses } from '../mocks/llm/index';
+import { setupMockFetch, getMockFetch } from '../mocks/http/index';
+import { setupMockFs, getMockFs } from '../mocks/filesystem/index';
 
-export { MockA2AServer, createMockServer, commonMockResponses } from './mock-server.js';
-export type { MockServerConfig, MockResponse, RequestRecord } from './mock-server.js';
+export { MockA2AServer, createMockServer, commonMockResponses } from './mock-server';
+export type { MockServerConfig, MockResponse, RequestRecord } from './mock-server';
 
-export { MockA2AClient, createMockClient, commonScenarios, setupMockClient } from './mock-client.js';
+export { MockA2AClient, createMockClient, commonScenarios, setupMockClient } from './mock-client';
 export type { 
     MockClientConfig, 
     ClientRequest, 
@@ -19,11 +19,11 @@ export type {
     InvokeResponse,
     TaskStatusResponse,
     SubscribeResponse 
-} from './mock-client.js';
+} from './mock-client';
 
 // Re-export test config
-export { testConfigs, getTestConfig } from '../test-config.js';
-export type { TestConfig } from '../test-config.js';
+export { testConfigs, getTestConfig } from '../test-config';
+export type { TestConfig } from '../test-config';
 
 /**
  * Setup all mocks based on test configuration

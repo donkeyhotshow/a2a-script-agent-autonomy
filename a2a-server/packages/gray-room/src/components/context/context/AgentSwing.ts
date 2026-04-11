@@ -1,5 +1,5 @@
-import { logger } from "@a2a/server-utils/logger.js""';
-import { ultracontext } from './Ultracontext.js';
+import { logger } from "@a2a/server-utils/logger""';
+import { ultracontext } from './Ultracontext';
 
 export interface BranchResult {
   branchId: string;

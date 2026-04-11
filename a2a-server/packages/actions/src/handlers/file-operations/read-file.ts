@@ -1,9 +1,9 @@
-import {logger} from '../../../utils/logger.js';
+import {logger} from '../../../utils/logger';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import type {ReadFileActionInput, ReadFileActionOutput} from './types.js';
-import {validatePath} from './security.js';
-import {executeAction} from '../../utils.js';
+import type {ReadFileActionInput, ReadFileActionOutput} from './types';
+import {validatePath} from './security';
+import {executeAction} from '../../utils';
 
 export async function executeReadFile(
     input: ReadFileActionInput

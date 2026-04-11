@@ -5,10 +5,10 @@
  */
 
 import { JSONPath } from 'jsonpath-plus';
-import { logger } from "@a2a/server-utils/logger.js"';
-import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence.js';
-import { deepCloneJson } from '../../../lib/deep-clone-json.js';
-import { stringifyForTemplate } from './value-helpers.js';
+import { logger } from "@a2a/server-utils/logger"';
+import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence';
+import { deepCloneJson } from '../../../lib/deep-clone-json';
+import { stringifyForTemplate } from './value-helpers';
 
 /**
  * Query values from an object using JSONPath

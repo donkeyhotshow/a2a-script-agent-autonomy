@@ -5,7 +5,7 @@
  * CPU-only, < 1 ms (synchronous hash on serialised context string).
  */
 import { createHash } from 'node:crypto';
-import type { IntegrityResult } from './types.js';
+import type { IntegrityResult } from './types';
 
 export class ContextValidator {
   private static serialise(context: Record<string, unknown>): string {

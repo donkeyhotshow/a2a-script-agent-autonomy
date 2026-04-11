@@ -14,18 +14,18 @@
 
 import * as path from 'path';
 import * as fs from 'node:fs/promises';
-import { deepCloneJson } from '@a2a/server-utils/deep-clone-json.js';
+import { deepCloneJson } from '@a2a/server-utils/deep-clone-json';
 import {
   query,
   set as jsonPathSet,
   resolveTemplates,
   extractJsonFromMarkdown,
   renderTemplateSimple
-} from './operations/json-path.js';
+} from './operations/json-path';
 import {
   shouldSkipDuplicateUserHistoryAppend,
   truncateToMaxChars,
-} from './operations/value-helpers.js';
+} from './operations/value-helpers';
 import type {
   TransformContext,
   TransformStep,
@@ -35,7 +35,7 @@ import type {
   ParseJsonFromMdOperation,
   RenderMarkdownOperation,
   TruncateSectionOperation,
-} from './types.js';
+} from './types';
 
 import {
   applyPickContext,
@@ -51,12 +51,12 @@ import {
   applyScratchpadOps,
   applyWorkbenchSectionOps,
   applySwitch,
-} from './operations/transform-groups.js';
+} from './operations/transform-groups';
 
 // Re-export from submodules
-export { query, set as jsonPathSet, resolveTemplates, extractJsonFromMarkdown, renderTemplateSimple } from './operations/json-path.js';
-export { shouldSkipDuplicateUserHistoryAppend } from './operations/value-helpers.js';
-export { createDefaultFileSystem } from './operations/transform-groups.js';
+export { query, set as jsonPathSet, resolveTemplates, extractJsonFromMarkdown, renderTemplateSimple } from './operations/json-path';
+export { shouldSkipDuplicateUserHistoryAppend } from './operations/value-helpers';
+export { createDefaultFileSystem } from './operations/transform-groups';
 
 export {
   applyPickContext,

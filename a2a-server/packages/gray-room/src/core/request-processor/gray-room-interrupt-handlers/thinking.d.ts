@@ -1,5 +1,5 @@
-import type { InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext } from '../../../transform/types.js';
-import { BaseGrayRoomHandler } from './base-handler.js';
+import type { InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext } from '../../../transform/types';
+import { BaseGrayRoomHandler } from './base-handler';
 /**
  * Handle thinking interrupt
  * Performs step-by-step reasoning about current task state

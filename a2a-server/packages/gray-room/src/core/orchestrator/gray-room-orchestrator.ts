@@ -1,49 +1,49 @@
 import * as path from "path";
-import { logger } from "@a2a/server-utils/logger.js""";
+import { logger } from "@a2a/server-utils/logger""";
 import {
   runPromptsTransform,
   syncLiveContextHistoryFromResultMessage,
-} from "../../../core/transform/index.js";
+} from "../../../core/transform/index";
 import type {
   GrayRoomControlEnvelope,
   InterruptDirective,
   ServerInterruptTraceEvent,
-} from "../../../core/transform/types.js";
+} from "../../../core/transform/types";
 import {
   mergeGrayRoomSlotIntoContext,
   mergeInterruptTraceIntoContext,
-} from "../../core/transform/interrupt-trace-contract.js";
-import { executeReadFile } from "../../../actions/handlers/file-operations.js";
-import { mergeServerRagPageIntoContext } from "../../../rag/auto-rag-page-server.js";
+} from "../../core/transform/interrupt-trace-contract";
+import { executeReadFile } from "../../../actions/handlers/file-operations";
+import { mergeServerRagPageIntoContext } from "../../../rag/auto-rag-page-server";
 import {
   extractLlmTextFromHubResponseBody,
   initAiHubChatPromise,
   pollReadyThenFetch,
-} from "../../../daemon/llm-hub-poll.js";
-import { BlackRoomOrchestrator } from "../../../black-room/black-room-orchestrator.js";
+} from "../../../daemon/llm-hub-poll";
+import { BlackRoomOrchestrator } from "../../../black-room/black-room-orchestrator";
 import type {
   AlgorithmContext,
   AlgorithmData,
-} from "../../../black-room/types.js";
-import type { ProcessResult } from "./request-processor.interfaces.js";
+} from "../../../black-room/types";
+import type { ProcessResult } from "./request-processor.interfaces";
 import {
   validateExecuteShapeForSchema,
   validateLlmOutputShape,
   validateRouterResultShape,
   shouldEnforceTransformStrictMode,
-} from "./validators/transform-execute-validator.js";
+} from "./validators/transform-execute-validator";
 import {
   resolveExecution,
   resolveHistoryLength,
   toInvokeShapeForPromptsTransform,
-} from "./normalization.js";
+} from "./normalization";
 import {
   grayRoomLlmModelFallback,
   resolveGrayRoomLlmModelFromContext,
-} from "./llm-model-resolver.js";
-import { globalArtifactStore } from "../../artifact-store.js";
-import { DedicatedAnalyzer } from "../../analyzer.js";
-import { globalMcpRegistry } from "../../../mcp/registry.js";
+} from "./llm-model-resolver";
+import { globalArtifactStore } from "../../artifact-store";
+import { DedicatedAnalyzer } from "../../analyzer";
+import { globalMcpRegistry } from "../../../mcp/registry";
 
 // Import trigger detection logic
 import {
@@ -53,7 +53,7 @@ import {
   getConfiguredMaxTurns,
   readGrayRoomInterruptBudget,
   GrayRoomTriggerResult,
-} from "./gray-room-trigger.js";
+} from "./gray-room-trigger";
 
 // Import utilities
 import {
@@ -63,26 +63,26 @@ import {
   GrayRoomOptions,
   type ReviewResult,
   type GrayRoomContext,
-} from "./gray-room-utils.js";
+} from "./gray-room-utils";
 
 // Import interrupt handlers
-import { handleCompressHistory } from "./gray-room-interrupt-handlers/compress-history.js";
-import { handleThinking } from "./gray-room-interrupt-handlers/thinking.js";
-import { handleAutoReadFile } from "./gray-room-interrupt-handlers/auto-read-file.js";
-import { handleAutoRagPage } from "./gray-room-interrupt-handlers/auto-rag-page.js";
-import { handleClarify } from "./gray-room-interrupt-handlers/clarify.js";
-import { handleAlgorithmInvoke } from "./gray-room-interrupt-handlers/algorithm-invoke.js";
-import { globalVisionTester } from "../../../vision-tester.js";
-import { globalRoleRegistry, AgentRole } from "../agent-role-registry.js";
-import { globalSafetyLayer } from "../../../safety-layer.js";
-import { globalIntentGate } from "../../../intent-gate.js";
-import { bugFixer } from "../../../llm/bug-fixer.js";
-import { repoMapService } from "../../../context/repo-map.service.js";
-import { llmService } from "../../llm/llm-service.js";
-import { contextDiscoveryService } from "../../context/context-discovery.service.js";
-import { resolveAiHubBaseUrl } from "../../utils/ai-hub-url.js";
-import { mkdtempOsTmp } from "../../utils/mkdtemp-os-tmp.js";
-import { prepareLlmMessages } from "./llm-orchestration.js";
+import { handleCompressHistory } from "./gray-room-interrupt-handlers/compress-history";
+import { handleThinking } from "./gray-room-interrupt-handlers/thinking";
+import { handleAutoReadFile } from "./gray-room-interrupt-handlers/auto-read-file";
+import { handleAutoRagPage } from "./gray-room-interrupt-handlers/auto-rag-page";
+import { handleClarify } from "./gray-room-interrupt-handlers/clarify";
+import { handleAlgorithmInvoke } from "./gray-room-interrupt-handlers/algorithm-invoke";
+import { globalVisionTester } from "../../../vision-tester";
+import { globalRoleRegistry, AgentRole } from "../agent-role-registry";
+import { globalSafetyLayer } from "../../../safety-layer";
+import { globalIntentGate } from "../../../intent-gate";
+import { bugFixer } from "../../../llm/bug-fixer";
+import { repoMapService } from "../../../context/repo-map.service";
+import { llmService } from "../../llm/llm-service";
+import { contextDiscoveryService } from "../../context/context-discovery.service";
+import { resolveAiHubBaseUrl } from "../../utils/ai-hub-url";
+import { mkdtempOsTmp } from "../../utils/mkdtemp-os-tmp";
+import { prepareLlmMessages } from "./llm-orchestration";
 
 export class GrayRoomOrchestrator {
   private maxInterruptTurns: number;

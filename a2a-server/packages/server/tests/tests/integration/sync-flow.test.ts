@@ -3,7 +3,7 @@
  */
 
 import request from 'supertest';
-import app from '../../src/app.js';
+import app from '../../src/app';
 import {describe, it, expect, beforeAll, afterAll} from 'vitest';
 
 const POLL_INTERVAL_MS = 40;

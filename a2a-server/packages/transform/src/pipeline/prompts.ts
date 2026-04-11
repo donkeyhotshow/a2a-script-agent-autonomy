@@ -5,16 +5,16 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { logger } from "@a2a/server-utils/logger.js"';
-import { deepCloneJson } from '@a2a/server-utils/deep-clone-json.js';
-import { pathIsAccessible } from '@a2a/server-utils/fs-access.js';
-import { prepareInvokePayloadForLlmPrompt } from '../materialize-result-for-llm.js';
-import { attachFlowControlHintToInvokePayload } from '../../prompts/flow-control-hints.js';
-import { attachWorkbenchForLlmPrompt } from '../workbench-normalize.js';
-import { loadTransformPipeline } from './load.js';
-import { runTransformPipeline } from './run.js';
-import type { TransformPipeline, TransformOptions, TransformResult } from '../types.js';
-import { ALLOWED_TRANSFORM_TYPES } from '../types.js';
+import { logger } from "@a2a/server-utils/logger"';
+import { deepCloneJson } from '@a2a/server-utils/deep-clone-json';
+import { pathIsAccessible } from '@a2a/server-utils/fs-access';
+import { prepareInvokePayloadForLlmPrompt } from '../materialize-result-for-llm';
+import { attachFlowControlHintToInvokePayload } from '../../prompts/flow-control-hints';
+import { attachWorkbenchForLlmPrompt } from '../workbench-normalize';
+import { loadTransformPipeline } from './load';
+import { runTransformPipeline } from './run';
+import type { TransformPipeline, TransformOptions, TransformResult } from '../types';
+import { ALLOWED_TRANSFORM_TYPES } from '../types';
 
 /**
  * Schema name → template file override. Convention: `{schema}-request.md`.

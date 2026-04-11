@@ -3,7 +3,7 @@
  * Uses config for health checks. Routes → services only.
  */
 
-import {checkDatabaseHealth} from '../../config/database.js';
+import {checkDatabaseHealth} from '../../config/database';
 
 export interface HealthStatus {
     database: { status: 'healthy' | 'unhealthy'; latency?: number; error?: string };

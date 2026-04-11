@@ -1,7 +1,7 @@
 import * as ts from "typescript";
 import { promises as fsPromises } from "node:fs";
 import * as path from "path";
-import { logger } from "@a2a/server-utils/logger.js""';
+import { logger } from "@a2a/server-utils/logger""';
 
 export interface ContextVersion {
   versionId: number;
@@ -110,7 +110,7 @@ export class UltraContextService {
 
     for (const chunk of chunks) {
       const tsJsFiles = chunk.filter(
-        (file) => file.endsWith(".ts") || file.endsWith(".js"),
+        (file) => file.endsWith(".ts") || file.endsWith(""),
       );
       const chunkSigs = await Promise.all(
         tsJsFiles.map((file) => this.extractSignatures(file)),

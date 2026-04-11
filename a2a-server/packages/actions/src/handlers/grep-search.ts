@@ -4,10 +4,10 @@
  * Handles grep-search action for text search with regex support.
  */
 
-import {logger} from '../../../utils/logger.js';
+import {logger} from '../../../utils/logger';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import {validatePath} from './file-operations/security.js';
+import {validatePath} from './file-operations/security';
 
 export interface GrepSearchInput {
     pattern: string;

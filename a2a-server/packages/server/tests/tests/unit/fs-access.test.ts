@@ -10,7 +10,7 @@ vi.mock('node:fs/promises', async (importOriginal) => {
 import {
     pathIsAccessible,
     timestampedBackupPath,
-} from '../../src/utils/fs-access.js';
+} from '../../src/utils/fs-access';
 
 describe('pathIsAccessible', () => {
     beforeEach(() => {

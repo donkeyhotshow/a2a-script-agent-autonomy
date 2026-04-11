@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
-import {normalizeAgentSpuriousRequestAfterPipeline} from '../../src/services/core/request-processor/agent-spurious-request-normalize.js';
-import type {ProcessResult} from '../../src/services/core/request-processor/request-processor.interfaces.js';
+import {normalizeAgentSpuriousRequestAfterPipeline} from '../../src/services/core/request-processor/agent-spurious-request-normalize';
+import type {ProcessResult} from '../../src/services/core/request-processor/request-processor.interfaces';
 
 describe('normalizeAgentSpuriousRequestAfterPipeline', () => {
     it('leaves first agent request (single assistant) unchanged', () => {

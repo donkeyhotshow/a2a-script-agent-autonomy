@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
 import * as fs from 'node:fs/promises';
-import {mkdtempOsTmp} from '../../src/utils/mkdtemp-os-tmp.js';
+import {mkdtempOsTmp} from '../../src/utils/mkdtemp-os-tmp';
 
 describe('mkdtempOsTmp', () => {
     it('creates a directory under OS tmp with given prefix', async () => {

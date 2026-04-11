@@ -4,10 +4,10 @@
  * Minimal action handlers for simulation processing.
  */
 
-import {logger} from '@a2a/server-utils/logger.js';
-import * as handlers from './handlers/index.js';
-import {SkillEvolver} from '../../server/src/skill-evolver.js';
-import { ActionType, VALID_ACTION_TYPES_SET } from './constants/action-types.js';
+import {logger} from '@a2a/server-utils/logger';
+import * as handlers from './handlers/index';
+import {SkillEvolver} from '../../server/src/skill-evolver';
+import { ActionType, VALID_ACTION_TYPES_SET } from './constants/action-types';
 import {BaseRegistry} from './base/base-registry.ts';
 import {handleError} from './utils/error-handler.ts';
 import { createSingleton } from './utils/singleton.ts';

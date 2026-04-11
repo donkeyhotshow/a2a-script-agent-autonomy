@@ -3,7 +3,7 @@
  */
 
 import { z } from 'zod';
-import { booleanSchema, intSchema } from './helpers.js';
+import { booleanSchema, intSchema } from './helpers';
 
 export const proxyConfigSchema = z.object({
   proxyHost: z.string().default('0.0.0.0'),

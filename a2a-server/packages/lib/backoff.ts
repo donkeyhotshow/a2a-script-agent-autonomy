@@ -10,7 +10,7 @@
  * - adaptive-polling.ts - adaptive polling
  */
 
-import { logger } from './logger.js';
+import { logger } from './logger';
 
 // Re-export from retry.ts
 export {
@@ -27,7 +27,7 @@ export {
     RetryOptions,
     backoffDelay,
     withRetry
-} from './retry.js';
+} from './retry';
 
 // Re-export from circuit-breaker.ts
 export {
@@ -37,14 +37,14 @@ export {
     CircuitBreaker,
     CircuitBreakerOpenError,
     withCircuitBreaker
-} from './circuit-breaker.js';
+} from './circuit-breaker';
 
 // Re-export from adaptive-polling.ts
 export {
     AdaptivePollingOptions,
     DEFAULT_ADAPTIVE_POLLING,
     AdaptivePolling
-} from './adaptive-polling.js';
+} from './adaptive-polling';
 
 // ===========================================
 // Batch Processing with Backoff (kept here due to dependency on retry.ts)
@@ -55,7 +55,7 @@ export interface BatchProcessorOptions<T, R> {
     processor: (item: T) => Promise<R>;
     batchSize: number;
     concurrency: number;
-    backoff?: Partial<import('./retry.js').BackoffOptions>;
+    backoff?: Partial<import('./retry').BackoffOptions>;
     onBatchStart?: (batch: T[], index: number) => void;
     onBatchComplete?: (batch: T[], results: R[], index: number) => void;
     onBatchError?: (batch: T[], error: Error, index: number) => void;
@@ -83,7 +83,7 @@ export async function processBatchWithBackoff<T, R>(
     });
     
     // Import retryWithBackoff dynamically to avoid circular dependency
-    const { retryWithBackoff } = await import('./retry.js');
+    const { retryWithBackoff } = await import('./retry');
     
     // Process batches with concurrency limit
     for (let i = 0; i < batches.length; i += concurrency) {
@@ -130,7 +130,7 @@ export async function processBatchWithBackoff<T, R>(
 // Metrics
 // ===========================================
 
-const globalMetrics: import('./circuit-breaker.js').RetryMetrics = {
+const globalMetrics: import('./circuit-breaker').RetryMetrics = {
     totalAttempts: 0,
     successfulRetries: 0,
     failedRetries: 0,
@@ -151,7 +151,7 @@ export function recordRetryAttempt(success: boolean, delay: number): void {
     globalMetrics.averageDelay = totalDelay / globalMetrics.totalAttempts;
 }
 
-export function getGlobalRetryMetrics(): import('./circuit-breaker.js').RetryMetrics {
+export function getGlobalRetryMetrics(): import('./circuit-breaker').RetryMetrics {
     return { ...globalMetrics };
 }
 

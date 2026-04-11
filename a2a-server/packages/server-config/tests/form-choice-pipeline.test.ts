@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { runFormChoicePipeline } from '../../src/services/core/request-processor/form-choice-pipeline.js';
+import { runFormChoicePipeline } from '../../src/services/core/request-processor/form-choice-pipeline';
 
 describe('form-choice pipeline', () => {
     it('routes agent to ai_action_ready', async () => {

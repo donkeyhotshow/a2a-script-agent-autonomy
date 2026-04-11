@@ -1,11 +1,11 @@
-import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
+import { createArtifactWriteInput, globalArtifactStore } from './artifact-store';
 import { promises as fs } from 'node:fs';
 import { join } from 'path';
-import { logger } from "@a2a/server-utils/logger.js""';
+import { logger } from "@a2a/server-utils/logger""';
 
 export interface RepoKnowledgePrior {
   topic: string;
-  tech_stack: string[];           // ['Next.js', 'TypeScript', 'Redis']
+  tech_stack: string[];           // ['Next', 'TypeScript', 'Redis']
   known_patterns: string[];       // ['singleton service', 'event-sourcing']
   known_anti_patterns: string[];  // ['boolean soup', 'direct main push']
   common_failure_modes: string[]; // ['context overflow', 'loop escalation']

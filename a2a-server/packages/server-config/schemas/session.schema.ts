@@ -3,7 +3,7 @@
  */
 
 import { z } from 'zod';
-import { intSchema } from './helpers.js';
+import { intSchema } from './helpers';
 
 export const sessionConfigSchema = z.object({
   timeoutMs: intSchema(60000, 86400000, 3600000),

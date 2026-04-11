@@ -1,11 +1,11 @@
-import {logger} from '../../../utils/logger.js';
-import {pathIsAccessible, timestampedBackupPath} from '../../../utils/fs-access.js';
+import {logger} from '../../../utils/logger';
+import {pathIsAccessible, timestampedBackupPath} from '../../../utils/fs-access';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import type {WriteFileActionInput, WriteFileActionOutput} from './types.js';
-import {validatePath} from './security.js';
-import {SWEVerifier} from '../../services/core/swe-verifier.js';
-import {executeAction} from '../../utils.js';
+import type {WriteFileActionInput, WriteFileActionOutput} from './types';
+import {validatePath} from './security';
+import {SWEVerifier} from '../../services/core/swe-verifier';
+import {executeAction} from '../../utils';
 
 export async function executeWriteFile(
     input: WriteFileActionInput

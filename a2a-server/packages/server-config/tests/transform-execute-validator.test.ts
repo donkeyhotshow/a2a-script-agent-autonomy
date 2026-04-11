@@ -9,7 +9,7 @@ import {
     validateResultShape,
     validateRouterResultShape,
     validateLlmOutputShape,
-} from '../../src/services/core/request-processor/validators/transform-execute-validator.js';
+} from '../../src/services/core/request-processor/validators/transform-execute-validator';
 
 describe('validateDialogExecuteShape', () => {
     it('accepts chat shape with message and form', () => {

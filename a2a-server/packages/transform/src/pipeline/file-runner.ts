@@ -3,9 +3,9 @@
  */
 
 import * as path from 'path';
-import { loadTransformPipeline } from './load.js';
-import { runTransformPipeline } from './run.js';
-import type { TransformOptions, TransformResult } from '../types.js';
+import { loadTransformPipeline } from './load';
+import { runTransformPipeline } from './run';
+import type { TransformOptions, TransformResult } from '../types';
 
 export async function runTransformPipelineFromFile(
   pipelinePath: string,

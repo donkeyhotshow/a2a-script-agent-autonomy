@@ -8,8 +8,8 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { agentRegistry, type AgentRegistration } from '../../services/registry-v2.js';
-import { logger } from "@a2a/server-utils/logger.js";
+import { agentRegistry, type AgentRegistration } from '../../services/registry-v2';
+import { logger } from "@a2a/server-utils/logger";
 
 const router = Router();
 

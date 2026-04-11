@@ -1,6 +1,6 @@
-import { logger } from '@a2a/server-utils/logger.js';
-import type { ServerInterruptTraceEvent } from "../../transform/types.js";
-import { globalArtifactStore } from "../core/artifact-store.js";
+import { logger } from '@a2a/server-utils/logger';
+import type { ServerInterruptTraceEvent } from "../../transform/types";
+import { globalArtifactStore } from "../core/artifact-store";
 
 export class ProgressiveRetriever {
   async retrieve(

@@ -1,10 +1,10 @@
 import * as path from 'path';
-import {executeReadFile} from '../../actions/handlers/file-operations.js';
-import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
+import {executeReadFile} from '../../actions/handlers/file-operations';
+import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server';
 import {mergeGrayRoomSlotIntoContext, mergeInterruptTraceIntoContext} from '../../../../packages/transform/src/interrupt-trace-contract.ts';
 import {runPromptsTransform} from '../../../packages/transform/src/index.ts';
 import type {GrayRoomControlEnvelope, InterruptDirective, ServerInterruptTraceEvent} from '../../../packages/transform/src/types.ts';
-import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver.js';
+import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver';
 
 /**
  * `execution` may appear on the invoke context root or under `context.execution` (nested envelope).

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   SandboxViolationError,
   validateSkillToolCodeForDeploy,
-} from '../../src/api/tools-evolve-sandbox.js';
+} from '../../src/api/tools-evolve-sandbox';
 
 const VALID_SKILL = `export const skill = {
   name: 'echo',

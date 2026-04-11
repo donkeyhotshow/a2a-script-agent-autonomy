@@ -5,9 +5,9 @@
  */
 
 import { z } from "zod";
-import { appConfigSchema } from "./schema.js";
-import { RawConfig, mapEnvironmentVariables } from "./env-mapper.js";
-import type { AppConfig } from "./types.js";
+import { appConfigSchema } from "./schema";
+import { RawConfig, mapEnvironmentVariables } from "./env-mapper";
+import type { AppConfig } from "./types";
 import {
   formatValidationErrors,
   validateConfig,
@@ -16,6 +16,6 @@ import {
   validateDatabase,
   validateSecurity,
   validateAIHub,
-} from "./config-validator.js";
+} from "./config-validator";
 
 // Individual validators are now imported from config-validator.js above

@@ -3,10 +3,10 @@ import Ajv, { ValidateFunction } from "ajv";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { invoke } from '../../../services/src/utils/invoke.service.js';
-import requestsRouter from "./requests.routes.js";
-import type { FileBlock } from "../types/index.js";
-import { logger } from "../../lib/logger.js";
+import { invoke } from '../../../services/src/utils/invoke.service';
+import requestsRouter from "./requests.routes";
+import type { FileBlock } from "../types/index";
+import { logger } from "../../lib/logger";
 import { validateInvokeRequest } from "@a2a-server/protocol";
 
 const ajv = new Ajv({ strict: false, allErrors: true, validateFormats: false });

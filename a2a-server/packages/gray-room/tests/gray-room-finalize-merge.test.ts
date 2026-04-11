@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {mergeGrayRoomFinalizeInnerContext} from '../src/services/core/request-processor/gray-room-utils.js';
+import {mergeGrayRoomFinalizeInnerContext} from '../src/services/core/request-processor/gray-room-utils';
 
 describe('mergeGrayRoomFinalizeInnerContext', () => {
     it('preserves workbench.sections and merges clarify into slots', () => {

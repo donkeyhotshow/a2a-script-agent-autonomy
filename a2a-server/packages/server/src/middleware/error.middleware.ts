@@ -1,7 +1,7 @@
 import {Request, Response, NextFunction} from 'express';
-import {logger} from '../../lib/logger.js';
-import {ApiResponse} from '../types/index.js';
-import {AppError} from '../types/errors.js';
+import {logger} from '../../lib/logger';
+import {ApiResponse} from '../types/index';
+import {AppError} from '../types/errors';
 
 export {AppError};
 

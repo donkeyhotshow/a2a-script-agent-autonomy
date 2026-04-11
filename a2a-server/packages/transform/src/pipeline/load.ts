@@ -4,8 +4,8 @@
 
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
-import type { TransformPipeline } from '../types.js';
-import { ALLOWED_TRANSFORM_TYPES } from '../types.js';
+import type { TransformPipeline } from '../types';
+import { ALLOWED_TRANSFORM_TYPES } from '../types';
 
 /**
  * Load pipeline JSON from disk (file or simulation dir).

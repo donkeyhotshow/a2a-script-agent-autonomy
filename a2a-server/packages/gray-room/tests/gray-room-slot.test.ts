@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
-import {mergeGrayRoomSlotIntoContext} from '../src/transform/interrupt-trace-contract.js';
-import type {GrayRoomControlEnvelope} from '../src/transform/types.js';
+import {mergeGrayRoomSlotIntoContext} from '../src/transform/interrupt-trace-contract';
+import type {GrayRoomControlEnvelope} from '../src/transform/types';
 
 describe('mergeGrayRoomSlotIntoContext', () => {
     it('merges grayRoom under workbench.slots and preserves interruptTrace', () => {

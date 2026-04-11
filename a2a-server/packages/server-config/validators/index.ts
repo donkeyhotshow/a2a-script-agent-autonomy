@@ -2,6 +2,6 @@
  * Validators Barrel
  */
 
-export * from './ports.js';
-export * from './database.js';
+export * from './ports';
+export * from './database';
 // add others

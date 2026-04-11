@@ -156,7 +156,7 @@ describe('File Block Parser', () => {
         });
 
         it('should extract .js extension', () => {
-            expect(fileBlockParser.getFileExtension('src/app.js')).toBe('js');
+            expect(fileBlockParser.getFileExtension('src/app')).toBe('js');
         });
 
         it('should extract .vue extension', () => {

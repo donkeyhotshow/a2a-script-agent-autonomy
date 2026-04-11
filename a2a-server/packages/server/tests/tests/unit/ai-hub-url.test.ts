@@ -5,7 +5,7 @@ import {
     resolveAiHubBaseUrl,
     resolveAiHubBaseUrlWithModuleEnv,
     resolveEnvOrDefaultBaseUrl,
-} from '../../src/utils/ai-hub-url.js';
+} from '../../src/utils/ai-hub-url';
 
 describe('normalizeHttpBaseUrl', () => {
     it('trims and strips one trailing slash', () => {

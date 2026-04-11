@@ -1,13 +1,13 @@
 import { Queue, Worker } from "bullmq";
-import { logger } from "./logger.js";
+import { logger } from "./logger";
 import {
   GrayRoomConfig,
   GrayRoomContext,
   GrayRoomTask,
   GrayRoomTaskResult,
   GrayRoomTrigger,
-} from "./types.js";
-import { GrayRoomOrchestrator } from "./orchestrator.js";
+} from "./types";
+import { GrayRoomOrchestrator } from "./orchestrator";
 
 export class GrayRoomManager {
   private config: GrayRoomConfig;

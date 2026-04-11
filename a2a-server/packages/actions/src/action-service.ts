@@ -5,10 +5,10 @@
  */
 
 import * as path from 'path';
-import { ActionDefinition, ActionMatch, ActionOutcome, ExecutionState, SubAction } from './types.js';
-import { ActionRegistry, actionRegistry } from './action-registry.js';
+import { ActionDefinition, ActionMatch, ActionOutcome, ExecutionState, SubAction } from './types';
+import { ActionRegistry, actionRegistry } from './action-registry';
 import { ActionExecutor, StepResult } from './action-executor.ts';
-import { logger } from '../../lib/logger.js';
+import { logger } from '../../lib/logger';
 import { createSingleton } from './utils/singleton.ts';
 
 /**

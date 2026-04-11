@@ -4,8 +4,8 @@
  * Callers pass a clone if the original invoke payload must stay unchanged.
  */
 
-import { deepCloneJson } from '@a2a/server-utils/deep-clone-json.js';
-import { toInvokeShapeForPromptsTransform } from '@a2a/server/normalization.js';
+import { deepCloneJson } from '@a2a/server-utils/deep-clone-json';
+import { toInvokeShapeForPromptsTransform } from '@a2a/server/normalization';
 
 const MAX_TOOL_SUMMARY = 4000;
 

@@ -2,7 +2,7 @@ import {describe, it, expect} from 'vitest';
 import {
     resolveLlmModelFromContext,
     resolveGrayRoomLlmModelFromContext,
-} from '../../src/services/core/request-processor/llm-model-resolver.js';
+} from '../../src/services/core/request-processor/llm-model-resolver';
 
 describe('resolveLlmModelFromContext', () => {
     it('uses context llmModel when set', () => {

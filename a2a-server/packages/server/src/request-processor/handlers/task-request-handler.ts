@@ -4,7 +4,7 @@
  * Handles processing of new task requests, proposing actions
  */
 
-import {logger} from "@a2a/server-utils/logger.js"';
+import {logger} from "@a2a/server-utils/logger"';
 import {actionProcessor} from '../../../../actions/src/action-processor.ts';
 import {actionRegistry} from '../../../../actions/src/action-registry.ts';
 import type {ActionDefinition} from '../../../../actions/src/types.ts';
@@ -12,9 +12,9 @@ import type {
     RequestContext,
     ProcessResult,
     ProcessOutcome,
-} from '../request-processor.interfaces.js';
+} from '../request-processor.interfaces';
 import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../../../../server-config/router-static.ts';
-import {dialogRequestProcessor} from '../dialog-request-processor.js';
+import {dialogRequestProcessor} from '../dialog-request-processor';
 
 /**
  * Parse task text from various context formats

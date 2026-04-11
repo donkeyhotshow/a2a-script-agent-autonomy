@@ -13,10 +13,10 @@
 
 import * as path from 'path';
 import * as fs from 'node:fs/promises';
-import { logger } from "@a2a/server-utils/logger.js"';
-import { pathIsAccessible } from '@a2a/server-utils/fs-access.js';
-import { deepCloneJson } from '@a2a/server-utils/deep-clone-json.js';
-import {query, set as jsonPathSet} from './json-path.js';
+import { logger } from "@a2a/server-utils/logger"';
+import { pathIsAccessible } from '@a2a/server-utils/fs-access';
+import { deepCloneJson } from '@a2a/server-utils/deep-clone-json';
+import {query, set as jsonPathSet} from './json-path';
 import type {
   TransformContext,
   TransformStep,
@@ -35,8 +35,8 @@ import type {
   ApplyWorkbenchSectionOpsOperation,
   SwitchOperation,
   ScratchpadOpCommand
-} from '../types.js';
-import {SERVER_OWNED_WORKBENCH_SLOT_KEYS} from '../interrupt-trace-contract.js';
+} from '../types';
+import {SERVER_OWNED_WORKBENCH_SLOT_KEYS} from '../interrupt-trace-contract';
 
 /**
  * pick-context — keep only specified fields under context, drop the rest.
@@ -479,7 +479,7 @@ export async function applySwitch(
 }
 
 // Re-export applyOperation from main module for recursive calls
-import { applyOperation as mainApplyOperation } from '../operations.js';
+import { applyOperation as mainApplyOperation } from '../operations';
 async function applyOperationFromGroups(operation: TransformStep, context: TransformContext): Promise<void> {
   // This will be resolved at runtime to avoid circular dependency
   await mainApplyOperation(operation, context);

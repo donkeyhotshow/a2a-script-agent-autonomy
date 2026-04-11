@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { routerStatic, LLM_PIPELINE_ACTIONS, ACTION_TO_SCHEMA, buildRouterForm } from '../../src/config/router-static.js';
+import { routerStatic, LLM_PIPELINE_ACTIONS, ACTION_TO_SCHEMA, buildRouterForm } from '../../src/config/router-static';
 
 describe('router-static-choices.json (T007)', () => {
     it('exposes llm pipeline actions and descriptions on static tail', () => {

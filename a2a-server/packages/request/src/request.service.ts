@@ -5,15 +5,15 @@
 
 import * as path from 'path';
 import { randomUUID } from 'crypto';
-import {logger} from './logger.js';
-import {RequestFileStorage} from './request-file-storage.js';
-import {sanitizeRequestResultForStorage} from './client-visible-context.js';
+import {logger} from './logger';
+import {RequestFileStorage} from './request-file-storage';
+import {sanitizeRequestResultForStorage} from './client-visible-context';
 
 /** Re-export for tests and callers; implementation lives in `utils/errors.ts`. */
 export {
     CLIENT_SAFE_PROCESSING_ERROR,
     sanitizeErrorMessage as humanizeUpstreamErrorMessage,
-} from './errors-inline.js';
+} from './errors-inline';
 
 export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 

@@ -3,7 +3,7 @@
  */
 
 import { z } from 'zod';
-import { intSchema } from './helpers.js';
+import { intSchema } from './helpers';
 
 export const storageConfigSchema = z.object({
   gitSshKeyPath: z.string().default('./ssh_keys'),

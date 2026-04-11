@@ -1,8 +1,8 @@
 import { execFile } from 'node:child_process';
-import { config, isDevelopment } from '../../../server-config/index.js';
+import { config, isDevelopment } from '../../../server-config/index';
 import path from 'path';
 import { NodeVM } from 'vm2';
-import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
+import { createArtifactWriteInput, globalArtifactStore } from './artifact-store';
 
 export interface VerificationResult {
   file_path: string;
@@ -57,7 +57,7 @@ export class SWEVerifier {
         zeroStagePassed = false;
         errors.push(`JSON parsing error: ${(e as Error).message}`);
       }
-    } else if (ext === '.js') {
+    } else if (ext === '') {
       try {
         const vm = new NodeVM({
           console: 'off',

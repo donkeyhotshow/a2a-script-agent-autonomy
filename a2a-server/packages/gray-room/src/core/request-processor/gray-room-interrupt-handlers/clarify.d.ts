@@ -1,5 +1,5 @@
-import type { InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext } from '../../../transform/types.js';
-import { BaseGrayRoomHandler } from './base-handler.js';
+import type { InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext } from '../../../transform/types';
+import { BaseGrayRoomHandler } from './base-handler';
 /**
  * Handle clarify interrupt
  * Adds clarification data to workbench slots

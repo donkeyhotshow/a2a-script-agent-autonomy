@@ -16,7 +16,7 @@ import type {
     SearchResult,
     ApiResponse,
     PaginatedResponse,
-} from '../../src/types/index.js';
+} from '../../src/types/index';
 
 describe('Types', () => {
     describe('ContextBlock', () => {

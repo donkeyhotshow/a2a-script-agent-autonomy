@@ -5,14 +5,14 @@
  * Handles interrupt processing after LLM calls.
  */
 
-import { FeatureAction, FeatureEvent } from "../index.js";
-import { GrayRoomOrchestrator } from "../../../../packages/gray-room/src/core/request-processor/gray-room-orchestrator.js";
+import { FeatureAction, FeatureEvent } from "../index";
+import { GrayRoomOrchestrator } from "../../../../packages/gray-room/src/core/request-processor/gray-room-orchestrator";
 import {
   readGrayRoomInterruptBudget,
   shouldUseGrayRoom,
-} from "../../../../packages/gray-room/src/core/request-processor/gray-room-trigger.js";
-import { getPromptsTransformsPath } from "../../../../packages/transform/index.js";
-import { features } from "../../../../packages/config/index.js";
+} from "../../../../packages/gray-room/src/core/request-processor/gray-room-trigger";
+import { getPromptsTransformsPath } from "../../../../packages/transform/index";
+import { features } from "../../../../packages/config/index";
 
 export class GrayRoomFeature implements FeatureAction {
   name = "gray-room";

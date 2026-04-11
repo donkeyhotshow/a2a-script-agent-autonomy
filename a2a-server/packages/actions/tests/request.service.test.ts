@@ -7,9 +7,9 @@ import {describe, it, expect, vi} from 'vitest';
 import {
     CLIENT_SAFE_PROCESSING_ERROR,
     humanizeUpstreamErrorMessage,
-} from '../../src/services/core/request/request.service.js';
+} from '../../src/services/core/request/request.service';
 
-vi.mock('../../src/utils/logger.js', () => ({
+vi.mock('../../src/utils/logger', () => ({
     logger: {
         info: vi.fn(),
         error: vi.fn(),

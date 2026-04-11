@@ -3,7 +3,7 @@
  */
 
 import { z } from 'zod';
-import { booleanSchema, minStringSchema, optionalMinStringSchema } from './helpers.js';
+import { booleanSchema, minStringSchema, optionalMinStringSchema } from './helpers';
 
 export const securityConfigSchema = z.object({
   jwtSecret: minStringSchema(32),

@@ -11,16 +11,16 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { logger } from "@a2a/server-utils/logger.js""';
-import { resolveAiHubBaseUrl } from '../../lib/ai-hub-url.js';
-import { fetchAiHubChatJson } from '../../lib/ai-hub-chat-sync.js';
-import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence.js';
+import { logger } from "@a2a/server-utils/logger""';
+import { resolveAiHubBaseUrl } from '../../lib/ai-hub-url';
+import { fetchAiHubChatJson } from '../../lib/ai-hub-chat-sync';
+import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence';
 import {
   ArtifactStore,
   createArtifactWriteInput,
   type StoredArtifact,
-} from '../core/artifact-store.js';
-import type { ReasoningChain } from '../core/cognitive-engine.js';
+} from '../core/artifact-store';
+import type { ReasoningChain } from '../core/cognitive-engine';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 

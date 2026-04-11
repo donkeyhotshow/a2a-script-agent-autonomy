@@ -4,7 +4,7 @@ import {
     parseActionFromMarkdown,
     parsePrimitive,
     parseSubAction,
-} from '../../src/actions/action-parser.js';
+} from '../../src/actions/action-parser';
 
 describe('parsePrimitive', () => {
     it('parses integers and floats', () => {

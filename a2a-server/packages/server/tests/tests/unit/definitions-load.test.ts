@@ -4,8 +4,8 @@
 
 import {describe, it, expect} from 'vitest';
 import path from 'path';
-import {parseAllActionsFromDirectory} from '../../src/actions/action-parser.js';
-import {AUTO_AI_ACTION_IDS} from '../../../packages/actions/src/definitions/auto-ai-index.js';
+import {parseAllActionsFromDirectory} from '../../src/actions/action-parser';
+import {AUTO_AI_ACTION_IDS} from '../../../packages/actions/src/definitions/auto-ai-index';
 
 const DEFINITIONS_DIR = path.resolve(process.cwd(), 'packages/actions/src/definitions');
 

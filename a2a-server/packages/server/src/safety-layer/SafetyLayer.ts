@@ -15,11 +15,11 @@
  *                     → SafetyLayer.intercept()  ← YOU ARE HERE
  *                     → applyInterrupt()          (only when decision === 'continue')
  */
-import { LoopDetector } from './LoopDetector.js';
-import { ContextValidator } from './ContextValidator.js';
-import { ConfidenceTracer } from './ConfidenceTracer.js';
-import type { LOOP_SIGNAL, CONFIDENCE_TRACE, IntegrityResult, WAITING_STATE, SafetyTurn } from './types.js';
-import { globalEventBus } from '../event-bus.js';
+import { LoopDetector } from './LoopDetector';
+import { ContextValidator } from './ContextValidator';
+import { ConfidenceTracer } from './ConfidenceTracer';
+import type { LOOP_SIGNAL, CONFIDENCE_TRACE, IntegrityResult, WAITING_STATE, SafetyTurn } from './types';
+import { globalEventBus } from '../event-bus';
 
 export type InterceptDecision =
   | { decision: 'continue' }

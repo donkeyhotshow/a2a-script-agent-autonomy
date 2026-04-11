@@ -1,5 +1,5 @@
 import {afterEach, describe, expect, it, vi} from 'vitest';
-import {fetchAiHubChatJson} from '../../src/utils/ai-hub-chat-sync.js';
+import {fetchAiHubChatJson} from '../../src/utils/ai-hub-chat-sync';
 
 describe('fetchAiHubChatJson', () => {
     afterEach(() => {
