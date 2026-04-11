@@ -10,7 +10,7 @@
  * - response-path.ts - обработка путей ответа
  */
 
-import { logger } from "@a2a/server-utils/logger"";
+import { logger } from "@a2a/server-utils/logger";
 import { resolveAiHubBaseUrl } from '../../../lib/ai-hub-url';
 import type { RequestContextBlock } from "@a2a/server-protocol";
 import type {

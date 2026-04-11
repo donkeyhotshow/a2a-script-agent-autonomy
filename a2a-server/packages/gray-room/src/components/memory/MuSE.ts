@@ -1,4 +1,4 @@
-import { logger } from "@a2a/server-utils/logger""';
+import { logger } from "@a2a/server-utils/logger";
 
 export interface Experience {
   taskId: string;

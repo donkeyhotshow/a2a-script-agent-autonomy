@@ -4,7 +4,7 @@
  * and loop. Replace with a neutral in-flight step + `execute.message`.
  */
 
-import {logger} from "@a2a/server-utils/logger"';
+import {logger} from "@a2a/server-utils/logger";
 import type {ProcessResult} from './request-processor.interfaces';
 import type {RequestContextBlock} from '../../types/index';
 import {isAgentSchemaName, lastAssistantMessageFromContext} from '../../../lib/agent-utils.ts';

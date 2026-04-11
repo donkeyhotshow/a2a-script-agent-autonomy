@@ -4,7 +4,7 @@
  * Handles processing of step results from executed steps
  */
 
-import {logger} from "@a2a/server-utils/logger"';
+import {logger} from "@a2a/server-utils/logger";
 import {actionProcessor} from '../../../../actions/src/action-processor.ts';
 import type {
     RequestContext,

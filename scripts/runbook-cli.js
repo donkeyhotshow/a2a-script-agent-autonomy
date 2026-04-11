@@ -457,32 +457,19 @@ async function startService(serviceName) {
   fs.mkdirSync(path.dirname(service.logfile), { recursive: true });
 
   if (process.platform === 'win32') {
-    const [cmd, args] = buildPowerShellStartArgs(service);
-    const child = spawn(cmd, args, {
-      cwd: path.join(__dirname, '..'),
-      stdio: ['ignore', 'pipe', 'pipe'],
+    // Bypass PowerShell entirely - use cmd.exe directly to avoid PowerShell 7 bugs
+    // Always ensure log directory exists first
+    fs.mkdirSync(path.dirname(service.logfile), { recursive: true });
+    
+    // Redirect output to log file by appending to command
+    const logCommand = `${service.startCmd} 1> "${service.logfile}" 2> "${service.logfile}.err"`;
+    const child = spawn('cmd.exe', ['/c', logCommand], {
+      cwd: path.resolve(__dirname, '..', service.cwd || '.'),
+      detached: true,
+      stdio: 'ignore',
       windowsHide: true
     });
-
-    let output = '';
-    let errorOutput = '';
-    child.stdout.on('data', (data) => { output += data.toString(); });
-    child.stderr.on('data', (data) => { errorOutput += data.toString(); });
-
-    const exitCode = await new Promise((resolve, reject) => {
-      child.on('error', reject);
-      child.on('exit', resolve);
-    });
-
-    if (exitCode !== 0) {
-      log(`✗ ${serviceName} failed to launch PowerShell wrapper: ${errorOutput.trim() || `exit ${exitCode}`}`);
-      return false;
-    }
-
-    const pid = parseInt(output.trim(), 10);
-    if (!Number.isInteger(pid) || pid <= 0) {
-      log(`✗ ${serviceName} PowerShell wrapper did not return a PID: ${output.trim()}`);
-    }
+    child.unref();
   } else {
     spawn(service.startCmd, { shell: true, stdio: 'inherit', cwd: path.resolve(__dirname, '..', service.cwd || '.') });
   }

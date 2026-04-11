@@ -10,7 +10,8 @@
     "./logger": "./dist/logger.js",
     "./logger.js": "./dist/logger.js",
     "./strip-markdown-json-fence": "./dist/strip-markdown-json-fence.js",
-    "./validation": "./dist/validation.js"
+    "./validation": "./dist/validation.js",
+    "./deep-clone-json": "./dist/deep-clone-json.js"
   },
   "scripts": {
     "build": "tsc",

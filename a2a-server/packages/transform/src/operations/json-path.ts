@@ -5,7 +5,7 @@
  */
 
 import { JSONPath } from 'jsonpath-plus';
-import { logger } from "@a2a/server-utils/logger"';
+import { logger } from "@a2a/server-utils/logger";
 import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence';
 import { deepCloneJson } from '../../../lib/deep-clone-json';
 import { stringifyForTemplate } from './value-helpers';

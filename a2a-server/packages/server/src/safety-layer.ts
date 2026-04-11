@@ -1,4 +1,4 @@
-import { createLogger } from "@a2a/server-utils/logger"';
+import { createLogger } from "@a2a/server-utils/logger";
 import { hashSha256 } from '../../lib/crypto';
 import { LoopDetector } from './safety-layer/LoopDetector';
 

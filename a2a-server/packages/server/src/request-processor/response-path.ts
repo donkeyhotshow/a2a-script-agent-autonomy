@@ -4,7 +4,7 @@
  * Функции для восстановления stuck dialog requests и управления путями ответа
  */
 
-import {logger} from "@a2a/server-utils/logger"';
+import {logger} from "@a2a/server-utils/logger";
 import {resolveAiHubBaseUrl} from '../../../lib/ai-hub-url.ts';
 import {getPromptsTransformsPath} from '../../../transform/src/index.ts';
 import {resolveLlmPromiseRecovery} from '../../../daemon/src/daemon/llm-hub-poll.ts';

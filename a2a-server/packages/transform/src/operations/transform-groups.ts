@@ -13,7 +13,7 @@
 
 import * as path from 'path';
 import * as fs from 'node:fs/promises';
-import { logger } from "@a2a/server-utils/logger"';
+import { logger } from "@a2a/server-utils/logger";
 import { pathIsAccessible } from '@a2a/server-utils/fs-access';
 import { deepCloneJson } from '@a2a/server-utils/deep-clone-json';
 import {query, set as jsonPathSet} from './json-path';

@@ -2,7 +2,7 @@ import http from "node:http";
 import { existsSync } from "node:fs";
 import app from "./app";
 import { config } from "../../server-config/index";
-import { logger } from "../../server-utils/src/logger";
+import { logger } from "@a2a/server-utils/logger";
 import {
   startRequestProcessor,
   stopRequestProcessor,

@@ -1,4 +1,4 @@
-import { logger } from "@a2a/server-utils/logger""';
+import { logger } from "@a2a/server-utils/logger";
 import { deepCloneJson } from '@a2a/server-utils/deep-clone-json';
 import crypto from 'node:crypto';
 

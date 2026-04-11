@@ -16,7 +16,7 @@ import {
   createArtifactWriteInput,
   type StoredArtifact,
 } from './artifact-store';
-import { logger } from "@a2a/server-utils/logger""';
+import { logger } from "@a2a/server-utils/logger";
 
 // ── Public types ──────────────────────────────────────────────────────────────
 

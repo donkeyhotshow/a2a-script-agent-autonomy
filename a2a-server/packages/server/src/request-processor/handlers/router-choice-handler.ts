@@ -4,7 +4,7 @@
  * Handles processing of user's choice from router form
  */
 
-import {logger} from "@a2a/server-utils/logger"';
+import {logger} from "@a2a/server-utils/logger";
 import {actionProcessor} from '../../../../actions/src/action-processor.ts';
 import {actionRegistry} from '../../../../actions/src/action-registry.ts';
 import type {ActionDefinition} from '../../../../actions/src/types.ts';

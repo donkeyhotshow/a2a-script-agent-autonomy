@@ -11,7 +11,7 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { logger } from "@a2a/server-utils/logger""';
+import { logger } from "@a2a/server-utils/logger";
 import { resolveAiHubBaseUrl } from '../../lib/ai-hub-url';
 import { fetchAiHubChatJson } from '../../lib/ai-hub-chat-sync';
 import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence';

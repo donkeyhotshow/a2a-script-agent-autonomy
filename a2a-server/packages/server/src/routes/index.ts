@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { invoke } from '../../../services/src/utils/invoke.service';
 import requestsRouter from "./requests.routes";
 import type { FileBlock } from "../types/index";
-import { logger } from "../../lib/logger";
+import { logger } from "@a2a/server-utils/logger";
 import { validateInvokeRequest } from "@a2a-server/protocol";
 
 const ajv = new Ajv({ strict: false, allErrors: true, validateFormats: false });

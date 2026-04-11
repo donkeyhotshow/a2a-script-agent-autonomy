@@ -8,7 +8,7 @@
  * - step_complete - confirming step completion
  */
 
-import {logger} from "@a2a/server-utils/logger"';
+import {logger} from "@a2a/server-utils/logger";
 import {actionProcessor} from '../../../actions/src/action-processor';
 import {actionRegistry} from '../../../actions/src/action-registry';
 import type {ActionDefinition} from '../../../actions/src/types';

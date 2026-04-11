@@ -1,7 +1,7 @@
 import * as ts from "typescript";
 import { promises as fsPromises } from "node:fs";
 import * as path from "path";
-import { logger } from "@a2a/server-utils/logger""';
+import { logger } from "@a2a/server-utils/logger";
 
 export interface ContextVersion {
   versionId: number;

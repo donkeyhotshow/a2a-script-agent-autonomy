@@ -20,7 +20,7 @@
 
 import { ArtifactStore, createArtifactWriteInput } from '../core/artifact-store';
 import { executeMcpCall } from '../../../actions/src/handlers/mcp-call';
-import { logger } from "@a2a/server-utils/logger""';
+import { logger } from "@a2a/server-utils/logger";
 import { resolveAiHubBaseUrlWithModuleEnv } from '../../lib/ai-hub-url';
 import { fetchAiHubGenerateText } from '../../lib/ai-hub-generate';
 import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence';

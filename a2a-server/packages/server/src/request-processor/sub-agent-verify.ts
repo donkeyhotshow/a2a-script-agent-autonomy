@@ -1,5 +1,5 @@
 import { execSync } from 'node:child_process';
-import { logger } from "@a2a/server-utils/logger"';
+import { logger } from "@a2a/server-utils/logger";
 
 export interface VerificationResult {
   passed: boolean;

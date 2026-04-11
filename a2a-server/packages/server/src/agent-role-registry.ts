@@ -1,6 +1,6 @@
 import type { OrchestratorState } from "./orchestrator-kernel";
 import { llmService } from "@a2a/server-llm";
-import { logger } from "@a2a/server-utils/logger""";
+import { logger } from "@a2a/server-utils/logger";
 import { tryParseJsonFromLlmText } from "@a2a/server-utils/strip-markdown-json-fence";
 
 export enum AgentRole {

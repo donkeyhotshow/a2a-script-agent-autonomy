@@ -1,4 +1,4 @@
-import {logger} from "@a2a/server-utils/logger"';
+import {logger} from "@a2a/server-utils/logger";
 import type { ProcessResult } from '../request-processor.interfaces';
 
 export interface TransformExecuteValidationIssue {

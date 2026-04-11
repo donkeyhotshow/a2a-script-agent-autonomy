@@ -1,9 +1,9 @@
 import * as path from "path";
-import { logger } from "@a2a/server-utils/logger""';
+import { logger } from "@a2a/server-utils/logger";
 import {
   runPromptsTransform,
   syncLiveContextHistoryFromResultMessage,
-} from "../../../../packages/transform/src/index.ts";
+} from "../../../transform/src/index.ts";
   import type {
     GrayRoomControlEnvelope,
     InterruptDirective,
