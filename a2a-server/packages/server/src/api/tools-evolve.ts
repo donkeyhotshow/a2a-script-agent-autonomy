@@ -2,12 +2,12 @@ import express from 'express';
 import fs from 'node:fs';
 import path from 'path';
 import { logger } from '../../lib/logger.js';
-import { SkillRegistry } from '../skills/SkillRegistry.js';
-import { config } from '../../packages/config/index.js';
+import { SkillRegistry } from '../../../features/src/skills/SkillRegistry.js';
+import { config } from '../../../server-config/index.js';
 import {
   SandboxViolationError,
   validateSkillToolCodeForDeploy,
-} from './tools-evolve-sandbox.js';
+} from '../tools-evolve-sandbox.js';
 
 const router = express.Router();
 const SKILLS_DIR = path.resolve(process.cwd(), 'a2a-server/src/skills/custom');
@@ -16,7 +16,7 @@ const registry = new SkillRegistry(SKILLS_DIR);
 // NOTE: CSRF protection (CWE-352) is enforced by csrfGuard middleware
 // mounted in app.ts before this router. Do not mount without it.
 router.post('/evolve', async (req, res) => {
-  if (!config.allowToolsEvolve) {
+  if (!config.features.actions.allowToolsEvolve) {
     return res.status(403).json({ error: 'Tools evolve endpoint disabled' });
   }
 

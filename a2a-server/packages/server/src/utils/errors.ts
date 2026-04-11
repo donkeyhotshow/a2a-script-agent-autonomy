@@ -1,1 +1,1 @@
-export * from '../../../lib/errors.ts'
+export * from '../../../lib/errors.js'

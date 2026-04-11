@@ -169,6 +169,7 @@ export const featuresConfigSchema = z
         gitOperations: booleanSchema.default(true),
         scriptExecution: booleanSchema.default(true),
         mcpCalls: booleanSchema.default(true),
+        allowToolsEvolve: booleanSchema.default(false),
       })
       .default({}),
 

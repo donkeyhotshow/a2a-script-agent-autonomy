@@ -1,5 +1,5 @@
 import { execFile } from 'node:child_process';
-import { config, isDevelopment } from '../../../packages/config/index.js';
+import { config, isDevelopment } from '../../../server-config/index.js';
 import path from 'path';
 import { NodeVM } from 'vm2';
 import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';

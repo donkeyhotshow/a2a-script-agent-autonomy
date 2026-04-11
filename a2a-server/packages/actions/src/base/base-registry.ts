@@ -4,7 +4,7 @@
  * Eliminates duplicate code from all registry classes
  */
 
-import {logger} from '../../../utils/src/lib/logger.js';
+import {logger} from '@a2a/server-utils/logger.js';
 
 export abstract class BaseRegistry<K, V> {
     protected readonly storage: Map<K, V> = new Map();

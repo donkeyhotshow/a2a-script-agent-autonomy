@@ -6,10 +6,10 @@
  */
 
 import {Router, Request, Response, NextFunction} from 'express';
-import {sanitizeErrorMessage} from '../../lib/errors.js';
+import {sanitizeErrorMessage} from '../../../server-utils/src/errors.js';
 import {requestService} from '../services/core/request/request.service.js';
 import {registryAuth} from '../middleware/registry-auth.middleware.js';
-import {clientSafeWorkbench} from '../services/core/request/client-visible-context.js';
+import {clientSafeWorkbench} from '../../request/client-visible-context.js';
 
 const router = Router();
 

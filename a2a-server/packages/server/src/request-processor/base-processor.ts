@@ -13,7 +13,7 @@ import type {
 } from './request-processor.interfaces.js';
 import type {CodeBlock} from '../../types/entity.types.js';
 import {resolveExecution} from './normalization.js';
-import {LLM_PIPELINE_ACTIONS} from '../../../packages/config/router-static.js';
+import {LLM_PIPELINE_ACTIONS} from '../../../server-config/router-static.js';
 
 /**
  * Base processor configuration

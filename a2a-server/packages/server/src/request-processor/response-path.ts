@@ -9,7 +9,7 @@ import {resolveAiHubBaseUrl} from '../../lib/ai-hub-url.js';
 import {getPromptsTransformsPath} from '../../transform/index.js';
 import {resolveLlmPromiseRecovery} from '../daemon/llm-hub-poll.js';
 import {GrayRoomOrchestrator} from './gray-room-orchestrator.js';
-import {readGrayRoomInterruptBudget, shouldUseGrayRoom} from './gray-room-trigger.js';
+import {readGrayRoomInterruptBudget, shouldUseGrayRoom} from '../../../gray-room/src/core/request-processor/gray-room-trigger.js';
 import {resolveTransformSchema, extractSchemaName} from './normalization.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
 

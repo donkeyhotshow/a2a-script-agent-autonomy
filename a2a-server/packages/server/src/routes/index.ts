@@ -3,7 +3,7 @@ import Ajv, { ValidateFunction } from "ajv";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { invoke } from "../services/utils/invoke.service.js";
+import { invoke } from '../../../services/src/utils/invoke.service.js';
 import requestsRouter from "./requests.routes.js";
 import type { FileBlock } from "../types/index.js";
 import { logger } from "../../lib/logger.js";

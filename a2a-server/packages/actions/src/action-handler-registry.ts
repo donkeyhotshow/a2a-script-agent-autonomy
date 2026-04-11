@@ -4,7 +4,7 @@
  * Minimal action handlers for simulation processing.
  */
 
-import {logger} from '../../../utils/src/lib/logger.js';
+import {logger} from '@a2a/server-utils/logger.js';
 import * as handlers from './handlers/index.js';
 import {SkillEvolver} from '../../server/src/skill-evolver.js';
 import { ActionType, VALID_ACTION_TYPES_SET } from './constants/action-types.js';

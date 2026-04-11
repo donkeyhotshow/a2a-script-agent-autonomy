@@ -35,8 +35,10 @@ import {
 import {
   resolveExecution,
   resolveHistoryLength,
+} from "./gray-room-utils.js";
+import {
   toInvokeShapeForPromptsTransform,
-} from "./normalization.js";
+} from "../../../server/src/request-processor/normalization.js";
 import {
   grayRoomLlmModelFallback,
   resolveGrayRoomLlmModelFromContext,

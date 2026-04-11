@@ -10,8 +10,8 @@
  * - response-path.ts - обработка путей ответа
  */
 
-import { logger } from "@a2a/server-utils";
-import { resolveAiHubBaseUrl } from "@a2a/server-utils";
+import { logger } from "@a2a/server-utils/logger.js";
+import { resolveAiHubBaseUrl } from '../../../server-utils/src/ai-hub-url.js';
 import type { RequestContextBlock } from "@a2a/server-protocol";
 import type {
   RequestContext,
@@ -20,7 +20,7 @@ import type {
 import { BaseRequestProcessor, type RequestType } from "./base-processor.js";
 import { isDialogToolExecutePayload } from "./gray-room-utils.js";
 import { normalizeAgentSpuriousRequestAfterPipeline } from "./agent-spurious-request-normalize.js";
-import { readDialogHubLlmResubmitMax } from "./gray-room-trigger.js";
+import { readDialogHubLlmResubmitMax } from "../../../gray-room/src/core/request-processor/gray-room-trigger.js";
 import { featureManager } from "@a2a/server-features";
 import {
   resolveTransformSchema,
@@ -28,7 +28,7 @@ import {
   extractSchemaName,
   resolveResultObject,
 } from "./normalization.js";
-import { tryParseJsonFromLlmText } from "@a2a/server-utils";
+import { tryParseJsonFromLlmText } from "@a2a/server-utils/strip-markdown-json-fence.js";
 import { resolveLlmModelFromContext } from "./llm-model-resolver.js";
 import { requestService } from "@a2a/server-request";
 import { CognitionBase } from "./cognition-base.js";
@@ -38,7 +38,7 @@ import { getPromptsTransformsPath } from './index.js';
 import {
   isAgentSchemaName,
   lastAssistantMessageFromContext,
-} from "@a2a/server-utils";
+} from '../../../server-utils/src/agent-utils.js';
 
 export { isDialogToolExecutePayload };
 export { resolveTransformSchema, normalizeContext, extractSchemaName };

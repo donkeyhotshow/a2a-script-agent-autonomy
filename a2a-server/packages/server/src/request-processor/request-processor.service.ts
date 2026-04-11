@@ -16,7 +16,7 @@ import {
   type RequestResult,
 } from "@a2a/server-request";
 import { logger } from '../../lib/logger.js';
-import { resolveAiHubBaseUrl } from "../utils/ai-hub-url.js";
+import { resolveAiHubBaseUrl } from "../../../lib/ai-hub-url.js";
 import { requestProcessorLatencyHistogram } from "../utils/metrics.js";
 import type {
   RequestContext,
@@ -40,7 +40,7 @@ import {
 } from "../../server-config/router-static.js";
 import { resolveExecution, resolveResultObject } from "./normalization.js";
 import { detectFrameworksFromCodeBlocks } from "./framework-from-codeblocks.js";
-import { readDialogHubLlmResubmitMax } from "./gray-room-trigger.js";
+import { readDialogHubLlmResubmitMax } from "../../../gray-room/src/core/request-processor/gray-room-trigger.js";
 import { features } from "../../server-config/index.js";
 
 export { LLM_PIPELINE_ACTIONS, type LlmPipelineAction };
