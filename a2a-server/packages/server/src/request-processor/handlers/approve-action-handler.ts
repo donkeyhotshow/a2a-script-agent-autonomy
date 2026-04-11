@@ -4,13 +4,13 @@
  * Handles processing of action execution approvals
  */
 
-import {logger} from '../../../utils/logger.js';
-import {actionProcessor} from '../../../actions/action-processor.js';
+import {logger} from "@a2a/server-utils/logger";
+import {actionProcessor} from '../../../../actions/src/action-processor.ts';
 import type {
     RequestContext,
     ProcessResult,
     ProcessOutcome,
-} from '../request-processor.interfaces.js';
+} from '../request-processor.interfaces';
 
 /**
  * Handle approve_action - client confirms action execution

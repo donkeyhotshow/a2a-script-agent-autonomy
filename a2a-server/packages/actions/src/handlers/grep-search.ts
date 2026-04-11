@@ -4,10 +4,10 @@
  * Handles grep-search action for text search with regex support.
  */
 
-import {logger} from '../../../utils/logger.js';
+import {logger} from '../../../utils/logger';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import {validatePath} from './file-operations/security.js';
+import {validatePath} from './file-operations/security';
 
 export interface GrepSearchInput {
     pattern: string;
@@ -141,16 +141,24 @@ async function searchInDirectory(
     options: GrepSearchOptions,
     matches: GrepMatch[],
     files: Set<string>,
-    maxResults: number
+    maxResults: number,
+    containmentRoot?: string
 ): Promise<void> {
     if (matches.length >= maxResults) return;
+
+    // CWE-22/23: fix root on first call; all recursive entries must stay within it
+    const root = containmentRoot ?? (path.resolve(dirPath) + path.sep);
 
     const entries = await fs.readdir(dirPath, {withFileTypes: true});
 
     for (const entry of entries) {
         if (matches.length >= maxResults) break;
 
-        const fullPath = path.join(dirPath, entry.name);
+        const fullPath = path.resolve(dirPath, entry.name);
+        // Skip any entry that escapes the containment root (e.g. symlinks)
+        if (!fullPath.startsWith(root) && fullPath !== root.slice(0, -1)) {
+            continue;
+        }
         const relativePath = path.relative(process.cwd(), fullPath);
 
         // Check exclude patterns
@@ -163,11 +171,11 @@ async function searchInDirectory(
             if (entry.name.startsWith('.') || entry.name === 'node_modules') {
                 continue;
             }
-            await searchInDirectory(fullPath, regex, options, matches, files, maxResults);
+            await searchInDirectory(fullPath, regex, options, matches, files, maxResults, root);
         } else if (entry.isFile()) {
             // Check include patterns
             if (options.include?.length) {
-                const matchesInclude = options.include.some((pattern: string) => 
+                const matchesInclude = options.include.some((pattern: string) =>
                     matchGlob(relativePath, pattern)
                 );
                 if (!matchesInclude) continue;

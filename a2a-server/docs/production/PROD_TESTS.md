@@ -70,7 +70,7 @@ node scripts/prod-test.js [options]
 
 - **URL**: `POST http://localhost:11435/api/generate`
 - **Auth**: None required
-- **Note**: Direct Local LLM upstream runs on port 11435. Use ai-integration proxy port 11434 only if it's properly configured to connect to Local LLM upstream.
+- **Note**: Direct Local LLM upstream runs on port 11435. Use a2a-ai-hub proxy port 11434 only if it's properly configured to connect to Local LLM upstream.
 
 ## Examples
 
@@ -96,30 +96,30 @@ node scripts/prod-test.js --list
 - Use `/api/v1/invoke` instead. The server routes have changed.
 
 **404 on `/api/generate`**
-- Make sure to use port 11435 (direct Local LLM upstream) or 11434 (ai-integration proxy) correctly.
+- Make sure to use port 11435 (direct Local LLM upstream) or 11434 (a2a-ai-hub proxy) correctly.
 - Check if Local LLM upstream is running: `curl http://localhost:11435/api/tags`
 
 **Model not found (`model 'qwen3:8b' not found`)**
 - Ensure the model is available in Local LLM upstream: `curl http://localhost:11435/api/tags`
-- If using ai-integration proxy on 11434, check LOCAL_LLM_UPSTREAM_URL configuration
+- If using a2a-ai-hub proxy on 11434, check LOCAL_LLM_UPSTREAM_URL configuration
 
 **Empty models list**
 - For direct Local LLM upstream (11435): Check if Local LLM upstream is running and models are loaded
-- For ai-integration proxy (11434): Check LOCAL_LLM_UPSTREAM_URL in config - it should point to actual Local LLM upstream port (11435)
+- For a2a-ai-hub proxy (11434): Check LOCAL_LLM_UPSTREAM_URL in config - it should point to actual Local LLM upstream port (11435)
 
 ### Port Configuration Issue
 
 **Current Setup:**
-- Direct Local LLM upstream: Port 11435 (PID 29572 - python3.13.exe - ai-integration crashed)
+- Direct Local LLM upstream: Port 11435 (PID 29572 - python3.13.exe - a2a-ai-hub crashed)
 - AI Integration Proxy: Port 11434 (PID 45752 - compat_llm.exe - direct Local LLM upstream started on 11434 by mistake)
 
-This is wrong! Local LLM upstream should be on 11435, and ai-integration proxy should connect to it.
+This is wrong! Local LLM upstream should be on 11435, and a2a-ai-hub proxy should connect to it.
 
 **Fix:**
 1. Stop all services
-2. Make sure LOCAL_LLM_UPSTREAM_URL in ai-integration/config is set to `http://localhost:11435`
+2. Make sure LOCAL_LLM_UPSTREAM_URL in a2a-ai-hub/config is set to `http://localhost:11435`
 3. Start Local LLM upstream first: `compat_llm serve`
-4. Then start ai-integration: `python -m proxy`
+4. Then start a2a-ai-hub: `python -m proxy`
 5. Finally start a2a-server
 
 ## Health Check Endpoints

@@ -1,6 +1,6 @@
-# ai-integration-ts Contract Freeze (v1)
+# a2a-ai-hub-ts Contract Freeze (v1)
 
-This document freezes externally visible behavior that `ai-integration-ts` must preserve.
+This document freezes externally visible behavior that `a2a-ai-hub-ts` must preserve.
 
 ## Scope
 

@@ -6,10 +6,10 @@
  */
 
 import {Router, Request, Response, NextFunction} from 'express';
-import {sanitizeErrorMessage} from '../utils/errors.js';
-import {requestService} from '../services/core/request/request.service.js';
-import {registryAuth} from '../middleware/registry-auth.middleware.js';
-import {clientSafeWorkbench} from '../services/core/request/client-visible-context.js';
+import {sanitizeErrorMessage} from '../../../server-utils/src/errors';
+import {requestService} from '../../../request/src/request.service';
+import {registryAuth} from '../middleware/registry-auth.middleware';
+import {clientSafeWorkbench} from '../../request/client-visible-context';
 
 const router = Router();
 
@@ -226,7 +226,7 @@ router.get('/:promiseId/result', async (req: Request, res: Response, next: NextF
 router.post('/:promiseId/halt', registryAuth, async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         const promiseId = String(req.params.promiseId || '');
-        const { haltRequest } = await import('../services/core/request-processor/request-processor.service.js');
+        const { haltRequest } = await import('../services/core/request-processor/request-processor.service');
         const success = haltRequest(promiseId);
         res.json({ success, message: success ? 'Halted' : 'Request not found or not active' });
     } catch (error) {

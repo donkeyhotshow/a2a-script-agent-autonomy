@@ -1,0 +1,18 @@
+{
+  "name": "@a2a/server-daemon",
+  "version": "1.0.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/index.ts"
+  },
+  "dependencies": {
+    "@a2a/server-utils": "workspace:*",
+    "@a2a/server-protocol": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.38",
+    "typescript": "^5.3.3"
+  }
+}

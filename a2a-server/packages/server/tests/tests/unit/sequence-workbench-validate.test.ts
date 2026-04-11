@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {collectSequenceWorkbenchWarnings} from '../../scripts/sim-validate/validators.js';
+import {collectSequenceWorkbenchWarnings} from '../../scripts/sim-validate/validators';
 
 describe('collectSequenceWorkbenchWarnings', () => {
     it('accepts valid steps array', () => {

@@ -21,7 +21,7 @@ Canonical normative text stays in **`AGENTS.md`** and root **`DEV_STATE.md`**. T
 | 3 | Should this Q&A table include **dates** (e.g. a Date column or per-row timestamps)? | **без дат** *(no dates in this log)* |
 | 4 | Should non–yes/no replies (e.g. Russian) be copied **verbatim** into **Answer**, with an **English gloss in parentheses**, instead of English paraphrase only? | **Yes** |
 | 5 | Should the **Question** column stay **English only** (while **Answer** may be verbatim non-English)? | **eng only** *(yes — questions English only)* |
-| 6 | Should each **module** `DEV_STATE.md` (`a2a-client`, `a2a-server`, `ai-integration`) include a **one-line pointer** to this Q&A log? | **Yes** |
+| 6 | Should each **module** `DEV_STATE.md` (`a2a-client`, `a2a-server`, `a2a-ai-hub`) include a **one-line pointer** to this Q&A log? | **Yes** |
 | 7 | Should **linking** to this Q&A log be **mandatory** on root **`DEV_STATE.md`**, every module **`DEV_STATE.md`**, and **`AGENTS.md`** Quick Reference? | **ликовка везде обязатльая** *(linking everywhere mandatory; intended: линковка … обязательная)* |
 | 8 | If a **new** top-level **`DEV_STATE`‑style** file is added later, should adding the **mandatory Q&A link** be treated as part of **“create the file”** (no separate follow-up)? | **No** |
 | 9 | Should we enforce recursive-agent safety checks (no loops, no uncontrolled self-modification, no entry-point loss), prefer declarative/config solutions, mark self-management as **EXPERIMENTAL**, and stop-on-risk? | **Yes**

@@ -2,16 +2,16 @@
  * Transform pipeline — public API (implementation in ./pipeline/).
  */
 
-export { runTransformPipeline } from './pipeline/run.js';
-export { loadTransformPipeline, loadSimulationTransform } from './pipeline/load.js';
+export { runTransformPipeline } from './pipeline/run';
+export { loadTransformPipeline, loadSimulationTransform } from './pipeline/load';
 export {
   runTransformPipelineFromFile,
   runSimulationTransform,
-} from './pipeline/file-runner.js';
+} from './pipeline/file-runner';
 export {
   SIMULATION_TO_SCHEMA,
   getPromptsTransformsPath,
   loadPromptsTransform,
   runPromptsTransform,
-} from './pipeline/prompts.js';
-export { validatePipeline } from './pipeline/validate.js';
+} from './pipeline/prompts';
+export { validatePipeline } from './pipeline/validate';

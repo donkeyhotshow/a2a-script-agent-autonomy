@@ -1,8 +1,8 @@
-import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
-import { SWEVerifier } from './swe-verifier.js';
+import { createArtifactWriteInput, globalArtifactStore } from './artifact-store';
+import { SWEVerifier } from './swe-verifier';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import { logger } from '../../utils/logger.js';
+import { logger } from "@a2a/server-utils/logger";
 
 /** Caller identity for artifacts (matches ActionHandlerContext fields used here). */
 export interface SkillEvolverContext {

@@ -6,10 +6,10 @@
 
 // @ts-expect-error - jsonpath-plus typing issues in NodeNext ESM
 import { JSONPath } from 'jsonpath-plus';
-import { logger } from '../../utils/logger.js';
-import { tryParseJsonFromLlmText } from '../../utils/strip-markdown-json-fence.js';
-import { deepCloneJson } from '../../utils/deep-clone-json.js';
-import { stringifyForTemplate } from './value-helpers.js';
+import { logger } from "@a2a/server-utils/logger";
+import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence';
+import { deepCloneJson } from '../../../lib/deep-clone-json';
+import { stringifyForTemplate } from './value-helpers';
 
 /**
  * Query values from an object using JSONPath
@@ -279,14 +279,18 @@ export function extractJsonFromMarkdown(md: string): unknown {
 }
 
 /**
- * Simple template rendering - replaces {{path}} placeholders with values
+ * Simple template rendering - replaces ${path} placeholders with values
  */
 export function renderTemplateSimple(template: string, data: Record<string, unknown>): string {
-  const pattern = '\\${([^}]+)}';
-  const regex = new RegExp(pattern, 'g');
+  // Use a literal regex — never construct RegExp from user-controlled input (CWE-78/20)
+  const TEMPLATE_RE = /\$\{([^}]+)\}/g;
 
-  return template.replace(regex, (_, key) => {
+  return template.replace(TEMPLATE_RE, (_, key: string) => {
     const trimmedKey = key.trim();
+    // Reject keys containing shell metacharacters or path separators (CWE-88)
+    if (!/^[\w$.\[\]]+$/.test(trimmedKey)) {
+      return '';
+    }
     const value = query(data, trimmedKey);
     return stringifyForTemplate(value);
   });

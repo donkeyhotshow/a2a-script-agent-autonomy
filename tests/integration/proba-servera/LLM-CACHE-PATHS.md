@@ -1,6 +1,6 @@
 # Proba → LLM disk cache (L3) path inventory
 
-Proba drives **a2a-server** in-process (default) or HTTP invoke; the server calls **ai-integration** (AI hub, default `AI_HUB_URL` → `11434`), which forwards to **Local LLM upstream** (`11435`).
+Proba drives **a2a-server** in-process (default) or HTTP invoke; the server calls **a2a-ai-hub** (AI hub, default `AI_HUB_URL` → `11434`), which forwards to **Local LLM upstream** (`11435`).
 
 ## Hub entry: promise vs sync
 
@@ -21,7 +21,7 @@ Proba drives **a2a-server** in-process (default) or HTTP invoke; the server call
 
 ## Measuring hits/misses
 
-On **ai-integration**, set `LLM_DISK_CACHE_LOG=1`. Logs look like:
+On **a2a-ai-hub**, set `LLM_DISK_CACHE_LOG=1`. Logs look like:
 
 `llm_disk_cache outcome=hit|miss|store stage=promise_inline|promise_bg|daemon|sync path=... key_prefix=...`
 

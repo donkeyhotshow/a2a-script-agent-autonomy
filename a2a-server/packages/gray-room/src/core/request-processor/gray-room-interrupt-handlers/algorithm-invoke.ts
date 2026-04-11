@@ -1,8 +1,8 @@
-import type {AlgorithmContext, AlgorithmData} from '../../black-room/types.js';
-import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../transform/types.js';
-import {BlackRoomOrchestrator} from '../../black-room/black-room-orchestrator.js';
-import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils.js';
-import {BaseGrayRoomHandler} from './base-handler.js';
+import type {AlgorithmContext, AlgorithmData} from '../../black-room/types';
+import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../transform/types';
+import {BlackRoomOrchestrator} from '../../black-room/black-room-orchestrator';
+import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils';
+import {BaseGrayRoomHandler} from './base-handler';
 
 /**
  * Handle algorithm_invoke interrupt

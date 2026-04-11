@@ -10,35 +10,35 @@
  * - response-path.ts - обработка путей ответа
  */
 
-import { logger } from "@a2a/server-utils";
-import { resolveAiHubBaseUrl } from "@a2a/server-utils";
+import { logger } from "@a2a/server-utils/logger";
+import { resolveAiHubBaseUrl } from '../../../lib/ai-hub-url';
 import type { RequestContextBlock } from "@a2a/server-protocol";
 import type {
   RequestContext,
   ProcessResult,
-} from "./request-processor.interfaces.js";
-import { BaseRequestProcessor, type RequestType } from "./base-processor.js";
-import { isDialogToolExecutePayload } from "./gray-room-utils.js";
-import { normalizeAgentSpuriousRequestAfterPipeline } from "./agent-spurious-request-normalize.js";
-import { readDialogHubLlmResubmitMax } from "./gray-room-trigger.js";
-import { featureManager } from "@a2a/server-features";
+} from "./request-processor.interfaces";
+import { BaseRequestProcessor, type RequestType } from "./base-processor";
+import { isDialogToolExecutePayload } from "../../../gray-room/src/core/request-processor/gray-room-utils.ts";
+import { normalizeAgentSpuriousRequestAfterPipeline } from "./agent-spurious-request-normalize";
+import { readDialogHubLlmResubmitMax } from "../../../gray-room/src/core/request-processor/gray-room-trigger";
+// import { featureManager } from "@a2a/server-features";
 import {
   resolveTransformSchema,
   normalizeContext,
   extractSchemaName,
   resolveResultObject,
-} from "./normalization.js";
-import { tryParseJsonFromLlmText } from "@a2a/server-utils";
-import { resolveLlmModelFromContext } from "./llm-model-resolver.js";
+} from "./normalization";
+import { tryParseJsonFromLlmText } from "@a2a/server-utils/strip-markdown-json-fence";
+import { resolveLlmModelFromContext } from "./llm-model-resolver";
 import { requestService } from "@a2a/server-request";
-import { CognitionBase } from "./cognition-base.js";
-import { EpisodicMemory } from "@a2a/server-memory";
-import { globalDesignReasoner } from "./hierarchical-design-reasoner.js";
-import { getPromptsTransformsPath } from "./transform/index.js";
+import { CognitionBase } from "../cognition-base.ts";
+
+import { globalDesignReasoner } from "../hierarchical-design-reasoner.ts";
+import { getPromptsTransformsPath } from './index';
 import {
   isAgentSchemaName,
   lastAssistantMessageFromContext,
-} from "@a2a/server-utils";
+} from '../../../server-utils/src/agent-utils';
 
 export { isDialogToolExecutePayload };
 export { resolveTransformSchema, normalizeContext, extractSchemaName };
@@ -53,7 +53,7 @@ export {
   recoverLlmPromise,
   type LlmCallOptions,
   type LlmCallResult,
-} from "./llm-orchestration.js";
+} from "./llm-orchestration";
 
 // Re-export из response-path
 export {
@@ -62,7 +62,7 @@ export {
   getLlmPromiseId,
   type ResponsePathResult,
   type RecoverDialogOutcome,
-} from "./response-path.js";
+} from "./response-path";
 
 function dialogFailedWithContext(
   ctx: Record<string, unknown>,
@@ -365,7 +365,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
 
   protected async doProcess(request: RequestContext): Promise<ProcessResult> {
     const { promiseId, context, message: requestMessage } = request;
-    const { executeLlmCall } = await import("./llm-orchestration.js");
+    const { executeLlmCall } = await import("./llm-orchestration");
 
     const ctx = normalizeContext(context, requestMessage);
     if (context.session_id) {
@@ -417,7 +417,7 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
       const existingLlmId = ctx["llmPromiseId"] as string | undefined;
       if (existingLlmId) {
         const { recoverDialogFromLlmPromise } =
-          await import("./response-path.js");
+          await import("./response-path");
         const recoveryOutcome = await recoverDialogFromLlmPromise(
           promiseId,
           ctx,
@@ -466,40 +466,31 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
 
       if (!ctx["llmPromiseId"]) {
         if (allowContextAugment) {
-          // Check if cognition injection is enabled via feature flag
-          const cognitionInjectionEnabled =
-            process.env.COGNITION_INJECTION_ENABLED === "1" ||
-            process.env.COGNITION_INJECTION_ENABLED === "true";
+          // Внедрение априорных знаний через CognitionBase
+          try {
+            const cognition = new CognitionBase();
+            const topic =
+              (ctx["task"] as string) ||
+              (ctx["message"] as string) ||
+              "general";
+            const sessionId = (ctx["session_id"] as string) || "startup";
 
-          if (cognitionInjectionEnabled) {
-            // Внедрение априорных знаний через CognitionBase (ADR-0062)
-            try {
-              const cognition = new CognitionBase();
-              const episodic = new EpisodicMemory();
-              const topic =
-                (ctx["task"] as string) ||
-                (ctx["message"] as string) ||
-                "general";
-              const sessionId = (ctx["session_id"] as string) || "startup";
+            const priors = await cognition.injectPriors(
+              topic,
+              sessionId,
+              { query: async () => [] }, // LessonStore stub
+              { query: async () => [] }, // PatternStore stub
+            );
 
-              const priors = await cognition.injectPriors(
-                topic,
-                sessionId,
-                { query: async () => [] }, // LessonStore stub
-                { query: async () => [] }, // PatternStore stub
-                episodic,
-              );
-
-              const priorStr = cognition.formatForContext(priors);
-              if (priorStr && typeof ctx["message"] === "string") {
-                ctx["message"] = ctx["message"] + "\n\n" + priorStr;
-              }
-            } catch (err) {
-              logger.warn(
-                "[DialogRequestProcessor] CognitionBase injection failed",
-                { error: String(err) },
-              );
+            const priorStr = cognition.formatForContext(priors);
+            if (priorStr && typeof ctx["message"] === "string") {
+              ctx["message"] = ctx["message"] + "\n\n" + priorStr;
             }
+          } catch (err) {
+            logger.warn(
+              "[DialogRequestProcessor] CognitionBase injection failed",
+              { error: String(err) },
+            );
           }
         }
 
@@ -583,11 +574,11 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
         }
 
         // Trigger gray room feature for post_llm_call event
-        await featureManager.trigger({
-          type: "post_llm_call",
-          context: ctx,
-          data: llmResult.responseMd,
-        });
+        // await featureManager.trigger({
+        //   type: "post_llm_call",
+        //   context: ctx,
+        //   data: llmResult.responseMd,
+        // });
 
         // Note: Gray room modifications are applied directly to ctx via feature system
         // For backward compatibility, we still need to call finalize function

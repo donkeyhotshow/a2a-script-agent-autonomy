@@ -6,7 +6,7 @@
 | -------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Red room**   | Client auto-completes tool `execute`, then sends next turn                  | One user-visible step per tool cycle                                                                                                                                      |
 | **Gray room**  | Server runs substeps (compress, thinking, re-LLM)                           | **None** — client gets one response after the chain finishes                                                                                                              |
-| **Black room** | Algorithm Mode — local Local LLM upstream execution for deterministic tasks | Proposed per [ADR-0058](../../docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md), see [BLACK-ROOM.md](../../ai-integration/docs/BLACK-ROOM.md) (in ai-integration) |
+| **Black room** | Algorithm Mode — local Local LLM upstream execution for deterministic tasks | Proposed per [ADR-0058](../../docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md), see [BLACK-ROOM.md](../../a2a-ai-hub/docs/BLACK-ROOM.md) (in a2a-ai-hub) |
 
 **Status:** Implemented as an **overlay** on one invoke: [`DialogRequestProcessor`](../src/services/core/request-processor/dialog-request-processor.ts) delegates to [`GrayRoomOrchestrator.runLoop()`](../src/services/core/request-processor/gray-room-orchestrator.ts). Interrupt trace for the client is merged via [`mergeInterruptTraceIntoContext`](../src/transform/interrupt-trace-contract.ts) (see § Concept Boundary).
 

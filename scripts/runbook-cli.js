@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { spawn, execFileSync } from 'child_process';
+import { spawn, execFileSync, execSync } from 'child_process';
 import net from 'net';
 import http from 'http';
 import { URL } from 'url';
@@ -8,7 +8,7 @@ import fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { fileURLToPath } from 'url';
-import { reservePort, releasePort } from './scripts/port-manager.js';
+import { reservePort, releasePort } from './port-manager.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,30 +24,35 @@ const SERVICES = {
     logfile: path.join(__dirname, '..', 'logs', 'runbook-status.log'),
     restartPolicy: {enabled: false}
   },
+
   'ai-integration': {
     port: 11434,
-    startCmd: 'cd ../a2a-ai-hub && make dev', // Adjusted path if needed
+    startCmd: 'python scripts/ensure-providers-config.py && python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port 11434',
+    cwd: 'a2a-ai-hub',
     healthEndpoint: '/health',
     dependencies: ['runbook-status'],
     logfile: path.join(__dirname, '..', 'logs', 'ai-integration.log')
   },
   'a2a-server': {
     port: 3000,
-    startCmd: 'cd ../a2a-server && npm run dev',
+    startCmd: 'npm run dev:no-auth',
+    cwd: 'a2a-server',
     healthEndpoint: '/health',
     dependencies: ['ai-integration'],
-    logfile: path.join(__dirname, '..', 'a2a-server', 'logs', 'a2a-server.log')
+    logfile: path.join(__dirname, '..', 'a2a-server', 'logs', 'server.log')
   },
   'client-api': {
     port: 3001,
-    startCmd: 'cd ../a2a-client && npm run dev',
+    startCmd: 'npx cross-env PORT=3001 WS_PORT=3002 SKIP_AUTH=1 tsx watch src/server/index.ts',
+    cwd: path.join('a2a-client', 'packages', 'sdk'),
     healthEndpoint: '/api/a2a/projects',
     dependencies: ['a2a-server'],
     logfile: path.join(__dirname, '..', 'a2a-client', 'logs', 'client-api.log')
   },
   'web-ui': {
     port: 5173,
-    startCmd: 'cd ../a2a-client && npm run dev:web',
+    startCmd: 'npx vite --port 5173',
+    cwd: 'a2a-client',
     healthEndpoint: '/api/a2a/projects',
     dependencies: ['client-api'],
     logfile: path.join(__dirname, '..', 'a2a-client', 'logs', 'web-ui.log')
@@ -358,7 +363,236 @@ function runDaemon() {
   return true;
 }
 
-// ... rest same as previous version, abbreviate for brevity
+function isPortOpen(port) {
+  return new Promise((resolve) => {
+    const client = net.createConnection(port, '127.0.0.1', () => {
+      client.end();
+      resolve(true);
+    });
+    client.on('error', () => resolve(false));
+    setTimeout(() => {
+      client.end();
+      resolve(false);
+    }, 1000);
+  });
+}
+
+async function checkHealth(serviceName) {
+  const service = SERVICES[serviceName];
+  const url = `http://localhost:${service.port}${service.healthEndpoint}`;
+  return new Promise((resolve) => {
+    const req = http.get(url, (res) => {
+      if (res.statusCode === 200) {
+        resolve(true);
+      } else {
+        resolve(false);
+      }
+    });
+    req.on('error', () => resolve(false));
+    setTimeout(() => {
+      req.destroy();
+      resolve(false);
+    }, 5000);
+  });
+}
+
+function getRunningServices() {
+  if (!fs.existsSync(PID_FILE)) return {};
+  const pids = fs.readFileSync(PID_FILE, 'utf8').split('\n').filter(line => line.trim());
+  const running = {};
+  pids.forEach(line => {
+    const [name, pid] = line.split(':');
+    if (name && pid) {
+      running[name] = parseInt(pid);
+    }
+  });
+  return running;
+}
+
+function savePid(serviceName, pid) {
+  const running = getRunningServices();
+  running[serviceName] = pid;
+  const lines = Object.entries(running).map(([name, p]) => `${name}:${p}`);
+  fs.writeFileSync(PID_FILE, lines.join('\n'));
+}
+
+function killProcess(pid) {
+  try {
+    process.kill(pid, 'SIGTERM');
+    setTimeout(() => {
+      try {
+        process.kill(pid, 'SIGKILL');
+      } catch {}
+    }, 5000);
+  } catch {}
+}
+
+function escapePowerShellSingleQuote(value) {
+  return value.replace(/'/g, "''");
+}
+
+function buildPowerShellStartArgs(service) {
+  const cwd = path.resolve(__dirname, '..', service.cwd || '.');
+  const logfile = path.resolve(service.logfile);
+  const command = service.startCmd;
+  const psCommand = `
+    $ErrorActionPreference = 'Stop';
+    $cwd = '${escapePowerShellSingleQuote(cwd)}';
+    $log = '${escapePowerShellSingleQuote(logfile)}';
+    Set-Location -LiteralPath $cwd;
+    $args = @('/c', '${escapePowerShellSingleQuote(command)}');
+    $proc = Start-Process -FilePath 'cmd.exe' -ArgumentList $args -WorkingDirectory $cwd -WindowStyle Hidden -RedirectStandardOutput $log -RedirectStandardError $log -PassThru;
+    Write-Output $proc.Id;
+  `;
+  return ['powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-Command', psCommand]];
+}
+
+async function startService(serviceName) {
+  const service = SERVICES[serviceName];
+  if (!service.startCmd.trim()) {
+    log(`${serviceName} has no start command, skipping`);
+    return true;
+  }
+  log(`Starting ${serviceName}...`);
+  fs.mkdirSync(path.dirname(service.logfile), { recursive: true });
+
+  if (process.platform === 'win32') {
+    // Bypass PowerShell entirely - use cmd.exe directly to avoid PowerShell 7 bugs
+    // Always ensure log directory exists first
+    fs.mkdirSync(path.dirname(service.logfile), { recursive: true });
+    
+    // Redirect output to log file by appending to command
+    const logCommand = `${service.startCmd} 1> "${service.logfile}" 2> "${service.logfile}.err"`;
+    const child = spawn('cmd.exe', ['/c', logCommand], {
+      cwd: path.resolve(__dirname, '..', service.cwd || '.'),
+      detached: true,
+      stdio: 'ignore',
+      windowsHide: true
+    });
+    child.unref();
+  } else {
+    spawn(service.startCmd, { shell: true, stdio: 'inherit', cwd: path.resolve(__dirname, '..', service.cwd || '.') });
+  }
+
+  // Wait for port and health
+  let healthy = false;
+  for (let i = 0; i < 30; i++) {
+    await new Promise(r => setTimeout(r, 1000));
+    if (await checkHealth(serviceName)) {
+      healthy = true;
+      break;
+    }
+  }
+
+  // Capture PID from netstat after service binds
+  if (healthy) {
+    try {
+      const netstat = execSync(`netstat -ano | findstr :${service.port} | findstr LISTENING`, { encoding: 'utf8' });
+      const lines = netstat.trim().split('\n');
+      if (lines.length > 0) {
+        const parts = lines[0].trim().split(/\s+/);
+        const listeningPid = parseInt(parts[4]);
+        if (listeningPid) savePid(serviceName, listeningPid);
+      }
+    } catch (e) {
+      // Ignore if the process has not yet bound to the port
+    }
+  }
+
+  if (healthy) {
+    log(`✓ ${serviceName} started`);
+  } else {
+    log(`✗ ${serviceName} failed to start - check logs: ${service.logfile}`);
+  }
+  return healthy;
+}
+
+async function startServiceCli(serviceName) {
+  const service = SERVICES[serviceName];
+  if (!service.startCmd.trim()) {
+    log(`${serviceName} has no start command, skipping`);
+    return;
+  }
+  if (await checkHealth(serviceName)) {
+    log(`${serviceName} already running`);
+    return;
+  }
+  const healthy = await startService(serviceName);
+  if (!healthy) {
+    log(`✗ ${serviceName} failed to start - check logs: ${service.logfile}`);
+    process.exit(1);
+  }
+}
+
+function stopService(serviceName) {
+  const running = getRunningServices();
+  const pid = running[serviceName];
+  if (pid) {
+    killProcess(pid);
+    delete running[serviceName];
+    const lines = Object.entries(running).map(([name, p]) => `${name}:${p}`);
+    fs.writeFileSync(PID_FILE, lines.join('\n'));
+    log(`${serviceName} stopped`);
+  }
+}
+
+function getDependencyOrder(services) {
+  const order = [];
+  const visited = new Set();
+  const visiting = new Set();
+  function dfs(name) {
+    if (visiting.has(name)) throw new Error('Cycle');
+    if (visited.has(name)) return;
+    visiting.add(name);
+    const deps = SERVICES[name].dependencies || [];
+    deps.forEach(dfs);
+    visiting.delete(name);
+    visited.add(name);
+    order.push(name);
+  }
+  services.forEach(dfs);
+  return order;
+}
+
+async function startCommand(services) {
+  const allServices = services.length ? services : Object.keys(SERVICES);
+  const order = getDependencyOrder(allServices);
+  const failures = [];
+  for (const name of order) {
+    const success = await startService(name);
+    if (!success) failures.push(name);
+  }
+  if (failures.length > 0) {
+    throw new Error(`Services failed to start: ${failures.join(', ')}`);
+  }
+}
+
+async function startCommandCli(services) {
+  const allServices = services.length ? services : Object.keys(SERVICES);
+  const order = getDependencyOrder(allServices);
+  for (const name of order) {
+    await startServiceCli(name);
+  }
+}
+
+function stopCommand(services) {
+  const allServices = services.length ? services : Object.keys(SERVICES);
+  const running = getRunningServices();
+  allServices.forEach(name => {
+    if (running[name]) {
+      stopService(name);
+    }
+  });
+}
+
+function showStatus() {
+  const running = getRunningServices();
+  Object.keys(SERVICES).forEach(name => {
+    const pid = running[name];
+    const status = pid ? 'running' : 'stopped';
+    log(`${name}: ${status} (port ${SERVICES[name].port}, pid ${pid || 'N/A'})`);
+  });
+}
 
 async function proxyCommand(command, serviceArgs) {
   if (!isDaemonRunning()) throw new Error('Daemon not running');
@@ -388,14 +622,22 @@ if (command === 'daemon-start') {
 } else {
   switch (command) {
     case 'start':
-      startCommand(serviceArgs);
+      startCommandCli(serviceArgs).catch(e => {
+        cliLog('Start failed: ' + e.message);
+        process.exit(1);
+      });
       break;
     case 'stop':
       stopCommand(serviceArgs);
       break;
     case 'restart':
       stopCommand(serviceArgs);
-      setTimeout(() => startCommand(serviceArgs), 2000);
+      setTimeout(() => {
+        startCommandCli(serviceArgs).catch(e => {
+          cliLog('Restart failed: ' + e.message);
+          process.exit(1);
+        });
+      }, 2000);
       break;
     case 'status':
       showStatus();

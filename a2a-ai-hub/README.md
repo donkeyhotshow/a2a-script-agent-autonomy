@@ -158,7 +158,7 @@ python -m proxy
 ## Структура проекта
 
 ```
-ai-integration/
+a2a-ai-hub/
 ├── proxy/                      # Модуль прокси
 │   ├── __init__.py             # Flask app
 │   ├── __main__.py             # Точка входа
@@ -250,7 +250,7 @@ python -m scripts.learning_queue approve <id>
 ```bash
 # Клонировать репозиторий
 git clone <repository-url>
-cd ai-integration
+cd a2a-ai-hub
 
 # Запустить сервисы
 ./docker-run.sh start
@@ -293,8 +293,8 @@ curl http://localhost:11434/health
 ### Структура сервисов
 
 - **compat_llm**: LLM сервер (порт 11435)
-- **ai-integration**: Прокси с демоном (порт 11434)
-- **ai-integration-dev**: Режим разработки (порт 11438)
+- **a2a-ai-hub**: Прокси с демоном (порт 11434)
+- **a2a-ai-hub-dev**: Режим разработки (порт 11438)
 
 ### Переменные окружения
 

@@ -87,7 +87,7 @@ curl http://localhost:11434/v1/models
 **Diagnosis:**
 ```bash
 # Check current timeout
-grep FORWARD_TIMEOUT ai-integration/.env
+grep FORWARD_TIMEOUT a2a-ai-hub/.env
 ```
 
 **Solutions:**
@@ -106,7 +106,7 @@ grep FORWARD_TIMEOUT ai-integration/.env
 # Check current provider timeout
 echo $PROVIDER_TIMEOUT
 # Or check in .env file
-grep PROVIDER_TIMEOUT ai-integration/.env
+grep PROVIDER_TIMEOUT a2a-ai-hub/.env
 ```
 
 **Solutions:**
@@ -199,7 +199,7 @@ netstat -ano | findstr "11435"
 
 ```bash
 # Per-promise logged request/response bodies (including upstream JSON errors)
-dir ai-integration\proxy_logs\promises
+dir a2a-ai-hub\proxy_logs\promises
 ```
 
 **Solutions**
@@ -256,11 +256,11 @@ curl http://localhost:11434/metrics
 
 | Component | Location |
 |-----------|----------|
-| Proxy LLM traces | `ai-integration/proxy_logs/promises/<promiseId>/` (`request.json`, `response.json`, `body_raw.json`, …) |
-| Legacy request dumps (non-promise paths) | `ai-integration/proxy_logs/requests/request_*/` |
-| Promise upstream bodies (debug) | `ai-integration/proxy_logs/promises/<promiseId>/body.md` |
-| Promise storage | `ai-integration/storage/promises/` |
-| Cache | `ai-integration/storage/cache/` |
+| Proxy LLM traces | `a2a-ai-hub/proxy_logs/promises/<promiseId>/` (`request.json`, `response.json`, `body_raw.json`, …) |
+| Legacy request dumps (non-promise paths) | `a2a-ai-hub/proxy_logs/requests/request_*/` |
+| Promise upstream bodies (debug) | `a2a-ai-hub/proxy_logs/promises/<promiseId>/body.md` |
+| Promise storage | `a2a-ai-hub/storage/promises/` |
+| Cache | `a2a-ai-hub/storage/cache/` |
 | Local LLM upstream logs | stdout/stderr of your `LOCAL_LLM_SERVE_CMD` process |
 
 ---
@@ -273,7 +273,7 @@ curl http://localhost:11434/metrics
 ./kill-all.bat
 
 # Start services
-cd ai-integration && docker-compose up -d
+cd a2a-ai-hub && docker-compose up -d
 start-all.bat
 ```
 
@@ -283,7 +283,7 @@ start-all.bat
 curl -X POST http://localhost:11434/daemon/stop
 
 # Delete promise storage
-rm -rf ai-integration/storage/promises/
+rm -rf a2a-ai-hub/storage/promises/
 
 # Restart daemon
 curl -X POST http://localhost:11434/daemon/start

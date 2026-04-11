@@ -1,11 +1,10 @@
-import { loadConfig, Config } from './config';
+import { loadConfig, Config } from './config.js';
 
 /**
  * Feature modules - these are dynamically imported based on config
  */
 interface FeatureModules {
   rag?: { initialize: () => Promise<void>; start: () => Promise<void>; stop: () => Promise<void> };
-  embedding?: { initialize: () => Promise<void>; start: () => Promise<void>; stop: () => Promise<void> };
   execution?: { initialize: () => Promise<void>; start: () => Promise<void>; stop: () => Promise<void> };
   web?: { initialize: () => Promise<void>; start: () => Promise<void>; stop: () => Promise<void> };
   storage?: { initialize: () => Promise<void>; start: () => Promise<void>; stop: () => Promise<void> };
@@ -36,12 +35,6 @@ class A2AClientApplication {
       console.log('RAG feature enabled');
       const ragModule = await import('./features/rag.ts');
       this.features.rag = ragModule;
-    }
-
-    if (this.config.features.embedding) {
-      console.log('Embedding feature enabled');
-      const embeddingModule = await import('./features/embedding.ts');
-      this.features.embedding = embeddingModule;
     }
 
     if (this.config.features.execution) {
@@ -76,10 +69,6 @@ class A2AClientApplication {
       startPromises.push(this.features.rag.initialize());
     }
     
-    if (this.config.features.embedding && this.features.embedding) {
-      startPromises.push(this.features.embedding.initialize());
-    }
-    
     if (this.config.features.execution && this.features.execution) {
       startPromises.push(this.features.execution.initialize());
     }
@@ -100,10 +89,6 @@ class A2AClientApplication {
     
     if (this.config.features.rag && this.features.rag) {
       startFeaturePromises.push(this.features.rag.start());
-    }
-    
-    if (this.config.features.embedding && this.features.embedding) {
-      startFeaturePromises.push(this.features.embedding.start());
     }
     
     if (this.config.features.execution && this.features.execution) {
@@ -144,11 +129,6 @@ class A2AClientApplication {
     if (this.config.features.execution && this.features.execution) {
       // Assuming stop method exists
       stopPromises.push(this.features.execution.stop?.());
-    }
-    
-    if (this.config.features.embedding && this.features.embedding) {
-      // Assuming stop method exists
-      stopPromises.push(this.features.embedding.stop?.());
     }
     
     if (this.config.features.rag && this.features.rag) {

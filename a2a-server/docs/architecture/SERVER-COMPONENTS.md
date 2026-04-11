@@ -399,7 +399,7 @@ class SSEManager {
 
 **Поддерживаемые провайдеры:**
 - `openai` - OpenAI API
-- `compat_llm` - Local LLM upstream через ai-integration
+- `compat_llm` - Local LLM upstream через a2a-ai-hub
 - `placeholder` - заглушка
 
 **Основные методы:**
@@ -433,7 +433,7 @@ interface LLMInput {
 **Файл:** [`src/services/compat_llm-adapter.ts`](a2a-server/src/services/compat_llm-adapter.ts)
 
 **Назначение:**
-- Promise-based интеграция с ai-integration (Local LLM upstream)
+- Promise-based интеграция с a2a-ai-hub (Local LLM upstream)
 - Polling статуса promise
 
 **Основные методы:**
@@ -446,7 +446,7 @@ interface LLMInput {
 | `waitForPromise(promiseId, onProgress?)` | Ожидание с polling |
 
 **Конфигурация (env):**
-- `AI_HUB_URL` - URL ai-integration (default: `http://localhost:11434`)
+- `AI_HUB_URL` - URL a2a-ai-hub (default: `http://localhost:11434`)
 - `POLL_INTERVAL_MS` - интервал polling (default: 2000ms)
 - `POLL_TIMEOUT_MS` - таймаут (default: 120000ms)
 
@@ -816,7 +816,7 @@ POST /invoke (step_result) → ActionProcessor.processStepResult()
 - `OPENAI_API_KEY` - ключ OpenAI
 - `OPENAI_MODEL` - модель OpenAI
 - `LOCAL_LLM_MODEL` - модель Local LLM upstream
-- `AI_HUB_URL` - URL ai-integration
+- `AI_HUB_URL` - URL a2a-ai-hub
 
 ### Processor
 - `REQUEST_PROCESSOR_INTERVAL_MS` - интервал polling (default: 5000ms)

@@ -4,7 +4,7 @@
  */
 
 import {describe, it, expect} from 'vitest';
-import {analyzeTaskDetail, getNeuronsByLevel, type TaskDetailLevel} from '../../src/utils/task-detail-analyzer.js';
+import {analyzeTaskDetail, getNeuronsByLevel, type TaskDetailLevel} from '../../src/utils/task-detail-analyzer';
 
 describe('task-detail-analyzer', () => {
     describe('analyzeTaskDetail', () => {
@@ -85,7 +85,7 @@ describe('task-detail-analyzer', () => {
         });
 
         it('should handle relative file paths', () => {
-            const result = analyzeTaskDetail('Update ./src/index.js');
+            const result = analyzeTaskDetail('Update ./src/index');
             expect(result.hasFilePaths).toBe(true);
         });
     });

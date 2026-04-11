@@ -29,8 +29,8 @@ param(
 $Config = @{
     PidFile = '.pids.txt'
     Services = @(
-        @{ Name = 'ai-integration'; Port = 11434; PidKey = 'AI_INTEGRATION_PID'; Enabled = -not $SkipAiIntegration;
-           Command = { param($p) & python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port $p }; WorkingDir = 'ai-integration'; HealthUrl = $null; LogFile = 'logs/ai.log' }
+        @{ Name = 'a2a-ai-hub'; Port = 11434; PidKey = 'AI_INTEGRATION_PID'; Enabled = -not $SkipAiIntegration;
+           Command = { param($p) & python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port $p }; WorkingDir = 'a2a-ai-hub'; HealthUrl = $null; LogFile = 'logs/ai.log' }
         @{ Name = 'a2a-server'; Port = 3000; PidKey = 'A2A_SERVER_PID'; Enabled = -not $SkipServer;
            Command = { param($p) & npm run dev }; WorkingDir = 'a2a-server'; HealthUrl = 'http://localhost:3000/health'; LogFile = 'logs/server.log' }
         @{ Name = 'client-api'; Port = 3001; PidKey = 'CLIENT_API_PID'; Enabled = -not $SkipClientApi;
@@ -220,7 +220,7 @@ function Start-Service {
 # ============================================================
 
 Set-Location $PSScriptRoot
-Write-Log "=== start-all.ps1 : Standardized service startup ===" 'STEP'
+Write-Log "===  : Standardized service startup ===" 'STEP'
 
 # Step 1: Kill existing processes (unless skipped)
 if (-not $SkipKill) {

@@ -1,6 +1,6 @@
 import {describe, it, expect} from 'vitest';
-import {filterResponse} from '../../src/routes/requests.routes.js';
-import {clientSafeWorkbench} from '../../src/services/core/request/client-visible-context.js';
+import {filterResponse} from '../../src/routes/requests.routes';
+import {clientSafeWorkbench} from '../../src/services/core/request/client-visible-context';
 
 describe('filterResponse (poll /result)', () => {
     it('preserves workbench, files, scratchpad, scratchpad_ops on context', () => {

@@ -2,7 +2,12 @@
  * Client-visible context: drop server-internal workbench slots before persistence and poll responses.
  */
 
-import {SERVER_OWNED_WORKBENCH_SLOT_KEYS} from '../../transform/interrupt-trace-contract.js';
+const SERVER_OWNED_WORKBENCH_SLOT_KEYS: ReadonlySet<string> = new Set([
+    'interruptTrace',
+    'grayRoom',
+    'thinking',
+    'clarify',
+]);
 
 /** Remove server-only workbench slots (gray room, interrupt trace, internal tool slots) — not for client API or disk. */
 export function clientSafeWorkbench(wb: unknown): unknown {

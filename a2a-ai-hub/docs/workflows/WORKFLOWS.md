@@ -115,7 +115,7 @@ curl http://localhost:11434/health
 # "cache_status": "active"
 
 # Clear cache manually
-rm -rf ai-integration/storage/cache/
+rm -rf a2a-ai-hub/storage/cache/
 ```
 
 ---
@@ -268,7 +268,7 @@ Run AI Integration in Docker containers.
 
 ### Quick Start
 ```bash
-cd ai-integration
+cd a2a-ai-hub
 docker-compose up -d
 
 # Check status
@@ -277,8 +277,8 @@ curl http://localhost:11434/health
 
 ### Available Services
 - `compat_llm` - LLM server (port 11435)
-- `ai-integration` - Proxy (port 11434)
-- `ai-integration-dev` - Dev mode (port 11438)
+- `a2a-ai-hub` - Proxy (port 11434)
+- `a2a-ai-hub-dev` - Dev mode (port 11438)
 
 ### Scripts
 ```bash

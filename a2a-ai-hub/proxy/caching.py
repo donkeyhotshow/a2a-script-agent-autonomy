@@ -117,7 +117,7 @@ def llm_disk_cache_log(
 ) -> None:
     """
     One-line grep-friendly events for proba / CI (no bodies, no secrets).
-    Set LLM_DISK_CACHE_LOG=1 on ai-integration to enable.
+    Set LLM_DISK_CACHE_LOG=1 on a2a-ai-hub to enable.
     """
     if not _llm_disk_cache_log_enabled():
         return

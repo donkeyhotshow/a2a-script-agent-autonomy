@@ -6,8 +6,12 @@
 
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
-import {ActionDefinition, SubAction, ActionContext, DSLDefinition} from './types.js';
-import {tryParseJsonFromLlmText} from '../../lib/strip-markdown-json-fence.js';
+import {ActionDefinition, SubAction, ActionContext, DSLDefinition} from './types';
+import {tryParseJsonFromLlmText} from '@a2a/server-utils/strip-markdown-json-fence';
+import {logger} from '@a2a/server-utils/logger';
+
+/** Strip newlines to prevent CWE-117 log injection */
+const sanitizeForLog = (s: string): string => s.replace(/[\n\r]/g, ' ');
 
 /**
  * Parse a primitive type from a string value
@@ -339,12 +343,17 @@ export function parseActionFromMarkdown(content: string, filename: string): Acti
 /**
  * Recursively collect all .md paths from a directory (skip README.md).
  */
-async function collectMarkdownFiles(dirPath: string, out: string[] = []): Promise<string[]> {
+async function collectMarkdownFiles(dirPath: string, out: string[] = [], root?: string): Promise<string[]> {
+    // CWE-22/23: resolve root once on first call; all entries must stay within it
+    const containmentRoot = root ?? path.resolve(dirPath);
     const entries = await fs.readdir(dirPath, {withFileTypes: true});
     for (const e of entries) {
-        const full = path.join(dirPath, e.name);
+        const full = path.resolve(dirPath, e.name);
+        if (!full.startsWith(containmentRoot + path.sep) && full !== containmentRoot) {
+            continue; // skip symlinks or entries that escape the root
+        }
         if (e.isDirectory()) {
-            await collectMarkdownFiles(full, out);
+            await collectMarkdownFiles(full, out, containmentRoot);
         } else if (e.name.endsWith('.md') && e.name.toLowerCase() !== 'readme.md') {
             out.push(full);
         }
@@ -366,11 +375,17 @@ export async function parseAllActionsFromDirectory(directoryPath: string): Promi
                 const action = parseActionFromMarkdown(content, baseName);
                 actions.push(action);
             } catch (error) {
-                console.error(`Error parsing action file ${filePath}:`, error);
+                logger.error('[action-parser] Error parsing action file', {
+                    filePath: sanitizeForLog(filePath),
+                    error: error instanceof Error ? error.message : String(error),
+                });
             }
         }
     } catch (error) {
-        console.error(`Error reading directory ${directoryPath}:`, error);
+        logger.error('[action-parser] Error reading directory', {
+            directoryPath: sanitizeForLog(directoryPath),
+            error: error instanceof Error ? error.message : String(error),
+        });
     }
     return actions;
 }

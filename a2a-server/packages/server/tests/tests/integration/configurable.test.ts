@@ -21,8 +21,8 @@ import {
   usesMocks, 
   usesRealDatabase,
   type TestConfig 
-} from '../test-config.js';
-import { setupMocks } from '../helpers/index.js';
+} from '../test-config';
+import { setupMocks } from '../helpers/index';
 
 describe('Configurable Integration Tests', () => {
   let config: TestConfig;

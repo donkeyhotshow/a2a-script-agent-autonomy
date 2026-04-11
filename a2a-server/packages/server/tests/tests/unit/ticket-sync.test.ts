@@ -8,12 +8,12 @@ import os from 'node:os';
 import fs from 'node:fs';
 
 // ── Mock logger ───────────────────────────────────────────────────────────────
-vi.mock('../../src/utils/logger.js', () => ({
+vi.mock('../../src/utils/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn() },
 }));
 
-import { TicketSync } from '../../src/services/core/ticket-sync.js';
-import type { ExecutionPlan, Goal } from '../../src/services/core/goal-planner.js';
+import { TicketSync } from '../../src/services/core/ticket-sync';
+import type { ExecutionPlan, Goal } from '../../src/services/core/goal-planner';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -307,8 +307,8 @@ describe('TicketSync', () => {
 
   describe('GoalPlanner integration', () => {
     it('writePlan is called by GoalPlanner.decompose() when ticketSync is provided', async () => {
-      const { ArtifactStore } = await import('../../src/services/core/artifact-store.js');
-      const { GoalPlanner } = await import('../../src/services/core/goal-planner.js');
+      const { ArtifactStore } = await import('../../src/services/core/artifact-store');
+      const { GoalPlanner } = await import('../../src/services/core/goal-planner');
 
       const store   = new ArtifactStore();
       const planner = new GoalPlanner(store, sync);
@@ -322,8 +322,8 @@ describe('TicketSync', () => {
     });
 
     it('markGoalActive updates plan and writes active status', async () => {
-      const { ArtifactStore } = await import('../../src/services/core/artifact-store.js');
-      const { GoalPlanner } = await import('../../src/services/core/goal-planner.js');
+      const { ArtifactStore } = await import('../../src/services/core/artifact-store');
+      const { GoalPlanner } = await import('../../src/services/core/goal-planner');
 
       const store   = new ArtifactStore();
       const planner = new GoalPlanner(store, sync);
@@ -337,8 +337,8 @@ describe('TicketSync', () => {
     });
 
     it('markGoalDone updates plan and writes done status', async () => {
-      const { ArtifactStore } = await import('../../src/services/core/artifact-store.js');
-      const { GoalPlanner } = await import('../../src/services/core/goal-planner.js');
+      const { ArtifactStore } = await import('../../src/services/core/artifact-store');
+      const { GoalPlanner } = await import('../../src/services/core/goal-planner');
 
       const store   = new ArtifactStore();
       const planner = new GoalPlanner(store, sync);
@@ -349,8 +349,8 @@ describe('TicketSync', () => {
     });
 
     it('finalizePlan writes a done archive file', async () => {
-      const { ArtifactStore } = await import('../../src/services/core/artifact-store.js');
-      const { GoalPlanner } = await import('../../src/services/core/goal-planner.js');
+      const { ArtifactStore } = await import('../../src/services/core/artifact-store');
+      const { GoalPlanner } = await import('../../src/services/core/goal-planner');
 
       const store   = new ArtifactStore();
       const planner = new GoalPlanner(store, sync);
@@ -362,8 +362,8 @@ describe('TicketSync', () => {
     });
 
     it('writePlan is called by GoalPlanner.replan() when ticketSync is provided', async () => {
-      const { ArtifactStore } = await import('../../src/services/core/artifact-store.js');
-      const { GoalPlanner } = await import('../../src/services/core/goal-planner.js');
+      const { ArtifactStore } = await import('../../src/services/core/artifact-store');
+      const { GoalPlanner } = await import('../../src/services/core/goal-planner');
 
       const store   = new ArtifactStore();
       const planner = new GoalPlanner(store, sync);
@@ -379,8 +379,8 @@ describe('TicketSync', () => {
     });
 
     it('GoalPlanner methods work correctly without ticketSync (backward-compat)', async () => {
-      const { ArtifactStore } = await import('../../src/services/core/artifact-store.js');
-      const { GoalPlanner } = await import('../../src/services/core/goal-planner.js');
+      const { ArtifactStore } = await import('../../src/services/core/artifact-store');
+      const { GoalPlanner } = await import('../../src/services/core/goal-planner');
 
       const store   = new ArtifactStore();
       const planner = new GoalPlanner(store); // no ticketSync

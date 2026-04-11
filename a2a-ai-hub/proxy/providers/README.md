@@ -161,6 +161,6 @@ Request → ProviderRouter → Provider Chain
 Run tests:
 
 ```bash
-cd ai-integration
+cd a2a-ai-hub
 pytest tests/providers/ -v
 ```

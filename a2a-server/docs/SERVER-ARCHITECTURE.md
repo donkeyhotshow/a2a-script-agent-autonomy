@@ -61,13 +61,13 @@ The A2A Server is a **stateless** HTTP service that processes requests and retur
 │                                 ▼                                            │
 │                    ┌─────────────────────────┐                              │
 │                    │   External AI Hub       │                              │
-│                    │   (ai-integration)      │                              │
+│                    │   (a2a-ai-hub)      │                              │
 │                    └─────────────────────────┘                              │
 └─────────────────────────────────────────────────────────────────────────────┘
                                       │
                                       ▼
 ┌─────────────────────────────────────────────────────────────────────────────┐
-│                       EXTERNAL AI HUB (ai-integration)                       │
+│                       EXTERNAL AI HUB (a2a-ai-hub)                       │
 │  - Proxy on **11434** → Local LLM upstream **11435**                                    │
 │  - Async promise support (promiseId)                                        │
 │  - ML simulation capabilities                                               │
@@ -365,7 +365,7 @@ REQUEST_PROCESSOR_INTERVAL_MS=5000
 
 > **Note:** Server is stateless - no database required. All state is stored by Client API.
 
-**AI Hub (ai-integration)**:
+**AI Hub (a2a-ai-hub)**:
 
 ```
 PROXY_PORT=11434
@@ -393,7 +393,7 @@ npm install
 npm run dev
 
 # AI Hub (optional)
-cd ai-integration
+cd a2a-ai-hub
 pip install -r requirements.txt
 python -m proxy
 
@@ -439,8 +439,8 @@ GET /api/v1/health/ready             - Readiness probe
 
 | Document                                                               | Description          |
 | ---------------------------------------------------------------------- | -------------------- |
-| [ai-integration/README.md](../../ai-integration/README.md)             | AI Hub documentation |
-| [ai-integration/docs/UPGRADE.md](../../ai-integration/docs/UPGRADE.md) | Upgrade guide        |
+| [a2a-ai-hub/README.md](../../a2a-ai-hub/README.md)             | AI Hub documentation |
+| [a2a-ai-hub/docs/UPGRADE.md](../../a2a-ai-hub/docs/UPGRADE.md) | Upgrade guide        |
 
 ---
 

@@ -7,8 +7,8 @@ const { createMock } = vi.hoisted(() => ({
   createMock: vi.fn().mockResolvedValue({ promiseId: 'prom_ut_sess', id: 'req_ut_sess' }),
 }));
 
-vi.mock('../../src/services/core/request/request.service.js', async (importOriginal) => {
-  const mod = await importOriginal<typeof import('../../src/services/core/request/request.service.js')>();
+vi.mock('../../src/services/core/request/request.service', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('../../src/services/core/request/request.service')>();
   return {
     ...mod,
     requestService: {
@@ -18,7 +18,7 @@ vi.mock('../../src/services/core/request/request.service.js', async (importOrigi
   };
 });
 
-import { invoke } from '../../src/services/utils/invoke.service.js';
+import { invoke } from '../../src/services/utils/invoke.service';
 
 describe('invoke — session_id privacy', () => {
   beforeEach(() => {

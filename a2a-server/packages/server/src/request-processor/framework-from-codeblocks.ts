@@ -2,7 +2,7 @@
  * Derive frameworks bucket from synthetic codeBlocks (e.g. package.json) for request context.
  */
 
-import { logger } from '../../utils/logger.js';
+import { logger } from "@a2a/server-utils/logger";
 
 const FRONTEND = new Set([
     'vue',

@@ -1,4 +1,4 @@
-import { GrayRoomConfig } from "./types.js";
+import { GrayRoomConfig } from "./types";
 
 export const defaultGrayRoomConfig: GrayRoomConfig = {
   version: "1.0",

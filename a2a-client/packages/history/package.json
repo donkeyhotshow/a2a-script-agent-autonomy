@@ -5,6 +5,7 @@
   "type": "module",
   "description": "History management",
   "exports": {
+    "./*": "./*",
     "./index.ts": "./src/index.ts",
     "./history-manager.ts": "./src/history-manager.ts",
     "./session-storage.ts": "./src/session-storage.ts",

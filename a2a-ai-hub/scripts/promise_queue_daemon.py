@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Daemon that polls the ai-integration proxy promise queue and delivers Qwen output."""
+"""Daemon that polls the a2a-ai-hub proxy promise queue and delivers Qwen output."""
 import argparse
 import json
 import logging
@@ -13,13 +13,13 @@ from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
 
-# Hub is ai-integration (e.g. :11434), not Local LLM upstream (:11435) — pending/execute live on the proxy.
+# Hub is a2a-ai-hub (e.g. :11434), not Local LLM upstream (:11435) — pending/execute live on the proxy.
 DEFAULT_PROXY_URL = os.environ.get("PROMISE_PROXY_URL") or os.environ.get("PROXY_URL") or "http://localhost:11434"
 DEFAULT_POLL_INTERVAL = 4.0
 DEFAULT_TIMEOUT = 15.0
 DEFAULT_RESPONSE_ATTEMPTS = 5
 DEFAULT_RESPONSE_RETRY_DELAY = 0.6
-USER_AGENT = "ai-integration-promise-daemon/1.0"
+USER_AGENT = "a2a-ai-hub-promise-daemon/1.0"
 
 
 def parse_args() -> argparse.Namespace:
@@ -29,7 +29,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--proxy-url",
         default=DEFAULT_PROXY_URL,
-        help="Base URL for the ai-integration proxy (default taken from PROMISE_PROXY_URL/PROXY_URL).",
+        help="Base URL for the a2a-ai-hub proxy (default taken from PROMISE_PROXY_URL/PROXY_URL).",
     )
     parser.add_argument("--interval", type=float, default=DEFAULT_POLL_INTERVAL, help="Seconds between polls when no tickets are pending.")
     parser.add_argument("--timeout", type=float, default=DEFAULT_TIMEOUT, help="HTTP timeout for proxy calls.")

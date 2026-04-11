@@ -3,7 +3,7 @@
  * Extracted from stepRoutes.ts
  */
 
-import { loadNewSession } from '@a2a-client/storage/newSessions.js';
+import { loadNewSession } from '@a2a-client/storage/newSessions.ts';
 
 export { getStorageMode, isValidSessionId } from '../../utils/server.js';
 

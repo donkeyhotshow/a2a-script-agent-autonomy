@@ -1,6 +1,6 @@
-import fs from 'fs';
 import path from 'path';
-import { normalizeProjectPath, projectPathsEqual } from './projectSessions.js';
+import { normalizeProjectPath, projectPathsEqual } from './projectSessions.ts';
+import { readJsonFileSync, writeJsonFileSync } from './utils.ts';
 
 /** Normative default per methodology/adr-compliance-orchestrator.md */
 export const ADR_COMPLIANCE_STATE_RELATIVE = path.join('.a2a', 'adr-compliance-state.json');
@@ -15,13 +15,7 @@ export function getAdrComplianceStatePath(projectPath) {
  */
 export function loadAdrComplianceState(projectPath) {
   const file = getAdrComplianceStatePath(projectPath);
-  if (!fs.existsSync(file)) return null;
-  try {
-    return JSON.parse(fs.readFileSync(file, 'utf8'));
-  } catch (err) {
-    console.error('[adrComplianceState] Failed to parse:', file, err?.message || err);
-    throw err instanceof Error ? err : new Error(String(err));
-  }
+  return readJsonFileSync(file, 'adrComplianceState', null, true);
 }
 
 /**

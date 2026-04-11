@@ -136,7 +136,7 @@
 | Web UI | 5173 | Пользовательский интерфейс | → Client API на том же Vite (`/api/a2a/*`) или SDK :3001 |
 | Client API | 5173 (vite-plugin) или 3001 (SDK) | Сессии, прокси на сервер | → A2A Server (3000) |
 | A2A Server | 3000 | Обработка задач | → AI Hub (11434) |
-| AI Hub (ai-integration) | 11434 | Прокси / promise flow | → Local LLM upstream (11435) |
+| AI Hub (a2a-ai-hub) | 11434 | Прокси / promise flow | → Local LLM upstream (11435) |
 | Local LLM upstream | 11435 | Локальная LLM | — |
 
 ## Перекрёстные ссылки

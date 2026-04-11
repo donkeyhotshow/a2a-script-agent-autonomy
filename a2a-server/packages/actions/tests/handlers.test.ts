@@ -3,9 +3,9 @@
  */
 
 import {describe, it, expect, vi} from 'vitest';
-import {executeReadFile, validateCommand} from '../../src/actions/handlers/index.js';
+import {executeReadFile, validateCommand} from '../../src/actions/handlers/index';
 
-vi.mock('../../src/utils/logger.js', () => ({
+vi.mock('../../src/utils/logger', () => ({
     logger: {
         info: vi.fn(),
         error: vi.fn(),
@@ -78,7 +78,7 @@ describe('Action Handlers', () => {
 
 describe('Action Handler Registry', () => {
     it('should have all expected handlers registered', async () => {
-        const {actionHandlerRegistry} = await import('../../src/actions/action-handler-registry.js');
+        const {actionHandlerRegistry} = await import('../../src/actions/action-handler-registry');
 
         const handlers = actionHandlerRegistry.listHandlers();
 
@@ -93,7 +93,7 @@ describe('Action Handler Registry', () => {
     });
 
     it('should check if handler exists', async () => {
-        const {actionHandlerRegistry} = await import('../../src/actions/action-handler-registry.js');
+        const {actionHandlerRegistry} = await import('../../src/actions/action-handler-registry');
 
         expect(actionHandlerRegistry.hasHandler('read-file')).toBe(true);
         expect(actionHandlerRegistry.hasHandler('non-existent')).toBe(false);

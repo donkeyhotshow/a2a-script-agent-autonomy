@@ -2,7 +2,7 @@
 
 ## Overview
 
-This glossary defines key terms and concepts specific to the AI Integration module (ai-integration) of the A2A Script Agent project.
+This glossary defines key terms and concepts specific to the AI Integration module (a2a-ai-hub) of the A2A Script Agent project.
 
 ## Core Concepts
 

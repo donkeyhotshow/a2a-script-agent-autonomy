@@ -11,7 +11,7 @@
 
 **Status:** Proposed per [ADR-0058](../../docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md). Not yet implemented.
 
-**Location:** `ai-integration` proxy layer (this document). Gray Room lives in `a2a-server`.
+**Location:** `a2a-ai-hub` proxy layer (this document). Gray Room lives in `a2a-server`.
 
 ## Concept
 
@@ -48,7 +48,7 @@ The `algorithmId` maps to a **known execution pattern** in Black Room — no nat
                                 ▼
                     ┌─────────────────────────┐     ┌─────────────────┐
                     │   Black Room Entry      │────►│ Algorithm Mode  │
-                    │    (in ai-integration)  │     │  (Local Local LLM upstream) │
+                    │    (in a2a-ai-hub)  │     │  (Local Local LLM upstream) │
                     └───────────┬─────────────┘     └─────────────────┘
                                 │
                                 │ result
@@ -59,23 +59,23 @@ The `algorithmId` maps to a **known execution pattern** in Black Room — no nat
                     └─────────────────────────┘
 ```
 
-### Boundary: ai-integration vs a2a-server
+### Boundary: a2a-ai-hub vs a2a-server
 
 | Component | Module | Responsibility |
 |-----------|--------|--------------|
 | **Gray Room Orchestrator** | `a2a-server` | Detects `algorithm_invoke`, routes to Black Room |
-| **Black Room Orchestrator** | `ai-integration` | Executes algorithms on local Local LLM upstream |
-| **Algorithm Registry** | `ai-integration` | Stores and serves algorithm definitions |
-| **Local LLM upstream Client** | `ai-integration` | Direct communication with Local LLM upstream (port 11435) |
+| **Black Room Orchestrator** | `a2a-ai-hub` | Executes algorithms on local Local LLM upstream |
+| **Algorithm Registry** | `a2a-ai-hub` | Stores and serves algorithm definitions |
+| **Local LLM upstream Client** | `a2a-ai-hub` | Direct communication with Local LLM upstream (port 11435) |
 
 ### Components
 
-#### 1. BlackRoomOrchestrator (in ai-integration)
+#### 1. BlackRoomOrchestrator (in a2a-ai-hub)
 
-Entry point for algorithm mode. Resides in `ai-integration` as it directly manages Local LLM upstream communication.
+Entry point for algorithm mode. Resides in `a2a-ai-hub` as it directly manages Local LLM upstream communication.
 
 ```typescript
-// ai-integration/src/black-room/black-room-orchestrator.ts (proposed)
+// a2a-ai-hub/src/black-room/black-room-orchestrator.ts (proposed)
 class BlackRoomOrchestrator {
   async executeAlgorithm(
     algorithmId: string,
@@ -85,12 +85,12 @@ class BlackRoomOrchestrator {
 }
 ```
 
-#### 2. Algorithm Registry (in ai-integration)
+#### 2. Algorithm Registry (in a2a-ai-hub)
 
 Maps `algorithmId` to execution definition:
 
 ```typescript
-// ai-integration/src/black-room/algorithm-registry.ts (proposed)
+// a2a-ai-hub/src/black-room/algorithm-registry.ts (proposed)
 interface AlgorithmDefinition {
   id: string;
   version: string;
@@ -216,24 +216,24 @@ Primary invoke (Prompt Mode in a2a-server)
     │    Input: suggestions + cost constraints
     │    Output: final algorithm_id, context_profile
     │
-    └──► Algorithm invoke → Black Room (ai-integration)
+    └──► Algorithm invoke → Black Room (a2a-ai-hub)
 ```
 
 Pre-spins are tracked in `context.workbench.slots.grayRoomPreSpins[]`.
 
 ## Configuration
 
-### Environment Variables (in ai-integration)
+### Environment Variables (in a2a-ai-hub)
 
 ```bash
 # Enable Black Room
 A2A_BLACK_ROOM_ENABLED=1
 
-# Local LLM upstream connection (ai-integration already connects here)
+# Local LLM upstream connection (a2a-ai-hub already connects here)
 A2A_BLACK_ROOM_COMPAT_LLM_URL=http://localhost:11435
 A2A_BLACK_ROOM_DEFAULT_MODEL=llama3.1:8b
 
-# Algorithm registry path (relative to ai-integration/)
+# Algorithm registry path (relative to a2a-ai-hub/)
 A2A_ALGORITHM_REGISTRY_PATH=./algorithms/
 A2A_ALGORITHM_AUTO_RELOAD=1  # Reload on file change (dev)
 
@@ -242,10 +242,10 @@ A2A_BLACK_ROOM_MAX_TURNS=10
 A2A_BLACK_ROOM_TIMEOUT_MS=30000
 ```
 
-### Algorithm Template Structure (in ai-integration/algorithms/)
+### Algorithm Template Structure (in a2a-ai-hub/algorithms/)
 
 ```
-ai-integration/algorithms/
+a2a-ai-hub/algorithms/
 ├── ctx-gather-v2/
 │   ├── algorithm.json          # AlgorithmDefinition
 │   ├── system.md              # System prompt template
@@ -270,9 +270,9 @@ When Black Room fails, escalate to Gray Room Prompt Mode:
 
 ## Comparison: Gray Room vs Black Room
 
-| Aspect | Gray Room (a2a-server) | Black Room (ai-integration) |
+| Aspect | Gray Room (a2a-server) | Black Room (a2a-ai-hub) |
 |--------|------------------------|------------------------------|
-| **Location** | `a2a-server` | `ai-integration` |
+| **Location** | `a2a-server` | `a2a-ai-hub` |
 | **Input** | Natural language | Structured algorithmId + data |
 | **Model** | Paid API (GPT-4/Claude) | Local Local LLM upstream |
 | **Cost** | Per-token | Free (local compute) |
@@ -290,7 +290,7 @@ Add `algorithm_invoke` handler to `applyInterrupt()`:
 ```typescript
 // In a2a-server/src/services/core/request-processor/gray-room-orchestrator.ts
  case 'algorithm_invoke': {
-   // Call Black Room in ai-integration
+   // Call Black Room in a2a-ai-hub
    const blackRoomUrl = process.env.AI_INTEGRATION_URL || 'http://localhost:11434';
    const result = await fetch(`${blackRoomUrl}/api/black-room/execute`, {
      method: 'POST',
@@ -309,9 +309,9 @@ Add `algorithm_invoke` handler to `applyInterrupt()`:
  }
 ```
 
-### ai-integration API Endpoint (proposed)
+### a2a-ai-hub API Endpoint (proposed)
 
-Black Room runs as dedicated endpoint in `ai-integration`:
+Black Room runs as dedicated endpoint in `a2a-ai-hub`:
 
 ```
 POST /api/black-room/execute
@@ -324,7 +324,7 @@ Body: {
 }
 ```
 
-Implementation location: `ai-integration/proxy/black_room_handler.py` or `ai-integration/src/black-room/` for Node.js.
+Implementation location: `a2a-ai-hub/proxy/black_room_handler.py` or `a2a-ai-hub/src/black-room/` for Node.js.
 
 ## Observability
 
@@ -350,7 +350,7 @@ Black Room adds events to `interruptTrace` (stored in a2a-server, displayed in c
 }
 ```
 
-### Metrics (in ai-integration)
+### Metrics (in a2a-ai-hub)
 
 - `black_room_executions_total` — Counter by algorithmId
 - `black_room_duration_seconds` — Histogram of execution time
@@ -367,5 +367,5 @@ Black Room adds events to `interruptTrace` (stored in a2a-server, displayed in c
 
 - [ADR-0058](../../docs/adr/ADR-0058-gray-room-split-prompt-vs-algorithm.md) — Decision record
 - [a2a-server/docs/GRAY-ROOM.md](../../a2a-server/docs/GRAY-ROOM.md) — Gray Room implementation (in a2a-server)
-- [ai-integration/README.md](../README.md) — AI Integration module overview
-- [ai-integration/docs/api-reference/PROXY_API.md](./api-reference/PROXY_API.md) — Proxy API details
+- [a2a-ai-hub/README.md](../README.md) — AI Integration module overview
+- [a2a-ai-hub/docs/api-reference/PROXY_API.md](./api-reference/PROXY_API.md) — Proxy API details

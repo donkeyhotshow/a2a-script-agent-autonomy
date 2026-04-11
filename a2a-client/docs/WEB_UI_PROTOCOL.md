@@ -4,7 +4,7 @@ Checkpoint: agent mode in `a2a-client/web` against the Vite **storage-mode** Cli
 
 **Web HTTP surface:** the browser only sees **`/api/a2a/*`** on the app origin. **Execution** still runs on **a2a-server** (`/api/v1/invoke` and request polling); the Client API is the gateway and session layer. Operator doc: [`docs/OPERATOR-CURL.md`](../../docs/OPERATOR-CURL.md) → *Web access and a2a-server*.
 
-**AI hub promise queue (vertex C):** same-origin **`/api/a2a/hub/*`** proxies to **`AI_HUB_URL`** (pending/errors/retry/execute/delete). Web header **Hub queue**; normative hub API: [`ai-integration/docs/api-reference/PROXY_API.md`](../../ai-integration/docs/api-reference/PROXY_API.md) § *Promise queue*.
+**AI hub promise queue (vertex C):** same-origin **`/api/a2a/hub/*`** proxies to **`AI_HUB_URL`** (pending/errors/retry/execute/delete). Web header **Hub queue**; normative hub API: [`a2a-ai-hub/docs/api-reference/PROXY_API.md`](../../a2a-ai-hub/docs/api-reference/PROXY_API.md) § *Promise queue*.
 
 ## Principles
 

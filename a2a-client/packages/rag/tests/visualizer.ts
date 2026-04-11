@@ -7,7 +7,7 @@
  * 
  * @example
  * ```typescript
- * import { visualizeReport, exportToCSV, asciiBarChart } from './visualizer';
+ * import { visualizeReport, exportToCSV, asciiBarChart } from './visualizer.js';
  * 
  * // Generate ASCII visualizations
  * const chart = visualizeReport(report);

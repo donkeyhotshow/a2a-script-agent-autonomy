@@ -1,4 +1,4 @@
-# Human-review test run (ai-integration)
+# Human-review test run (a2a-ai-hub)
 
 **When:** 2026-04-05T23:19:31.974675+00:00
 **Exit code:** 0
@@ -13,7 +13,7 @@ See pytest output below.
 ============================= test session starts =============================
 platform win32 -- Python 3.13.12, pytest-9.0.2, pluggy-1.6.0 -- C:\Users\dev\AppData\Local\Microsoft\WindowsApps\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\python.exe
 cachedir: .pytest_cache
-rootdir: C:\workspace\org-carrier\a2a-script-agent\ai-integration
+rootdir: C:\workspace\org-carrier\a2a-script-agent\a2a-ai-hub
 configfile: pyproject.toml
 plugins: anyio-4.12.1, asyncio-1.3.0
 asyncio: mode=Mode.STRICT, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function

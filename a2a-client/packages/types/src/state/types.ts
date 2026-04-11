@@ -15,6 +15,25 @@ export interface Task {
     progress?: number;
 }
 
+export interface SessionState {
+    id: string;
+    currentStep: number;
+    createdAt?: string;
+    updatedAt?: string;
+    status: 'active' | 'corrupt' | 'completed' | 'failed';
+    mode?: string;
+    title?: string;
+    context?: ContextBlock;
+    execute?: unknown;
+    asyncPending?: boolean;
+    promiseId?: string | null;
+    promiseStatus?: string | null;
+    error?: {
+        code: string;
+        message: string;
+    };
+}
+
 export interface ContextBlock {
     version: '1.0';
     new_task?: string[];

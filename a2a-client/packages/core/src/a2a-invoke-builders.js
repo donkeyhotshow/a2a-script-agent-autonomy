@@ -3,7 +3,7 @@
  * Helper functions for A2A invoke body processing.
  */
 
-import { unwrapA2aInvokeBody } from '../shared/src/client-api-envelope.mjs';
+import { unwrapA2aInvokeBody } from '@a2a-client/shared/client-api-envelope.mjs';
 
 import { pickInvokeContextPatch } from './context-invoke-patch.mjs';
 

@@ -3,7 +3,7 @@ import {
   prepareInvokePayloadForLlmPrompt,
   formatToolResultForHistory,
   syncLiveContextHistoryFromResultMessage,
-} from '../../src/transform/materialize-result-for-llm.js';
+} from '../../src/transform/materialize-result-for-llm';
 
 describe('materialize-result-for-llm', () => {
   it('folds result.message as user and clears result', () => {
@@ -29,7 +29,7 @@ describe('materialize-result-for-llm', () => {
   it('adds rag-search as system and skips duplicate system line', () => {
     const rag = {
       query: 'q',
-      files: ['src/a.js'],
+      files: ['src/a'],
       page: 1,
       pageSize: 20,
       total: 1,
@@ -50,8 +50,8 @@ describe('materialize-result-for-llm', () => {
   it('formats grep-search like simulations when path/glob omitted', () => {
     const s = formatToolResultForHistory('grep-search', {
       matches: [
-        { file: 'tests/api.test.js', line: 1, text: 'x' },
-        { file: 'tests/api.test.js', line: 2, text: 'y' }
+        { file: 'tests/api.test', line: 1, text: 'x' },
+        { file: 'tests/api.test', line: 2, text: 'y' }
       ]
     });
     expect(s).toBe('Grep tests/*.js: tests/api.test.js (2 matches)');
@@ -60,7 +60,7 @@ describe('materialize-result-for-llm', () => {
   it('formats grep-search with explicit path', () => {
     const s = formatToolResultForHistory('grep-search', {
       path: 'src/',
-      matches: [{ file: 'src/auth.js', line: 1, text: 'x' }]
+      matches: [{ file: 'src/auth', line: 1, text: 'x' }]
     });
     expect(s).toBe('Grep src/: src/auth.js (1 matches)');
   });

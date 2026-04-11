@@ -12,7 +12,7 @@ import {
     validationError,
     unauthorized,
     forbidden
-} from '../../src/middleware/error.middleware.js';
+} from '../../src/middleware/error.middleware';
 
 describe('Error Middleware', () => {
     let mockReq: Partial<Request>;
@@ -27,7 +27,7 @@ describe('Error Middleware', () => {
         };
         mockNext = vi.fn();
 
-        vi.mock('../../src/utils/logger.js', () => ({
+        vi.mock('../../src/utils/logger', () => ({
             logger: {
                 error: vi.fn(),
             },

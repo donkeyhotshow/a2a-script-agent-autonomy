@@ -2,8 +2,8 @@
  * Request Processor Interfaces — only what is actively used.
  */
 
-import type { Graph } from '../graph-store.service.js';
-import type { RequestContextBlock } from '../../types/index.js';
+import type { Graph } from '../graph-store.service';
+import type { RequestContextBlock } from '../../types/index';
 
 export interface RequestContext {
     promiseId: string;
@@ -68,18 +68,8 @@ export interface ExecuteCommand {
     // promiseId + status polling and renders waiting UI independently.
 }
 
-export interface ValidationResult {
-    valid: boolean;
-    errors: ValidationError[];
-}
-
-export interface ValidationError {
-    field: string;
-    code: string;
-    message: string;
-    severity: 'error' | 'warning' | 'info';
-    path?: string[];
-}
+import type { ValidationResult, ValidationError } from '../types/validation.interfaces';
+export type { ValidationResult, ValidationError };
 
 
 

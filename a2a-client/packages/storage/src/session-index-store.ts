@@ -1,13 +1,13 @@
 import fs from 'fs';
 import path from 'path';
-import { ensureDir } from './root.js';
-import { readServerPromiseJson } from './session-promise-read.js';
+import { ensureDir } from './root.ts';
+import { readServerPromiseJson } from './session-promise-read.ts';
 import {
    getNewSessionDir,
    getNewStepDir,
    listNewSteps,
    normalizeSessionIdForDir,
- } from '@a2a-client/storage/src/session-paths.mjs';
+  } from '@a2a-client/storage/session-paths.ts';
 
 /**
  * Derive session mode from session data.

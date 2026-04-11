@@ -1,10 +1,10 @@
-import { logger } from "@a2a/server-utils";
+import { logger } from "@a2a/server-utils/logger";
 import {
   extractLlmTextFromHubResponseBody,
   initAiHubChatPromise,
 } from "@a2a/server-daemon";
-import { BLACK_ROOM_DEFAULT_LLM_MODEL } from "./black-room/black-room-defaults.js";
-import { tryParseJsonFromLlmText } from "@a2a/server-utils";
+import { BLACK_ROOM_DEFAULT_LLM_MODEL } from "./black-room/black-room-defaults";
+import { tryParseJsonFromLlmText } from "@a2a/server-utils/strip-markdown-json-fence";
 
 export interface AgentSwingResult {
   best_history: any[];

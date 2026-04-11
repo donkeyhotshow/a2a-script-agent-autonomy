@@ -1,6 +1,6 @@
 import fs from 'fs';
-import path from 'path';
-import { getStorageSessionsRoot } from './root.js';
+import { pathExists, joinPaths, normalizePath } from '@a2a-client/execution/fs-utils';
+import { getStorageSessionsRoot } from './root.ts';
 
 /** Normalize id for filesystem paths (session-index may store numeric id from legacy JSON). */
 export function normalizeSessionIdForDir(sessionId) {
@@ -29,34 +29,34 @@ export function getNewSessionsDir(cwd) {
 }
 
 export function getNewSessionDir(cwd, sessionId) {
-  let sid = normalizeSessionIdForDir(sessionId);
-  if (!sid) {
-    console.error('[newSessions] getNewSessionDir: missing sessionId (using fallback dir)');
-    sid = '_invalid_session';
-  }
-  const parent = stepSessionsParentBySessionId.get(sid);
-  const base = parent && String(parent).trim() ? parent : getNewSessionsDir(cwd);
-  return path.join(base, sid);
-}
+   let sid = normalizeSessionIdForDir(sessionId);
+   if (!sid) {
+     console.error('[newSessions] getNewSessionDir: missing sessionId (using fallback dir)');
+     sid = '_invalid_session';
+   }
+   const parent = stepSessionsParentBySessionId.get(sid);
+   const base = parent && String(parent).trim() ? parent : getNewSessionsDir(cwd);
+   return joinPaths(base, sid);
+ }
 
 export function getNewStepDir(cwd, sessionId, stepNum) {
-  return path.join(getNewSessionDir(cwd, sessionId), String(stepNum));
-}
+   return joinPaths(getNewSessionDir(cwd, sessionId), String(stepNum));
+ }
 
 export function getStepFilePath(cwd, sessionId, stepNum, filename) {
-  const sid = normalizeSessionIdForDir(sessionId);
-  if (!sid) return '';
-  return path.join(getNewStepDir(cwd, sid, stepNum), filename);
-}
+   const sid = normalizeSessionIdForDir(sessionId);
+   if (!sid) return '';
+   return joinPaths(getNewStepDir(cwd, sid, stepNum), filename);
+ }
 
 export function listNewSteps(cwd, sessionId) {
-  const sid = normalizeSessionIdForDir(sessionId);
-  if (!sid) return [];
-  const sessionDir = getNewSessionDir(cwd, sid);
-  if (!fs.existsSync(sessionDir)) return [];
-  const entries = fs.readdirSync(sessionDir, { withFileTypes: true });
-  return entries
-    .filter(e => e.isDirectory() && /^\d+$/.test(e.name))
-    .map(e => parseInt(e.name, 10))
-    .sort((a, b) => a - b);
-}
+   const sid = normalizeSessionIdForDir(sessionId);
+   if (!sid) return [];
+   const sessionDir = getNewSessionDir(cwd, sid);
+   if (!pathExists(sessionDir)) return [];
+   const entries = fs.readdirSync(sessionDir, { withFileTypes: true });
+   return entries
+     .filter(e => e.isDirectory() && /^\d+$/.test(e.name))
+     .map(e => parseInt(e.name, 10))
+     .sort((a, b) => a - b);
+ }

@@ -4,7 +4,7 @@
 
 **Priority:** 10
 
-**Планы:** [ai-integration docs](../../../../ai-integration/docs/README.md).
+**Планы:** [a2a-ai-hub docs](../../../../a2a-ai-hub/docs/README.md).
 
 ## Sub-actions (4 steps)
 

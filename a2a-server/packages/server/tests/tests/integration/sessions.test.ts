@@ -3,7 +3,7 @@
  */
 
 import request from 'supertest';
-import app from '../../src/app.js';
+import app from '../../src/app';
 
 describe('Sessions API', () => {
     describe('POST /api/v1/sessions', () => {

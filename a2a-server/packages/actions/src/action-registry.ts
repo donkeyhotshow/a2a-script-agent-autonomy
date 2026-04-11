@@ -6,9 +6,13 @@
 
 import * as path from 'path';
 import {access} from 'node:fs/promises';
-import {ActionDefinition, ActionMatch} from './types.js';
-import {parseAllActionsFromDirectory} from './action-parser.js';
-import {logger} from '../../lib/logger.js';
+import {ActionDefinition, ActionMatch} from './types.ts';
+import {parseAllActionsFromDirectory} from './action-parser.ts';
+import {logger} from '../../lib/logger.ts';
+import {BaseRegistry} from './base/base-registry.ts';
+import {handleError} from './utils/error-handler.ts';
+import {createSingleton} from './utils/singleton.ts';
+import {normalizeForMatching} from './utils/string-utils.ts';
 
 export type ActionRegistryBootstrapPolicy = 'fail-fast' | 'lenient';
 
@@ -25,42 +29,59 @@ export const MIN_MATCH_SCORE = 0.5;
 /**
  * Action Registry - manages loading and searching actions from MD files
  */
-export class ActionRegistry {
-    private actions: Map<string, ActionDefinition> = new Map();
+export class ActionRegistry extends BaseRegistry<string, ActionDefinition> {
     private defaultDirectory: string;
+    private readonly allowedRoot: string;
 
     /**
      * Create a new ActionRegistry
      */
     constructor(directoryPath?: string) {
-        this.defaultDirectory = directoryPath || path.resolve(process.cwd(), 'src/actions/definitions');
-        logger.info(`[ActionRegistry] Initialized with directory: ${this.defaultDirectory}`);
+        super('ActionRegistry');
+        // CWE-22/23: lock allowed root to cwd at construction time
+        this.allowedRoot = path.resolve(process.cwd());
+        const resolved = path.resolve(directoryPath ?? path.join(process.cwd(), 'packages/actions/src/definitions'));
+        this.assertContained(resolved);
+        this.defaultDirectory = resolved;
+        logger.info('[ActionRegistry] Initialized with directory', {directory: this.defaultDirectory});
+    }
+
+    private assertContained(dirPath: string): void {
+        const resolved = path.resolve(dirPath);
+        if (!resolved.startsWith(this.allowedRoot + path.sep) && resolved !== this.allowedRoot) {
+            throw new Error(`Path traversal detected: ${dirPath}`);
+        }
     }
 
     async loadFromDirectory(dirPath?: string): Promise<void> {
-        const directoryPath = dirPath || this.defaultDirectory;
+        const directoryPath = dirPath ? path.resolve(dirPath) : this.defaultDirectory;
+        // CWE-22/23: validate any caller-supplied dirPath
+        this.assertContained(directoryPath);
         const policy = getBootstrapPolicy();
-        logger.info(`[ActionRegistry] Loading actions from: ${directoryPath}`);
+        logger.info('[ActionRegistry] Loading actions from', {directory: directoryPath});
         try {
-            this.actions.clear();
+            this.storage.clear();
             if (policy === 'fail-fast') {
                 await access(directoryPath);
             }
             const mdActions = await parseAllActionsFromDirectory(directoryPath);
-            for (const action of mdActions) this.actions.set(action.id, action);
-            logger.info(`[ActionRegistry] Loaded ${this.actions.size} actions`);
+            for (const action of mdActions) this.storage.set(action.id, action);
+            logger.info('[ActionRegistry] Loaded actions', {count: this.storage.size});
         } catch (error) {
-            logger.error(`[ActionRegistry] Error loading actions:`, error);
-
-            if (policy === 'fail-fast') {
-                throw error;
-            }
-
-            // Lenient mode: keep registry empty and allow server to continue working
-            this.actions.clear();
-            logger.warn(
-                `[ActionRegistry] Bootstrap in lenient mode - continuing with 0 actions (A2A_ACTION_REGISTRY_BOOTSTRAP_MODE!=fail-fast)`
-            );
+            handleError({
+                logger,
+                component: 'ActionRegistry',
+                message: 'Error loading actions',
+                error,
+                policy,
+                onLenient: () => {
+                    // Lenient mode: keep registry empty and allow server to continue working
+                    this.storage.clear();
+                    logger.warn(
+                        '[ActionRegistry] Bootstrap in lenient mode - continuing with 0 actions (A2A_ACTION_REGISTRY_BOOTSTRAP_MODE!=fail-fast)'
+                    );
+                }
+            });
         }
     }
 
@@ -68,14 +89,14 @@ export class ActionRegistry {
      * Get an action by its ID
      */
     getAction(id: string): ActionDefinition | null {
-        return this.actions.get(id) || null;
+        return this.getOrNull(id);
     }
 
     /**
      * Get all loaded actions
      */
     getAllActions(): ActionDefinition[] {
-        return Array.from(this.actions.values());
+        return this.getAll();
     }
 
     /**
@@ -83,10 +104,9 @@ export class ActionRegistry {
      */
     findAction(taskDescription: string): ActionMatch[] {
         const matches: ActionMatch[] = [];
-        const taskLower = taskDescription.toLowerCase();
-        const taskWords = taskLower.split(/\s+/).filter(w => w.length > 2);
+        const taskWords = normalizeForMatching(taskDescription);
 
-        for (const action of Array.from(this.actions.values())) {
+        for (const action of this.getAll()) {
             let matchScore = 0;
             const descLower = action.description.toLowerCase();
             const titleLower = action.title.toLowerCase();
@@ -126,30 +146,15 @@ export class ActionRegistry {
     }
 
     async reload(): Promise<void> {
-        logger.info(`[ActionRegistry] Reloading`);
+        logger.info('[ActionRegistry] Reloading');
         await this.loadFromDirectory();
     }
-
-    /**
-     * Get the count of loaded actions
-     */
-    get count(): number {
-        return this.actions.size;
-    }
 }
-
-// Singleton instance
-let actionRegistryInstance: ActionRegistry | null = null;
 
 /**
  * Get the singleton ActionRegistry instance
  */
-export function getActionRegistry(directoryPath?: string): ActionRegistry {
-    if (!actionRegistryInstance) {
-        actionRegistryInstance = new ActionRegistry(directoryPath);
-    }
-    return actionRegistryInstance;
-}
+export const getActionRegistry = createSingleton(ActionRegistry);
 
 // Export singleton directly
 export const actionRegistry = getActionRegistry();

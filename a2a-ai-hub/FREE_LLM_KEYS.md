@@ -2,7 +2,7 @@
 
 ## AI Integration (this repo)
 
-1. Copy the **`.env format`** block below into `ai-integration/.env` (or export vars in your shell).
+1. Copy the **`.env format`** block below into `a2a-ai-hub/.env` (or export vars in your shell).
 2. Ensure `config/providers.json` exists (`python scripts/ensure-providers-config.py` copies from `config/providers.example.json` once).
 3. Merge any missing **`providers`** / **`api_keys`** entries from `config/providers.example.json` into your `providers.json`, then set `"enabled": true` for backends you want in `/api/tags` and routing.
 4. Restart the proxy (e.g. repo root `start-all.bat`). Keys in `${VAR}` form are resolved from the environment when the JSON is loaded.

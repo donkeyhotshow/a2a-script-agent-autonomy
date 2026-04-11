@@ -1,6 +1,6 @@
-# ai-integration/docs/ Summary
+# a2a-ai-hub/docs/ Summary
 AI Hub/proxy-specific:
-- AI-INTEGRATION-UI.md, TESTING.md
+- a2a-ai-hub-UI.md, TESTING.md
 - ai-hub.config.*, GLOSSARY.md
 - Subdirs: api-reference/, configuration/, troubleshooting/, workflows/
 

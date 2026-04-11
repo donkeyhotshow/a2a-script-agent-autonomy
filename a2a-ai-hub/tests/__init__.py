@@ -1,3 +1,3 @@
 """
-Tests for ai-integration
+Tests for a2a-ai-hub
 """

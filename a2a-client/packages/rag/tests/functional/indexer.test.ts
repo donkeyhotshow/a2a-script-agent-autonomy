@@ -17,6 +17,7 @@ import {TestDataGenerator} from '../../test-data/generator.js';
 import {DEFAULT_CONFIG} from '../config.js';
 import type {RAGIndexData, IndexFileInfo} from '../../src/indexer.js';
 import type {Chunk} from '../../src/chunk-manager.js';
+import { checkPathAccess } from '../../../execution/src/fs-access.js';
 
 // Test configuration
 const TEST_DIR = path.join(DEFAULT_CONFIG.outputDir, 'functional-indexer-test');
@@ -200,11 +201,9 @@ describe('RAG Indexer Functional Tests', () => {
     it('should save index to disk', async () => {
       await indexer.indexProject(true);
 
-      // Check that index file was created
-      const indexFilePath = path.join(INDEX_DIR, 'rag-files.json');
-      const indexExists = await fs.access(indexFilePath)
-        .then(() => true)
-        .catch(() => false);
+       // Check that index file was created
+       const indexFilePath = path.join(INDEX_DIR, 'rag-files.json');
+       const indexExists = await checkPathAccess(indexFilePath);
 
       expect(indexExists).toBe(true);
     });

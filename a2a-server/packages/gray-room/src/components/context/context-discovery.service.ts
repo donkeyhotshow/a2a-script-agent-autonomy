@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { statSync } from 'fs';
-import { logger } from '../../utils/logger.js';
+import { logger } from "@a2a/server-utils/logger";
 
 export interface DiscoveryResult {
   filePath: string;

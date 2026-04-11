@@ -8,7 +8,7 @@
  * - Server transform pipeline integration (server-transforms-request.json, server-transforms-response.json)
  */
 
-import {logger} from '../../utils/logger.js';
+import {logger} from "@a2a/server-utils/logger";
 import {readFile} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
 import path from 'path';
@@ -17,19 +17,19 @@ import {
     getPromptsTransformsPath,
     SIMULATION_TO_SCHEMA,
     loadPromptsTransform,
-} from '../../transform/index.js';
+} from '../../../transform/src/index.ts';
 import type {
     RequestContext,
     ProcessResult
-} from './request-processor.interfaces.js';
-import {BaseRequestProcessor, type RequestType} from './base-processor.js';
+} from './request-processor.interfaces';
+import {BaseRequestProcessor, type RequestType} from './base-processor';
 import {
     validateExecuteShapeForSchema,
     isAgentTransformSchema,
     validateResultShape,
     validateLlmOutputShape,
     shouldEnforceTransformStrictMode,
-} from './validators/transform-execute-validator.js';
+} from './validators/transform-execute-validator';
 
 /**
  * Simulation configuration

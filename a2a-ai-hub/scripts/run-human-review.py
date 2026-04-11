@@ -28,7 +28,7 @@ def main() -> int:
     ]
     proc = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True)
     stamp = datetime.now(timezone.utc).isoformat()
-    body = f"""# Human-review test run (ai-integration)
+    body = f"""# Human-review test run (a2a-ai-hub)
 
 **When:** {stamp}
 **Exit code:** {proc.returncode}

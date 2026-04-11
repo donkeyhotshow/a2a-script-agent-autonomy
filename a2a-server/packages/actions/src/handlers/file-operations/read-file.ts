@@ -1,9 +1,9 @@
-import {logger} from '../../../utils/logger.js';
+import {logger} from '../../../utils/logger';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import type {ReadFileActionInput, ReadFileActionOutput} from './types.js';
-import {validatePath} from './security.js';
-import {executeAction} from '../../utils.js';
+import type {ReadFileActionInput, ReadFileActionOutput} from './types';
+import {validatePath} from './security';
+import {executeAction} from '../../utils';
 
 export async function executeReadFile(
     input: ReadFileActionInput
@@ -11,7 +11,8 @@ export async function executeReadFile(
     return executeAction(
         'read-file',
         input,
-        (input) => validatePath(input.filePath),
+        // CWE-22/23: resolve first, then validate the resolved path
+        (input) => validatePath(path.resolve(input.filePath)),
         async (input) => {
             const fullPath = path.resolve(input.filePath);
             const encoding = input.encoding || 'utf8';

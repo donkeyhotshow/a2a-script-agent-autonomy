@@ -13,7 +13,7 @@ The AI Integration proxy serves multiple providers (Z.AI, Local LLM upstream, vi
 
 2. **Client API:** `POST /api/a2a/sessions` accepts optional **`llmModel`** in the JSON body; it is stored on `session.context` and merged into invoke context on `/next` when not already set. `pickInvokeContextPatch` preserves `llmModel` when merging server responses.
 
-3. **Proxy:** `GET /api/tags` returns a merged Local LLM upstream-shaped list; each model row includes **`provider`** (`z_ai`, `compat_llm`, `virtual`, …). See `ai-integration/docs/api-reference/PROXY_API.md`.
+3. **Proxy:** `GET /api/tags` returns a merged Local LLM upstream-shaped list; each model row includes **`provider`** (`z_ai`, `compat_llm`, `virtual`, …). See `a2a-ai-hub/docs/api-reference/PROXY_API.md`.
 
 ## Consequences
 
@@ -24,6 +24,6 @@ The AI Integration proxy serves multiple providers (Z.AI, Local LLM upstream, vi
 ## Related
 
 - `a2a-server/src/services/core/request-processor/llm-model-resolver.ts`
-- `ai-integration/proxy/proxy_handler.py` (`_handle_api_tags_unified`)
+- `a2a-ai-hub/proxy/proxy_handler.py` (`_handle_api_tags_unified`)
 - ADR-0058 (Black/Gray split) — complementary routing story
 - **Implementation map:** proxy `/api/tags` aggregation + model-based routing; a2a-server propagates `llmModel` / `context.llmModel`; Client API `POST /api/a2a/sessions` accepts `llmModel` and Settings default; optional per-session UI picker remains backlog. Sims: [`simulations/LLM-BACKEND-MAP.md`](../../simulations/LLM-BACKEND-MAP.md), [`simulations/SCHEMA.md`](../../simulations/SCHEMA.md) (*LLM provider / model*).

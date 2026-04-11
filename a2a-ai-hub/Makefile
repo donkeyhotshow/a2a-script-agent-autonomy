@@ -1,4 +1,4 @@
-# Makefile for ai-integration development
+# Makefile for a2a-ai-hub development
 
 .PHONY: help install install-dev test clean lint format
 
@@ -52,7 +52,7 @@ run:
 
 # Docker
 docker-build:
-	docker build -t ai-integration .
+	docker build -t a2a-ai-hub .
 
 docker-run:
-	docker run -p 11435:11435 -e LOCAL_LLM_UPSTREAM_URL=http://host.docker.internal:11434 ai-integration
+	docker run -p 11435:11435 -e LOCAL_LLM_UPSTREAM_URL=http://host.docker.internal:11434 a2a-ai-hub

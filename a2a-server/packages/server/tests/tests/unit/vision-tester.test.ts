@@ -5,18 +5,18 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // ── Mock logger ───────────────────────────────────────────────────────────────
-vi.mock('../../src/utils/logger.js', () => ({
+vi.mock('../../src/utils/logger', () => ({
   logger: { info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn() },
 }));
 
 // ── Mock mcp-call ─────────────────────────────────────────────────────────────
-vi.mock('../../src/actions/handlers/mcp-call.js', () => ({
+vi.mock('../../src/actions/handlers/mcp-call', () => ({
   executeMcpCall: vi.fn(),
 }));
 
-import { executeMcpCall } from '../../src/actions/handlers/mcp-call.js';
-import { ArtifactStore } from '../../src/services/core/artifact-store.js';
-import { VisionTester } from '../../src/services/evaluation/vision-tester.js';
+import { executeMcpCall } from '../../src/actions/handlers/mcp-call';
+import { ArtifactStore } from '../../src/services/core/artifact-store';
+import { VisionTester } from '../../src/services/evaluation/vision-tester';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
-import {logger} from '../../../utils/logger.js';
+import {logger} from '../../../utils/logger';
 import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
-import type {FileExistsActionInput, FileExistsActionOutput} from './types.js';
+import type {FileExistsActionInput, FileExistsActionOutput} from './types';
 
 export async function executeFileExists(
     input: FileExistsActionInput

@@ -1,5 +1,5 @@
-import {resolveAiHubBaseUrl} from './ai-hub-url.js';
-import {AI_HUB_JSON_HEADERS} from './ai-hub-chat-sync.js';
+import {resolveAiHubBaseUrl} from './ai-hub-url';
+import {AI_HUB_JSON_HEADERS} from './ai-hub-chat-sync';
 
 export type AiHubGenerateRequestBody = {
     model: string;

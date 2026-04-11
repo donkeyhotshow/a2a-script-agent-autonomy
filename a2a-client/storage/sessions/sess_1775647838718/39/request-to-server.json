@@ -59,17 +59,17 @@
       "path": "prompts-to-agent-mode",
       "entries": [
         {
-          "name": "ai-integration-configuration-system-plan.md",
+          "name": "a2a-ai-hub-configuration-system-plan.md",
           "isFile": true,
           "isDirectory": false
         },
         {
-          "name": "ai-integration-promise-queue-plan.md",
+          "name": "a2a-ai-hub-promise-queue-plan.md",
           "isFile": true,
           "isDirectory": false
         },
         {
-          "name": "ai-integration-ui-improvements-plan.md",
+          "name": "a2a-ai-hub-ui-improvements-plan.md",
           "isFile": true,
           "isDirectory": false
         },

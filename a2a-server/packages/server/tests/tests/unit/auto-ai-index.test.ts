@@ -10,7 +10,7 @@ import {
     getCategories,
     isAutoAiAction,
     getCategoryForAction,
-} from '../../src/actions/definitions/auto-ai-index.js';
+} from '../../../packages/actions/src/definitions/auto-ai-index';
 
 describe('auto-ai-index', () => {
     it('exports categories with expected action IDs', () => {

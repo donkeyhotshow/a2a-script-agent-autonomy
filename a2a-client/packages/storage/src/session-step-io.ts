@@ -1,19 +1,19 @@
 import fs from 'fs';
 import path from 'path';
-import { ensureDir } from './root.js';
+import { ensureDir } from './root.ts';
 import {
   isActivePromiseStatus,
   isRemovablePromiseBesideResponse,
   isRecoverableAsyncSnapshot,
-} from './promise-status.js';
-import { loadSessionIndex, saveSessionIndex } from './session-index-store.js';
+} from './promise-status.ts';
+import { loadSessionIndex, saveSessionIndex } from './session-index-store.ts';
 import {
   getNewSessionDir,
   getNewStepDir,
   getStepFilePath,
   listNewSteps,
   normalizeSessionIdForDir,
-} from './session-paths.js';
+} from './session-paths.ts';
 
 /**
  * @deprecated Since 2026-03-27 - Use step-based storage instead. Will be removed in next release cycle.

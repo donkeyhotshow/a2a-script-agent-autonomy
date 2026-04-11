@@ -5,7 +5,7 @@ import {
     isTaskLike,
     isMessageLike,
     isRequestLike,
-} from '../../src/types/entity.guards.js';
+} from '../../src/types/entity.guards';
 
 describe('entity.guards', () => {
     it('hasId', () => {

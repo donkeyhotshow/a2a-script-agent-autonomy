@@ -2,7 +2,7 @@
 
 ## Overview
 
-The ai-integration module includes a sophisticated simulation system (rnj-L) and supporting scripts for training, daemon management, and utility operations. The simulation system enables intelligent response generation based on conversation history and embedding similarity.
+The a2a-ai-hub module includes a sophisticated simulation system (rnj-L) and supporting scripts for training, daemon management, and utility operations. The simulation system enables intelligent response generation based on conversation history and embedding similarity.
 
 ## Core Architecture
 

@@ -16,12 +16,12 @@ This repository is an **autonomous operator workstation** for AI-assisted develo
 
 | Platform | Use this from the **repository root** only |
 |----------|---------------------------------------------|
-| **Windows** | **`.\start-all.bat`** — for first start, stop, or restart of **any** service in the coordinated stack |
-| **Linux / macOS** | **`./start-all.sh`** — same rule |
+| **Windows** | **`npm run dev`** — starts all services using the runbook CLI |
+| **Linux / macOS** | **`npm run dev`** — same rule |
 
-Do **not** use `npm run dev`, `npm start`, or equivalent **inside** `a2a-server`, `a2a-client`, `ai-integration`, or nested packages to refresh the live stack. That skips kill/port checks and PID bookkeeping and leads to duplicate listeners and broken `.pids.txt`.
+Do **not** use `npm run dev`, `npm start`, or equivalent **inside** `a2a-server`, `a2a-client`, `a2a-ai-hub`, or nested packages to refresh the live stack. That skips kill/port checks and PID bookkeeping and leads to duplicate listeners and broken `.pids.txt`.
 
-At the repo root on Windows, `npm run dev` is an alias for `start-all.bat` — that is the **only** npm entry point meant for whole-stack control.
+The `npm run dev` uses `scripts/runbook-cli.js start` to manage all services locally.
 
 ## Key Changes (2026-03-20)
 
@@ -49,14 +49,13 @@ Open **[`START-FULL-SPECTRUM.md`](START-FULL-SPECTRUM.md)** and copy the **Agent
 ```bash
 # 1. Setup
 cp .env.example .env
-# Edit .env with your secrets
 
 # 2. Install
 npm install
 cd a2a-server && npm install && cd ..
 cd a2a-client && npm install && cd ..
 
-# 3. Run (repository root only; restarts = same place — never per-package npm for the full stack)
+# 3. Run (repository root only)
 npm run dev
 ```
 
@@ -66,36 +65,21 @@ npm run dev
 
 | Command | Purpose |
 |---------|---------|
-| `npm run dev` | Start all services (Server + Client + Infrastructure); on Windows this runs `start-all.bat` |
-| `bash start-all.sh` (Linux/Mac) | Manual start with verification |
-| `.\start-all.bat` (Windows) | Manual start with verification (preferred explicit entry) |
+| `npm run dev` | Start all services (Server + Client + AI) using runbook CLI |
+| `node scripts/runbook-cli.js start` | Manual start with verification |
+| `node scripts/runbook-cli.js stop` | Stop all services |
+| `node scripts/runbook-cli.js status` | Check service status |
+| `node scripts/runbook-cli.js daemon-start` | Start daemon for monitoring and auto-restart |
 
-**Windows — restarts:** Use **only** **`.\start-all.bat`** from the repo root whenever you need to refresh the stack (one service or all). Do **not** run `npm run dev` / `npm start` inside `a2a-server`, `a2a-client`, `ai-integration`, or `packages/sdk` for that.
+Use `npm run dev` from the repository root to start the full stack. The runbook CLI manages service lifecycle, health checks, and dependencies.
 
-**Linux/macOS:**
-```bash
-# Make scripts executable (first time only)
-chmod +x start-all.sh kill-all.sh
+Services include:
+- AI Integration (port 11434)
+- A2A Server (port 3000)
+- Client API (port 3001)
+- Web UI (port 5173)
 
-# Start all services with pre-flight cleanup
-./start-all.sh
-
-# Stop all services with dual verification
-./kill-all.sh
-```
-
-**Legacy batch (Windows):**
-```batch
-start-all.bat
-kill-all.bat
-```
-
-These scripts follow the port-kill / verify / PID cleanup pattern documented in [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md) and [`AGENTS.md`](AGENTS.md) (live stack restart):
-1. **Kill by port**: Find processes listening on service ports and terminate them
-2. **Verify port free**: Confirm no process remains on the port
-3. **Kill by PID/process name**: Terminate from `.pids.txt` and by executable patterns
-4. **Verify processes gone**: Check no matching processes remain
-5. **Clean `.pids.txt`**: Only after all verifications pass
+The runbook CLI follows the port-kill / verify / PID cleanup pattern documented in [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md) and [`AGENTS.md`](AGENTS.md).
 
 ### Service Architecture
 
@@ -104,8 +88,7 @@ See [`docs/SYSTEM_STARTUP.md`](docs/SYSTEM_STARTUP.md) for detailed port managem
 ### Health Gating with Exponential Backoff
 
 Services start in dependency order with automatic retry:
-1. **Infrastructure**: PostgreSQL → Redis → (Local LLM upstream if proxy needed)
-2. **Backend**: Server (waits for PostgreSQL + Redis)
+1. **Backend**: AI Integration → A2A Server
 3. **Client**: Client API → Web UI (waits for Server)
 4. **AI**: Proxy (waits for Local LLM upstream)
 
@@ -225,8 +208,8 @@ npm run sim:validate
 ```
 ├── a2a-client/          # Web UI and client packages
 ├── a2a-server/          # Server API and services
-├── ai-integration/      # AI Hub proxy (Python)
-├── docker-compose.yml   # Infrastructure orchestration
+├── a2a-ai-hub/      # AI Hub proxy (Python)
+├── scripts/runbook-cli.js # Service orchestration
 ├── scripts/             # Orchestrator and utilities
 │   └── orchestrator.js  # Unified service manager
 ├── simulations/         # Test scenarios (golden standard)

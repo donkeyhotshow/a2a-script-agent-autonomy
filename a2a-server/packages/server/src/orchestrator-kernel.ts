@@ -12,7 +12,7 @@
  */
 
 import { EventEmitter } from 'events';
-import { globalEventBus } from './event-bus.js';
+import { globalEventBus } from './event-bus';
 
 // ── States ──────────────────────────────────────────────────────────────────
 

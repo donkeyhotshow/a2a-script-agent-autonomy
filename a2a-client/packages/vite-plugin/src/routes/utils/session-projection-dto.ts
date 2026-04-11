@@ -15,7 +15,7 @@ import {
     getNewSessionDir,
     registerStepSessionsParent,
     findOpenAsyncStepWithoutResponse,
-} from '@a2a-client/storage/newSessions.js';
+} from '@a2a-client/storage/newSessions.ts';
 import http from 'http';
 
 function hasProjectedExecutePayload(ex) {

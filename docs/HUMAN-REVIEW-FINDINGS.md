@@ -1,12 +1,12 @@
 # Human-review test suite — consolidated findings
 
-**Purpose:** Exploratory tests under `tests/human-review/` in `a2a-client`, `a2a-server`, and `ai-integration`. They are **excluded** from normal `npm test` / default pytest (see each module’s config). They encode **desired invariants**; **failing** rows are gaps to fix or expectations to reject after human review.
+**Purpose:** Exploratory tests under `tests/human-review/` in `a2a-client`, `a2a-server`, and `a2a-ai-hub`. They are **excluded** from normal `npm test` / default pytest (see each module’s config). They encode **desired invariants**; **failing** rows are gaps to fix or expectations to reject after human review.
 
 **Regenerate machine output (overwrites per-module `REPORT.md`):**
 
 - `a2a-client/`: `npm run test:human-review`
 - `a2a-server/`: `npm run test:human-review`
-- `ai-integration/`: `python scripts/run-human-review.py`
+- `a2a-ai-hub/`: `python scripts/run-human-review.py`
 - All three: `npm run test:human-review:all` (repo root)
 
 **Snapshot (2026-04-06):** 20 tests total — **20 passed** (checklist items implemented in code).
@@ -19,7 +19,7 @@
 |-----------------|--------|--------|--------------------------------------------|
 | **a2a-client**  | 8      | 0      | Client API DTOs, envelope, stage, submit |
 | **a2a-server**  | 8      | 0      | Normalization, gray-room merge, validation |
-| **ai-integration** | 4   | 0      | `_extract_prompt`, `_normalize_path` / path match |
+| **a2a-ai-hub** | 4   | 0      | `_extract_prompt`, `_normalize_path` / path match |
 
 ---
 
@@ -57,7 +57,7 @@
 
 ---
 
-## ai-integration (`ai-integration/tests/human-review/`)
+## a2a-ai-hub (`a2a-ai-hub/tests/human-review/`)
 
 | File | Status | Finding (if failed) |
 |------|--------|------------------------|
@@ -91,6 +91,6 @@
 
 ## Related docs
 
-- Per-run logs: `a2a-client/tests/human-review/REPORT.md`, `a2a-server/tests/human-review/REPORT.md`, `ai-integration/tests/human-review/REPORT.md`
+- Per-run logs: `a2a-client/tests/human-review/REPORT.md`, `a2a-server/tests/human-review/REPORT.md`, `a2a-ai-hub/tests/human-review/REPORT.md`
 - Operator flow: [`docs/OPERATOR-CURL.md`](OPERATOR-CURL.md)
 - Agent-mode Client API dialog (maintained state + changelog): [`docs/AGENT-DIALOG-API-STATE.md`](AGENT-DIALOG-API-STATE.md)

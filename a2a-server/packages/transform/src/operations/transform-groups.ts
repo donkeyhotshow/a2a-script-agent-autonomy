@@ -13,10 +13,10 @@
 
 import * as path from 'path';
 import * as fs from 'node:fs/promises';
-import { logger } from '../../utils/logger.js';
-import { pathIsAccessible } from '../../utils/fs-access.js';
-import { deepCloneJson } from '../../utils/deep-clone-json.js';
-import {query, set as jsonPathSet} from './json-path.js';
+import { logger } from "@a2a/server-utils/logger";
+import { pathIsAccessible } from '@a2a/server-utils/fs-access';
+import { deepCloneJson } from '@a2a/server-utils/deep-clone-json';
+import {query, set as jsonPathSet} from './json-path';
 import type {
   TransformContext,
   TransformStep,
@@ -35,8 +35,8 @@ import type {
   ApplyWorkbenchSectionOpsOperation,
   SwitchOperation,
   ScratchpadOpCommand
-} from '../types.js';
-import {SERVER_OWNED_WORKBENCH_SLOT_KEYS} from '../interrupt-trace-contract.js';
+} from '../types';
+import {SERVER_OWNED_WORKBENCH_SLOT_KEYS} from '../interrupt-trace-contract';
 
 /**
  * pick-context — keep only specified fields under context, drop the rest.
@@ -479,7 +479,7 @@ export async function applySwitch(
 }
 
 // Re-export applyOperation from main module for recursive calls
-import { applyOperation as mainApplyOperation } from '../operations.js';
+import { applyOperation as mainApplyOperation } from '../operations';
 async function applyOperationFromGroups(operation: TransformStep, context: TransformContext): Promise<void> {
   // This will be resolved at runtime to avoid circular dependency
   await mainApplyOperation(operation, context);
@@ -488,18 +488,29 @@ async function applyOperationFromGroups(operation: TransformStep, context: Trans
 /**
  * Create a default file system implementation
  */
-export function createDefaultFileSystem(): TransformFileSystem {
+export function createDefaultFileSystem(allowedRoot?: string): TransformFileSystem {
+  // CWE-22/23: resolve the root once; all FS operations are confined to it
+  const root = path.resolve(allowedRoot ?? process.cwd());
+  const assertContained = (filePath: string): void => {
+    const resolved = path.resolve(filePath);
+    if (!resolved.startsWith(root + path.sep) && resolved !== root) {
+      throw new Error(`Path traversal detected: ${filePath}`);
+    }
+  };
+
   return {
     async readFile(filePath: string, encoding: BufferEncoding = 'utf-8'): Promise<string> {
+      assertContained(filePath);
       return fs.readFile(filePath, encoding);
     },
     async writeFile(filePath: string, content: string): Promise<void> {
-      // Ensure directory exists
+      assertContained(filePath);
       const dir = path.dirname(filePath);
       await fs.mkdir(dir, { recursive: true });
       await fs.writeFile(filePath, content, 'utf-8');
     },
     async exists(filePath: string): Promise<boolean> {
+      assertContained(filePath);
       return pathIsAccessible(filePath, (m) =>
         logger.debug('[transform-fs] exists access failed', {
           filePath: m.filePath,

@@ -51,7 +51,7 @@ async function runAiIntegrationCleanup() {
     repoRoot,
     'tests',
     'direct-tests',
-    'ai-integration',
+    'a2a-ai-hub',
     'run-test-cleanup.ps1',
   );
   try {
@@ -66,7 +66,7 @@ async function runAiIntegrationCleanup() {
       });
     });
   } catch (e) {
-    console.warn('[cleanup] ai-integration cleanup failed:', e.message || e);
+    console.warn('[cleanup] a2a-ai-hub cleanup failed:', e.message || e);
   }
 }
 

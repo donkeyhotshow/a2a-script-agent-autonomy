@@ -1,5 +1,5 @@
 """
-File logging under ai-integration/logs/ (works with uvicorn and python -m proxy).
+File logging under a2a-ai-hub/logs/ (works with uvicorn and python -m proxy).
 
 Console output is unchanged; this adds a rotating file so start-all.bat still leaves traces.
 """
@@ -43,7 +43,7 @@ def ensure_file_log_handler() -> Optional[str]:
         log_dir = os.path.join(_package_parent_dir(), "logs")
     os.makedirs(log_dir, exist_ok=True)
 
-    log_name = os.environ.get("AI_INTEGRATION_LOG_FILE", "ai-integration.log").strip() or "ai-integration.log"
+    log_name = os.environ.get("AI_INTEGRATION_LOG_FILE", "a2a-ai-hub.log").strip() or "a2a-ai-hub.log"
     log_path = os.path.join(log_dir, log_name)
 
     level_name = os.environ.get("LOG_LEVEL", "INFO").upper()

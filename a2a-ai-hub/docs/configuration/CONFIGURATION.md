@@ -2,7 +2,7 @@
 
 ## Overview
 
-The AI Integration module (ai-integration) is configured through several files and environment variables. This document covers the configuration system, including environment variables, provider settings, and runtime parameters.
+The AI Integration module (a2a-ai-hub) is configured through several files and environment variables. This document covers the configuration system, including environment variables, provider settings, and runtime parameters.
 
 ## Configuration Files
 

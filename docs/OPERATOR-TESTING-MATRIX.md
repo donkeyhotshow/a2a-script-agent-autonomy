@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define deterministic test entry points for operator verification across Client API, server contracts, monitor flows, simulations, and ai-integration.
+Define deterministic test entry points for operator verification across Client API, server contracts, monitor flows, simulations, and a2a-ai-hub.
 
 ## Contract
 
@@ -81,7 +81,7 @@ Source: [a2a-client/docs/api-testing-plan.md](../a2a-client/docs/api-testing-pla
 | Root orchestration | `npm run test:monitor`, `npm run test:direct-tests`, `npm run test:before-start` |
 | a2a-client | `npm --prefix a2a-client run test:client-api`, `npm --prefix a2a-client run test:web`, `npm --prefix a2a-client run test:e2e` |
 | a2a-server | `npm --prefix a2a-server run test`, `npm --prefix a2a-server run sim:lint:all`, `npm --prefix a2a-server run sim:validate:all` |
-| ai-integration (python) | `python -m pytest ai-integration/tests` |
+| a2a-ai-hub (python) | `python -m pytest a2a-ai-hub/tests` |
 
 ## Production-Ready Test Gate (Operator Summary)
 

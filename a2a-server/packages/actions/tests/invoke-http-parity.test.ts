@@ -7,7 +7,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import request from 'supertest';
 import {beforeAll, describe, expect, it} from 'vitest';
-import app from '../../src/app.js';
+import app from '../../src/app';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '../../..');

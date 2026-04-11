@@ -33,6 +33,7 @@ import path from 'path';
 import { v4 as uuidv4 } from 'uuid';
 import { FileStorageBackend } from './storage-backends.js';
 import { SessionManager } from './session-manager.js';
+import { checkPathAccess } from '../../../execution/src/fs-access.js';
 import type { 
   SessionMetadata, 
   SessionData, 
@@ -56,15 +57,19 @@ export class SessionStorage {
     this.manager = new SessionManager(backend);
   }
 
-  async initialize(): Promise<void> {
-    try {
-      await fs.access(this.basePath);
-    } catch {
-      await fs.mkdir(this.basePath, { recursive: true });
-      await fs.mkdir(this.sessionsDir, { recursive: true });
-    }
-    await this.manager.initialize();
-  }
+   async initialize(): Promise<void> {
+     try {
+       const hasAccess = await checkPathAccess(this.basePath);
+       if (!hasAccess) {
+         await fs.mkdir(this.basePath, { recursive: true });
+         await fs.mkdir(this.sessionsDir, { recursive: true });
+       }
+     } catch {
+       await fs.mkdir(this.basePath, { recursive: true });
+       await fs.mkdir(this.sessionsDir, { recursive: true });
+     }
+     await this.manager.initialize();
+   }
 
   async createSession(name: string, description?: string, tags: string[] = []): Promise<SessionMetadata> {
     return this.manager.createSession(name, description, tags, this.basePath);

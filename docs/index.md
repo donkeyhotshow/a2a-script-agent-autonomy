@@ -20,7 +20,7 @@ High-level project-wide documentation covering architecture, protocols, simulati
 
 ## Component-Specific
 - [a2a-server/docs/](../a2a-server/docs/) - Server implementation
-- [ai-integration/docs/](../ai-integration/docs/) - AI integration
+- [a2a-ai-hub/docs/](../a2a-ai-hub/docs/) - AI integration
 - [a2a-client/docs/](../a2a-client/docs/) - Client documentation
 
 All rights reserved.

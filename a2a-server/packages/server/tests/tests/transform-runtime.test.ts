@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { runTransformPipeline, loadTransformPipeline, runPromptsTransform, getPromptsTransformsPath } from '../src/transform/index.js';
+import { runTransformPipeline, loadTransformPipeline, runPromptsTransform, getPromptsTransformsPath } from '../src/transform/index';
 import * as fs from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'node:os';
@@ -343,7 +343,7 @@ describe('Transform Pipeline Runtime', () => {
         context: {
           execution: { action: 'agent' },
           task: 'do it',
-          files: { 'src/a.js': 'content' },
+          files: { 'src/a': 'content' },
           scratchpad: { done: true },
           history: [{ role: 'user', message: 'hi' }]
         }
@@ -502,7 +502,7 @@ describe('Transform Pipeline Runtime', () => {
         ]
       };
       const input = {
-        context: { files: { 'a.js': 'x' }, task: 'ok' }
+        context: { files: { 'a': 'x' }, task: 'ok' }
       };
       const result = await runTransformPipeline(pipeline, input);
       expect(result.success).toBe(true);
@@ -571,24 +571,24 @@ describe('Transform Pipeline Runtime', () => {
       const pipeline = {
         steps: [
           { op: 'copy', from: '$', to: '$out' },
-          { op: 'pick-files', paths: ['src/auth.js'] }
+          { op: 'pick-files', paths: ['src/auth'] }
         ]
       };
       const input = {
         context: {
           files: {
-            'src/auth.js': 'content-a',
-            'src/app.js': 'content-b',
-            'src/utils.js': 'content-c'
+            'src/auth': 'content-a',
+            'src/app': 'content-b',
+            'src/utils': 'content-c'
           }
         }
       };
       const result = await runTransformPipeline(pipeline, input);
       expect(result.success).toBe(true);
       const files = (result.output.context as Record<string, unknown>).files as Record<string, unknown>;
-      expect(files['src/auth.js']).toBe('content-a');
-      expect(files['src/app.js']).toBeUndefined();
-      expect(files['src/utils.js']).toBeUndefined();
+      expect(files['src/auth']).toBe('content-a');
+      expect(files['src/app']).toBeUndefined();
+      expect(files['src/utils']).toBeUndefined();
     });
 
     it('pick-files $result auto-picks from result action key', async () => {
@@ -601,13 +601,13 @@ describe('Transform Pipeline Runtime', () => {
       const input = {
         context: {
           files: {
-            'src/auth.js': 'content-a',
-            'src/app.js': 'content-b'
+            'src/auth': 'content-a',
+            'src/app': 'content-b'
           }
         },
         result: {
           'rag-search': {
-            files: ['src/auth.js'],
+            files: ['src/auth'],
             results: []
           }
         }
@@ -615,8 +615,8 @@ describe('Transform Pipeline Runtime', () => {
       const result = await runTransformPipeline(pipeline, input);
       expect(result.success).toBe(true);
       const files = (result.output.context as Record<string, unknown>).files as Record<string, unknown>;
-      expect(files['src/auth.js']).toBe('content-a');
-      expect(files['src/app.js']).toBeUndefined();
+      expect(files['src/auth']).toBe('content-a');
+      expect(files['src/app']).toBeUndefined();
     });
 
     it('merge-files-to-context folds read-file result into context.files', async () => {
@@ -627,14 +627,14 @@ describe('Transform Pipeline Runtime', () => {
         ]
       };
       const input = {
-        context: { files: { 'src/app.js': 'old' } },
-        result: { 'read-file': { path: 'src/auth.js', content: 'new content' } }
+        context: { files: { 'src/app': 'old' } },
+        result: { 'read-file': { path: 'src/auth', content: 'new content' } }
       };
       const result = await runTransformPipeline(pipeline, input);
       expect(result.success).toBe(true);
       const files = (result.output.context as Record<string, unknown>).files as Record<string, unknown>;
-      expect(files['src/auth.js']).toBe('new content');
-      expect(files['src/app.js']).toBe('old');
+      expect(files['src/auth']).toBe('new content');
+      expect(files['src/app']).toBe('old');
     });
 
     it('summarize-files truncates to maxLines', async () => {
@@ -646,12 +646,12 @@ describe('Transform Pipeline Runtime', () => {
         ]
       };
       const input = {
-        context: { files: { 'src/big.js': lines.join('\n') } }
+        context: { files: { 'src/big': lines.join('\n') } }
       };
       const result = await runTransformPipeline(pipeline, input);
       expect(result.success).toBe(true);
       const files = (result.output.context as Record<string, unknown>).files as Record<string, unknown>;
-      const content = files['src/big.js'] as string;
+      const content = files['src/big'] as string;
       expect(content.split('\n').length).toBe(11); // 10 lines + comment
       expect(content).toContain('90 more lines');
     });
@@ -667,16 +667,16 @@ describe('Transform Pipeline Runtime', () => {
       const input = {
         context: {
           files: {
-            'src/auth.js': lines5,
-            'tests/auth.test.js': lines5
+            'src/auth': lines5,
+            'tests/auth.test': lines5
           }
         }
       };
       const result = await runTransformPipeline(pipeline, input);
       expect(result.success).toBe(true);
       const files = (result.output.context as Record<string, unknown>).files as Record<string, unknown>;
-      expect((files['src/auth.js'] as string).split('\n').length).toBe(3); // 2 + comment
-      expect(files['tests/auth.test.js']).toBe(lines5); // untouched
+      expect((files['src/auth'] as string).split('\n').length).toBe(3); // 2 + comment
+      expect(files['tests/auth.test']).toBe(lines5); // untouched
     });
 
     it('for-each runs sub-steps per item', async () => {

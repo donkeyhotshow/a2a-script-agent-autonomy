@@ -3,4 +3,4 @@ export {
     mergeResponseContext,
     sanitizeContextForServer,
     sanitizeInvokeBodyForA2aUpstream,
-} from '../../../../../shared/a2a-invoke-builders.js';
+} from '@a2a-client/shared/a2a-invoke-builders.mjs';

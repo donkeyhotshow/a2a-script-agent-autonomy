@@ -105,7 +105,7 @@ See the [AGENTS-REFERENCE.md](../docs/AGENTS-REFERENCE.md) *Why iteration stops*
 
 See the [AGENTS-REFERENCE.md](../docs/AGENTS-REFERENCE.md) *Common Issues* section for Local LLM upstream handling and debugging stuck pipelines.
 
-**Hub ticket stuck in `error` (ai-integration, port 11434):** `GET /promises/pending` only lists **pending** work. List failures with **`GET /promises/errors`**, then **`POST /promise/{id}/retry`** and **`POST /promise/{id}/execute`**, or **`DELETE /promise/{id}`** to drop the ticket — [`ai-integration/docs/api-reference/PROXY_API.md`](../ai-integration/docs/api-reference/PROXY_API.md) § *Promise queue (hub tickets)*. From the Client API origin (default **`http://localhost:5173`**): same paths under **`/api/a2a/hub/...`** (proxy to `AI_HUB_URL`).
+**Hub ticket stuck in `error` (a2a-ai-hub, port 11434):** `GET /promises/pending` only lists **pending** work. List failures with **`GET /promises/errors`**, then **`POST /promise/{id}/retry`** and **`POST /promise/{id}/execute`**, or **`DELETE /promise/{id}`** to drop the ticket — [`a2a-ai-hub/docs/api-reference/PROXY_API.md`](../a2a-ai-hub/docs/api-reference/PROXY_API.md) § *Promise queue (hub tickets)*. From the Client API origin (default **`http://localhost:5173`**): same paths under **`/api/a2a/hub/...`** (proxy to `AI_HUB_URL`).
 
 Narrative table of common “why iteration stopped” traps and mitigations (IDE vs driver): root **`AGENTS-REFERENCE.md`** → *Why iteration stops (misreads and mitigations)*.
 

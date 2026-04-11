@@ -168,7 +168,7 @@ Services are configured in `runbook-config.json`:
       "port": 3000,
       "health_endpoint": "/health",
       "start_command": "cd a2a-server && npm run dev",
-      "dependencies": ["ai-integration"],
+      "dependencies": ["a2a-ai-hub"],
       "logfile": "a2a-server/logs/a2a-server.log"
     }
   }

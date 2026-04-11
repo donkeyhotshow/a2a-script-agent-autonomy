@@ -34,7 +34,7 @@ DEFAULT_METRICS_KEYWORDS = [
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Run the full ai-integration smoke chain (health → metrics → simul → promise)."
+        description="Run the full a2a-ai-hub smoke chain (health → metrics → simul → promise)."
     )
     parser.add_argument("--proxy-url", default=DEFAULT_PROXY_URL, help="Base URL for the proxy.")
     parser.add_argument("--timeout", type=float, default=5.0, help="HTTP timeout for checks.")

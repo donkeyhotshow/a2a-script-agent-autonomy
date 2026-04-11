@@ -1,8 +1,8 @@
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore — playwright is an optional peer dependency; install it for browser automation
 import { chromium, Browser, Page } from 'playwright';
-import { logger } from '../../utils/logger.js';
-import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
+import { logger } from '@a2a/server-utils/logger';
+import { createArtifactWriteInput, globalArtifactStore } from './artifact-store';
 
 export interface VisionQAStatus {
     passed: boolean;

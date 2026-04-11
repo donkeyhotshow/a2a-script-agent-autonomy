@@ -1,6 +1,6 @@
-import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../transform/types.js';
-import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils.js';
-import {BaseGrayRoomHandler} from './base-handler.js';
+import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../transform/types';
+import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils';
+import {BaseGrayRoomHandler} from './base-handler';
 
 /**
  * Handle clarify interrupt

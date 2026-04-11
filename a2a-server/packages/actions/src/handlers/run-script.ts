@@ -4,7 +4,7 @@
  * Handles run-script action for executing predefined scripts.
  */
 
-import {logger} from '../../../utils/logger.js';
+import {logger} from '../../../utils/logger';
 import {spawn} from 'node:child_process';
 
 export interface RunScriptParams {
@@ -157,9 +157,24 @@ export async function executeRunScript(
             };
         }
 
-        // Build command arguments
-        const args = script.args ? script.args(params) : [];
-        
+        // Build command arguments — validate all string params to prevent injection
+        const safeParams = sanitizeParams(params);
+        const args = script.args ? script.args(safeParams) : [];
+
+        // Reject any arg containing shell metacharacters
+        const SHELL_META = /[;&|`$<>(){}\\"'\n\r]/;
+        for (const arg of args) {
+            if (SHELL_META.test(arg)) {
+                return {
+                    success: false,
+                    scriptId: input.scriptId,
+                    error: `Unsafe argument rejected: ${arg}`,
+                    errorCode: 'INVALID_ARGUMENT',
+                    duration: Date.now() - startTime,
+                };
+            }
+        }
+
         // Execute the script
         const result = await executeCommand(script.command, args);
 
@@ -208,6 +223,18 @@ export async function executeRunScript(
 }
 
 /**
+ * Strip shell metacharacters from all string values in params
+ */
+function sanitizeParams(params: RunScriptParams): RunScriptParams {
+    const SHELL_META = /[;&|`$<>(){}\\"'\n\r]/g;
+    const result: RunScriptParams = {};
+    for (const [key, value] of Object.entries(params)) {
+        result[key] = typeof value === 'string' ? value.replace(SHELL_META, '') : value;
+    }
+    return result;
+}
+
+/**
  * Execute a command
  */
 function executeCommand(
@@ -226,7 +253,7 @@ function executeCommand(
         const child = spawn(command, args, {
             cwd: process.cwd(),
             env: process.env,
-            shell: true,
+            shell: false,
         });
 
         // Set up timeout

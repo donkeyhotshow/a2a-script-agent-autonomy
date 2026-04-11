@@ -15,8 +15,8 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { ArtifactStore, createArtifactWriteInput } from './artifact-store.js';
-import { TicketSync } from './ticket-sync.js';
+import { ArtifactStore, createArtifactWriteInput } from './artifact-store';
+import { TicketSync } from './ticket-sync';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 

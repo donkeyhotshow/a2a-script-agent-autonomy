@@ -1,4 +1,4 @@
-import { GrayRoomConfig } from "../src/types.js";
+import { GrayRoomConfig } from "../src/types";
 
 export const productionGrayRoomConfig: GrayRoomConfig = {
   version: "1.0",

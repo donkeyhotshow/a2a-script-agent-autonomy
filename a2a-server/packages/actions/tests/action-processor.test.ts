@@ -3,7 +3,7 @@
  */
 
 import {describe, it, expect} from 'vitest';
-import {actionProcessor} from '../src/actions/action-processor.js';
+import {actionProcessor} from '../src/actions/action-processor';
 
 describe('ActionProcessor', () => {
     describe('processTaskRequest', () => {

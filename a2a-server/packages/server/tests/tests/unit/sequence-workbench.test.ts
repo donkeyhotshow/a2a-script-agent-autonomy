@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {applySequenceStepComplete} from '../../src/services/core/request-processor/sequence-workbench.js';
+import {applySequenceStepComplete} from '../../src/services/core/request-processor/sequence-workbench';
 
 describe('applySequenceStepComplete', () => {
     it('rejects when workbench.sequence is missing', () => {

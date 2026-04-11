@@ -4,7 +4,7 @@
  * Функции нормализации контекста и извлечения схемы трансформации
  */
 
-import {ACTION_TO_SCHEMA} from '../../../packages/config/router-static.js';
+import {ACTION_TO_SCHEMA} from '../../../server-config/router-static.ts';
 
 /**
  * Flat server context → invoke-shaped payload for `runPromptsTransform(..., 'request', ...)`.

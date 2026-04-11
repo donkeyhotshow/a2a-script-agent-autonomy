@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { getStorageRoot } from '@a2a-client/storage/src/root.ts';
+import { getStorageRoot } from '@a2a-client/storage/root.ts';
 import { createProjectRoutes } from './routes/projects.js';
 import { createSessionRoutes } from './routes/sessionRoutes.js';
 import { createStepRoutes } from './routes/stepRoutes.js';

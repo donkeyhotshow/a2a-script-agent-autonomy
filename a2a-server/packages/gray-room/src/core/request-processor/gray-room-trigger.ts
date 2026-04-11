@@ -1,5 +1,5 @@
-import {resolveExecution} from './normalization.js';
-import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver.js';
+import {resolveExecution, resolveHistoryLength} from './gray-room-utils';
+import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver';
 
 /** Default value for A2A_GRAY_ROOM_MAX_TURNS */
 const DEFAULT_GRAY_ROOM_MAX_TURNS = 10;
@@ -156,11 +156,9 @@ export function shouldUseGrayRoom(ctx: Record<string, unknown>, flowControlHint?
     return computeGrayRoomTrigger(ctx, flowControlHint);
 }
 
-/** Max hub LLM promise resubmits before failing (`DIALOG_HUB_LLM_RESUBMIT_MAX`, default 2). */
-export function readDialogHubLlmResubmitMax(): number {
-    const n = parseInt(process.env.DIALOG_HUB_LLM_RESUBMIT_MAX || '2', 10);
-    return Number.isFinite(n) && n >= 0 ? n : 2;
-}
+export { readDialogHubLlmResubmitMax } from '../../../../lib/env-utils';
+
+
 
 /** Interrupt budget for `GrayRoomOrchestrator` (env `A2A_MAX_INTERRUPT_TURNS` or `A2A_GRAY_ROOM_MAX_TURNS`). */
 export function readGrayRoomInterruptBudget(): number {

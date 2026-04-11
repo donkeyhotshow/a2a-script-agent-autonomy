@@ -1,19 +1,19 @@
 import express from 'express';
 import fs from 'node:fs';
 import path from 'path';
-import { logger } from '../../lib/logger.js';
-import { SkillRegistry } from '../skills/SkillRegistry.js';
-import { config } from '@a2a/server-config/index.js';
+import { logger } from '../../lib/logger';
+import { SkillRegistry } from '../../../features/src/skills/SkillRegistry';
+import { config } from '../../../server-config/index';
 import {
   SandboxViolationError,
   validateSkillToolCodeForDeploy,
-} from './tools-evolve-sandbox.js';
+} from './tools-evolve-sandbox';
 
 const router = express.Router();
 const registry = new SkillRegistry(path.join(process.cwd(), 'a2a-server/src/skills/custom'));
 
 router.post('/evolve', async (req, res) => {
-  if (!config.allowToolsEvolve) {
+  if (!config.features.actions.allowToolsEvolve) {
     return res.status(403).json({ error: 'Tools evolve endpoint disabled' });
   }
 

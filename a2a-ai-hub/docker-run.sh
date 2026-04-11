@@ -1,5 +1,5 @@
 #!/bin/bash
-# Docker run script for ai-integration
+# Docker run script for a2a-ai-hub
 
 set -e
 
@@ -46,7 +46,7 @@ build() {
 
 # Start services
 start() {
-    log_info "Starting ai-integration services..."
+    log_info "Starting a2a-ai-hub services..."
     docker-compose up -d
     log_info "Services started. Waiting for health checks..."
 
@@ -54,8 +54,8 @@ start() {
     log_info "Waiting for Local LLM upstream to be ready..."
     docker-compose exec -T compat_llm sh -c 'until curl -f http://localhost:11435/api/tags > /dev/null 2>&1; do sleep 2; done'
 
-    log_info "Waiting for ai-integration proxy to be ready..."
-    docker-compose exec -T ai-integration sh -c 'until curl -f http://localhost:11434/health > /dev/null 2>&1; do sleep 2; done'
+    log_info "Waiting for a2a-ai-hub proxy to be ready..."
+    docker-compose exec -T a2a-ai-hub sh -c 'until curl -f http://localhost:11434/health > /dev/null 2>&1; do sleep 2; done'
 
     log_info "All services are ready!"
     log_info "  - Local LLM upstream: http://localhost:11435"
@@ -64,7 +64,7 @@ start() {
 
 # Stop services
 stop() {
-    log_info "Stopping ai-integration services..."
+    log_info "Stopping a2a-ai-hub services..."
     docker-compose down
     log_info "Services stopped"
 }

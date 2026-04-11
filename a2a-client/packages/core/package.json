@@ -5,6 +5,7 @@
   "type": "module",
   "description": "Core client functionality, utilities, and shared logic",
   "exports": {
+    "./*": "./*",
     "./a2a-invoke-builders.js": "./src/a2a-invoke-builders.js",
     "./context-invoke-patch.mjs": "./src/context-invoke-patch.mjs",
     "./kv-unwrap.mjs": "./src/kv-unwrap.mjs",

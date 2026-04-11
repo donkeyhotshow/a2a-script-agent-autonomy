@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {formatRagHitsForHistory} from '../src/services/rag/auto-rag-page-server.js';
+import {formatRagHitsForHistory} from '../src/services/rag/auto-rag-page-server';
 
 describe('formatRagHitsForHistory', () => {
     it('formats paths and scores', () => {

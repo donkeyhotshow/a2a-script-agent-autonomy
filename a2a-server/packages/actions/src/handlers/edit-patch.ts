@@ -4,11 +4,11 @@
  * Handles edit-patch action for applying patches to files.
  */
 
-import {logger} from '../../../utils/logger.js';
-import {pathIsAccessible, timestampedBackupPath} from '../../../utils/fs-access.js';
+import {logger} from '../../../utils/logger';
+import {pathIsAccessible, timestampedBackupPath} from '../../../utils/fs-access';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
-import {validatePath} from './file-operations/security.js';
+import {validatePath} from './file-operations/security';
 
 export interface PatchOperation {
     type: 'replace' | 'insert' | 'delete' | 'replaceContent';
@@ -45,8 +45,9 @@ export async function executeEditPatch(
     });
 
     try {
-        // Validate path
-        const validation = validatePath(input.path);
+        // CWE-22/23: resolve first, then validate the resolved path
+        const fullPath = path.resolve(input.path);
+        const validation = validatePath(fullPath);
         if (!validation.valid) {
             return {
                 success: false,
@@ -56,8 +57,6 @@ export async function executeEditPatch(
                 error: validation.error,
             };
         }
-
-        const fullPath = path.resolve(input.path);
 
         const fileExists = await pathIsAccessible(fullPath, (m) =>
             logger.warn('[edit-patch] access check failed', {

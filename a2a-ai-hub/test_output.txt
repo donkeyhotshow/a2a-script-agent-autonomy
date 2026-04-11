@@ -14,7 +14,7 @@ Promise daemon auto-started
 
 4. Checking if 'glm-4.7-flash' is in models list...
 Traceback (most recent call last):
-  File "C:\workspace\org-carrier\a2a-script-agent\ai-integration\test_z_ai_debug.py", line 80, in <module>
+  File "C:\workspace\org-carrier\a2a-script-agent\a2a-ai-hub\test_z_ai_debug.py", line 80, in <module>
     asyncio.run(main())
     ~~~~~~~~~~~^^^^^^^^
   File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3312.0_x64__qbz5n2kfra8p0\Lib\asyncio\runners.py", line 195, in run
@@ -26,7 +26,7 @@ Traceback (most recent call last):
   File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3312.0_x64__qbz5n2kfra8p0\Lib\asyncio\base_events.py", line 725, in run_until_complete
     return future.result()
            ~~~~~~~~~~~~~^^
-  File "C:\workspace\org-carrier\a2a-script-agent\ai-integration\test_z_ai_debug.py", line 44, in main
+  File "C:\workspace\org-carrier\a2a-script-agent\a2a-ai-hub\test_z_ai_debug.py", line 44, in main
     print("   'glm-4.7-flash' is in the models list \u2713")
     ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "C:\Program Files\WindowsApps\PythonSoftwareFoundation.Python.3.13_3.13.3312.0_x64__qbz5n2kfra8p0\Lib\encodings\cp1251.py", line 19, in encode

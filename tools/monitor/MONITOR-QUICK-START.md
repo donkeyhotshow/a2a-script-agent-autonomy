@@ -191,7 +191,7 @@ npm run report:promise -- <promiseId> [--out trace.md] [--logs]   # MD report: s
 ### Fresh start (wipe sessions + monitor cursor)
 
 1. Stop stack: **`kill-all.bat`** (or **`kill-all.sh`**) from repo root.  
-2. **`npm run cleanup:fresh`** — removes Task Monitor state / ledger and empties client **`storage/sessions`**, hub **`proxy_logs`**, hub promise snapshots, server **`storage/requests`**. Does **not** delete LLM disk cache under **`ai-integration/storage/cache`**.  
+2. **`npm run cleanup:fresh`** — removes Task Monitor state / ledger and empties client **`storage/sessions`**, hub **`proxy_logs`**, hub promise snapshots, server **`storage/requests`**. Does **not** delete LLM disk cache under **`a2a-ai-hub/storage/cache`**.  
 3. Start again: **`start-all.bat`** / **`start-all.sh`**, then **`npm run monitor`** as usual.
 
 To drop **only** monitor bindings without touching disk sessions: **`npm run monitor:reset`**.  
@@ -239,11 +239,11 @@ Defined in [`.env.example`](.env.example). Common overrides:
 
 ## AI Integration promise queue (`PROMISE_DAEMON_ONLY`)
 
-When the proxy runs with **`PROMISE_DAEMON_ONLY=true`** (default in `ai-integration`), **`?promise=1`** LLM calls are **queued** under `ai-integration/proxy_logs/promises/` until the **promise daemon** runs them or you **`POST /promise/<id>/execute`**. The Task Monitor drives sessions that eventually hit that path, so async steps can **stall** if nothing drains the queue. **Do not** turn the queue off for “inline” forwarding — the supported contract stays **async** (daemon or manual `POST /promise/.../execute`).
+When the proxy runs with **`PROMISE_DAEMON_ONLY=true`** (default in `a2a-ai-hub`), **`?promise=1`** LLM calls are **queued** under `a2a-ai-hub/proxy_logs/promises/` until the **promise daemon** runs them or you **`POST /promise/<id>/execute`**. The Task Monitor drives sessions that eventually hit that path, so async steps can **stall** if nothing drains the queue. **Do not** turn the queue off for “inline” forwarding — the supported contract stays **async** (daemon or manual `POST /promise/.../execute`).
 
 On startup (after the normal health check), the monitor calls **`GET {TASK_MONITOR_AI_HUB_URL}/health`**. If the JSON includes **`"promise_daemon_only": true`**, it prints operator instructions (pending list, execute URL, prompt locations) and, in an **interactive** terminal, requires typing **`OK`** before continuing. Non-TTY runs skip the prompt but print a warning; automation should set **`TASK_MONITOR_SKIP_PROMISE_GATE=1`** (or rely on **`CI=true`**) when the daemon is guaranteed to be running.
 
-Full workflow: [`ai-integration/docs/workflows/WORKFLOWS.md`](ai-integration/docs/workflows/WORKFLOWS.md). Proxy overview: [`ai-integration/README.md`](ai-integration/README.md).
+Full workflow: [`a2a-ai-hub/docs/workflows/WORKFLOWS.md`](a2a-ai-hub/docs/workflows/WORKFLOWS.md). Proxy overview: [`a2a-ai-hub/README.md`](a2a-ai-hub/README.md).
 
 ## When something fails
 

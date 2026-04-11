@@ -15,5 +15,5 @@ export {
     resetCallCount,
     loadPresetResponses,
     preloadResponses
-} from './mock-llm-adapter.js';
-export type { LLMInput, LLMMockConfig, ReplayProviderOptions } from './mock-llm-adapter.js';
+} from './mock-llm-adapter';
+export type { LLMInput, LLMMockConfig, ReplayProviderOptions } from './mock-llm-adapter';

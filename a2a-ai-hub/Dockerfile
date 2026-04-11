@@ -1,4 +1,4 @@
-# Multi-stage build for ai-integration proxy
+# Multi-stage build for a2a-ai-hub proxy
 FROM python:3.11-slim as base
 
 # Set environment variables

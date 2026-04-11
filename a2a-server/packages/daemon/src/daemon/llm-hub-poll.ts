@@ -1,13 +1,13 @@
 /**
  * Background polling: A2A Server → AI Hub (LLM proxy).
- * Waits until ai-integration reports the LLM promise ready, then fetches response body.
+ * Waits until a2a-ai-hub reports the LLM promise ready, then fetches response body.
  */
 
-import {requestService} from '../services/core/request/request.service.js';
-import {logger} from '../../lib/logger.js';
-import {resolveAiHubBaseUrl} from '../utils/ai-hub-url.js';
-import {AI_HUB_JSON_HEADERS, type AiHubChatRequestBody} from '../utils/ai-hub-chat-sync.js';
-import {tryParseJsonFromLlmText} from '../../lib/strip-markdown-json-fence.js';
+import {requestService} from '../services/core/request/request.service';
+import {logger} from '../../lib/logger';
+import {resolveAiHubBaseUrl} from '../../lib/ai-hub-url';
+import {AI_HUB_JSON_HEADERS, type AiHubChatRequestBody} from '../../lib/ai-hub-chat-sync';
+import {tryParseJsonFromLlmText} from '../../lib/strip-markdown-json-fence';
 
 /** Hub /api/chat uses `message.content`; /api/generate uses top-level `response`. */
 type HubMessageBlock = {content?: string; reasoning_content?: string};
@@ -262,7 +262,7 @@ export async function initAiHubChatPromise(
 /**
  * Poll until the hub marks `llmPromiseId` done, then GET `/promise/:id/response`.
  *
- * Uses **`GET /promise/:id`** (canonical status per ai-integration) instead of relying on
+ * Uses **`GET /promise/:id`** (canonical status per a2a-ai-hub) instead of relying on
  * `GET /promises/status` “ready” list, which scans the whole promises directory and can
  * miss a just-completed id under load or race with listing.
  */
