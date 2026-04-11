@@ -19,7 +19,7 @@
 
 import fs from 'node:fs';
 import path from 'node:path';
-import { logger } from '@a2a/server-utils/logger.js';
+import { logger } from "@a2a/server-utils/logger.js"';
 import type { ExecutionPlan, Goal, GoalStatus } from './goal-planner.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────

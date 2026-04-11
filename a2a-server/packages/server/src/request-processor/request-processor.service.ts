@@ -37,7 +37,7 @@ import type { RequestType } from "./base-processor.js";
 import {
   LLM_PIPELINE_ACTIONS,
   type LlmPipelineAction,
-} from "../../server-config/router-static.js";
+} from "../../../server-config/router-static.ts";
 import { resolveExecution, resolveResultObject } from "./normalization.js";
 import { detectFrameworksFromCodeBlocks } from "./framework-from-codeblocks.js";
 import { readDialogHubLlmResubmitMax } from "../../../gray-room/src/core/request-processor/gray-room-trigger.js";

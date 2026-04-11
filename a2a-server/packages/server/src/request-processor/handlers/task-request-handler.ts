@@ -4,16 +4,16 @@
  * Handles processing of new task requests, proposing actions
  */
 
-import {logger} from '../../../utils/logger.js';
-import {actionProcessor} from '../../../actions/action-processor.js';
-import {actionRegistry} from '../../../actions/action-registry.js';
-import type {ActionDefinition} from '../../../actions/types.js';
+import {logger} from "@a2a/server-utils/logger.js"';
+import {actionProcessor} from '../../../../actions/src/action-processor.ts';
+import {actionRegistry} from '../../../../actions/src/action-registry.ts';
+import type {ActionDefinition} from '../../../../actions/src/types.ts';
 import type {
     RequestContext,
     ProcessResult,
     ProcessOutcome,
 } from '../request-processor.interfaces.js';
-import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../server-config/router-static.js';
+import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../../../../server-config/router-static.ts';
 import {dialogRequestProcessor} from '../dialog-request-processor.js';
 
 /**

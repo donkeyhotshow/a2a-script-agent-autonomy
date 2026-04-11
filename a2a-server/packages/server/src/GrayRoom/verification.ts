@@ -1,4 +1,4 @@
-import { logger } from '@a2a/server-utils/logger.js';
+import { logger } from "@a2a/server-utils/logger.js""';
 
 export interface BehavioralProof {
   scenario: string;

@@ -8,7 +8,7 @@
  * - Interactive form flows
  */
 
-import {logger} from '@a2a/server-utils/logger.js';
+import {logger} from "@a2a/server-utils/logger.js";
 import type {
     RequestContext,
     ProcessResult,

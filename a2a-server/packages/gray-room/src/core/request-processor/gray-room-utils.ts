@@ -1,9 +1,9 @@
 import * as path from 'path';
 import {executeReadFile} from '../../actions/handlers/file-operations.js';
 import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
-import {mergeGrayRoomSlotIntoContext, mergeInterruptTraceIntoContext} from '../../transform/interrupt-trace-contract.js';
-import {runPromptsTransform} from '../../transform/index.js';
-import type {GrayRoomControlEnvelope, InterruptDirective, ServerInterruptTraceEvent} from '../../transform/types.js';
+import {mergeGrayRoomSlotIntoContext, mergeInterruptTraceIntoContext} from '../../../../packages/transform/src/interrupt-trace-contract.ts';
+import {runPromptsTransform} from '../../../packages/transform/src/index.ts';
+import type {GrayRoomControlEnvelope, InterruptDirective, ServerInterruptTraceEvent} from '../../../packages/transform/src/types.ts';
 import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver.js';
 
 /**

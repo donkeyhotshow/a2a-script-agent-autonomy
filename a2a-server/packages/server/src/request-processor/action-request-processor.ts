@@ -8,7 +8,7 @@
  * - step_complete - confirming step completion
  */
 
-import {logger} from '@a2a/server-utils/logger.js';
+import {logger} from "@a2a/server-utils/logger.js"';
 import {actionProcessor} from '../../../actions/src/action-processor.js';
 import {actionRegistry} from '../../../actions/src/action-registry.js';
 import type {ActionDefinition} from '../../../actions/src/types.js';
@@ -18,7 +18,7 @@ import type {
     ProcessOutcome,
 } from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
-import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../../../server-config/router-static.js';
+import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../../../server-config/router-static.ts';
 import {applySequenceStepComplete} from './sequence-workbench.js';
 import {resolveExecution, resolveResultObject} from './normalization.js';
 import {dialogRequestProcessor} from './dialog-request-processor.js';

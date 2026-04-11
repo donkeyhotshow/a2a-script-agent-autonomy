@@ -3,7 +3,7 @@ import express, {Express, Request, Response} from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
-import {requestLogger} from './utils/logger.js';
+import {requestLogger} from "@a2a/server-utils/logger.js";
 import {errorHandler} from './middleware/error.middleware.js';
 import {registryAuth} from './middleware/registry-auth.middleware.js';
 import {csrfGuard} from './middleware/csrf.middleware.js';

@@ -10,18 +10,18 @@
  * - response-path.ts - обработка путей ответа
  */
 
-import { logger } from "@a2a/server-utils/logger.js";
-import { resolveAiHubBaseUrl } from '../../../server-utils/src/ai-hub-url.js';
+import { logger } from "@a2a/server-utils/logger.js"";
+import { resolveAiHubBaseUrl } from '../../../lib/ai-hub-url.js';
 import type { RequestContextBlock } from "@a2a/server-protocol";
 import type {
   RequestContext,
   ProcessResult,
 } from "./request-processor.interfaces.js";
 import { BaseRequestProcessor, type RequestType } from "./base-processor.js";
-import { isDialogToolExecutePayload } from "./gray-room-utils.js";
+import { isDialogToolExecutePayload } from "../../../gray-room/src/core/request-processor/gray-room-utils.ts";
 import { normalizeAgentSpuriousRequestAfterPipeline } from "./agent-spurious-request-normalize.js";
 import { readDialogHubLlmResubmitMax } from "../../../gray-room/src/core/request-processor/gray-room-trigger.js";
-import { featureManager } from "@a2a/server-features";
+// import { featureManager } from "@a2a/server-features";
 import {
   resolveTransformSchema,
   normalizeContext,
@@ -31,9 +31,9 @@ import {
 import { tryParseJsonFromLlmText } from "@a2a/server-utils/strip-markdown-json-fence.js";
 import { resolveLlmModelFromContext } from "./llm-model-resolver.js";
 import { requestService } from "@a2a/server-request";
-import { CognitionBase } from "./cognition-base.js";
+import { CognitionBase } from "../cognition-base.ts";
 
-import { globalDesignReasoner } from "./hierarchical-design-reasoner.js";
+import { globalDesignReasoner } from "../hierarchical-design-reasoner.ts";
 import { getPromptsTransformsPath } from './index.js';
 import {
   isAgentSchemaName,
@@ -574,11 +574,11 @@ export class DialogRequestProcessor extends BaseRequestProcessor {
         }
 
         // Trigger gray room feature for post_llm_call event
-        await featureManager.trigger({
-          type: "post_llm_call",
-          context: ctx,
-          data: llmResult.responseMd,
-        });
+        // await featureManager.trigger({
+        //   type: "post_llm_call",
+        //   context: ctx,
+        //   data: llmResult.responseMd,
+        // });
 
         // Note: Gray room modifications are applied directly to ctx via feature system
         // For backward compatibility, we still need to call finalize function

@@ -5,7 +5,7 @@
  * and shared functionality for processing different types of requests.
  */
 
-import {logger} from '@a2a/server-utils/logger.js';
+import {logger} from "@a2a/server-utils/logger.js"';
 import type {
     RequestContext,
     ProcessResult,
@@ -13,7 +13,7 @@ import type {
 } from './request-processor.interfaces.js';
 import type {CodeBlock} from '../../types/entity.types.js';
 import {resolveExecution} from './normalization.js';
-import {LLM_PIPELINE_ACTIONS} from '../../../server-config/router-static.js';
+import {LLM_PIPELINE_ACTIONS} from '../../../server-config/router-static.ts';
 
 /**
  * Base processor configuration

@@ -3,10 +3,10 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as processorService from '../../src/services/core/request-processor/request-processor.service.js';
-import { requestService } from '../../src/services/core/request/request.service.js';
+import { requestService } from '../../../../request/src/request.service.js';
 
 // Mock requestService.updateStatus to capture results
-vi.mock('../../src/services/core/request/request.service.js', () => ({
+vi.mock('../../../../request/src/request.service.js', () => ({
     requestService: {
         updateStatus: vi.fn().mockResolvedValue(true),
         getNextPending: vi.fn(),

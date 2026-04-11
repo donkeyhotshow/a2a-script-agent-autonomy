@@ -7,7 +7,7 @@
 
 import {Router, Request, Response, NextFunction} from 'express';
 import {sanitizeErrorMessage} from '../../../server-utils/src/errors.js';
-import {requestService} from '../services/core/request/request.service.js';
+import {requestService} from '../../../request/src/request.service.js';
 import {registryAuth} from '../middleware/registry-auth.middleware.js';
 import {clientSafeWorkbench} from '../../request/client-visible-context.js';
 

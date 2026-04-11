@@ -4,7 +4,7 @@ import {
     initAiHubChatPromise,
     pollReadyThenFetch,
 } from '../../../daemon/llm-hub-poll.js';
-import {logger} from '../../../utils/logger.js';
+import {logger} from "@a2a/server-utils/logger.js""';
 import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils.js';
 import {tryParseJsonFromLlmText} from '../../../utils/strip-markdown-json-fence.js';
 import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../transform/types.js';

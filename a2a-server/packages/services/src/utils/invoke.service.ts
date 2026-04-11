@@ -11,7 +11,7 @@
  */
 
 import type {FileBlock} from '../../types/index.js';
-import {requestService} from '../../../server/src/services/core/request/request.service.js';
+import {requestService} from '../../../request/src/request.service.js';
 import {resolveExecution, resolveResultObject} from '../../../server/src/request-processor/normalization.js';
 import {ACTION_TO_SCHEMA} from '../../../server-config/router-static.js';
 import {trackRequestStart} from './pipeline-observability.service.js';

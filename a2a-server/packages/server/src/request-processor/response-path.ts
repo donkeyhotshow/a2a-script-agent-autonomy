@@ -4,11 +4,11 @@
  * Функции для восстановления stuck dialog requests и управления путями ответа
  */
 
-import {logger} from '@a2a/server-utils/logger.js';
-import {resolveAiHubBaseUrl} from '../../lib/ai-hub-url.js';
-import {getPromptsTransformsPath} from '../../transform/index.js';
-import {resolveLlmPromiseRecovery} from '../daemon/llm-hub-poll.js';
-import {GrayRoomOrchestrator} from './gray-room-orchestrator.js';
+import {logger} from "@a2a/server-utils/logger.js"';
+import {resolveAiHubBaseUrl} from '../../../lib/ai-hub-url.ts';
+import {getPromptsTransformsPath} from '../../../transform/src/index.ts';
+import {resolveLlmPromiseRecovery} from '../../../daemon/src/daemon/llm-hub-poll.ts';
+import {GrayRoomOrchestrator} from '../../../gray-room/src/core/request-processor/gray-room-orchestrator.ts';
 import {readGrayRoomInterruptBudget, shouldUseGrayRoom} from '../../../gray-room/src/core/request-processor/gray-room-trigger.js';
 import {resolveTransformSchema, extractSchemaName} from './normalization.js';
 import type {ProcessResult} from './request-processor.interfaces.js';

@@ -8,7 +8,7 @@
  * - Server transform pipeline integration (server-transforms-request.json, server-transforms-response.json)
  */
 
-import {logger} from '@a2a/server-utils/logger.js';
+import {logger} from "@a2a/server-utils/logger.js"';
 import {readFile} from 'node:fs/promises';
 import {existsSync} from 'node:fs';
 import path from 'path';
@@ -17,7 +17,7 @@ import {
     getPromptsTransformsPath,
     SIMULATION_TO_SCHEMA,
     loadPromptsTransform,
-} from '../../../transform/src/index.js';
+} from '../../../transform/src/index.ts';
 import type {
     RequestContext,
     ProcessResult

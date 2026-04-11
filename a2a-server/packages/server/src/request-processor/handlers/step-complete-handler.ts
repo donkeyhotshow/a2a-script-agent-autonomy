@@ -4,7 +4,7 @@
  * Handles processing of step completion confirmations
  */
 
-import {logger} from '../../../utils/logger.js';
+import {logger} from "@a2a/server-utils/logger.js"';
 import {applySequenceStepComplete} from '../sequence-workbench.js';
 import type {
     RequestContext,
