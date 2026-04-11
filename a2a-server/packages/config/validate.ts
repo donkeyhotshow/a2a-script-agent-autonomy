@@ -13,7 +13,8 @@
  *   --json    Output results as JSON
  */
 
-import { validateConfig, validateConfigSafe, config } from "./index.js";
+import { validateConfig, validateConfigSafe } from "./loader.js";
+import { config } from "./index.js";
 
 const args = process.argv.slice(2);
 const isSafe = args.includes("--safe");

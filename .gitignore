@@ -27,3 +27,8 @@ hooks/CURSOR_AGENT_SIGNAL.md
 
 # Vitest JSON scratch from human-review runners
 **/tests/human-review/.last-vitest.json
+
+# Backup artifact exclusions (BLACKBOXAI_MIGRATION_PLAN)
+.kilo/scripts/duplicates/backups/
+**/*.import-fix-backup
+**/*.comprehensive-fix-backup
