@@ -15,7 +15,7 @@ import {
     pollReadyThenFetch,
     resolveLlmPromiseRecovery,
 } from '../daemon/llm-hub-poll.js';
-import {requestService} from '@a2a/request';
+import {requestService} from '@a2a/server-request';
 import {resolveMainDialogLlmModelFromEnv} from './llm-model-resolver.js';
 import {toInvokeShapeForPromptsTransform} from './normalization.js';
 

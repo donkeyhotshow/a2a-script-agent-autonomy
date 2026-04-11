@@ -9,6 +9,7 @@ import { ActionDefinition, ActionMatch, ActionOutcome, ExecutionState, SubAction
 import { ActionRegistry, actionRegistry } from './action-registry.js';
 import { ActionExecutor, StepResult } from './action-executor.ts';
 import { logger } from '../../lib/logger.js';
+import { createSingleton } from './utils/singleton.ts';
 
 /**
  * Расширенный формат ответа для симуляции
@@ -77,12 +78,7 @@ export class ActionService {
      * @returns отсортированный массив совпадений
      */
     findActions(taskDescription: string): ActionMatch[] {
-        const matches = this.registry.findAction(taskDescription);
-
-        // Сортировка уже выполняется в registry, но на всякий случай
-        matches.sort((a, b) => b.matchScore - a.matchScore);
-
-        return matches;
+        return this.registry.findAction(taskDescription);
     }
 
     /**
@@ -281,19 +277,13 @@ export function createActionResponse(params: {
     return response;
 }
 
-// Экспорт синглтона
-let actionServiceInstance: ActionService | null = null;
+import { createSingleton } from './utils/singleton';
 
 /**
  * Получить синглтон ActionService
  * @returns экземпляр ActionService
  */
-export function getActionService(): ActionService {
-    if (!actionServiceInstance) {
-        actionServiceInstance = new ActionService();
-    }
-    return actionServiceInstance;
-}
+export const getActionService = createSingleton(ActionService);
 
 // Экспорт синглтона по умолчанию
 export const actionService = getActionService();

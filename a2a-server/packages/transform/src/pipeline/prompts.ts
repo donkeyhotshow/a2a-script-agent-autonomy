@@ -14,6 +14,7 @@ import { attachWorkbenchForLlmPrompt } from '../workbench-normalize.js';
 import { loadTransformPipeline } from './load.js';
 import { runTransformPipeline } from './run.js';
 import type { TransformPipeline, TransformOptions, TransformResult } from '../types.js';
+import { ALLOWED_TRANSFORM_TYPES } from '../types.js';
 
 /**
  * Schema name → template file override. Convention: `{schema}-request.md`.
@@ -90,8 +91,6 @@ export function getPromptsTransformsPath(): string {
  * 4. server-transforms-{type}.json
  * When forceServerTransforms: true, use server-transforms-{type}.json; **dialog** response also tries **dialog-llm-response.json** first (workbench + same parse/execute as generic).
  */
-const ALLOWED_TRANSFORM_TYPES = new Set(['request', 'response']);
-
 /** Allowlist for schema name characters — prevents path traversal via schemaName */
 const SAFE_SCHEMA_RE = /^[a-zA-Z0-9_-]+$/;
 

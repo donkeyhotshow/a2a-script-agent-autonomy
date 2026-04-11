@@ -1,7 +1,7 @@
 import {Router, Request, Response, NextFunction} from 'express';
-import {actionProcessor} from '../../../actions/src'/action-processor.js';
-import type {ActionProcessorResult} from '../../../actions/src'/action-processor.js';
-import {actionRegistry} from '../../../actions/src'/action-registry.js';
+import {actionProcessor} from '../../../actions/src/action-processor.js';
+import type {ActionProcessorResult} from '../../../actions/src/action-processor.js';
+import {actionRegistry} from '../../../actions/src/action-registry.js';
 import {logger} from '../../lib/logger.js';
 import {stripServerInternalWorkbenchFromContext} from '../services/core/request/client-visible-context.js';
 

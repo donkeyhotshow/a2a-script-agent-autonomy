@@ -8,6 +8,7 @@
   "exports": {
     ".": "./dist/index.js",
     "./logger": "./dist/logger.js",
+    "./logger.js": "./dist/logger.js",
     "./strip-markdown-json-fence": "./dist/strip-markdown-json-fence.js",
     "./validation": "./dist/validation.js"
   },
@@ -18,7 +19,6 @@
     "lint:fix": "eslint src/**/*.ts --fix"
   },
   "dependencies": {
-    "@a2a/server-config": "workspace:*",
     "bcrypt": "^5.1.1"
   },
   "devDependencies": {

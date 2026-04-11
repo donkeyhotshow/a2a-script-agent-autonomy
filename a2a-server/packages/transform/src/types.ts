@@ -516,3 +516,8 @@ export class TransformError extends Error {
     this.name = 'TransformError';
   }
 }
+
+/**
+ * Allowed transform pipeline types
+ */
+export const ALLOWED_TRANSFORM_TYPES = new Set(['request', 'response']);

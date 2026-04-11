@@ -7,16 +7,10 @@
 import {logger} from '../../../utils/src/lib/logger.js';
 import * as handlers from './handlers/index.js';
 import {SkillEvolver} from '../../server/src/skill-evolver.js';
-
-export type ActionType =
-    | 'read-file'
-    | 'write-file'
-    | 'file-exists'
-    | 'list-directory'
-    | 'execute-command'
-    | 'grep-search'
-    | 'edit-patch'
-    | 'run-script';
+import { ActionType, VALID_ACTION_TYPES_SET } from './constants/action-types.js';
+import {BaseRegistry} from './base/base-registry.ts';
+import {handleError} from './utils/error-handler.ts';
+import { createSingleton } from './utils/singleton.ts';
 
 export interface ActionHandlerContext {
     sessionId: string;
@@ -55,36 +49,28 @@ const DEFAULT_HANDLERS: Record<ActionType, ActionHandler> = {
 /**
  * Registry mapping action types to their handlers
  */
-class ActionHandlerRegistry {
-    private handlers: Map<ActionType, ActionHandler> = new Map();
+class ActionHandlerRegistry extends BaseRegistry<ActionType, ActionHandler> {
     private initialized = false;
     private errorTracker: Map<ActionType, string[]> = new Map();
     private skillEvolver = new SkillEvolver();
 
     constructor() {
+        super('ActionHandlerRegistry');
         this.registerDefaultHandlers();
-    }
-
-    /**
-     * Register a handler for an action type
-     */
-    register(actionType: ActionType, handler: ActionHandler): void {
-        this.handlers.set(actionType, handler);
-        logger.info('[ActionHandlerRegistry] Handler registered', {actionType});
     }
 
     /**
      * Get handler for action type
      */
     getHandler(actionType: string): ActionHandler | undefined {
-        return this.handlers.get(actionType as ActionType);
+        return this.get(actionType as ActionType);
     }
 
     /**
      * Check if handler exists for action type
      */
     hasHandler(actionType: string): boolean {
-        return this.handlers.has(actionType as ActionType);
+        return this.has(actionType as ActionType);
     }
 
     /**
@@ -96,11 +82,7 @@ class ActionHandlerRegistry {
         context: ActionHandlerContext
     ): Promise<unknown> {
         // CWE-94: validate actionType against known allowlist before dispatch
-        const VALID_ACTION_TYPES = new Set<ActionType>([
-            'read-file', 'write-file', 'file-exists', 'list-directory',
-            'execute-command', 'grep-search', 'edit-patch', 'run-script',
-        ]);
-        if (!VALID_ACTION_TYPES.has(actionType as ActionType)) {
+        if (!VALID_ACTION_TYPES_SET.has(actionType as ActionType)) {
             throw new Error(`Unknown action type: ${actionType}`);
         }
 
@@ -134,13 +116,16 @@ class ActionHandlerRegistry {
 
             return result;
         } catch (error) {
-            logger.error('[ActionHandlerRegistry] Action execution failed', {
-                actionType,
-                sessionId: context.sessionId,
-                error: String(error),
+            handleError({
+                logger,
+                component: 'ActionHandlerRegistry',
+                message: 'Action execution failed',
+                error,
+                policy: 'fail-fast',
+                onLenient: async () => {
+                    await this.recordFailure(actionType as ActionType, String(error), context);
+                }
             });
-            await this.recordFailure(actionType as ActionType, String(error), context);
-            throw error;
         }
     }
 
@@ -154,7 +139,13 @@ class ActionHandlerRegistry {
                 const proposal = await this.skillEvolver.evolve(actionType, errors, context);
                 logger.warn(`[ActionHandlerRegistry] SkillEvolver triggered for ${actionType}`, { proposal });
             } catch (e) {
-                logger.error('[ActionHandlerRegistry] SkillEvolver failed', { error: String(e) });
+                handleError({
+                    logger,
+                    component: 'ActionHandlerRegistry',
+                    message: 'SkillEvolver failed',
+                    error: e,
+                    policy: 'lenient'
+                });
             }
             this.errorTracker.delete(actionType); // Reset after evolution
         }
@@ -164,7 +155,7 @@ class ActionHandlerRegistry {
      * List all registered handlers
      */
     listHandlers(): ActionType[] {
-        return Array.from(this.handlers.keys());
+        return this.listKeys();
     }
 
     private registerDefaultHandlers(): void {
@@ -179,8 +170,13 @@ class ActionHandlerRegistry {
     }
 }
 
-// Global instance
-export const actionHandlerRegistry = new ActionHandlerRegistry();
+/**
+ * Get singleton ActionHandlerRegistry instance
+ */
+export const getActionHandlerRegistry = createSingleton(ActionHandlerRegistry);
+
+// Global instance for backward compatibility
+export const actionHandlerRegistry = getActionHandlerRegistry();
 
 // Export class for direct usage
 export { ActionHandlerRegistry };

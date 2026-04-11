@@ -11,9 +11,11 @@ export async function executeListDirectory(
     return executeAction(
         'list-directory',
         input,
-        (input) => validatePath(input.dirPath),
+        // CWE-22/23: resolve first, then validate the resolved path
+        (input) => validatePath(path.resolve(input.dirPath)),
         async (input) => {
             const fullPath = path.resolve(input.dirPath);
+            const containmentRoot = fullPath + path.sep;
 
             const files: ListDirActionOutput['files'] = [];
             let reachedLimit = false;
@@ -36,7 +38,11 @@ export async function executeListDirectory(
                         break;
                     }
 
-                    const entryPath = path.join(dir, entry.name);
+                    // CWE-22/23: resolve entry and verify it stays within the root dir
+                    const entryPath = path.resolve(dir, entry.name);
+                    if (!entryPath.startsWith(containmentRoot) && entryPath !== fullPath) {
+                        continue;
+                    }
                     const relativePath = path.relative(baseDir, entryPath);
 
                     if (input.pattern) {

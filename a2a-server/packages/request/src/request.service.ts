@@ -5,7 +5,7 @@
 
 import * as path from 'path';
 import { randomUUID } from 'crypto';
-import {logger} from '@a2a/server-utils/logger.js';
+import {logger} from './logger.js';
 import {RequestFileStorage} from './request-file-storage.js';
 import {sanitizeRequestResultForStorage} from './client-visible-context.js';
 
@@ -13,7 +13,7 @@ import {sanitizeRequestResultForStorage} from './client-visible-context.js';
 export {
     CLIENT_SAFE_PROCESSING_ERROR,
     sanitizeErrorMessage as humanizeUpstreamErrorMessage,
-} from '../../../lib/errors.js';
+} from './errors-inline.js';
 
 export type RequestStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
 

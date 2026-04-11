@@ -78,3 +78,8 @@ export {
 
 // Action Handlers
 export * as handlers from './handlers/index.js';
+
+// Utilities
+export {
+    normalizeForMatching
+} from './utils/string-utils.js';

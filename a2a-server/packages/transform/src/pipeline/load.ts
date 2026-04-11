@@ -5,6 +5,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import type { TransformPipeline } from '../types.js';
+import { ALLOWED_TRANSFORM_TYPES } from '../types.js';
 
 /**
  * Load pipeline JSON from disk (file or simulation dir).
@@ -37,8 +38,6 @@ export async function loadTransformPipeline(
 
   return pipeline;
 }
-
-const ALLOWED_TRANSFORM_TYPES = new Set(['request', 'response']);
 
 export async function loadSimulationTransform(
   simulationDir: string,

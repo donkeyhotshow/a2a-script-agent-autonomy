@@ -11,11 +11,7 @@
     "build": "tsc -p tsconfig.json",
     "prepare": "npm run build"
   },
-  "dependencies": {
-    "@a2a/utils": "workspace:*",
-    "@a2a/protocol": "workspace:*",
-    "@a2a/server-core": "workspace:*"
-  },
+  "dependencies": {},
   "devDependencies": {
     "typescript": "^5.0.0"
   },

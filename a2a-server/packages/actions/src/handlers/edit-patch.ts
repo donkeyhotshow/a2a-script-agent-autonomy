@@ -45,8 +45,9 @@ export async function executeEditPatch(
     });
 
     try {
-        // Validate path
-        const validation = validatePath(input.path);
+        // CWE-22/23: resolve first, then validate the resolved path
+        const fullPath = path.resolve(input.path);
+        const validation = validatePath(fullPath);
         if (!validation.valid) {
             return {
                 success: false,
@@ -56,8 +57,6 @@ export async function executeEditPatch(
                 error: validation.error,
             };
         }
-
-        const fullPath = path.resolve(input.path);
 
         const fileExists = await pathIsAccessible(fullPath, (m) =>
             logger.warn('[edit-patch] access check failed', {

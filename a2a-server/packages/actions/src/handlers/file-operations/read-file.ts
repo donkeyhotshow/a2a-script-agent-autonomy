@@ -11,7 +11,8 @@ export async function executeReadFile(
     return executeAction(
         'read-file',
         input,
-        (input) => validatePath(input.filePath),
+        // CWE-22/23: resolve first, then validate the resolved path
+        (input) => validatePath(path.resolve(input.filePath)),
         async (input) => {
             const fullPath = path.resolve(input.filePath);
             const encoding = input.encoding || 'utf8';

@@ -13,7 +13,8 @@ export async function executeWriteFile(
     return executeAction(
         'write-file',
         input,
-        (input) => validatePath(input.filePath),
+        // CWE-22/23: resolve first, then validate the resolved path
+        (input) => validatePath(path.resolve(input.filePath)),
         async (input) => {
             const fullPath = path.resolve(input.filePath);
             const dir = path.dirname(fullPath);
