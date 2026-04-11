@@ -1,11 +1,11 @@
 /**
  * Centralized Configuration Loader
  *
- * Loads and validates environment variables using Zod schemas.
- * Provides type-safe configuration with fail-fast validation.
+ * Barrel file that re-exports all configuration utilities.
+ * Single Source of Truth pattern - imports should go through this file.
  *
  * Usage:
- *   import { config, validateConfig } from './config/index.js';
+ *   import { config, validateConfig, mapEnvironmentVariables } from '@a2a/config';
  *
  *   // Access validated config
  *   const port = config.ports.serverPort;
@@ -20,6 +20,7 @@
 
 // Environment variable mapping (env-mapper.ts is source of truth)
 export { mapEnvironmentVariables } from "./env-mapper.js";
+export type { RawConfig } from "./env-mapper.js";
 
 // Validation functions (loader.ts is source of truth)
 export {
@@ -31,7 +32,9 @@ export {
 // Schemas (schema.ts is source of truth)
 export {
   appConfigSchema,
+  portConfigSchema,
   databaseConfigSchema,
+  aiConfigSchema,
   aiHubConfigSchema,
   securityConfigSchema,
   serverConfigSchema,
@@ -40,6 +43,7 @@ export {
   loggingConfigSchema,
   rateLimitConfigSchema,
   queueConfigSchema,
+  mlConfigSchema,
   sessionConfigSchema,
   requestProcessorConfigSchema,
   featuresConfigSchema,
@@ -53,65 +57,19 @@ export {
 } from "./features.js";
 
 // ===========================================
-// Individual Section Validators (kept for backwards-compatibility)
-// ===========================================
-import { databaseConfigSchema, aiHubConfigSchema, securityConfigSchema } from "./schema.js";
-import { createFeatureManager } from "./features.js";
-import { validateConfig } from "./loader.js";
-import type { AppConfig } from "./types.js";
-
-/**
- * Validates only database configuration.
- */
-export function validateDatabase() {
-  const raw = {
-    databaseUrl: process.env.DATABASE_URL,
-    redisUrl: process.env.REDIS_URL,
-    postgresUser: process.env.POSTGRES_USER,
-    postgresPassword: process.env.POSTGRES_PASSWORD,
-    postgresDb: process.env.POSTGRES_DB,
-  };
-  return databaseConfigSchema.parse(raw);
-}
-
-/**
- * Validates only security configuration.
- */
-export function validateSecurity() {
-  const raw = {
-    jwtSecret: process.env.JWT_SECRET,
-    jwtExpiresIn: process.env.JWT_EXPIRES_IN,
-    jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
-    encryptionKey: process.env.ENCRYPTION_KEY,
-    skipAuth: process.env.SKIP_AUTH,
-    apiKeyPrefix: process.env.API_KEY_PREFIX,
-  };
-  return securityConfigSchema.parse(raw);
-}
-
-/**
- * Validates only AI Hub configuration.
- */
-export function validateAIHub() {
-  const raw = {
-    aiHubUrl: process.env.AI_HUB_URL,
-    pollIntervalMs: process.env.POLL_INTERVAL_MS,
-    pollTimeoutMs: process.env.POLL_TIMEOUT_MS,
-    openaiApiKey: process.env.OPENAI_API_KEY,
-    openaiModel: process.env.OPENAI_MODEL,
-  };
-  return aiHubConfigSchema.parse(raw);
-}
-
-// ===========================================
 // Exported Configuration Singleton
 // ===========================================
+
+// Import config and features from loader (which imports from env-mapper + schema)
+import { validateConfig as loadConfig } from "./loader.js";
+import { createFeatureManager } from "./features.js";
+import type { AppConfig } from "./types.js";
 
 /**
  * Validated configuration object.
  * Throws on startup if configuration is invalid.
  */
-export const config: AppConfig = validateConfig();
+export const config: AppConfig = loadConfig();
 
 /**
  * Feature manager for checking enabled features
