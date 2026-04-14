@@ -262,6 +262,7 @@ body {
 .op-msg[data-role="user"] { background: #eff6ff; border-color: #bfdbfe; align-self: flex-end; max-width: 80%; }
 .op-msg[data-role="assistant"] { background: #f9fafb; border-color: #eef2f7; align-self: flex-start; max-width: 80%; }
 .op-msg[data-role="system"] { background: #fff7ed; border-color: #fed7aa; }
+.op-msg[data-role="error"] { background: #fef2f2; border-color: #fecaca; align-self: stretch; max-width: 100%; }
 
 .op-msg-role {
     font-size: 10px;
@@ -299,6 +300,33 @@ body {
     flex-direction: column;
 }
 .op-input-row { display: flex; gap: 8px; align-items: center; width: 100%; }
+.op-input-row.is-hidden { display: none; }
+
+/* Thinking indicator (HTTP polling) */
+.op-thinking {
+    margin: 0 10px 8px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    border: 1px solid #c5cae9;
+    background: #e8eaf6;
+    font-size: 13px;
+    color: #3949ab;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+.op-thinking[hidden] { display: none !important; }
+.op-thinking-label { font-style: italic; }
+.op-thinking-dots span {
+    animation: op-thinking-blink 1.2s infinite both;
+    font-weight: 700;
+}
+.op-thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+.op-thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes op-thinking-blink {
+    0%, 80%, 100% { opacity: 0.2; }
+    40% { opacity: 1; }
+}
 .op-form-fields { width: 100%; display: flex; flex-direction: column; gap: 8px; }
 .op-field { display: flex; flex-direction: column; gap: 4px; }
 .op-field-label { font-size: 11px; color: #6b7280; }
@@ -332,6 +360,19 @@ body {
 .op-workbench-body { flex: 1; min-height: 0; overflow: auto; padding: 10px; }
 .op-pane { display: none; height: 100%; }
 .op-pane.is-on { display: block; }
+.op-diff-pre {
+    margin: 0;
+    padding: 12px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    max-height: 70vh;
+    overflow: auto;
+}
 .op-empty { color: #6b7280; padding: 14px; border: 1px dashed #e5e7eb; border-radius: 10px; background: #fff; }
 .op-empty-small { color: #6b7280; font-size: 12px; padding: 10px; }
 

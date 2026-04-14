@@ -40,6 +40,9 @@
         monitor: () => document.getElementById('operator-monitor'),
     };
 
+    /** Canonical key for resume-after-refresh (see acceptance checklist). */
+    const SESSION_STORAGE_KEY = 'a2a_session_id';
+
     const state = {
         sessions: [],
         activeSessionId: null,
@@ -48,7 +51,99 @@
         // choices pending (array) comes from execute.form.choices
         pendingChoices: null,
         lastExecuteSignature: null,
+        lastPollAttempts: 0,
+        activeFormSpec: null,
     };
+
+    function persistActiveSessionId(sessionId) {
+        if (!sessionId) return;
+        try {
+            sessionStorage.setItem(SESSION_STORAGE_KEY, String(sessionId));
+        } catch (e) {
+            console.warn('[operator-ui] sessionStorage persist failed', e);
+        }
+    }
+
+    function clearPersistedSessionId() {
+        try {
+            sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        } catch (e) {
+            console.warn('[operator-ui] sessionStorage clear failed', e);
+        }
+    }
+
+    function syncChoiceInputGuard() {
+        const row = document.getElementById('op-input-row');
+        if (!row) return;
+        row.classList.toggle('is-hidden', !!state.pendingChoices);
+    }
+
+    function updateThinkingUI(blocked, reason) {
+        const el = document.getElementById('op-thinking');
+        if (!el) return;
+        const r = String(reason || '');
+        const show = !!blocked && /processing|hydrating|busy/i.test(r);
+        if (!show) {
+            el.hidden = true;
+            el.innerHTML = '';
+            return;
+        }
+        el.hidden = false;
+        el.innerHTML =
+            '<span class="op-thinking-label">Working…</span>' +
+            '<span class="op-thinking-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>';
+    }
+
+    function refreshWorkbenchDiff() {
+        const pane = document.querySelector('.op-pane[data-pane="diff"]');
+        if (!pane) return;
+        const st = store.getState?.() || {};
+        const ex = st.execute;
+        if (!ex || typeof ex !== 'object') {
+            pane.innerHTML = '<div class="op-empty">Waiting for agent changes…</div>';
+            return;
+        }
+        const parts = [];
+        if (typeof ex.message === 'string' && ex.message.trim()) parts.push(ex.message.trim());
+        const a = ex.attachments;
+        if (a && typeof a === 'object') {
+            try {
+                parts.push(JSON.stringify(a, null, 2));
+            } catch (e) {
+                parts.push(String(a));
+            }
+        }
+        const text = parts.length ? parts.join('\n\n---\n\n') : '(no projection)';
+        pane.innerHTML = '<pre class="op-diff-pre">' + escapeHtml(text) + '</pre>';
+    }
+
+    async function resumeFromStorage() {
+        let raw = '';
+        try {
+            raw = sessionStorage.getItem(SESSION_STORAGE_KEY) || '';
+        } catch (e) {
+            console.warn('[operator-ui] sessionStorage read failed', e);
+            return;
+        }
+        const sid = raw.trim();
+        if (!sid) return;
+        try {
+            const session = await api.getSession(sid);
+            const id =
+                global.resolveSessionIdFromPayload?.(session) || session?.id || session?.sessionId;
+            if (!id) {
+                clearPersistedSessionId();
+                return;
+            }
+            const exists = state.sessions.some((s) => s.id === id);
+            if (!exists) state.sessions = [{ id }, ...state.sessions];
+            renderSessionList();
+            setActiveSession(id);
+        } catch (e) {
+            console.warn('[operator-ui] resume session failed', e);
+            clearPersistedSessionId();
+        }
+    }
 
     function escapeHtml(s) {
         return global.escapeHtml ? global.escapeHtml(s) : String(s ?? '');
@@ -88,6 +183,7 @@
 
     function setActiveSession(sessionId) {
         state.activeSessionId = sessionId;
+        if (sessionId) persistActiveSessionId(sessionId);
         const el = els.activeSession();
         if (el) el.textContent = `Session: ${sessionId ? sessionId.slice(0, 8) : '—'}`;
         renderSessionList();
@@ -195,11 +291,21 @@
         } else {
             setConn('Ready');
         }
+        updateThinkingUI(blocked, reason || '');
+    }
+
+    function renderFormError(message) {
+        // Minimal predictable error surface; avoid complex per-field wiring.
+        if (message) {
+            store.pushMessage?.(String(message), 'error');
+            renderMessagesFromStore();
+        }
     }
 
     function clearDynamicForm() {
         const host = els.formFields();
         if (host) host.innerHTML = '';
+        state.activeFormSpec = null;
     }
 
     function renderExecuteForm(execute) {
@@ -216,6 +322,7 @@
         if (form.textarea && typeof form.textarea === 'object' && form.textarea.name) {
             const name = String(form.textarea.name);
             const label = String(form.textarea.label || name);
+            state.activeFormSpec = { kind: 'textarea', textarea: form.textarea };
             host.innerHTML =
                 `<div class="op-field">` +
                 `<div class="op-field-label">${escapeHtml(label)}</div>` +
@@ -227,6 +334,7 @@
         // input array support
         const inputs = Array.isArray(form.input) ? form.input : null;
         if (inputs && inputs.length > 0) {
+            state.activeFormSpec = { kind: 'input', input: inputs };
             host.innerHTML = inputs
                 .map((f) => {
                     if (!f || typeof f !== 'object') return '';
@@ -255,6 +363,7 @@
         if (!Array.isArray(choices) || choices.length === 0) {
             host.innerHTML = '';
             state.pendingChoices = null;
+            syncChoiceInputGuard();
             // When choices are cleared, re-enable dynamic form and input unless async blocks.
             return;
         }
@@ -277,6 +386,7 @@
         });
         // Two-beats guard: while choices pending, disable free-text input.
         setInputBlocked(true, 'Awaiting choice');
+        syncChoiceInputGuard();
     }
 
     function deriveChoicesFromExecute(execute) {
@@ -315,9 +425,12 @@
                 setInputBlocked(!!store.isInputBlocked?.(), 'Busy');
             }
             setConn('Ready');
+            refreshWorkbenchDiff();
         } catch (e) {
             console.error('[operator-ui] hydrate error', e);
             setConn('Error');
+            renderFormError(e?.payload?.message || e?.message || 'Hydrate failed');
+            updateThinkingUI(false, '');
         }
     }
 
@@ -338,6 +451,11 @@
             console.warn('[operator-ui] Choices pending; refusing free-text submit.');
             return;
         }
+        // If store considers input blocked (async work), refuse to prevent 409 async_pending.
+        if (typeof store.isInputBlocked === 'function' && store.isInputBlocked()) {
+            renderFormError('Busy: wait for the current step to finish (polling /async).');
+            return;
+        }
         // Prefer server-provided form if present: submit form fields; else fall back to message.
         const st = store.getState?.() || {};
         const execute = st.execute;
@@ -352,6 +470,14 @@
                 if (!name) return;
                 data[name] = el.value;
             });
+            // Validate form if we have a spec.
+            if (state.activeFormSpec?.kind === 'input' && typeof global.validateForm === 'function') {
+                const vr = global.validateForm(state.activeFormSpec.input, data);
+                if (vr && vr.valid === false) {
+                    renderFormError(vr.firstError || 'Invalid form');
+                    return;
+                }
+            }
             // Router first beat: common field name is `task` (API expects it at top-level, not inside result).
             if (typeof data.task === 'string' && data.task.trim()) {
                 submitBody = { task: data.task.trim() };
@@ -371,16 +497,42 @@
         renderMessagesFromStore();
         setInputBlocked(true, 'Processing…');
 
-        const ack = await api.postNext(sid, submitBody);
+        let ack;
+        try {
+            ack = await api.postNext(sid, submitBody);
+        } catch (e) {
+            // Expected when user races async_pending; show message and rehydrate.
+            renderFormError(e?.payload?.message || e?.message || 'Submit failed');
+            await hydrateFromServer();
+            return;
+        }
+        state.lastPollAttempts = 0;
         const shouldPoll = ack?.asyncPending === true || ack?.promiseId || ack?.accepted === true;
         if (shouldPoll) {
-            await api.pollUntilDone(sid, {
-                onTick: (r) => {
-                    if (r?.execute) store.setExecute?.(r.execute);
-                },
-                intervalMs: 800,
-                maxAttempts: 200,
-            });
+            try {
+                await api.pollUntilDone(sid, {
+                    onTick: (r) => {
+                        if (r?.execute) store.setExecute?.(r.execute);
+                        state.lastPollAttempts++;
+                        if (state.lastPollAttempts % 5 === 0) {
+                            setConn(`Processing… (${state.lastPollAttempts})`);
+                        }
+                    },
+                    shouldStop: (r) => {
+                        // Stop early if server surfaces an actionable form (choices/input/textarea) for the user.
+                        const ex = r?.execute;
+                        if (typeof global.executeHasActionableForm === 'function') {
+                            return global.executeHasActionableForm(ex) === true;
+                        }
+                        return false;
+                    },
+                    intervalMs: 800,
+                    maxAttempts: 200,
+                });
+            } catch (pe) {
+                console.error('[operator-ui] pollUntilDone', pe);
+                renderFormError(pe?.message || 'Async polling failed');
+            }
         }
         await hydrateFromServer();
     }
@@ -390,16 +542,40 @@
         renderChoices(null);
         clearDynamicForm();
         setInputBlocked(true, 'Processing…');
-        const ack = await api.postNext(sid, { result: { choice: choiceId } });
+        let ack;
+        try {
+            ack = await api.postNext(sid, { result: { choice: choiceId } });
+        } catch (e) {
+            renderFormError(e?.payload?.message || e?.message || 'Choice submit failed');
+            await hydrateFromServer();
+            return;
+        }
+        state.lastPollAttempts = 0;
         const shouldPoll = ack?.asyncPending === true || ack?.promiseId || ack?.accepted === true;
         if (shouldPoll) {
-            await api.pollUntilDone(sid, {
-                onTick: (r) => {
-                    if (r?.execute) store.setExecute?.(r.execute);
-                },
-                intervalMs: 800,
-                maxAttempts: 200,
-            });
+            try {
+                await api.pollUntilDone(sid, {
+                    onTick: (r) => {
+                        if (r?.execute) store.setExecute?.(r.execute);
+                        state.lastPollAttempts++;
+                        if (state.lastPollAttempts % 5 === 0) {
+                            setConn(`Processing… (${state.lastPollAttempts})`);
+                        }
+                    },
+                    shouldStop: (r) => {
+                        const ex = r?.execute;
+                        if (typeof global.executeHasActionableForm === 'function') {
+                            return global.executeHasActionableForm(ex) === true;
+                        }
+                        return false;
+                    },
+                    intervalMs: 800,
+                    maxAttempts: 200,
+                });
+            } catch (pe) {
+                console.error('[operator-ui] pollUntilDone (choice)', pe);
+                renderFormError(pe?.message || 'Async polling failed');
+            }
         }
         await hydrateFromServer();
     }
@@ -506,6 +682,8 @@
             } catch (err) {
                 console.error('[operator-ui] submit error', err);
                 setConn('Error');
+                renderFormError(err?.payload?.message || err?.message || 'Submit error');
+                setInputBlocked(false, 'Ready');
             }
         });
 
@@ -518,6 +696,7 @@
         });
 
         setConn('Ready');
+        void resumeFromStorage();
     }
 
     if (document.readyState === 'loading') {

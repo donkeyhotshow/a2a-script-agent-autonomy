@@ -101,6 +101,14 @@
                 await sleep(intervalMs);
                 continue;
             }
+            if (typeof opts.shouldStop === 'function') {
+                try {
+                    if (opts.shouldStop(last) === true) return last;
+                } catch (e) {
+                    // Never crash polling due to a UI callback; treat as non-stopping.
+                    console.error('[apiIntegration] shouldStop callback failed', e);
+                }
+            }
             if (last.asyncPending === false || last.completed === true || last.status === 'idle') {
                 return last;
             }
