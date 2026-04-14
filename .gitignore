@@ -20,6 +20,21 @@ a2a-client/storage/
 # Sim invoke capture (merge into response.json for goldens; see simulations/SCHEMA.md)
 simulations/**/invoke-capture.json
 .env*
+!.env.example
+
+# Local agent extract tree (not part of product source)
+.agentLOGIC/
+
+# Task Monitor runtime state (machine-local)
+task-monitor-state.json
+
+# TypeScript / tooling scratch dumps (regenerate locally if needed)
+tsc-errors.txt
+tsc-out.txt
+tsc-out2.txt
+git_status_full.txt
+diff_summary.txt
+dedup_report_remote.md
 
 # Cursor hook ticker (regenerated every N minutes locally)
 hooks/CURSOR_AGENT_SIGNAL.json
@@ -27,8 +42,3 @@ hooks/CURSOR_AGENT_SIGNAL.md
 
 # Vitest JSON scratch from human-review runners
 **/tests/human-review/.last-vitest.json
-
-# Backup artifact exclusions (BLACKBOXAI_MIGRATION_PLAN)
-.kilo/scripts/duplicates/backups/
-**/*.import-fix-backup
-**/*.comprehensive-fix-backup

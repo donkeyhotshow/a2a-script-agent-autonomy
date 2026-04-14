@@ -1,178 +1,36 @@
-# Unified Documentation Workflow CI/CD Integration
-name: Unified Documentation Workflow
+# Scheduled / manual offline gates (legacy unified doc workflow removed — it depended on missing .clinerules/).
+name: Repo validate (offline)
+
 on:
   schedule:
-    - cron: '0 2 * * *'  # Daily at 2 AM
+    - cron: '0 2 * * *'
   workflow_dispatch:
-    inputs:
-      priority:
-        description: 'Workflow priority level'
-        required: true
-        default: 'medium'
-        type: choice
-        options:
-          - high
-          - medium
-          - low
-      force_restart:
-        description: 'Force restart existing workflow'
-        required: false
-        default: false
-        type: boolean
 
 jobs:
-  documentation-workflow:
+  repo-validate:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # Fetch full history for better analysis
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
+          cache-dependency-path: package-lock.json
 
-      - name: Install dependencies
+      - name: Install root dependencies
         run: npm ci
 
-      - name: Check workflow status
-        id: check-status
+      - name: Cross-system validate
+        run: npm run cross-system:validate
+
+      - name: Simulation markdown gate
+        run: npm run sim:check-md:fail
+
+      - name: Client integration tests (incl. web)
+        working-directory: a2a-client
         run: |
-          # Check if there's an active workflow
-          STATUS=$(node .clinerules/scripts/workflow-engine.js --status 2>&1 | grep -E "(No active workflow|Current Phase)" || echo "unknown")
-          echo "status=$STATUS" >> $GITHUB_OUTPUT
-          echo "Status check result: $STATUS"
-
-      - name: Start workflow
-        id: start-workflow
-        if: steps.check-status.outputs.status == 'No active workflow found' || github.event.inputs.force_restart == 'true'
-        run: |
-          PRIORITY="${{ github.event.inputs.priority || 'medium' }}"
-          echo "Starting workflow with priority: $PRIORITY"
-          node .clinerules/scripts/workflow-engine.js --start --priority "$PRIORITY"
-          
-          # Wait a moment for initialization
-          sleep 5
-          
-          # Get session ID
-          SESSION_ID=$(node .clinerules/scripts/workflow-engine.js --status --json 2>/dev/null | jq -r '.session_id' || echo "unknown")
-          echo "session_id=$SESSION_ID" >> $GITHUB_OUTPUT
-          echo "Workflow started with session ID: $SESSION_ID"
-
-      - name: Monitor workflow progress
-        id: monitor
-        run: |
-          echo "Monitoring workflow progress..."
-          
-          # Monitor for up to 4 hours (240 minutes)
-          MAX_MINUTES=240
-          CHECK_INTERVAL=300  # 5 minutes
-          
-          for ((i=1; i<=MAX_MINUTES*60/CHECK_INTERVAL; i++)); do
-            # Get current status
-            STATUS_JSON=$(node .clinerules/scripts/workflow-engine.js --status --json 2>/dev/null)
-          
-            if [ $? -eq 0 ]; then
-              CURRENT_PHASE=$(echo "$STATUS_JSON" | jq -r '.current_phase')
-              PROGRESS=$(echo "$STATUS_JSON" | jq -r '.progress_percentage')
-              SESSION_ID=$(echo "$STATUS_JSON" | jq -r '.session_id')
-          
-              echo "Progress: $PROGRESS% - Phase: $CURRENT_PHASE"
-          
-              # Check if completed
-              if [ "$CURRENT_PHASE" = "completed" ]; then
-                echo "✅ Workflow completed successfully!"
-                echo "session_id=$SESSION_ID" >> $GITHUB_OUTPUT
-                echo "completed=true" >> $GITHUB_OUTPUT
-                exit 0
-              fi
-          
-              # Check for errors or stuck progress
-              if [ "$PROGRESS" -lt 100 ] && [ $i -gt 20 ]; then  # After 100 minutes
-                echo "⚠️  Warning: Workflow may be stuck at $PROGRESS%"
-                # Continue monitoring but log warning
-              fi
-            else
-              echo "❌ Failed to get workflow status"
-              exit 1
-            fi
-          
-            # Sleep before next check
-            sleep $CHECK_INTERVAL
-          done
-          
-          echo "❌ Workflow did not complete within $MAX_MINUTES minutes"
-          echo "completed=false" >> $GITHUB_OUTPUT
-          exit 1
-
-      - name: Generate final report
-        if: always()
-        run: |
-          echo "Generating final workflow report..."
-          
-          # Generate JSON report
-          node .clinerules/scripts/workflow-engine.js --report --format json > workflow-report.json
-          
-          # Generate markdown report
-          node .clinerules/scripts/workflow-engine.js --report --format markdown > workflow-report.md
-          
-          # Generate dashboard report
-          node .clinerules/scripts/dashboard.js --export --format markdown > dashboard-report.md
-          
-          echo "Reports generated:"
-          echo "- workflow-report.json"
-          echo "- workflow-report.md"
-          echo "- dashboard-report.md"
-
-      - name: Upload workflow reports
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: workflow-reports
-          path: |
-            workflow-report.json
-            workflow-report.md
-            dashboard-report.md
-            .clinerules/test-report.json
-          retention-days: 30
-
-      - name: Comment on PR
-        if: github.event_name == 'pull_request'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            
-            // Read reports
-            const workflowReport = fs.readFileSync('workflow-report.md', 'utf8');
-            const dashboardReport = fs.readFileSync('dashboard-report.md', 'utf8');
-            
-            // Create comment body
-            const commentBody = `## 📊 Documentation Workflow Report
-            
-            ### Workflow Summary
-            ${workflowReport}
-            
-            ### Dashboard Overview
-            ${dashboardReport}
-            
-            ---
-            *Generated by [Unified Documentation Workflow System](https://github.com/your-org/your-repo)*`;
-            
-            // Post comment
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: commentBody
-            });
-
-      - name: Fail on incomplete workflow
-        if: steps.monitor.outputs.completed != 'true'
-        run: |
-          echo "❌ Workflow did not complete successfully"
-          echo "Check the logs for details"
-          exit 1
+          npm ci
+          npm run test:web

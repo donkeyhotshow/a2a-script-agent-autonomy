@@ -16,3 +16,12 @@ dist/
 # Session/storage in project folder (legacy - now uses ~/.a2a-client)
 
 .pids.txt
+
+.env*
+!.env.example
+
+.agentLOGIC/
+task-monitor-state.json
+tsc-errors.txt
+tsc-out.txt
+tsc-out2.txt

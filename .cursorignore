@@ -1,6 +1,17 @@
-# process-input script output
+﻿# process-input script output
 
 node_modules/
-
+output/
+dist/
+**/logs/
+*.log
+.agentLOGIC/
 simulation-true/
 questions-to-user/
+task-monitor-state.json
+.env
+.env.local
+tsc-errors.txt
+tsc-out.txt
+tsc-out2.txt
+
