@@ -1,5 +1,13 @@
 # DEV_STATE — 2026-04-08
 
+**Evidence (2026-04-14):** `a2a-client`: `npm test` → **38 files, 341 tests, exit 0**. Root: `npm run central:offline` → **exit 0** (indirect tests, server unit, monitor infra, cross-system validate, sim lint/validate). **Launch-fix pass:** workspace `@a2a/fs-utils` + ESM `execution/fs-utils`; companion `.js` for execution scan modules + `rag/embedding-client.js`; `shared/session-stage-derive` matches Client API stage tests; monitor: log tail age filter (`TASK_MONITOR_LOG_SCAN_MAX_AGE_MINUTES`) + Client API health tries `127.0.0.1` / `localhost` / `[::1]`; broken `runbook/docs/OPERATOR-CURL.md` links pointed at `docs/OPERATOR-CURL.md`. Smoke: `npm run monitor:once` → **exit 0**; `node` ESM import `@a2a-client/execution/fs-utils` / `@a2a-client/embedding` → OK.
+
+**Operator UI (2026-04-14):** Implemented Both-mode Operator UI shell using existing `a2a-client/packages/web` (vanilla JS) aligned with [`a2a-client/docs/WEB_UI_PROTOCOL.md`](a2a-client/docs/WEB_UI_PROTOCOL.md): session-scoped polling (`GET /api/a2a/sessions/:id/async`) and router two-beats (`result.message` → `execute.form.choices` → `result.choice`). **Build evidence:** `pnpm --prefix a2a-client run build` → **exit 0**, output to `a2a-client/public/ui` (served in prod by a2a-server at `/ui/*`). Note: `a2a-server` root `tsc` currently reports many pre-existing type errors in packages unrelated to the UI wiring, so verification for this change relies on `a2a-client` build + runtime smoke (below).
+
+**Operator UI smoke (2026-04-14):** Dev server started on **`http://localhost:5174/`** (5173 was in use). `POST /api/a2a/sessions` succeeded (session `sess_1776159204853`). `POST /api/a2a/sessions/:id/next` with `{ result: { message: "покажи варианты" } }` returned ack `{ success:true, step:2, asyncPending:true }` and server-side promiseId `prom_a257d18e-7e43-4ff4-aefa-4c37e39b1ad4`. Polling verified: `GET /api/a2a/sessions/:id` → `asyncPending=true`, `stage=awaiting-async`; `GET /api/a2a/sessions/:id/async` → `{ status:"pending", asyncPending:true }`. Upstream completion/choices were not observed in this environment because the server promise stayed `pending` (likely AI hub not running), so the choices-beat UI was not end-to-end exercised today.
+
+**Live stack attempt (2026-04-14):** `start-all.bat` paths fixed to `scripts\scripts\start-*.bat`; root `node_modules` no longer deleted on start (required for `npm run monitor:once`). Use root `kill-all.bat` for port cleanup. **ai-hub:** `http://127.0.0.1:11434/health` → **200** after `providers.json` copy from example. **`a2a-server` `dev:no-auth`:** import graph + **server-config** env/Zod alignment fixed; **`GET http://127.0.0.1:3000/health`** → **200** when process listens (see `tasks/pending/a2a-server-dev-entry-import-paths.md`). **`npm run monitor:once`:** **exit 0** after root `npm install` (postinstall fixed for Windows); initial health may still warn if Client API `/projects` or hub/LLM are down.
+
 **Rules Q&A:** [`docs/PROJECT-RULES-QA.md`](docs/PROJECT-RULES-QA.md) · Normative: [`AGENTS.md`](AGENTS.md)
 
 **Project status (elevated bar):** treat the repo as an **autonomous AI operator workstation** — async sessions until terminal completion, not ad-hoc invokes. **Production acceptance** = explicit criteria in `tasks/` + monitor-driven runs + offline validators (contracts, **boundary cases**, cross-system checks). Evidence before closure — [`AGENTS.md`](AGENTS.md) *Evidence-first loop*.
@@ -17,6 +25,8 @@
 **Operator scan iteration (2026-04-08, client/sdk/web/storage + tests):** Added [`docs/OPERATOR-TESTING-MATRIX.md`](docs/OPERATOR-TESTING-MATRIX.md) with deterministic test matrix and operator facts from `a2a-client` protocol docs (`WEB_UI_PROTOCOL.md`, `api-testing-plan.md`) and root script inventory. Linked matrix from [`MONITOR-QUICK-START.md`](MONITOR-QUICK-START.md), [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](docs/OPERATOR-MONITOR-MANUAL-QA.md), [`docs/OPERATOR-CURL.md`](docs/OPERATOR-CURL.md), and [`docs/AGENTS-REFERENCE.md`](docs/AGENTS-REFERENCE.md).
 **Operator hardening iteration (2026-04-08, triangle + alerts + UI switch scope):** Added concrete wrong-behavior incident playbook to [`docs/TRIANGLE-WORKFLOW.md`](docs/TRIANGLE-WORKFLOW.md), added color-alert reminder to [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](docs/OPERATOR-MONITOR-MANUAL-QA.md), and created testable implementation task [`tasks/web-ui-client-prototype-toggle.md`](tasks/web-ui-client-prototype-toggle.md) for runtime switch between current client UI and prototype UI.
 **UI switch implementation (2026-04-08):** Implemented runtime interface toggle in client web header (`Client UI` / `Prototype UI`) with persisted mode + configurable prototype URL in settings; added return switch inside `a2a-prototype` UI. Verification: `npm --prefix a2a-client run test:web` -> **52 passed**.
+
+**Import migration P0 (2026-04-13, `a2a-server`):** Hub promise pipeline moved into `@a2a/server-utils` (no `packages/lib` → `daemon` typecheck edge); daemon wraps poll ticks for A2A context; `server-request` re-exports errors from `@a2a/server-utils`; canonical `npm run build` uses `scripts/build-workspaces-ordered.mjs` through `@a2a/server-gray-room`. Evidence: that command **exit 0** on agent host. Journal: [`docs/import-migration-board.md`](import-migration-board.md).
 
 **Canonical operator runbook (deduplicated):** use [`docs/OPERATOR-MONITOR-MANUAL-QA.md`](docs/OPERATOR-MONITOR-MANUAL-QA.md) as the single workflow source for monitor execution, manual QA, anti-patterns, and **100% production-ready** acceptance criteria. Keep `DEV_STATE` entries focused on iteration evidence and deltas.
 
@@ -123,4 +133,45 @@ Then `start-all.bat` and retry.
 
 **2026-04-08:** Docs tightened — indexed stack workflow normative on Task Monitor (`AGENTS.md`, `ONE-PIPELINE.md`, `tasks/README.md`, `MONITOR-QUICK-START.md`, `STACK-RUN.md`, `GLOSSARY.md`). **`npm run test:monitor`** → **38 passed** (re-verified; + central-orchestrator argv test; + sequential `createCompletionReport` guard). **`START-FULL-SPECTRUM.md`** Agent prompt updated: real **`hooks/task_monitor_issue.json`** (`errors[]`), **`task_completion_report.json`**, optional sample **`CURSOR_AGENT_SIGNAL`** (no in-repo ticker script), monitor-owned `/next` loop, IDE cadence + [`docs/agent-iteration-traps.md`](docs/agent-iteration-traps.md), evidence before hook cleanup. Dead **`BREAK_STATE.md`** links removed from [`docs/PROMISE-RETRY-DIALOG.md`](docs/PROMISE-RETRY-DIALOG.md) and [`a2a-server/docs/GRAY-ROOM.md`](a2a-server/docs/GRAY-ROOM.md); **`test:before-start`** includes **`test:monitor`** (see *Next* §1 for current count); [`prompts-to-agent-mode/methodology-proposals-folder-missing.md`](prompts-to-agent-mode/methodology-proposals-folder-missing.md) no longer claims missing `tasks.md` is “done.”
 
+---
+
+## 2026-04-13 — Topology / NodeNext stabilization (no directory moves)
+
+**Decision:** freeze structural moves; fix topology ambiguity first.
+
+**Evidence (inbound imports):**
+- `@a2a/config` consumers found in `a2a-server/packages/server/**` and `a2a-server/packages/services/**`
+- `@a2a/server-protocol` consumers found in `a2a-server/packages/server/**` and `a2a-server/packages/actions/**`
+
+**Fixes (topology ambiguity removed):**
+- Duplicate workspace package name **`@a2a/config`** resolved by:
+  - keeping canonical in `a2a-server/packages/server-config` (real usage + workspace)
+  - renaming legacy `a2a-server/packages/config` → `@a2a/config-legacy`
+  - exporting router/static + health API from canonical `@a2a/config`
+- Duplicate workspace package name **`@a2a/server-protocol`** resolved by:
+  - keeping canonical in `a2a-server/packages/server-protocol` (workspace)
+  - renaming legacy `a2a-server/packages/protocol` → `@a2a/server-protocol-legacy`
+
+**NodeNext/ESM import rule enforced:** `.js` specifiers retained (NodeNext).
+
+**Runtime checks:**
+- `npm --prefix a2a-server run build --workspace=@a2a/server-utils` → **exit 0**
+- `npm --prefix a2a-server run build` → **still failing** (next error class: workspace boundary/tsconfig rootDir in `@a2a/server-daemon`, plus protocol/type mismatches in `actions` and missing modules in `gray-room`).
+
+**Next step:** normalize workspace package boundaries (`package.json` + `exports` + tsconfig references) for `actions/daemon/gray-room/...` and re-run typecheck/build after each wave.
+
 Historical change log was pruned in favor of this goal-centric view; use `git log` and module DEV_STATE history for archaeology.
+
+## 2026-04-14 — Offline gate `central:offline` green (path + sim toolchain)
+
+**Evidence:** repo root `npm run central:offline` → **exit 0** (indirect 14/14, server Vitest 87, monitor infra 38, audit-session-storage chain ok, cross-system ok, sim:check-md ok, sim:lint 36 roots, sim:validate **174** step/substep targets).
+
+**Fixes in this iteration:**
+- `a2a-server/shared/internal-client-action-keys.mjs` re-export → `../../a2a-client/packages/shared/internal-client-action-keys.mjs`.
+- `sim-lint/registry.ts`: `isSimulationRoot` filter (skip `tests/integration/simulations/scripts/*` tooling dirs mistaken for goldens).
+- `sim-validate`: `SCHEMAS_DIR` → `docs/PROTOCOL/json-schemas`; discovery via `getAllSimulations` + `expandSimulationValidateTargets` (numbered steps + `N-sub-M`); interrupt substeps require only `request`/`response` (+ optional client/received/transforms).
+- `sim-validate/reporters.ts`: `--sim` paths under `integration/…` resolve to `tests/integration/simulations`.
+
+**Note:** `cross-system:validate` still logs 4× `EXECUTE_MESSAGE_ONLY` on stored sessions (informational); gate remains OK.
+
+**2026-04-14 (later) — client workspace + launchers:** `@a2a/rag` renamed from `@a2a-client/rag`, exports point at `src/` (no missing `dist/`). `@a2a-client/core` `a2a-invoke-builders.js` aligned with shared (sanitize returns clones — fixes undefined `context` / `a2aTraceId`). SDK `context-invoke-patch.ts` import path corrected. Added repo-root `scripts/start-web-ui.bat` and `scripts/start-client-api.bat` (so `a2a-client` `npm run dev` and SDK `dev` resolve). Evidence: `npm --prefix a2a-client run test:web` → **52 tests passed**; `npm run central:offline` → **exit 0**.

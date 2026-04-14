@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A2A Task Flow</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="app">
+        <div id="operator-root">
+            <div id="operator-main">
+                <aside id="operator-sessions" aria-label="Sessions">
+                    <div class="op-panel-header">
+                        <div class="op-panel-title">Sessions</div>
+                        <button id="op-new-session" class="op-btn op-btn-primary" type="button">＋ New</button>
+                    </div>
+                    <div id="op-session-list" class="op-session-list"></div>
+                    <div class="op-panel-footer">
+                        <span class="op-conn-dot" id="op-conn-dot" aria-hidden="true"></span>
+                        <span id="op-conn-label" class="op-conn-label">Idle</span>
+                    </div>
+                </aside>
+
+                <section id="operator-chat" aria-label="Chat">
+                    <div class="op-panel-header">
+                        <div class="op-panel-title">Chat</div>
+                        <div class="op-panel-subtitle" id="op-active-session">Session: —</div>
+                    </div>
+                    <div id="op-messages" class="op-messages"></div>
+                    <div id="op-choices" class="op-choices"></div>
+                    <div id="op-grayroom" class="op-grayroom"></div>
+                    <form id="op-input-form" class="op-input" autocomplete="off">
+                        <div id="op-form-fields" class="op-form-fields"></div>
+                        <div class="op-input-row">
+                            <input id="op-input" class="op-input-text" type="text" placeholder="Type a message…" />
+                            <button id="op-send" class="op-btn op-btn-primary" type="submit">Send</button>
+                            <button id="op-stop" class="op-btn op-btn-danger" type="button">Stop</button>
+                        </div>
+                    </form>
+                </section>
+
+                <section id="operator-workbench" aria-label="Workbench">
+                    <div class="op-panel-header">
+                        <div class="op-panel-title">Workbench</div>
+                        <div class="op-tabs" role="tablist" aria-label="Workbench tabs">
+                            <button class="op-tab is-on" type="button" data-tab="diff" role="tab" aria-selected="true">Diff</button>
+                            <button class="op-tab" type="button" data-tab="trace" role="tab" aria-selected="false">Trace</button>
+                        </div>
+                    </div>
+                    <div class="op-workbench-body">
+                        <div class="op-pane is-on" data-pane="diff">
+                            <div class="op-empty">Waiting for agent changes…</div>
+                        </div>
+                        <div class="op-pane" data-pane="trace">
+                            <div class="op-empty">Waiting for trace steps…</div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <section id="operator-monitor" aria-label="Task monitor">
+                <div class="op-monitor-header">
+                    <div class="op-monitor-title">Task Queue</div>
+                    <div class="op-monitor-meta">
+                        <span id="op-running-badge" class="op-badge op-badge-accent is-hidden">running: 0</span>
+                        <button id="op-monitor-toggle" class="op-btn op-btn-ghost" type="button" aria-expanded="true">▼</button>
+                        <button id="op-clear-done" class="op-btn op-btn-ghost" type="button">Clear Done</button>
+                    </div>
+                </div>
+                <div id="op-monitor-body" class="op-monitor-body"></div>
+            </section>
+        </div>
+    </div>
+
+    <!-- Daemons (must load first) -->
+    <script type="module" src="/js/daemons/emitter.js"></script>
+    <script type="module" src="/js/daemons/dialog-loader.js"></script>
+    <script type="module" src="/js/daemons/dialog-promise-poll.js"></script>
+    
+    <!-- Utilities -->
+    <script type="module" src="/js/html-utils.js"></script>
+    <script type="module" src="/js/api-integration.js"></script>
+    
+    <!-- Core state -->
+    <script type="module" src="/js/session-data.js"></script>
+    <script type="module" src="/js/session-store.js"></script>
+    
+    <!-- TaskFlow modules -->
+    <script type="module" src="/js/task-flow/init.js"></script>
+    <script type="module" src="/js/task-flow/index.js"></script>
+    <script type="module" src="/js/task-flow/loader.js"></script>
+    <script type="module" src="/js/task-flow/tasks.js"></script>
+    <script type="module" src="/js/task-flow/messages.js"></script>
+    <script type="module" src="/js/task-flow/render.js"></script>
+    <script type="module" src="/js/task-flow/render-layout.js"></script>
+    <script type="module" src="/js/operator-ui.js"></script>
+</body>
+</html>

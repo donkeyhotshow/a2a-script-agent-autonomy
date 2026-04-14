@@ -10,7 +10,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
  */
 export default defineConfig({
   root: 'packages/web',
+  base: process.env.NODE_ENV === 'production' ? '/ui/' : '/',
     build: {
+      outDir: path.resolve(__dirname, 'public/ui'),
+      emptyOutDir: true,
       target: 'es2020',
       minify: 'esbuild',
       cssMinify: true,
