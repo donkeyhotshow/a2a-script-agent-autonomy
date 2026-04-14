@@ -1,7 +1,0 @@
-{
-  "projectId": "golden-rc",
-  "sessionId": "sess-rc-1",
-  "execute": {
-    "message": "Resilience chain complete: RAG drained and both files in context.files."
-  }
-}

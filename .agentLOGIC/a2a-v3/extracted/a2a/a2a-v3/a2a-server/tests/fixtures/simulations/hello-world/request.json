@@ -1,8 +1,0 @@
-{
-  "context": {
-    "version": "1.0",
-    "session_id": "test-session-hello",
-    "user_id": "test-user"
-  },
-  "message": "Hello, say hello back"
-}

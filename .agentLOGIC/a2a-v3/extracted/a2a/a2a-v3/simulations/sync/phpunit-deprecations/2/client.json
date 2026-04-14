@@ -1,7 +1,0 @@
-{
-  "projectId": "123",
-  "sessionId": "456",
-  "result": {
-    "choice": "phpunit-deprecations"
-  }
-}

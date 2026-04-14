@@ -1,7 +1,0 @@
-{
-  "projectId": "proj-orch-001",
-  "sessionId": "sess-orch-001",
-  "execute": {
-    "message": "Plan: cross-check AGENTS, PROTOCOL, and simulations docs for duplicated tables and note missing links."
-  }
-}

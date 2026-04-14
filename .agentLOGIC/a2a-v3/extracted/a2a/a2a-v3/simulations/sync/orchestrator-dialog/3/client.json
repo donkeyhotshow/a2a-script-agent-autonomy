@@ -1,7 +1,0 @@
-{
-  "projectId": "proj-orch-001",
-  "sessionId": "sess-orch-001",
-  "result": {
-    "message": "Read ADR-0027 and tell me how to check documentation consistency across canonical sources."
-  }
-}
