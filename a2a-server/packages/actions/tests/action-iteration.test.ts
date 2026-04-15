@@ -4,7 +4,7 @@
  */
 
 import {describe, it, expect, beforeAll} from 'vitest';
-import {actionProcessor} from '../../src/actions/action-processor';
+import {actionProcessor} from '../../src/actions/action-processor.js';
 
 describe('Action Iteration Flow', () => {
     beforeAll(async () => {

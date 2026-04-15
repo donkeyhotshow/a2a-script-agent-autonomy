@@ -12,7 +12,7 @@
 ### Outputs
 
 - Running services on configured ports.
-- Valid health responses from `a2a-server`, `a2a-ai-hub`, and Client API.
+- Valid health responses from `a2a-server`, `ai-integration`, and Client API.
 - Client API session flow accepts `POST /api/a2a/sessions`, `POST /next`, and `GET /async`.
 
 ### Side Effects
@@ -47,7 +47,7 @@
 | Web Browser | 5173 | UI |
 | a2a-client SDK | 3001 | Client API |
 | a2a-server | 3000 | Main Server |
-| a2a-ai-hub | 11434 | AI Proxy |
+| ai-integration | 11434 | AI Proxy |
 
 ---
 
@@ -63,12 +63,12 @@ kill-all.ps1     # Stop all services
 - `a2a-server` → `tsx watch`
 - Client API (`a2a-client/packages/sdk`) → `tsx watch`
 - Web UI (`a2a-client`) → `vite` HMR
-- `a2a-ai-hub` → `uvicorn --reload`
+- `ai-integration` → `uvicorn --reload`
 - promise queue daemon → dev watch wrapper (`scripts/promise_queue_daemon_watch.py`)
 
-**When to use `start-all.bat` again:** only for full bootstrap/reset or process-level faults (stuck ports, broken process tree, env/config changes requiring restart, dead Vite/Client API process, stale `.pids.txt`). `start-all.bat` is the canonical full reset path (calls `kill-all.bat`, verifies ports, starts services, starts promise queue daemon). See [`AGENTS-REFERENCE.md`](../docs/AGENTS-REFERENCE.md).
+**When to use `start-all.bat` again:** only for full bootstrap/reset or process-level faults (stuck ports, broken process tree, env/config changes requiring restart, dead Vite/Client API process, stale `.pids.txt`). `start-all.bat` is the canonical full reset path (calls `kill-all.bat`, verifies ports, starts services, starts promise queue daemon). See [`AGENTS-REFERENCE.md`](../../../docs/AGENTS-REFERENCE.md).
 
-**LLM / hub busy:** If a Client API session is waiting on the LLM (`asyncPending` / server `processing`), **confirm** your configured upstream (per `a2a-ai-hub` / `providers.json`) is actually working **before** killing or restarting the stack. Normative wording: [`OPERATOR-CURL.md`](../runbook/docs/OPERATOR-CURL.md).
+**LLM / hub busy:** If a Client API session is waiting on the LLM (`asyncPending` / server `processing`), **confirm** your configured upstream (per `ai-integration` / `providers.json`) is actually working **before** killing or restarting the stack. Normative wording: [`OPERATOR-CURL.md`](../../../docs/OPERATOR-CURL.md).
 
 ### Linux/Mac
 ```bash
@@ -81,15 +81,15 @@ bash start-all.sh    # Start all services
 
 For day-to-day restarts on Windows, use `start-all.bat` only. Steps below are exception-only for debugging or intentional single-component isolation.
 
-### 1. a2a-ai-hub (AI Proxy)
+### 1. ai-integration (AI Proxy)
 
 ```bash
-cd a2a-ai-hub
+cd ai-integration
 
 # Установка зависимостей
 pip install -r requirements.txt
 
-# Запуск (routing: config/providers.json + env — see a2a-ai-hub README)
+# Запуск (routing: config/providers.json + env — see ai-integration README)
 python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port 11434
 ```
 
@@ -142,7 +142,7 @@ npm run dev
 # a2a-server
 curl http://localhost:3000/health
 
-# a2a-ai-hub
+# ai-integration
 curl http://localhost:11434/health
 
 # a2a-client SDK
@@ -172,7 +172,7 @@ curl http://localhost:5173/api/a2a/sessions/SESSION_ID/async
 
 | Переменная | Описание | По умолчанию |
 |------------|----------|--------------|
-| `AI_HUB_URL` | URL a2a-ai-hub | http://localhost:11434 |
+| `AI_HUB_URL` | URL ai-integration | http://localhost:11434 |
 | `LLM_MODEL` / `Z_AI_MODEL` | Model id sent to hub (a2a-server) | см. `a2a-server/.env.example` |
 | `ENCRYPTION_KEY` | Ключ шифрования (32 символа) | - |
 | `JWT_SECRET` | Секрет JWT (мин. 32 символа) | - |
@@ -182,7 +182,7 @@ curl http://localhost:5173/api/a2a/sessions/SESSION_ID/async
 
 | Сервис | Порт |
 |--------|------|
-| a2a-ai-hub | 11434 |
+| ai-integration | 11434 |
 | a2a-server | 3000 |
 | a2a-client SDK | 3001 |
 | Web UI (Vite) | 5173 |
@@ -205,8 +205,8 @@ taskkill /F /PID <PID>
 # a2a-server
 tail -f a2a-server.log
 
-# a2a-ai-hub
-tail -f a2a-ai-hub.log
+# ai-integration
+tail -f ai-integration.log
 
 ```
 
@@ -237,7 +237,7 @@ a2a-script-agent/
 │   ├── web/            # UI приложение
 │   └── packages/       # NPM пакеты
 │       └── sdk/        # Client SDK
-├── a2a-ai-hub/     # AI прокси (Python)
+├── ai-integration/     # AI прокси (Python)
 ├── config/             # Конфигурация
 └── docs/              # Документация
 ```

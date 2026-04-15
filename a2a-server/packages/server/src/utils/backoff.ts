@@ -1,1 +1,1 @@
-export * from '../../../lib/backoff.ts'
+export * from '../../../lib/backoff.js'

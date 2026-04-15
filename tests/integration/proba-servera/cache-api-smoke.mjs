@@ -2,7 +2,7 @@
  * Direct hub API check: first POST /api/chat?promise=1 fills L3 disk cache;
  * second identical body returns HTTP 200 with cached: true (try_resolve_promise_from_cache).
  *
- * Requires: a2a-ai-hub (AI_HUB_URL) + Local LLM upstream with at least one model.
+ * Requires: ai-integration (AI_HUB_URL) + Local LLM upstream with at least one model.
  *   node tests/proba-servera/cache-api-smoke.mjs
  * Env: AI_HUB_URL, LOCAL_LLM_TAGS_URL (default http://localhost:11435/api/tags), PROBA_CACHE_SMOKE_MODEL
  */
@@ -73,7 +73,7 @@ async function waitDone(promiseId) {
 async function main() {
   const h = await fetch(`${hub}/health`).catch(() => null);
   if (!h?.ok) {
-    console.error(`FAIL: a2a-ai-hub health ${hub}/health — start stack (start-all.bat) or set AI_HUB_URL`);
+    console.error(`FAIL: ai-integration health ${hub}/health — start stack (start-all.bat) or set AI_HUB_URL`);
     process.exit(2);
   }
 

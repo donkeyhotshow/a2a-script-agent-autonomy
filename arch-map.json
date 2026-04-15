@@ -1,0 +1,1304 @@
+{
+  "generatedAt": "2026-04-12T14:20:03.666Z",
+  "root": ".",
+  "packages": [
+    {
+      "name": "a2a-coding-orchestrator",
+      "path": ".",
+      "type": "module",
+      "entryPoints": {
+        "main": null,
+        "exports": null,
+        "bins": null
+      },
+      "scripts": [
+        "dev",
+        "sim:lint",
+        "sim:lint:all",
+        "sim:validate",
+        "sim:quality",
+        "sim:contract-report",
+        "sim:check-md",
+        "sim:check-md:fail",
+        "sim:check-md:fix",
+        "gate:cleanup",
+        "agent-runner",
+        "central",
+        "central:offline",
+        "monitor",
+        "monitor:daemon",
+        "monitor:once",
+        "monitor:completed",
+        "monitor:completed:json"
+      ],
+      "deps": {
+        "dependencies": [],
+        "devDependencies": [],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": false,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    },
+    {
+      "name": "a2a-server",
+      "path": "a2a-server",
+      "type": "module",
+      "entryPoints": {
+        "main": "dist/index.js",
+        "exports": null,
+        "bins": [
+          "bin/a2a-claude.ts",
+          "bin/handler-tui.ts"
+        ]
+      },
+      "scripts": [
+        "dev",
+        "dev:local",
+        "dev:no-auth",
+        "claude",
+        "tui",
+        "build",
+        "start",
+        "test",
+        "test:human-review",
+        "test:watch",
+        "test:coverage",
+        "test:mocks",
+        "test:record",
+        "test:replay",
+        "test:real",
+        "lint",
+        "lint:fix",
+        "format",
+        "sim:create",
+        "sim:run",
+        "sim:run-all",
+        "sim:lint",
+        "sim:lint:all",
+        "sim:validate",
+        "sim:validate:all",
+        "sim:workbench:validate",
+        "sim:compare",
+        "sim:report",
+        "sim:check-md",
+        "sim:check-md:fix",
+        "sim:quality",
+        "sim:contract-report",
+        "gate:cleanup",
+        "build:deps",
+        "build:services",
+        "build:app",
+        "clean"
+      ],
+      "deps": {
+        "dependencies": [
+          "@a2a/server-request",
+          "@a2a/server-utils",
+          "@a2a/server-protocol",
+          "@a2a/config",
+          "@a2a/server-features",
+          "@a2a/server-daemon",
+          "@chainsafe/libp2p-gossipsub",
+          "@chainsafe/libp2p-noise",
+          "@libp2p/mplex",
+          "@libp2p/tcp",
+          "bcrypt",
+          "bullmq",
+          "commander",
+          "compression",
+          "cors",
+          "cross-fetch",
+          "dotenv",
+          "express",
+          "express-async-errors",
+          "handlebars",
+          "helmet",
+          "ink",
+          "js-yaml",
+          "jsonpath-plus",
+          "jsonwebtoken",
+          "libp2p",
+          "loro-crdt",
+          "multer",
+          "picomatch",
+          "prom-client",
+          "react",
+          "simple-git",
+          "typescript",
+          "uuid",
+          "vm2",
+          "winston",
+          "winston-daily-rotate-file",
+          "ws",
+          "zod"
+        ],
+        "devDependencies": [
+          "@types/ajv",
+          "@types/bcrypt",
+          "@types/compression",
+          "@types/cors",
+          "@types/express",
+          "@types/js-yaml",
+          "@types/jsonwebtoken",
+          "@types/multer",
+          "@types/nock",
+          "@types/node",
+          "@types/picomatch",
+          "@types/supertest",
+          "@types/uuid",
+          "@types/ws",
+          "@typescript-eslint/eslint-plugin",
+          "@typescript-eslint/parser",
+          "ajv",
+          "ajv-formats",
+          "cross-env",
+          "eslint",
+          "jsonify",
+          "nock",
+          "prettier",
+          "supertest",
+          "ts-node",
+          "ts-node-dev",
+          "tsx",
+          "vitest"
+        ],
+        "peerDependencies": []
+      },
+      "hasDistDir": true,
+      "hasSrcDir": true,
+      "hasTests": true,
+      "tsconfig": {
+        "extends": null,
+        "outDir": "./dist",
+        "rootDir": "./"
+      }
+    },
+    {
+      "name": "@a2a/server-daemon",
+      "path": "a2a-server/packages/daemon",
+      "type": "commonjs",
+      "entryPoints": {
+        "main": "dist/index.js",
+        "exports": null,
+        "bins": null
+      },
+      "scripts": [
+        "build",
+        "dev"
+      ],
+      "deps": {
+        "dependencies": [
+          "@a2a/server-utils",
+          "@a2a/server-protocol"
+        ],
+        "devDependencies": [
+          "@types/node",
+          "typescript"
+        ],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": "../../tsconfig.json",
+        "outDir": "./dist",
+        "rootDir": "./src"
+      }
+    },
+    {
+      "name": "@a2a/server-features",
+      "path": "a2a-server/packages/features",
+      "type": "commonjs",
+      "entryPoints": {
+        "main": "dist/index.js",
+        "exports": null,
+        "bins": null
+      },
+      "scripts": [
+        "build",
+        "prepare"
+      ],
+      "deps": {
+        "dependencies": [],
+        "devDependencies": [
+          "typescript"
+        ],
+        "peerDependencies": []
+      },
+      "hasDistDir": true,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    },
+    {
+      "name": "@a2a/server-request",
+      "path": "a2a-server/packages/request",
+      "type": "commonjs",
+      "entryPoints": {
+        "main": "dist/index.js",
+        "exports": null,
+        "bins": null
+      },
+      "scripts": [
+        "build",
+        "prepare"
+      ],
+      "deps": {
+        "dependencies": [
+          "@a2a/server-utils",
+          "@a2a/server-protocol"
+        ],
+        "devDependencies": [
+          "typescript"
+        ],
+        "peerDependencies": []
+      },
+      "hasDistDir": true,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": "./dist",
+        "rootDir": "./src"
+      }
+    },
+    {
+      "name": "@a2a/config",
+      "path": "a2a-server/packages/server-config",
+      "type": "module",
+      "entryPoints": {
+        "main": "dist/index.js",
+        "exports": [
+          ".",
+          "./index"
+        ],
+        "bins": null
+      },
+      "scripts": [
+        "build",
+        "test"
+      ],
+      "deps": {
+        "dependencies": [],
+        "devDependencies": [
+          "typescript",
+          "vitest"
+        ],
+        "peerDependencies": []
+      },
+      "hasDistDir": true,
+      "hasSrcDir": false,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    },
+    {
+      "name": "@a2a/server-protocol",
+      "path": "a2a-server/packages/server-protocol",
+      "type": "module",
+      "entryPoints": {
+        "main": "dist/index.js",
+        "exports": [
+          "."
+        ],
+        "bins": null
+      },
+      "scripts": [
+        "build",
+        "prepare"
+      ],
+      "deps": {
+        "dependencies": [],
+        "devDependencies": [
+          "typescript",
+          "vitest"
+        ],
+        "peerDependencies": []
+      },
+      "hasDistDir": true,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": "../../tsconfig.json",
+        "outDir": "./dist",
+        "rootDir": "./src"
+      }
+    },
+    {
+      "name": "@a2a/server-utils",
+      "path": "a2a-server/packages/server-utils",
+      "type": "module",
+      "entryPoints": {
+        "main": "dist/index.js",
+        "exports": [
+          ".",
+          "./logger",
+          "./logger.js",
+          "./strip-markdown-json-fence",
+          "./validation",
+          "./deep-clone-json"
+        ],
+        "bins": null
+      },
+      "scripts": [
+        "build",
+        "test",
+        "lint",
+        "lint:fix"
+      ],
+      "deps": {
+        "dependencies": [
+          "bcrypt"
+        ],
+        "devDependencies": [
+          "@types/node",
+          "typescript",
+          "vitest"
+        ],
+        "peerDependencies": []
+      },
+      "hasDistDir": true,
+      "hasSrcDir": true,
+      "hasTests": true,
+      "tsconfig": {
+        "extends": "../../tsconfig.json",
+        "outDir": "./dist",
+        "rootDir": "./src"
+      }
+    },
+    {
+      "name": "@a2a-client/root",
+      "path": "a2a-client",
+      "type": "module",
+      "entryPoints": {
+        "main": null,
+        "exports": null,
+        "bins": null
+      },
+      "scripts": [
+        "test",
+        "test:human-review",
+        "test:watch",
+        "test:coverage",
+        "test:client-api",
+        "smoke:client",
+        "verify:client",
+        "test:api",
+        "test:web",
+        "test:e2e",
+        "test:e2e:simulation",
+        "test:e2e:ui",
+        "test:e2e:debug",
+        "test:e2e:report",
+        "dev",
+        "dev:local",
+        "build",
+        "build:web",
+        "build:analyze",
+        "preview",
+        "lint",
+        "type-check",
+        "cli",
+        "cleanup:sessions",
+        "cleanup:sessions:dry-run",
+        "repair:session-steps",
+        "repair:session-steps:dry-run"
+      ],
+      "deps": {
+        "dependencies": [
+          "@a2a-client/vite-plugin",
+          "@vitest/coverage-v8",
+          "@vue-flow/background",
+          "@vue-flow/controls",
+          "@vue-flow/core",
+          "@vue-flow/minimap",
+          "uuid",
+          "vue",
+          "zod"
+        ],
+        "devDependencies": [
+          "@vitejs/plugin-vue",
+          "@playwright/test",
+          "@types/node",
+          "@vitest/ui",
+          "cross-env",
+          "jsdom",
+          "node-fetch",
+          "pixelmatch",
+          "pngjs",
+          "supertest",
+          "tsx",
+          "vite",
+          "vitest"
+        ],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": false,
+      "hasTests": true,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    },
+    {
+      "name": "@a2a-client/core",
+      "path": "a2a-client/packages/core",
+      "type": "module",
+      "entryPoints": {
+        "main": null,
+        "exports": [
+          "./*",
+          "./a2a-invoke-builders.js",
+          "./context-invoke-patch.mjs",
+          "./kv-unwrap.mjs",
+          "./node-errors.mjs"
+        ],
+        "bins": null
+      },
+      "scripts": [],
+      "deps": {
+        "dependencies": [],
+        "devDependencies": [],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": "./dist",
+        "rootDir": null
+      }
+    },
+    {
+      "name": "@a2a-client/execution",
+      "path": "a2a-client/packages/execution",
+      "type": "module",
+      "entryPoints": {
+        "main": "./src/index.js",
+        "exports": [
+          "./*",
+          ".",
+          "./fs-utils",
+          "./terminal",
+          "./script-runner",
+          "./run-agent-command",
+          "./path-sandbox",
+          "./run-agent-edit-patch",
+          "./run-agent-registered-script"
+        ],
+        "bins": null
+      },
+      "scripts": [
+        "build",
+        "test"
+      ],
+      "deps": {
+        "dependencies": [
+          "vm2"
+        ],
+        "devDependencies": [
+          "typescript"
+        ],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    },
+    {
+      "name": "@a2a-client/history",
+      "path": "a2a-client/packages/history",
+      "type": "module",
+      "entryPoints": {
+        "main": null,
+        "exports": [
+          "./*",
+          "./index.ts",
+          "./history-manager.ts",
+          "./session-storage.ts",
+          "./types.ts"
+        ],
+        "bins": null
+      },
+      "scripts": [],
+      "deps": {
+        "dependencies": [],
+        "devDependencies": [],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    },
+    {
+      "name": "@a2a-client/json",
+      "path": "a2a-client/packages/json",
+      "type": "commonjs",
+      "entryPoints": {
+        "main": "dist/index.js",
+        "exports": [
+          "./*",
+          "."
+        ],
+        "bins": null
+      },
+      "scripts": [
+        "build",
+        "test"
+      ],
+      "deps": {
+        "dependencies": [
+          "@a2a-client/types",
+          "zod"
+        ],
+        "devDependencies": [
+          "typescript"
+        ],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    },
+    {
+      "name": "@a2a-client/protocol",
+      "path": "a2a-client/packages/protocol",
+      "type": "module",
+      "entryPoints": {
+        "main": null,
+        "exports": [
+          "./*",
+          "./a2a-invoke-builders.mjs",
+          "./context-invoke-patch.mjs",
+          "./dialog-invoke-history.mjs",
+          "./next-invoke-pipeline.mjs",
+          "./router-submit.mjs"
+        ],
+        "bins": null
+      },
+      "scripts": [],
+      "deps": {
+        "dependencies": [],
+        "devDependencies": [],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    },
+    {
+      "name": "@a2a/rag",
+      "path": "a2a-client/packages/rag",
+      "type": "commonjs",
+      "entryPoints": {
+        "main": "dist/index.js",
+        "exports": [
+          "./*",
+          ".",
+          "./meilisearch-defaults"
+        ],
+        "bins": null
+      },
+      "scripts": [
+        "build",
+        "test",
+        "test:jest",
+        "demo"
+      ],
+      "deps": {
+        "dependencies": [
+          "@a2a-client/execution",
+          "chokidar"
+        ],
+        "devDependencies": [
+          "@types/jest",
+          "@types/node",
+          "jest",
+          "ts-jest",
+          "tsx",
+          "typescript",
+          "vitest"
+        ],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": true,
+      "hasTests": true,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    },
+    {
+      "name": "@a2a/sdk",
+      "path": "a2a-client/packages/sdk",
+      "type": "module",
+      "entryPoints": {
+        "main": "./src/index.ts",
+        "exports": [
+          "./*",
+          ".",
+          "./client",
+          "./server"
+        ],
+        "bins": null
+      },
+      "scripts": [
+        "dev",
+        "build",
+        "start",
+        "test"
+      ],
+      "deps": {
+        "dependencies": [
+          "@a2a/core",
+          "@a2a/shared",
+          "@a2a/protocol",
+          "@a2a/storage",
+          "@a2a/rag",
+          "cors",
+          "express",
+          "multer",
+          "node-fetch",
+          "ws"
+        ],
+        "devDependencies": [],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    },
+    {
+      "name": "@a2a-client/shared",
+      "path": "a2a-client/packages/shared",
+      "type": "module",
+      "entryPoints": {
+        "main": null,
+        "exports": [
+          "./*"
+        ],
+        "bins": null
+      },
+      "scripts": [
+        "build"
+      ],
+      "deps": {
+        "dependencies": [],
+        "devDependencies": [],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    },
+    {
+      "name": "@a2a-client/storage",
+      "path": "a2a-client/packages/storage",
+      "type": "module",
+      "entryPoints": {
+        "main": null,
+        "exports": [
+          "./*",
+          "./session-paths.mjs",
+          "./session-sort.mjs",
+          "./session-stage-derive.mjs",
+          "./session-id.js",
+          "./adrComplianceState.ts",
+          "./kv.ts",
+          "./newSessions.ts",
+          "./projectSessions.ts",
+          "./projects.ts",
+          "./promise-status.ts",
+          "./root.ts",
+          "./session-index-store.ts",
+          "./session-paths.ts",
+          "./session-promise-read.ts",
+          "./session-step-io.ts",
+          "./session-store.ts"
+        ],
+        "bins": null
+      },
+      "scripts": [],
+      "deps": {
+        "dependencies": [],
+        "devDependencies": [],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    },
+    {
+      "name": "@a2a-client/types",
+      "path": "a2a-client/packages/types",
+      "type": "commonjs",
+      "entryPoints": {
+        "main": "dist/index.js",
+        "exports": [
+          "./*",
+          "."
+        ],
+        "bins": null
+      },
+      "scripts": [
+        "build",
+        "test"
+      ],
+      "deps": {
+        "dependencies": [],
+        "devDependencies": [
+          "typescript"
+        ],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": "dist",
+        "rootDir": "src"
+      }
+    },
+    {
+      "name": "@a2a-client/vite-plugin",
+      "path": "a2a-client/packages/vite-plugin",
+      "type": "module",
+      "entryPoints": {
+        "main": "./src/index.js",
+        "exports": [
+          "./*",
+          "."
+        ],
+        "bins": null
+      },
+      "scripts": [
+        "test",
+        "test:watch",
+        "lint"
+      ],
+      "deps": {
+        "dependencies": [
+          "@a2a-client/core",
+          "@a2a-client/storage",
+          "@a2a-client/execution"
+        ],
+        "devDependencies": [],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    },
+    {
+      "name": "session-flow-viewer",
+      "path": "tools/monitor/session-flow-viewer",
+      "type": "module",
+      "entryPoints": {
+        "main": null,
+        "exports": null,
+        "bins": null
+      },
+      "scripts": [
+        "dev",
+        "build",
+        "preview"
+      ],
+      "deps": {
+        "dependencies": [
+          "@vue-flow/background",
+          "@vue-flow/controls",
+          "@vue-flow/core",
+          "@vue-flow/minimap",
+          "vue"
+        ],
+        "devDependencies": [
+          "@vitejs/plugin-vue",
+          "typescript",
+          "vite",
+          "vue-tsc"
+        ],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": true,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    },
+    {
+      "name": "a2a-simulations",
+      "path": "tests/integration/simulations",
+      "type": "module",
+      "entryPoints": {
+        "main": null,
+        "exports": null,
+        "bins": null
+      },
+      "scripts": [
+        "sim:run",
+        "sim:validate",
+        "sim:lint",
+        "sim:report",
+        "sim:all",
+        "test"
+      ],
+      "deps": {
+        "dependencies": [],
+        "devDependencies": [
+          "tsx",
+          "@types/node",
+          "typescript",
+          "zod",
+          "vitest"
+        ],
+        "peerDependencies": []
+      },
+      "hasDistDir": false,
+      "hasSrcDir": false,
+      "hasTests": false,
+      "tsconfig": {
+        "extends": null,
+        "outDir": null,
+        "rootDir": null
+      }
+    }
+  ],
+  "informalModules": [
+    {
+      "name": "server",
+      "path": "a2a-server/packages/server",
+      "role": "feature",
+      "fileCount": 173,
+      "importedBy": [
+        "a2a-server"
+      ]
+    },
+    {
+      "name": "actions",
+      "path": "a2a-server/packages/actions",
+      "role": "lib",
+      "fileCount": 43,
+      "importedBy": [
+        "a2a-server",
+        "a2a-server/packages/server"
+      ]
+    },
+    {
+      "name": "gray-room",
+      "path": "a2a-server/packages/gray-room",
+      "role": "feature",
+      "fileCount": 45,
+      "importedBy": [
+        "a2a-server",
+        "a2a-server/packages/server"
+      ]
+    },
+    {
+      "name": "lib",
+      "path": "a2a-server/packages/lib",
+      "role": "lib",
+      "fileCount": 46,
+      "importedBy": [
+        "a2a-server",
+        "a2a-server/packages/server"
+      ]
+    },
+    {
+      "name": "llm",
+      "path": "a2a-server/packages/llm",
+      "role": "lib",
+      "fileCount": 7,
+      "importedBy": [
+        "a2a-server/packages/server"
+      ]
+    },
+    {
+      "name": "services",
+      "path": "a2a-server/packages/services",
+      "role": "feature",
+      "fileCount": 9,
+      "importedBy": [
+        "a2a-server/packages/server"
+      ]
+    },
+    {
+      "name": "transform",
+      "path": "a2a-server/packages/transform",
+      "role": "lib",
+      "fileCount": 17,
+      "importedBy": [
+        "a2a-server/packages/server"
+      ]
+    },
+    {
+      "name": "a2a-orchestrator",
+      "path": "a2a-orchestrator",
+      "role": "scripts",
+      "fileCount": 1,
+      "importedBy": [
+        "a2a-coding-orchestrator"
+      ]
+    },
+    {
+      "name": "scripts",
+      "path": "scripts",
+      "role": "scripts",
+      "fileCount": 0,
+      "importedBy": [
+        "a2a-coding-orchestrator"
+      ]
+    },
+    {
+      "name": "tests",
+      "path": "tests",
+      "role": "feature",
+      "fileCount": 8,
+      "importedBy": []
+    },
+    {
+      "name": "tools",
+      "path": "tools",
+      "role": "lib",
+      "fileCount": 9,
+      "importedBy": []
+    },
+    {
+      "name": "a2a-ai-hub",
+      "path": "a2a-ai-hub",
+      "role": "feature",
+      "fileCount": 0,
+      "importedBy": [
+        "a2a-coding-orchestrator"
+      ]
+    }
+  ],
+  "dependencyGraph": [
+    {
+      "from": "a2a-server",
+      "to": "@a2a/server-request",
+      "type": "workspace"
+    },
+    {
+      "from": "a2a-server",
+      "to": "@a2a/server-utils",
+      "type": "workspace"
+    },
+    {
+      "from": "a2a-server",
+      "to": "@a2a/server-protocol",
+      "type": "workspace"
+    },
+    {
+      "from": "a2a-server",
+      "to": "@a2a/config",
+      "type": "workspace"
+    },
+    {
+      "from": "a2a-server",
+      "to": "@a2a/server-features",
+      "type": "workspace"
+    },
+    {
+      "from": "a2a-server",
+      "to": "@a2a/server-daemon",
+      "type": "workspace"
+    },
+    {
+      "from": "@a2a/server-daemon",
+      "to": "@a2a/server-utils",
+      "type": "workspace"
+    },
+    {
+      "from": "@a2a/server-daemon",
+      "to": "@a2a/server-protocol",
+      "type": "workspace"
+    },
+    {
+      "from": "@a2a/server-request",
+      "to": "@a2a/server-utils",
+      "type": "workspace"
+    },
+    {
+      "from": "@a2a/server-request",
+      "to": "@a2a/server-protocol",
+      "type": "workspace"
+    },
+    {
+      "from": "@a2a-client/json",
+      "to": "@a2a-client/types",
+      "type": "workspace"
+    },
+    {
+      "from": "@a2a/rag",
+      "to": "@a2a-client/execution",
+      "type": "workspace"
+    },
+    {
+      "from": "@a2a-client/vite-plugin",
+      "to": "@a2a-client/core",
+      "type": "workspace"
+    },
+    {
+      "from": "@a2a-client/vite-plugin",
+      "to": "@a2a-client/storage",
+      "type": "workspace"
+    },
+    {
+      "from": "@a2a-client/vite-plugin",
+      "to": "@a2a-client/execution",
+      "type": "workspace"
+    },
+    {
+      "from": "@a2a-client/root",
+      "to": "@a2a-client/vite-plugin",
+      "type": "workspace"
+    },
+    {
+      "from": "@a2a/sdk",
+      "to": "@a2a/core",
+      "type": "external"
+    },
+    {
+      "from": "@a2a/sdk",
+      "to": "@a2a/shared",
+      "type": "external"
+    },
+    {
+      "from": "@a2a/sdk",
+      "to": "@a2a/protocol",
+      "type": "external"
+    },
+    {
+      "from": "@a2a/sdk",
+      "to": "@a2a/storage",
+      "type": "external"
+    },
+    {
+      "from": "@a2a/sdk",
+      "to": "@a2a/rag",
+      "type": "external"
+    },
+    {
+      "from": "a2a-coding-orchestrator",
+      "to": "a2a-server",
+      "type": "relative"
+    },
+    {
+      "from": "a2a-coding-orchestrator",
+      "to": "@a2a-client/root",
+      "type": "relative"
+    },
+    {
+      "from": "a2a-coding-orchestrator",
+      "to": "a2a-ai-hub",
+      "type": "relative"
+    },
+    {
+      "from": "a2a-server/packages/server",
+      "to": "@a2a/server-utils",
+      "type": "workspace"
+    },
+    {
+      "from": "a2a-server/packages/server",
+      "to": "@a2a/server-protocol",
+      "type": "workspace"
+    },
+    {
+      "from": "a2a-server/packages/server",
+      "to": "@a2a/config",
+      "type": "workspace"
+    },
+    {
+      "from": "a2a-server/packages/server",
+      "to": "a2a-server/packages/actions",
+      "type": "relative"
+    },
+    {
+      "from": "a2a-server/packages/server",
+      "to": "a2a-server/packages/gray-room",
+      "type": "relative"
+    },
+    {
+      "from": "a2a-server/packages/server",
+      "to": "a2a-server/packages/llm",
+      "type": "relative"
+    },
+    {
+      "from": "a2a-server/packages/server",
+      "to": "a2a-server/packages/services",
+      "type": "relative"
+    },
+    {
+      "from": "a2a-server/packages/server",
+      "to": "a2a-server/packages/transform",
+      "type": "relative"
+    },
+    {
+      "from": "a2a-server/packages/server",
+      "to": "a2a-server/packages/lib",
+      "type": "relative"
+    }
+  ],
+  "circularDeps": [],
+  "violations": [
+    {
+      "from": "@a2a/sdk",
+      "to": "a2a-server",
+      "description": "@a2a/sdk (in a2a-client/packages/sdk) declares deps @a2a/core, @a2a/shared, @a2a/protocol, @a2a/storage, @a2a/rag using unscoped @a2a/* names that collide with server-side workspace packages  name collision risk between client and server @a2a/* namespaces"
+    }
+  ],
+  "orphans": [
+    "ai-integration",
+    "diagram",
+    "archive",
+    "etalon",
+    "gh-install",
+    "downloads",
+    "monitor-artifacts",
+    "prompts-to-agent-mode",
+    ".agentLOGIC",
+    ".codeviz"
+  ],
+  "services": [
+    {
+      "name": "a2a-server",
+      "entryFile": "a2a-server/packages/server/src/index.ts",
+      "port": 3000,
+      "startCommand": "tsx watch packages/server/src/index.ts",
+      "healthEndpoint": "/health",
+      "dependsOnServices": [
+        "a2a-ai-hub",
+        "redis",
+        "postgres"
+      ]
+    },
+    {
+      "name": "client-api",
+      "entryFile": "a2a-client/packages/sdk/src/server/index.ts",
+      "port": 3001,
+      "startCommand": "scripts/start-client-api.bat",
+      "healthEndpoint": "/health",
+      "dependsOnServices": [
+        "a2a-server"
+      ]
+    },
+    {
+      "name": "web-ui",
+      "entryFile": "a2a-client (vite)",
+      "port": 5173,
+      "startCommand": "vite",
+      "healthEndpoint": null,
+      "dependsOnServices": [
+        "client-api"
+      ]
+    },
+    {
+      "name": "a2a-ai-hub",
+      "entryFile": "a2a-ai-hub/proxy/asgi.py",
+      "port": 11434,
+      "startCommand": "uvicorn proxy.asgi:app",
+      "healthEndpoint": "/health",
+      "dependsOnServices": [
+        "ollama"
+      ]
+    },
+    {
+      "name": "ollama",
+      "entryFile": "docker/local binary",
+      "port": 11435,
+      "startCommand": "docker run ollama/ollama",
+      "healthEndpoint": null,
+      "dependsOnServices": []
+    },
+    {
+      "name": "postgres",
+      "entryFile": "docker",
+      "port": 5432,
+      "startCommand": "docker compose up postgres",
+      "healthEndpoint": null,
+      "dependsOnServices": []
+    },
+    {
+      "name": "redis",
+      "entryFile": "docker",
+      "port": 6379,
+      "startCommand": "docker compose up redis",
+      "healthEndpoint": null,
+      "dependsOnServices": []
+    }
+  ],
+  "openQuestions": [
+    "a2a-server/packages/server-config has no src/ dir  config files may be at package root; outDir/rootDir unknown",
+    "@a2a/sdk deps (@a2a/core, @a2a/shared, @a2a/protocol, @a2a/storage, @a2a/rag) use unscoped names not matching any workspace package.json  may be stale/incorrect package names",
+    "a2a-server/packages/agents dir exists but contains 0 .ts files  role unknown, possibly placeholder",
+    "Circular dep scan was heuristic only  no deep static analysis performed; actual circular deps may exist in gray-room <-> server <-> actions triangle",
+    "a2a-ai-hub start command inferred from Dockerfile/asgi.py  actual uvicorn invocation not confirmed from scripts",
+    "prompts-to-agent-mode/ and monitor-artifacts/ are runtime data dirs, not code  listed as orphans but are operational artifacts",
+    "a2a-client/packages/premium-ui has no package.json (only .next/ build artifacts)  role and entry point unknown",
+    "kernel/ dir in a2a-client workspace is listed in workspaces but not explored  may contain additional packages",
+    "No explicit healthEndpoint found for web-ui (Vite dev server has no /health route by default)"
+  ]
+}

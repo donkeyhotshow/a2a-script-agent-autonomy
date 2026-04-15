@@ -4,65 +4,64 @@ import { compareSessionCreatedAtDesc } from '@a2a-client/shared/session-sort.mjs
 import {
   isActivePromiseStatus,
   isRecoverableAsyncSnapshot,
-} from './promise-status.ts';
-import { getStorageKvRoot } from './root.ts';
+} from './promise-status.js';
+import { getStorageKvRoot } from './root.js';
 import {
   deriveSessionMode,
   loadSessionIndex,
   reconcileSessionIndexFromDisk,
   saveSessionIndex,
-} from './session-index-store.ts';
-import { loadNewStep, saveNewStep } from './session-step-io.ts';
+} from './session-index-store.js';
+import { loadNewStep, saveNewStep } from './session-step-io.js';
 import {
   getNewSessionsDir,
   getNewSessionDir,
   getNewStepDir,
   listNewSteps,
   normalizeSessionIdForDir,
-} from './session-paths.ts';
-import { pathExists, joinPaths, ensureDir } from '@a2a-client/execution/fs-utils';
+} from './session-paths.js';
 
 function pruneUiStateForMissingSessions(existingSessionIds) {
-   if (!existingSessionIds || typeof existingSessionIds.has !== 'function') return;
-   const uiDir = joinPaths(getStorageKvRoot(), 'ui');
-   if (!pathExists(uiDir)) return;
+  if (!existingSessionIds || typeof existingSessionIds.has !== 'function') return;
+  const uiDir = path.join(getStorageKvRoot(), 'ui');
+  if (!fs.existsSync(uiDir)) return;
 
-   // 1) Delete per-window state files for non-existent sessions.
-   // Current filename shape: window_state_sess_1234567890_1536x864_125.json
-   const windowStateRe = /^window_state_(sess_\d+)_\d+x\d+_\d+\.json$/;
-   for (const f of fs.readdirSync(uiDir)) {
-     const m = f.match(windowStateRe);
-     if (!m) continue;
-     const sid = m[1];
-     if (!existingSessionIds.has(sid)) {
-       try {
-         fs.unlinkSync(joinPaths(uiDir, f));
-       } catch (e) {
-         // Non-fatal: keep listing sessions even if one stale file cannot be removed.
-         console.error('[ui-prune] Failed to delete UI window state', f, e?.message || e);
-       }
-     }
-   }
+  // 1) Delete per-window state files for non-existent sessions.
+  // Current filename shape: window_state_sess_1234567890_1536x864_125.json
+  const windowStateRe = /^window_state_(sess_\d+)_\d+x\d+_\d+\.json$/;
+  for (const f of fs.readdirSync(uiDir)) {
+    const m = f.match(windowStateRe);
+    if (!m) continue;
+    const sid = m[1];
+    if (!existingSessionIds.has(sid)) {
+      try {
+        fs.unlinkSync(path.join(uiDir, f));
+      } catch (e) {
+        // Non-fatal: keep listing sessions even if one stale file cannot be removed.
+        console.error('[ui-prune] Failed to delete UI window state', f, e?.message || e);
+      }
+    }
+  }
 
-   // 2) Prune UI window index (`a2a_session_windows.json`) so it doesn't reference removed sessions.
-   const idxFile = joinPaths(uiDir, 'a2a_session_windows.json');
-   if (!pathExists(idxFile)) return;
-   try {
-     const raw = fs.readFileSync(idxFile, 'utf8');
-     const wrapper = JSON.parse(raw);
-     const valueRaw = wrapper?.value;
-     if (typeof valueRaw !== 'string') return;
-     const state = JSON.parse(valueRaw);
-     const windows = Array.isArray(state?.windows) ? state.windows.filter((id) => existingSessionIds.has(String(id))) : [];
-     const active = typeof state?.active === 'string' && existingSessionIds.has(state.active) ? state.active : (windows[0] || null);
-     const next = { ...state, windows, active };
-     if (JSON.stringify(next) === JSON.stringify(state)) return;
-     const out = { ...wrapper, value: JSON.stringify(next), timestamp: new Date().toISOString() };
-     fs.writeFileSync(idxFile, JSON.stringify(out, null, 2));
-   } catch (e) {
-     console.error('[ui-prune] Failed to prune a2a_session_windows.json', e?.message || e);
-   }
- }
+  // 2) Prune UI window index (`a2a_session_windows.json`) so it doesn't reference removed sessions.
+  const idxFile = path.join(uiDir, 'a2a_session_windows.json');
+  if (!fs.existsSync(idxFile)) return;
+  try {
+    const raw = fs.readFileSync(idxFile, 'utf8');
+    const wrapper = JSON.parse(raw);
+    const valueRaw = wrapper?.value;
+    if (typeof valueRaw !== 'string') return;
+    const state = JSON.parse(valueRaw);
+    const windows = Array.isArray(state?.windows) ? state.windows.filter((id) => existingSessionIds.has(String(id))) : [];
+    const active = typeof state?.active === 'string' && existingSessionIds.has(state.active) ? state.active : (windows[0] || null);
+    const next = { ...state, windows, active };
+    if (JSON.stringify(next) === JSON.stringify(state)) return;
+    const out = { ...wrapper, value: JSON.stringify(next), timestamp: new Date().toISOString() };
+    fs.writeFileSync(idxFile, JSON.stringify(out, null, 2));
+  } catch (e) {
+    console.error('[ui-prune] Failed to prune a2a_session_windows.json', e?.message || e);
+  }
+}
 
 /**
  * Save session (legacy compatibility) - wraps step-based storage.
@@ -70,40 +69,40 @@ function pruneUiStateForMissingSessions(existingSessionIds) {
  * @param {Object} session - Session object with id, title, currentStep, context, etc.
  */
 export function saveNewSession(cwd, session) {
-   const sessionId = normalizeSessionIdForDir(session?.id);
-   if (!sessionId) {
-     console.error('[newSessions] saveNewSession: missing session.id');
-     return;
-   }
-   const stepNum = session.currentStep || 1;
+  const sessionId = normalizeSessionIdForDir(session?.id);
+  if (!sessionId) {
+    console.error('[newSessions] saveNewSession: missing session.id');
+    return;
+  }
+  const stepNum = session.currentStep || 1;
 
-   if (session.context) {
-     const stepDir = getNewStepDir(cwd, sessionId, stepNum);
-     const metaFile = joinPaths(stepDir, 'server-response.json');
-     if (!pathExists(metaFile) && !session.promiseId) {
-       const stepData = {
-         step: stepNum,
-         context: session.context,
-         title: session.title,
-         status: session.status || 'active',
-         ...(session.execute !== undefined ? { execute: session.execute } : {}),
-       };
-       saveNewStep(cwd, sessionId, stepNum, stepData);
-     }
-   }
+  if (session.context) {
+    const stepDir = getNewStepDir(cwd, sessionId, stepNum);
+    const metaFile = path.join(stepDir, 'server-response.json');
+    if (!fs.existsSync(metaFile) && !session.promiseId) {
+      const stepData = {
+        step: stepNum,
+        context: session.context,
+        title: session.title,
+        status: session.status || 'active',
+        ...(session.execute !== undefined ? { execute: session.execute } : {}),
+      };
+      saveNewStep(cwd, sessionId, stepNum, stepData);
+    }
+  }
 
-   saveSessionIndex(cwd, sessionId, {
-     step: stepNum,
-     context: session.context,
-     title: session.title,
-     status: session.status,
-     promiseId: session.promiseId || null,
-     promiseStatus: session.promiseStatus || null,
-     ...(session.execute !== undefined && session.execute !== null
-       ? { execute: session.execute }
-       : {}),
-   });
- }
+  saveSessionIndex(cwd, sessionId, {
+    step: stepNum,
+    context: session.context,
+    title: session.title,
+    status: session.status,
+    promiseId: session.promiseId || null,
+    promiseStatus: session.promiseStatus || null,
+    ...(session.execute !== undefined && session.execute !== null
+      ? { execute: session.execute }
+      : {}),
+  });
+}
 
 /**
  * Reconstruct session metadata from step files and save session-index.json.
@@ -151,35 +150,35 @@ export function rebuildSessionIndex(cwd, sessionId) {
  * Latest such step wins. Prevents projecting the previous step's form while step N has no terminal response.
  */
 export function findOpenAsyncStepWithoutResponse(cwd, sessionId) {
-   const sid = normalizeSessionIdForDir(sessionId);
-   if (!sid) return null;
-   const steps = listNewSteps(cwd, sid).sort((a, b) => b - a);
-   for (const stepNum of steps) {
-     const stepDir = getNewStepDir(cwd, sid, stepNum);
-     const respPath = joinPaths(stepDir, 'server-response.json');
-     const promPath = joinPaths(stepDir, 'server-promise.json');
-     if (!pathExists(promPath)) continue;
-     if (pathExists(respPath)) continue;
-     let prom = null;
-     try {
-       prom = JSON.parse(fs.readFileSync(promPath, 'utf8'));
-     } catch (e) {
-       console.error('[newSessions] Invalid server-promise.json (skipping step):', promPath, e?.message || e);
-       continue;
-     }
-     if (!prom || typeof prom !== 'object') continue;
-     if (isActivePromiseStatus(prom.status)) {
-       return { stepNum, mode: 'pending', promise: prom };
-     }
-     if (prom.status === 'failed' || prom.status === 'error') {
-       if (isRecoverableAsyncSnapshot(prom)) {
-         return { stepNum, mode: 'pending', promise: prom };
-       }
-       return { stepNum, mode: 'failed', promise: prom };
-     }
-   }
-   return null;
- }
+  const sid = normalizeSessionIdForDir(sessionId);
+  if (!sid) return null;
+  const steps = listNewSteps(cwd, sid).sort((a, b) => b - a);
+  for (const stepNum of steps) {
+    const stepDir = getNewStepDir(cwd, sid, stepNum);
+    const respPath = path.join(stepDir, 'server-response.json');
+    const promPath = path.join(stepDir, 'server-promise.json');
+    if (!fs.existsSync(promPath)) continue;
+    if (fs.existsSync(respPath)) continue;
+    let prom = null;
+    try {
+      prom = JSON.parse(fs.readFileSync(promPath, 'utf8'));
+    } catch (e) {
+      console.error('[newSessions] Invalid server-promise.json (skipping step):', promPath, e?.message || e);
+      continue;
+    }
+    if (!prom || typeof prom !== 'object') continue;
+    if (isActivePromiseStatus(prom.status)) {
+      return { stepNum, mode: 'pending', promise: prom };
+    }
+    if (prom.status === 'failed' || prom.status === 'error') {
+      if (isRecoverableAsyncSnapshot(prom)) {
+        return { stepNum, mode: 'pending', promise: prom };
+      }
+      return { stepNum, mode: 'failed', promise: prom };
+    }
+  }
+  return null;
+}
 
 export function loadNewSession(cwd, sessionId) {
   const sid = normalizeSessionIdForDir(sessionId);
@@ -267,24 +266,24 @@ export function loadNewSession(cwd, sessionId) {
 }
 
 export function listNewSessions(cwd) {
-   const sessionsDir = getNewSessionsDir(cwd);
-   if (!pathExists(sessionsDir)) return [];
-   const entries = fs.readdirSync(sessionsDir, { withFileTypes: true })
-     .filter(e => e.isDirectory());
+  const sessionsDir = getNewSessionsDir(cwd);
+  if (!fs.existsSync(sessionsDir)) return [];
+  const entries = fs.readdirSync(sessionsDir, { withFileTypes: true })
+    .filter(e => e.isDirectory());
 
-   // Keep UI kv clean when sessions are deleted manually from disk.
-   const ids = new Set(entries.map(e => normalizeSessionIdForDir(e.name)).filter(Boolean));
-   pruneUiStateForMissingSessions(ids);
+  // Keep UI kv clean when sessions are deleted manually from disk.
+  const ids = new Set(entries.map(e => normalizeSessionIdForDir(e.name)).filter(Boolean));
+  pruneUiStateForMissingSessions(ids);
 
-   return entries
-     .map(e => {
-       const session = loadNewSession(cwd, e.name);
-       if (!session) return null;
-       return { id: session.id, title: session.title || session.id, createdAt: session.createdAt };
-     })
-     .filter(Boolean)
-     .sort(compareSessionCreatedAtDesc);
- }
+  return entries
+    .map(e => {
+      const session = loadNewSession(cwd, e.name);
+      if (!session) return null;
+      return { id: session.id, title: session.title || session.id, createdAt: session.createdAt };
+    })
+    .filter(Boolean)
+    .sort(compareSessionCreatedAtDesc);
+}
 
 export function deleteNewSession(cwd, sessionId) {
   const sid = normalizeSessionIdForDir(sessionId);

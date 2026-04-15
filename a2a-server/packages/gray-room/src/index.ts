@@ -5,17 +5,31 @@
  * Handles interrupt processing after LLM calls.
  */
 
-import { FeatureAction, FeatureEvent } from "../index";
-import { GrayRoomOrchestrator } from "../../../../packages/gray-room/src/core/request-processor/gray-room-orchestrator";
+import { GrayRoomOrchestrator } from './core/request-processor/gray-room-orchestrator.js';
 import {
   readGrayRoomInterruptBudget,
   shouldUseGrayRoom,
-} from "../../../../packages/gray-room/src/core/request-processor/gray-room-trigger";
-import { getPromptsTransformsPath } from "../../../../packages/transform/index";
-import { features } from "../../../../packages/config/index";
+} from './core/request-processor/gray-room-trigger.js';
+import { getPromptsTransformsPath } from '../../transform/index.js';
+import { features } from '../../config/index.js';
+
+/** Minimal feature event interface */
+export interface FeatureEvent {
+  type: string;
+  context: Record<string, unknown>;
+  data?: unknown;
+}
+
+/** Minimal feature action interface */
+export interface FeatureAction {
+  name: string;
+  priority: number;
+  enabled: boolean;
+  execute(event: FeatureEvent): Promise<Record<string, unknown> | void>;
+}
 
 export class GrayRoomFeature implements FeatureAction {
-  name = "gray-room";
+  name = 'gray-room';
   priority = 100; // High priority to run after other features
   enabled = features.transform.grayRoom;
 
@@ -29,7 +43,7 @@ export class GrayRoomFeature implements FeatureAction {
   }
 
   async execute(event: FeatureEvent): Promise<Record<string, unknown> | void> {
-    if (event.type !== "post_llm_call") {
+    if (event.type !== 'post_llm_call') {
       return;
     }
 
@@ -42,9 +56,9 @@ export class GrayRoomFeature implements FeatureAction {
     }
 
     // Extract necessary data
-    const schemaName = context["schemaName"] as string;
+    const schemaName = context['schemaName'] as string;
     const responseMd = data as string;
-    const promiseId = context["promiseId"] as string;
+    const promiseId = context['promiseId'] as string;
 
     if (!schemaName || !responseMd || !promiseId) {
       return;
@@ -57,11 +71,11 @@ export class GrayRoomFeature implements FeatureAction {
       responseMd,
       promiseId,
       false, // recovered
-      true, // processInterrupts
+      true,  // processInterrupts
     );
 
     // Return the context modifications
-    return result.context || {};
+    return result.context ?? {};
   }
 }
 

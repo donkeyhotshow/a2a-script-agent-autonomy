@@ -4,4 +4,4 @@
  *
  * Single Source of Truth: packages/utils/src/validation.ts
  */
-export * from '../validation.js';
+export * from '../utils/src/validation.js';

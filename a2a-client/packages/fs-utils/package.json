@@ -1,0 +1,15 @@
+{
+  "name": "@a2a/fs-utils",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Filesystem helpers and scan/ignore utilities (barrel over execution implementations)",
+  "type": "module",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

@@ -6,18 +6,19 @@
 
 import * as path from 'path';
 import {logger} from "@a2a/server-utils/logger";
-import {resolveAiHubBaseUrl} from '../../../lib/ai-hub-url.ts';
-import {mkdtempOsTmp} from '../../../lib/mkdtemp-os-tmp.ts';
-import {runPromptsTransform} from '../../../transform/src/index.ts';
+import {resolveAiHubBaseUrl} from '@a2a/server-utils';
+import {mkdtempOsTmp} from '../../../lib/mkdtemp-os-tmp.js';
+import {runPromptsTransform} from '../../../transform/src/index.js';
 import {
     extractLlmTextFromHubResponseBody,
     initAiHubChatPromise,
     pollReadyThenFetch,
     resolveLlmPromiseRecovery,
-} from '../../../daemon/src/daemon/llm-hub-poll.ts';
+} from '@a2a/server-utils';
 import {requestService} from '@a2a/server-request';
-import {resolveMainDialogLlmModelFromEnv} from './llm-model-resolver';
-import {toInvokeShapeForPromptsTransform} from './normalization';
+import {resolveA2aTraceId} from '@a2a/server-utils';
+import {resolveMainDialogLlmModelFromEnv} from './llm-model-resolver.js';
+import {toInvokeShapeForPromptsTransform} from './normalization.js';
 
 const DEFAULT_MODEL = resolveMainDialogLlmModelFromEnv();
 
@@ -120,16 +121,22 @@ export async function initLlmPromise(
     base: string,
     model: string,
     messages: Array<{role: string; content: string}>,
-    promiseId: string
+    promiseId: string,
+    a2aTraceId?: string
 ): Promise<{success: boolean; promiseId?: string; inlineResponseBody?: string; error?: string}> {
-    const r = await initAiHubChatPromise(base, promiseId, {model, messages, stream: false});
+    const r = await initAiHubChatPromise(base, promiseId, {model, messages, stream: false}, undefined, a2aTraceId);
     if (r.ok) {
         return {success: true, promiseId: r.llmPromiseId, inlineResponseBody: r.inlineResponseBody};
     }
     if (r.reason === 'missing_llm_promise_id') {
         return {success: false, error: 'No promiseId in LLM response'};
     }
-    logger.error('[DialogRequestProcessor] LLM promise init failed', {status: r.status, error: r.bodyText});
+    logger.error('[DialogRequestProcessor] LLM promise init failed', {
+        status: r.status,
+        error: r.bodyText,
+        promise_id: promiseId,
+        trace_id: typeof a2aTraceId === 'string' ? a2aTraceId : promiseId,
+    });
     return {success: false, error: `LLM error: ${r.status} ${r.bodyText.slice(0, 200)}`};
 }
 
@@ -148,9 +155,17 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
     } = options;
 
     const normalizedBase = resolveAiHubBaseUrl(base);
+    const traceId = resolveA2aTraceId(ctx, promiseId);
 
     try {
         await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_request_transform'});
+        logger.info('[DialogRequestProcessor] llm.request_transform.start', {
+            evt: 'llm.request_transform.start',
+            trace_id: traceId,
+            promise_id: promiseId,
+            schema: schemaName,
+            request_phase: 'llm_request_transform',
+        });
 
         // 1. Request transforms → request.md
         const outputDir = await createDialogTransformOutputDir();
@@ -173,12 +188,30 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
             };
         }
 
+        logger.info('[DialogRequestProcessor] llm.request_transform.end', {
+            evt: 'llm.request_transform.end',
+            trace_id: traceId,
+            promise_id: promiseId,
+            schema: schemaName,
+            request_phase: 'llm_request_transform',
+        });
+
         // 2. Prepare messages
         const messages = prepareLlmMessages(transformResult.files);
         await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_hub_submit'});
 
+        const messagesBytes = messages.reduce((n, m) => n + (typeof m.content === 'string' ? m.content.length : 0), 0);
+        logger.info('[DialogRequestProcessor] llm.hub.submit', {
+            evt: 'llm.hub.submit',
+            trace_id: traceId,
+            promise_id: promiseId,
+            schema: schemaName,
+            request_phase: 'llm_hub_submit',
+            attrs: {model, messages_bytes: messagesBytes},
+        });
+
         // 3. Call LLM via promise flow
-        const initResult = await initLlmPromise(normalizedBase, model, messages, promiseId);
+        const initResult = await initLlmPromise(normalizedBase, model, messages, promiseId, traceId);
         if (!initResult.success) {
             await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
             const ie = initResult.error;
@@ -194,7 +227,11 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
 
         // 4. Store promise ID
         await requestService.updateLlmPromiseId(promiseId, llmPromiseId);
-        logger.info('[DialogRequestProcessor] Polling promise', {llmPromiseId});
+        logger.info('[DialogRequestProcessor] Polling promise', {
+            llmPromiseId,
+            trace_id: traceId,
+            promise_id: promiseId,
+        });
 
         // 5. Poll for response (or use hub inline body on disk-cache hit)
         const rawResponseMd =
@@ -225,9 +262,21 @@ export async function executeLlmCall(options: LlmCallOptions): Promise<LlmCallRe
         }
 
         await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_response_ready'});
+        logger.info('[DialogRequestProcessor] llm.hub.response_ready', {
+            evt: 'llm.hub.response_ready',
+            trace_id: traceId,
+            promise_id: promiseId,
+            llm_promise_id: llmPromiseId,
+            schema: schemaName,
+            request_phase: 'llm_response_ready',
+        });
         return {success: true, responseMd, llmPromiseId, requestTransformExecute, requestTransformContext};
     } catch (err) {
-        logger.error('[DialogRequestProcessor] LLM call failed', {error: String(err)});
+        logger.error('[DialogRequestProcessor] LLM call failed', {
+            error: String(err),
+            trace_id: traceId,
+            promise_id: promiseId,
+        });
         await requestService.patchRequestContext(promiseId, {requestPhase: 'llm_error'});
         const raw = err instanceof Error ? err.message : String(err);
         return {

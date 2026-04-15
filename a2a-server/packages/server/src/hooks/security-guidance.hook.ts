@@ -8,7 +8,7 @@
 
 import {globalToolHookRegistry} from '../tool-hook-registry.js';
 import {evaluatePathRules, defaultPathRules} from '../../policy/path-rules.config.js';
-import {logger} from '../../../utils/logger.js';
+import {logger} from '@a2a/server-utils/logger';
 
 /** Dangerous shell command patterns to warn about. */
 const DANGEROUS_COMMAND_PATTERNS: Array<{pattern: RegExp; reason: string}> = [
@@ -42,7 +42,7 @@ export function registerSecurityGuidanceHooks(): void {
         phase: 'pre',
         toolNamePattern: 'write-file',
         name: 'security-guidance:write-file-path-check',
-        async handler(toolName, input) {
+        async handler(_toolName, input) {
             const filePath = extractFilePath(input);
             if (!filePath) return {blocked: false};
 
@@ -63,7 +63,7 @@ export function registerSecurityGuidanceHooks(): void {
         phase: 'pre',
         toolNamePattern: 'edit-file',
         name: 'security-guidance:edit-file-path-check',
-        async handler(toolName, input) {
+        async handler(_toolName, input) {
             const filePath = extractFilePath(input);
             if (!filePath) return {blocked: false};
 
@@ -84,7 +84,7 @@ export function registerSecurityGuidanceHooks(): void {
         phase: 'pre',
         toolNamePattern: 'bash',
         name: 'security-guidance:bash-danger-check',
-        async handler(toolName, input) {
+        async handler(_toolName, input) {
             const command = extractCommand(input);
             if (!command) return {blocked: false};
 
@@ -110,7 +110,7 @@ export function registerSecurityGuidanceHooks(): void {
         phase: 'post',
         toolNamePattern: 'write-file',
         name: 'security-guidance:write-audit-log',
-        async handler(toolName, input, output) {
+        async handler(toolName, input, _output) {
             const filePath = extractFilePath(input);
             logger.info('[SecurityGuidance] File write completed', {
                 toolName,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSessionGetQuery } from './session-manager.js';
+import { buildSessionGetQuery } from '../src/session-manager.ts';
 
 describe('buildSessionGetQuery', () => {
     it('returns empty string when no flags', () => {

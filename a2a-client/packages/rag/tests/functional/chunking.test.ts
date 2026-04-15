@@ -584,7 +584,7 @@ npm install @a2a/rag
 ## Usage
 
 \`\`\`typescript
-import { createRAG } from '@a2a-client/rag';
+import { createRAG } from '@a2a/rag';
 
 const rag = createRAG({
   projectPath: './my-project'

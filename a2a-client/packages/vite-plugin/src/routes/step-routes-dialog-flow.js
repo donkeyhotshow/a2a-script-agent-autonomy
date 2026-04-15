@@ -1,6 +1,8 @@
+import crypto from 'node:crypto';
 import { buildSubmitResult, normalizeRouterStepSubmit, routerFormHasChoices, validateSubmitResult, } from './step-routes-router-flow.js';
 import { maybeChainAgentTools } from './step-routes-agent-flow.js';
 import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.js';
+import { A2A_TRACE_CONTEXT_KEY } from '@a2a-client/shared/a2a-trace-constants.mjs';
 import * as stepHandlers from './handlers/step-handlers.js';
 import { validateSessionId, resolveProjectStorage, loadSessionData, saveSessionData } from './session-manager.js';
 import { mergeContext, processTaskAndContext, prepareServerRequest } from './context-processor.js';
@@ -8,6 +10,14 @@ import { sendHttpRequest } from './http-invoker.js';
 import { parseServerResponse, processResponseData, extractAssistantMessage } from './response-handler.js';
 import { saveClientResult, saveRequestToServer, ensureStepDirectory, saveServerPromise, saveStepData, updateSessionAfterResponse, updateSessionForPromise, finalizeSession } from './persistence-manager.js';
 import { unwrapA2aResponse } from './utils/builders.js';
+function logClientApiNext(evt, fields) {
+    console.log(JSON.stringify({
+        ts: new Date().toISOString(),
+        svc: 'a2a-client-api',
+        evt,
+        ...fields,
+    }));
+}
 /**
  * Contract: build transport ack payload for /sessions/{id}/next.
  * Inputs:
@@ -22,13 +32,17 @@ import { unwrapA2aResponse } from './utils/builders.js';
  * Assumption:
  * - Caller owns HTTP status code; this object is body-only.
  */
-function createResponseAckObject(success, step, promiseId, error = null) {
-    return {
+function createResponseAckObject(success, step, promiseId, error = null, traceId = null) {
+    const o = {
         success: success,
         step: step,
         promiseId: promiseId,
         error: error
     };
+    if (traceId) {
+        o.traceId = traceId;
+    }
+    return o;
 }
 function respondJsonOnce(res, statusCode, payload) {
     if (res.writableEnded || res.headersSent)
@@ -69,12 +83,22 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                 respondJsonOnce(res, 404, { error: 'Session not found' });
                 return;
             }
+            const inboundTraceRaw = req.headers?.['x-a2a-trace-id'];
+            const inboundTrace = typeof inboundTraceRaw === 'string' ? inboundTraceRaw.trim() : '';
+            const traceId = inboundTrace || crypto.randomUUID();
             // Constraint: async-only single-flight. Reject overlapping /next calls to avoid router-state race conditions.
             const activeAsync = stepHandlers.getActiveAsyncWork(cwd, sessionId);
             if (session.asyncPending === true || activeAsync) {
+                logClientApiNext('http.next.rejected', {
+                    trace_id: traceId,
+                    session_id: sessionId,
+                    step: Number(session.currentStep) || 1,
+                    reason: 'async_pending',
+                });
                 respondJsonOnce(res, 409, {
                     error: 'async_pending',
                     message: 'Poll GET /api/a2a/sessions/{id}/async until idle before sending another /next.',
+                    traceId,
                 });
                 return;
             }
@@ -109,13 +133,20 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                 prevStepData,
             });
             mergedContext = updatedMergedContext;
+            mergedContext[A2A_TRACE_CONTEXT_KEY] = traceId;
             const requestToServer = prepareServerRequest({
                 mergedContext,
                 submitResult,
                 effectiveTask,
             });
             saveRequestToServer({ cwd, sessionId, nextStepNum, requestToServer });
+            logClientApiNext('http.next.accepted', {
+                trace_id: traceId,
+                session_id: sessionId,
+                step: nextStepNum,
+            });
             sendHttpRequest({
+                traceId,
                 requestToServer,
                 onResponse: async (xhrRes, data) => {
                     try {
@@ -127,7 +158,7 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                             updateSessionForPromise({ session, nextStepNum, submitResult, promiseData, mergedContext });
                             saveSessionData({ projectPath, session });
                             saveServerPromise({ cwd, sessionId, nextStepNum, promiseData });
-                            respondJsonOnce(res, 200, createResponseAckObject(true, nextStepNum, promiseData.promiseId));
+                            respondJsonOnce(res, 200, createResponseAckObject(true, nextStepNum, promiseData.promiseId, null, traceId));
                             return;
                         }
                         const a2aPayload = unwrapA2aResponse(serverResponse) || serverResponse;
@@ -178,11 +209,11 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                         finalizeSession({ session, finalStepNum, finalSavedContext, finalServerResponse });
                         saveSessionData({ projectPath, session });
                         if (!hasServer) {
-                            const errBody = createResponseAckObject(false, nextStepNum, null, 'A2A invoke failed');
+                            const errBody = createResponseAckObject(false, nextStepNum, null, 'A2A invoke failed', traceId);
                             respondJsonOnce(res, xhrRes.statusCode >= 400 ? xhrRes.statusCode : 502, errBody);
                             return;
                         }
-                        respondJsonOnce(res, 200, createResponseAckObject(true, finalStepNum, null));
+                        respondJsonOnce(res, 200, createResponseAckObject(true, finalStepNum, null, null, traceId));
                     }
                     catch (e) {
                         console.error('[vite-plugin-a2a] Error in A2A response handler:', e?.stack || e?.message || e);
@@ -199,7 +230,7 @@ export function handleNextStep({ cwd, path, req, res, storageMode = 'storage' })
                         session.currentStep = nextStepNum;
                         session.updatedAt = new Date().toISOString();
                         saveSessionData({ projectPath, session });
-                        respondJsonOnce(res, 503, createResponseAckObject(false, nextStepNum, null, 'A2A server unavailable: ' + detail));
+                        respondJsonOnce(res, 503, createResponseAckObject(false, nextStepNum, null, 'A2A server unavailable: ' + detail, traceId));
                     }
                     catch (err) {
                         console.error('[vite-plugin-a2a] Error in A2A error handler:', err.message);

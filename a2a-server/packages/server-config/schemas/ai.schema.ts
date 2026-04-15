@@ -3,7 +3,7 @@
  */
 
 import { z } from 'zod';
-import { booleanSchema, intSchema, urlSchema } from './helpers';
+import { booleanSchema, intSchema, urlSchema } from './helpers.js';
 
 export const aiConfigSchema = z.object({
   localLlmUpstreamUrl: urlSchema('http://localhost:11435'),

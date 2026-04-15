@@ -14,7 +14,7 @@ export type {
     ActionMatch,
     ActionOutcome,
     ActionResponse,
-} from './types';
+} from './types.js';
 
 // Validation (action-key shape + invoke envelope; see action-validator.ts)
 export {
@@ -26,7 +26,7 @@ export {
     type ValidationResult,
     type ExecuteKey,
     type ResultKey,
-} from './action-validator';
+} from './action-validator.js';
 
 // Parser functions from action-parser.ts
 export {
@@ -35,21 +35,21 @@ export {
     parsePrimitive,
     parseSubAction,
     parseActionContext,
-} from './action-parser';
+} from './action-parser.js';
 
 // Registry from action-registry.ts
 export {
     ActionRegistry,
     actionRegistry,
     getActionRegistry,
-} from './action-registry';
+} from './action-registry.js';
 
 // Executor and types from action-executor.ts
 export {
     ActionExecutor,
     type StepResult,
     type ActionResult,
-} from './action-executor';
+} from './action-executor.js';
 
 // Service and factory from action-service.ts
 export {
@@ -58,14 +58,14 @@ export {
     getActionService,
     createActionResponse,
     type ActionResponseSimulation,
-} from './action-service';
+} from './action-service.js';
 
 // Processor from action-processor.ts
 export {
     ActionProcessor,
     actionProcessor,
     type ActionProcessorResult,
-} from './action-processor';
+} from './action-processor.js';
 
 // Action Handler Registry
 export {
@@ -74,12 +74,7 @@ export {
     type ActionType,
     type ActionHandler,
     type ActionHandlerContext,
-} from './action-handler-registry';
+} from './action-handler-registry.js';
 
 // Action Handlers
-export * as handlers from './handlers/index';
-
-// Utilities
-export {
-    normalizeForMatching
-} from './utils/string-utils';
+export * as handlers from './handlers/index.js';

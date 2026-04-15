@@ -9,7 +9,6 @@
   },
   "exports": {
     "./*": "./*",
-    "./*": "./*",
     "./internal-client-action-keys.mjs": "./internal-client-action-keys.mjs",
     "./safe-path.mjs": "./safe-path.mjs",
     "./safe-path.js": "./safe-path.mjs",

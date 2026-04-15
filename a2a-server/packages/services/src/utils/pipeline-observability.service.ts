@@ -8,8 +8,11 @@ import { logger } from '@a2a/server-utils/logger';
 /**
  * Track request start
  */
-export function trackRequestStart(promiseId: string): void {
-    logger.debug('[Pipeline] Request started', { promiseId });
+export function trackRequestStart(promiseId: string, traceId?: string): void {
+    logger.debug('[Pipeline] Request started', {
+        promiseId,
+        trace_id: traceId ?? promiseId,
+    });
 }
 
 /**

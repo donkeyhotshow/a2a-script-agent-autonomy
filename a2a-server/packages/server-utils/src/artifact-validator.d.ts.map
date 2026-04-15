@@ -1,0 +1,1 @@
+{"version":3,"file":"artifact-validator.d.ts","sourceRoot":"","sources":["artifact-validator.ts"],"names":[],"mappings":"AAAA,MAAM,WAAW,wBAAwB;IACvC,KAAK,EAAE,OAAO,CAAC;IACf,MAAM,EAAE,MAAM,EAAE,CAAC;CAClB;AAgBD,wBAAgB,gBAAgB,CAAC,QAAQ,EAAE,OAAO,GAAG,wBAAwB,CAgD5E"}

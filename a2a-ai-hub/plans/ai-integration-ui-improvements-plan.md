@@ -2,7 +2,7 @@
 
 ## Цель
 
-Улучшить web UI для Promise Monitor в a2a-ai-hub/proxy/views.py.
+Улучшить web UI для Promise Monitor в ai-integration/proxy/views.py.
 
 ## Текущее состояние
 
@@ -56,9 +56,9 @@
 
 ## Technical Notes
 
-- UI находится в `a2a-ai-hub/proxy/views.py`
+- UI находится в `ai-integration/proxy/views.py`
 - HTML шаблон: `PROMISE_VIEW_HTML`
-- API endpoints в `a2a-ai-hub/proxy/routes.py`:
+- API endpoints в `ai-integration/proxy/routes.py`:
   - `/ui/promises/next` — получить следующий promise
   - `/ui/promises/<id>/execute` — выполнить запрос
   - `/ui/promises/<id>/respond` — отправить ответ

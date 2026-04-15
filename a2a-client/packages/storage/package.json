@@ -5,8 +5,6 @@
   "type": "module",
   "description": "Session storage path and sorting utilities",
   "exports": {
-    "./*": "./*",
-    "./*": "./*",
     "./session-paths.mjs": "./src/session-paths.mjs",
     "./session-sort.mjs": "./src/session-sort.mjs",
     "./session-stage-derive.mjs": "./src/session-stage-derive.mjs",

@@ -4,8 +4,8 @@
  * Callers pass a clone if the original invoke payload must stay unchanged.
  */
 
-import { deepCloneJson } from '@a2a/server-utils/deep-clone-json';
-import { toInvokeShapeForPromptsTransform } from '@a2a/server/normalization';
+import { A2A_TRACE_CONTEXT_KEY, deepCloneJson } from '@a2a/server-utils';
+import { toInvokeShapeForPromptsTransform } from './invoke-shape.js';
 
 const MAX_TOOL_SUMMARY = 4000;
 
@@ -169,9 +169,19 @@ export function materializeResultIntoHistoryForLlm(root: Record<string, unknown>
   return root;
 }
 
+/** Remove observability-only ids so they never appear in rendered LLM prompts. */
+function stripObservabilityIdsFromInvokePayloadForLlm(root: Record<string, unknown>): void {
+  delete root[A2A_TRACE_CONTEXT_KEY];
+  const inner = root['context'];
+  if (inner && typeof inner === 'object' && !Array.isArray(inner)) {
+    delete (inner as Record<string, unknown>)[A2A_TRACE_CONTEXT_KEY];
+  }
+}
+
 /** Clone invoke-shaped payload, then materialize (for prompt pipeline; keeps caller's object intact). */
 export function prepareInvokePayloadForLlmPrompt(input: Record<string, unknown>): Record<string, unknown> {
   const clone = deepCloneJson(input);
+  stripObservabilityIdsFromInvokePayloadForLlm(clone);
   return materializeResultIntoHistoryForLlm(clone);
 }
 

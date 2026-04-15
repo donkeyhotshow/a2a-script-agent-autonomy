@@ -1,0 +1,13 @@
+{
+  "name": "On New File",
+  "version": "1.0.0",
+  "description": "Checks new .ts/.js files for placement, import style, and dependency rules",
+  "when": {
+    "type": "fileCreated",
+    "patterns": ["**/*.ts", "**/*.js", "**/*.mts", "**/*.mjs"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A new file was created. Please verify:\n1. The file is in the correct folder per structure.md (e.g. server code in a2a-server/packages/, client code in a2a-client/packages/)\n2. All imports use .js extensions (NodeNext moduleResolution requirement)\n3. No imports from forbidden cross-package paths (a2a-server must not import from a2a-client and vice versa)\n4. If the file is a public export, add it to the nearest index.ts barrel\n5. If the file exceeds ~300 lines, suggest splitting it\nReport any violations found."
+  }
+}

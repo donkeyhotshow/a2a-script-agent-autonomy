@@ -2,7 +2,7 @@
 
 **When to use:** Loader stuck, wrong screen, wrong turn, or payload shape does not match the scenario you expect.
 
-**Triangle:** three layers — **C** = a2a-ai-hub (LLM path), **B** = a2a-server (invoke/transforms), **A** = Client API (session + `/next` + `/async` + storage). **Local LLM upstream** (if present) is only the backend behind **C**, not a separate operator surface. Repo **`start-all`** / **`runbook-cli.ps1`** do not start a local upstream; configure **`LOCAL_LLM_UPSTREAM_URL`** / providers when you use one.
+**Triangle:** three layers — **C** = ai-integration (LLM path), **B** = a2a-server (invoke/transforms), **A** = Client API (session + `/next` + `/async` + storage). **Local LLM upstream** (if present) is only the backend behind **C**, not a separate operator surface. Repo **`start-all`** / **`runbook-cli.ps1`** do not start a local upstream; configure **`LOCAL_LLM_UPSTREAM_URL`** / providers when you use one.
 
 **Repeatable unit:** the **Triangle loop** below. Run **0** after any infra fix, port change, or `start-all` restart. For each turn you drive over HTTP, repeat **1 → 2 → (3 if sending) → 1**.
 
@@ -63,7 +63,7 @@ Use **`BASE`** = your Client API origin (dev default `http://localhost:5173`). U
 
 | Step | Action | OK means | If not OK |
 |------|--------|----------|-----------|
-| **C1** | `GET ${AI_HUB_URL}/health` (default host `http://localhost:11434`) | HTTP 200 | Fix a2a-ai-hub / its backend; [`docs/SYSTEM_STARTUP.md`](SYSTEM_STARTUP.md); then **go to 0** |
+| **C1** | `GET ${AI_HUB_URL}/health` (default host `http://localhost:11434`) | HTTP 200 | Fix ai-integration / its backend; [`docs/SYSTEM_STARTUP.md`](SYSTEM_STARTUP.md); then **go to 0** |
 | **A1** | `GET {BASE}/api/a2a/projects` | HTTP 200 | Fix Vite / Client API; then **go to 0** |
 | **B1** | `GET http://localhost:3000/health` (only if you need a2a-server directly) | HTTP 200 | Fix a2a-server; then **go to 0** |
 

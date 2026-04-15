@@ -1,5 +1,5 @@
 import {afterEach, describe, expect, it} from 'vitest';
-import {detectGrayRoomTrigger, shouldUseGrayRoom} from '../src/services/core/request-processor/gray-room-trigger';
+import {detectGrayRoomTrigger, shouldUseGrayRoom} from '../src/services/core/request-processor/gray-room-trigger.js';
 
 describe('gray room trigger policy', () => {
     const prev = process.env.A2A_GRAY_ROOM_ENABLED;

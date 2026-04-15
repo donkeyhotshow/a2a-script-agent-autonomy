@@ -32,7 +32,15 @@ export default defineConfig({
       '**/packages/rag/tests/accuracy/**',
       '**/packages/rag/tests/functional/integration.test.ts',
       '**/packages/rag/tests/functional/search.test.ts',
-      '**/packages/rag/tests/performance/**'
+      '**/packages/rag/tests/performance/**',
+      /** No package sources — only dist stub */
+      '**/packages/embedding/tests/**',
+      /** Duplicate of validator.test.ts (CommonJS + dist) */
+      '**/packages/json/tests/validator.test.js',
+      /** Fixture modules under tests/mocks never landed in repo */
+      '**/packages/shared/tests/mock-fetch.test.ts',
+      '**/packages/shared/tests/mock-storage.test.ts',
+      '**/packages/shared/tests/mocks.test.ts'
     ],
     coverage: {
       provider: 'v8',
@@ -45,7 +53,7 @@ export default defineConfig({
     },
     server: {
       deps: {
-        inline: ['@a2a/execution', '@a2a/rag']
+        inline: ['@a2a/execution', '@a2a/rag', '@a2a-client/storage']
       }
     }
   },
@@ -57,6 +65,6 @@ export default defineConfig({
     }
   },
   ssr: {
-    noExternal: ['@a2a/execution', '@a2a/rag']
+    noExternal: ['@a2a/execution', '@a2a/rag', '@a2a-client/storage']
   }
 });

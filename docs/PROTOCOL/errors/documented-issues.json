@@ -10,7 +10,7 @@
       {
         "id": "type_mismatches",
         "category": "Type Safety Violations",
-        "location": "a2a-ai-hub/tests/test_llm_cache.py",
+        "location": "ai-integration/tests/test_llm_cache.py",
         "description": "build_llm_cache_payload function parameters expect str but receive str | dict[Any, Any]",
         "affected_fields": ["path", "method", "target_url", "forward_args", "raw_body"],
         "impact": "Type safety violations in LLM cache payload construction",

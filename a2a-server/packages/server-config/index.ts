@@ -14,6 +14,20 @@
  *   validateConfig(); // Throws on invalid config
  */
 
+import dotenv from "dotenv";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+/** Prefer CWD (`npm run` from `a2a-server/`); fallback for tools resolving from `dist/`. */
+const _here = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(process.cwd(), ".env") });
+dotenv.config({
+  path: path.resolve(_here, "../../.env"),
+});
+dotenv.config({
+  path: path.resolve(_here, "../../../.env"),
+});
+
 // ===========================================
 // Single Source of Truth: re-exports from modular files
 // ===========================================
@@ -43,7 +57,6 @@ export {
   loggingConfigSchema,
   rateLimitConfigSchema,
   queueConfigSchema,
-  mlConfigSchema,
   sessionConfigSchema,
   requestProcessorConfigSchema,
   featuresConfigSchema,
@@ -55,6 +68,18 @@ export {
   loadServiceIfEnabled,
   loadMiddlewareIfEnabled,
 } from "./features.js";
+
+// Router static configuration (used by request processor/router handlers)
+export {
+  ACTION_TO_SCHEMA,
+  LLM_PIPELINE_ACTIONS,
+  ROUTER_CONFIG,
+  buildRouterForm,
+  routerStatic,
+} from "./router-static.js";
+
+// Health checks
+export { checkDatabaseHealth } from "./database.js";
 
 // ===========================================
 // Exported Configuration Singleton

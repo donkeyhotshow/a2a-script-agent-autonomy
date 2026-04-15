@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {deepCloneJson} from '../../src/utils/deep-clone-json';
+import {deepCloneJson} from '../../src/utils/deep-clone-json.js';
 
 describe('deepCloneJson', () => {
     it('clones plain objects and arrays deeply', () => {

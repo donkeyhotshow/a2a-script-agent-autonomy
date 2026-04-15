@@ -2,7 +2,7 @@ import {
   createArtifactWriteInput,
   type StoredArtifact,
   type ArtifactStore,
-} from './artifact-store';
+} from './artifact-store.js';
 
 const COMPONENT_ID = 'DedicatedAnalyzer';
 

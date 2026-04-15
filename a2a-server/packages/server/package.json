@@ -1,0 +1,28 @@
+{
+  "name": "@a2a/server-core",
+  "version": "1.0.0",
+  "description": "Core server library exports for A2A server (public API only)",
+  "type": "module",
+  "main": "dist/public/index.js",
+  "types": "dist/public/index.d.ts",
+  "exports": {
+    ".": "./dist/public/index.js"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@a2a/config": "file:../server-config",
+    "@a2a/server-protocol": "file:../server-protocol",
+    "@a2a/server-request": "file:../request",
+    "@a2a/server-utils": "file:../server-utils"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.39",
+    "typescript": "^5.3.3"
+  }
+}
+

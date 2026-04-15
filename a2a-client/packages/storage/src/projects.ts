@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { isNodeEnoent } from '@a2a-client/shared/node-errors.js';
 import { projectsListFromDocument } from '@a2a-client/shared/projects-document.mjs';
-import { getStorageRoot, ensureDir } from './root.ts';
+import { getStorageRoot, ensureDir } from './root.js';
 
 const PROJECTS_FILE = 'projects.json';
 

@@ -2,7 +2,12 @@ import winston from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
 import * as fs from "node:fs/promises";
 import * as path from "path";
-import { config } from "@a2a/server-config/index";
+
+// Minimal config fallback — avoids dependency on @a2a/config
+const config = {
+  logLevel: process.env['LOG_LEVEL'] ?? 'info',
+  logFormat: process.env['LOG_FORMAT'] ?? 'pretty',
+};
 
 const logsDir = path.join(process.cwd(), "logs");
 

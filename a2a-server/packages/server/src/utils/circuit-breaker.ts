@@ -1,1 +1,1 @@
-export * from '../../../lib/circuit-breaker.ts'
+export * from '../../../lib/circuit-breaker.js'

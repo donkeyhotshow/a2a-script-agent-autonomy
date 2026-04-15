@@ -4,7 +4,7 @@
 
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { runTransformPipelineFromFile } from '../../../transform/src/pipeline.ts';
+import { runTransformPipelineFromFile } from '../../../transform/src/pipeline.js';
 import type { ProcessOutcome, ProcessResult } from './request-processor.interfaces';
 import {logger} from "@a2a/server-utils/logger";
 import {
@@ -12,7 +12,7 @@ import {
     validateFormChoiceProcessResult,
     validateDialogExecuteShape,
     validateLlmOutputShape,
-} from './validators/transform-execute-validator';
+} from './validators/transform-execute-validator.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FORM_CHOICE_PIPELINE = path.join(__dirname, '../../../prompts/transforms/form-choice-response.json');

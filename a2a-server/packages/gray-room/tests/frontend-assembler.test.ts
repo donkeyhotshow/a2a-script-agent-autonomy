@@ -1,8 +1,8 @@
 import {describe, expect, it, vi} from 'vitest';
-import type {Graph} from '../../src/services/core/graph-store.service';
-import {FrontendAssembler} from '../../src/services/core/frontend-assembler';
+import type {Graph} from '../../src/services/core/graph-store.service.js';
+import {FrontendAssembler} from '../../src/services/core/frontend-assembler.js';
 
-vi.mock('../../src/utils/logger', () => ({
+vi.mock('../../src/utils/logger.js', () => ({
     logger: {info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn()},
 }));
 

@@ -14,6 +14,23 @@ const rootDir = path.resolve(__dirname, '..');
 // Load .env from root directory
 dotenv.config({path: path.join(rootDir, '.env')});
 
+function emailOrDefault(raw: string | undefined, fallback: string): string {
+    const s = raw?.trim();
+    if (!s) return fallback;
+    return s.includes('@') ? s : fallback;
+}
+
+function pollMsOrUndef(
+    raw: string | undefined,
+    min: number,
+    max: number,
+): string | undefined {
+    if (raw == null || !String(raw).trim()) return undefined;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n < min || n > max) return undefined;
+    return String(Math.trunc(n));
+}
+
 /**
  * Raw environment variable mapping.
  * Centralizes all env var names.
@@ -37,6 +54,14 @@ export function mapEnvironmentVariables() {
             postgresUser: process.env.POSTGRES_USER,
             postgresPassword: process.env.POSTGRES_PASSWORD,
             postgresDb: process.env.POSTGRES_DB,
+        },
+        // AI Hub (matches `appConfigSchema.aiHub`, distinct from legacy `ai` block below)
+        aiHub: {
+            aiHubUrl: process.env.AI_HUB_URL,
+            pollIntervalMs: pollMsOrUndef(process.env.POLL_INTERVAL_MS, 100, 60000),
+            pollTimeoutMs: pollMsOrUndef(process.env.POLL_TIMEOUT_MS, 1000, 600000),
+            openaiApiKey: process.env.OPENAI_API_KEY,
+            openaiModel: process.env.OPENAI_MODEL,
         },
         // AI/LLM
         ai: {
@@ -68,7 +93,7 @@ export function mapEnvironmentVariables() {
         server: {
             nodeEnv: process.env.NODE_ENV,
             host: process.env.HOST,
-            defaultEmail: process.env.A2A_DEFAULT_EMAIL,
+            defaultEmail: emailOrDefault(process.env.A2A_DEFAULT_EMAIL, 'dev@localhost'),
             defaultPassword: process.env.A2A_DEFAULT_PASSWORD,
         },
         // Proxy
@@ -123,6 +148,8 @@ export function mapEnvironmentVariables() {
         requestProcessor: {
             intervalMs: process.env.REQUEST_PROCESSOR_INTERVAL_MS,
         },
+        // Feature flags — nested defaults applied by Zod (`featuresConfigSchema`)
+        features: {},
     };
 }
 

@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process';
 import { statSync } from 'fs';
-import { logger } from "@a2a/server-utils/logger";
+import { logger } from '@a2a/server-utils/logger';
 
 export interface DiscoveryResult {
   filePath: string;
@@ -35,7 +35,7 @@ export class ContextDiscoveryService {
         execFile('grep', ['-rni', '--exclude-dir=node_modules', query, rootPath], {
           encoding: 'utf-8',
           timeout: 5000
-        }, (error, stdout, stderr) => {
+        }, (error, stdout, _stderr) => {
           if (error && !stdout) {
             reject(error);
           } else {
@@ -59,9 +59,9 @@ export class ContextDiscoveryService {
       const match = line.match(/^([^:]+):(\d+):(.*)$/);
       if (match) {
         results.push({
-          filePath: match[1],
-          lineNumber: parseInt(match[2], 10),
-          lineContent: match[3].trim()
+          filePath: match[1] ?? '',
+          lineNumber: parseInt(match[2] ?? '0', 10),
+          lineContent: (match[3] ?? '').trim()
         });
       }
       if (results.length >= 20) break; // Limit results for token efficiency

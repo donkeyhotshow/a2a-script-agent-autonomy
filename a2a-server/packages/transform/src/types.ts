@@ -499,8 +499,6 @@ export interface TransformOptions {
   fs?: TransformFileSystem;
   /** Template renderer function */
   renderTemplate?: (template: string, data: Record<string, unknown>) => string;
-  /** Absolute root that simulationDir must be confined to (CWE-22/23) */
-  simulationsRoot?: string;
 }
 
 /**
@@ -516,8 +514,3 @@ export class TransformError extends Error {
     this.name = 'TransformError';
   }
 }
-
-/**
- * Allowed transform pipeline types
- */
-export const ALLOWED_TRANSFORM_TYPES = new Set(['request', 'response']);

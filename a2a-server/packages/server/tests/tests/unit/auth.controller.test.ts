@@ -6,7 +6,7 @@ import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest';
 import {Request, Response, NextFunction} from 'express';
 
 // Mock dependencies
-vi.mock('../../src/config/index', () => ({
+vi.mock('../../src/config/index.js', () => ({
     config: {
         jwtSecret: 'test-jwt-secret-min-32-characters-long-test',
         jwtExpiresIn: '1h',
@@ -14,7 +14,7 @@ vi.mock('../../src/config/index', () => ({
     },
 }));
 
-vi.mock('../../src/repositories/client.repository', () => ({
+vi.mock('../../src/repositories/client.repository.js', () => ({
     emailExists: vi.fn(),
     createClient: vi.fn(),
     findClientByEmail: vi.fn(),
@@ -22,13 +22,13 @@ vi.mock('../../src/repositories/client.repository', () => ({
     findClientById: vi.fn(),
 }));
 
-vi.mock('../../src/utils/crypto', () => ({
+vi.mock('../../src/utils/crypto.js', () => ({
     hashPassword: vi.fn().mockResolvedValue('hashed_password'),
     verifyPassword: vi.fn().mockResolvedValue(true),
     generateApiKey: vi.fn().mockReturnValue('sk_test_123456'),
 }));
 
-vi.mock('../../src/utils/logger', () => ({
+vi.mock('../../src/utils/logger.js', () => ({
     logger: {
         info: vi.fn(),
         error: vi.fn(),
@@ -37,10 +37,10 @@ vi.mock('../../src/utils/logger', () => ({
     },
 }));
 
-import * as clientRepo from '../../src/repositories/client.repository';
+import * as clientRepo from '../../src/repositories/client.repository.js';
 
 // Import after mocks
-const {register, getToken, refreshToken, getCurrentClient} = await import('../../src/controllers/auth.controller');
+const {register, getToken, refreshToken, getCurrentClient} = await import('../../src/controllers/auth.controller.js');
 
 describe('Auth Controller', () => {
     let mockReq: Partial<Request>;

@@ -5,7 +5,7 @@
  * Full schema validation handled by transforms pipeline.
  */
 
-import { ACTION_TYPES } from './constants/action-types';
+import { ACTION_TYPES } from './constants/action-types.js';
 
 // Valid action keys for execute payloads
 export const VALID_EXECUTE_KEYS = [
@@ -22,7 +22,7 @@ export type ResultKey = typeof VALID_RESULT_KEYS[number];
 /**
  * Validation result type
  */
-import type { ActionValidationResult } from '@server/types/validation.interfaces';
+import type { ActionValidationResult } from '@a2a/server-core';
 
 /**
  * @deprecated Use canonical ActionValidationResult from @server/types

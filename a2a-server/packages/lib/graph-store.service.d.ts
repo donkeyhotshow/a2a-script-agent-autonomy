@@ -5,7 +5,7 @@
  * IMPORTANT: Server does NOT store client data!
  * Graph is passed in context and returned in response.
  */
-import type { RecognizedEntity, RecognizedRelation, EntityTypeName } from '../../types/entity.types';
+import type { RecognizedEntity, RecognizedRelation, EntityTypeName } from '../protocol/src/types/entity.types.js';
 export interface Graph {
     entities: RecognizedEntity[];
     relations: RecognizedRelation[];

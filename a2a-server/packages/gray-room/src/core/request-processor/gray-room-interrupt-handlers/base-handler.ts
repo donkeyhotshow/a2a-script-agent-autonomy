@@ -1,5 +1,5 @@
-import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types';
-import type {GrayRoomContext} from '../gray-room-utils';
+import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../../../transform/src/types.js';
+import type {GrayRoomContext} from '../gray-room-utils.js';
 
 /**
  * Base class for gray room interrupt handlers to eliminate duplication

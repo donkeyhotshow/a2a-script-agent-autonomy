@@ -4,7 +4,7 @@ import { glob } from 'glob';
 export interface Tool {
   name: string;
   description: string;
-  execute: Function;
+  execute: (params: unknown) => Promise<unknown>;
 }
 
 export async function loadCustomTools(): Promise<Tool[]> {

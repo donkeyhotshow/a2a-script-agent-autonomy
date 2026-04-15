@@ -1,4 +1,7 @@
 import axios from 'axios';
+import { randomUUID } from 'crypto';
+
+const A2A_TRACE_HEADER = 'X-A2A-Trace-Id';
 import { ServerUnavailableError } from './errors.js';
 import {
   buildGetSessionValidateOptions,
@@ -84,7 +87,16 @@ class TaskMonitorApi {
 
   async sendNext(sessionId, payload = {}) {
     try {
-      const response = await axios.post(`${this.baseUrl}/sessions/${sessionId}/next`, payload);
+      const traceId = randomUUID();
+      const response = await axios.post(`${this.baseUrl}/sessions/${sessionId}/next`, payload, {
+        headers: { [A2A_TRACE_HEADER]: traceId },
+ });
+      if (Array.isArray(this.runMetrics?.a2aTraceIds)) {
+        this.runMetrics.a2aTraceIds.push(traceId);
+      }
+      if (typeof this.log === 'function') {
+        this.log('info', `[task-monitor] /next trace_id=${traceId} sessionId=${sessionId}`);
+      }
       this._validateEnvelope(`POST /next (${sessionId})`, response.data);
       // Handle different response formats
       if (response.data && response.data.execute) {

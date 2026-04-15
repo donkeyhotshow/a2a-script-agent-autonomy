@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
     createStandaloneRateLimitMiddleware,
     getStandaloneHttpLimitsProfile,
-} from './http-limits.js';
+} from '../src/server/server/http-limits.ts';
 
 const ENV_KEYS = [
     'SDK_HTTP_CORS_ENABLED',

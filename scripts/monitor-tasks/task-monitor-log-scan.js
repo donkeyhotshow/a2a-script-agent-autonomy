@@ -12,6 +12,39 @@ const DEFAULT_LOG_TARGETS = [
 const ERROR_LINE_RE =
   /npm ERR!|Traceback \(most recent call last\)|UnhandledPromiseRejection|uncaughtException|\bFATAL\b|ECONNREFUSED|ENOTFOUND|ETIMEDOUT|ECONNRESET|"level"\s*:\s*"(error|fatal)"|\[(?:error|fatal)\]|(?:^|\s)Error:\s|\bException:\s|^\s*Error\s+[-—]/i;
 
+/** @param {string} line */
+function parseLogLineUtcMs(line) {
+  if (typeof line !== 'string' || !line) return null;
+  const t = line.trim();
+  let m = t.match(/^(\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:?\d{2})?)/);
+  if (m) {
+    const raw = m[1].includes('T') ? m[1] : m[1].replace(' ', 'T');
+    const d = new Date(raw);
+    if (!Number.isNaN(d.getTime())) return d.getTime();
+  }
+  m = t.match(/^\[([^\]]+)\]/);
+  if (m) {
+    const d = new Date(m[1]);
+    if (!Number.isNaN(d.getTime())) return d.getTime();
+  }
+  return null;
+}
+
+/**
+ * Drop stale log lines when TASK_MONITOR_LOG_SCAN_MAX_AGE_MINUTES > 0 (default 12). Set to 0 to disable.
+ * TASK_MONITOR_LOG_SCAN_TIME_STRICT=1 — lines without a parseable leading timestamp are ignored.
+ * @param {string} line
+ * @param {number} maxAgeMin
+ * @param {boolean} strictTime
+ */
+function isLogLineWithinAgeWindow(line, maxAgeMin, strictTime) {
+  if (!maxAgeMin || maxAgeMin <= 0 || !Number.isFinite(maxAgeMin)) return true;
+  const ts = parseLogLineUtcMs(line);
+  if (ts == null) return !strictTime;
+  const cutoff = Date.now() - maxAgeMin * 60 * 1000;
+  return ts >= cutoff;
+}
+
 function walkLogFiles(dir, pattern, maxDepth, depth = 0, out = []) {
   if (depth > maxDepth) return out;
   if (!fs.existsSync(dir)) return out;
@@ -126,6 +159,8 @@ class TaskMonitorLogScan {
     const maxHitsPerFile = options.maxHitsPerFile ?? 25;
     const maxTotalHits = options.maxTotalHits ?? 200;
     const targets = options.targets ?? DEFAULT_LOG_TARGETS;
+    const maxAgeMin = parseInt(process.env.TASK_MONITOR_LOG_SCAN_MAX_AGE_MINUTES || '12', 10);
+    const strictTime = process.env.TASK_MONITOR_LOG_SCAN_TIME_STRICT === '1';
 
     const fileEntries = [];
     for (const t of targets) {
@@ -156,6 +191,7 @@ class TaskMonitorLogScan {
       for (const line of lines) {
         if (hits.length >= maxTotalHits || count >= maxHitsPerFile) break;
         if (!line || !ERROR_LINE_RE.test(line)) continue;
+        if (!isLogLineWithinAgeWindow(line, maxAgeMin, strictTime)) continue;
         if (/no error|0 errors|errors?:\s*\[\s*\]|error:\s*null\b/i.test(line)) continue;
         hits.push({ app, file: fp, line: line.length > 500 ? `${line.slice(0, 497)}...` : line });
         count++;
@@ -185,6 +221,8 @@ export {
   TaskMonitorLogScan,
   DEFAULT_LOG_TARGETS,
   ERROR_LINE_RE,
+  parseLogLineUtcMs,
+  isLogLineWithinAgeWindow,
   scanSessionServerResponseForWireJsonHistory,
   WIRE_COMPLETION_IN_HISTORY_RE,
 };

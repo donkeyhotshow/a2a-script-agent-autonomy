@@ -1,5 +1,5 @@
-# Run dialog flow. Local HTTP LLM on 11435; a2a-ai-hub proxy on 11434.
-# If timeout: set FORWARD_TIMEOUT_SECONDS=180 when starting a2a-ai-hub.
+# Run dialog flow. Local HTTP LLM on 11435; ai-integration proxy on 11434.
+# If timeout: set FORWARD_TIMEOUT_SECONDS=180 when starting ai-integration.
 #
 # Usage:
 #   .\run-dialog-direct-local-hub.ps1
@@ -22,7 +22,7 @@ function Write-Step($msg) { Write-Host "`n=== $msg ===" -ForegroundColor Cyan }
 function Ok($msg) { Write-Host "  OK $msg" -ForegroundColor Green }
 function Warn($msg) { Write-Host "  WARN $msg" -ForegroundColor Yellow }
 
-Write-Step "Dialog flow (a2a-ai-hub -> local LLM upstream)"
+Write-Step "Dialog flow (ai-integration -> local LLM upstream)"
 
 Write-Host "`n[1] Local LLM upstream" -ForegroundColor Gray
 try {
@@ -37,9 +37,9 @@ try {
 Write-Host "`n[2] a2a-server config" -ForegroundColor Gray
 try {
     Invoke-RestMethod -Uri "http://localhost:11434/health" -TimeoutSec 3 | Out-Null
-    Ok "a2a-ai-hub proxy (11434)"
+    Ok "ai-integration proxy (11434)"
 } catch {
-    Warn "a2a-ai-hub not reachable. Start with: start-all.bat"
+    Warn "ai-integration not reachable. Start with: start-all.bat"
 }
 
 Write-Host "`n[3] Services" -ForegroundColor Gray

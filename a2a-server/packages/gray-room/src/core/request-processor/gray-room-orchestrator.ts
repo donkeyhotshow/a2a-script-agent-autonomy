@@ -1,51 +1,50 @@
 import * as path from "path";
-import { logger } from "@a2a/server-utils/logger";
+import { logger } from "../../../utils/logger.js";
 import {
   runPromptsTransform,
   syncLiveContextHistoryFromResultMessage,
-} from "../../../transform/src/index.ts";
-  import type {
-    GrayRoomControlEnvelope,
-    InterruptDirective,
-    ServerInterruptTraceEvent,
-  } from "../../../../packages/transform/src/types.ts";
+} from "../../../transform/index.js";
+import type {
+  GrayRoomControlEnvelope,
+  InterruptDirective,
+  ServerInterruptTraceEvent,
+} from "../../../transform/types.js";
 import {
   mergeGrayRoomSlotIntoContext,
   mergeInterruptTraceIntoContext,
-} from "../../../../packages/transform/src/interrupt-trace-contract.ts";
-import { executeReadFile } from "../../../actions/handlers/file-operations";
-import { mergeServerRagPageIntoContext } from "../../../rag/auto-rag-page-server";
+} from "../../transform/interrupt-trace-contract.js";
+import { executeReadFile } from "../../../actions/handlers/file-operations.js";
+import { mergeServerRagPageIntoContext } from "../../../rag/auto-rag-page-server.js";
 import {
   extractLlmTextFromHubResponseBody,
   initAiHubChatPromise,
   pollReadyThenFetch,
-} from "../../../daemon/llm-hub-poll";
-import { BlackRoomOrchestrator } from "../../black-room/black-room-orchestrator";
+} from "../../../daemon/llm-hub-poll.js";
+import { BlackRoomOrchestrator } from "../../black-room/black-room-orchestrator.js";
 import type {
   AlgorithmContext,
   AlgorithmData,
-} from "../../black-room/types";
-import type { ProcessResult } from "./request-processor.interfaces";
+} from "../../black-room/types.js";
+import type { ProcessResult } from "./request-processor.interfaces.js";
 import {
   validateExecuteShapeForSchema,
   validateLlmOutputShape,
   validateRouterResultShape,
   shouldEnforceTransformStrictMode,
-} from "./validators/transform-execute-validator";
+} from "./validators/transform-execute-validator.js";
 import {
   resolveExecution,
   resolveHistoryLength,
-} from "./gray-room-utils";
-import {
   toInvokeShapeForPromptsTransform,
-} from "../../../server/src/request-processor/normalization";
+} from "./normalization.js";
 import {
   grayRoomLlmModelFallback,
   resolveGrayRoomLlmModelFromContext,
-} from "./llm-model-resolver";
-import { globalArtifactStore } from "../artifact-store";
-import { DedicatedAnalyzer } from "../analyzer";
-import { globalMcpRegistry } from "../../mcp/registry";
+} from "./llm-model-resolver.js";
+import { globalArtifactStore } from "../artifact-store.js";
+import { DedicatedAnalyzer } from "../analyzer.js";
+import { globalExperienceBank } from "../../memory/experience-bank.js";
+import { globalMcpRegistry } from "../../mcp/registry.js";
 
 // Import trigger detection logic
 import {
@@ -55,7 +54,7 @@ import {
   getConfiguredMaxTurns,
   readGrayRoomInterruptBudget,
   GrayRoomTriggerResult,
-} from "./gray-room-trigger";
+} from "./gray-room-trigger.js";
 
 // Import utilities
 import {
@@ -65,26 +64,26 @@ import {
   GrayRoomOptions,
   type ReviewResult,
   type GrayRoomContext,
-} from "./gray-room-utils";
+} from "./gray-room-utils.js";
 
 // Import interrupt handlers
-import { handleCompressHistory } from "./gray-room-interrupt-handlers/compress-history";
-import { handleThinking } from "./gray-room-interrupt-handlers/thinking";
-import { handleAutoReadFile } from "./gray-room-interrupt-handlers/auto-read-file";
-import { handleAutoRagPage } from "./gray-room-interrupt-handlers/auto-rag-page";
-import { handleClarify } from "./gray-room-interrupt-handlers/clarify";
-import { handleAlgorithmInvoke } from "./gray-room-interrupt-handlers/algorithm-invoke";
-import { globalVisionTester } from "../vision-tester";
-import { globalRoleRegistry, AgentRole } from "../agent-role-registry";
-import { globalSafetyLayer } from "../safety-layer";
-import { globalIntentGate } from "../intent-gate";
-import { bugFixer } from "../../llm/bug-fixer";
-import { repoMapService } from "../../context/repo-map.service";
-import { llmService } from "../../llm/llm-service";
-import { contextDiscoveryService } from "../../context/context-discovery.service";
-import { resolveAiHubBaseUrl } from "../../utils/ai-hub-url";
-import { mkdtempOsTmp } from "../../utils/mkdtemp-os-tmp";
-import { prepareLlmMessages } from "./llm-orchestration";
+import { handleCompressHistory } from "./gray-room-interrupt-handlers/compress-history.js";
+import { handleThinking } from "./gray-room-interrupt-handlers/thinking.js";
+import { handleAutoReadFile } from "./gray-room-interrupt-handlers/auto-read-file.js";
+import { handleAutoRagPage } from "./gray-room-interrupt-handlers/auto-rag-page.js";
+import { handleClarify } from "./gray-room-interrupt-handlers/clarify.js";
+import { handleAlgorithmInvoke } from "./gray-room-interrupt-handlers/algorithm-invoke.js";
+import { globalVisionTester } from "../vision-tester.js";
+import { globalRoleRegistry, AgentRole } from "../agent-role-registry.js";
+import { globalSafetyLayer } from "../safety-layer.js";
+import { globalIntentGate } from "../intent-gate.js";
+import { bugFixer } from "../../llm/bug-fixer.js";
+import { repoMapService } from "../../context/repo-map.service.js";
+import { llmService } from "../../llm/llm-service.js";
+import { contextDiscoveryService } from "../../context/context-discovery.service.js";
+import { resolveAiHubBaseUrl } from "../../utils/ai-hub-url.js";
+import { mkdtempOsTmp } from "../../utils/mkdtemp-os-tmp.js";
+import { prepareLlmMessages } from "./llm-orchestration.js";
 
 export class GrayRoomOrchestrator {
   private maxInterruptTurns: number;
@@ -217,7 +216,22 @@ export class GrayRoomOrchestrator {
         }
         // --------------------------------------------
 
-
+        // -- EXPERIENCE BANK (PRE) --
+        try {
+          const exprs = await globalExperienceBank.getRelevantExperiences(
+            JSON.stringify(workingCtx).slice(0, 500),
+          );
+          if (exprs.length > 0) {
+            workingCtx["relevant_experiences"] = exprs.map(
+              (e) => e.action_payload,
+            );
+          }
+        } catch (err) {
+          logger.warn("[GrayRoom] ExperienceBank get failure", {
+            error: String(err),
+          });
+        }
+        // --------------------------
 
         touchGrayRoom({
           phase: "response_transform",
@@ -472,7 +486,21 @@ export class GrayRoomOrchestrator {
           },
         };
 
-
+        // -- EXPERIENCE BANK (POST) --
+        try {
+          await globalExperienceBank.recordTurn(
+            (workingCtx["session_id"] as string) || "unknown",
+            `turn-${turn}`,
+            JSON.stringify(workingCtx),
+            { type: "interrupt", payload: interrupt.reason },
+            insights.confidence_delta,
+          );
+        } catch (err) {
+          logger.warn("[GrayRoom] ExperienceBank record failure", {
+            error: String(err),
+          });
+        }
+        // ------------------------------------------------
 
         logger.info("[GrayRoom] Iteration start", {
           turn,

@@ -1,7 +1,7 @@
 import * as ts from "typescript";
 import { promises as fsPromises } from "node:fs";
 import * as path from "path";
-import { logger } from "@a2a/server-utils/logger";
+import { logger } from '@a2a/server-utils/logger';
 
 export interface ContextVersion {
   versionId: number;
@@ -48,6 +48,7 @@ export class UltraContextService {
     }
 
     const lastVersion = history[history.length - 1];
+    if (!lastVersion) throw new Error(`Session ${sessionId} has no versions`);
     const newData = { ...lastVersion.data, ...delta };
     const newVersionId = lastVersion.versionId + 1;
 
@@ -67,8 +68,8 @@ export class UltraContextService {
 
   getLatest(sessionId: string): Record<string, any> {
     const history = this.sessions.get(sessionId);
-    if (!history) return {};
-    return history[history.length - 1].data;
+    if (!history || history.length === 0) return {};
+    return history[history.length - 1]!.data;
   }
 
   timeTravel(sessionId: string, versionId: number): void {
@@ -110,7 +111,7 @@ export class UltraContextService {
 
     for (const chunk of chunks) {
       const tsJsFiles = chunk.filter(
-        (file) => file.endsWith(".ts") || file.endsWith(""),
+        (file) => file.endsWith(".ts") || file.endsWith(".js"),
       );
       const chunkSigs = await Promise.all(
         tsJsFiles.map((file) => this.extractSignatures(file)),

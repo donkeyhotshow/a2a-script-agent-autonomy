@@ -1,16 +1,23 @@
 import http from 'http';
 import { getA2aServerBaseUrl } from '@a2a-client/shared/a2a-server-base.js';
+import { A2A_TRACE_HEADER } from '@a2a-client/shared/a2a-trace-constants.mjs';
 
-export function sendHttpRequest({ requestToServer, onResponse, onError }) {
+export function sendHttpRequest({ requestToServer, onResponse, onError, traceId }) {
     const a2aServerUrl = getA2aServerBaseUrl();
     const urlObj = new URL(`${a2aServerUrl}/api/v1/invoke`);
+
+    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const tid = typeof traceId === 'string' ? traceId.trim() : '';
+    if (tid) {
+        headers[A2A_TRACE_HEADER] = tid;
+    }
 
     const reqOptions = {
         hostname: urlObj.hostname,
         port: urlObj.port,
         path: urlObj.pathname,
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
     };
 
     const xhrReq = http.request(reqOptions, (xhrRes) => {

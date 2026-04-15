@@ -1,13 +1,13 @@
 {
-  "name": "@a2a-client/rag",
+  "name": "@a2a/rag",
   "version": "1.0.0",
   "description": "RAG Indexing and Search Module for A2A - Local indexing and search capabilities for code projects",
-  "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
-    "./*": "./*",
-    ".": "./dist/index.js",
-    "./meilisearch-defaults": "./dist/meilisearch-defaults.js"
+    ".": "./src/index.ts",
+    "./meilisearch-defaults": "./src/meilisearch-defaults.ts"
   },
   "scripts": {
     "build": "tsc",

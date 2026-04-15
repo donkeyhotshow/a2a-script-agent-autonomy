@@ -6,7 +6,7 @@
 
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
-import {ActionDefinition, SubAction, ActionContext, DSLDefinition} from './types';
+import {ActionDefinition, SubAction, ActionContext, DSLDefinition} from './types.js';
 import {tryParseJsonFromLlmText} from '@a2a/server-utils/strip-markdown-json-fence';
 import {logger} from '@a2a/server-utils/logger';
 

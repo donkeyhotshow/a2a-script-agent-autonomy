@@ -1,0 +1,72 @@
+services:
+  # AI Proxy Service
+  a2a-ai-hub:
+    build:
+      context: ./a2a-ai-hub
+      dockerfile: Dockerfile
+    container_name: a2a-ai-proxy
+    ports:
+      - "${PROXY_PORT:-11434}:11434"
+    environment:
+      - PROXY_PORT=11434
+      - PROXY_HOST=0.0.0.0
+      - LOCAL_LLM_UPSTREAM_URL=http://compat_llm:11434
+      - LOCAL_LLM_MODEL=${LOCAL_LLM_MODEL:-qwen3:8b}
+      - LOCAL_LLM_TIMEOUT=6000
+      - LOCAL_LLM_AUTO_START=false
+      - STORAGE_DIR=/app/proxy_logs
+      - LOG_LEVEL=INFO
+      - LOG_FORMAT=json
+      - HEALTH_CHECK_INTERVAL=5
+    volumes:
+      - ai_proxy_logs:/app/proxy_logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/health/ready"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    depends_on:
+      compat_llm:
+        condition: service_healthy
+    networks:
+      - a2a-network
+    profiles:
+      - ai
+      - full
+
+  # Local LLM upstream for AI inference
+  compat_llm:
+    image: compat_llm/compat_llm:latest
+    container_name: a2a-compat_llm
+    ports:
+      - "${LOCAL_LLM_PORT:-11435}:11434"
+    volumes:
+      - compat_llm_data:/root/.compat_llm
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/tags"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - a2a-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    profiles:
+      - ai
+      - full
+
+volumes:
+  compat_llm_data:
+  ai_proxy_logs:
+
+networks:
+  a2a-network:
+    driver: bridge
+    name: a2a-network

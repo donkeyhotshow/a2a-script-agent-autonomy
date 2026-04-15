@@ -1,18 +1,26 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
-import { buildInitialInvokeRequestBody, ROUTER_NEW_TASK_EXECUTION } from './first-invoke-payload.js';
+import { buildInitialInvokeRequestBody, ROUTER_NEW_TASK_EXECUTION } from '../src/lib/first-invoke-payload.ts';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const repoRoot = join(__dirname, '../../../../..');
+const repoRoot = join(__dirname, '../../../..');
 const simulationsBasePath = process.env.SIMULATIONS_PATH || join(repoRoot, 'simulations');
+
+function readAgentStep1Request(): string {
+    const primary = join(simulationsBasePath, 'sync', 'agent', '1', 'request.json');
+    const integration = join(repoRoot, 'tests', 'integration', 'simulations', 'sync', 'agent', '1', 'request.json');
+    if (existsSync(primary)) return readFileSync(primary, 'utf-8');
+    if (existsSync(integration)) return readFileSync(integration, 'utf-8');
+    throw new Error('Golden request.json not found under simulations/ or tests/integration/simulations/');
+}
 
 describe('first-invoke-payload (T003)', () => {
     it('matches simulations/agent/1 execution pattern', () => {
-        const golden = JSON.parse(
-            readFileSync(join(simulationsBasePath, 'sync', 'agent', '1', 'request.json'), 'utf-8')
-        ) as { context: { execution: { action: string; step: string } } };
+        const golden = JSON.parse(readAgentStep1Request()) as {
+            context: { execution: { action: string; step: string } };
+        };
 
         expect(ROUTER_NEW_TASK_EXECUTION).toEqual(golden.context.execution);
     });

@@ -1,6 +1,5 @@
-import { createLogger } from "@a2a/server-utils/logger";
-import { tryParseJsonFromLlmText } from "@a2a/server-utils/strip-markdown-json-fence";
-import { llmService } from "@a2a/server-llm";
+import { createLogger } from "@a2a/server-utils";
+import { tryParseJsonFromLlmText } from "@a2a/server-utils";
 
 const logger = createLogger("IntentGate");
 

@@ -18,12 +18,10 @@
  *                           Absent → screenshot capture is skipped; rule-based fallback runs.
  */
 
-import { ArtifactStore, createArtifactWriteInput } from '../core/artifact-store';
-import { executeMcpCall } from '../../../actions/src/handlers/mcp-call';
-import { logger } from "@a2a/server-utils/logger";
-import { resolveAiHubBaseUrlWithModuleEnv } from '../../lib/ai-hub-url';
-import { fetchAiHubGenerateText } from '../../lib/ai-hub-generate';
-import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence';
+import { ArtifactStore, createArtifactWriteInput } from '../core/artifact-store.js';
+import { executeMcpCall } from '../../actions/src/handlers/mcp-call.js';
+import { logger, resolveAiHubBaseUrlWithModuleEnv, tryParseJsonFromLlmText } from '@a2a/server-utils';
+import { fetchAiHubGenerateText } from '../../utils/ai-hub-generate.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 

@@ -13,7 +13,7 @@ from typing import Optional
 
 # Load .env file
 from dotenv import load_dotenv
-# Load from parent directory (a2a-ai-hub/)
+# Load from parent directory (ai-integration/)
 env_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
 load_dotenv(env_path)
 
@@ -28,7 +28,7 @@ from proxy.daemon import start_daemon, stop_daemon
 from proxy.config import CLEANUP_INTERVAL_HOURS, ENABLE_CLEANUP
 from proxy.logging_setup import ensure_file_log_handler
 
-# Configure logging (console + file under a2a-ai-hub/logs/)
+# Configure logging (console + file under ai-integration/logs/)
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'

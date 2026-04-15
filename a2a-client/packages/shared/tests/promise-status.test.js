@@ -3,7 +3,7 @@ import {
     isActivePromiseStatus,
     isPromisePollComplete,
     isRemovablePromiseBesideResponse,
-} from '../../packages/vite-plugin/storage/promise-status.js';
+} from '@a2a-client/storage/promise-status.ts';
 
 describe('promise-status', () => {
     it('isActivePromiseStatus', () => {

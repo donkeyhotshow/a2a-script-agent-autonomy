@@ -21,12 +21,18 @@ export async function serverFetch(
     method: string,
     serverBaseUrl: string,
     pathName: string,
-    body: unknown | null = null
+    body: unknown | null = null,
+    extraHeaders: Record<string, string> | undefined = undefined
 ): Promise<Response> {
     const cfg = await loadConfig();
     const headers: Record<string, string> = {};
     if (cfg.token) headers['Authorization'] = `Bearer ${cfg.token}`;
     if (body != null) headers['Content-Type'] = 'application/json';
+    if (extraHeaders) {
+        for (const [k, v] of Object.entries(extraHeaders)) {
+            if (v) headers[k] = v;
+        }
+    }
 
     const url = `${normalizeA2aServerBaseUrl(serverBaseUrl)}${pathName}`;
     

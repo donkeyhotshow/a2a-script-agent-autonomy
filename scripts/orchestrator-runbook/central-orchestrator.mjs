@@ -11,7 +11,8 @@ import { fileURLToPath } from 'url';
 import path from 'path';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(__dirname);
+/** Repository root (this file lives in scripts/orchestrator-runbook/). */
+const repoRoot = path.resolve(__dirname, '..', '..');
 
 const extra = process.argv.slice(2);
 if (extra.length > 0) {

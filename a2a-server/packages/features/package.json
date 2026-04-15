@@ -11,7 +11,11 @@
     "build": "tsc -p tsconfig.json",
     "prepare": "npm run build"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@a2a/server-utils": "file:../server-utils",
+    "@a2a/server-protocol": "file:../server-protocol",
+    "@a2a/server-core": "file:../server"
+  },
   "devDependencies": {
     "typescript": "^5.0.0"
   },

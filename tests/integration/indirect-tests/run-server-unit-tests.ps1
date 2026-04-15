@@ -6,9 +6,9 @@
     By default excludes tests/integration/** and tests/e2e/** (real HTTP, LLM, long timeouts).
     Use -IncludeIntegration to run the full a2a-server suite (needs stack/services as those tests expect).
 .EXAMPLE
-    .\tests\indirect-tests\run-server-unit-tests.ps1
-    .\tests\indirect-tests\run-server-unit-tests.ps1 -Filter "router|action"
-    .\tests\indirect-tests\run-server-unit-tests.ps1 -IncludeIntegration
+    .\tests\integration\indirect-tests\run-server-unit-tests.ps1
+    .\tests\integration\indirect-tests\run-server-unit-tests.ps1 -Filter "router|action"
+    .\tests\integration\indirect-tests\run-server-unit-tests.ps1 -IncludeIntegration
 #>
 param(
     [string]$Filter = "",
@@ -17,12 +17,14 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
-$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..')
+$RepoRoot = Resolve-Path (Join-Path $PSScriptRoot '..\..\..')
 Set-Location (Join-Path $RepoRoot 'a2a-server')
 
 $env:NODE_ENV = 'test'
 $env:ENCRYPTION_KEY = '12345678901234567890123456789012'  # 32 chars for test
 $env:JWT_SECRET = 'test-jwt-secret-32-chars-long!!!!!'
+# Stateless integration tests expect no DB URL from .env
+Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
 
 if ($IncludeIntegration) {
     $vitestCmd = if ($Watch) { "npx vitest" } else { "npx vitest run" }

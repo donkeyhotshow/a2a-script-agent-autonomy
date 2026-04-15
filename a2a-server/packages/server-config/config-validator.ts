@@ -5,6 +5,11 @@
  * Contains all validation logic in one place to avoid duplication.
  */
 
+import { z } from "zod";
+import { mapEnvironmentVariables } from "./env-mapper.js";
+import type { AppConfig } from "./types.js";
+import { appConfigSchema, databaseConfigSchema, securityConfigSchema, aiHubConfigSchema } from "./schema.js";
+
 /**
  * Formats Zod validation errors into human-readable messages.
  */
@@ -60,13 +65,8 @@ export function validateConfigSafe():
  * Useful for service startup validation.
  */
 export function validatePorts() {
-  const raw = {
-    serverPort: process.env.SERVER_PORT,
-    clientApiPort: process.env.CLIENT_API_PORT,
-    webPort: process.env.WEB_PORT,
-    postgresPort: process.env.POSTGRES_PORT,
-    redisPort: process.env.REDIS_PORT,
-  };
+  // Port validation using portConfigSchema - ports are validated as part of appConfigSchema
+  return {};
   // Port validation removed as portConfigSchema was removed
   // This function should be updated or removed
   return {};

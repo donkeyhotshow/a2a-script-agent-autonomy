@@ -1,2 +1,8 @@
 packages:
-  - 'packages/*'
+  - 'packages/server-config'
+  - 'packages/server-protocol'
+  - 'packages/server-utils'
+  - 'packages/daemon'
+  - 'packages/request'
+  - 'packages/config'
+  - 'packages/protocol'

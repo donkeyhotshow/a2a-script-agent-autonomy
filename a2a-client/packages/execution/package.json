@@ -3,17 +3,20 @@
   "version": "1.0.0",
   "description": "A2A Execution - unified package for fs-utils, terminal and script-runner",
   "type": "module",
-  "main": "./src/index.js",
+  "main": "./src/index.ts",
   "exports": {
-    "./*": "./*",
-    ".": "./src/index.js",
-    "./fs-utils": "./src/index.js",
+    ".": "./src/index.ts",
+    "./fs-utils": "./src/fs-utils.ts",
     "./terminal": "./src/terminal/terminal-handler.cjs",
-    "./script-runner": "./src/script-runner/index.js",
-    "./run-agent-command": "./src/run-agent-command.js",
-    "./path-sandbox": "./src/path-sandbox.js",
-    "./run-agent-edit-patch": "./src/run-agent-edit-patch.js",
-    "./run-agent-registered-script": "./src/run-agent-registered-script.js"
+    "./script-runner": "./src/script-runner/index.ts",
+    "./run-agent-command": "./src/run-agent-command.ts",
+    "./run-agent-command.js": "./src/run-agent-command.ts",
+    "./path-sandbox": "./src/path-sandbox.ts",
+    "./path-sandbox.js": "./src/path-sandbox.ts",
+    "./run-agent-edit-patch": "./src/run-agent-edit-patch.ts",
+    "./run-agent-edit-patch.js": "./src/run-agent-edit-patch.ts",
+    "./run-agent-registered-script": "./src/run-agent-registered-script.ts",
+    "./run-agent-registered-script.js": "./src/run-agent-registered-script.ts"
   },
   "scripts": {
     "build": "tsc",
@@ -29,6 +32,7 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@a2a/fs-utils": "file:../fs-utils",
     "vm2": "^3.10.5"
   },
   "devDependencies": {

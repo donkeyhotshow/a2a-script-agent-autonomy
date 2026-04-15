@@ -2,7 +2,7 @@
  * LLMJudge — ADR-0065: LLM-as-Judge self-evaluation layer.
  *
  * Evaluates agent outputs against the goal before the DELIVERING transition.
- * Calls the existing AI proxy (a2a-ai-hub on :11434) with a structured
+ * Calls the existing AI proxy (ai-integration on :11434) with a structured
  * evaluation prompt. Falls back to a rule-based judge when the proxy is
  * unavailable.
  *
@@ -11,16 +11,13 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { logger } from "@a2a/server-utils/logger";
-import { resolveAiHubBaseUrl } from '../../lib/ai-hub-url';
-import { fetchAiHubChatJson } from '../../lib/ai-hub-chat-sync';
-import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence';
+import { logger, resolveAiHubBaseUrl, fetchAiHubChatJson, tryParseJsonFromLlmText } from '@a2a/server-utils';
 import {
   ArtifactStore,
   createArtifactWriteInput,
   type StoredArtifact,
-} from '../core/artifact-store';
-import type { ReasoningChain } from '../core/cognitive-engine';
+} from '../core/artifact-store.js';
+import type { ReasoningChain } from '../core/cognitive-engine.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 

@@ -74,7 +74,7 @@ npm run test:gang
 2. **Смена Папы (Papa Shift):**
    - Проверяет, запущен ли живой стек (`http://localhost:3000/health`).
    - Если стек жив — `e2e-dialog-test.js` (с флагом `E2E_DIRECT_LOW_LLM=1` для экономии токенов): Client API / сессии / LLM.
-   - Если **a2a-ai-hub** отвечает на `:11434/health` — `npm run verify:proba-cache-api` (два одинаковых `POST /api/chat?promise=1` → второй с `cached: true`).
+   - Если **ai-integration** отвечает на `:11434/health` — `npm run verify:proba-cache-api` (два одинаковых `POST /api/chat?promise=1` → второй с `cached: true`).
    - **Proba-servera** уже в смене Мамы (in-process invoke, без HTTP).
 
 Если вам нужно запустить их по отдельности:
@@ -91,7 +91,7 @@ npm run test:gang
 
 3. **Papa (when you need “it really talks”):**
    ```powershell
-   powershell -ExecutionPolicy Bypass -File .\tests\direct-tests\run-post-
+   powershell -ExecutionPolicy Bypass -File .\tests\direct-tests\run-post-start-all.ps1
    # Or subset: node tests/direct-tests/e2e-dialog-test.js --only=routerAgentNoLoop
    ```
    See [`tests/direct-tests/README.md`](tests/direct-tests/README.md).

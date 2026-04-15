@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { createHubPromiseRoutes } from '../../packages/vite-plugin/routes/hubPromiseRoutes.js';
+import { createHubPromiseRoutes } from '../src/routes/hubPromiseRoutes.js';
 
 describe('hubPromiseRoutes', () => {
     let mw;

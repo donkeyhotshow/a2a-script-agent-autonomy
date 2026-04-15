@@ -2,8 +2,8 @@
  * Locks router vs LLM-pipeline classification for mode:agent (see tasks/pending/router-agent-mode-fix-verification.md).
  */
 import {describe, it, expect} from 'vitest';
-import {BaseRequestProcessor, type RequestType} from '../../src/services/core/request-processor/base-processor';
-import type {RequestContext, ProcessResult} from '../../src/services/core/request-processor/request-processor.interfaces';
+import {BaseRequestProcessor, type RequestType} from '../../src/services/core/request-processor/base-processor.js';
+import type {RequestContext, ProcessResult} from '../../src/services/core/request-processor/request-processor.interfaces.js';
 
 class IsTaskRequestProbe extends BaseRequestProcessor {
     constructor() {

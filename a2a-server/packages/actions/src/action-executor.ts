@@ -1,4 +1,4 @@
-import { ActionDefinition, ExecutionState, SubAction, StepHistory } from './types.ts';
+import { ActionDefinition, ExecutionState, SubAction, StepHistory } from './types.js';
 
 export interface StepResult {
     stepId: string;

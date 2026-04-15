@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Test cleanup functionality for a2a-ai-hub proxy.
+Test cleanup functionality for ai-integration proxy.
 """
 
 import argparse

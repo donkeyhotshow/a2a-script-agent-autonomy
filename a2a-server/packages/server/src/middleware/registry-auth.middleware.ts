@@ -6,7 +6,7 @@
  */
 
 import type {Request, Response, NextFunction} from 'express';
-import {config} from '../../server-config/index';
+import {config} from '@a2a/config';
 
 export function registryAuth(req: Request, res: Response, next: NextFunction): void {
     if (config.skipAuth) {

@@ -1,6 +1,37 @@
 import axios from 'axios';
 
 /**
+ * Try Client API on alternate loopback hosts (IPv4 / name / IPv6) when one bind family fails.
+ * @param {string} baseUrl e.g. http://127.0.0.1:5173/api/a2a
+ * @returns {string[]}
+ */
+export function loopbackClientApiBaseUrlCandidates(baseUrl) {
+  const trimmed = String(baseUrl || '').replace(/\/$/, '');
+  try {
+    const u = new URL(trimmed);
+    const host = u.hostname;
+    const loopbacks = new Set(['127.0.0.1', 'localhost', '[::1]', '::1']);
+    if (!loopbacks.has(host)) return [trimmed];
+    const order = ['127.0.0.1', 'localhost', '[::1]'];
+    const seen = new Set();
+    const variants = [];
+    for (const h of order) {
+      const c = new URL(trimmed);
+      c.hostname = h;
+      const s = c.toString().replace(/\/$/, '');
+      if (!seen.has(s)) {
+        seen.add(s);
+        variants.push(s);
+      }
+    }
+    const rest = variants.filter((x) => x !== trimmed);
+    return [trimmed, ...rest];
+  } catch {
+    return [trimmed];
+  }
+}
+
+/**
  * Action-key shape for Client API session payloads (projected execute / result).
  * @param {object} obj
  * @param {'execute'|'result'} type
@@ -196,10 +227,25 @@ class TaskMonitorValidation {
     const healthTimeout = parseInt(process.env.TASK_MONITOR_HEALTH_TIMEOUT_MS || '15000', 10);
 
     try {
-      // Check Client API
-      const clientRes = await axios.get(`${this.baseUrl}/projects`, { timeout: healthTimeout });
-      results.clientApi = clientRes.status === 200 && Array.isArray(clientRes.data.projects);
-      results.details.clientApi = results.clientApi ? 'OK' : 'Failed';
+      const bases = loopbackClientApiBaseUrlCandidates(this.baseUrl);
+      let lastMsg = '';
+      for (const base of bases) {
+        try {
+          const clientRes = await axios.get(`${base}/projects`, { timeout: healthTimeout });
+          if (clientRes.status === 200 && Array.isArray(clientRes.data.projects)) {
+            results.clientApi = true;
+            results.details.clientApi = base === this.baseUrl.replace(/\/$/, '') ? 'OK' : `OK (${base})`;
+            lastMsg = '';
+            break;
+          }
+          lastMsg = 'Unexpected response shape';
+        } catch (error) {
+          lastMsg = error.message;
+        }
+      }
+      if (!results.clientApi) {
+        results.details.clientApi = lastMsg ? `Error: ${lastMsg}` : 'Failed';
+      }
     } catch (error) {
       results.details.clientApi = `Error: ${error.message}`;
     }

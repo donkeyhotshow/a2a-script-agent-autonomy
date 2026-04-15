@@ -25,12 +25,15 @@
                 <section id="operator-chat" aria-label="Chat">
                     <div class="op-panel-header">
                         <div class="op-panel-title">Chat</div>
+                        <span id="op-header-spinner" class="op-header-spinner" hidden aria-hidden="true"></span>
                         <div class="op-panel-subtitle" id="op-active-session">Session: —</div>
                     </div>
                     <div id="op-messages" class="op-messages"></div>
                     <div id="op-thinking" class="op-thinking" hidden aria-live="polite"></div>
+                    <div id="op-waiting" class="op-waiting" hidden></div>
                     <div id="op-choices" class="op-choices"></div>
                     <div id="op-grayroom" class="op-grayroom"></div>
+                    <div id="op-retry-bar" class="op-retry-bar" hidden></div>
                     <form id="op-input-form" class="op-input" autocomplete="off">
                         <div id="op-form-fields" class="op-form-fields"></div>
                         <div id="op-input-row" class="op-input-row">
@@ -58,6 +61,17 @@
                         </div>
                     </div>
                 </section>
+            </div>
+
+            <div id="op-artifact-modal" class="op-modal" hidden aria-modal="true" role="dialog">
+                <div class="op-modal-backdrop" data-close-modal="1"></div>
+                <div class="op-modal-panel">
+                    <div class="op-modal-header">
+                        <div class="op-modal-title" id="op-artifact-modal-title">Artifact</div>
+                        <button type="button" class="op-btn op-btn-ghost" id="op-artifact-modal-close" aria-label="Close">✕</button>
+                    </div>
+                    <pre class="op-modal-body" id="op-artifact-modal-body"></pre>
+                </div>
             </div>
 
             <section id="operator-monitor" aria-label="Task monitor">

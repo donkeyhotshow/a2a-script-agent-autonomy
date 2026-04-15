@@ -16,7 +16,7 @@
  */
 
 import { spawn } from 'node:child_process';
-import { logger } from '../../../utils/logger';
+import { logger } from '@a2a/server-utils/logger';
 
 // ── Input / Output types ──────────────────────────────────────────────────────
 

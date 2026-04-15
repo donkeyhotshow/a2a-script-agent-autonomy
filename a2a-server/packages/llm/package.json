@@ -1,0 +1,27 @@
+{
+  "name": "@a2a/server-llm",
+  "version": "1.0.0",
+  "description": "LLM-facing utilities and stubs for A2A server",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": [
+    "dist/**/*"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@a2a/server-utils": "file:../server-utils",
+    "@a2a/server-protocol": "file:../server-protocol",
+    "@a2a/server-transform": "file:../transform"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.39",
+    "typescript": "^5.3.3"
+  }
+}
+

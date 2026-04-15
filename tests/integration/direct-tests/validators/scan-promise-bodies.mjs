@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { analyzeLlmExecuteShape } from './lib/check-llm-execute-shape.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const PROMISES_DIR = path.join(__dirname, '..', '..', '..', 'ai-integration', 'proxy_logs', 'promises');
+const PROMISES_DIR = path.join(__dirname, '..', '..', '..', '..', 'ai-integration', 'proxy_logs', 'promises');
 const argv = new Set(process.argv.slice(2));
 const skipIfMissing = argv.has('--skip-if-missing');
 const strict = argv.has('--strict');

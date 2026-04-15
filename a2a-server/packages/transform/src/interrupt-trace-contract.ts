@@ -15,7 +15,7 @@
  * `mergeGrayRoomSlotIntoContext` from `GrayRoomOrchestrator`.
  */
 
-import type {GrayRoomControlEnvelope, ServerInterruptTraceEvent} from './types';
+import type {GrayRoomControlEnvelope, ServerInterruptTraceEvent} from './types.js';
 
 /** Slot key under `workbench.slots` (single source of truth). */
 export const INTERRUPT_TRACE_SLOT_KEY = 'interruptTrace' as const;

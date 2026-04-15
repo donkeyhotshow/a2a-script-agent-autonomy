@@ -3,7 +3,7 @@
  * Re-exports all schemas from modular config/schemas/ structure.
  */
 
-export * from "./schemas/index";
+export * from "./schemas/index.js";
 
 // ===========================================
 // Helper Schemas
@@ -23,9 +23,6 @@ const booleanSchema = z
 /** Coerce string to integer */
 const intSchema = (min: number, max: number, defaultValue: number) =>
   z.coerce.number().int().min(min).max(max).default(defaultValue);
-
-/** Port number schema (1-65535) */
-const portSchema = (defaultPort: number) => intSchema(1, 65535, defaultPort);
 
 /** URL string schema */
 const urlSchema = (defaultUrl?: string) =>
@@ -77,7 +74,10 @@ export const securityConfigSchema = z.object({
 export const serverConfigSchema = z.object({
   nodeEnv: z.enum(["development", "production", "test"]).default("development"),
   host: z.string().default("localhost"),
-  defaultEmail: z.string().email().default("dev@localhost"),
+  /** Dev seed uses `dev@localhost` (not a public TLD — excluded from `z.string().email()`). */
+  defaultEmail: z
+    .union([z.string().email(), z.literal("dev@localhost")])
+    .default("dev@localhost"),
   defaultPassword: z.string().default("dev"),
 });
 

@@ -1,4 +1,4 @@
-import { validatePath } from './security';
+import { validatePath } from './security.js';
 import { describe, test, expect, vi, beforeEach, afterEach } from 'vitest';
 
 describe('validatePath', () => {

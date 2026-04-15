@@ -6,7 +6,7 @@
  * записи в критические пути файловой системы.
  */
 
-import {logger} from '../../utils/logger.js';
+import {logger} from '@a2a/server-utils/logger';
 
 export interface PathRule {
     /** Glob-style pattern. Supports ** and *. */

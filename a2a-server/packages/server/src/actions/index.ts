@@ -4,5 +4,5 @@
  * @deprecated Use direct imports from @a2a/actions instead
  */
 
-export * from '../../../actions/src';
+export * from '../../../actions/src/index.js';
 

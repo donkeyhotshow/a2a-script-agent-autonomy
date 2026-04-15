@@ -5,7 +5,7 @@ import {
     isGraphComplete,
     mergeGraphs,
     parseGraphFromContext,
-} from '../../src/services/core/graph-store.service';
+} from '../../src/services/core/graph-store.service.js';
 
 const e1 = {
     id: 'm1',

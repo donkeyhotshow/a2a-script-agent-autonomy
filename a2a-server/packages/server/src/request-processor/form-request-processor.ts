@@ -14,8 +14,8 @@ import type {
     ProcessResult,
     ProcessOutcome
 } from './request-processor.interfaces';
-import {BaseRequestProcessor, type RequestType} from './base-processor';
-import {runFormChoicePipeline} from './form-choice-pipeline';
+import {BaseRequestProcessor, type RequestType} from './base-processor.js';
+import {runFormChoicePipeline} from './form-choice-pipeline.js';
 
 /**
  * Form field definition

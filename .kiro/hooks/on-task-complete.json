@@ -1,0 +1,13 @@
+{
+  "name": "On Task Complete",
+  "version": "1.0.0",
+  "description": "Moves completed task files and updates DEV_STATE.md",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["tasks/*.md", "tasks/pending/*.md"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A task file in tasks/ was edited. If this task is now complete:\n1. Move the task file to tasks/completed/ (or tasks/_completed/)\n2. Update DEV_STATE.md — set today's date, update service statuses, record evidence of completion (test output, sessionId, promiseId, or diff summary)\n3. If all tasks for a package are complete, update that package's README.md\n4. Check if the empty queue policy applies: prune completed items, discover new work, write new tasks if needed\nOnly act if the task content indicates completion."
+  }
+}

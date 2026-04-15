@@ -7,7 +7,7 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { agentRegistry } from '../../services/registry-v2';
+import { agentRegistry } from '../../../services/src/registry-v2.js';
 
 const router = Router();
 

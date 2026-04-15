@@ -1,4 +1,4 @@
-// Stub for @a2a-client/rag since the package has build issues
+// Stub for @a2a/rag since the package has build issues
 export class RAGSearcher {
   constructor() {}
   async search() {

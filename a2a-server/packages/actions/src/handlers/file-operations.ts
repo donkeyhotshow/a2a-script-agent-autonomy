@@ -2,10 +2,10 @@
  * Action Handler: file-operations — re-exports from `./file-operations/`.
  */
 
-export {executeReadFile} from './file-operations/read-file';
-export {executeWriteFile} from './file-operations/write-file';
-export {executeFileExists} from './file-operations/file-exists';
-export {executeListDirectory} from './file-operations/list-directory';
+export {executeReadFile} from './file-operations/read-file.js';
+export {executeWriteFile} from './file-operations/write-file.js';
+export {executeFileExists} from './file-operations/file-exists.js';
+export {executeListDirectory} from './file-operations/list-directory.js';
 export type {
     ReadFileActionInput,
     ReadFileActionOutput,
@@ -15,4 +15,4 @@ export type {
     FileExistsActionOutput,
     ListDirActionInput,
     ListDirActionOutput,
-} from './file-operations/types';
+} from './file-operations/types.js';

@@ -13,7 +13,6 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { createRAG, RAGIndexer, RAGSearcher } from '../dist/index.js';
-import { checkPathAccess } from '../../../execution/src/fs-access.js';
 
 const PROJECT_PATH = 'C:\\workspace\\domain-platform\\websitestore.com.ua';
 const RAG_RESPONSES_DIR = './rag-responses';
@@ -27,35 +26,28 @@ async function main() {
     const queries = await loadQueriesFromSimulations();
     console.log(`Found ${queries.length} queries\n`);
     
-     // Check if project exists
-     try {
-         const hasAccess = await checkPathAccess(PROJECT_PATH);
-         if (!hasAccess) {
-             console.error(`Project not found: ${PROJECT_PATH}`);
-             console.log('Please check the project path in the script');
-             process.exit(1);
-         }
-     } catch {
-         console.error(`Project not found: ${PROJECT_PATH}`);
-         console.log('Please check the project path in the script');
-         process.exit(1);
-     }
+    // Check if project exists
+    try {
+        await fs.access(PROJECT_PATH);
+    } catch {
+        console.error(`Project not found: ${PROJECT_PATH}`);
+        console.log('Please check the project path in the script');
+        process.exit(1);
+    }
     
     // Create RAG instance
     console.log('Creating RAG indexer for project...');
     const rag = createRAG({ projectPath: PROJECT_PATH });
     
-     // Check if index exists
-      const indexPath = path.join(PROJECT_PATH, '.a2a', 'index', 'rag-files.json');
-      let indexExists = false;
-      try {
-          const hasAccess = await checkPathAccess(indexPath);
-          if (hasAccess) {
-              indexExists = true;
-          }
-      } catch (err) {
-          // Silently ignore file access errors - index doesn't exist
-      }
+    // Check if index exists
+     const indexPath = path.join(PROJECT_PATH, '.a2a', 'index', 'rag-files.json');
+     let indexExists = false;
+     try {
+         await fs.access(indexPath);
+         indexExists = true;
+     } catch (err) {
+         // Silently ignore file access errors - index doesn't exist
+     }
     
     if (!indexExists) {
         console.log('Index not found. Indexing project (this may take a while)...');

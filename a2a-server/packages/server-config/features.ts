@@ -5,7 +5,7 @@
  * Core systems cannot be disabled - they are always enabled.
  */
 
-import type { FeaturesConfig } from "./schema";
+import type { FeaturesConfig } from "./schema.js";
 
 /**
  * Feature flag checker with caching

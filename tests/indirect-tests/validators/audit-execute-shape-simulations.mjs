@@ -11,7 +11,10 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
-const SIM_DIR = path.join(REPO_ROOT, 'simulations', 'sync');
+const SIM_DIRS = [
+  path.join(REPO_ROOT, 'simulations', 'sync'),
+  path.join(REPO_ROOT, 'tests', 'integration', 'simulations', 'sync'),
+].filter((d) => fs.existsSync(d));
 
 const TOOL_KEYS = new Set([
     'rag-search',
@@ -95,26 +98,27 @@ function findViolations(jsonPath) {
 
 function scanSimulations() {
     const results = [];
-    if (!fs.existsSync(SIM_DIR)) {
-        return { results, filesScanned: 0 };
-    }
     let filesScanned = 0;
-    const categories = fs.readdirSync(SIM_DIR, { withFileTypes: true }).filter((d) => d.isDirectory());
+    for (const SIM_DIR of SIM_DIRS) {
+        const categories = fs.readdirSync(SIM_DIR, { withFileTypes: true }).filter((d) => d.isDirectory());
 
-    for (const ent of categories) {
-        const catPath = path.join(SIM_DIR, ent.name);
-        const stepDirs = fs.readdirSync(catPath, { withFileTypes: true }).filter((d) => d.isDirectory() && isStepDir(d.name));
+        for (const ent of categories) {
+            const catPath = path.join(SIM_DIR, ent.name);
+            const stepDirs = fs
+                .readdirSync(catPath, { withFileTypes: true })
+                .filter((d) => d.isDirectory() && isStepDir(d.name));
 
-        for (const sd of stepDirs) {
-            const responsePath = path.join(catPath, sd.name, 'response.json');
-            if (!fs.existsSync(responsePath)) continue;
-            filesScanned++;
-            const violations = findViolations(responsePath);
-            if (violations.length > 0) {
-                results.push({
-                    file: path.relative(REPO_ROOT, responsePath),
-                    violations,
-                });
+            for (const sd of stepDirs) {
+                const responsePath = path.join(catPath, sd.name, 'response.json');
+                if (!fs.existsSync(responsePath)) continue;
+                filesScanned++;
+                const violations = findViolations(responsePath);
+                if (violations.length > 0) {
+                    results.push({
+                        file: path.relative(REPO_ROOT, responsePath),
+                        violations,
+                    });
+                }
             }
         }
     }

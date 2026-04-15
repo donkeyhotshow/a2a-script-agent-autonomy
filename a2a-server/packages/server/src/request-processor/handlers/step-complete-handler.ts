@@ -5,7 +5,7 @@
  */
 
 import {logger} from "@a2a/server-utils/logger";
-import {applySequenceStepComplete} from '../sequence-workbench';
+import {applySequenceStepComplete} from '../sequence-workbench.js';
 import type {
     RequestContext,
     ProcessResult,

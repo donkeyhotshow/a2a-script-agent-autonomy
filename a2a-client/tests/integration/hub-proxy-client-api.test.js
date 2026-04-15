@@ -4,7 +4,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import request from 'supertest';
 import express from 'express';
-import { createHubProxyRouter } from '../../packages/sdk/src/server/server/routes/hub-proxy.js';
+import { createHubProxyRouter } from '../../packages/sdk/src/server/server/routes/hub-proxy.ts';
 
 function makeApp() {
     const app = express();

@@ -1,5 +1,5 @@
 """
-Cleanup utilities for a2a-ai-hub proxy.
+Cleanup utilities for ai-integration proxy.
 
 Handles automatic cleanup of old promises, results, and logs based on TTL settings.
 """

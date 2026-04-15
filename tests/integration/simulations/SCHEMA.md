@@ -133,7 +133,7 @@ Examples: [`agent-auto-ai/6/interrupt.md`](agent-auto-ai/6/interrupt.md); subste
 
 Simulations test **payload shape**, not live Z.AI vs Local LLM upstream. **`request.md` / `response.md`** are fixtures: they do not prove routing.
 
-- **Runtime** model list and routing live in **a2a-ai-hub** (`GET /api/tags`, per-request `model`) → see [`LLM-BACKEND-MAP.md`](LLM-BACKEND-MAP.md) for ports, “fixture vs live”, and an optional YAML header for `request.md` so authors state assumed `provider` + `model`.
+- **Runtime** model list and routing live in **ai-integration** (`GET /api/tags`, per-request `model`) → see [`LLM-BACKEND-MAP.md`](LLM-BACKEND-MAP.md) for ports, “fixture vs live”, and an optional YAML header for `request.md` so authors state assumed `provider` + `model`.
 - **Future:** when the server stores `model` (and optional provider) on invoke, document the exact `context` paths in `request.json` here and add a targeted golden (tracked in [`tasks/pending/multi-provider-model-selection.md`](../tasks/pending/multi-provider-model-selection.md)).
 
 ## Примеры Web ↔ Client API

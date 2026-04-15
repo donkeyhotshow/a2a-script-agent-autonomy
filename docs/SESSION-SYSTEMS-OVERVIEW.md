@@ -63,9 +63,9 @@ Client API → A2A Server → AI Integration
 ```
 
 ### Key Files
-- `a2a-ai-hub/proxy/promise_routes.py` - Promise API endpoints
-- `a2a-ai-hub/proxy/promises.py` - Promise state management
-- `a2a-ai-hub/proxy/daemon.py` - Background processing
+- `ai-integration/proxy/promise_routes.py` - Promise API endpoints
+- `ai-integration/proxy/promises.py` - Promise state management
+- `ai-integration/proxy/daemon.py` - Background processing
 - `a2a-client/packages/vite-plugin/routes/stepRoutes.js` - `/async` polling
 
 ### States

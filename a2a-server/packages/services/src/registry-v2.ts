@@ -13,7 +13,7 @@
  *  - Background poller drains agents whose last heartbeat is > 30 s old
  */
 
-import { logger } from '../../lib/logger';
+import { logger } from '@a2a/server-utils/logger';
 
 // ── Public interfaces ─────────────────────────────────────────────────────────
 

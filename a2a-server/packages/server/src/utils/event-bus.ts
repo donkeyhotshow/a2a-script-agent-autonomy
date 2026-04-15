@@ -1,1 +1,1 @@
-export * from '../../../lib/event-bus.ts'
+export * from '../../../lib/event-bus.js'

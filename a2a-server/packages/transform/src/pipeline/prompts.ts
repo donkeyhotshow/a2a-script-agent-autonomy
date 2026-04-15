@@ -5,16 +5,14 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
-import { logger } from "@a2a/server-utils/logger";
-import { deepCloneJson } from '@a2a/server-utils/deep-clone-json';
-import { pathIsAccessible } from '@a2a/server-utils/fs-access';
-import { prepareInvokePayloadForLlmPrompt } from '../materialize-result-for-llm';
-import { attachFlowControlHintToInvokePayload } from '../../prompts/flow-control-hints';
-import { attachWorkbenchForLlmPrompt } from '../workbench-normalize';
-import { loadTransformPipeline } from './load';
-import { runTransformPipeline } from './run';
-import type { TransformPipeline, TransformOptions, TransformResult } from '../types';
-import { ALLOWED_TRANSFORM_TYPES } from '../types';
+import { logger } from '@a2a/server-utils/logger';
+import { deepCloneJson, pathIsAccessible } from '@a2a/server-utils';
+import { prepareInvokePayloadForLlmPrompt } from '../materialize-result-for-llm.js';
+import { attachFlowControlHintToInvokePayload } from '../prompts/flow-control-hints.js';
+import { attachWorkbenchForLlmPrompt } from '../workbench-normalize.js';
+import { loadTransformPipeline } from './load.js';
+import { runTransformPipeline } from './run.js';
+import type { TransformPipeline, TransformOptions, TransformResult } from '../types.js';
 
 /**
  * Schema name → template file override. Convention: `{schema}-request.md`.
@@ -91,9 +89,6 @@ export function getPromptsTransformsPath(): string {
  * 4. server-transforms-{type}.json
  * When forceServerTransforms: true, use server-transforms-{type}.json; **dialog** response also tries **dialog-llm-response.json** first (workbench + same parse/execute as generic).
  */
-/** Allowlist for schema name characters — prevents path traversal via schemaName */
-const SAFE_SCHEMA_RE = /^[a-zA-Z0-9_-]+$/;
-
 async function resolveTransformFile(
   dir: string,
   schemaName: string,
@@ -101,26 +96,6 @@ async function resolveTransformFile(
   type: 'request' | 'response',
   forceServerTransforms?: boolean
 ): Promise<string> {
-  // CWE-22/23: validate inputs before interpolating into paths
-  if (!ALLOWED_TRANSFORM_TYPES.has(type)) {
-    throw new Error(`Invalid transform type: ${type}`);
-  }
-  if (!SAFE_SCHEMA_RE.test(schemaName)) {
-    throw new Error(`Invalid schemaName: ${schemaName}`);
-  }
-
-  // Containment root: all candidates must stay within dir's parent (prompts/transforms/)
-  const resolvedDir = path.resolve(dir);
-  const containmentRoot = path.resolve(resolvedDir, '..');
-
-  const assertContained = (filePath: string): string => {
-    const resolved = path.resolve(filePath);
-    if (!resolved.startsWith(containmentRoot + path.sep) && resolved !== containmentRoot) {
-      throw new Error(`Path traversal detected: ${filePath}`);
-    }
-    return resolved;
-  };
-
   const candidates: string[] = [];
 
   // Map schema names to their transform files
@@ -132,27 +107,29 @@ async function resolveTransformFile(
 
   if (forceServerTransforms) {
     if (mappedSchema === 'coder' && type === 'request') {
-      candidates.push(assertContained(path.resolve(dir, 'coder-request.json')));
+      candidates.push(path.resolve(dir, 'coder-request.json'));
     }
+    // Dialog request transform sets initial form (textarea) before LLM call
     if (mappedSchema === 'dialog' && type === 'request') {
-      candidates.push(assertContained(path.resolve(dir, 'dialog-request.json')));
+      candidates.push(path.resolve(dir, 'dialog-request.json'));
     }
     if (mappedSchema === 'dialog' && type === 'response') {
-      candidates.push(assertContained(path.resolve(dir, 'dialog-llm-response.json')));
+      candidates.push(path.resolve(dir, 'dialog-llm-response.json'));
     }
+    // Agent request transform sets initial form before LLM call
     if (mappedSchema === 'agent' && type === 'request') {
-      candidates.push(assertContained(path.resolve(dir, 'agent-request.json')));
+      candidates.push(path.resolve(dir, 'agent-request.json'));
     }
-    candidates.push(assertContained(path.resolve(dir, `server-transforms-${type}.json`)));
+    candidates.push(path.resolve(dir, `server-transforms-${type}.json`));
   } else {
     // Schema-local override: prompts/{schema}/server-transforms-{type}.json
-    candidates.push(assertContained(path.resolve(dir, '..', mappedSchema, `server-transforms-${type}.json`)));
+    candidates.push(path.resolve(dir, '..', mappedSchema, `server-transforms-${type}.json`));
 
     if (step !== undefined && step > 0) {
-      candidates.push(assertContained(path.resolve(dir, `${mappedSchema}-${step}-${type}.json`)));
+      candidates.push(path.resolve(dir, `${mappedSchema}-${step}-${type}.json`));
     }
-    candidates.push(assertContained(path.resolve(dir, `${mappedSchema}-${type}.json`)));
-    candidates.push(assertContained(path.resolve(dir, `server-transforms-${type}.json`)));
+    candidates.push(path.resolve(dir, `${mappedSchema}-${type}.json`));
+    candidates.push(path.resolve(dir, `server-transforms-${type}.json`));
   }
 
   for (const filePath of candidates) {

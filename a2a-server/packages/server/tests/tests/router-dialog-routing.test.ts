@@ -1,11 +1,11 @@
 import {describe, expect, it} from 'vitest';
-import {determineRequestType} from '../src/services/core/request-processor/request-processor.service';
+import {determineRequestType} from '../src/services/core/request-processor/request-processor.service.js';
 import {
     normalizeContext,
     resolveExecution,
     resolveResultObject,
     resolveTransformSchema,
-} from '../src/services/core/request-processor/normalization';
+} from '../src/services/core/request-processor/normalization.js';
 
 describe('resolveResultObject', () => {
     it('merges nested and root result; root wins on conflicts', () => {

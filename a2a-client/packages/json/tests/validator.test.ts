@@ -3,7 +3,7 @@
  */
 
 import {describe, it, expect} from 'vitest';
-import {validateResponse, getResponseType, isUnifiedResponse, validateResponseType} from '../dist/validator.js';
+import {validateResponse, getResponseType, isUnifiedResponse, validateResponseType} from '../src/validator.ts';
 
 describe('validateResponse', () => {
     it('should validate a valid action_proposal response', () => {

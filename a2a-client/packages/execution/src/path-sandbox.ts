@@ -21,3 +21,12 @@ export function resolveUnderProjectRoot(projectPath, rel) {
     }
     return abs;
 }
+
+/** Namespace-style helper used by kernel / tooling; prefer {@link resolveUnderProjectRoot} for tree-shaking. */
+export class PathSandbox {
+    static resolveUnderProjectRoot = resolveUnderProjectRoot;
+
+    resolveUnderProjectRoot(projectPath: string, rel: string) {
+        return resolveUnderProjectRoot(projectPath, rel);
+    }
+}

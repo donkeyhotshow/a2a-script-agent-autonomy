@@ -125,25 +125,25 @@ touch "$PID_FILE"
 log OK "$PID_FILE reset"
 
 # ==========================================
-# Step 4: Start a2a-ai-hub
+# Step 4: Start ai-integration
 # ==========================================
 echo ""
-log STEP "Step 4/8" "Starting a2a-ai-hub on port $PROXY_PORT..."
+log STEP "Step 4/8" "Starting ai-integration on port $PROXY_PORT..."
 
-cd a2a-ai-hub
-python scripts/ensure-providers-config.py || { log WARN "a2a-ai-hub: ensure-providers-config failed (missing config/providers.example.json?)"; exit 1; }
+cd ai-integration
+python scripts/ensure-providers-config.py || { log WARN "ai-integration: ensure-providers-config failed (missing config/providers.example.json?)"; exit 1; }
 python -m uvicorn proxy.asgi:application --host 0.0.0.0 --port $PROXY_PORT &
 AI_PID=$!
 cd ..
 sleep 3
 
-# Verify a2a-ai-hub started
+# Verify ai-integration started
 AI_CHECK_PID=$(get_pid_on_port $PROXY_PORT)
 if [[ -n "$AI_CHECK_PID" ]]; then
     echo "AI_INTEGRATION_PID=$AI_CHECK_PID" >> "$PID_FILE"
-    log OK "a2a-ai-hub started (PID: $AI_CHECK_PID)"
+    log OK "ai-integration started (PID: $AI_CHECK_PID)"
 else
-    log WARN "Could not verify a2a-ai-hub PID"
+    log WARN "Could not verify ai-integration PID"
 fi
 
 # ==========================================
@@ -153,7 +153,7 @@ echo ""
 log STEP "Step 4b/8" "Starting promise-queue-daemon..."
 HUB_URL="${PROMISE_PROXY_URL:-http://localhost:$PROXY_PORT}"
 (
-  cd a2a-ai-hub && exec python scripts/promise_queue_daemon.py --proxy-url "$HUB_URL"
+  cd ai-integration && exec python scripts/promise_queue_daemon.py --proxy-url "$HUB_URL"
 ) &
 PROMISE_DAEMON_BG_PID=$!
 echo "PROMISE_QUEUE_DAEMON_PID=$PROMISE_DAEMON_BG_PID" >> "$PID_FILE"
@@ -235,7 +235,7 @@ log STEP "SUMMARY" "All services started successfully"
 
 echo ""
 echo "Services:"
-echo "  - a2a-ai-hub: http://localhost:$PROXY_PORT (API proxy)"
+echo "  - ai-integration: http://localhost:$PROXY_PORT (API proxy)"
 echo "  - promise-queue-daemon: background PID in $PID_FILE (drains hub promise queue)"
 echo "  - a2a-server:   http://localhost:$SERVER_PORT"
 echo "  - client-api:   http://localhost:$CLIENT_API_PORT"

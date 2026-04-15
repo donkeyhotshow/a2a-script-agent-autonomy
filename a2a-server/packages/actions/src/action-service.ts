@@ -5,11 +5,11 @@
  */
 
 import * as path from 'path';
-import { ActionDefinition, ActionMatch, ActionOutcome, ExecutionState, SubAction } from './types';
-import { ActionRegistry, actionRegistry } from './action-registry';
-import { ActionExecutor, StepResult } from './action-executor.ts';
-import { logger } from '../../lib/logger';
-import { createSingleton } from './utils/singleton.ts';
+import { ActionDefinition, ActionMatch, ActionOutcome, ExecutionState, SubAction } from './types.js';
+import { ActionRegistry, actionRegistry } from './action-registry.js';
+import { ActionExecutor, StepResult } from './action-executor.js';
+import { logger } from '@a2a/server-utils/logger';
+import { createSingleton } from './utils/singleton.js';
 
 /**
  * Расширенный формат ответа для симуляции
@@ -276,8 +276,6 @@ export function createActionResponse(params: {
     }
     return response;
 }
-
-import { createSingleton } from './utils/singleton';
 
 /**
  * Получить синглтон ActionService

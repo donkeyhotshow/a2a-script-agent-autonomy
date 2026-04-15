@@ -20,12 +20,16 @@ export function mergeResponseContext(fallbackContext = {}, serverResponse = null
     return base;
 }
 
+const CLIENT_SCOPE_KEYS = ['sessionId', 'session_id', 'projectId', 'projectRoot'];
+
 export function sanitizeContextForServer(context) {
     if (!context || typeof context !== 'object' || Array.isArray(context)) {
         return {};
     }
     const out = { ...context };
-    // Remove sensitive fields if any
+    for (const k of CLIENT_SCOPE_KEYS) {
+        delete out[k];
+    }
     return out;
 }
 

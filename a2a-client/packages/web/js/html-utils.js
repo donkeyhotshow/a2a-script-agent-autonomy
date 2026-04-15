@@ -288,4 +288,54 @@
     global.validateForm = validateForm;
     global.showFieldError = showFieldError;
     global.clearFieldError = clearFieldError;
+
+    /**
+     * Minimal message normalizer for operator Web UI (packages/web).
+     * Keeps SessionStore/session-data.js working without a separate ESM install step.
+     */
+    if (!global.Normalizers) {
+        global.Normalizers = {
+            MAX_MESSAGES: 500,
+            /**
+             * @param {unknown} message
+             * @param {string} [role]
+             */
+            normalizeMessage(message, role) {
+                const id =
+                    'm_' +
+                    Date.now() +
+                    '_' +
+                    Math.random().toString(36).slice(2, 9);
+                if (message && typeof message === 'object' && !Array.isArray(message)) {
+                    const r = message.role || role || 'assistant';
+                    let content = '';
+                    if (typeof message.content === 'string') content = message.content;
+                    else if (message.content && typeof message.content === 'object') {
+                        content =
+                            message.content.text ||
+                            message.content.body ||
+                            JSON.stringify(message.content);
+                    } else if (typeof message.text === 'string') content = message.text;
+                    else if (typeof message.message === 'string') content = message.message;
+                    let artifacts = [];
+                    if (Array.isArray(message.artifacts)) artifacts = message.artifacts;
+                    else if (Array.isArray(message.metadata?.artifacts)) {
+                        artifacts = message.metadata.artifacts;
+                    }
+                    return {
+                        id: message.id || id,
+                        role: r,
+                        content: String(content || ''),
+                        artifacts,
+                    };
+                }
+                return {
+                    id,
+                    role: role || 'user',
+                    content: String(message ?? ''),
+                    artifacts: [],
+                };
+            },
+        };
+    }
 })(typeof window !== 'undefined' ? window : globalThis);

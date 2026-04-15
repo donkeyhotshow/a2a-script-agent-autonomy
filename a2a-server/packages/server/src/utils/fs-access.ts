@@ -1,1 +1,1 @@
-export * from '../../../lib/fs-access.ts'
+export * from '../../../lib/fs-access.js'

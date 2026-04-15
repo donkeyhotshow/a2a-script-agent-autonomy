@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { GrayRoomManager } from "../src/manager";
-import { defaultGrayRoomConfig } from "../src/config";
+import { GrayRoomManager } from "../src/manager.js";
+import { defaultGrayRoomConfig } from "../src/config.js";
 
 describe("GrayRoomManager", () => {
   it("should create tickets", () => {

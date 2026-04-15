@@ -12,8 +12,8 @@ import type {
     ValidationResult
 } from './request-processor.interfaces';
 import type {CodeBlock} from '../../types/entity.types';
-import {resolveExecution} from './normalization';
-import {LLM_PIPELINE_ACTIONS} from '../../../server-config/router-static.ts';
+import {resolveExecution} from './normalization.js';
+import {LLM_PIPELINE_ACTIONS} from '../../../server-config/router-static.js';
 
 /**
  * Base processor configuration

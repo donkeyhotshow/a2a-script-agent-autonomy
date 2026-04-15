@@ -8,9 +8,9 @@ import {describe, it, expect, beforeAll, afterAll, beforeEach, vi} from 'vitest'
 import * as path from 'path';
 import * as os from 'os';
 import {mkdirSync, rmSync} from 'fs';
-import {messageService} from '../../src/services/core/messaging/message.service';
+import {messageService} from '../../src/services/core/messaging/message.service.js';
 
-let requestService: typeof import('../../../../request/src/request.service')['requestService'];
+let requestService: typeof import('../../src/services/core/request/request.service.js')['requestService'];
 
 let tmpReqDir: string;
 
@@ -20,7 +20,7 @@ describe('Integration Tests (Real Components - Stateless)', () => {
         mkdirSync(tmpReqDir, {recursive: true});
         process.env.REQUESTS_STORAGE_PATH = tmpReqDir;
         vi.resetModules();
-        const mod = await import('../../../../request/src/request.service');
+        const mod = await import('../../src/services/core/request/request.service.js');
         requestService = mod.requestService;
     });
 

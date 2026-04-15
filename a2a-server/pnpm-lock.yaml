@@ -8,9 +8,24 @@ importers:
 
   .:
     dependencies:
+      '@a2a/config':
+        specifier: workspace:*
+        version: link:packages/server-config
+      '@a2a/server-daemon':
+        specifier: workspace:*
+        version: link:packages/daemon
+      '@a2a/server-features':
+        specifier: workspace:*
+        version: link:packages/features
+      '@a2a/server-protocol':
+        specifier: workspace:*
+        version: link:packages/server-protocol
       '@a2a/server-request':
         specifier: workspace:*
         version: link:packages/request
+      '@a2a/server-utils':
+        specifier: workspace:*
+        version: link:packages/server-utils
       '@chainsafe/libp2p-gossipsub':
         specifier: ^14.1.2
         version: 14.1.2
@@ -139,7 +154,7 @@ importers:
         specifier: ^10.0.3
         version: 10.0.3
       '@types/node':
-        specifier: ^20.19.38
+        specifier: ^20.19.39
         version: 20.19.39
       '@types/picomatch':
         specifier: ^4.0.2

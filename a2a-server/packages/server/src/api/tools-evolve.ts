@@ -1,22 +1,19 @@
 import express from 'express';
 import fs from 'node:fs';
 import path from 'path';
-import { logger } from '../../lib/logger';
-import { SkillRegistry } from '../../../features/src/skills/SkillRegistry';
-import { config } from '../../../server-config/index';
+import { logger } from '@a2a/server-utils/logger';
+import { SkillRegistry } from '../skills/SkillRegistry.js';
+import { config } from '@a2a/config';
 import {
   SandboxViolationError,
   validateSkillToolCodeForDeploy,
-} from '../tools-evolve-sandbox';
+} from './tools-evolve-sandbox.js';
 
 const router = express.Router();
-const SKILLS_DIR = path.resolve(process.cwd(), 'a2a-server/src/skills/custom');
-const registry = new SkillRegistry(SKILLS_DIR);
+const registry = new SkillRegistry(path.join(process.cwd(), 'a2a-server/src/skills/custom'));
 
-// NOTE: CSRF protection (CWE-352) is enforced by csrfGuard middleware
-// mounted in app.ts before this router. Do not mount without it.
 router.post('/evolve', async (req, res) => {
-  if (!config.features.actions.allowToolsEvolve) {
+  if (!config.allowToolsEvolve) {
     return res.status(403).json({ error: 'Tools evolve endpoint disabled' });
   }
 
@@ -35,11 +32,8 @@ router.post('/evolve', async (req, res) => {
   try {
     validateSkillToolCodeForDeploy(toolCode);
 
-    // 2. Write to custom tools directory — containment check prevents path traversal
-    const targetPath = path.resolve(SKILLS_DIR, `${toolName}.skill.ts`);
-    if (!targetPath.startsWith(SKILLS_DIR + path.sep)) {
-      return res.status(400).json({ error: 'Invalid toolName: path traversal detected' });
-    }
+    // 2. Write to custom tools directory
+    const targetPath = path.join(process.cwd(), 'a2a-server/src/skills/custom', `${toolName}.skill.ts`);
     await fs.promises.mkdir(path.dirname(targetPath), { recursive: true });
     await fs.promises.writeFile(targetPath, toolCode);
 

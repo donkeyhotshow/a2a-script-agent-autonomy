@@ -4,11 +4,21 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import {FileScanner, GlobMatcher} from '@a2a-client/execution/fs-utils';
+import * as executionFsUtils from '@a2a-client/execution/fs-utils';
 import type {ScannedFile} from '@a2a-client/execution/fs-utils';
 import {RAGIndexer} from './indexer.js';
 import {ChunkManager} from './chunk-manager.js';
 import chokidar from 'chokidar';
+
+type FileScannerCtor = new (...args: unknown[]) => unknown;
+type GlobMatcherCtor = new (...args: unknown[]) => unknown;
+const {FileScanner, GlobMatcher} = executionFsUtils as unknown as {
+  FileScanner: FileScannerCtor;
+  GlobMatcher: GlobMatcherCtor;
+};
+
+type FileScanner = InstanceType<FileScannerCtor>;
+type GlobMatcher = InstanceType<GlobMatcherCtor>;
 
 export interface RAGIntegratorConfig {
     projectPath?: string;

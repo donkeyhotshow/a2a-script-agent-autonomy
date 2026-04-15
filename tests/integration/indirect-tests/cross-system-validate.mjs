@@ -8,13 +8,15 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { globSync } from 'glob';
 
-const root = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
+/** indirect-tests → integration → tests → repo root */
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
 
-const PROMISES_DIR = path.join(root, 'a2a-ai-hub', 'proxy_logs', 'promises');
+const PROMISES_DIR = path.join(root, 'ai-integration', 'proxy_logs', 'promises');
 const SESSIONS_ROOT = path.join(root, 'a2a-client', 'storage', 'sessions');
 const VERIFY_SCRIPT = path.join(
   root,
   'tests',
+  'integration',
   'direct-tests',
   'validators',
   'verify-gray-room-state.mjs'

@@ -11,7 +11,7 @@
 | Script | npm run | What it checks |
 |--------|---------|----------------|
 | [lib/check-llm-execute-shape.mjs](lib/check-llm-execute-shape.mjs) | — | Shared rules used by `scan-promise-bodies` and `scan-session-responses` |
-| [scan-promise-bodies.mjs](scan-promise-bodies.mjs) | `scan-promise-bodies` | `a2a-ai-hub/proxy_logs/promises/*/body.md` — LLM JSON (e.g. top-level `message` + tool vs `execute.message`) |
+| [scan-promise-bodies.mjs](scan-promise-bodies.mjs) | `scan-promise-bodies` | `ai-integration/proxy_logs/promises/*/body.md` — LLM JSON (e.g. top-level `message` + tool vs `execute.message`) |
 | [scan-session-responses.mjs](scan-session-responses.mjs) | `scan-session-responses` | `a2a-client/storage/sessions/**/server-response.json` — execute/message rules + `context.task` + non-empty `history` must include `role:user` (see `simulations/sync/dialog/description.md`) |
 | [verify-gray-room-state.mjs](verify-gray-room-state.mjs) | `verify:gray-room` | Session/context snapshot JSON — `workbench.sections.sequence`, predictions, `history` / `operationHistory` consistency |
 | [audit-sim-choice-descriptions.mjs](audit-sim-choice-descriptions.mjs) | `audit:sim-choice-descriptions` | All `simulations/**/*.json` — router `choices[]` rows must have non-empty `description` |
@@ -24,7 +24,7 @@
 | `verify:audit-session-storage-generator` | [`verify-audit-session-storage-generator.mjs`](verify-audit-session-storage-generator.mjs) — asserts the audit script stays free of MD5 skip logic and keeps the workflow block. |
 | `verify:audit-session-storage-accuracy` | [`verify-audit-session-storage-accuracy.mjs`](verify-audit-session-storage-accuracy.mjs) — after `audit:session-storage`, checks `tasks/pending/session-storage-*.md` **Findings** / **Evidence paths** match [`scripts/lib/session-storage-audit-analyze.mjs`](../../../scripts/lib/session-storage-audit-analyze.mjs) (same analysis as the generator). |
 | `verify:audit-session-storage` | **One-shot:** `verify:audit-session-storage-generator` → `audit:session-storage` → `verify:audit-session-storage-accuracy` (rewrites `tasks/pending/session-storage-*.md` then validates). |
-| `report:promise` | [`scripts/promise-artifacts-report.mjs`](../../../scripts/promise-artifacts-report.mjs) — given one **`promiseId`**, writes a **Markdown** inventory: `a2a-server/storage/requests/{id}.json` (Gray Room `interruptTrace` / slots / `operationHistory`), client session refs, `a2a-ai-hub/proxy_logs/promises/<id>/`; optional `--logs` |
+| `report:promise` | [`scripts/promise-artifacts-report.mjs`](../../../scripts/promise-artifacts-report.mjs) — given one **`promiseId`**, writes a **Markdown** inventory: `a2a-server/storage/requests/{id}.json` (Gray Room `interruptTrace` / slots / `operationHistory`), client session refs, `ai-integration/proxy_logs/promises/<id>/`; optional `--logs` |
 
 ## Related (stay in package modules)
 

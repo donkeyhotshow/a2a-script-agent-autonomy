@@ -9,7 +9,7 @@
     a short e2e smoke subset still runs.
     For full e2e with fewer LLM calls / sessions: set E2E_DIRECT_LOW_LLM=1 for the e2e-dialog-test.js step (see script header).
 .EXAMPLE
-    .\tests\direct-tests\run-post-
+    .\tests\direct-tests\run-post-start-all.ps1
 #>
 param(
     [switch]$SkipHeavy

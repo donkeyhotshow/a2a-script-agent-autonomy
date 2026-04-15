@@ -14,22 +14,22 @@ import {
     setupLLMMock, 
     clearLLMResponses,
     createCanonicalResponse 
-} from '../mocks/llm/mock-llm-adapter';
+} from '../mocks/llm/mock-llm-adapter.js';
 
 import { 
     MockFetch, 
     commonMocks 
-} from '../mocks/http/index';
+} from '../mocks/http/index.js';
 
 import { 
     MockA2AServer,
     commonMockResponses 
-} from '../helpers/mock-server';
+} from '../helpers/mock-server.js';
 
 import { 
     MockA2AClient,
     commonScenarios 
-} from '../helpers/mock-client';
+} from '../helpers/mock-client.js';
 
 describe('Integration Tests with Mocks', () => {
     describe('LLM Mock', () => {

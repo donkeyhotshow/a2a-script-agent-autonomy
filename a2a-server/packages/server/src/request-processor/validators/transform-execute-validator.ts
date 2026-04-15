@@ -1,5 +1,5 @@
-import {logger} from "@a2a/server-utils/logger";
-import type { ProcessResult } from '../request-processor.interfaces';
+import {logger} from '@a2a/server-utils/logger';
+import type { ProcessResult } from '../request-processor.interfaces.js';
 
 export interface TransformExecuteValidationIssue {
     code: string;

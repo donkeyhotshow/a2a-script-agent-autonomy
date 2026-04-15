@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { updateSessionWithServerResponse } from './session-transform.js';
-import type { Project, Session } from '../../models/session.model.js';
+import { updateSessionWithServerResponse } from '../src/server/services/transforms/session-transform.ts';
+import type { Project, Session } from '../src/server/models/session.model.ts';
 
 const project = { id: 'p1', name: 'p' } as Project;
 

@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {resolveHistoryLength} from '../src/services/core/request-processor/normalization';
+import {resolveHistoryLength} from '../src/services/core/request-processor/normalization.js';
 
 describe('resolveHistoryLength', () => {
     it('prefers root history when present', () => {

@@ -13,6 +13,8 @@
 import {Router, Request, Response} from 'express';
 import path from 'path';
 import fs from 'fs/promises';
+import {randomUUID} from 'node:crypto';
+import {A2A_TRACE_CONTEXT_KEY, A2A_TRACE_HEADER} from '@a2a-client/shared/a2a-trace-constants.mjs';
 import {sessionService} from '../../services/session-service.js';
 import {
     saveRequestToServer,
@@ -79,6 +81,9 @@ router.post('/', async (req: Request, res: Response) => {
                     task: body.task,
                     extraContext: session.context && typeof session.context === 'object' ? session.context : {},
                 });
+                const sessionTraceId = randomUUID();
+                const rbCtx = requestBody.context as Record<string, unknown>;
+                rbCtx[A2A_TRACE_CONTEXT_KEY] = sessionTraceId;
                 const upstreamBody = sanitizeInvokeBodyForA2aUpstream(requestBody) as Record<string, unknown>;
 
                 const err = validateRequestToServer({ task: body.task, context: upstreamBody.context });
@@ -93,7 +98,9 @@ router.post('/', async (req: Request, res: Response) => {
                     ...upstreamBody,
                 });
 
-                const upstream = await serverFetch('POST', serverBase, '/api/v1/invoke', upstreamBody);
+                const upstream = await serverFetch('POST', serverBase, '/api/v1/invoke', upstreamBody, {
+                    [A2A_TRACE_HEADER]: sessionTraceId,
+                });
                 serverResponse = (await upstream.json()) as Record<string, unknown>;
 
                 if (upstream.ok && serverResponse) {

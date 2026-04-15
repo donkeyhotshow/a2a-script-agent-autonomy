@@ -1,0 +1,19 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "baseUrl": ".",
+    "paths": {
+      "@a2a/server-core": ["../server/dist/public/index.d.ts"]
+    }
+  },
+  "include": [
+    "src/public/**/*",
+    "src/handlers/**/*",
+    "src/handlers/*.ts",
+    "src/handlers.ts"
+  ],
+  "exclude": ["node_modules", "dist", "tests"]
+}
+

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { extractExecuteAction, handleExecuteAction } from './action-handler.js';
-import type { HandleActionOptions } from './types.js';
+import { extractExecuteAction, handleExecuteAction } from '../src/action-handler.ts';
+import type { HandleActionOptions } from '../src/types.ts';
 
 describe('extractExecuteAction (T008)', () => {
     it('returns type and payload for a single execute key', () => {

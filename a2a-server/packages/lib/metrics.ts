@@ -1,4 +1,3 @@
-// @ts-expect-error - prom-client typing issues in NodeNext ESM
 import { Registry, Histogram } from 'prom-client';
 
 // Create a registry for our metrics

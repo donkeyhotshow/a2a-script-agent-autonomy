@@ -1,1 +1,1 @@
-export * from '../../../lib/adaptive-polling.ts'
+export * from '../../../lib/adaptive-polling.js'

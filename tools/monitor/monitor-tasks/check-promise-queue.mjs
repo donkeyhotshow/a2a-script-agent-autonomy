@@ -23,7 +23,7 @@
  *   PROMISES_JSON_MAX_ROWS — cap rows in `--json` output (default 40)
  *   TASK_MONITOR_HUB_PENDING_TIMEOUT_MS — fetch timeout (default 20000)
  *
- * See: a2a-ai-hub/docs/api-reference/PROXY_API.md
+ * See: ai-integration/docs/api-reference/PROXY_API.md
  *
  * Task Monitor uses the same probe (`promise-queue-probe.mjs`) via
  * `logHubPromiseQueueSnapshot()` after the promise gate and when a task fails or times out.

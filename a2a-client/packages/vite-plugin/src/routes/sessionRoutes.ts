@@ -6,7 +6,7 @@ import {
        getProjectPathForSessions,
        resolveSessionProjectPath,
        findSessionProjectPath,
-   } from '@a2a-client/storage/projectSessions.ts';
+   } from '@a2a-client/storage/src/projectSessions.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import {
@@ -16,7 +16,7 @@ import {
        deleteNewSession,
        saveNewStep,
        getNewSessionDir,
-   } from '@a2a-client/storage/newSessions.ts';
+   } from '@a2a-client/storage/src/newSessions.js';
 import { getStorageMode, isValidSessionId } from '../utils/server.js';
 import {
      collectSessionMessagesFlat,

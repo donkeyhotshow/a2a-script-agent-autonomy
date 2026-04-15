@@ -13,8 +13,8 @@
  */
 
 import { randomUUID } from 'node:crypto';
-import { validateArtifact } from './artifact-validator';
-import { globalEventBus } from './event-bus';
+import { validateArtifact } from './artifact-validator.js';
+import { globalEventBus } from './event-bus.js';
 
 // ── Re-export base types so callers only import from one place ────────────────
 

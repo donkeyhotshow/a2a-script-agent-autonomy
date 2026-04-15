@@ -11,14 +11,14 @@ export {
    getStepFilePath,
    listNewSteps,
    registerStepSessionsParent,
-  } from './session-paths.ts';
+ } from './session-paths.ts';
 
 export {
   deriveSessionMode,
   loadSessionIndex,
   reconcileSessionIndexFromDisk,
   saveSessionIndex,
-} from './session-index-store.ts';
+} from './session-index-store.js';
 
 export {
   deleteNewSession,
@@ -30,7 +30,7 @@ export {
   rewindSessionAfterStep,
   rewindSessionLastStep,
   saveNewSession,
-} from './session-store.ts';
+} from './session-store.js';
 
 export {
   dropStaleServerPromiseForStep,
@@ -50,4 +50,4 @@ export {
   saveStepFile,
   validateSessionStorage,
   validateStepStorage,
-} from './session-step-io.ts';
+} from './session-step-io.js';

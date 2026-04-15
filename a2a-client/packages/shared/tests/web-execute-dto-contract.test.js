@@ -17,7 +17,11 @@ describe('WebExecuteDTOContract', () => {
         'run-script',
     ];
     const allowedWebExecuteKeys = new Set(['message', 'llmMessage', 'form', 'attachments']);
-    const simulationRoot = path.resolve(process.cwd(), '..', 'simulations', 'sync');
+    const repoRoot = path.resolve(process.cwd(), '..');
+    const simulationRoots = [
+        path.join(repoRoot, 'simulations', 'sync'),
+        path.join(repoRoot, 'tests', 'integration', 'simulations', 'sync'),
+    ];
     const fixturePaths = [
         'dialog/1/received.json',
         'dialog/2/received.json',
@@ -33,8 +37,13 @@ describe('WebExecuteDTOContract', () => {
     ];
 
     const readFixture = (relativePath) => {
-        const fullPath = path.join(simulationRoot, relativePath);
-        return JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
+        for (const root of simulationRoots) {
+            const fullPath = path.join(root, relativePath);
+            if (fs.existsSync(fullPath)) {
+                return JSON.parse(fs.readFileSync(fullPath, 'utf-8'));
+            }
+        }
+        throw new Error(`Fixture not found under simulations/sync or tests/integration/simulations/sync: ${relativePath}`);
     };
 
     const validateBaseStructure = (dto) => {

@@ -1,1 +1,1 @@
-export * from '../../../lib/mkdtemp-os-tmp.ts'
+export * from '../../../lib/mkdtemp-os-tmp.js'

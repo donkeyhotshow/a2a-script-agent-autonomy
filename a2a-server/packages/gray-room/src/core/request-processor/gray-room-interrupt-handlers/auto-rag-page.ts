@@ -1,6 +1,6 @@
-import {ProgressiveRetriever} from '../../rag/progressive-retriever';
-import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../transform/types';
-import {BaseGrayRoomHandler} from './base-handler';
+import {ProgressiveRetriever} from '@a2a/server-llm';
+import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '@a2a/server-transform';
+import {BaseGrayRoomHandler} from './base-handler.js';
 
 /**
  * Handle auto_rag_page interrupt

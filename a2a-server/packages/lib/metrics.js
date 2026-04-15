@@ -7,7 +7,6 @@ export const requestProcessorLatencyHistogram = new Histogram({
     help: 'Latency of request processor ticks in milliseconds',
     labelNames: ['outcome'], // We can label by outcome (success, failed, etc.)
     buckets: [10, 50, 100, 250, 500, 1000, 2500, 5000, 10000], // Up to 10 seconds
+    registers: [register], // ADR-0053 §Metrics registration
 });
-// Register the histogram
-register.registerMetric(requestProcessorLatencyHistogram);
 //# sourceMappingURL=metrics.js.map

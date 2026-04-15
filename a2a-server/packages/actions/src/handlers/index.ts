@@ -18,7 +18,7 @@ export {
     type FileExistsActionOutput,
     type ListDirActionInput,
     type ListDirActionOutput,
-} from './file-operations';
+} from './file-operations.js';
 
 // Command Execution handlers
 export {
@@ -26,7 +26,7 @@ export {
     validateCommand,
     type ExecuteCommandInput,
     type ExecuteCommandOutput,
-} from './command-execution';
+} from './command-execution.js';
 
 // Grep Search handlers
 export {
@@ -35,7 +35,7 @@ export {
     type GrepSearchOutput,
     type GrepSearchOptions,
     type GrepMatch,
-} from './grep-search';
+} from './grep-search.js';
 
 // Edit Patch handlers
 export {
@@ -43,7 +43,7 @@ export {
     type EditPatchInput,
     type EditPatchOutput,
     type PatchOperation,
-} from './edit-patch';
+} from './edit-patch.js';
 
 // Run Script handlers
 export {
@@ -52,7 +52,7 @@ export {
     type RunScriptInput,
     type RunScriptOutput,
     type RunScriptParams,
-} from './run-script';
+} from './run-script.js';
 
 // MCP-call handler (ADR-ClawCode §14.2)
 export {
@@ -60,7 +60,7 @@ export {
     type McpCallInput,
     type McpCallOutput,
     type McpContent,
-} from './mcp-call';
+} from './mcp-call.js';
 
 // PHPantom LSP handlers (ADR-PHPantom §15)
 export {
@@ -70,4 +70,4 @@ export {
     type PhpantomAnalyzeOutput,
     type PhpantomFixInput,
     type PhpantomFixOutput,
-} from './phpantom';
+} from './phpantom.js';

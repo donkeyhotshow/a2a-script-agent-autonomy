@@ -10,7 +10,7 @@
  * 
  * @example
  * ```typescript
- * import { runTransformPipelineFromFile } from './index';
+ * import { runTransformPipelineFromFile } from './transform/index.js';
  * 
  * const result = await runTransformPipelineFromFile(
  *   'simulations/agent-coder/3/server-transforms-response.json',
@@ -21,7 +21,7 @@
  * ```
  */
 
-export * from './types';
+export * from './types.js';
 export {
     INTERRUPT_TRACE_SLOT_KEY,
     INTERRUPT_TRACE_CONTEXT_PATH,
@@ -29,14 +29,14 @@ export {
     SERVER_OWNED_WORKBENCH_SLOT_KEYS,
     mergeInterruptTraceIntoContext,
     mergeGrayRoomSlotIntoContext,
-} from './interrupt-trace-contract';
-export {query, resolveTemplates} from './operations/json-path';
-export * from './operations';
-export * from './pipeline';
+} from './interrupt-trace-contract.js';
+export {query, resolveTemplates} from './operations/json-path.js';
+export * from './operations.js';
+export * from './pipeline.js';
 export {
   prepareInvokePayloadForLlmPrompt,
   materializeResultIntoHistoryForLlm,
   formatToolResultForHistory,
   syncLiveContextHistoryFromResultMessage,
-} from './materialize-result-for-llm';
-export * from './operation-history';
+} from './materialize-result-for-llm.js';
+export * from './operation-history.js';

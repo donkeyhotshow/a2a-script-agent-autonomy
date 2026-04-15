@@ -6,7 +6,7 @@
  * по всем итерациям interrupt loop.
  */
 
-import {logger} from '../../utils/logger.js';
+import {logger} from '@a2a/server-utils/logger';
 
 export interface UsageRecord {
     inputTokens?: number;

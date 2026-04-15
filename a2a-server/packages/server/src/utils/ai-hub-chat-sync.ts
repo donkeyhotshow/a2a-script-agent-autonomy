@@ -1,5 +1,5 @@
-import {resolveAiHubBaseUrl} from './ai-hub-url';
-import {logger} from './logger';
+import {resolveAiHubBaseUrl} from './ai-hub-url.js';
+import {logger} from './logger.js';
 
 /** Standard headers for AI Integration hub JSON `POST` bodies. */
 export const AI_HUB_JSON_HEADERS: Record<string, string> = {

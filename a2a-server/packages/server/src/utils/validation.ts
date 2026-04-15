@@ -1,1 +1,1 @@
-export * from '../../../lib/validation.ts'
+export * from '../../../lib/validation.js'

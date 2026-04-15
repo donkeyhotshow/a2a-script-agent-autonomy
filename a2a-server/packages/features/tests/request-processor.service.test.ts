@@ -7,14 +7,14 @@ import {
     determineRequestType,
     processOneRequest,
     stopRequestProcessor,
-} from '../../src/services/core/request-processor/request-processor.service';
+} from '../../src/services/core/request-processor/request-processor.service.js';
 
 const mockGetNextPending = vi.fn();
 const mockUpdateStatus = vi.fn().mockResolvedValue(true);
 const mockScheduleRetry = vi.fn().mockResolvedValue(false);
 const mockCreate = vi.fn();
 
-vi.mock('../../src/services/core/request/request.service', () => ({
+vi.mock('../../src/services/core/request/request.service.js', () => ({
     isRetryableError: () => false,
     requestService: {
         getNextPending: (...args: unknown[]) => mockGetNextPending(...args),

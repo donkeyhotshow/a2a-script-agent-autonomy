@@ -33,7 +33,7 @@ logger = logging.getLogger('cleanup-old-artifacts')
 
 
 class CleanupArtifacts:
-    """Handles cleanup of old artifacts in a2a-ai-hub storage."""
+    """Handles cleanup of old artifacts in ai-integration storage."""
 
     def __init__(
         self,
@@ -311,7 +311,7 @@ def get_storage_stats(logs_dir: Path) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Cleanup old pending/promise/log artifacts from a2a-ai-hub storage."
+        description="Cleanup old pending/promise/log artifacts from ai-integration storage."
     )
 
     # Path arguments

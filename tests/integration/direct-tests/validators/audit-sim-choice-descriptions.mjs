@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /** Report simulation JSON objects in choices[] missing non-empty description (any depth). */
-import { readdirSync, readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -34,9 +34,15 @@ function audit(obj, file, hits) {
     for (const k of Object.keys(obj)) audit(obj[k], file, hits);
 }
 
-const root = join(__dirname, '..', '..', '..', 'simulations');
+/** validators → direct-tests → integration → tests → repo */
+const repoRoot = resolve(__dirname, '..', '..', '..', '..');
+const simRoots = [
+  join(repoRoot, 'tests', 'integration', 'simulations'),
+  join(repoRoot, 'simulations'),
+].filter((r) => existsSync(r));
 const hits = [];
-for (const f of walkJson(root)) {
+for (const root of simRoots) {
+  for (const f of walkJson(root)) {
     let j;
     try {
         j = JSON.parse(readFileSync(f, 'utf8'));
@@ -44,6 +50,7 @@ for (const f of walkJson(root)) {
         continue;
     }
     audit(j, f, hits);
+  }
 }
 if (hits.length) {
     for (const h of hits) console.log(h.file, h.id, h.idx);

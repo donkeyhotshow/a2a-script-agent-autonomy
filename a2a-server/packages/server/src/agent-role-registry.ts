@@ -1,5 +1,4 @@
-import type { OrchestratorState } from "./orchestrator-kernel";
-import { llmService } from "@a2a/server-llm";
+import type { OrchestratorState } from "./orchestrator-kernel.js";
 import { logger } from "@a2a/server-utils/logger";
 import { tryParseJsonFromLlmText } from "@a2a/server-utils/strip-markdown-json-fence";
 
@@ -96,7 +95,7 @@ If they disagree, you make the final call or suggest a compromise path.
     const task = (ctx["task"] as string) || "Unknown task";
     const contextDump = JSON.stringify(ctx).slice(0, 3000); // Send partial context to reviewer
 
-    const reviewReq = `
+    const _reviewReq = `
 System Instruction:
 ${reviewerPrompt}
 
@@ -117,19 +116,6 @@ Please review the context and execution results provided. You must output valid 
       throw new Error(
         "Agent role registry LLM functionality disabled - use invoke mechanism",
       );
-      const resultText = chatResult.content ?? "";
-      const parsed = tryParseJsonFromLlmText(resultText);
-      if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-        throw new Error("Reviewer response is not a JSON object");
-      }
-      const obj = parsed as Record<string, unknown>;
-      return {
-        passed: Boolean(obj["passed"]),
-        reason:
-          typeof obj["reason"] === "string"
-            ? obj["reason"]
-            : "No reason provided",
-      };
     } catch (e) {
       logger.error("[AgentRoleRegistry] Syndicate review failed to parse", {
         error: String(e),

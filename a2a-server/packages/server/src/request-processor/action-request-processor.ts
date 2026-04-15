@@ -8,40 +8,40 @@
  * - step_complete - confirming step completion
  */
 
-import {logger} from "@a2a/server-utils/logger";
-import {actionProcessor} from '../../../actions/src/action-processor';
-import {actionRegistry} from '../../../actions/src/action-registry';
-import type {ActionDefinition} from '../../../actions/src/types';
+import {logger} from '@a2a/server-utils/logger';
+import {actionProcessor} from '../../actions/src/action-processor.js';
+import {actionRegistry} from '../../actions/src/action-registry.js';
+import type {ActionDefinition} from '../../actions/src/types.js';
 import type {
     RequestContext,
     ProcessResult,
     ProcessOutcome,
-} from './request-processor.interfaces';
-import {BaseRequestProcessor, type RequestType} from './base-processor';
-import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../../../server-config/router-static.ts';
-import {applySequenceStepComplete} from './sequence-workbench';
-import {resolveExecution, resolveResultObject} from './normalization';
-import {dialogRequestProcessor} from './dialog-request-processor';
+} from './request-processor.interfaces.js';
+import {BaseRequestProcessor, type RequestType} from './base-processor.js';
+import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '@a2a/config';
+import {applySequenceStepComplete} from './sequence-workbench.js';
+import {resolveExecution, resolveResultObject} from './normalization.js';
+import {dialogRequestProcessor} from './dialog-request-processor.js';
 
 // Import extracted handlers
 import {
     handleStepResult as handleStepResultFn
-} from './handlers/step-result-handler';
+} from './handlers/step-result-handler.js';
 import {
     handleRouterChoice as handleRouterChoiceFn,
     pickRouterSubmitChoice as pickRouterSubmitChoiceFn
-} from './handlers/router-choice-handler';
+} from './handlers/router-choice-handler.js';
 import {
     handleTaskRequest as handleTaskRequestFn,
     parseTaskText as parseTaskTextFn,
     analyzeTaskForAutoRouting as analyzeTaskForAutoRoutingFn
-} from './handlers/task-request-handler';
+} from './handlers/task-request-handler.js';
 import {
     handleStepComplete as handleStepCompleteFn
-} from './handlers/step-complete-handler';
+} from './handlers/step-complete-handler.js';
 import {
     handleApproveAction as handleApproveActionFn
-} from './handlers/approve-action-handler';
+} from './handlers/approve-action-handler.js';
 
 /**
  * Action request processor configuration

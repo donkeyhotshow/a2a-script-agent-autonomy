@@ -5,7 +5,7 @@
 **TODO Tracker:** [docs/TODO.md](docs/TODO.md)
 
 ## Information Gathered (Инфо из анализа)
-- **Структура проекта:** Монопо с подпроектами (a2a-client/, a2a-server/, a2a-ai-hub/, a2a-prototype/, infrastucture/, runbook/, etc.). Каждый имеет docs/ с index.md. Root docs/ существует.
+- **Структура проекта:** Монопо с подпроектами (a2a-client/, a2a-server/, ai-integration/, a2a-prototype/, infrastucture/, runbook/, etc.). Каждый имеет docs/ с index.md. Root docs/ существует.
 - **Распределение docs:** ~127 .md файлов. Многие в docs/ подпроектов (e.g. a2a-client/docs/WEB-UI.md, API-SERVER.md). Root docs/ имеет ARCHITECTURE.md, PROTOCOL.md, SIMULATION-FORMAT.md, etc. Тестовые симуляции имеют README.md/description.md с похожим контентом (request/response структуры).
 - **Дубли/похожести:** Много упоминаний request.md/response.md шаблонов в a2a-server/docs/*.md и симуляциях. AGENTS.md, DEV_STATE.md, GLOSSARY.md в root + подпроектах (нужен мерж в root). TODO.md уже имеет план перемещений (CLIENT-DIALOG → a2a-client/docs/, etc.).
 - **Ключевые файлы:** docs/index.md (общий индекс), TODO.md (существующий план), AGENTS.md/GLOSSARY.md (глобальные, дубли в подпроектах), DEV_STATE.md (cross-module).

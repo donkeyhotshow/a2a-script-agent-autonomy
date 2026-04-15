@@ -20,7 +20,7 @@
  *   - Intermediate LLM turns superseded by later ones
  *   - Raw tool call/result turns beyond the preserved window
  */
-import { logger } from '@a2a/server-utils/logger.js';
+import { logger } from '@a2a/server-utils/logger';
 const DEFAULT_CONTEXT_WINDOW_CHARS = 128_000;
 const DEFAULT_THRESHOLD = 0.8;
 const DEFAULT_TARGET_ENTRIES = 5;

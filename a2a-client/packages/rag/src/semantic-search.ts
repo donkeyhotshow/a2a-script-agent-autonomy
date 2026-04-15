@@ -4,7 +4,7 @@
 
 import {RAGSearcher} from './searcher.js';
 import type {Chunk} from './chunk-manager.js';
-import {createEmbeddingClient, Embedding} from './embedding-client.js';
+import {createEmbeddingClient} from './embedding-client.js';
 
 export interface SemanticSearcherConfig extends Record<string, unknown> {
     projectPath?: string;
@@ -20,9 +20,9 @@ export interface SimilarityResult {
 
 export class SemanticSearcher extends RAGSearcher {
     embeddingClient: ReturnType<typeof createEmbeddingClient>;
-    vectorIndex: Map<string, Embedding> | null = null;
+    vectorIndex: Map<string, number[]> | null = null;
     private vectorIndexReady = false;
-    private embeddingCache = new Map<string, Embedding>();
+    private embeddingCache = new Map<string, number[]>();
 
     constructor(config: SemanticSearcherConfig = {}) {
         super(config);
@@ -40,7 +40,7 @@ export class SemanticSearcher extends RAGSearcher {
         this.vectorIndexReady = true;
     }
 
-    async getEmbedding(content: string): Promise<Embedding> {
+    async getEmbedding(content: string): Promise<number[]> {
         const cacheKey = content.substring(0, 100);
         const cached = this.embeddingCache.get(cacheKey);
         if (cached) return cached;
@@ -49,7 +49,7 @@ export class SemanticSearcher extends RAGSearcher {
         return embedding;
     }
 
-    calculateSimilarity(embedding1: Embedding, embedding2: Embedding): number {
+    calculateSimilarity(embedding1: number[], embedding2: number[]): number {
         let dotProduct = 0;
         for (let i = 0; i < embedding1.length; i++) {
             dotProduct += embedding1[i]! * embedding2[i]!;

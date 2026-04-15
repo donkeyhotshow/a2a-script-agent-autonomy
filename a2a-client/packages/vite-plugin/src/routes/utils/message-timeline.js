@@ -89,7 +89,7 @@ export function collectCanonicalTimeline(cwd, sessionId) {
                 });
             }
         }
-        const clientResult = stepHandlers.loadStepFile(cwd, sessionId, stepNum, 'client-result.tson');
+        const clientResult = stepHandlers.loadStepFile(cwd, sessionId, stepNum, 'client-result.json');
         const clientMessage = toText(clientResult?.result?.message).trim();
         if (clientMessage) {
             entries.push({

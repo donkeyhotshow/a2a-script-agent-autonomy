@@ -64,7 +64,7 @@
 
 ### Black alert (proxy) — **Черная тревога (proxy)**
 
-**Proxy only** — `a2a-ai-hub` (hub/proxy to Local LLM upstream, proxy logs, model routing). *Older notes sometimes used «красная» for proxy; black is the label for this layer.* Distinct from **Black alert (operator)** below.
+**Proxy only** — `ai-integration` (hub/proxy to Local LLM upstream, proxy logs, model routing). *Older notes sometimes used «красная» for proxy; black is the label for this layer.* Distinct from **Black alert (operator)** below.
 
 ### Blue alert — **Голубая тревога**
 
@@ -116,7 +116,7 @@
 
 ### Yellow alert (scan) — **Жёлтая тревога (скан)**
 
-**AI / IDE command** — proactive pass over the codebase for **shortcomings, hacks, and unfinished fixes** (TODO/FIXME, fragile error handling, sync/async smells, contract drift, test gaps). **Normative procedure:** [`docs/YELLOW-ALERT-SCAN.md`](docs/YELLOW-ALERT-SCAN.md) (invocation text, pattern hints, report format). **Not** a subsystem scope tag (unlike **Black alert (proxy)** for `a2a-ai-hub`).
+**AI / IDE command** — proactive pass over the codebase for **shortcomings, hacks, and unfinished fixes** (TODO/FIXME, fragile error handling, sync/async smells, contract drift, test gaps). **Normative procedure:** [`docs/YELLOW-ALERT-SCAN.md`](docs/YELLOW-ALERT-SCAN.md) (invocation text, pattern hints, report format). **Not** a subsystem scope tag (unlike **Black alert (proxy)** for `ai-integration`).
 
 ### Yellow alert (operator) — **Жёлтая тревога (оператор)**
 

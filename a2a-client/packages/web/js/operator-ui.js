@@ -1,13 +1,7 @@
 /**
- * Operator UI controller for a2a-client/packages/web
+ * Operator UI — async Client API console (HTTP polling only).
  *
- * - 3-column layout wiring (sessions/chat/workbench + bottom monitor)
- * - Session create + active session UI
- * - Router "two beats" guard: disable free-text input while choices pending
- *
- * Transport contract:
- * - POST /api/a2a/sessions/:id/next returns ack (no promiseId)
- * - Poll GET /api/a2a/sessions/:id/async until asyncPending=false / completed=true
+ * Endpoints (same-origin): /api/a2a/sessions, /next, /async, GET session.
  */
 (function (global) {
     'use strict';
@@ -17,15 +11,35 @@
     if (!store) throw new Error('[operator-ui] SessionStore missing (load js/session-store.js)');
     if (!api) throw new Error('[operator-ui] apiIntegration missing (load js/api-integration.js)');
 
+    const UI_STATES = Object.freeze({
+        IDLE: 'IDLE',
+        CREATING: 'CREATING',
+        SENDING: 'SENDING',
+        POLLING: 'POLLING',
+        WAITING_INPUT: 'WAITING_INPUT',
+        WAITING_TEXT: 'WAITING_TEXT',
+        WAITING_APPROVAL: 'WAITING_APPROVAL',
+        ERROR: 'ERROR',
+        DONE: 'DONE',
+    });
+
+    const SESSION_STORAGE_KEY = 'a2a_session_id';
+    const SESSION_LIST_KEY = 'a2a_session_list';
+
     const els = {
+        root: () => document.getElementById('operator-root'),
         newSessionBtn: () => document.getElementById('op-new-session'),
         sessionList: () => document.getElementById('op-session-list'),
         activeSession: () => document.getElementById('op-active-session'),
         connDot: () => document.getElementById('op-conn-dot'),
         connLabel: () => document.getElementById('op-conn-label'),
+        headerSpinner: () => document.getElementById('op-header-spinner'),
         messages: () => document.getElementById('op-messages'),
+        thinking: () => document.getElementById('op-thinking'),
+        waiting: () => document.getElementById('op-waiting'),
         choices: () => document.getElementById('op-choices'),
         grayroom: () => document.getElementById('op-grayroom'),
+        retryBar: () => document.getElementById('op-retry-bar'),
         inputForm: () => document.getElementById('op-input-form'),
         formFields: () => document.getElementById('op-form-fields'),
         input: () => document.getElementById('op-input'),
@@ -38,22 +52,108 @@
         tabs: () => Array.from(document.querySelectorAll('.op-tab')),
         panes: () => Array.from(document.querySelectorAll('.op-pane')),
         monitor: () => document.getElementById('operator-monitor'),
+        artifactModal: () => document.getElementById('op-artifact-modal'),
+        artifactModalTitle: () => document.getElementById('op-artifact-modal-title'),
+        artifactModalBody: () => document.getElementById('op-artifact-modal-body'),
+        artifactModalClose: () => document.getElementById('op-artifact-modal-close'),
     };
-
-    /** Canonical key for resume-after-refresh (see acceptance checklist). */
-    const SESSION_STORAGE_KEY = 'a2a_session_id';
 
     const state = {
         sessions: [],
         activeSessionId: null,
         monitorOpen: true,
         tasks: [],
-        // choices pending (array) comes from execute.form.choices
         pendingChoices: null,
         lastExecuteSignature: null,
         lastPollAttempts: 0,
         activeFormSpec: null,
+        /** @type {string} */
+        uiState: UI_STATES.IDLE,
+        lastSubmitCtx: null,
+        waitingCountdownTimer: null,
+        /** @type {Promise<void>|null} */
+        _sendChain: null,
+        _artifactSeq: 0,
+        /** @type {Record<string, unknown[]>} */
+        _artifactBlobs: {},
     };
+
+    function escapeHtml(s) {
+        return global.escapeHtml ? global.escapeHtml(s) : String(s ?? '');
+    }
+
+    function setState(newState) {
+        if (!UI_STATES[newState] && !Object.values(UI_STATES).includes(newState)) {
+            console.warn('[operator-ui] unknown UI state', newState);
+        }
+        state.uiState = newState;
+        const root = els.root();
+        if (root) root.dataset.uiState = newState;
+
+        const spin = els.headerSpinner();
+        if (spin) {
+            const busy =
+                newState === UI_STATES.CREATING ||
+                newState === UI_STATES.SENDING ||
+                newState === UI_STATES.POLLING;
+            spin.hidden = !busy;
+            spin.classList.toggle('is-on', busy);
+        }
+
+        const label = els.connLabel();
+        if (label) {
+            const map = {
+                [UI_STATES.IDLE]: 'Ready',
+                [UI_STATES.CREATING]: 'Creating…',
+                [UI_STATES.SENDING]: 'Sending…',
+                [UI_STATES.POLLING]: 'Polling…',
+                [UI_STATES.WAITING_INPUT]: 'Choose',
+                [UI_STATES.WAITING_TEXT]: 'Form',
+                [UI_STATES.WAITING_APPROVAL]: 'Approval',
+                [UI_STATES.ERROR]: 'Error',
+                [UI_STATES.DONE]: 'Done',
+            };
+            label.textContent = map[newState] || newState;
+        }
+
+        const dot = els.connDot();
+        if (dot) {
+            if (newState === UI_STATES.ERROR) dot.dataset.status = 'Error';
+            else if (newState === UI_STATES.IDLE || newState === UI_STATES.DONE) dot.dataset.status = 'Ready';
+            else dot.dataset.status = 'Processing…';
+        }
+
+        syncInputDisabledForFsm();
+    }
+
+    function syncInputDisabledForFsm() {
+        const s = state.uiState;
+        const blockMain =
+            s === UI_STATES.CREATING ||
+            s === UI_STATES.SENDING ||
+            s === UI_STATES.POLLING ||
+            s === UI_STATES.WAITING_APPROVAL ||
+            s === UI_STATES.ERROR ||
+            !!state.pendingChoices;
+        const input = els.input();
+        const send = els.sendBtn();
+        if (input) input.disabled = blockMain;
+        if (send) send.disabled = blockMain;
+    }
+
+    function setThinkingVisible(show) {
+        const el = els.thinking();
+        if (!el) return;
+        if (!show) {
+            el.hidden = true;
+            el.innerHTML = '';
+            return;
+        }
+        el.hidden = false;
+        el.innerHTML =
+            '<span class="op-thinking-label">Thinking</span>' +
+            '<span class="op-thinking-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>';
+    }
 
     function persistActiveSessionId(sessionId) {
         if (!sessionId) return;
@@ -72,26 +172,406 @@
         }
     }
 
+    function loadSessionListFromStorage() {
+        try {
+            const raw = sessionStorage.getItem(SESSION_LIST_KEY);
+            if (!raw) return [];
+            const arr = JSON.parse(raw);
+            return Array.isArray(arr) ? arr : [];
+        } catch (e) {
+            console.warn('[operator-ui] session list parse failed', e);
+            return [];
+        }
+    }
+
+    function saveSessionListToStorage(list) {
+        try {
+            sessionStorage.setItem(SESSION_LIST_KEY, JSON.stringify(list.slice(0, 50)));
+        } catch (e) {
+            console.warn('[operator-ui] session list save failed', e);
+        }
+    }
+
+    function upsertSessionEntry(sessionId, title) {
+        if (!sessionId) return;
+        const ts = Date.now();
+        const cur = loadSessionListFromStorage().filter((x) => x && x.id !== sessionId);
+        cur.unshift({ id: sessionId, title: title || sessionId.slice(0, 8), ts });
+        saveSessionListToStorage(cur);
+        state.sessions = cur.map((x) => ({ id: x.id, title: x.title }));
+    }
+
+    function isSessionTerminal(session) {
+        if (!session || typeof session !== 'object') return true;
+        const st = session.status;
+        if (st === 'error' || st === 'failed') return true;
+        if (st === 'completed' || st === 'done') return true;
+        if (session.stage === 'completed') return true;
+        return false;
+    }
+
     function syncChoiceInputGuard() {
         const row = document.getElementById('op-input-row');
         if (!row) return;
         row.classList.toggle('is-hidden', !!state.pendingChoices);
     }
 
-    function updateThinkingUI(blocked, reason) {
-        const el = document.getElementById('op-thinking');
-        if (!el) return;
-        const r = String(reason || '');
-        const show = !!blocked && /processing|hydrating|busy/i.test(r);
-        if (!show) {
-            el.hidden = true;
-            el.innerHTML = '';
+    function clearWaitingCountdown() {
+        if (state.waitingCountdownTimer) {
+            clearInterval(state.waitingCountdownTimer);
+            state.waitingCountdownTimer = null;
+        }
+    }
+
+    function renderWaitingCard(waitPayload, execute) {
+        const host = els.waiting();
+        if (!host) return;
+        clearWaitingCountdown();
+        if (!waitPayload) {
+            host.hidden = true;
+            host.innerHTML = '';
             return;
         }
-        el.hidden = false;
-        el.innerHTML =
-            '<span class="op-thinking-label">Working…</span>' +
-            '<span class="op-thinking-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span>';
+        const w = typeof waitPayload === 'object' && waitPayload !== null ? waitPayload : { message: String(waitPayload) };
+        const reason =
+            escapeHtml(w.reason || w.message || w.text || (typeof waitPayload === 'string' ? waitPayload : '') || '—');
+        const expiresAt = w.expires_at ?? w.expiresAt ?? null;
+        host.hidden = false;
+        host.innerHTML =
+            '<div class="op-waiting-card">' +
+            '<div class="op-waiting-icon" aria-hidden="true">⏸</div>' +
+            '<div class="op-waiting-main">' +
+            '<div class="op-waiting-title">Waiting for approval</div>' +
+            '<div class="op-waiting-reason">' +
+            reason +
+            '</div>' +
+            (expiresAt
+                ? '<div class="op-waiting-countdown" id="op-waiting-countdown">--:--</div>'
+                : '') +
+            '<div class="op-waiting-actions">' +
+            '<button type="button" class="op-btn op-btn-primary" id="op-wait-approve">Approve</button>' +
+            '<button type="button" class="op-btn op-btn-danger" id="op-wait-reject">Reject</button>' +
+            '</div></div></div>';
+
+        const approve = host.querySelector('#op-wait-approve');
+        const reject = host.querySelector('#op-wait-reject');
+        if (approve) {
+            approve.addEventListener('click', () => {
+                void sendSecondBeat({ result: { choice: 'approve' } }, { label: 'approve' });
+            });
+        }
+        if (reject) {
+            reject.addEventListener('click', () => {
+                void sendSecondBeat({ result: { choice: 'reject' } }, { label: 'reject' });
+            });
+        }
+
+        if (expiresAt) {
+            const tick = () => {
+                const el = document.getElementById('op-waiting-countdown');
+                if (!el) return;
+                let expMs = null;
+                if (typeof expiresAt === 'number') expMs = expiresAt < 1e12 ? expiresAt * 1000 : expiresAt;
+                else {
+                    const d = Date.parse(String(expiresAt));
+                    if (!Number.isNaN(d)) expMs = d;
+                }
+                if (expMs == null) {
+                    el.textContent = '--:--';
+                    return;
+                }
+                const sec = Math.max(0, Math.floor((expMs - Date.now()) / 1000));
+                const mm = String(Math.floor(sec / 60)).padStart(2, '0');
+                const ss = String(sec % 60).padStart(2, '0');
+                el.textContent = `${mm}:${ss}`;
+            };
+            tick();
+            state.waitingCountdownTimer = setInterval(tick, 1000);
+        }
+
+        void execute;
+    }
+
+    function clearWaitingDom() {
+        clearWaitingCountdown();
+        const host = els.waiting();
+        if (host) {
+            host.hidden = true;
+            host.innerHTML = '';
+        }
+    }
+
+    function deriveChoicesFromExecute(execute) {
+        const choices = execute?.form?.choices;
+        if (Array.isArray(choices) && choices.length > 0) return choices;
+        const metaChoices = execute?.form?.meta?.routerChoices;
+        if (Array.isArray(metaChoices) && metaChoices.length > 0) return metaChoices;
+        return null;
+    }
+
+    function clearDynamicForm() {
+        const host = els.formFields();
+        if (host) host.innerHTML = '';
+        state.activeFormSpec = null;
+    }
+
+    function renderChoices(choices) {
+        const host = els.choices();
+        if (!host) return;
+        if (!Array.isArray(choices) || choices.length === 0) {
+            host.innerHTML = '';
+            state.pendingChoices = null;
+            syncChoiceInputGuard();
+            return;
+        }
+        state.pendingChoices = choices;
+        host.innerHTML =
+            '<div class="op-choices-title">Choose next step</div>' +
+            choices
+                .map((c) => {
+                    const id = escapeHtml(c.id);
+                    const label = escapeHtml(c.label || c.id);
+                    const desc = c.description ? `<div class="op-choice-desc">${escapeHtml(c.description)}</div>` : '';
+                    return `<button class="op-choice" type="button" data-choice="${id}"><div class="op-choice-label">${label}</div>${desc}</button>`;
+                })
+                .join('');
+        host.querySelectorAll('[data-choice]').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                const choiceId = btn.getAttribute('data-choice');
+                if (!choiceId) return;
+                host.querySelectorAll('[data-choice]').forEach((b) => {
+                    b.disabled = true;
+                });
+                btn.classList.add('is-selected');
+                await sendSecondBeat({ result: { choice: choiceId } }, { label: 'choice', choiceId });
+            });
+        });
+        syncChoiceInputGuard();
+    }
+
+    /**
+     * Render execute.form: choices, textarea, or input[]; clear when absent.
+     * @param {object|null|undefined} execute
+     */
+    function renderForm(execute) {
+        if (execute && execute.wait) {
+            clearDynamicForm();
+            renderChoices(null);
+            renderWaitingCard(execute.wait, execute);
+            setState(UI_STATES.WAITING_APPROVAL);
+            return;
+        }
+        clearWaitingDom();
+        const form = execute?.form;
+        const choices = deriveChoicesFromExecute(execute);
+        if (choices) {
+            clearDynamicForm();
+            renderChoices(choices);
+            const send = els.sendBtn();
+            const input = els.input();
+            if (send) send.disabled = true;
+            if (input) input.disabled = true;
+            setState(UI_STATES.WAITING_INPUT);
+            return;
+        }
+        renderChoices(null);
+        const host = els.formFields();
+        if (!host) return;
+        host.innerHTML = '';
+        if (!form || typeof form !== 'object') {
+            setState(UI_STATES.IDLE);
+            return;
+        }
+        if (form.textarea && typeof form.textarea === 'object' && form.textarea.name) {
+            const name = String(form.textarea.name);
+            const label = String(form.textarea.label || name);
+            state.activeFormSpec = { kind: 'textarea', textarea: form.textarea };
+            host.innerHTML =
+                `<div class="op-field">` +
+                `<div class="op-field-label">${escapeHtml(label)}</div>` +
+                `<textarea class="op-field-textarea" name="${escapeHtml(name)}" placeholder="${escapeHtml(form.textarea.placeholder || '')}"></textarea>` +
+                `</div>` +
+                `<button type="button" class="op-btn op-btn-primary op-form-submit" id="op-form-dynamic-submit">Submit</button>`;
+            setState(UI_STATES.WAITING_TEXT);
+            return;
+        }
+        const inputs = Array.isArray(form.input) ? form.input : null;
+        if (inputs && inputs.length > 0) {
+            state.activeFormSpec = { kind: 'input', input: inputs };
+            host.innerHTML =
+                inputs
+                    .map((f) => {
+                        if (!f || typeof f !== 'object') return '';
+                        const name = String(f.name || '');
+                        if (!name) return '';
+                        const lbl = String(f.label || name);
+                        const type = String(f.type || 'text');
+                        const required = !!f.required;
+                        const placeholder = String(f.placeholder || '');
+                        return (
+                            `<div class="op-field">` +
+                            `<div class="op-field-label">${escapeHtml(lbl)}${required ? ' *' : ''}</div>` +
+                            `<input class="op-field-input" name="${escapeHtml(name)}" type="${escapeHtml(type)}" placeholder="${escapeHtml(placeholder)}" ${required ? 'required' : ''} />` +
+                            `</div>`
+                        );
+                    })
+                    .filter(Boolean)
+                    .join('') +
+                `<button type="button" class="op-btn op-btn-primary op-form-submit" id="op-form-dynamic-submit">Submit</button>`;
+            setState(UI_STATES.WAITING_TEXT);
+            return;
+        }
+        setState(UI_STATES.IDLE);
+    }
+
+    function messageBodyLooksLikeDiff(text) {
+        const t = String(text || '');
+        if (!t) return false;
+        return /(^|\n)[+-][^\n]*(\n|$)/.test(t) || /(^|\n)diff --git /.test(t);
+    }
+
+    function renderMessageArtifactsHtml(artifacts) {
+        if (!Array.isArray(artifacts) || artifacts.length === 0) return '';
+        const blobId = 'a_' + String(++state._artifactSeq);
+        state._artifactBlobs[blobId] = artifacts;
+        const chips = artifacts
+            .map((a, i) => {
+                const label =
+                    escapeHtml((a && (a.title || a.name || a.label || `artifact-${i + 1}`)) || `artifact-${i + 1}`);
+                return `<button type="button" class="op-artifact-chip" data-artifact-blob="${escapeHtml(
+                    blobId
+                )}" data-artifact-index="${i}">${label}</button>`;
+            })
+            .join('');
+        return `<div class="op-artifacts">${chips}</div>`;
+    }
+
+    function wireArtifactChips(container) {
+        if (!container) return;
+        container.querySelectorAll('.op-artifact-chip').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const blobId = btn.getAttribute('data-artifact-blob');
+                const arts = blobId ? state._artifactBlobs[blobId] : null;
+                const idx = parseInt(btn.getAttribute('data-artifact-index') || '0', 10) || 0;
+                if (!Array.isArray(arts)) return;
+                openArtifactModal(arts[idx], idx);
+            });
+        });
+    }
+
+    function openArtifactModal(artifact, index) {
+        const modal = els.artifactModal();
+        const title = els.artifactModalTitle();
+        const body = els.artifactModalBody();
+        if (!modal || !title || !body) return;
+        let text = '';
+        try {
+            text = typeof artifact === 'string' ? artifact : JSON.stringify(artifact, null, 2);
+        } catch (e) {
+            console.error('[operator-ui] artifact stringify', e);
+            text = String(artifact);
+        }
+        title.textContent = `Artifact ${index + 1}`;
+        body.textContent = text;
+        modal.hidden = false;
+    }
+
+    function closeArtifactModal() {
+        const modal = els.artifactModal();
+        if (modal) modal.hidden = true;
+    }
+
+    function initArtifactModal() {
+        els.artifactModalClose()?.addEventListener('click', closeArtifactModal);
+        els.artifactModal()?.addEventListener('click', (ev) => {
+            const t = ev.target;
+            if (t && t.getAttribute && t.getAttribute('data-close-modal') === '1') closeArtifactModal();
+        });
+    }
+
+    function renderMessagesFromStore() {
+        const container = els.messages();
+        if (!container) return;
+        const st = store.getState?.() || {};
+        const msgs = st.messages || [];
+        if (!Array.isArray(msgs) || msgs.length === 0) {
+            container.innerHTML = `<div class="op-empty">No messages</div>`;
+            const stE = store.getState?.() || {};
+            const ex0 = stE.execute;
+            if (Array.isArray(ex0?.artifacts) && ex0.artifacts.length > 0) {
+                const bar = document.createElement('div');
+                bar.className = 'op-exec-artifact-strip';
+                bar.innerHTML = renderMessageArtifactsHtml(ex0.artifacts);
+                container.appendChild(bar);
+                wireArtifactChips(bar);
+            }
+            return;
+        }
+        const frag = document.createDocumentFragment();
+        for (const m of msgs) {
+            const role = String(m.role || 'assistant');
+            const content = String(m.content || '');
+            const av = role === 'user' ? 'U' : role === 'assistant' ? 'A' : role === 'error' ? '!' : '•';
+            const row = document.createElement('div');
+            row.className = `op-msg op-msg-${role}`;
+            row.dataset.role = role;
+
+            const inner = document.createElement('div');
+            inner.className = 'op-msg-inner';
+
+            const avatar = document.createElement('div');
+            avatar.className = 'op-msg-avatar';
+            avatar.textContent = av;
+
+            const col = document.createElement('div');
+            col.className = 'op-msg-col';
+
+            const meta = document.createElement('div');
+            meta.className = 'op-msg-meta';
+            meta.textContent = role;
+
+            const bodyWrap = document.createElement('div');
+            if (messageBodyLooksLikeDiff(content) && role !== 'user') {
+                const pre = document.createElement('pre');
+                pre.className = 'op-msg-body op-msg-pre';
+                pre.textContent = content;
+                bodyWrap.appendChild(pre);
+            } else {
+                const body = document.createElement('div');
+                body.className = 'op-msg-body';
+                body.textContent = content;
+                bodyWrap.appendChild(body);
+            }
+
+            col.appendChild(meta);
+            col.appendChild(bodyWrap);
+
+            const arts = m.artifacts;
+            if (Array.isArray(arts) && arts.length > 0) {
+                const wrap = document.createElement('div');
+                wrap.innerHTML = renderMessageArtifactsHtml(arts);
+                const node = wrap.firstElementChild;
+                if (node) col.appendChild(node);
+            }
+
+            inner.appendChild(avatar);
+            inner.appendChild(col);
+            row.appendChild(inner);
+            frag.appendChild(row);
+        }
+        container.innerHTML = '';
+        container.appendChild(frag);
+        container.querySelectorAll('.op-artifacts').forEach((h) => wireArtifactChips(h));
+        const st2 = store.getState?.() || {};
+        const ex = st2.execute;
+        if (Array.isArray(ex?.artifacts) && ex.artifacts.length > 0) {
+            const bar = document.createElement('div');
+            bar.className = 'op-exec-artifact-strip';
+            bar.innerHTML = renderMessageArtifactsHtml(ex.artifacts);
+            container.appendChild(bar);
+            wireArtifactChips(bar);
+        }
+        container.scrollTop = container.scrollHeight;
     }
 
     function refreshWorkbenchDiff() {
@@ -114,146 +594,11 @@
             }
         }
         const text = parts.length ? parts.join('\n\n---\n\n') : '(no projection)';
-        pane.innerHTML = '<pre class="op-diff-pre">' + escapeHtml(text) + '</pre>';
-    }
-
-    async function resumeFromStorage() {
-        let raw = '';
-        try {
-            raw = sessionStorage.getItem(SESSION_STORAGE_KEY) || '';
-        } catch (e) {
-            console.warn('[operator-ui] sessionStorage read failed', e);
-            return;
-        }
-        const sid = raw.trim();
-        if (!sid) return;
-        try {
-            const session = await api.getSession(sid);
-            const id =
-                global.resolveSessionIdFromPayload?.(session) || session?.id || session?.sessionId;
-            if (!id) {
-                clearPersistedSessionId();
-                return;
-            }
-            const exists = state.sessions.some((s) => s.id === id);
-            if (!exists) state.sessions = [{ id }, ...state.sessions];
-            renderSessionList();
-            setActiveSession(id);
-        } catch (e) {
-            console.warn('[operator-ui] resume session failed', e);
-            clearPersistedSessionId();
-        }
-    }
-
-    function escapeHtml(s) {
-        return global.escapeHtml ? global.escapeHtml(s) : String(s ?? '');
-    }
-
-    function setConn(status) {
-        const dot = els.connDot();
-        const label = els.connLabel();
-        if (!dot || !label) return;
-        dot.dataset.status = status;
-        label.textContent = status;
-    }
-
-    function renderSessionList() {
-        const list = els.sessionList();
-        if (!list) return;
-        if (state.sessions.length === 0) {
-            list.innerHTML = `<div class="op-empty-small">No sessions yet</div>`;
-            return;
-        }
-        list.innerHTML = state.sessions
-            .map((s) => {
-                const id = escapeHtml(s.id);
-                const label = escapeHtml((s.id || '').slice(0, 8) || '—');
-                const isActive = s.id === state.activeSessionId;
-                return `<button class="op-session-item ${isActive ? 'is-on' : ''}" type="button" data-sid="${id}">${label}</button>`;
-            })
-            .join('');
-        list.querySelectorAll('[data-sid]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                const sid = btn.getAttribute('data-sid');
-                if (!sid) return;
-                setActiveSession(sid);
-            });
-        });
-    }
-
-    function setActiveSession(sessionId) {
-        state.activeSessionId = sessionId;
-        if (sessionId) persistActiveSessionId(sessionId);
-        const el = els.activeSession();
-        if (el) el.textContent = `Session: ${sessionId ? sessionId.slice(0, 8) : '—'}`;
-        renderSessionList();
-        // Hydrate snapshot for messages/execute/context
-        void hydrateFromServer();
-    }
-
-    function renderMessagesFromStore() {
-        const container = els.messages();
-        if (!container) return;
-        const st = store.getState?.() || {};
-        const msgs = st.messages || [];
-        if (!Array.isArray(msgs) || msgs.length === 0) {
-            container.innerHTML = `<div class="op-empty">No messages</div>`;
-            return;
-        }
-        container.innerHTML = msgs
-            .map((m) => {
-                const role = escapeHtml(m.role || 'assistant');
-                const content = escapeHtml(m.content || '');
-                return `<div class="op-msg" data-role="${role}"><div class="op-msg-role">${role}</div><div class="op-msg-body">${content}</div></div>`;
-            })
-            .join('');
-        container.scrollTop = container.scrollHeight;
-    }
-
-    function buildExecuteBadgesHtml(execute) {
-        const a = execute?.attachments;
-        if (!a || typeof a !== 'object') return '';
-        const badges = [];
-        if (Array.isArray(a.readFiles) && a.readFiles.length > 0) badges.push(['readFiles', String(a.readFiles.length)]);
-        if (Array.isArray(a.writtenFiles) && a.writtenFiles.length > 0) badges.push(['writtenFiles', String(a.writtenFiles.length)]);
-        if (typeof a.ragQuery === 'string' && a.ragQuery) badges.push(['rag', '1']);
-        if (typeof a.shellCommand === 'string' && a.shellCommand) badges.push(['shell', '1']);
-        if (typeof a.grepPattern === 'string' && a.grepPattern) badges.push(['grep', '1']);
-        if (typeof a.listDirectoryPath === 'string' && a.listDirectoryPath) badges.push(['ls', '1']);
-        if (typeof a.pendingClientAction === 'string' && a.pendingClientAction) badges.push(['pending', '1']);
-        if (badges.length === 0) return '';
-        return (
-            '<div class="op-exec-badges">' +
-            badges
-                .map(([k, v]) => `<span class="op-badge op-badge-accent">${escapeHtml(k)}: ${escapeHtml(v)}</span>`)
-                .join('') +
-            '</div>'
-        );
-    }
-
-    function maybeEmitExecuteActivity(execute) {
-        if (!execute || typeof execute !== 'object') return;
-        const msg = typeof execute.message === 'string' ? execute.message.trim() : '';
-        const attachments = execute.attachments && typeof execute.attachments === 'object' ? execute.attachments : null;
-        if (!msg && !attachments) return;
-
-        const signature = JSON.stringify({
-            message: msg || null,
-            attachments: attachments || null,
-            formChoices: Array.isArray(execute?.form?.choices) ? execute.form.choices.map((c) => c?.id) : null,
-        });
-        if (signature === state.lastExecuteSignature) return;
-        state.lastExecuteSignature = signature;
-
-        const badgesHtml = buildExecuteBadgesHtml(execute);
-        const body =
-            (msg ? msg : 'Agent activity') +
-            (badgesHtml ? '\n' : '') +
-            (badgesHtml ? badgesHtml.replace(/<[^>]+>/g, '') : '');
-
-        // Keep it simple: emit a system message in the timeline.
-        store.pushMessage?.(body, 'system');
-        renderMessagesFromStore();
+        const pre = document.createElement('pre');
+        pre.className = 'op-diff-pre';
+        pre.textContent = text;
+        pane.innerHTML = '';
+        pane.appendChild(pre);
     }
 
     function renderGrayRoomFromContext() {
@@ -265,7 +610,6 @@
             host.innerHTML = '';
             return;
         }
-        // Reuse existing TaskFlowRender builder when available.
         if (global.TaskFlowRender?.buildGrayRoomHtml) {
             host.innerHTML =
                 global.TaskFlowRender.buildGrayRoomHtml(ctx) +
@@ -273,6 +617,96 @@
             return;
         }
         host.innerHTML = '';
+    }
+
+    function clearRetryBar() {
+        const bar = els.retryBar();
+        if (bar) {
+            bar.hidden = true;
+            bar.innerHTML = '';
+        }
+    }
+
+    function showRetryBar(message) {
+        const bar = els.retryBar();
+        if (!bar) return;
+        bar.hidden = false;
+        bar.innerHTML = '';
+        const span = document.createElement('span');
+        span.className = 'op-retry-text';
+        span.textContent = String(message || 'Request failed');
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'op-btn op-btn-primary';
+        btn.textContent = 'Retry';
+        btn.addEventListener('click', () => {
+            const ctx = state.lastSubmitCtx;
+            if (!ctx?.sid || !ctx.body) return;
+            clearRetryBar();
+            void sendSecondBeat(ctx.body, { label: 'retry' });
+        });
+        bar.appendChild(span);
+        bar.appendChild(btn);
+    }
+
+    function renderFormError(message) {
+        if (message) {
+            store.pushMessage?.(String(message), 'error');
+            renderMessagesFromStore();
+        }
+    }
+
+    function applySessionSnapshot(session) {
+        const sid = global.resolveSessionIdFromPayload?.(session) || session?.id || session?.sessionId;
+        if (!sid) return;
+        if (session?.messages) {
+            store.applyServerMessages?.(session.messages);
+        }
+        if (session?.execute !== undefined) {
+            store.setExecute?.(session.execute);
+        }
+        if (session?.context !== undefined) {
+            store.setContext?.(session.context);
+        }
+        renderMessagesFromStore();
+        renderGrayRoomFromContext();
+        renderForm(session.execute);
+        refreshWorkbenchDiff();
+    }
+
+    async function hydrateFromServer() {
+        const sid = state.activeSessionId;
+        if (!sid) return;
+        try {
+            setConn('Hydrating…');
+            const session = await api.getSession(sid);
+            applySessionSnapshot(session);
+            const st = store.getState?.() || {};
+            const ex = st.execute;
+            if (ex?.wait) {
+                setInputBlocked(true, 'Awaiting approval');
+            } else if (state.pendingChoices) {
+                setInputBlocked(true, 'Awaiting choice');
+            } else if (global.executeHasActionableForm?.(ex)) {
+                setInputBlocked(false, 'Ready');
+            } else {
+                const blocked = !!store.isInputBlocked?.();
+                setInputBlocked(blocked, blocked ? 'Busy' : 'Ready');
+            }
+            setConn('Ready');
+        } catch (e) {
+            console.error('[operator-ui] hydrate error', e);
+            setConn('Error');
+            renderFormError(e?.payload?.message || e?.message || 'Hydrate failed');
+            setState(UI_STATES.ERROR);
+            setThinkingVisible(false);
+        }
+    }
+
+    function setConn(status) {
+        const dot = els.connDot();
+        if (!dot) return;
+        dot.dataset.status = status;
     }
 
     function setInputBlocked(blocked, reason) {
@@ -291,293 +725,257 @@
         } else {
             setConn('Ready');
         }
-        updateThinkingUI(blocked, reason || '');
-    }
-
-    function renderFormError(message) {
-        // Minimal predictable error surface; avoid complex per-field wiring.
-        if (message) {
-            store.pushMessage?.(String(message), 'error');
-            renderMessagesFromStore();
-        }
-    }
-
-    function clearDynamicForm() {
-        const host = els.formFields();
-        if (host) host.innerHTML = '';
-        state.activeFormSpec = null;
-    }
-
-    function renderExecuteForm(execute) {
-        const host = els.formFields();
-        if (!host) return;
-        host.innerHTML = '';
-        const form = execute?.form;
-        if (!form || typeof form !== 'object') return;
-
-        // choices are rendered separately by renderChoices().
-        if (Array.isArray(form.choices) && form.choices.length > 0) return;
-
-        // textarea support
-        if (form.textarea && typeof form.textarea === 'object' && form.textarea.name) {
-            const name = String(form.textarea.name);
-            const label = String(form.textarea.label || name);
-            state.activeFormSpec = { kind: 'textarea', textarea: form.textarea };
-            host.innerHTML =
-                `<div class="op-field">` +
-                `<div class="op-field-label">${escapeHtml(label)}</div>` +
-                `<textarea class="op-field-textarea" name="${escapeHtml(name)}" placeholder="${escapeHtml(form.textarea.placeholder || '')}"></textarea>` +
-                `</div>`;
-            return;
-        }
-
-        // input array support
-        const inputs = Array.isArray(form.input) ? form.input : null;
-        if (inputs && inputs.length > 0) {
-            state.activeFormSpec = { kind: 'input', input: inputs };
-            host.innerHTML = inputs
-                .map((f) => {
-                    if (!f || typeof f !== 'object') return '';
-                    const name = String(f.name || '');
-                    if (!name) return '';
-                    const label = String(f.label || name);
-                    const type = String(f.type || 'text');
-                    const required = !!f.required;
-                    const placeholder = String(f.placeholder || '');
-                    return (
-                        `<div class="op-field">` +
-                        `<div class="op-field-label">${escapeHtml(label)}${required ? ' *' : ''}</div>` +
-                        `<input class="op-field-input" name="${escapeHtml(name)}" type="${escapeHtml(type)}" placeholder="${escapeHtml(placeholder)}" ${required ? 'required' : ''} />` +
-                        `</div>`
-                    );
-                })
-                .filter(Boolean)
-                .join('');
-            return;
-        }
-    }
-
-    function renderChoices(choices) {
-        const host = els.choices();
-        if (!host) return;
-        if (!Array.isArray(choices) || choices.length === 0) {
-            host.innerHTML = '';
-            state.pendingChoices = null;
-            syncChoiceInputGuard();
-            // When choices are cleared, re-enable dynamic form and input unless async blocks.
-            return;
-        }
-        state.pendingChoices = choices;
-        host.innerHTML = `<div class="op-choices-title">Choose next step</div>` +
-            choices
-                .map((c) => {
-                    const id = escapeHtml(c.id);
-                    const label = escapeHtml(c.label || c.id);
-                    const desc = c.description ? `<div class="op-choice-desc">${escapeHtml(c.description)}</div>` : '';
-                    return `<button class="op-choice" type="button" data-choice="${id}"><div class="op-choice-label">${label}</div>${desc}</button>`;
-                })
-                .join('');
-        host.querySelectorAll('[data-choice]').forEach((btn) => {
-            btn.addEventListener('click', async () => {
-                const choiceId = btn.getAttribute('data-choice');
-                if (!choiceId) return;
-                await submitChoice(choiceId);
-            });
-        });
-        // Two-beats guard: while choices pending, disable free-text input.
-        setInputBlocked(true, 'Awaiting choice');
-        syncChoiceInputGuard();
-    }
-
-    function deriveChoicesFromExecute(execute) {
-        const choices = execute?.form?.choices;
-        if (Array.isArray(choices) && choices.length > 0) return choices;
-        const metaChoices = execute?.form?.meta?.routerChoices;
-        if (Array.isArray(metaChoices) && metaChoices.length > 0) return metaChoices;
-        return null;
-    }
-
-    async function hydrateFromServer() {
-        const sid = state.activeSessionId;
-        if (!sid) return;
-        try {
-            setConn('Hydrating…');
-            const session = await api.getSession(sid);
-            if (session?.messages) {
-                store.applyServerMessages?.(session.messages);
-            }
-            if (session?.execute !== undefined) {
-                store.setExecute?.(session.execute);
-            }
-            if (session?.context !== undefined) {
-                store.setContext?.(session.context);
-            }
-            renderMessagesFromStore();
-            renderGrayRoomFromContext();
-            const st = store.getState?.() || {};
-            const execute = st.execute;
-            const choices = deriveChoicesFromExecute(execute);
-            if (choices) {
-                renderChoices(choices);
-            } else {
-                renderChoices(null);
-                renderExecuteForm(execute);
-                setInputBlocked(!!store.isInputBlocked?.(), 'Busy');
-            }
-            setConn('Ready');
-            refreshWorkbenchDiff();
-        } catch (e) {
-            console.error('[operator-ui] hydrate error', e);
-            setConn('Error');
-            renderFormError(e?.payload?.message || e?.message || 'Hydrate failed');
-            updateThinkingUI(false, '');
-        }
     }
 
     async function ensureSession() {
         if (state.activeSessionId) return state.activeSessionId;
+        setState(UI_STATES.CREATING);
         const session = await api.createSession({});
         const sid = global.resolveSessionIdFromPayload?.(session) || session?.id || session?.sessionId;
         if (!sid) throw new Error('session_id_missing');
-        state.sessions = [{ id: sid }, ...state.sessions];
+        upsertSessionEntry(sid, session?.title || session?.context?.task || 'Chat');
+        state.sessions = loadSessionListFromStorage().map((x) => ({ id: x.id, title: x.title }));
         renderSessionList();
-        setActiveSession(sid);
+        setActiveSession(sid, true);
+        setState(UI_STATES.IDLE);
         return sid;
     }
 
-    async function submitMessage(text) {
-        const sid = await ensureSession();
-        if (state.pendingChoices) {
-            console.warn('[operator-ui] Choices pending; refusing free-text submit.');
+    function renderSessionList() {
+        const list = els.sessionList();
+        if (!list) return;
+        const rows = loadSessionListFromStorage();
+        if (rows.length === 0) {
+            list.innerHTML = `<div class="op-empty-small">No sessions yet</div>`;
             return;
         }
-        // If store considers input blocked (async work), refuse to prevent 409 async_pending.
-        if (typeof store.isInputBlocked === 'function' && store.isInputBlocked()) {
-            renderFormError('Busy: wait for the current step to finish (polling /async).');
-            return;
-        }
-        // Prefer server-provided form if present: submit form fields; else fall back to message.
-        const st = store.getState?.() || {};
-        const execute = st.execute;
-        const pendingForm = execute?.form;
-
-        let submitBody = null;
-        const dynHost = els.formFields();
-        if (dynHost && dynHost.querySelector('input[name],textarea[name]')) {
-            const data = {};
-            dynHost.querySelectorAll('input[name],textarea[name]').forEach((el) => {
-                const name = el.getAttribute('name');
-                if (!name) return;
-                data[name] = el.value;
+        list.innerHTML = rows
+            .map((s) => {
+                const id = escapeHtml(s.id);
+                const title = escapeHtml(s.title || s.id.slice(0, 8));
+                const isActive = s.id === state.activeSessionId;
+                return `<button class="op-session-item ${isActive ? 'is-on' : ''}" type="button" data-sid="${id}" title="${id}">${title}</button>`;
+            })
+            .join('');
+        list.querySelectorAll('[data-sid]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const sid = btn.getAttribute('data-sid');
+                if (!sid) return;
+                void switchSession(sid);
             });
-            // Validate form if we have a spec.
-            if (state.activeFormSpec?.kind === 'input' && typeof global.validateForm === 'function') {
-                const vr = global.validateForm(state.activeFormSpec.input, data);
-                if (vr && vr.valid === false) {
-                    renderFormError(vr.firstError || 'Invalid form');
-                    return;
-                }
-            }
-            // Router first beat: common field name is `task` (API expects it at top-level, not inside result).
-            if (typeof data.task === 'string' && data.task.trim()) {
-                submitBody = { task: data.task.trim() };
-                store.pushMessage?.(data.task.trim(), 'user');
-            } else if (typeof data.message === 'string' && data.message.trim()) {
-                submitBody = { result: { message: data.message.trim() } };
-                store.pushMessage?.(data.message.trim(), 'user');
-            } else {
-                submitBody = { result: data };
-                store.pushMessage?.(text, 'user');
-            }
-        } else {
-            submitBody = { result: { message: text } };
-            store.pushMessage?.(text, 'user');
-        }
-
-        renderMessagesFromStore();
-        setInputBlocked(true, 'Processing…');
-
-        let ack;
-        try {
-            ack = await api.postNext(sid, submitBody);
-        } catch (e) {
-            // Expected when user races async_pending; show message and rehydrate.
-            renderFormError(e?.payload?.message || e?.message || 'Submit failed');
-            await hydrateFromServer();
-            return;
-        }
-        state.lastPollAttempts = 0;
-        const shouldPoll = ack?.asyncPending === true || ack?.promiseId || ack?.accepted === true;
-        if (shouldPoll) {
-            try {
-                await api.pollUntilDone(sid, {
-                    onTick: (r) => {
-                        if (r?.execute) store.setExecute?.(r.execute);
-                        state.lastPollAttempts++;
-                        if (state.lastPollAttempts % 5 === 0) {
-                            setConn(`Processing… (${state.lastPollAttempts})`);
-                        }
-                    },
-                    shouldStop: (r) => {
-                        // Stop early if server surfaces an actionable form (choices/input/textarea) for the user.
-                        const ex = r?.execute;
-                        if (typeof global.executeHasActionableForm === 'function') {
-                            return global.executeHasActionableForm(ex) === true;
-                        }
-                        return false;
-                    },
-                    intervalMs: 800,
-                    maxAttempts: 200,
-                });
-            } catch (pe) {
-                console.error('[operator-ui] pollUntilDone', pe);
-                renderFormError(pe?.message || 'Async polling failed');
-            }
-        }
-        await hydrateFromServer();
+        });
     }
 
-    async function submitChoice(choiceId) {
-        const sid = await ensureSession();
-        renderChoices(null);
+    function setActiveSession(sessionId, hydrate = true) {
+        state.activeSessionId = sessionId;
+        if (sessionId) persistActiveSessionId(sessionId);
+        const el = els.activeSession();
+        if (el) el.textContent = `Session: ${sessionId ? sessionId.slice(0, 8) : '—'}`;
+        renderSessionList();
+        if (hydrate) void hydrateFromServer();
+    }
+
+    async function switchSession(sessionId) {
+        clearRetryBar();
+        clearWaitingDom();
+        state.pendingChoices = null;
+        setActiveSession(sessionId, true);
+    }
+
+    async function startNewSession() {
+        clearRetryBar();
+        clearWaitingDom();
+        state.pendingChoices = null;
         clearDynamicForm();
-        setInputBlocked(true, 'Processing…');
+        setState(UI_STATES.CREATING);
+        try {
+            store.reset?.(null);
+        } catch (e) {
+            console.warn('[operator-ui] store reset', e);
+        }
+        const session = await api.createSession({});
+        const sid = global.resolveSessionIdFromPayload?.(session) || session?.id || session?.sessionId;
+        if (!sid) {
+            setState(UI_STATES.ERROR);
+            return;
+        }
+        upsertSessionEntry(sid, 'New chat');
+        state.sessions = loadSessionListFromStorage().map((x) => ({ id: x.id, title: x.title }));
+        renderSessionList();
+        setActiveSession(sid, true);
+        setState(UI_STATES.IDLE);
+    }
+
+    async function runPollAfterAck(sid) {
+        state.lastPollAttempts = 0;
+        try {
+            const pollRes = await api.pollUntilDone(sid, 60, 500, {
+                onTick: (r) => {
+                    if (r?.execute) store.setExecute?.(r.execute);
+                    state.lastPollAttempts++;
+                    if (state.lastPollAttempts % 4 === 0) {
+                        setConn(`Polling… (${state.lastPollAttempts})`);
+                    }
+                },
+                shouldStop: (r) => {
+                    const ex = r?.execute;
+                    if (typeof global.executeHasActionableForm === 'function') {
+                        return global.executeHasActionableForm(ex) === true;
+                    }
+                    return false;
+                },
+            });
+            if (pollRes && pollRes.timedOut === true) {
+                if (pollRes.snapshot) {
+                    applySessionSnapshot(pollRes.snapshot);
+                } else {
+                    renderFormError('Polling timed out; session state was refreshed if available.');
+                }
+            } else if (pollRes && (pollRes.status === 'error' || pollRes.status === 'failed')) {
+                const em =
+                    (typeof pollRes.error === 'string' && pollRes.error) ||
+                    (pollRes.error && pollRes.error.message) ||
+                    pollRes.message ||
+                    'Async step failed';
+                store.pushMessage?.(String(em), 'error');
+                renderMessagesFromStore();
+            }
+        } catch (pe) {
+            console.error('[operator-ui] pollUntilDone', pe);
+            renderFormError(pe?.message || 'Async polling failed');
+        }
+    }
+
+    /**
+     * Second beat: `{ result: { ... } }` envelope; first beat uses `{ task }` in sendMessage.
+     * @param {object} body
+     * @param {{ label?: string }} meta
+     */
+    async function sendSecondBeat(body, meta) {
+        const sid = state.activeSessionId || (await ensureSession());
+        if (state.uiState === UI_STATES.SENDING || state.uiState === UI_STATES.POLLING) return;
+        state.lastSubmitCtx = { sid, body, meta: meta || {} };
+        setState(UI_STATES.SENDING);
+        setThinkingVisible(true);
+        clearRetryBar();
         let ack;
         try {
-            ack = await api.postNext(sid, { result: { choice: choiceId } });
+            ack = await api.postNext(sid, body);
         } catch (e) {
-            renderFormError(e?.payload?.message || e?.message || 'Choice submit failed');
+            console.error('[operator-ui] postNext failed', e);
+            setState(UI_STATES.ERROR);
+            renderFormError(e?.payload?.message || e?.message || 'Submit failed');
+            showRetryBar(e?.payload?.message || e?.message || 'Submit failed');
+            setThinkingVisible(false);
             await hydrateFromServer();
             return;
         }
-        state.lastPollAttempts = 0;
+        setState(UI_STATES.POLLING);
         const shouldPoll = ack?.asyncPending === true || ack?.promiseId || ack?.accepted === true;
         if (shouldPoll) {
-            try {
-                await api.pollUntilDone(sid, {
-                    onTick: (r) => {
-                        if (r?.execute) store.setExecute?.(r.execute);
-                        state.lastPollAttempts++;
-                        if (state.lastPollAttempts % 5 === 0) {
-                            setConn(`Processing… (${state.lastPollAttempts})`);
-                        }
-                    },
-                    shouldStop: (r) => {
-                        const ex = r?.execute;
-                        if (typeof global.executeHasActionableForm === 'function') {
-                            return global.executeHasActionableForm(ex) === true;
-                        }
-                        return false;
-                    },
-                    intervalMs: 800,
-                    maxAttempts: 200,
-                });
-            } catch (pe) {
-                console.error('[operator-ui] pollUntilDone (choice)', pe);
-                renderFormError(pe?.message || 'Async polling failed');
-            }
+            await runPollAfterAck(sid);
         }
         await hydrateFromServer();
+        setThinkingVisible(false);
+        setState(UI_STATES.IDLE);
+    }
+
+    /**
+     * @param {string} text trimmed user line (optional when submitting dynamic form only)
+     */
+    async function sendMessage(text) {
+        if (state.uiState === UI_STATES.SENDING || state.uiState === UI_STATES.POLLING) return;
+
+        const run = async () => {
+            const sid = await ensureSession();
+            if (state.pendingChoices) {
+                console.warn('[operator-ui] choices pending');
+                return;
+            }
+            if (typeof store.isInputBlocked === 'function' && store.isInputBlocked()) {
+                renderFormError('Busy: wait for the current step to finish (polling /async).');
+                return;
+            }
+
+            const st = store.getState?.() || {};
+            const execute = st.execute;
+            const dynHost = els.formFields();
+
+            let submitBody = null;
+
+            if (dynHost && dynHost.querySelector('input[name],textarea[name]')) {
+                const data = {};
+                dynHost.querySelectorAll('input[name],textarea[name]').forEach((el) => {
+                    const name = el.getAttribute('name');
+                    if (!name) return;
+                    data[name] = el.value;
+                });
+                if (state.activeFormSpec?.kind === 'input' && typeof global.validateForm === 'function') {
+                    const vr = global.validateForm(state.activeFormSpec.input, data);
+                    if (vr && vr.valid === false) {
+                        renderFormError(vr.firstError || 'Invalid form');
+                        return;
+                    }
+                }
+                if (typeof data.task === 'string' && data.task.trim()) {
+                    submitBody = { task: data.task.trim() };
+                    store.pushMessage?.(data.task.trim(), 'user');
+                } else if (typeof data.message === 'string' && data.message.trim()) {
+                    submitBody = { result: { message: data.message.trim() } };
+                    store.pushMessage?.(data.message.trim(), 'user');
+                } else {
+                    const keys = Object.keys(data);
+                    const payload =
+                        keys.length === 1 && keys[0] === 'message'
+                            ? { message: String(data.message) }
+                            : { message: JSON.stringify(data) };
+                    submitBody = { result: payload };
+                    store.pushMessage?.(text || JSON.stringify(data), 'user');
+                }
+            } else {
+                if (!text) return;
+                submitBody = { task: text };
+                store.pushMessage?.(text, 'user');
+            }
+
+            renderMessagesFromStore();
+            state.lastSubmitCtx = { sid, body: submitBody };
+            setState(UI_STATES.SENDING);
+            setThinkingVisible(true);
+            clearRetryBar();
+
+            let ack;
+            try {
+                ack = await api.postNext(sid, submitBody);
+            } catch (e) {
+                console.error('[operator-ui] postNext', e);
+                setState(UI_STATES.ERROR);
+                renderFormError(e?.payload?.message || e?.message || 'Submit failed');
+                showRetryBar(e?.payload?.message || e?.message || 'Submit failed');
+                setThinkingVisible(false);
+                await hydrateFromServer();
+                return;
+            }
+
+            setState(UI_STATES.POLLING);
+            const shouldPoll = ack?.asyncPending === true || ack?.promiseId || ack?.accepted === true;
+            if (shouldPoll) {
+                await runPollAfterAck(sid);
+            }
+            await hydrateFromServer();
+            setThinkingVisible(false);
+            setState(UI_STATES.IDLE);
+        };
+
+        state._sendChain = (state._sendChain || Promise.resolve()).then(run).catch((err) => {
+            console.error('[operator-ui] sendMessage chain', err);
+            setState(UI_STATES.ERROR);
+            renderFormError(err?.message || 'Unexpected error');
+            showRetryBar(err?.message || 'Unexpected error');
+            setThinkingVisible(false);
+            setInputBlocked(false, 'Ready');
+        });
+        await state._sendChain;
     }
 
     function initTabs() {
@@ -620,7 +1018,6 @@
         const running = state.tasks.filter((t) => t.status === 'running').length;
         badge.textContent = `running: ${running}`;
         badge.classList.toggle('is-hidden', running === 0);
-        // Minimal table (placeholder until server emits tasks via execute/context)
         if (state.tasks.length === 0) {
             body.innerHTML = `<div class="op-empty-small">No tasks</div>`;
             return;
@@ -639,70 +1036,134 @@
     }
 
     function wireEvents() {
-        // Store events
         store.on?.('messages', renderMessagesFromStore);
         store.on?.('execute', function (ex) {
-            maybeEmitExecuteActivity(ex);
-            const choices = deriveChoicesFromExecute(ex);
-            if (choices) renderChoices(choices);
-            else renderChoices(null);
+            renderForm(ex);
+            refreshWorkbenchDiff();
         });
         store.on?.('context', renderGrayRoomFromContext);
         store.on?.('promisePending', function (pending) {
-            if (!state.pendingChoices) setInputBlocked(!!pending, pending ? 'Processing…' : 'Ready');
+            if (!state.pendingChoices && !store.getState?.().execute?.wait) {
+                setInputBlocked(!!pending, pending ? 'Processing…' : 'Ready');
+            }
         });
         store.on?.('error', function () {
-            setConn('Error');
+            setState(UI_STATES.ERROR);
         });
     }
 
-    function boot() {
+    async function initResumeFlow() {
+        state.sessions = loadSessionListFromStorage().map((x) => ({ id: x.id, title: x.title }));
+        renderSessionList();
+
+        let raw = '';
+        try {
+            raw = sessionStorage.getItem(SESSION_STORAGE_KEY) || '';
+        } catch (e) {
+            console.warn('[operator-ui] sessionStorage read failed', e);
+        }
+        const sid = raw.trim();
+        if (sid) {
+            try {
+                const session = await api.getSession(sid);
+                const id = global.resolveSessionIdFromPayload?.(session) || session?.id || session?.sessionId;
+                if (!id) {
+                    clearPersistedSessionId();
+                    await startNewSession();
+                    return;
+                }
+                if (isSessionTerminal(session)) {
+                    clearPersistedSessionId();
+                    await startNewSession();
+                    return;
+                }
+                upsertSessionEntry(id, session?.context?.task || id.slice(0, 8));
+                state.sessions = loadSessionListFromStorage().map((x) => ({ id: x.id, title: x.title }));
+                renderSessionList();
+                setActiveSession(id, true);
+                if (session.asyncPending === true) {
+                    setThinkingVisible(true);
+                    setState(UI_STATES.POLLING);
+                    await runPollAfterAck(id);
+                    await hydrateFromServer();
+                    setThinkingVisible(false);
+                }
+                setState(UI_STATES.IDLE);
+            } catch (e) {
+                console.warn('[operator-ui] resume session failed', e);
+                clearPersistedSessionId();
+                await startNewSession();
+            }
+            return;
+        }
+        await startNewSession();
+    }
+
+    function initUI() {
         initTabs();
         initMonitor();
+        initArtifactModal();
         renderSessionList();
         wireEvents();
+        setState(UI_STATES.IDLE);
 
         els.newSessionBtn()?.addEventListener('click', async () => {
-            const session = await api.createSession({});
-            const sid = global.resolveSessionIdFromPayload?.(session) || session?.id || session?.sessionId;
-            if (!sid) return;
-            state.sessions = [{ id: sid }, ...state.sessions];
-            renderSessionList();
-            setActiveSession(sid);
+            try {
+                await startNewSession();
+            } catch (e) {
+                console.error('[operator-ui] new session', e);
+                renderFormError(e?.message || 'New session failed');
+            }
+        });
+
+        els.inputForm()?.addEventListener('click', async (ev) => {
+            const t = ev.target;
+            if (!t || t.id !== 'op-form-dynamic-submit') return;
+            ev.preventDefault();
+            if (state.uiState === UI_STATES.SENDING || state.uiState === UI_STATES.POLLING) return;
+            t.disabled = true;
+            try {
+                await sendMessage('');
+            } catch (err) {
+                console.error('[operator-ui] form submit', err);
+            } finally {
+                t.disabled = false;
+            }
         });
 
         els.inputForm()?.addEventListener('submit', async (e) => {
             e.preventDefault();
             const input = els.input();
             const text = (input?.value || '').trim();
-            // If there is a dynamic form rendered, allow submit without the single-line input.
             if (text) input.value = '';
             try {
-                await submitMessage(text);
+                await sendMessage(text);
             } catch (err) {
                 console.error('[operator-ui] submit error', err);
-                setConn('Error');
+                setState(UI_STATES.ERROR);
                 renderFormError(err?.payload?.message || err?.message || 'Submit error');
+                showRetryBar(err?.message || 'Submit error');
+                setThinkingVisible(false);
                 setInputBlocked(false, 'Ready');
             }
         });
 
         els.stopBtn()?.addEventListener('click', () => {
-            // No WS interrupt in this repo; best-effort UX: unblock input locally.
-            // Real interrupt requires server-side contract and is out of scope for low-risk today.
             state.pendingChoices = null;
             renderChoices(null);
+            clearWaitingDom();
             setInputBlocked(false, 'Ready');
+            setState(UI_STATES.IDLE);
         });
 
-        setConn('Ready');
-        void resumeFromStorage();
+        void initResumeFlow();
     }
 
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', boot);
+        document.addEventListener('DOMContentLoaded', initUI);
     } else {
-        boot();
+        initUI();
     }
-})(typeof window !== 'undefined' ? window : globalThis);
 
+    global.operatorUi = { initUI, setState, sendMessage, renderForm, renderWaitingCard, pollUntilDone: api.pollUntilDone };
+})(typeof window !== 'undefined' ? window : globalThis);

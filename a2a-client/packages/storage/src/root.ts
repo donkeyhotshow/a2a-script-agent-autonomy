@@ -1,20 +1,20 @@
 import path from 'path';
-import { pathExists, ensureDir as fsEnsureDir, joinPaths } from '@a2a-client/execution/fs-utils';
+import fs from 'fs';
 
 export function getStorageRoot() {
   if (process.env.A2A_CLIENT_STORAGE_DIR) return process.env.A2A_CLIENT_STORAGE_DIR;
-  return joinPaths(process.cwd(), 'storage');
+  return path.join(process.cwd(), 'storage');
 }
 
 export function getStorageKvRoot() {
-  return joinPaths(getStorageRoot(), 'kv');
+  return path.join(getStorageRoot(), 'kv');
 }
 
 export function getStorageSessionsRoot() {
-  return joinPaths(getStorageRoot(), 'sessions');
+  return path.join(getStorageRoot(), 'sessions');
 }
 
 export function ensureDir(dirPath) {
   if (!dirPath) return;
-  if (!pathExists(dirPath)) fsEnsureDir(dirPath);
+  if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
 }

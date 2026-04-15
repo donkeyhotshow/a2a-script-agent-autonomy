@@ -5,12 +5,12 @@
  */
 
 import {logger} from '@a2a/server-utils/logger';
-import * as handlers from './handlers/index';
-import {SkillEvolver} from '../../server/src/skill-evolver';
-import { ActionType, VALID_ACTION_TYPES_SET } from './constants/action-types';
-import {BaseRegistry} from './base/base-registry.ts';
-import {handleError} from './utils/error-handler.ts';
-import { createSingleton } from './utils/singleton.ts';
+import * as handlers from './handlers/index.js';
+import { SkillEvolver } from '@a2a/server-core';
+import { ActionType, VALID_ACTION_TYPES_SET } from './constants/action-types.js';
+import {BaseRegistry} from './base/base-registry.js';
+import {handleError} from './utils/error-handler.js';
+import { createSingleton } from './utils/singleton.js';
 
 export interface ActionHandlerContext {
     sessionId: string;

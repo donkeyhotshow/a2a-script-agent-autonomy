@@ -1,5 +1,5 @@
 import {describe, it, expect, afterEach} from 'vitest';
-import {ActionRegistry} from '../../src/actions/action-registry';
+import {ActionRegistry} from '../../src/actions/action-registry.js';
 
 describe('ActionRegistry bootstrap policy', () => {
     const ORIGINAL_ENV = process.env.A2A_ACTION_REGISTRY_BOOTSTRAP_MODE;

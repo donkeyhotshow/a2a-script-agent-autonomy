@@ -34,7 +34,7 @@ node tests/direct-tests/e2e-dialog-test.js --only=clientProjects,serverHealth,se
 
 If Vite returns **`503` / `A2A server unavailable`** on `/next` under load, the harness **retries** Client API fetches (`E2E_FETCH_RETRIES`, `E2E_FETCH_RETRY_BASE_MS`, optional `E2E_CASE_COOLDOWN_MS` between cases) — see the header comment in `e2e-dialog-test.js`.
 
-**Manual full direct suite (Papa):** [`run-post-`](run-post-) — hub (`run-checks.ps1` with Client **3001** / Web **5173**), Vitest, `router-choice-transition.test.mjs`, full `e2e-dialog-test.js`, `gray-room-test.js`, `test-dialog-flow.ps1`, `test-agent-flow.ps1`, `server-invoke-agent.ps1`. Set **`A2A_POST_START_SKIP_HEAVY=1`** to skip LLM-heavy steps (hub + Vitest + router + short e2e subset only). **`start-all.bat` does not run this** — see [PAPA-MAMA.md](../../PAPA-MAMA.md).
+**Manual full direct suite (Papa):** [`run-post-start-all.ps1`](run-post-start-all.ps1) — hub (`run-checks.ps1` with Client **3001** / Web **5173**), Vitest, `router-choice-transition.test.mjs`, full `e2e-dialog-test.js`, `gray-room-test.js`, `test-dialog-flow.ps1`, `test-agent-flow.ps1`, `server-invoke-agent.ps1`. Set **`A2A_POST_START_SKIP_HEAVY=1`** to skip LLM-heavy steps (hub + Vitest + router + short e2e subset only). **`start-all.bat` does not run this** — see [PAPA-MAMA.md](../../PAPA-MAMA.md).
 
 ---
 
@@ -45,16 +45,16 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 | Entry | Purpose |
 |-------|---------|
 | [validators/](validators/) | Standalone validators (not Vitest); see [validators/README.md](validators/README.md) |
-| [`scripts/promise-artifacts-report.mjs`](../../scripts/promise-artifacts-report.mjs) (repo root) | `npm run report:promise -- <promiseId> [--out report.md] [--logs]` — one **Markdown** report: server `storage/requests/{id}.json`, Gray Room (`interruptTrace`, `grayRoom`, `operationHistory`), client `sessions/**/server-promise.json`, `a2a-ai-hub/proxy_logs/promises/<id>/` |
+| [`scripts/promise-artifacts-report.mjs`](../../scripts/promise-artifacts-report.mjs) (repo root) | `npm run report:promise -- <promiseId> [--out report.md] [--logs]` — one **Markdown** report: server `storage/requests/{id}.json`, Gray Room (`interruptTrace`, `grayRoom`, `operationHistory`), client `sessions/**/server-promise.json`, `ai-integration/proxy_logs/promises/<id>/` |
 | [validators/scan-promise-bodies.mjs](validators/scan-promise-bodies.mjs) | `npm run scan-promise-bodies` — proxy promise `body.md` LLM JSON |
 | [validators/scan-session-responses.mjs](validators/scan-session-responses.mjs) | `npm run scan-session-responses` — `storage/sessions/**/server-response.json` (same shape rules; noisy) |
 | [validators/verify-gray-room-state.mjs](validators/verify-gray-room-state.mjs) | `npm run verify:gray-room -- <snapshot.json>` — sequence / workbench snapshot |
 | [validators/audit-sim-choice-descriptions.mjs](validators/audit-sim-choice-descriptions.mjs) | `npm run audit:sim-choice-descriptions` — simulation `choices[].description` |
 | [run-checks.ps1](run-checks.ps1) | Hub: health checks by scope (LLM, ServerLLM, ClientServer, …) |
-| [run-post-](run-post-) | Chains hub + Vitest + node + PS1 flows; run manually after the stack is up ([PAPA-MAMA.md](../../PAPA-MAMA.md)) |
+| [run-post-start-all.ps1](run-post-start-all.ps1) | Chains hub + Vitest + node + PS1 flows; run manually after the stack is up ([PAPA-MAMA.md](../../PAPA-MAMA.md)) |
 | [scripts/](scripts/) | Runners → `scripts/tests/` and root `scripts/` (prod-test, pre-release, web-ui-smoke-report) |
-| [dialog/](dialog/) | Dialog flow with direct Local LLM upstream (bypass a2a-ai-hub timeout) |
-| [rag/](rag/), [sdk/](sdk/), [a2a-ai-hub/](a2a-ai-hub/), [server/](server/) | Runners → packages (RAG, SDK, AI, sim) |
+| [dialog/](dialog/) | Dialog flow with direct Local LLM upstream (bypass ai-integration timeout) |
+| [rag/](rag/), [sdk/](sdk/), [ai-integration/](ai-integration/), [server/](server/) | Runners → packages (RAG, SDK, AI, sim) |
 
 ---
 
@@ -93,7 +93,7 @@ Scripts that run test/check flows **directly** (no test framework). Original fil
 .\tests\direct-tests\dialog\run-dialog-direct-local-hub.ps1 -RetryRequest "a2a-server\storage\requests\prom_xxx.json"
 ```
 
-a2a-ai-hub uses FORWARD_TIMEOUT_SECONDS=180 (set in start-a2a-ai-hub.bat) for slow models.
+ai-integration uses FORWARD_TIMEOUT_SECONDS=180 (set in start-ai-integration.bat) for slow models.
 
 ## Artifact tracking and cleanup
 
@@ -101,7 +101,7 @@ Direct Node-based tests (`e2e-dialog-test.js`, `gray-room-test.js`) append clien
 
 **Trace one `promiseId` across storages (Markdown):** from repo root, `npm run report:promise -- <promiseId> --out docs/tmp/promise-trace.md` (optional `--logs` for server log lines). See [`scripts/promise-artifacts-report.mjs`](../../scripts/promise-artifacts-report.mjs).
 
-To remove those artifacts and run a2a-ai-hub cleanup after a batch of direct tests:
+To remove those artifacts and run ai-integration cleanup after a batch of direct tests:
 
 ```powershell
 .\tests\direct-tests\cleanup-artifacts.ps1
@@ -111,7 +111,7 @@ What it does:
 
 - Deletes recorded Client API sessions via `DELETE /api/a2a/sessions/:id`
 - Deletes matching A2A Server request files from `a2a-server/storage/requests/{promiseId}.json`
-- Runs `tests/direct-tests/a2a-ai-hub/run-test-cleanup.ps1` to clear a2a-ai-hub requests/promises/cache
+- Runs `tests/direct-tests/ai-integration/run-test-cleanup.ps1` to clear ai-integration requests/promises/cache
 - Clears the registry file (empties tracked IDs)
 
 ## Replay saved session steps
@@ -139,7 +139,7 @@ node tests/direct-tests/replay-session-from-disk.js a2a-client/storage/sessions/
 | **Scripts (root)** | `scripts/` | `scripts/run-*.ps1` (port 5173) |
 | **RAG** | `a2a-client/packages/rag/scripts/` | `rag/run-*.ps1` |
 | **SDK** | `a2a-client/packages/sdk/scripts/` | `sdk/run-*.ps1` |
-| **AI integration** | `a2a-ai-hub/scripts/` | `a2a-ai-hub/run-*.ps1` |
+| **AI integration** | `ai-integration/scripts/` | `ai-integration/run-*.ps1` |
 | **Server sim** | `a2a-server/scripts/` | `server/run-*.ps1` |
 | **Level 1–3 suite** | [`scripts/tests/`](../tests/README.md) | `.\scripts\tests\run-all.ps1` |
 
@@ -161,7 +161,7 @@ node tests/direct-tests/replay-session-from-disk.js a2a-client/storage/sessions/
 
 - `test-server-connection.ts`
 
-## AI integration (`a2a-ai-hub/scripts/`)
+## AI integration (`ai-integration/scripts/`)
 
 - `test_ai_integration.py`, `test_ai_integration_chain.py`
 - `test_promise_simulate.py`, `test_promise_daemon.py`
@@ -202,13 +202,13 @@ From repo root:
 .\tests\direct-tests\sdk\run-server-connection.ps1
 
 # AI integration
-.\tests\direct-tests\a2a-ai-hub\run-a2a-ai-hub.ps1
-.\tests\direct-tests\a2a-ai-hub\run-test-a2a-ai-hub-chain.ps1
-.\tests\direct-tests\a2a-ai-hub\run-test-promise-simulate.ps1
-.\tests\direct-tests\a2a-ai-hub\run-test-promise-daemon.ps1
-.\tests\direct-tests\a2a-ai-hub\run-test-cleanup.ps1
-.\tests\direct-tests\a2a-ai-hub\run-promise-chain.ps1
-.\tests\direct-tests\a2a-ai-hub\run-promise-chain-py.ps1
+.\tests\direct-tests\ai-integration\run-ai-integration.ps1
+.\tests\direct-tests\ai-integration\run-test-ai-integration-chain.ps1
+.\tests\direct-tests\ai-integration\run-test-promise-simulate.ps1
+.\tests\direct-tests\ai-integration\run-test-promise-daemon.ps1
+.\tests\direct-tests\ai-integration\run-test-cleanup.ps1
+.\tests\direct-tests\ai-integration\run-promise-chain.ps1
+.\tests\direct-tests\ai-integration\run-promise-chain-py.ps1
 
 # Server simulations
 .\tests\direct-tests\server\run-simulation.ps1

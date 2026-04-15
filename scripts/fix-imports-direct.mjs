@@ -5,58 +5,66 @@
  * Использует actionProcessor для запуска fix-imports-generic действия
  */
 
-import { actionProcessor } from '../a2a-server/packages/actions/src/action-processor.ts';
+import { actionProcessor } from '../a2a-server/packages/actions/src/action-processor.js';
+
+// Окружение
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const rootDir = path.resolve(__dirname, '..');
 
 // Папки для обработки
 const directories = [
   {
     name: 'a2a-server',
-    path: 'c:\\workspace\\org-carrier\\a2a-script-agent\\a2a-server',
+    path: path.join(rootDir, 'a2a-server'),
     task: 'fix imports in a2a-server'
   },
   {
     name: 'a2a-server/packages/utils',
-    path: 'c:\\workspace\\org-carrier\\a2a-script-agent\\a2a-server\\packages\\utils',
+    path: path.join(rootDir, 'a2a-server', 'packages', 'utils'),
     task: 'fix imports in a2a-server utils'
   },
   {
     name: 'a2a-server/packages/features',
-    path: 'c:\\workspace\\org-carrier\\a2a-script-agent\\a2a-server\\packages\\features',
+    path: path.join(rootDir, 'a2a-server', 'packages', 'features'),
     task: 'fix imports in a2a-server features'
   },
   {
     name: 'a2a-client',
-    path: 'c:\\workspace\\org-carrier\\a2a-script-agent\\a2a-client',
+    path: path.join(rootDir, 'a2a-client'),
     task: 'fix imports in a2a-client'
   },
   {
     name: 'a2a-client/packages/api-client',
-    path: 'c:\\workspace\\org-carrier\\a2a-script-agent\\a2a-client\\packages\\api-client',
+    path: path.join(rootDir, 'a2a-client', 'packages', 'api-client'),
     task: 'fix imports in api-client'
   },
   {
     name: 'a2a-client/packages/fs-utils',
-    path: 'c:\\workspace\\org-carrier\\a2a-script-agent\\a2a-client\\packages\\fs-utils',
+    path: path.join(rootDir, 'a2a-client', 'packages', 'fs-utils'),
     task: 'fix imports in fs-utils'
   },
   {
     name: 'a2a-client/packages/rag',
-    path: 'c:\\workspace\\org-carrier\\a2a-script-agent\\a2a-client\\packages\\rag',
+    path: path.join(rootDir, 'a2a-client', 'packages', 'rag'),
     task: 'fix imports in rag package'
   },
   {
     name: 'a2a-client/packages/script-runner',
-    path: 'c:\\workspace\\org-carrier\\a2a-script-agent\\a2a-client\\packages\\script-runner',
+    path: path.join(rootDir, 'a2a-client', 'packages', 'script-runner'),
     task: 'fix imports in script-runner'
   },
   {
     name: 'a2a-client/packages/execution',
-    path: 'c:\\workspace\\org-carrier\\a2a-script-agent\\a2a-client\\packages\\execution',
+    path: path.join(rootDir, 'a2a-client', 'packages', 'execution'),
     task: 'fix imports in execution package'
   },
   {
     name: 'a2a-client/web',
-    path: 'c:\\workspace\\org-carrier\\a2a-script-agent\\a2a-client\\web',
+    path: path.join(rootDir, 'a2a-client', 'web'),
     task: 'fix imports in web ui'
   }
 ];

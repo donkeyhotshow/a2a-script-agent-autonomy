@@ -4,12 +4,11 @@
  * Provides JSONPath query and set operations using jsonpath-plus
  */
 
-// @ts-expect-error - jsonpath-plus typing issues in NodeNext ESM
 import { JSONPath } from 'jsonpath-plus';
-import { logger } from "@a2a/server-utils/logger";
+import { logger } from '@a2a/server-utils/logger';
 import { tryParseJsonFromLlmText } from '@a2a/server-utils/strip-markdown-json-fence';
-import { deepCloneJson } from '../../../lib/deep-clone-json';
-import { stringifyForTemplate } from './value-helpers';
+import { deepCloneJson } from '@a2a/server-utils';
+import { stringifyForTemplate } from './value-helpers.js';
 
 /**
  * Query values from an object using JSONPath
@@ -279,18 +278,14 @@ export function extractJsonFromMarkdown(md: string): unknown {
 }
 
 /**
- * Simple template rendering - replaces ${path} placeholders with values
+ * Simple template rendering - replaces {{path}} placeholders with values
  */
 export function renderTemplateSimple(template: string, data: Record<string, unknown>): string {
-  // Use a literal regex — never construct RegExp from user-controlled input (CWE-78/20)
-  const TEMPLATE_RE = /\$\{([^}]+)\}/g;
+  const pattern = '\\${([^}]+)}';
+  const regex = new RegExp(pattern, 'g');
 
-  return template.replace(TEMPLATE_RE, (_, key: string) => {
+  return template.replace(regex, (_, key) => {
     const trimmedKey = key.trim();
-    // Reject keys containing shell metacharacters or path separators (CWE-88)
-    if (!/^[\w$.\[\]]+$/.test(trimmedKey)) {
-      return '';
-    }
     const value = query(data, trimmedKey);
     return stringifyForTemplate(value);
   });

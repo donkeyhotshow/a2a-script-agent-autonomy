@@ -20,7 +20,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { logger } from "@a2a/server-utils/logger";
-import type { ExecutionPlan, Goal, GoalStatus } from './goal-planner';
+import type { ExecutionPlan, Goal, GoalStatus } from './goal-planner.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -167,7 +167,7 @@ export class TicketSync {
 
   private _slug(sessionId: string): string {
     // Replace characters unsafe for filenames
-    const slug = sessionId.replace(/[^a-zA-Z0-9_\-]/g, '_');
+    const slug = sessionId.replace(/[^a-zA-Z0-9_-]/g, '_');
     if (!slug) throw new Error('sessionId produced an empty slug');
     return slug;
   }

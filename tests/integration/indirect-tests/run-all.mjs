@@ -4,8 +4,8 @@
  * No live stack required — validates code, schemas, and configuration.
  *
  * Usage:
- *   node tests/indirect-tests/run-all.mjs
- *   node tests/indirect-tests/run-all.mjs --json
+ *   node tests/integration/indirect-tests/run-all.mjs
+ *   node tests/integration/indirect-tests/run-all.mjs --json
  */
 
 import { spawnSync } from 'child_process';
@@ -13,7 +13,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join, resolve } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(__dirname, '..', '..');
+/** Repo root: indirect-tests → integration → tests → root */
+const repoRoot = resolve(__dirname, '..', '..', '..');
 const tests = [
     { name: 'Action Registry', cmd: ['node', join(__dirname, 'validate-action-registry.mjs')] },
     { name: 'Request Schemas', cmd: ['node', join(__dirname, 'validate-request-schemas.mjs')] },
@@ -87,11 +88,11 @@ const tests = [
     },
     {
         name: 'Mama Sticky Router Audit',
-        cmd: ['node', join(__dirname, 'validators', 'audit-sticky-router.mjs')],
+        cmd: ['node', join(__dirname, '..', '..', 'indirect-tests', 'validators', 'audit-sticky-router.mjs')],
     },
     {
         name: 'Mama Execute Shape (simulations/sync)',
-        cmd: ['node', join(__dirname, 'validators', 'audit-execute-shape-simulations.mjs')],
+        cmd: ['node', join(__dirname, '..', '..', 'indirect-tests', 'validators', 'audit-execute-shape-simulations.mjs')],
     },
     {
         name: 'Mama Sim Choice Descriptions',

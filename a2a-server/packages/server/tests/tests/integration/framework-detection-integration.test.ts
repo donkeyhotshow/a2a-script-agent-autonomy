@@ -2,11 +2,11 @@
  * Framework Detection Integration Tests
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as processorService from '../../src/services/core/request-processor/request-processor.service';
-import { requestService } from '../../../../request/src/request.service';
+import * as processorService from '../../src/services/core/request-processor/request-processor.service.js';
+import { requestService } from '../../src/services/core/request/request.service.js';
 
 // Mock requestService.updateStatus to capture results
-vi.mock('../../../../request/src/request.service', () => ({
+vi.mock('../../src/services/core/request/request.service.js', () => ({
     requestService: {
         updateStatus: vi.fn().mockResolvedValue(true),
         getNextPending: vi.fn(),
@@ -15,7 +15,7 @@ vi.mock('../../../../request/src/request.service', () => ({
 }));
 
 // Mock the actual routing to avoid side effects
-vi.mock('../../src/services/core/request-processor/index', async (importOriginal) => {
+vi.mock('../../src/services/core/request-processor/index.js', async (importOriginal) => {
     const actual = await importOriginal() as any;
     return {
         ...actual,

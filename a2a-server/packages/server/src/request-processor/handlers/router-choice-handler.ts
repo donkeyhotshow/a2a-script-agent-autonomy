@@ -4,17 +4,17 @@
  * Handles processing of user's choice from router form
  */
 
-import {logger} from "@a2a/server-utils/logger";
-import {actionProcessor} from '../../../../actions/src/action-processor.ts';
-import {actionRegistry} from '../../../../actions/src/action-registry.ts';
-import type {ActionDefinition} from '../../../../actions/src/types.ts';
+import {logger} from '@a2a/server-utils/logger';
+import {actionProcessor} from '../../../actions/action-processor.js';
+import {actionRegistry} from '../../../actions/action-registry.js';
+import type {ActionDefinition} from '../../../actions/types.js';
 import type {
     RequestContext,
     ProcessResult,
     ProcessOutcome,
-} from '../request-processor.interfaces';
-import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../../../../server-config/router-static.ts';
-import {dialogRequestProcessor} from '../dialog-request-processor';
+} from '../request-processor.interfaces.js';
+import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '@a2a/config';
+import {dialogRequestProcessor} from '../dialog-request-processor.js';
 
 /**
  * Handle router choice submission - process user's choice from router form

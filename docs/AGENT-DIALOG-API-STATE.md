@@ -49,8 +49,8 @@ Recent **human-review** fixes (see [`docs/HUMAN-REVIEW-FINDINGS.md`](HUMAN-REVIE
 |------|------|------------|
 | Partial `/next` ack | Handler may return **minimal** `{ success, step, asyncPending }` without full `session` | **`GET …/sessions/{id}`** + **`GET /async`** until the step settles |
 | Envelope `data: null` | Bare `data: null` without `session` unwraps to `null` | Re-fetch session; do not assume a partial envelope is complete |
-| GLM via a2a-ai-hub | `/v1/chat/completions` can return **`choices[0].message.content` empty** while **`usage.completion_tokens_details.reasoning_tokens` > 0** | Hub/model may be “thinking-only” in `content`; server/UI may show no visible assistant line until proxy or prompt path maps reasoning → user-visible text |
-| a2a-ai-hub stability | Intermittent **`Event loop is closed`** (503) on chat; **`curl /health` can hang** if the process is wedged | Free port **11434** (kill listener PID), then `scripts/start-a2a-ai-hub.bat` from repo root (same as `start-all.bat` step). |
+| GLM via ai-integration | `/v1/chat/completions` can return **`choices[0].message.content` empty** while **`usage.completion_tokens_details.reasoning_tokens` > 0** | Hub/model may be “thinking-only” in `content`; server/UI may show no visible assistant line until proxy or prompt path maps reasoning → user-visible text |
+| ai-integration stability | Intermittent **`Event loop is closed`** (503) on chat; **`curl /health` can hang** if the process is wedged | Free port **11434** (kill listener PID), then `scripts/start-ai-integration.bat` from repo root (same as `start-all.bat` step). |
 
 ---
 
@@ -90,8 +90,8 @@ Content-Type: application/json
 
 - **Router after seed:** Even with **`mode: "agent"`** or **`mode: "dialog"`**, the first **`/next`** with user text can still produce **`execution.action: "task"` / `step: "router"`** and a large choice list; automation must branch on **`form.choices`** (see step 3 above).
 - **Persisted step artifact (mitigated server-side):** Gray room could finish with **context only** and **no `execute`**, which produced context-only **`server-response.json`** (bad for Client API). **`DialogRequestProcessor`** now applies a **dialog fallback `execute.form`** (and appends **`assistant`** to `history` when missing) when the dialog schema would otherwise return an empty/missing execute. Gray room also **resolved** the async loop when an interrupt was skipped for `when` (previously could hang without `resolve`).
-- **Hub model name:** In [`a2a-ai-hub/config/providers.json`](../a2a-ai-hub/config/providers.json), **`qwen3:8b`** maps to **`glm-4.7-flash`**; a chat request body listing `qwen3:8b` may still **complete as `model: "glm-4.7-flash"`** in the JSON response.
-- **Direct hub check (optional):** `POST http://localhost:11434/v1/chat/completions` with JSON body `{"model":"glm-4.7-flash","messages":[{"role":"user","content":"…"}],"max_tokens":128}` — use a file body on Windows to avoid shell escaping. If this fails, fix **a2a-ai-hub** before debugging Client API session logic.
+- **Hub model name:** In [`ai-integration/config/providers.json`](../ai-integration/config/providers.json), **`qwen3:8b`** maps to **`glm-4.7-flash`**; a chat request body listing `qwen3:8b` may still **complete as `model: "glm-4.7-flash"`** in the JSON response.
+- **Direct hub check (optional):** `POST http://localhost:11434/v1/chat/completions` with JSON body `{"model":"glm-4.7-flash","messages":[{"role":"user","content":"…"}],"max_tokens":128}` — use a file body on Windows to avoid shell escaping. If this fails, fix **ai-integration** before debugging Client API session logic.
 
 ---
 
@@ -104,9 +104,9 @@ Content-Type: application/json
 | 2026-02-09 | Doc/code follow-up to **async-only** invoke: [`SESSION-SYSTEMS-OVERVIEW.md`](SESSION-SYSTEMS-OVERVIEW.md) diagram + E2E pointers; agent RAG/tool chain comments (stop on **`promiseId`**); e2e-dialog JSDoc. |
 | 2026-04-06 | **Removed `sync`** from protocol: A2A **`POST /invoke`** async-only; Client **`/next`** no longer sends `sync`; schema + tests + proba updated. |
 | 2026-04-06 | **Orange alert:** documented — **`sync` forbidden** for Client API agent/dialog drivers; async + `/async` poll only ([`OPERATOR-CURL.md`](OPERATOR-CURL.md) cross-link). |
-| 2026-04-06 | Human-review checklist **implemented** (client/server/a2a-ai-hub); **Open risks** table refreshed; `/next` `execute` projection + numeric `task` + async stage behavior documented in [`HUMAN-REVIEW-FINDINGS.md`](HUMAN-REVIEW-FINDINGS.md). |
+| 2026-04-06 | Human-review checklist **implemented** (client/server/ai-integration); **Open risks** table refreshed; `/next` `execute` projection + numeric `task` + async stage behavior documented in [`HUMAN-REVIEW-FINDINGS.md`](HUMAN-REVIEW-FINDINGS.md). |
 | 2026-04-06 | **Server fix:** dialog gray-room results with missing `execute` get fallback form + history assistant; gray-room `interruptWhenSatisfied === false` now calls **`resolve()`** (was `return` only). |
-| 2026-04-06 | Live Client API drive: create → `/next` (task) → `/next` (`dialog` or `agent`); router present; **`dialog`** choice ~87s server time; persisted step lacked **`execute`** + no assistant in **messages** (see Stack observations). Hub: GLM completions observed with **empty `message.content`** and **reasoning_tokens**; proxy **503 "Event loop is closed"** / hung health until PID on **11434** cleared and `scripts/start-a2a-ai-hub.bat` rerun. |
+| 2026-04-06 | Live Client API drive: create → `/next` (task) → `/next` (`dialog` or `agent`); router present; **`dialog`** choice ~87s server time; persisted step lacked **`execute`** + no assistant in **messages** (see Stack observations). Hub: GLM completions observed with **empty `message.content`** and **reasoning_tokens**; proxy **503 "Event loop is closed"** / hung health until PID on **11434** cleared and `scripts/start-ai-integration.bat` rerun. |
 | 2026-04-06 | Doc created. Baseline: two-beat router still possible after create even with `mode: "agent"` — always **GET session** before each `/next` when automating. |
 
 ---

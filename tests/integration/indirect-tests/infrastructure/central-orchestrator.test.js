@@ -8,11 +8,12 @@ import { fileURLToPath } from 'url';
 import { describe, it, expect } from 'vitest';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.resolve(__dirname, '../..');
+/** infrastructure → indirect-tests → integration → tests → repo root */
+const REPO_ROOT = path.resolve(__dirname, '../../../..');
 
 describe('central-orchestrator.mjs', () => {
   it('exits 2 when extra CLI arguments are passed', () => {
-    const script = path.join(REPO_ROOT, 'central-orchestrator.mjs');
+    const script = path.join(REPO_ROOT, 'scripts', 'orchestrator-runbook', 'central-orchestrator.mjs');
     const r = spawnSync(process.execPath, [script, 'bogus'], {
       cwd: REPO_ROOT,
       encoding: 'utf-8',

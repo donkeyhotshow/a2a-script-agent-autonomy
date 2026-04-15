@@ -7,6 +7,8 @@
  */
 
 import {Router, Request, Response} from 'express';
+import {randomUUID} from 'node:crypto';
+import {A2A_TRACE_CONTEXT_KEY} from '@a2a-client/shared/a2a-trace-constants.mjs';
 import {sessionService} from '../../services/session-service.js';
 import {readServerResponse, saveClientResult} from '../../services/step-storage.js';
 import {
@@ -87,10 +89,12 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
         );
 
         const nextStep = stepNum + 1;
+        const actionTraceId = randomUUID();
         const requestBody = {
             context: {
                 execution: { action: 'action', step: body.choice },
                 ...session.context,
+                [A2A_TRACE_CONTEXT_KEY]: actionTraceId,
             },
             result: { choice: body.choice, input: body.input },
         };
@@ -103,7 +107,7 @@ router.post('/:sessionId/action', async (req: Request, res: Response) => {
         });
         if (!invokeResult) return;
 
-        res.json(buildMinimalNextAck(invokeResult.ackStep, invokeResult.promiseId));
+        res.json(buildMinimalNextAck(invokeResult.ackStep, invokeResult.promiseId, invokeResult.traceId));
     } catch (error) {
         console.error('[SESSIONS API] Error processing action:', error);
         res.status(500).json({
@@ -214,6 +218,21 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
         });
         mergedContext = mergedAfterTask;
 
+        const inboundTraceRaw = req.headers['x-a2a-trace-id'];
+        const inboundTrace = typeof inboundTraceRaw === 'string' ? inboundTraceRaw.trim() : '';
+        const traceId = inboundTrace || randomUUID();
+        mergedContext[A2A_TRACE_CONTEXT_KEY] = traceId;
+        console.log(
+            JSON.stringify({
+                ts: new Date().toISOString(),
+                svc: 'a2a-client-api',
+                evt: 'http.next.accepted',
+                trace_id: traceId,
+                session_id: sessionId,
+                step: stepNum + 1,
+            })
+        );
+
         const requestBody = prepareServerRequest({
             mergedContext,
             submitResult,
@@ -236,7 +255,7 @@ router.post('/:sessionId/next', async (req: Request, res: Response) => {
         });
         if (!invokeResult) return;
 
-        res.json(buildMinimalNextAck(invokeResult.ackStep, invokeResult.promiseId));
+        res.json(buildMinimalNextAck(invokeResult.ackStep, invokeResult.promiseId, invokeResult.traceId));
     } catch (error) {
         console.error('[SESSIONS API] Error processing next:', error);
         res.status(500).json({

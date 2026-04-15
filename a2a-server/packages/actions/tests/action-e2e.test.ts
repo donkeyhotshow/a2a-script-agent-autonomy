@@ -9,8 +9,8 @@
 
 import {describe, it, expect, beforeAll} from 'vitest';
 import request from 'supertest';
-import app from '../../src/app';
-import {actionProcessor} from '../../src/actions/action-processor';
+import app from '../../src/app.js';
+import {actionProcessor} from '../../src/actions/action-processor.js';
 
 // Проверка доступности сервера
 const SERVER_URL = 'http://localhost:3000';

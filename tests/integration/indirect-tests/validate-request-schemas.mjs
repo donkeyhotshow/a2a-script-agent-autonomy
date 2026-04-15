@@ -12,8 +12,12 @@ import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(__dirname, '..', '..');
-const schemasDir = join(repoRoot, 'docs', 'new-request-flow', 'json-schemas');
+const repoRoot = resolve(__dirname, '..', '..', '..');
+const legacySchemas = join(repoRoot, 'docs', 'new-request-flow', 'json-schemas');
+const protocolSchemas = join(repoRoot, 'docs', 'PROTOCOL', 'json-schemas');
+const schemasDir = existsSync(protocolSchemas)
+  ? protocolSchemas
+  : legacySchemas;
 
 let exitCode = 0;
 const errors = [];

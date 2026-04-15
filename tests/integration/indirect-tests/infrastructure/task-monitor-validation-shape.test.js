@@ -7,7 +7,7 @@ import {
   validateClientSession,
   validatePartialSessionEnvelope,
   isTaskMonitorSessionValidationDisabled,
-} from '../../tests/monitor-tasks/task-monitor-validation.js';
+} from '../../../../scripts/monitor-tasks/task-monitor-validation.js';
 
 describe('TaskMonitorValidation.validateSessionResponse', () => {
   const v = new TaskMonitorValidation();

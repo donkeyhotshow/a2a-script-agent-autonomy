@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-High-level smoke tests for the a2a-ai-hub layer.
+High-level smoke tests for the ai-integration layer.
 
 Validates proxy health endpoints, the Local LLM upstream backend, and the promise daemon workflow.
 """
@@ -50,7 +50,7 @@ def _check_endpoint(url: str, label: str, timeout: float) -> bool:
 
 
 def run_health_verification(proxy_url: str, local_llm_upstream_url: str, timeout: float) -> bool:
-    logging.info("Running a2a-ai-hub health checks...")
+    logging.info("Running ai-integration health checks...")
     passed = True
     for url, label in _build_checks(proxy_url, local_llm_upstream_url):
         passed &= _check_endpoint(url, label, timeout)
@@ -59,7 +59,7 @@ def run_health_verification(proxy_url: str, local_llm_upstream_url: str, timeout
 
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Smoke-test the a2a-ai-hub proxy, daemon, and Local LLM upstream connectivity."
+        description="Smoke-test the ai-integration proxy, daemon, and Local LLM upstream connectivity."
     )
     parser.add_argument("--proxy-url", default=DEFAULT_PROXY_URL, help="AI proxy base URL.")
     parser.add_argument(
@@ -105,10 +105,10 @@ def main() -> None:
         success &= resilience_check
 
     if success:
-        logging.info("a2a-ai-hub smoke tests passed.")
+        logging.info("ai-integration smoke tests passed.")
         return
 
-    logging.error("a2a-ai-hub smoke tests failed.")
+    logging.error("ai-integration smoke tests failed.")
     sys.exit(1)
 
 

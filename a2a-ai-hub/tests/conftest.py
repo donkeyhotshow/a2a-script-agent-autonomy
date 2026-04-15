@@ -1,4 +1,4 @@
-"""Shared pytest hooks for a2a-ai-hub."""
+"""Shared pytest hooks for ai-integration."""
 
 import pytest
 

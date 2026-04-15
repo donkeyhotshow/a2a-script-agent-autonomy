@@ -1,49 +1,48 @@
 import * as path from "path";
-import { logger } from "@a2a/server-utils/logger";
+import { logger, resolveA2aTraceId } from "@a2a/server-utils";
 import {
   runPromptsTransform,
   syncLiveContextHistoryFromResultMessage,
-} from "../../../core/transform/index";
+  mergeGrayRoomSlotIntoContext,
+  mergeInterruptTraceIntoContext,
+} from "@a2a/server-transform";
 import type {
   GrayRoomControlEnvelope,
   InterruptDirective,
   ServerInterruptTraceEvent,
-} from "../../../core/transform/types";
-import {
-  mergeGrayRoomSlotIntoContext,
-  mergeInterruptTraceIntoContext,
-} from "../../core/transform/interrupt-trace-contract";
-import { executeReadFile } from "../../../actions/handlers/file-operations";
-import { mergeServerRagPageIntoContext } from "../../../rag/auto-rag-page-server";
+} from "@a2a/server-transform";
+import { executeReadFile } from "@a2a/server-actions";
+import { mergeServerRagPageIntoContext } from "@a2a/server-llm";
 import {
   extractLlmTextFromHubResponseBody,
   initAiHubChatPromise,
   pollReadyThenFetch,
-} from "../../../daemon/llm-hub-poll";
-import { BlackRoomOrchestrator } from "../../../black-room/black-room-orchestrator";
+} from "@a2a/server-daemon";
+import { BlackRoomOrchestrator } from "../black-room/black-room-orchestrator.js";
 import type {
   AlgorithmContext,
   AlgorithmData,
-} from "../../../black-room/types";
-import type { ProcessResult } from "./request-processor.interfaces";
+} from "../black-room/types.js";
+import type { ProcessResult } from "../../../../server/src/request-processor/request-processor.interfaces.js";
 import {
   validateExecuteShapeForSchema,
   validateLlmOutputShape,
   validateRouterResultShape,
   shouldEnforceTransformStrictMode,
-} from "./validators/transform-execute-validator";
+} from "../../../../server/src/request-processor/validators/transform-execute-validator.js";
 import {
   resolveExecution,
   resolveHistoryLength,
   toInvokeShapeForPromptsTransform,
-} from "./normalization";
+} from "../../../../server/src/request-processor/normalization.js";
 import {
   grayRoomLlmModelFallback,
   resolveGrayRoomLlmModelFromContext,
-} from "./llm-model-resolver";
-import { globalArtifactStore } from "../../artifact-store";
-import { DedicatedAnalyzer } from "../../analyzer";
-import { globalMcpRegistry } from "../../../mcp/registry";
+} from "../../../../server/src/request-processor/llm-model-resolver.js";
+import { globalArtifactStore } from "../../../../server/src/artifact-store.js";
+import { DedicatedAnalyzer } from "../../../../server/src/analyzer.js";
+import { globalExperienceBank } from "../../memory/experience-bank.js";
+import { globalMcpRegistry } from "../mcp/registry.js";
 
 // Import trigger detection logic
 import {
@@ -53,7 +52,7 @@ import {
   getConfiguredMaxTurns,
   readGrayRoomInterruptBudget,
   GrayRoomTriggerResult,
-} from "./gray-room-trigger";
+} from "../request-processor/gray-room-trigger.js";
 
 // Import utilities
 import {
@@ -63,26 +62,25 @@ import {
   GrayRoomOptions,
   type ReviewResult,
   type GrayRoomContext,
-} from "./gray-room-utils";
+} from "../request-processor/gray-room-utils.js";
 
 // Import interrupt handlers
-import { handleCompressHistory } from "./gray-room-interrupt-handlers/compress-history";
-import { handleThinking } from "./gray-room-interrupt-handlers/thinking";
-import { handleAutoReadFile } from "./gray-room-interrupt-handlers/auto-read-file";
-import { handleAutoRagPage } from "./gray-room-interrupt-handlers/auto-rag-page";
-import { handleClarify } from "./gray-room-interrupt-handlers/clarify";
-import { handleAlgorithmInvoke } from "./gray-room-interrupt-handlers/algorithm-invoke";
-import { globalVisionTester } from "../../../vision-tester";
-import { globalRoleRegistry, AgentRole } from "../agent-role-registry";
-import { globalSafetyLayer } from "../../../safety-layer";
-import { globalIntentGate } from "../../../intent-gate";
-import { bugFixer } from "../../../llm/bug-fixer";
-import { repoMapService } from "../../../context/repo-map.service";
-import { llmService } from "../../llm/llm-service";
-import { contextDiscoveryService } from "../../context/context-discovery.service";
-import { resolveAiHubBaseUrl } from "../../utils/ai-hub-url";
-import { mkdtempOsTmp } from "../../utils/mkdtemp-os-tmp";
-import { prepareLlmMessages } from "./llm-orchestration";
+import { handleCompressHistory } from "../request-processor/gray-room-interrupt-handlers/compress-history.js";
+import { handleThinking } from "../request-processor/gray-room-interrupt-handlers/thinking.js";
+import { handleAutoReadFile } from "../request-processor/gray-room-interrupt-handlers/auto-read-file.js";
+import { handleAutoRagPage } from "../request-processor/gray-room-interrupt-handlers/auto-rag-page.js";
+import { handleClarify } from "../request-processor/gray-room-interrupt-handlers/clarify.js";
+import { handleAlgorithmInvoke } from "../request-processor/gray-room-interrupt-handlers/algorithm-invoke.js";
+import { globalVisionTester } from "../../../../server/src/vision-tester.js";
+import { globalRoleRegistry, AgentRole } from "../../../../server/src/agent-role-registry.js";
+import { globalSafetyLayer } from "../../../../server/src/safety-layer.js";
+import { globalIntentGate } from "../../../../server/src/intent-gate.js";
+import { bugFixer } from "../../llm/bug-fixer.js";
+import { repoMapService } from "../../context/repo-map.service.js";
+import { contextDiscoveryService } from "../../context/context-discovery.service.js";
+import { resolveAiHubBaseUrl } from "@a2a/server-utils";
+import { mkdtempOsTmp } from "../../../../lib/mkdtemp-os-tmp.js";
+import { prepareLlmMessages } from "../../../../server/src/request-processor/llm-orchestration.js";
 
 export class GrayRoomOrchestrator {
   private maxInterruptTurns: number;
@@ -118,6 +116,13 @@ export class GrayRoomOrchestrator {
     let activeSchemaName = schemaName;
     const trace: ServerInterruptTraceEvent[] = [];
     let turn = 0;
+    const traceId = resolveA2aTraceId(ctx, promiseId);
+    logger.info("[GrayRoom] gray_room.loop.enter", {
+      evt: "gray_room.loop.enter",
+      trace_id: traceId,
+      promise_id: promiseId,
+      schema: schemaName,
+    });
     const startedAt = new Date().toISOString();
     const grayRoom: GrayRoomControlEnvelope = {
       enabled: processInterrupts,
@@ -215,7 +220,22 @@ export class GrayRoomOrchestrator {
         }
         // --------------------------------------------
 
-
+        // -- EXPERIENCE BANK (PRE) --
+        try {
+          const exprs = await globalExperienceBank.getRelevantExperiences(
+            JSON.stringify(workingCtx).slice(0, 500),
+          );
+          if (exprs.length > 0) {
+            workingCtx["relevant_experiences"] = exprs.map(
+              (e) => e.action_payload,
+            );
+          }
+        } catch (err) {
+          logger.warn("[GrayRoom] ExperienceBank get failure", {
+            error: String(err),
+          });
+        }
+        // --------------------------
 
         touchGrayRoom({
           phase: "response_transform",
@@ -470,11 +490,27 @@ export class GrayRoomOrchestrator {
           },
         };
 
-
+        // -- EXPERIENCE BANK (POST) --
+        try {
+          await globalExperienceBank.recordTurn(
+            (workingCtx["session_id"] as string) || "unknown",
+            `turn-${turn}`,
+            JSON.stringify(workingCtx),
+            { type: "interrupt", payload: interrupt.reason },
+            insights.confidence_delta,
+          );
+        } catch (err) {
+          logger.warn("[GrayRoom] ExperienceBank record failure", {
+            error: String(err),
+          });
+        }
+        // ------------------------------------------------
 
         logger.info("[GrayRoom] Iteration start", {
           turn,
           state: currentState,
+          trace_id: resolveA2aTraceId(workingCtx, promiseId),
+          promise_id: promiseId,
         });
 
         // -- AGENT ROLE INTEGRATION (ADR-0038) --
@@ -683,11 +719,17 @@ export class GrayRoomOrchestrator {
           workingCtx,
           this.model,
         );
-        const chatInit = await initAiHubChatPromise(this.aiHubUrl, subHeader, {
-          model: llmModel,
-          messages,
-          stream: false,
-        });
+        const chatInit = await initAiHubChatPromise(
+          this.aiHubUrl,
+          subHeader,
+          {
+            model: llmModel,
+            messages,
+            stream: false,
+          },
+          undefined,
+          resolveA2aTraceId(workingCtx, promiseId),
+        );
         if (!chatInit.ok) {
           if (chatInit.reason === "bad_http_status") {
             logger.error("[GrayRoom] LLM promise init failed", {

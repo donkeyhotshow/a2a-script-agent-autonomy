@@ -1,1 +1,1 @@
-export * from '../../../lib/task-detail-analyzer.ts'
+export * from '../../../lib/task-detail-analyzer.js'

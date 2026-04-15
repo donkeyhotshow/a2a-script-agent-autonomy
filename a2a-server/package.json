@@ -10,7 +10,8 @@
     "dev:no-auth": "cross-env SKIP_AUTH=1 tsx watch packages/server/src/index.ts",
     "claude": "tsx bin/a2a-claude.ts",
     "tui": "tsx bin/handler-tui.ts",
-    "build": "tsc",
+    "build": "node scripts/build-workspaces-ordered.mjs",
+    "build:tsc-root": "tsc",
     "start": "node dist/index.js",
     "test": "vitest run",
     "test:human-review": "node scripts/run-human-review.mjs",
@@ -38,15 +39,28 @@
     "sim:quality": "tsx scripts/sim-quality-gate.ts",
     "sim:contract-report": "tsx scripts/sim-contract-report.ts",
     "gate:cleanup": "tsx scripts/cleanup-gate.ts",
-    "build": "npm run build --workspaces --if-present",
-    "build:deps": "npm run build --workspace=@a2a/server-config && npm run build --workspace=@a2a/server-utils && npm run build --workspace=@a2a/server-protocol && npm run build --workspace=@a2a/server-transform && npm run build --workspace=@a2a/server-core",
-    "build:services": "npm run build --workspace=@a2a/server-llm && npm run build --workspace=@a2a/server-p2p && npm run build --workspace=@a2a/server-daemon && npm run build --workspace=@a2a/server-actions",
-    "build:app": "npm run build --workspace=@a2a/server",
+    "build:parallel": "npm run build --workspaces --if-present",
+    "build:deps": "npm run build --workspace=@a2a/config && npm run build --workspace=@a2a/server-utils && npm run build --workspace=@a2a/server-protocol",
+    "build:services": "npm run build --workspace=@a2a/server-daemon && npm run build --workspace=@a2a/server-features",
+    "build:app": "npm run build --workspace=@a2a/server-request",
     "clean": "npm run clean --workspaces --if-present && rm -rf dist/"
   },
-  "workspaces": [
-    "packages/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "packages/server",
+      "packages/actions",
+      "packages/llm",
+      "packages/transform",
+      "packages/gray-room",
+      "packages/server-config",
+      "packages/server-protocol",
+      "packages/server-utils",
+      "packages/daemon",
+      "packages/request",
+      "packages/config",
+      "packages/protocol"
+    ]
+  },
   "keywords": [
     "a2a",
     "agent-to-agent",
@@ -56,7 +70,12 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "@a2a/server-request": "workspace:*",
+    "@a2a/server-request": "file:packages/request",
+    "@a2a/server-utils": "file:packages/server-utils",
+    "@a2a/server-protocol": "file:packages/server-protocol",
+    "@a2a/config": "file:packages/server-config",
+    "@a2a/server-features": "file:packages/features",
+    "@a2a/server-daemon": "file:packages/daemon",
     "@chainsafe/libp2p-gossipsub": "^14.1.2",
     "@chainsafe/libp2p-noise": "^17.0.0",
     "@libp2p/mplex": "^12.0.15",

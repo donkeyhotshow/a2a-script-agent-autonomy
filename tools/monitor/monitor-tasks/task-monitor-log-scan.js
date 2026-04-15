@@ -5,8 +5,8 @@ import path from 'path';
 const DEFAULT_LOG_TARGETS = [
   { app: 'a2a-client', dir: 'a2a-client/logs', pattern: /\.log$/i, maxDepth: 12 },
   { app: 'a2a-server', dir: 'a2a-server/logs', pattern: /\.log$/i, maxDepth: 12 },
-  { app: 'a2a-ai-hub', file: 'a2a-ai-hub/proxy.log' },
-  { app: 'a2a-ai-hub', dir: 'a2a-ai-hub/proxy_logs', pattern: /\.log$/i, maxDepth: 3 },
+  { app: 'ai-integration', file: 'ai-integration/proxy.log' },
+  { app: 'ai-integration', dir: 'ai-integration/proxy_logs', pattern: /\.log$/i, maxDepth: 3 },
 ];
 
 const ERROR_LINE_RE =

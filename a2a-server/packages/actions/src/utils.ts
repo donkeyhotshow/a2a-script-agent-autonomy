@@ -1,4 +1,4 @@
-import { logger } from '../../lib/logger';
+import { logger } from '@a2a/server-utils/logger';
 
 export interface ValidationResult {
     valid: boolean;

@@ -4,13 +4,14 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const REPO_ROOT = path.resolve(__dirname, '..');
+/** indirect-tests → integration → tests → repo root */
+const REPO_ROOT = path.resolve(__dirname, '..', '..', '..');
 
 const CLIENT_API_URL = process.env.CLIENT_API_URL || 'http://localhost:5173';
 const SERVER_BASE = (process.env.A2A_SERVER_URL || 'http://localhost:3000').replace(/\/$/, '');
 
 function artifactScanArgs(scriptBase, strictArtifacts) {
-    const args = [`tests/direct-tests/validators/${scriptBase}`, '--skip-if-missing'];
+    const args = [`tests/integration/direct-tests/validators/${scriptBase}`, '--skip-if-missing'];
     if (process.env.MAMA_ARTIFACT_STRICT === '1' || strictArtifacts) args.push('--strict');
     return args;
 }
@@ -29,7 +30,7 @@ function parseGangArgs(argv) {
 }
 
 function printHelp() {
-    console.log(`Papa & Mama Gang — ${path.join('tests', 'papa-mama-gang.mjs')}
+    console.log(`Papa & Mama Gang — ${path.join('tests', 'integration', 'indirect-tests', 'papa-mama-gang.mjs')}
 
 Flags:
   --mama-only          Run Mama shift only (offline + units + sims)
@@ -179,7 +180,7 @@ async function papaShift(opts = {}) {
             (typeof process.env.PAPA_E2E_ONLY === 'string' && process.env.PAPA_E2E_ONLY.trim()) ||
             (typeof process.env.E2E_DIRECT_ONLY === 'string' && process.env.E2E_DIRECT_ONLY.trim()) ||
             '';
-        const e2eArgs = ['tests/direct-tests/e2e-dialog-test.js'];
+        const e2eArgs = ['tests/integration/direct-tests/e2e-dialog-test.js'];
         if (only) e2eArgs.push(`--only=${only}`);
         await runCmd('Papa E2E', 'node', e2eArgs, REPO_ROOT, env);
 

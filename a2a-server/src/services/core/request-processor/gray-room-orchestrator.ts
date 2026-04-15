@@ -1,11 +1,10 @@
 import * as path from 'path';
-import {logger} from '../../../utils/logger.js';
-import {runPromptsTransform} from '../../../transform/index.js';
-import type {GrayRoomControlEnvelope, InterruptDirective, ServerInterruptTraceEvent} from '../../../transform/types.js';
-import {mergeGrayRoomSlotIntoContext, mergeInterruptTraceIntoContext} from '../../../transform/interrupt-trace-contract.js';
-import {executeReadFile} from '../../../actions/handlers/file-operations.js';
-import {mergeServerRagPageIntoContext} from '../../rag/auto-rag-page-server.js';
-import {initAiHubChatPromise, pollReadyThenFetch} from '../../../daemon/llm-hub-poll.js';
+import {logger} from '@a2a/server-utils';
+import {runPromptsTransform, mergeGrayRoomSlotIntoContext, mergeInterruptTraceIntoContext} from '@a2a/server-transform';
+import type {GrayRoomControlEnvelope, InterruptDirective, ServerInterruptTraceEvent} from '@a2a/server-transform';
+import {executeReadFile} from '@a2a/server-actions';
+import {mergeServerRagPageIntoContext} from '../rag/auto-rag-page-server.js';
+import {initAiHubChatPromise, pollReadyThenFetch} from '@a2a/server-daemon';
 import {BlackRoomOrchestrator} from '../black-room/black-room-orchestrator.js';
 import type {AlgorithmContext, AlgorithmData} from '../black-room/types.js';
 import type {ProcessResult} from './request-processor.interfaces.js';
@@ -17,7 +16,7 @@ import {
 } from './validators/transform-execute-validator.js';
 import {resolveExecution, resolveHistoryLength, toInvokeShapeForPromptsTransform} from './normalization.js';
 import {grayRoomLlmModelFallback, resolveGrayRoomLlmModelFromContext} from './llm-model-resolver.js';
-import {globalArtifactStore} from '../artifact-store.js';
+import {globalArtifactStore} from '@a2a/server-utils';
 import {DedicatedAnalyzer} from '../analyzer.js';
 import {globalExperienceBank} from '../../memory/experience-bank.js';
 import {globalMcpRegistry} from '../../mcp/registry.js';
@@ -51,8 +50,8 @@ import {llmService} from '../../llm/llm-service.js';
 import {OrchestratorKernel} from '../orchestrator-kernel.js';
 import type {OrchestratorState, OrchestratorEvent} from '../orchestrator-kernel.js';
 import {contextDiscoveryService} from '../../context/context-discovery.service.js';
-import {resolveAiHubBaseUrl} from '../../../utils/ai-hub-url.js';
-import {mkdtempOsTmp} from '../../../utils/mkdtemp-os-tmp.js';
+import {resolveAiHubBaseUrl} from '@a2a/server-llm';
+import {mkdtempOsTmp} from '@a2a/server-utils';
 import {prepareLlmMessages} from './llm-orchestration.js';
 
 export class GrayRoomOrchestrator {

@@ -1,1 +1,1 @@
-export * from '../../../lib/artifact-validator.ts'
+export * from '../../../lib/artifact-validator.js'

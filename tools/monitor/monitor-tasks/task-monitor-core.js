@@ -78,6 +78,8 @@ class TaskMonitorCore {
     this.runMetrics = {
       startedAt: new Date().toISOString(),
       promiseErrors: { newThisRun: 0, fresh: 0, old401: 0, staleCandidates: 0, staleHandled: 0 },
+      /** Correlates monitor-driven POST /next with A2A server + AI hub logs (`X-A2A-Trace-Id`). */
+      a2aTraceIds: [],
     };
     this.loadState();
   }
@@ -686,7 +688,7 @@ class TaskMonitorCore {
   }
 
   /**
-   * When a2a-ai-hub runs with PROMISE_DAEMON_ONLY=true, LLM calls with ?promise=1 stay pending
+   * When ai-integration runs with PROMISE_DAEMON_ONLY=true, LLM calls with ?promise=1 stay pending
    * until the promise daemon or a manual POST /promise/{id}/execute runs. Warn and optionally block.
    */
   async promptPromiseManualGateIfNeeded() {
@@ -725,7 +727,7 @@ class TaskMonitorCore {
       `${data.storage_dir || 'proxy_logs'}/promises/ until something executes them.`,
       '',
       'Options (async contract — keep PROMISE_DAEMON_ONLY on):',
-      `  1) Keep the promise-queue daemon running (stack start / a2a-ai-hub daemon).`,
+      `  1) Keep the promise-queue daemon running (stack start / ai-integration daemon).`,
       `  2) Execute manually: GET ${this.aiHubUrl}/promises/pending then`,
       `     POST ${this.aiHubUrl}/promise/<promiseId>/execute`,
       `  3) Do not switch the proxy to synchronous forwarding; draining this queue is the supported path.`,
@@ -734,7 +736,7 @@ class TaskMonitorCore {
       `  GET ${this.aiHubUrl}/promise/<promiseId>/request`,
       `  UI: ${this.aiHubUrl}/ui/promises/view`,
       '',
-      'Docs: a2a-ai-hub/docs/workflows/WORKFLOWS.md — MONITOR-QUICK-START.md (promise gate)',
+      'Docs: ai-integration/docs/workflows/WORKFLOWS.md — MONITOR-QUICK-START.md (promise gate)',
       '='.repeat(72),
       ''
     ];
@@ -927,6 +929,7 @@ class TaskMonitorCore {
       rootCauseClass,
       nextAction,
       promiseErrors: this.runMetrics.promiseErrors,
+      a2aTraceIds: Array.isArray(this.runMetrics.a2aTraceIds) ? this.runMetrics.a2aTraceIds : [],
     };
     const jsonPath = path.join(dir, `monitor-run-${ts}.json`);
     const mdPath = path.join(dir, `monitor-run-${ts}.md`);
@@ -939,6 +942,7 @@ class TaskMonitorCore {
       `- root cause class: ${payload.rootCauseClass}`,
       `- next action: ${payload.nextAction}`,
       `- promise errors: fresh=${payload.promiseErrors.fresh}, old401=${payload.promiseErrors.old401}, newThisRun=${payload.promiseErrors.newThisRun}`,
+      `- a2aTraceIds (${payload.a2aTraceIds.length}): ${payload.a2aTraceIds.slice(-8).join(', ') || 'n/a'}`,
       '',
     ].join('\n');
     fs.writeFileSync(mdPath, md);

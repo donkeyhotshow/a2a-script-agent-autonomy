@@ -1,6 +1,5 @@
-import { logger } from "@a2a/server-utils/logger";
-import { contextDiscoveryService } from '../../../../features/gray-room/components/context/context-discovery.service';
-import { BaseRegistry } from '../../../actions/src/base/base-registry.ts';
+import { logger } from '@a2a/server-utils/logger';
+import { contextDiscoveryService } from '../../../features/src/gray-room/components/context/context-discovery.service.js';
 
 /**
  * MCP 28-Tool Registry (ADR-0075)
@@ -13,12 +12,11 @@ export interface McpTool {
   execute: (args: any) => Promise<any>;
 }
 
-export class McpRegistry extends BaseRegistry<string, McpTool> {
+export class McpRegistry {
   private static instance: McpRegistry;
+  private tools = new Map<string, McpTool>();
 
-  private constructor() {
-    super('McpRegistry');
-  }
+  private constructor() {}
 
   static getInstance(): McpRegistry {
     if (!McpRegistry.instance) {
@@ -29,19 +27,19 @@ export class McpRegistry extends BaseRegistry<string, McpTool> {
 
   registerTool(tool: McpTool) {
     logger.info('[McpRegistry] Registering tool', { name: tool.name });
-    this.register(tool.name, tool);
+    this.tools.set(tool.name, tool);
   }
 
   getTool(name: string): McpTool | undefined {
-    return this.get(name);
+    return this.tools.get(name);
   }
 
   listTools(): McpTool[] {
-    return this.getAll();
+    return Array.from(this.tools.values());
   }
 
   async executeTool(name: string, args: any): Promise<any> {
-    const tool = this.getTool(name);
+    const tool = this.tools.get(name);
     if (!tool) {
       throw new Error(`Tool not found: ${name}`);
     }

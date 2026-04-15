@@ -15,9 +15,8 @@ import {
     shouldDeferDialogProcessorFailure,
     type RequestResult,
 } from '../request/request.service.js';
-import {logger} from '../../../utils/logger.js';
-import {resolveAiHubBaseUrl} from '../../../utils/ai-hub-url.js';
-import {requestProcessorLatencyHistogram} from '../../../utils/metrics.js';
+import {logger, requestProcessorLatencyHistogram} from '@a2a/server-utils';
+import {resolveAiHubBaseUrl} from '@a2a/server-llm';
 import type {RequestContext, ProcessResult, ProcessOutcome, Task, TaskAnalysis} from './request-processor.interfaces.js';
 import {
     actionRequestProcessor,

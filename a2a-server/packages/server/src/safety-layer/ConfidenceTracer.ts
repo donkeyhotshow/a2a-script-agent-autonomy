@@ -8,7 +8,7 @@
  * call is made here. In production a separate sidecar LLM can be wired in
  * by overriding `extractFromThinkingSlot`.
  */
-import type { CONFIDENCE_TRACE, WAITING_STATE } from './types';
+import type { CONFIDENCE_TRACE, WAITING_STATE } from './types.js';
 
 export interface ConfidenceConfig {
   /** Gate below which agent pauses and waits for human. Default: 0.65 */

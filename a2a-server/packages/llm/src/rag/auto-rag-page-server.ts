@@ -3,8 +3,7 @@
  * Disabled - RAG functionality removed from server.
  */
 
-import { logger } from '@a2a/server-utils/logger';
-import type { ServerInterruptTraceEvent } from "../../transform/types";
+import type { ServerInterruptTraceEvent } from '@a2a/server-transform';
 
 /** Compact RAG hit lines for `context.history` (system role) after server-side `auto_rag_page`. */
 export function formatRagHitsForHistory(
@@ -38,7 +37,7 @@ export function formatRagHitsForHistory(
  */
 export async function mergeServerRagPageIntoContext(
   nextCtx: Record<string, unknown>,
-  data: Record<string, unknown> | undefined,
+  _data: Record<string, unknown> | undefined,
 ): Promise<{
   nextCtx: Record<string, unknown>;
   trace: ServerInterruptTraceEvent | null;

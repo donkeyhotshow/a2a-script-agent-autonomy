@@ -13,8 +13,8 @@
  *  - Background poller drains agents whose last heartbeat is > 30 s old
  */
 
-import { logger } from '../../lib/logger';
-import { RateLimiter } from '../../../../src/rateLimiter';
+import { logger } from '../../lib/logger.js';
+import { RateLimiter } from '../../../../src/rateLimiter.js';
 
 // ── Public interfaces ─────────────────────────────────────────────────────────
 

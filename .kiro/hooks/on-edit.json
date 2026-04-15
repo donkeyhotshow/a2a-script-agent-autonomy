@@ -1,0 +1,13 @@
+{
+  "name": "On Edit",
+  "version": "1.0.0",
+  "description": "Checks edited files for silent errors, console.log usage, and implicit any",
+  "when": {
+    "type": "fileEdited",
+    "patterns": ["**/*.ts", "**/*.js", "**/*.mts", "**/*.mjs"]
+  },
+  "then": {
+    "type": "askAgent",
+    "prompt": "A file was edited. Please verify:\n1. No new TODO comments without a corresponding task file in tasks/\n2. All catch blocks log the error (no silent failures — this is a bug)\n3. No console.log statements (use winston logger from @a2a/server-utils in server code)\n4. No implicit any — types must be explicit\n5. If a public interface changed, check if the corresponding docs in docs/ need updating\nReport any violations found."
+  }
+}

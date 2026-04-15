@@ -1,4 +1,4 @@
-# a2a-ai-hub — documentation
+# ai-integration — documentation
 
 Use this folder for proxy / AI Hub–specific docs (endpoints, env, promise flow).
 

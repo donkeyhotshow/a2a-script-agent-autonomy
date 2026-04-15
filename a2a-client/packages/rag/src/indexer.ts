@@ -4,11 +4,13 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import {IgnoreDetector} from '@a2a-client/execution/fs-utils';
+import * as executionFsUtils from '@a2a-client/execution/fs-utils';
 import {ChunkManager, type Chunk, type ChunkManagerConfig} from './chunk-manager.js';
 import {scoreFileRelevance} from './file-relevance.js';
 import type {FileRelevanceLabel, FileRelevanceModel} from './file-relevance.js';
-import { checkPathAccess } from '../../../execution/src/fs-access.js';
+
+type IgnoreDetectorCtor = new (...args: unknown[]) => unknown;
+const {IgnoreDetector} = executionFsUtils as unknown as {IgnoreDetector: IgnoreDetectorCtor};
 
 export interface RAGIndexerConfig {
     projectPath: string;
@@ -476,18 +478,15 @@ export class RAGIndexer {
         const staleFiles: string[] = [];
         let orphanedChunks = 0;
 
-         // Check for stale files (files that no longer exist)
-         for (const file of index.files) {
-             const fullPath = path.join(this.projectPath, file.path);
-             try {
-                 const hasAccess = await checkPathAccess(fullPath);
-                 if (!hasAccess) {
-                     staleFiles.push(file.path);
-                 }
-             } catch {
-                 staleFiles.push(file.path);
-             }
-         }
+        // Check for stale files (files that no longer exist)
+        for (const file of index.files) {
+            const fullPath = path.join(this.projectPath, file.path);
+            try {
+                await fs.access(fullPath);
+            } catch {
+                staleFiles.push(file.path);
+            }
+        }
 
         // Check for orphaned chunks (chunks without corresponding files)
         const filePaths = new Set(index.files.map((f: IndexFileInfo) => f.path));

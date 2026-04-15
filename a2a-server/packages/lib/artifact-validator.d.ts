@@ -1,13 +1,9 @@
 /**
- * Server-side artifact validator — used by ArtifactStore (ADR-0053).
+ * @deprecated Re-export shim for backwards compatibility.
+ * Single Source of Truth: packages/utils/src/artifact-validator.ts
  *
- * Validates mandatory base fields that every artifact must carry.
- * Uses manual checks to avoid AJV ESM/CJS compat issues present
- * in the existing server codebase.
+ * This file existed as a duplicate of the utils implementation.
+ * All imports should migrate to '@a2a/utils' or the canonical path.
  */
-export interface ArtifactValidationResult {
-    valid: boolean;
-    errors: string[];
-}
-export declare function validateArtifact(artifact: unknown): ArtifactValidationResult;
+export * from '../utils/src/artifact-validator.js';
 //# sourceMappingURL=artifact-validator.d.ts.map

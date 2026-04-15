@@ -5,4 +5,4 @@
  * This file existed as a duplicate of the utils implementation.
  * All imports should migrate to '@a2a/utils' or the canonical path.
  */
-export * from '../../utils/src/artifact-validator.js';
+export * from '../utils/src/artifact-validator.js';

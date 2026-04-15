@@ -1,1 +1,1 @@
-export * from '../../../lib/deep-clone-json.ts'
+export * from '../../../lib/deep-clone-json.js'

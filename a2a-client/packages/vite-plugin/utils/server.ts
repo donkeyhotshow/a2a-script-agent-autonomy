@@ -1,4 +1,4 @@
-export { SAFE_SEGMENT, isValidSessionId } from '@a2a-client/shared/session-id.ts';
+export { SAFE_SEGMENT, isValidSessionId } from '@a2a-client/shared/session-id.js';
 export { safePath } from '@a2a-client/shared/safe-path.mjs';
 
 export function getStorageMode(req) {

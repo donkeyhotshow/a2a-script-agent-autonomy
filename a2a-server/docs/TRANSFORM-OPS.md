@@ -214,3 +214,18 @@ Response transforms use a different subset of operations:
 `apply-scratchpad-ops` should be added to all AI-action response transforms that use `scratchpad`.
 
 `merge-workbench-sections` + `apply-workbench-section-ops` should be added when the prompt exposes `${workbench}` / `context.workbench` (auto-ai, coder, analyze base transforms).
+
+---
+
+## Runtime evolution guardrails (DO / DON'T)
+
+**DO**
+
+- Add a new `op` only when **at least two** different schemas need the same non-trivial step (roughly >10–15 lines duplicated with identical semantics).
+- Cover new ops with **unit tests** (synthetic `TransformContext` + in-memory `fs` via `runTransformPipeline` options) and, when applicable, a **golden JSON pipeline** test.
+- Keep `a2aTraceId` and other observability keys **out of LLM prompts** — `prepareInvokePayloadForLlmPrompt` strips `a2aTraceId` from the clone used for request transforms.
+
+**DON'T**
+
+- Add a plugin system, dynamic `require`/`import` of arbitrary code as pipeline steps, or meta-ops (`foreach`-style DSL expansion) without an ADR and two real consumers.
+- Mix Gray Room policy (interrupt dispatch, side effects) into transform JSON — transforms stay deterministic JSON/markdown in → JSON/markdown out.

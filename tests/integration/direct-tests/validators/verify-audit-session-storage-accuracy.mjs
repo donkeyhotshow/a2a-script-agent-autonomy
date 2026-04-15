@@ -7,10 +7,10 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { analyzeSession, buildClusters } from '../../../scripts/lib/session-storage-audit-analyze.mjs';
+import { analyzeSession, buildClusters } from '../../../../scripts/scripts/lib/session-storage-audit-analyze.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const repoRoot = path.resolve(__dirname, '../../..');
+const repoRoot = path.resolve(__dirname, '../../../..');
 const sessionsRoot = path.join(repoRoot, 'a2a-client', 'storage', 'sessions');
 const pendingRoot = path.join(repoRoot, 'tasks', 'pending');
 

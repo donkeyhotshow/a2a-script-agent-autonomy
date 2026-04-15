@@ -17,9 +17,11 @@
  *   getCallsForSession()— all calls belonging to a session
  */
 
-import type { OrchestratorState } from '../core/orchestrator-kernel';
-import { globalEventBus } from '../core/event-bus';
-import { logger } from '@a2a/server-utils/logger';
+import { globalEventBus } from "@a2a/server-utils";
+import { logger } from "@a2a/server-utils/logger";
+
+// Keep daemon package boundary stable: do not import `packages/server/*` types here.
+export type OrchestratorState = string;
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -366,7 +368,7 @@ export class ToolTracker {
  * Process-singleton ToolTracker. Import and use directly:
  *
  * ```ts
- * import { toolTracker } from './monitoring/tool-tracker';
+ * import { toolTracker } from '../daemon/src/monitoring/tool-tracker.js';
  * await toolTracker.record({ tool_name: 'read-file', ... });
  * const hints = await toolTracker.routingHints(['read-file', 'rag-search'], 'SCANNING');
  * ```

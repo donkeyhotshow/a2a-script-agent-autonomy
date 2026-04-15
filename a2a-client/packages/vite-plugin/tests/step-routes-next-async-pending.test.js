@@ -8,13 +8,13 @@ import fs from 'fs';
 import path from 'path';
 import os from 'os';
 
-import { handleNextStep } from '../../packages/vite-plugin/routes/step-routes-dialog-flow.js';
+import { handleNextStep } from '../src/routes/step-routes-dialog-flow.js';
 import {
   saveNewStep,
   saveServerPromise,
   reconcileSessionIndexFromDisk,
   clearStepSessionsParentRegistry,
-} from '../../packages/vite-plugin/storage/newSessions.js';
+} from '@a2a-client/storage/newSessions.ts';
 
 let testDir;
 const sessionId = 'sess_1775590000001';

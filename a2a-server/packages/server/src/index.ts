@@ -1,21 +1,19 @@
 import http from "node:http";
 import { existsSync } from "node:fs";
-import app from "./app";
-import { config } from "../../server-config/index";
-import { logger } from "@a2a/server-utils/logger";
+import app from "./app.js";
+import { config } from "@a2a/config";
+import { logger } from "./utils/logger.js";
 import {
   startRequestProcessor,
   stopRequestProcessor,
-} from "./request-processor/request-processor.service";
-import { actionRegistry } from "../../actions/src/action-registry";
-// Removed algorithm registry import - module moved to gray-room package
-const algorithmRegistry = { loadFromDirectory: async () => console.log('Algorithm registry skipped') };
-import { getPromptsTransformsPath } from './index';
-import { globalArtifactStore } from "./artifact-store";
+} from "../../daemon/src/daemon/request-processor-daemon.js";
+import { actionRegistry } from "../../actions/src/action-registry.js";
+import { algorithmRegistry } from "./services/core/black-room/algorithm-registry.js";
+import { getPromptsTransformsPath } from "../../transform/index.js";
+import { globalArtifactStore } from "./artifact-store.js";
 
-// Temporary placeholders for missing modules
-const ultraContextService = {};
-const peerRelay = { joinRoom: () => console.log('Peer relay joined room') };
+import { ultraContextService } from "./services/context/ultracontext.service.js";
+import { peerRelay } from "./services/p2p/relay.js";
 
 // Create HTTP server
 const server = http.createServer(app);
@@ -85,16 +83,17 @@ async function bootstrap(): Promise<void> {
   logger.info("[A2A] Initializing Distributed Core 2.5...");
   peerRelay.joinRoom("main", "server-01");
 
-  server.listen(config.port, () => {
+  const listenPort = Number(process.env.PORT) || 3000;
+  server.listen(listenPort, () => {
     logger.info(`A2A Server started (Simulation Mode)`, {
-      port: config.port,
+      port: listenPort,
       environment: config.nodeEnv,
       pid: process.pid,
       actionsRegistered: actionRegistry.count,
     });
 
-    logger.info(`Health check: http://localhost:${config.port}/health`);
-    logger.info(`API: http://localhost:${config.port}/api/v1/invoke`);
+    logger.info(`Health check: http://localhost:${listenPort}/health`);
+    logger.info(`API: http://localhost:${listenPort}/api/v1/invoke`);
   });
 }
 

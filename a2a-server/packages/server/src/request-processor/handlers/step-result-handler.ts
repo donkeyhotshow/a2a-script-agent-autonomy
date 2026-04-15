@@ -5,13 +5,13 @@
  */
 
 import {logger} from "@a2a/server-utils/logger";
-import {actionProcessor} from '../../../../actions/src/action-processor.ts';
+import {actionProcessor} from '../../../../actions/src/action-processor.js';
 import type {
     RequestContext,
     ProcessResult,
     ProcessOutcome,
 } from '../request-processor.interfaces';
-import {resolveExecution} from '../normalization';
+import {resolveExecution} from '../normalization.js';
 
 /**
  * Handle step_result - client sends step result after executing code

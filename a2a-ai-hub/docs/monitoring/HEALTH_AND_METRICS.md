@@ -235,7 +235,7 @@ spec:
     spec:
       containers:
       - name: proxy
-        image: a2a-ai-hub:latest
+        image: ai-integration:latest
         ports:
         - containerPort: 11434
         livenessProbe:

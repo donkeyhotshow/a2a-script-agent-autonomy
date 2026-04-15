@@ -9,7 +9,7 @@
  */
 
 import {EventEmitter} from 'events';
-import {evaluatePathRules, defaultPathRules} from './policy/path-rules.config.js';
+import {evaluatePathRules, defaultPathRules} from '../server/src/policy/path-rules.config.js';
 
 /**
  * Конфигурация безопасности для execute

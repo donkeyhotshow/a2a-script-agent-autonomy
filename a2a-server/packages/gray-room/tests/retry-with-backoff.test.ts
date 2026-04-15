@@ -7,7 +7,7 @@ import {
     calculateDelay,
     calculateDelaySequence,
     retryWithBackoff,
-} from '../../src/utils/retry';
+} from '../../src/utils/retry.js';
 
 const noJitter = {
     jitter: false,

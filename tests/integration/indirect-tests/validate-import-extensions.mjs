@@ -13,9 +13,9 @@ import { join, resolve, extname, dirname, relative } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(__dirname, '..', '..');
+const repoRoot = resolve(__dirname, '..', '..', '..');
 const serverRoot = join(repoRoot, 'a2a-server');
-const aiIntegrationRoot = join(repoRoot, 'a2a-ai-hub');
+const aiIntegrationRoot = join(repoRoot, 'ai-integration');
 
 let exitCode = 0;
 const errors = [];
@@ -80,7 +80,7 @@ function scanDir(dir, extensions = ['.ts']) {
 console.log('=== Checking a2a-server (NodeNext imports) ===');
 scanDir(join(serverRoot, 'src'));
 
-console.log('=== Checking a2a-ai-hub (NodeNext imports) ===');
+console.log('=== Checking ai-integration (NodeNext imports) ===');
 scanDir(join(aiIntegrationRoot, 'src'));
 
 // Output

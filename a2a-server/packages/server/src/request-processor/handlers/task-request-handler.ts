@@ -5,16 +5,16 @@
  */
 
 import {logger} from "@a2a/server-utils/logger";
-import {actionProcessor} from '../../../../actions/src/action-processor.ts';
-import {actionRegistry} from '../../../../actions/src/action-registry.ts';
-import type {ActionDefinition} from '../../../../actions/src/types.ts';
+import {actionProcessor} from '../../../../actions/src/action-processor.js';
+import {actionRegistry} from '../../../../actions/src/action-registry.js';
+import type {ActionDefinition} from '../../../../actions/src/types.js';
 import type {
     RequestContext,
     ProcessResult,
     ProcessOutcome,
 } from '../request-processor.interfaces';
-import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../../../../server-config/router-static.ts';
-import {dialogRequestProcessor} from '../dialog-request-processor';
+import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../../../../server-config/router-static.js';
+import {dialogRequestProcessor} from '../dialog-request-processor.js';
 
 /**
  * Parse task text from various context formats

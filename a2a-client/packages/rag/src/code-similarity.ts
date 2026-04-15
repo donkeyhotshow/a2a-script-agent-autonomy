@@ -3,7 +3,6 @@
  */
 
 import type {Chunk} from './chunk-manager.js';
-import { MathUtils } from './math-utils.js';
 
 export interface CodeSimilarityConfig {
     minSimilarity?: number;
@@ -103,9 +102,13 @@ export class CodeSimilarityEngine {
         return union.size > 0 ? intersection.size / union.size : 0;
     }
 
-private _cosineSimilarity(a: Set<string>, b: Set<string>): number {
-        return MathUtils.setCosineSimilarity(a, b);
-      }
+    private _cosineSimilarity(a: Set<string>, b: Set<string>): number {
+        const intersection = new Set([...a].filter((x) => b.has(x)));
+        const magA = Math.sqrt(a.size);
+        const magB = Math.sqrt(b.size);
+        if (magA === 0 || magB === 0) return 0;
+        return intersection.size / (magA * magB);
+    }
 
     private _overlapCoefficient(a: Set<string>, b: Set<string>): number {
         const intersection = new Set([...a].filter((x) => b.has(x)));

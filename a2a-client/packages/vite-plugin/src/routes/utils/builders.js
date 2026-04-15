@@ -6,6 +6,17 @@ import { pickInvokeContextPatch } from '@a2a-client/shared/context-invoke-patch.
 import { extractA2aExecute, mergeResponseContext, sanitizeContextForServer, sanitizeInvokeBodyForA2aUpstream, } from '@a2a-client/shared/a2a-invoke-builders.js';
 export { pickInvokeContextPatch, extractA2aExecute, mergeResponseContext, sanitizeContextForServer, sanitizeInvokeBodyForA2aUpstream, };
 export { stripSpuriousTaskEchoFromDialogHistory, mergeDialogHistoryForInvoke, } from '@a2a-client/shared/dialog-invoke-history.js';
+export function unwrapA2aResponse(serverResponse, depth = 0) {
+    if (!serverResponse || typeof serverResponse !== 'object')
+        return serverResponse;
+    if ('result' in serverResponse || 'execute' in serverResponse)
+        return serverResponse;
+    if ('data' in serverResponse && depth < 4) {
+        const inner = unwrapA2aResponse(serverResponse.data, depth + 1);
+        return inner != null && typeof inner === 'object' ? inner : serverResponse.data;
+    }
+    return serverResponse;
+}
 /**
  * Build step record payload from server response
  * @param params.sessionId - session identifier
@@ -35,7 +46,7 @@ export function buildStepRecord({ sessionId, stepNum, serverResponse, messages =
  * @returns step directory path
  */
 export async function ensureStepDir(cwd, sessionId, stepNum) {
-    const { getNewStepDir } = await import('../@a2a-client/storage/newSessions.ts');
+    const { getNewStepDir } = await import('@a2a-client/storage/newSessions.ts');
     const fs = await import('fs');
     const stepDir = getNewStepDir(cwd, sessionId, stepNum);
     if (!fs.existsSync(stepDir)) {

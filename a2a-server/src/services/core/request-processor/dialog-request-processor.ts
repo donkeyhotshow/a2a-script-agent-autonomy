@@ -10,9 +10,9 @@
  * - response-path.ts - обработка путей ответа
  */
 
-import {logger} from '../../../utils/logger.js';
-import {resolveAiHubBaseUrl} from '../../../utils/ai-hub-url.js';
-import {getPromptsTransformsPath} from '../../../transform/index.js';
+import {logger} from '@a2a/server-utils';
+import {resolveAiHubBaseUrl} from '@a2a/server-llm';
+import {getPromptsTransformsPath} from '@a2a/server-transform';
 import type {RequestContextBlock} from '../../../types/index.js';
 import type {RequestContext, ProcessResult} from './request-processor.interfaces.js';
 import {BaseRequestProcessor, type RequestType} from './base-processor.js';
@@ -34,13 +34,13 @@ import {
     extractSchemaName,
     resolveResultObject,
 } from './normalization.js';
-import {tryParseJsonFromLlmText} from '../../../utils/strip-markdown-json-fence.js';
+import {tryParseJsonFromLlmText} from '@a2a/server-utils';
 import {resolveLlmModelFromContext} from './llm-model-resolver.js';
 import {requestService} from '../request/request.service.js';
 import {CognitionBase} from '../cognition-base.js';
 import {EpisodicMemory} from '../../memory/episodic-memory.js';
 import {globalDesignReasoner} from '../hierarchical-design-reasoner.js';
-import {isAgentSchemaName, lastAssistantMessageFromContext} from '../../../utils/agent-utils.js';
+import {isAgentSchemaName, lastAssistantMessageFromContext} from '@a2a/server-utils';
 
 export {isDialogToolExecutePayload};
 export {resolveTransformSchema, normalizeContext, extractSchemaName};

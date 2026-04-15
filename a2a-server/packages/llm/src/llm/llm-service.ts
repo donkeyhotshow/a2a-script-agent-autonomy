@@ -15,14 +15,14 @@ export interface LlmResponse {
 }
 
 export class LlmService {
-  async chat(request: LlmRequest): Promise<LlmResponse> {
+  async chat(_request: LlmRequest): Promise<LlmResponse> {
     // Disabled - use invoke mechanism instead
     throw new Error("LLM service disabled - use invoke mechanism");
   }
 
   async debate(
-    task: string,
-    context: any,
+    _task: string,
+    _context: unknown,
   ): Promise<{ plan: string; consensus: string }> {
     // Disabled - use invoke mechanism instead
     throw new Error("LLM service disabled - use invoke mechanism");

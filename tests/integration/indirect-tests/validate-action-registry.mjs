@@ -13,9 +13,12 @@ import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(__dirname, '..', '..');
+/** indirect-tests → integration → tests → repo root */
+const repoRoot = resolve(__dirname, '..', '..', '..');
 const serverRoot = join(repoRoot, 'a2a-server');
-const actionsDir = join(serverRoot, 'src', 'actions');
+const workspaceActions = join(serverRoot, 'packages', 'actions', 'src');
+const legacyActions = join(serverRoot, 'src', 'actions');
+const actionsDir = existsSync(workspaceActions) ? workspaceActions : legacyActions;
 const yamlActionsDir = join(actionsDir, 'definitions', 'yaml', 'actions');
 
 let exitCode = 0;

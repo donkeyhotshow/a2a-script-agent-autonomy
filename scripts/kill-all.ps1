@@ -23,11 +23,11 @@ param(
 
 # Service definitions: name -> { port, processes, patterns }
 $Services = @{
-    'a2a-ai-hub' = @{
+    'ai-integration' = @{
         Port = 11434
         PidKey = 'AI_INTEGRATION_PID'
         Processes = @('python.exe', 'uvicorn.exe')
-        Patterns = @('uvicorn', 'a2a-ai-hub', 'proxy.asgi')
+        Patterns = @('uvicorn', 'ai-integration', 'proxy.asgi')
     }
     'a2a-server' = @{
         Port = 3000
@@ -55,7 +55,7 @@ $script:ExitCode = 0
 function Write-Log {
     param([string]$Message, [string]$Level = 'INFO')
     $colorMap = @{ 'INFO' = 'White'; 'OK' = 'Green'; 'WARN' = 'Yellow'; 'ERROR' = 'Red'; 'STEP' = 'Cyan' }
-    $color = $colorMap[$Level] ?? 'White'
+    $color = if ($colorMap.ContainsKey($Level)) { $colorMap[$Level] } else { 'White' }
     $prefix = if ($Level -eq 'STEP') { "`n[$Level]" } else { "  [$Level]" }
     Write-Host "$prefix $Message" -ForegroundColor $color
 }

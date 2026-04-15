@@ -1,5 +1,5 @@
 /**
- * Test suite for Task Monitor (entry: tests/monitor-and-process-tasks.js + tests/monitor-tasks/*)
+ * Test suite for Task Monitor (entry: scripts/monitor-and-process-tasks.js + scripts/monitor-tasks/*)
  */
 
 import fs from 'fs';
@@ -8,30 +8,30 @@ import { fileURLToPath } from 'url';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-/** Repo root — avoids failures when vitest cwd is not the repository root */
-const REPO_ROOT = path.resolve(__dirname, '../..');
+/** Repo root — infrastructure → indirect-tests → integration → tests → root */
+const REPO_ROOT = path.resolve(__dirname, '../../../..');
 
 vi.mock('axios');
 
 const MONITOR_SOURCE_FILES = [
-  'tests/monitor-and-process-tasks.js',
-  'tests/monitor-tasks/monitor-mixin.js',
-  'tests/monitor-tasks/monitor-modules.js',
-  'tests/monitor-tasks/task-monitor-core.js',
-  'tests/monitor-tasks/promise-queue-probe.mjs',
-  'tests/monitor-tasks/task-monitor-api.js',
-  'tests/monitor-tasks/task-monitor-processing.js',
-  'tests/monitor-tasks/processing/rewind-disk.js',
-  'tests/monitor-tasks/processing/router-gate.js',
-  'tests/monitor-tasks/processing/task-files.js',
-  'tests/monitor-tasks/processing/process-task.js',
-  'tests/monitor-tasks/processing/parallel-monitor.js',
-  'tests/monitor-tasks/task-monitor-utils.js',
-  'tests/monitor-tasks/task-monitor-validation.js',
-  'tests/monitor-tasks/task-monitor-log-scan.js',
-  'tests/monitor-tasks/task-monitor-daemon.js',
-  'tests/monitor-tasks/task-monitor-session-helpers.js',
-  'tests/monitor-tasks/errors.js',
+  'scripts/monitor-and-process-tasks.js',
+  'scripts/monitor-tasks/monitor-mixin.js',
+  'scripts/monitor-tasks/monitor-modules.js',
+  'scripts/monitor-tasks/task-monitor-core.js',
+  'scripts/monitor-tasks/promise-queue-probe.mjs',
+  'scripts/monitor-tasks/task-monitor-api.js',
+  'scripts/monitor-tasks/task-monitor-processing.js',
+  'scripts/monitor-tasks/processing/rewind-disk.js',
+  'scripts/monitor-tasks/processing/router-gate.js',
+  'scripts/monitor-tasks/processing/task-files.js',
+  'scripts/monitor-tasks/processing/process-task.js',
+  'scripts/monitor-tasks/processing/parallel-monitor.js',
+  'scripts/monitor-tasks/task-monitor-utils.js',
+  'scripts/monitor-tasks/task-monitor-validation.js',
+  'scripts/monitor-tasks/task-monitor-log-scan.js',
+  'scripts/monitor-tasks/task-monitor-daemon.js',
+  'scripts/monitor-tasks/task-monitor-session-helpers.js',
+  'scripts/monitor-tasks/errors.js',
 ];
 
 function readMonitorSources(testDir) {
@@ -40,7 +40,7 @@ function readMonitorSources(testDir) {
   ).join('\n');
 }
 
-describe('tests/monitor-and-process-tasks.js', () => {
+describe('scripts/monitor-and-process-tasks.js', () => {
   const testDir = REPO_ROOT;
   const stateFile = path.join(testDir, 'task-monitor-state.json');
 
@@ -116,9 +116,9 @@ describe('tests/monitor-and-process-tasks.js', () => {
 
   describe('Completed session export', () => {
     it('exposes --list-completed and ledger helpers for finished prompts', () => {
-      const entry = fs.readFileSync(path.join(testDir, 'tests/monitor-and-process-tasks.js'), 'utf8');
+      const entry = fs.readFileSync(path.join(testDir, 'scripts/monitor-and-process-tasks.js'), 'utf8');
       expect(entry).toContain('--list-completed');
-      const core = fs.readFileSync(path.join(testDir, 'tests/monitor-tasks/task-monitor-core.js'), 'utf8');
+      const core = fs.readFileSync(path.join(testDir, 'scripts/monitor-tasks/task-monitor-core.js'), 'utf8');
       expect(core).toContain('printCompletedSessionsExport');
       expect(core).toContain('readCompletedSessionsLedger');
     });
@@ -161,13 +161,13 @@ describe('tests/monitor-and-process-tasks.js', () => {
     });
 
     it('should default --once to one task when TASK_MONITOR_MAX_TASKS_PER_RUN is unset', () => {
-      const entry = fs.readFileSync(path.join(testDir, 'tests/monitor-and-process-tasks.js'), 'utf8');
+      const entry = fs.readFileSync(path.join(testDir, 'scripts/monitor-and-process-tasks.js'), 'utf8');
       expect(entry).toContain('TASK_MONITOR_MAX_TASKS_PER_RUN');
       expect(entry).toContain("process.env.TASK_MONITOR_MAX_TASKS_PER_RUN = '1'");
     });
 
     it('should default TASK_MONITOR_STRICT_AGENT_COMPLETION when unset', () => {
-      const entry = fs.readFileSync(path.join(testDir, 'tests/monitor-and-process-tasks.js'), 'utf8');
+      const entry = fs.readFileSync(path.join(testDir, 'scripts/monitor-and-process-tasks.js'), 'utf8');
       expect(entry).toContain('TASK_MONITOR_STRICT_AGENT_COMPLETION');
       expect(entry).toContain("process.env.TASK_MONITOR_STRICT_AGENT_COMPLETION = '0'");
     });
@@ -202,7 +202,7 @@ describe('tests/monitor-and-process-tasks.js', () => {
     });
 
     it('should map --retry-step to TASK_MONITOR_RESUME_REWIND_LAST_STEP in entry script', () => {
-      const entry = fs.readFileSync(path.join(testDir, 'tests/monitor-and-process-tasks.js'), 'utf8');
+      const entry = fs.readFileSync(path.join(testDir, 'scripts/monitor-and-process-tasks.js'), 'utf8');
       expect(entry).toContain('--retry-step');
       expect(entry).toContain('TASK_MONITOR_RESUME_REWIND_LAST_STEP');
       expect(entry).toContain('--resume-from-step=');
@@ -212,7 +212,7 @@ describe('tests/monitor-and-process-tasks.js', () => {
       const source = readMonitorSources(testDir);
       expect(source).toContain('tryRewindSessionDiskStep');
       expect(source).toContain('applyTaskMonitorRewindDisk');
-      const entry = fs.readFileSync(path.join(testDir, 'tests/monitor-and-process-tasks.js'), 'utf8');
+      const entry = fs.readFileSync(path.join(testDir, 'scripts/monitor-and-process-tasks.js'), 'utf8');
       expect(entry).toContain('applyMonitorMixins');
       expect(entry).toContain('TASK_MONITOR_MIXINS');
     });
@@ -226,7 +226,7 @@ describe('tests/monitor-and-process-tasks.js', () => {
 
     it('should support strict agent completion until step=completed via continuation /next', () => {
       const pt = fs.readFileSync(
-        path.join(testDir, 'tests/monitor-tasks/processing/process-task.js'),
+        path.join(testDir, 'scripts/monitor-tasks/processing/process-task.js'),
         'utf8'
       );
       expect(pt).toContain('TASK_MONITOR_STRICT_AGENT_COMPLETION');
@@ -294,17 +294,17 @@ describe('tests/monitor-and-process-tasks.js', () => {
 
     it('should enforce one prompt at a time until processTask completes (daemon invariant)', () => {
       const daemon = fs.readFileSync(
-        path.join(testDir, 'tests/monitor-tasks/task-monitor-daemon.js'),
+        path.join(testDir, 'scripts/monitor-tasks/task-monitor-daemon.js'),
         'utf8'
       );
-      const entry = fs.readFileSync(path.join(testDir, 'tests/monitor-and-process-tasks.js'), 'utf8');
+      const entry = fs.readFileSync(path.join(testDir, 'scripts/monitor-and-process-tasks.js'), 'utf8');
       expect(daemon).toContain('INVARIANT: one incomplete prompt per iteration');
       expect(entry).toContain('one prompt at a time');
     });
 
     it('should support check-promise-queue --json and --detail', () => {
       const cli = fs.readFileSync(
-        path.join(testDir, 'tests/monitor-tasks/check-promise-queue.mjs'),
+        path.join(testDir, 'scripts/monitor-tasks/check-promise-queue.mjs'),
         'utf8'
       );
       expect(cli).toContain("'--json'");
@@ -314,7 +314,7 @@ describe('tests/monitor-and-process-tasks.js', () => {
 
     it('should optionally probe hub queue on daemon status tick', () => {
       const daemon = fs.readFileSync(
-        path.join(testDir, 'tests/monitor-tasks/task-monitor-daemon.js'),
+        path.join(testDir, 'scripts/monitor-tasks/task-monitor-daemon.js'),
         'utf8'
       );
       expect(daemon).toContain('TASK_MONITOR_HUB_PROBE_DAEMON_STATUS');
@@ -331,7 +331,7 @@ describe('tests/monitor-and-process-tasks.js', () => {
 
     it('should write completion hook from sequential processTask on success', () => {
       const pt = fs.readFileSync(
-        path.join(testDir, 'tests/monitor-tasks/processing/process-task.js'),
+        path.join(testDir, 'scripts/monitor-tasks/processing/process-task.js'),
         'utf8'
       );
       expect(pt).toContain('createCompletionReport');

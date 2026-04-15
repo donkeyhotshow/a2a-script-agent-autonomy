@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { pickInvokeContextPatch } from './context-invoke-patch.js';
+import { pickInvokeContextPatch } from '@a2a-client/shared/context-invoke-patch.mjs';
 
 describe('pickInvokeContextPatch', () => {
     it('returns empty for non-objects', () => {
@@ -19,7 +19,6 @@ describe('pickInvokeContextPatch', () => {
                 scratchpad: { done: true },
                 workbench: { sections: { s1: 'y' } },
                 ragResults: [1],
-                version: '2.0',
                 junk: { nested: true },
                 hugeBlob: 'x'.repeat(1000),
             })
@@ -31,7 +30,6 @@ describe('pickInvokeContextPatch', () => {
             scratchpad: { done: true },
             workbench: { sections: { s1: 'y' } },
             ragResults: [1],
-            version: '2.0',
         });
     });
 

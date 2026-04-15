@@ -1,2 +1,2 @@
 // Daemon package entry point
-export * from './daemon/request-processor-daemon';
+export * from "./daemon/llm-hub-poll.js";

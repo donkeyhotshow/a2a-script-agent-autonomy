@@ -7,7 +7,7 @@ import {
     ExecuteSecurityService,
     DEFAULT_SECURITY_CONFIG,
     getExecuteSecurityService,
-} from '../../src/services/execute-security.service';
+} from '../../src/services/execute-security.service.js';
 
 describe('ExecuteSecurityService', () => {
     let service: ExecuteSecurityService;

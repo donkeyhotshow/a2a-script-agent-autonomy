@@ -12,8 +12,17 @@ import { dirname, join, resolve } from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(__dirname, '..', '..');
-const promptsDir = join(repoRoot, 'a2a-server', 'prompts');
+const repoRoot = resolve(__dirname, '..', '..', '..');
+const serverRoot = join(repoRoot, 'a2a-server');
+const legacyPrompts = join(serverRoot, 'prompts');
+/** Workspace: known prompt template trees (avoid scanning tests/fixtures). */
+const promptScanDirs = existsSync(legacyPrompts)
+  ? [legacyPrompts]
+  : [
+      join(serverRoot, 'packages', 'agents', 'src'),
+      join(serverRoot, 'packages', 'features', 'src', 'agents'),
+      join(serverRoot, 'packages', 'actions', 'src', 'definitions', 'auto-ai'),
+    ].filter((d) => existsSync(d));
 
 let exitCode = 0;
 const errors = [];
@@ -80,7 +89,8 @@ function scanDir(dir) {
     const entries = readdirSync(dir, { withFileTypes: true });
     for (const entry of entries) {
         const fullPath = join(dir, entry.name);
-        if (entry.isDirectory() && !entry.name.startsWith('.')) {
+        if (entry.isDirectory()) {
+            if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
             scanDir(fullPath);
         } else if (entry.isFile() && entry.name.endsWith('.md')) {
             checkPromptFile(fullPath);
@@ -89,11 +99,13 @@ function scanDir(dir) {
 }
 
 console.log('=== Validating prompts ===');
-if (!existsSync(promptsDir)) {
-    console.error(`\n=== Prompt Validation FAILED ===\n  ✗ Prompts directory missing: ${promptsDir}`);
+if (promptScanDirs.length === 0) {
+    console.error(`\n=== Prompt Validation FAILED ===\n  ✗ No prompt template directories found under a2a-server`);
     process.exit(1);
 }
-scanDir(promptsDir);
+for (const d of promptScanDirs) {
+    scanDir(d);
+}
 
 // Output
 if (errors.length > 0) {

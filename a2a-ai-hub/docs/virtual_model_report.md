@@ -37,7 +37,7 @@
 
 ```json
 {
-  "ai_hub_config": "C:\\workspace\\org-carrier\\a2a-script-agent\\a2a-ai-hub\\docs\\ai-hub.config.example.json",
+  "ai_hub_config": "C:\\workspace\\org-carrier\\a2a-script-agent\\ai-integration\\docs\\ai-hub.config.example.json",
   "ai_hub_rules": 3,
   "local_llm_upstream_available": false,
   "local_llm_upstream_host": "http://localhost:11435",

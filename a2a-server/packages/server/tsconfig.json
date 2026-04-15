@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src"
+  },
+  "include": [
+    "src/public/**/*",
+    "src/skill-evolver.ts",
+    "src/swe-verifier.ts",
+    "src/types/validation.interfaces.ts",
+    "src/artifact-store.ts"
+  ],
+  "exclude": ["node_modules", "dist", "tests"]
+}
+

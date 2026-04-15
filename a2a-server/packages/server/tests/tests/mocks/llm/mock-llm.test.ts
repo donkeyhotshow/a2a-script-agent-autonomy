@@ -12,7 +12,7 @@ import {
     createCanonicalResponse,
     getCallCount,
     resetCallCount
-} from './index';
+} from './index.js';
 
 describe('LLM Mock Adapter', () => {
     let mockCallLLM: ReturnType<typeof vi.fn>;
@@ -127,7 +127,7 @@ describe('LLM Mock Adapter', () => {
 
 describe('Replay Provider', () => {
     it('should create replay provider function', async () => {
-        const { createReplayProvider } = await import('./index');
+        const { createReplayProvider } = await import('./index.js');
         
         // Create a replay provider (would read from files in real use)
         const provider = await createReplayProvider({

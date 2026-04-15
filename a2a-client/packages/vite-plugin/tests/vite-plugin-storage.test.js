@@ -26,12 +26,12 @@ import {
   loadStepFile,
   clearStepSessionsParentRegistry,
   registerStepSessionsParent,
-} from '../../packages/vite-plugin/storage/newSessions.js';
+} from '@a2a-client/storage/newSessions.ts';
 import {
   getActiveAsyncWork,
   getProjectModeInflightPromise,
-} from '../../packages/vite-plugin/routes/utils/session-projection-dto.js';
-import { collectSessionMessagesFlat } from '../../packages/vite-plugin/routes/utils/message-timeline.js';
+} from '../src/routes/utils/session-projection-dto.js';
+import { collectSessionMessagesFlat } from '../src/routes/utils/message-timeline.js';
 
 let testDir;
 

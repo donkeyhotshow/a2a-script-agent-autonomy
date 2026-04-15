@@ -159,6 +159,11 @@ def handle_promise_mode(
     simulate_snapshot = simulate_action if isinstance(simulate_action, dict) else None
 
     server_promise_id = (request.headers.get('X-Server-Promise-Id') or '').strip() or None
+    a2a_trace_id = (
+        (request.headers.get('X-A2A-Trace-Id') or request.headers.get('x-a2a-trace-id') or '')
+        .strip()
+        or None
+    )
     promise = create_promise(
         method=request.method,
         path=path,
@@ -167,6 +172,20 @@ def handle_promise_mode(
         simulate=simulate_snapshot,
         server_promise_id=server_promise_id,
     )
+
+    if a2a_trace_id:
+        logger.info(
+            'hub.chat.promise_mode trace_id=%s server_promise_id=%s llm_promise_id=%s',
+            a2a_trace_id,
+            server_promise_id or '',
+            promise.promise_id,
+        )
+    else:
+        logger.info(
+            'hub.chat.promise_mode server_promise_id=%s llm_promise_id=%s',
+            server_promise_id or '',
+            promise.promise_id,
+        )
 
     trace_dir = ''
     if want_trace:

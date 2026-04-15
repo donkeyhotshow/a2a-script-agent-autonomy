@@ -13,7 +13,7 @@
  *
  * Usage:
  * ```ts
- * import { policyEngine } from './policy-engine';
+ * import { policyEngine } from './policy-engine.js';
  *
  * if (policyEngine.isBlocked(ctx)) {
  *   const violations = policyEngine.evaluate(ctx);
@@ -29,7 +29,7 @@ import { dirname, join } from 'node:path';
 import {
   createArtifactWriteInput,
   globalArtifactStore,
-} from '../core/artifact-store';
+} from '../core/artifact-store.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────
 

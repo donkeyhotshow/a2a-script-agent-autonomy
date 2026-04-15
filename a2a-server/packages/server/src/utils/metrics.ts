@@ -1,1 +1,1 @@
-export * from '../../../lib/metrics.ts'
+export * from '../../../lib/metrics.js'

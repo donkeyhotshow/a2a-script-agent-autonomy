@@ -1,14 +1,13 @@
-import {resolveGrayRoomLlmModelFromContext} from '../llm-model-resolver';
+import {resolveGrayRoomLlmModelFromContext} from '../../../../../server/src/request-processor/llm-model-resolver.js';
 import {
     extractLlmTextFromHubResponseBody,
     initAiHubChatPromise,
     pollReadyThenFetch,
-} from '../../../daemon/llm-hub-poll';
-import {logger} from "@a2a/server-utils/logger""';
-import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils';
-import {tryParseJsonFromLlmText} from '../../../utils/strip-markdown-json-fence';
-import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../transform/types';
-import {BaseGrayRoomHandler} from './base-handler';
+} from '@a2a/server-daemon';
+import {logger, tryParseJsonFromLlmText, resolveA2aTraceId} from '@a2a/server-utils';
+import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils.js';
+import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '@a2a/server-transform';
+import {BaseGrayRoomHandler} from './base-handler.js';
 
 /**
  * Handle thinking interrupt
@@ -34,11 +33,17 @@ export class HandleThinking extends BaseGrayRoomHandler {
     
     try {
         const sidecarModel = resolveGrayRoomLlmModelFromContext(nextCtx, model);
-        const chatInit = await initAiHubChatPromise(aiHubUrl, `${promiseId}-think`, {
-            model: sidecarModel,
-            messages: [{ role: 'user', content: thinkingPrompt }],
-            stream: false,
-        });
+        const chatInit = await initAiHubChatPromise(
+            aiHubUrl,
+            `${promiseId}-think`,
+            {
+                model: sidecarModel,
+                messages: [{ role: 'user', content: thinkingPrompt }],
+                stream: false,
+            },
+            undefined,
+            resolveA2aTraceId(nextCtx as Record<string, unknown>, promiseId),
+        );
         if (chatInit.ok) {
             const thinkRaw =
                 chatInit.inlineResponseBody ?? (await pollReadyThenFetch(aiHubUrl, chatInit.llmPromiseId));

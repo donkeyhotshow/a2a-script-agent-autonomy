@@ -3,7 +3,7 @@
  * Server is async-only: if chained POST /invoke returns promiseId, chain stops; caller polls /result and continues elsewhere.
  */
 
-import { RAGSearcher } from './rag-stub.js';
+import { RAGSearcher } from '@a2a/rag';
 import { saveRequestToServer, saveServerResponse } from '../services/step-storage.js';
 import { serverFetch, getServerBaseUrl } from '../services/upstream.service.js';
 import { loadProjects } from '../services/projects.service.js';

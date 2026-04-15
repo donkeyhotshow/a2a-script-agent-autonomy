@@ -6,7 +6,7 @@
  * that focuses on key operations rather than full conversation.
  * 
  * Usage:
- * - Import types from './types' (NodeNext emit)
+ * - Import types from './types.js' (NodeNext emit)
  * - Use createOperation() to create new operations
  * - Use addOperationToContext() to add to context
  * - Use updateOperationStatus() to update status
@@ -17,7 +17,7 @@ import {
   type OperationType, 
   type OperationStatus,
   type OperationError 
-} from './types';
+} from './types.js';
 
 /**
  * Generate a unique operation ID

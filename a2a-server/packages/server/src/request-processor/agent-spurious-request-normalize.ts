@@ -4,10 +4,10 @@
  * and loop. Replace with a neutral in-flight step + `execute.message`.
  */
 
-import {logger} from "@a2a/server-utils/logger";
-import type {ProcessResult} from './request-processor.interfaces';
-import type {RequestContextBlock} from '../../types/index';
-import {isAgentSchemaName, lastAssistantMessageFromContext} from '../../../lib/agent-utils.ts';
+import {logger} from '@a2a/server-utils/logger';
+import type {ProcessResult} from './request-processor.interfaces.js';
+import type {RequestContextBlock} from '@a2a/server-protocol';
+import {isAgentSchemaName, lastAssistantMessageFromContext} from '@a2a/server-utils';
 
 
 function countAssistantTurns(history: unknown): number {

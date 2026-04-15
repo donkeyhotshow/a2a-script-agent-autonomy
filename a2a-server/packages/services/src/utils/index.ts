@@ -1,2 +1,2 @@
-export * from './invoke.service';
-export * from './promise-pool';
+export * from './invoke.service.js';
+export * from './promise-pool.js';

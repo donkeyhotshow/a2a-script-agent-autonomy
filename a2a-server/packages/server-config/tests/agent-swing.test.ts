@@ -12,7 +12,7 @@ vi.mock('../../src/daemon/llm-hub-poll', async (importOriginal) => {
     };
 });
 
-import {AgentSwing} from '../../src/services/core/agent-swing';
+import {AgentSwing} from '../../src/services/core/agent-swing.js';
 
 describe('AgentSwing.compressWithLookahead', () => {
     const swing = new AgentSwing();

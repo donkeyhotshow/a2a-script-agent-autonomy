@@ -21,7 +21,7 @@ import {
     loadServerPromise,
     loadStepFile,
     getNewSessionLatestStep,
-} from '@a2a-client/storage/newSessions.ts';
+} from '@a2a-client/storage/newSessions.js';
 
 // Re-export isValidSessionId for external usage
 export { isValidSessionId };

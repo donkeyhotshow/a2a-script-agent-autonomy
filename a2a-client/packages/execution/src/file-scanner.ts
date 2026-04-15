@@ -5,6 +5,7 @@
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import {GlobMatcher} from './glob-matcher.js';
+import type {IgnoreDetector} from './ignore-detector.js';
 
 export interface FileScannerConfig {
     rootPath?: string;
@@ -13,6 +14,8 @@ export interface FileScannerConfig {
     maxDepth?: number;
     maxFiles?: number;
     onProgress?: (info: { type: string; path: string; stats: ScanStats }) => void;
+    /** When set and initialized, scan results are filtered with ignore rules (parity with scanWithIgnore). */
+    ignoreDetector?: IgnoreDetector | null;
 }
 
 export interface ScanStats {
@@ -45,6 +48,7 @@ export class FileScanner {
     onProgress: FileScannerConfig['onProgress'];
     private includeMatcher: GlobMatcher;
     private excludeMatcher: GlobMatcher;
+    private readonly ignoreDetector: IgnoreDetector | null;
 
     constructor(config: FileScannerConfig = {}) {
         this.rootPath = config.rootPath ?? process.cwd();
@@ -55,6 +59,7 @@ export class FileScanner {
         this.onProgress = config.onProgress;
         this.includeMatcher = new GlobMatcher(this.includePatterns);
         this.excludeMatcher = new GlobMatcher(this.excludePatterns);
+        this.ignoreDetector = config.ignoreDetector ?? null;
     }
 
     async scan(dir?: string, options: FileScannerConfig = {}): Promise<ScanResult> {
@@ -67,7 +72,21 @@ export class FileScanner {
             errors: [],
         };
         await this.walkDirectory(dir ?? this.rootPath, files, stats, 0, options);
-        return {files, stats, rootPath: this.rootPath};
+        const base: ScanResult = {files, stats, rootPath: this.rootPath};
+        const det = this.ignoreDetector;
+        if (det?.initialized) {
+            const kept: ScannedFile[] = [];
+            for (const file of files) {
+                if (!det.shouldIgnore(file.relativePath)) kept.push(file);
+            }
+            const skipped = files.length - kept.length;
+            return {
+                files: kept,
+                stats: {...stats, skippedFiles: stats.skippedFiles + skipped},
+                rootPath: this.rootPath,
+            };
+        }
+        return base;
     }
 
     private async walkDirectory(

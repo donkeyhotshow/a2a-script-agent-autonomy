@@ -1,6 +1,5 @@
-import { logger } from '@a2a/server-utils/logger';
-import type { ServerInterruptTraceEvent } from "../../transform/types";
-import { globalArtifactStore } from "../core/artifact-store";
+import { logger, globalArtifactStore, type StoredArtifact } from '@a2a/server-utils';
+import type { ServerInterruptTraceEvent } from '@a2a/server-transform';
 
 export class ProgressiveRetriever {
   async retrieve(
@@ -19,10 +18,10 @@ export class ProgressiveRetriever {
 
     try {
       // Only Layer 1: Summary Layer (query ArtifactStore)
-      let hits: any[] = [];
-      const summaryHits = await globalArtifactStore.query({ query });
+      let hits: Array<Record<string, unknown>> = [];
+      const summaryHits = await globalArtifactStore.query({ session_id: undefined });
       if (summaryHits.length > 0) {
-        hits = summaryHits.map((h) => ({
+        hits = summaryHits.map((h: StoredArtifact) => ({
           source: "summary_layer",
           type: h.artifact_type,
           content: h.summary,
@@ -30,7 +29,7 @@ export class ProgressiveRetriever {
       }
 
       // Graph Layer (Mock) - just marking graph relationships
-      hits = hits.map((h) => ({ ...h, graph_links: [] }));
+      hits = hits.map((h: Record<string, unknown>) => ({ ...h, graph_links: [] }));
 
       const prev = innerCtx["ragResults"];
       const combined = Array.isArray(prev) ? [...prev, ...hits] : hits;

@@ -1,8 +1,8 @@
 import { execFile } from 'node:child_process';
-import { config, isDevelopment } from '../../../server-config/index';
+import { isDevelopment } from '@a2a/config';
 import path from 'path';
 import { NodeVM } from 'vm2';
-import { createArtifactWriteInput, globalArtifactStore } from './artifact-store';
+import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
 
 export interface VerificationResult {
   file_path: string;
@@ -57,7 +57,7 @@ export class SWEVerifier {
         zeroStagePassed = false;
         errors.push(`JSON parsing error: ${(e as Error).message}`);
       }
-    } else if (ext === '') {
+    } else if (ext === '.js') {
       try {
         const vm = new NodeVM({
           console: 'off',
@@ -89,15 +89,25 @@ export class SWEVerifier {
     if (testCommand && isDevelopment) {
       try {
         // Split command into argv array for safe execution
-        const argv = testCommand.split(/\s+/);
+        const argv = testCommand.split(/\s+/).filter(Boolean);
+        if (argv.length === 0) {
+          throw new Error('TEST_COMMAND is set but empty after parsing');
+        }
+        const file = argv[0]!;
+        const args = argv.slice(1);
         const { stdout, stderr } = await new Promise<{ stdout: string; stderr: string }>((resolve, reject) => {
-          execFile(argv[0], argv.slice(1), { timeout: 30000 }, (error, stdout, stderr) => {
-            if (error) {
-              reject({ error, stdout, stderr });
-            } else {
-              resolve({ stdout, stderr });
-            }
-          });
+          execFile(
+            file,
+            args,
+            { timeout: 30000, encoding: 'utf8' },
+            (error: Error | null, stdout: string, stderr: string) => {
+              if (error) {
+                reject({ error, stdout, stderr });
+              } else {
+                resolve({ stdout, stderr });
+              }
+            },
+          );
         });
         const res: VerificationResult = {
           file_path: filePath,

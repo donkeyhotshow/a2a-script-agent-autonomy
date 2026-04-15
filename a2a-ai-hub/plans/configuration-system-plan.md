@@ -318,15 +318,15 @@ json
 
 ### Новые файлы:
 
-1. `a2a-ai-hub/config/validator.py` — модуль валидации
-2. `a2a-ai-hub/config/limits.py` — лимиты параметров
-3. `a2a-ai-hub/config/rate_limiter.py` — rate limiting
-4. `a2a-ai-hub/docs/ai-hub.config.schema.v2.json` — расширенная схема
+1. `ai-integration/config/validator.py` — модуль валидации
+2. `ai-integration/config/limits.py` — лимиты параметров
+3. `ai-integration/config/rate_limiter.py` — rate limiting
+4. `ai-integration/docs/ai-hub.config.schema.v2.json` — расширенная схема
 
 ### Изменяемые файлы:
 
-1. `a2a-ai-hub/proxy.py` — интеграция валидации
-2. `a2a-ai-hub/docs/ai-hub.config.schema.json` — обновление схемы
+1. `ai-integration/proxy.py` — интеграция валидации
+2. `ai-integration/docs/ai-hub.config.schema.json` — обновление схемы
 
 ---
 

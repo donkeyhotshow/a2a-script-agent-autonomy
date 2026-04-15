@@ -58,7 +58,7 @@ export function buildStepRecord({ sessionId, stepNum, serverResponse, messages =
  * @returns step directory path
  */
 export async function ensureStepDir(cwd, sessionId, stepNum) {
-    const { getNewStepDir } = await import('../@a2a-client/storage/newSessions.ts');
+    const { getNewStepDir } = await import('@a2a-client/storage/newSessions.ts');
     const fs = await import('fs');
     const stepDir = getNewStepDir(cwd, sessionId, stepNum);
     if (!fs.existsSync(stepDir)) {

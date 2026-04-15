@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest';
-import {validateExecutePayloadDetailed, validateInvokeEnvelopeResponse} from '../../src/actions/action-validator';
+import {validateExecutePayloadDetailed, validateInvokeEnvelopeResponse} from '../../src/actions/action-validator.js';
 
 describe('validateExecutePayloadDetailed', () => {
     it('accepts rag-search execute', () => {

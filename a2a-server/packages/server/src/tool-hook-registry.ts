@@ -13,7 +13,7 @@
  *   });
  */
 
-import {logger} from '../../utils/logger.js';
+import {logger} from '@a2a/server-utils/logger';
 
 export type HookPhase = 'pre' | 'post';
 

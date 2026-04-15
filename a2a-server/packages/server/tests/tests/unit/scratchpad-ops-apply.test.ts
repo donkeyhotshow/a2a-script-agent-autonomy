@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { runTransformPipeline } from '../../src/transform/pipeline';
-import type { TransformPipeline } from '../../src/transform/types';
+import { runTransformPipeline } from '../../src/transform/pipeline.js';
+import type { TransformPipeline } from '../../src/transform/types.js';
 
 /** T017: server transform consumes scratchpad_ops into scratchpad (see apply-scratchpad-ops). */
 describe('apply-scratchpad-ops', () => {

@@ -88,15 +88,40 @@
     }
 
     /**
-     * Poll until completed or error. Session-scoped: does NOT require promiseId.
+     * Poll until async settles. Supports:
+     * - `pollUntilDone(id, 60, 500, { onTick, shouldStop })` (canonical)
+     * - `pollUntilDone(id, { intervalMs, maxAttempts, onTick, shouldStop })` (legacy)
+     *
+     * Stops when `asyncPending === false`, `status === 'error'|'failed'`, or legacy idle/completed.
+     * On max attempts: final `GET /sessions/:id` snapshot is attached; returns `{ timedOut: true, snapshot, lastAsync }` (no throw).
      */
-    async function pollUntilDone(sessionId, opts = {}) {
-        const intervalMs = typeof opts.intervalMs === 'number' ? opts.intervalMs : 800;
-        const maxAttempts = typeof opts.maxAttempts === 'number' ? opts.maxAttempts : 120;
+    async function pollUntilDone(sessionId, arg2, arg3, arg4) {
+        let maxAttempts = 60;
+        let intervalMs = 500;
+        /** @type {{ onTick?: Function, shouldStop?: Function }} */
+        let opts = {};
+        if (typeof arg2 === 'object' && arg2 !== null && !Array.isArray(arg2)) {
+            opts = arg2;
+            maxAttempts = typeof opts.maxAttempts === 'number' ? opts.maxAttempts : 60;
+            intervalMs = typeof opts.intervalMs === 'number' ? opts.intervalMs : 500;
+        } else {
+            if (typeof arg2 === 'number') maxAttempts = arg2;
+            if (typeof arg3 === 'number') intervalMs = arg3;
+            if (typeof arg4 === 'object' && arg4 !== null) opts = arg4;
+        }
         let last = null;
         for (let i = 0; i < maxAttempts; i++) {
-            last = await pollAsync(sessionId);
-            opts.onTick?.(last);
+            try {
+                last = await pollAsync(sessionId);
+            } catch (e) {
+                console.error('[apiIntegration] pollAsync failed', e);
+                last = null;
+            }
+            try {
+                opts.onTick?.(last);
+            } catch (e) {
+                console.error('[apiIntegration] onTick failed', e);
+            }
             if (!last) {
                 await sleep(intervalMs);
                 continue;
@@ -105,23 +130,27 @@
                 try {
                     if (opts.shouldStop(last) === true) return last;
                 } catch (e) {
-                    // Never crash polling due to a UI callback; treat as non-stopping.
                     console.error('[apiIntegration] shouldStop callback failed', e);
                 }
             }
-            if (last.asyncPending === false || last.completed === true || last.status === 'idle') {
+            if (last.asyncPending === false) {
                 return last;
             }
             if (last.status === 'failed' || last.status === 'error') {
-                const err = new Error(last.error || 'async_failed');
-                err.payload = last;
-                throw err;
+                return last;
+            }
+            if (last.completed === true || last.status === 'idle') {
+                return last;
             }
             await sleep(intervalMs);
         }
-        const err = new Error('polling_timeout');
-        err.payload = last;
-        throw err;
+        let snapshot = null;
+        try {
+            snapshot = await getSession(sessionId);
+        } catch (e) {
+            console.error('[apiIntegration] pollUntilDone timeout hydrate failed', e);
+        }
+        return { timedOut: true, snapshot, lastAsync: last };
     }
 
     global.apiIntegration = {

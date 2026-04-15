@@ -4,6 +4,8 @@
 # Provider + API key pool (copy from config/providers.example.json after clone)
 config/providers.json
 
+# Proxy logs
+proxy_logs/
 logs/*.log
 __pycache__/
 *.pyc

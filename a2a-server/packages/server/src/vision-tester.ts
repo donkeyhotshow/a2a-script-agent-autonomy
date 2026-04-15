@@ -2,7 +2,7 @@
 // @ts-ignore — playwright is an optional peer dependency; install it for browser automation
 import { chromium, Browser, Page } from 'playwright';
 import { logger } from '@a2a/server-utils/logger';
-import { createArtifactWriteInput, globalArtifactStore } from './artifact-store';
+import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
 
 export interface VisionQAStatus {
     passed: boolean;

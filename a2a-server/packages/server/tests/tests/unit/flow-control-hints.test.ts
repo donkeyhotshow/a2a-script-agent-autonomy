@@ -3,7 +3,7 @@ import {
   readExecutionRef,
   resolveFlowControlHintMarkdown,
   attachFlowControlHintToInvokePayload
-} from '../../src/prompts/flow-control-hints';
+} from '../../src/prompts/flow-control-hints.js';
 
 describe('flow-control-hints', () => {
   it('reads action and step from context.execution', () => {

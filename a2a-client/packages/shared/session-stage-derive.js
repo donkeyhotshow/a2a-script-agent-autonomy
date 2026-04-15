@@ -1,1 +1,1 @@
-export function sessionStageDerive() {}
+export { deriveSessionStage } from './session-stage-derive.mjs';

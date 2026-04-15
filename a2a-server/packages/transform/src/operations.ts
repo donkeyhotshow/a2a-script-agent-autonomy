@@ -14,18 +14,18 @@
 
 import * as path from 'path';
 import * as fs from 'node:fs/promises';
-import { deepCloneJson } from '@a2a/server-utils/deep-clone-json';
+import { deepCloneJson } from '@a2a/server-utils';
 import {
   query,
   set as jsonPathSet,
   resolveTemplates,
   extractJsonFromMarkdown,
   renderTemplateSimple
-} from './operations/json-path';
+} from './operations/json-path.js';
 import {
   shouldSkipDuplicateUserHistoryAppend,
   truncateToMaxChars,
-} from './operations/value-helpers';
+} from './operations/value-helpers.js';
 import type {
   TransformContext,
   TransformStep,
@@ -35,7 +35,7 @@ import type {
   ParseJsonFromMdOperation,
   RenderMarkdownOperation,
   TruncateSectionOperation,
-} from './types';
+} from './types.js';
 
 import {
   applyPickContext,
@@ -51,12 +51,12 @@ import {
   applyScratchpadOps,
   applyWorkbenchSectionOps,
   applySwitch,
-} from './operations/transform-groups';
+} from './operations/transform-groups.js';
 
 // Re-export from submodules
-export { query, set as jsonPathSet, resolveTemplates, extractJsonFromMarkdown, renderTemplateSimple } from './operations/json-path';
-export { shouldSkipDuplicateUserHistoryAppend } from './operations/value-helpers';
-export { createDefaultFileSystem } from './operations/transform-groups';
+export { query, set as jsonPathSet, resolveTemplates, extractJsonFromMarkdown, renderTemplateSimple } from './operations/json-path.js';
+export { shouldSkipDuplicateUserHistoryAppend } from './operations/value-helpers.js';
+export { createDefaultFileSystem } from './operations/transform-groups.js';
 
 export {
   applyPickContext,
@@ -287,14 +287,9 @@ async function applyParseJsonFromMd(
   
   // Resolve file path
   const baseDir = context.baseDir || process.cwd();
-  const resolvedBase = path.resolve(baseDir);
-  const filePath = path.isAbsolute(fromFile)
-    ? fromFile
+  const filePath = path.isAbsolute(fromFile) 
+    ? fromFile 
     : path.resolve(baseDir, fromFile);
-
-  if (!filePath.startsWith(resolvedBase + path.sep) && filePath !== resolvedBase) {
-    throw new Error(`Path traversal detected in fromFile: ${fromFile}`);
-  }
   
   // Read file
   let content: string;
@@ -360,21 +355,14 @@ async function applyRenderMarkdown(
   // Get template content
   let template: string;
   const baseDir = context.baseDir || process.cwd();
-  const resolvedBase = path.resolve(baseDir);
-  const containedIn = (p: string) =>
-    p.startsWith(resolvedBase + path.sep) || p === resolvedBase;
-
+  
   // Check if templateRef is a file path or a special reference
   if (templateRef.includes('#')) {
     // Handle template references like "simulations/agent-coder/3/request.md"
-    const templatePath = templateRef.startsWith('/')
-      ? templateRef
+    const templatePath = templateRef.startsWith('/') 
+      ? templateRef 
       : path.resolve(baseDir, templateRef);
-
-    if (!containedIn(templatePath)) {
-      throw new Error(`Path traversal detected in templateRef: ${templateRef}`);
-    }
-
+    
     if (context.fs) {
       template = await context.fs.readFile(templatePath, 'utf-8');
     } else {
@@ -383,11 +371,6 @@ async function applyRenderMarkdown(
   } else {
     // Try as file path
     const templatePath = path.resolve(baseDir, templateRef);
-
-    if (!containedIn(templatePath)) {
-      throw new Error(`Path traversal detected in templateRef: ${templateRef}`);
-    }
-
     if (context.fs) {
       template = await context.fs.readFile(templatePath, 'utf-8');
     } else {
@@ -410,12 +393,7 @@ async function applyRenderMarkdown(
 
   // Write output file
   const outputBaseDir = context.outputDir || baseDir;
-  const resolvedOutputBase = path.resolve(outputBaseDir);
   const outputPath = path.resolve(outputBaseDir, outputFile);
-
-  if (!outputPath.startsWith(resolvedOutputBase + path.sep) && outputPath !== resolvedOutputBase) {
-    throw new Error(`Path traversal detected in outputFile: ${outputFile}`);
-  }
 
   if (context.fs) {
     await context.fs.writeFile(outputPath, rendered);

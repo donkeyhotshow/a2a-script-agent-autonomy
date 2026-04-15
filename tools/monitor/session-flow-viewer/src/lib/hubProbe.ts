@@ -1,6 +1,6 @@
 /**
  * Same surface as tests/monitor-tasks/promise-queue-probe (subset): pending + errors JSON.
- * Inputs: hub base (a2a-ai-hub) and optional web base (Client API proxy).
+ * Inputs: hub base (ai-integration) and optional web base (Client API proxy).
  */
 
 export function normalizeWebOrigin(origin: string): string {

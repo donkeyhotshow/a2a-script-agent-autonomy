@@ -14,7 +14,7 @@ This document tracks the transition criteria and aggregated evidence from module
 - `DEV_STATE.md` (root)
 - `a2a-client/DEV_STATE.md`
 - `a2a-server/DEV_STATE.md`
-- `a2a-ai-hub/DEV_STATE.md`
+- `ai-integration/DEV_STATE.md`
 
 ## Transition Criteria
 
@@ -45,7 +45,7 @@ Evidence snapshot (2026-03-27):
 - Root cross-module backlog exists and tracks governance tasks (`CM-*`) in `DEV_STATE.md`.
 - `a2a-server/DEV_STATE.md` reports test + lint + simulation validity (unit tests, `sim:lint`, `sim:validate`).
 - `a2a-client/DEV_STATE.md` tracks protocol alignment and contract-test backlog with explicit tasks.
-- `a2a-ai-hub/DEV_STATE.md` is intentionally BLOCKED with explicit dependencies, reducing hidden coupling.
+- `ai-integration/DEV_STATE.md` is intentionally BLOCKED with explicit dependencies, reducing hidden coupling.
 - This document provides the required cross-module readiness report.
 
 Status: PASS (baseline `valid`, not yet `clean` warning-free)
@@ -70,7 +70,7 @@ Status: NOT READY
 | Architecture/state governance | `DEV_STATE.md` + module states | Source-of-truth boundaries documented | Green |
 | Client protocol/read-model clarity | `a2a-client/DEV_STATE.md` | SC progress exists, contract tests still open | Yellow |
 | Server stability and validation | `a2a-server/DEV_STATE.md` | Unit/lint/sim valid reported | Green |
-| AI integration runtime readiness | `a2a-ai-hub/DEV_STATE.md` | Explicitly blocked pending upstream completion | Yellow |
+| AI integration runtime readiness | `ai-integration/DEV_STATE.md` | Explicitly blocked pending upstream completion | Yellow |
 | Cross-module transition reporting | This document + root CM-04 | Criteria + evidence now published | Green |
 
 Legend: Green = meets current stage criteria, Yellow = known gap with tracked tasks, Red = blocking risk without owner.

@@ -1,5 +1,5 @@
 // RAG feature module
-import { createRAG } from '@a2a-client/rag';
+import { createRAG } from '@a2a/rag';
 
 let ragInstance: ReturnType<typeof createRAG> | null = null;
 

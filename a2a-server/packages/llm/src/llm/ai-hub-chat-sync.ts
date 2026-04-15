@@ -1,5 +1,5 @@
-import {resolveAiHubBaseUrl} from './ai-hub-url';
-import {logger} from './logger';
+import {resolveAiHubBaseUrl} from './ai-hub-url.js';
+import {logger} from '@a2a/server-utils/logger';
 
 /** Standard headers for AI Integration hub JSON `POST` bodies. */
 export const AI_HUB_JSON_HEADERS: Record<string, string> = {
@@ -77,7 +77,7 @@ export async function fetchAiHubChatJson(
     signal?: AbortSignal
 ): Promise<FetchAiHubChatResult> {
     const base = resolveAiHubBaseUrl(hubBase);
-    const hub = await import('../daemon/llm-hub-poll');
+    const hub = await import('@a2a/server-daemon');
     const serverPromiseId = `sync-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 
     let initRes: Awaited<ReturnType<typeof hub.initAiHubChatPromise>>;

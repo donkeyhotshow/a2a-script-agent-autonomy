@@ -10,11 +10,15 @@
  * ASYNC-only: POST /api/v1/invoke always returns promiseId; clients poll GET …/requests/:id/result.
  */
 
-import type {FileBlock} from '../../types/index';
-import {requestService} from '../../../request/src/request.service';
-import {resolveExecution, resolveResultObject} from '../../../server/src/request-processor/normalization';
-import {ACTION_TO_SCHEMA} from '../../../server-config/router-static';
-import {trackRequestStart} from './pipeline-observability.service';
+import type {FileBlock} from '@a2a/server-protocol';
+import {requestService} from '@a2a/server-request';
+import {resolveExecution, resolveResultObject} from '../../../server/src/request-processor/normalization.js';
+import {ACTION_TO_SCHEMA} from '@a2a/config';
+import {trackRequestStart} from './pipeline-observability.service.js';
+import {
+    A2A_TRACE_CONTEXT_KEY,
+    resolveA2aTraceId,
+} from '@a2a/server-utils';
 
 /**
  * Router beat + `result.choice` → dialog|agent|task-decomposition: set `transformSchema` on the
@@ -144,9 +148,17 @@ export async function invoke(clientId: string, input: InvokeInput): Promise<Invo
         message: message ?? undefined,
         codeBlocks: input.code_blocks ?? undefined,
     });
-    
+
+    const existingTrace = ctx[A2A_TRACE_CONTEXT_KEY];
+    if (!(typeof existingTrace === 'string' && existingTrace.trim() !== '')) {
+        ctx[A2A_TRACE_CONTEXT_KEY] = promiseId;
+        await requestService.patchRequestContext(promiseId, {
+            [A2A_TRACE_CONTEXT_KEY]: promiseId,
+        });
+    }
+
     // Track request start for observability
-    trackRequestStart(promiseId);
+    trackRequestStart(promiseId, resolveA2aTraceId(ctx, promiseId));
 
     return {promiseId};
 }

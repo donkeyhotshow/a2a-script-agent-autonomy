@@ -12,8 +12,8 @@
     "prepare": "npm run build"
   },
   "dependencies": {
-    "@a2a/server-utils": "workspace:*",
-    "@a2a/server-protocol": "workspace:*"
+    "@a2a/server-utils": "file:../server-utils",
+    "@a2a/server-protocol": "file:../server-protocol"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

@@ -4,10 +4,10 @@
  * Handles execute-command action with sandboxing and security.
  */
 
-import {logger} from '../../../utils/logger';
+import {logger} from '@a2a/server-utils/logger';
 import {spawn} from 'node:child_process';
-import {validatePath} from './file-operations/security';
-import {executeAction, ValidationResult} from '../utils';
+import {validatePath} from './file-operations/security.js';
+import {executeAction, ValidationResult} from '../utils.js';
 
 export interface ExecuteCommandInput {
     command: string;

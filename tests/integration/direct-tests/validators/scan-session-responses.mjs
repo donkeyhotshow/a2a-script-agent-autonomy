@@ -9,7 +9,7 @@ import { fileURLToPath } from 'url';
 import { analyzeLlmExecuteShape } from './lib/check-llm-execute-shape.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const REPO_ROOT = path.join(__dirname, '..', '..', '..');
+const REPO_ROOT = path.join(__dirname, '..', '..', '..', '..');
 const SESSIONS_ROOT = path.join(REPO_ROOT, 'a2a-client', 'storage', 'sessions');
 const argv = new Set(process.argv.slice(2));
 const skipIfMissing = argv.has('--skip-if-missing');

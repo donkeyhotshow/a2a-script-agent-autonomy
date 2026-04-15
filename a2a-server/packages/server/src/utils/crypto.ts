@@ -1,1 +1,1 @@
-export * from '../../../lib/crypto.ts'
+export * from '../../../lib/crypto.js'

@@ -1,11 +1,12 @@
-import { createArtifactWriteInput, globalArtifactStore } from './artifact-store';
+import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
+import type { EpisodicMemory } from '../../daemon/src/memory/episodic-memory.js';
 import { promises as fs } from 'node:fs';
 import { join } from 'path';
-import { logger } from "@a2a/server-utils/logger";
+import { logger } from '@a2a/server-utils/logger';
 
 export interface RepoKnowledgePrior {
   topic: string;
-  tech_stack: string[];           // ['Next', 'TypeScript', 'Redis']
+  tech_stack: string[];           // ['Next.js', 'TypeScript', 'Redis']
   known_patterns: string[];       // ['singleton service', 'event-sourcing']
   known_anti_patterns: string[];  // ['boolean soup', 'direct main push']
   common_failure_modes: string[]; // ['context overflow', 'loop escalation']
@@ -83,6 +84,7 @@ export class CognitionBase {
     sessionId: string,
     lessonStore: LessonStoreMock,
     patternStore: PatternStoreMock,
+    episodicMemory: EpisodicMemory,
   ): Promise<InjectedPriors> {
     const allPriors: RepoKnowledgePrior[] = [...this.dynamicPriors.filter(p => p.topic === topic)];
 
@@ -113,6 +115,22 @@ export class CognitionBase {
         recommended_approaches: pattern.anti_pattern ? [] : [pattern.description],
         source: 'pattern_store',
         confidence: pattern.confidence ?? 0.7,
+      });
+    }
+
+    // 3. Top-1 episodic recall for warm start
+    const episodes = await episodicMemory.recall(topic);
+    if (episodes.length > 0) {
+      const ep = episodes[0]!;
+      allPriors.push({
+        topic,
+        tech_stack: [],
+        known_patterns: ep.applicable_lessons ?? [],
+        known_anti_patterns: [],
+        common_failure_modes: ep.episode.outcome === 'failure' ? [ep.episode.task_description] : [],
+        recommended_approaches: ep.episode.outcome === 'success' ? [ep.episode.task_description] : [],
+        source: 'episodic',
+        confidence: ep.similarity_score ?? 0.6,
       });
     }
 

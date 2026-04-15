@@ -21,7 +21,7 @@
 import { exec } from 'node:child_process';
 import { promisify } from 'node:util';
 import * as fs from 'node:fs';
-import { logger } from '../../../utils/logger';
+import { logger } from '@a2a/server-utils/logger';
 
 const execAsync = promisify(exec);
 

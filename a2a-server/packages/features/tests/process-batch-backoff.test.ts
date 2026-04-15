@@ -1,6 +1,6 @@
 import {describe, expect, it, vi} from 'vitest';
 
-vi.mock('../../src/utils/logger', () => ({
+vi.mock('../../src/utils/logger.js', () => ({
     logger: {info: vi.fn(), warn: vi.fn(), debug: vi.fn(), error: vi.fn()},
 }));
 
@@ -9,7 +9,7 @@ import {
     resetGlobalMetrics,
     recordRetryAttempt,
     getGlobalRetryMetrics,
-} from '../../src/utils/backoff';
+} from '../../src/utils/backoff.js';
 
 describe('processBatchWithBackoff', () => {
     it('processes items in batches and returns flat results', async () => {

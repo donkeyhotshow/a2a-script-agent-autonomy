@@ -141,7 +141,7 @@ doc:
 
 ## External AI Hub
 
-Прокси **a2a-ai-hub** (**:11434** → Local LLM upstream **:11435**), async через **`promiseId`**. Поток и таблица endpoint’ов: [PROTOCOL.md → Async flow](PROTOCOL.md#async-flow-promiseid); интеграция на стороне сервера: [SERVER-ARCHITECTURE.md → External AI Hub Integration](SERVER-ARCHITECTURE.md#external-ai-hub-integration).
+Прокси **ai-integration** (**:11434** → Local LLM upstream **:11435**), async через **`promiseId`**. Поток и таблица endpoint’ов: [PROTOCOL.md → Async flow](PROTOCOL.md#async-flow-promiseid); интеграция на стороне сервера: [SERVER-ARCHITECTURE.md → External AI Hub Integration](SERVER-ARCHITECTURE.md#external-ai-hub-integration).
 
 ## Потоки данных
 
