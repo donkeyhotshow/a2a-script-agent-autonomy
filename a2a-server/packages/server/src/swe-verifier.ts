@@ -59,7 +59,7 @@ export class SWEVerifier {
       }
     } else if (ext === '.js') {
       try {
-        const context = vm.createContext({});
+        const context = vm.createContext(Object.create(null) as object);
         const script = new vm.Script(content, { filename: filePath });
         script.runInContext(context, { timeout: 5000 });
       } catch (e) {
