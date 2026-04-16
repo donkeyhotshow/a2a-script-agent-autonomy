@@ -1,5 +1,5 @@
 import * as ts from 'typescript';
-import { VM } from 'vm2';
+import vm from 'node:vm';
 
 /** Thrown when submitted skill code fails static or VM validation (maps to HTTP 403). */
 export class SandboxViolationError extends Error {
@@ -33,7 +33,7 @@ const FORBIDDEN_IDENTIFIERS = new Set([
 
 /**
  * Validate submitted `.skill.ts` body before writing to disk.
- * Layers: static patterns → TS parse + forbidden identifiers → transpile to CJS → vm2 VM (no require).
+ * Layers: static patterns → TS parse + forbidden identifiers → transpile to CJS → node:vm (no require).
  */
 export function validateSkillToolCodeForDeploy(toolCode: string): void {
   if (typeof toolCode !== 'string') {
@@ -128,7 +128,7 @@ function assertTranspiledSafe(js: string): void {
 
 function runInRestrictedVm(javascript: string): void {
   const moduleExports: Record<string, unknown> = {};
-  const sandbox = {
+  const context = vm.createContext({
     exports: moduleExports,
     module: { exports: moduleExports },
     __filename: '/virtual/skill.skill.ts',
@@ -140,15 +140,11 @@ function runInRestrictedVm(javascript: string): void {
       info: (): void => {},
       debug: (): void => {},
     },
-  };
-
-  const vm = new VM({
-    timeout: 3000,
-    sandbox,
   });
 
   try {
-    vm.run(javascript);
+    const script = new vm.Script(javascript, { filename: '/virtual/skill.js' });
+    script.runInContext(context, { timeout: 3000 });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     throw new SandboxViolationError(`Sandbox execution failed: ${msg}`);

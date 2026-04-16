@@ -7,7 +7,7 @@ import { config } from '@a2a/config';
 import {
   SandboxViolationError,
   validateSkillToolCodeForDeploy,
-} from './tools-evolve-sandbox.js';
+} from '../tools-evolve-sandbox.js';
 
 const router = express.Router();
 const registry = new SkillRegistry(path.join(process.cwd(), 'a2a-server/src/skills/custom'));

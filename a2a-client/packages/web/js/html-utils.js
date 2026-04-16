@@ -301,9 +301,10 @@
              * @param {string} [role]
              */
             normalizeMessage(message, role) {
+                const now = Date.now();
                 const id =
                     'm_' +
-                    Date.now() +
+                    now +
                     '_' +
                     Math.random().toString(36).slice(2, 9);
                 if (message && typeof message === 'object' && !Array.isArray(message)) {
@@ -327,6 +328,7 @@
                         role: r,
                         content: String(content || ''),
                         artifacts,
+                        ts: message.ts || now,
                     };
                 }
                 return {
@@ -334,6 +336,7 @@
                     role: role || 'user',
                     content: String(message ?? ''),
                     artifacts: [],
+                    ts: now,
                 };
             },
         };
