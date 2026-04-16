@@ -3,26 +3,41 @@
  * Created to eliminate code duplication in file system traversal
  */
 
-import { existsSync, readdirSync, statSync } from 'fs';
+import { existsSync, readdirSync, statSync, Stats } from 'fs';
 import { join, relative, resolve, sep } from 'path';
 
+interface WalkEntry {
+  rel: string;
+  full: string;
+  stats: Stats;
+}
+
+interface WalkOptions {
+  filter?: (entry: WalkEntry) => boolean;
+  includeDirs?: boolean;
+  base?: string;
+}
+
+interface ListEntry {
+  rel: string;
+  full: string;
+  size: number;
+}
+
 /**
- * Recursively list all files in a directory with optional filtering
- * @param {string} dir - Directory to scan
- * @param {Object} options - Configuration options
- * @param {Function} options.filter - Function to filter files (receives { rel, full, stats })
- * @param {boolean} options.includeDirs - Whether to include directories in results
- * @param {string} options.base - Base directory for relative paths (defaults to dir)
- * @returns {Array<Object>} Array of file objects with { rel, full, stats }
+ * Recursively list all files in a directory with optional filtering.
+ * @param dir - Directory to scan
+ * @param options - Configuration options
+ * @returns Array of file objects with { rel, full, stats }
  */
-export function walkFilesRecursive(dir, options = {}) {
+export function walkFilesRecursive(dir: string, options: WalkOptions = {}): WalkEntry[] {
   const {
     filter = () => true,
     includeDirs = false,
-    base = dir
+    base = dir,
   } = options;
 
-  const out = [];
+  const out: WalkEntry[] = [];
 
   if (!existsSync(dir)) return out;
 
@@ -44,11 +59,7 @@ export function walkFilesRecursive(dir, options = {}) {
         }
       }
       // Recurse into subdirectory
-      out.push(...walkFilesRecursive(full, {
-        filter,
-        includeDirs,
-        base
-      }));
+      out.push(...walkFilesRecursive(full, { filter, includeDirs, base }));
     } else {
       const rel = relative(base, full).replace(/\\/g, '/');
       if (filter({ rel, full, stats })) {
@@ -61,13 +72,13 @@ export function walkFilesRecursive(dir, options = {}) {
 }
 
 /**
- * Recursively list all directories in a directory
- * @param {string} dir - Directory to scan
- * @param {Function} filter - Function to filter directories (receives directory name)
- * @returns {Array<string>} Array of relative directory paths
+ * Recursively list all directories in a directory.
+ * @param dir - Directory to scan
+ * @param filter - Function to filter directories (receives directory name)
+ * @returns Array of absolute directory paths
  */
-export function walkDirsRecursive(dir, filter = () => true) {
-  const out = [];
+export function walkDirsRecursive(dir: string, filter: (name: string) => boolean = () => true): string[] {
+  const out: string[] = [];
 
   if (!existsSync(dir)) return out;
 
@@ -78,7 +89,6 @@ export function walkDirsRecursive(dir, filter = () => true) {
       if (filter(entry.name)) {
         out.push(full);
       }
-      // Recurse into subdirectory
       out.push(...walkDirsRecursive(full, filter));
     }
   }
@@ -87,25 +97,28 @@ export function walkDirsRecursive(dir, filter = () => true) {
 }
 
 /**
- * Simple recursive file lister (matches original duplication pattern)
- * @param {string} dir - Directory to scan
- * @param {string} base - Base directory for relative paths (defaults to dir)
- * @returns {Array<Object>} Array of file objects with { rel, full, size }
+ * Simple recursive file lister.
+ * @param dir - Directory to scan
+ * @param base - Base directory for relative paths (defaults to dir)
+ * @returns Array of file objects with { rel, full, size }
  */
-export function listFilesRecursive(dir, base = dir) {
-  const out = [];
+export function listFilesRecursive(dir: string, base: string = dir): ListEntry[] {
+  const out: ListEntry[] = [];
   if (!existsSync(dir)) return out;
   const entries = readdirSync(dir, { withFileTypes: true });
   for (const e of entries) {
-    const full = path.join(dir, e.name);
+    const full = join(dir, e.name);
     if (e.isDirectory()) {
       out.push(...listFilesRecursive(full, base));
     } else {
-      const rel = path.relative(base, full);
+      const rel = relative(base, full);
       let size = 0;
       try {
-        size = fs.statSync(full).size;
-      } catch (_) {}
+        size = statSync(full).size;
+      } catch (err: unknown) {
+        // File may have been deleted between readdir and stat (TOCTOU) — skip it.
+        console.warn('[walkFiles] stat failed, skipping:', full, err instanceof Error ? err.message : String(err));
+      }
       out.push({ rel, full, size });
     }
   }
@@ -113,18 +126,18 @@ export function listFilesRecursive(dir, base = dir) {
 }
 
 /**
- * List numeric step directories (matches duplicate pattern in session storage audit)
- * @param {string} sessionDir - Session directory to scan for step subdirectories
- * @returns {Array<number>} Sorted array of step numbers
+ * List numeric step directories sorted ascending.
+ * @param sessionDir - Session directory to scan for step sub-directories
+ * @returns Sorted array of step numbers
  */
-export function listStepDirs(sessionDir) {
+export function listStepDirs(sessionDir: string): number[] {
   try {
-    return fs
-      .readdirSync(sessionDir, { withFileTypes: true })
+    return readdirSync(sessionDir, { withFileTypes: true })
       .filter((d) => d.isDirectory() && /^\d+$/.test(d.name))
       .map((d) => Number(d.name))
       .sort((a, b) => a - b);
-  } catch {
+  } catch (err: unknown) {
+    console.warn('[listStepDirs] readdirSync failed:', sessionDir, err instanceof Error ? err.message : String(err));
     return [];
   }
 }

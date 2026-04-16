@@ -18,9 +18,30 @@ import path from 'node:path';
 const app: Express = express();
 
 app.use(helmet({contentSecurityPolicy: false, crossOriginEmbedderPolicy: false}));
+const allowedOrigins = process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',').map((o) => o.trim()).filter(Boolean)
+    : [
+        'http://localhost:3001',
+        'http://127.0.0.1:3001',
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:5174',
+        'http://127.0.0.1:5174',
+      ];
+
 const corsOptions = {
-  origin: process.env.NODE_ENV !== 'production' || process.env.CORS_PERMISSIVE === '1' ? true : process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : false,
-  credentials: true
+    origin: (
+        origin: string | undefined,
+        callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+        // Server-to-server / CLI requests have no Origin header — allow them.
+        if (!origin) return callback(null, true);
+        // Explicit opt-in permissive mode (dev override only).
+        if (process.env.CORS_PERMISSIVE === '1') return callback(null, true);
+        if (allowedOrigins.includes(origin)) return callback(null, true);
+        callback(new Error(`CORS: origin '${origin}' not permitted`));
+    },
+    credentials: true,
 };
 app.use(cors(corsOptions));
 app.use(compression());
@@ -55,7 +76,7 @@ app.use('/api/a2a/sessions', sessionsRouter);
 app.use('/api/registry/register', registryAuth, registryRegisterRouter);
 app.use('/api/registry/route', registryAuth, registryRouteRouter);
 app.use('/api/registry', registryAuth, registryHealthRouter);
-app.use('/api/tools', toolsEvolveRouter);
+app.use('/api/tools', registryAuth, toolsEvolveRouter);
 
 // Production UI (Both-mode): serve built Operator UI as static assets at /ui/*
 // Build output: a2a-client/public/ui (see a2a-client/vite.config.prod.ts)
