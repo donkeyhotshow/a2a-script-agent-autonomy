@@ -1,7 +1,7 @@
 import { execFile } from 'node:child_process';
+import vm from 'node:vm';
 import { isDevelopment } from '@a2a/config';
 import path from 'path';
-import { NodeVM } from 'vm2';
 import { createArtifactWriteInput, globalArtifactStore } from './artifact-store.js';
 const RESTRICTED_PATTERNS = [
     { regex: /rm\s+-rf\s+\//, msg: 'Root/Recursive deletion attempt' },
@@ -45,12 +45,9 @@ export class SWEVerifier {
         }
         else if (ext === '.js') {
             try {
-                const vm = new NodeVM({
-                    console: 'off',
-                    sandbox: {},
-                    require: { builtin: [], external: false }
-                });
-                vm.run(content, filePath);
+                const context = vm.createContext({});
+                const script = new vm.Script(content, { filename: filePath });
+                script.runInContext(context, { timeout: 5000 });
             }
             catch (e) {
                 // VM run failed - could be syntax or semantic error

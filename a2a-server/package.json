@@ -104,7 +104,6 @@
     "simple-git": "^3.22.1",
     "typescript": "^5.3.3",
     "uuid": "^9.0.1",
-    "vm2": "^3.10.5",
     "winston": "^3.11.0",
     "winston-daily-rotate-file": "^5.0.0",
     "ws": "^8.19.0",
