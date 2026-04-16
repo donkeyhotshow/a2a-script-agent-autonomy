@@ -914,3 +914,686 @@ body {
 .op-badge-pending { background: #292524; border-color: #92400e; color: #fcd34d; }
 .op-badge-done { background: #052e16; border-color: #166534; color: #4ade80; }
 .op-badge-failed { background: #450a0a; border-color: #991b1b; color: #fca5a5; }
+
+/* ─── Phase 1: Trace timeline ─────────────────────────────────────────────── */
+
+.op-trace-list {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: 6px 0;
+}
+
+.op-trace-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #1f2937;
+    background: #0f172a;
+    position: relative;
+}
+
+.op-trace-row.is-error {
+    border-color: #7f1d1d;
+    background: #1c0a0a;
+}
+
+.op-trace-row.is-active {
+    border-color: #2563eb;
+    background: #0c1929;
+}
+
+.op-trace-icon {
+    flex: 0 0 18px;
+    font-size: 13px;
+    color: #475569;
+    text-align: center;
+    margin-top: 1px;
+}
+
+.op-trace-row.is-error .op-trace-icon { color: #f87171; }
+.op-trace-row.is-active .op-trace-icon { color: #38bdf8; }
+
+.op-trace-body {
+    flex: 1;
+    min-width: 0;
+}
+
+.op-trace-label {
+    font-size: 12px;
+    color: #cbd5e1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.op-trace-row.is-error .op-trace-label { color: #fca5a5; }
+.op-trace-row.is-active .op-trace-label { color: #93c5fd; }
+
+.op-trace-meta {
+    font-size: 10px;
+    color: #475569;
+    margin-top: 2px;
+    font-family: ui-monospace, monospace;
+}
+
+.op-trace-spinner {
+    flex: 0 0 12px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #1e3a5f;
+    border-top-color: #38bdf8;
+    animation: op-spin 0.7s linear infinite;
+    margin-top: 2px;
+}
+
+/* ─── Phase 1: Colorized diff ────────────────────────────────────────────── */
+
+.op-diff-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 4px 0;
+}
+
+.op-diff-file {
+    border: 1px solid #1f2937;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0f172a;
+    transition: border-color 160ms ease;
+}
+
+.op-diff-file.is-accepted { border-color: #166534; }
+.op-diff-file.is-rejected { border-color: #991b1b; opacity: 0.55; }
+
+.op-diff-summary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #1e293b;
+    cursor: pointer;
+    list-style: none;
+    user-select: none;
+    flex-wrap: wrap;
+}
+
+.op-diff-summary::-webkit-details-marker { display: none; }
+
+.op-diff-fname {
+    flex: 1;
+    font-family: ui-monospace, monospace;
+    font-size: 12px;
+    color: #bae6fd;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.op-diff-turn {
+    font-size: 10px;
+    color: #475569;
+    padding: 2px 6px;
+    border-radius: 999px;
+    border: 1px solid #1f2937;
+}
+
+.op-diff-stat {
+    font-size: 11px;
+    font-family: ui-monospace, monospace;
+    padding: 2px 6px;
+    border-radius: 999px;
+}
+
+.op-diff-stat-add { background: #052e16; color: #4ade80; }
+.op-diff-stat-del { background: #450a0a; color: #fca5a5; }
+
+.op-diff-review-badge {
+    font-size: 11px;
+    color: #94a3b8;
+    padding: 2px 6px;
+}
+
+.op-diff-lines {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.5;
+    overflow-x: auto;
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+.op-diff-hunk {
+    padding: 3px 10px;
+    background: #1e293b;
+    color: #475569;
+    font-size: 11px;
+}
+
+.op-diff-add {
+    padding: 1px 10px;
+    background: #052e16;
+    color: #86efac;
+    white-space: pre;
+}
+
+.op-diff-del {
+    padding: 1px 10px;
+    background: #450a0a;
+    color: #fca5a5;
+    white-space: pre;
+}
+
+.op-diff-ctx {
+    padding: 1px 10px;
+    color: #94a3b8;
+    white-space: pre;
+}
+
+.op-diff-prefix {
+    display: inline-block;
+    width: 14px;
+    color: #475569;
+    user-select: none;
+}
+
+.op-diff-add .op-diff-prefix { color: #4ade80; }
+.op-diff-del .op-diff-prefix { color: #f87171; }
+
+.op-diff-actions {
+    display: flex;
+    gap: 8px;
+    padding: 8px 10px;
+    border-top: 1px solid #1f2937;
+    background: #0f172a;
+}
+
+.op-btn-accept {
+    background: #052e16;
+    border-color: #166534;
+    color: #4ade80;
+}
+.op-btn-accept:hover { background: #14532d; }
+
+.op-btn-reject {
+    background: #450a0a;
+    border-color: #991b1b;
+    color: #fca5a5;
+}
+.op-btn-reject:hover { background: #7f1d1d; }
+
+/* ─── Phase 2: Artifacts pane ────────────────────────────────────────────── */
+
+.op-artifact-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px 0;
+}
+
+.op-artifact-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid #1f2937;
+    background: #0f172a;
+    cursor: pointer;
+    transition: background 120ms;
+}
+
+.op-artifact-row:hover { background: #1e293b; border-color: #334155; }
+
+.op-artifact-row-icon { font-size: 16px; flex: 0 0 20px; }
+
+.op-artifact-row-label {
+    flex: 1;
+    font-size: 12px;
+    color: #e2e8f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.op-artifact-row-type {
+    font-size: 10px;
+    color: #475569;
+    padding: 2px 6px;
+    border-radius: 999px;
+    border: 1px solid #1f2937;
+}
+
+/* ─── Phase 2: Error center ──────────────────────────────────────────────── */
+
+.op-error-center {
+    border-top: 1px solid #7f1d1d;
+    background: #1c0a0a;
+    padding: 10px 12px;
+}
+
+.op-error-center[hidden] { display: none !important; }
+
+.op-ec-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.op-ec-icon {
+    font-size: 16px;
+    color: #f87171;
+    flex: 0 0 auto;
+}
+
+.op-ec-title {
+    flex: 1;
+    font-size: 13px;
+    color: #fca5a5;
+    font-weight: 600;
+}
+
+.op-ec-ts {
+    font-size: 10px;
+    color: #7f1d1d;
+    font-family: ui-monospace, monospace;
+}
+
+.op-ec-code {
+    font-size: 11px;
+    color: #ef4444;
+    font-family: ui-monospace, monospace;
+    margin-bottom: 6px;
+}
+
+.op-ec-stack {
+    margin-bottom: 8px;
+}
+
+.op-ec-stack summary {
+    font-size: 11px;
+    color: #6b7280;
+    cursor: pointer;
+}
+
+.op-ec-stack-pre {
+    margin: 4px 0 0;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: #0f172a;
+    font-size: 10px;
+    color: #94a3b8;
+    font-family: ui-monospace, monospace;
+    overflow: auto;
+    max-height: 120px;
+    white-space: pre-wrap;
+}
+
+.op-ec-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* ─── Phase 2: Better empty states ──────────────────────────────────────── */
+
+.op-welcome {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 20px;
+    gap: 12px;
+    text-align: center;
+    min-height: 200px;
+}
+
+.op-welcome-icon {
+    font-size: 32px;
+    opacity: 0.4;
+}
+
+.op-welcome-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.op-welcome-subtitle {
+    font-size: 13px;
+    color: #64748b;
+    max-width: 320px;
+}
+
+.op-welcome-examples {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 4px;
+}
+
+.op-welcome-example {
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid #334155;
+    background: #1e293b;
+    color: #93c5fd;
+    cursor: pointer;
+    transition: background 120ms;
+}
+.op-welcome-example:hover { background: #1e3a5f; border-color: #3b82f6; }
+
+.op-welcome-status {
+    font-size: 11px;
+    color: #475569;
+    margin-top: 4px;
+}
+
+/* ─── Phase 2: Keyboard shortcut bar ─────────────────────────────────────── */
+
+.op-shortcut-bar {
+    display: flex;
+    gap: 12px;
+    padding: 6px 12px;
+    border-top: 1px solid #1f2937;
+    background: #0b0f17;
+    flex-wrap: wrap;
+}
+
+.op-shortcut-hint {
+    font-size: 10px;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.op-shortcut-hint kbd {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 4px;
+    border: 1px solid #334155;
+    background: #1e293b;
+    color: #94a3b8;
+    font-family: ui-monospace, monospace;
+}
+
+/* ─── Phase 3: Evidence pane ─────────────────────────────────────────────── */
+
+.op-evidence-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    padding: 4px 0;
+}
+
+.op-evidence-card {
+    border-radius: 8px;
+    padding: 10px 12px;
+    border: 1px solid #1f2937;
+    background: #0f172a;
+    cursor: pointer;
+    transition: background 120ms;
+}
+.op-evidence-card:hover { background: #1e293b; }
+
+.op-evidence-card.ev-pass { border-color: #166534; background: #052e16; }
+.op-evidence-card.ev-fail { border-color: #991b1b; background: #450a0a; }
+.op-evidence-card.ev-warn { border-color: #92400e; background: #1c1400; }
+
+.op-evidence-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.op-evidence-icon { font-size: 16px; }
+
+.op-evidence-label {
+    flex: 1;
+    font-size: 13px;
+    color: #e2e8f0;
+    font-weight: 500;
+}
+
+.op-evidence-status {
+    font-size: 10px;
+    color: #6b7280;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+}
+
+.op-evidence-detail {
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 6px;
+    font-family: ui-monospace, monospace;
+}
+
+/* ─── Phase 3: Session memory card ─────────────────────────────────────── */
+
+.op-memory-card {
+    border-top: 1px solid #1f2937;
+    padding: 8px 10px;
+    background: #0b0f17;
+}
+
+.op-memory-card[hidden] { display: none !important; }
+
+.op-mem-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 6px;
+}
+
+.op-mem-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #475569;
+}
+
+.op-mem-body.is-collapsed { display: none; }
+
+.op-mem-section {
+    margin-bottom: 6px;
+}
+
+.op-mem-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #334155;
+    margin-bottom: 3px;
+}
+
+.op-mem-goal {
+    font-size: 11px;
+    color: #94a3b8;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.op-mem-file {
+    font-size: 10px;
+    color: #64748b;
+    font-family: ui-monospace, monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* ─── Phase 3: Session tagging ──────────────────────────────────────────── */
+
+.op-tag-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 6px 8px;
+    border-bottom: 1px solid #1f2937;
+    min-height: 28px;
+}
+
+.op-tag-filter:empty { display: none; }
+
+.op-tag-chip {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid #334155;
+    background: #1e293b;
+    color: #64748b;
+    cursor: pointer;
+    transition: background 120ms;
+}
+.op-tag-chip:hover { background: #1e3a5f; color: #93c5fd; }
+.op-tag-chip.is-on { background: #1e3a5f; border-color: #3b82f6; color: #93c5fd; }
+.op-tag-chip.op-tag-clear { color: #ef4444; border-color: #7f1d1d; background: #1c0a0a; }
+
+.op-session-row {
+    display: flex;
+    align-items: stretch;
+    border-radius: 8px;
+    border: 1px solid #334155;
+    overflow: hidden;
+    background: #1e293b;
+}
+
+.op-session-row.is-on { background: #1e3a8a; border-color: #3b82f6; }
+
+.op-session-row .op-session-item {
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    flex: 1;
+    padding: 8px 10px;
+}
+
+.op-session-row-actions {
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid #334155;
+}
+
+.op-session-add-tag,
+.op-session-replay {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: #475569;
+    cursor: pointer;
+    font-size: 11px;
+    padding: 0 6px;
+    border-radius: 0;
+    transition: background 120ms, color 120ms;
+}
+.op-session-add-tag:hover { background: #1f2937; color: #e2e8f0; }
+.op-session-replay:hover { background: #1e3a5f; color: #38bdf8; }
+
+.op-session-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px;
+    margin-top: 3px;
+}
+
+.op-session-tag {
+    font-size: 9px;
+    padding: 1px 5px;
+    border-radius: 999px;
+    border: 1px solid #334155;
+    background: #0f172a;
+    color: #64748b;
+}
+
+.op-tag-picker {
+    z-index: 200;
+    background: #111827;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 130px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+
+.op-tag-picker-item {
+    font-size: 12px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: #94a3b8;
+    cursor: pointer;
+    text-align: left;
+    transition: background 120ms;
+}
+.op-tag-picker-item:hover { background: #1e293b; color: #e2e8f0; }
+.op-tag-picker-item.is-on { color: #4ade80; }
+
+/* ─── Phase 3: Turn summary card ─────────────────────────────────────────── */
+
+.op-turn-summary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 6px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    border: 1px solid #1e3a5f;
+    background: #0c1929;
+}
+
+.op-turn-summary-icon {
+    font-size: 11px;
+    color: #475569;
+    flex: 0 0 auto;
+}
+
+.op-turn-summary-text {
+    font-size: 11px;
+    color: #64748b;
+    font-style: italic;
+}
+
+/* ─── Phase 3: Replay overlay ────────────────────────────────────────────── */
+
+.op-replay-overlay {
+    position: relative;
+}
+
+.op-replay-overlay[hidden] { display: none !important; }
+
+.op-replay-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-top: 1px solid #1e3a5f;
+    background: #0c1929;
+    flex-wrap: wrap;
+}
+
+.op-replay-seek {
+    flex: 1;
+    min-width: 60px;
+    accent-color: #38bdf8;
+}
+
+.op-replay-pos {
+    font-size: 11px;
+    font-family: ui-monospace, monospace;
+    color: #475569;
+    white-space: nowrap;
+}
+

@@ -21,6 +21,14 @@
         WAITING_APPROVAL: 'WAITING_APPROVAL',
         ERROR: 'ERROR',
         DONE: 'DONE',
+        // Phase 1 additions — richer execution states
+        PLANNING: 'PLANNING',
+        GENERATING: 'GENERATING',
+        TOOL_RUNNING: 'TOOL_RUNNING',
+        RETRYING: 'RETRYING',
+        COMPRESSING: 'COMPRESSING',
+        RECOVERING: 'RECOVERING',
+        BLOCKED: 'BLOCKED',
     });
 
     const SESSION_STORAGE_KEY = 'a2a_session_id';
@@ -40,6 +48,7 @@
         choices: () => document.getElementById('op-choices'),
         grayroom: () => document.getElementById('op-grayroom'),
         retryBar: () => document.getElementById('op-retry-bar'),
+        errorCenter: () => document.getElementById('op-error-center'),
         inputForm: () => document.getElementById('op-input-form'),
         formFields: () => document.getElementById('op-form-fields'),
         input: () => document.getElementById('op-input'),
@@ -56,6 +65,16 @@
         artifactModalTitle: () => document.getElementById('op-artifact-modal-title'),
         artifactModalBody: () => document.getElementById('op-artifact-modal-body'),
         artifactModalClose: () => document.getElementById('op-artifact-modal-close'),
+        // Phase 1-3 additions
+        tracePane: () => document.querySelector('.op-pane[data-pane="trace"]'),
+        artifactsPane: () => document.querySelector('.op-pane[data-pane="artifacts"]'),
+        evidencePane: () => document.querySelector('.op-pane[data-pane="evidence"]'),
+        tagFilter: () => document.getElementById('op-tag-filter'),
+        memoryCard: () => document.getElementById('op-memory-card'),
+        replayOverlay: () => document.getElementById('op-replay-overlay'),
+        replaySeek: () => document.getElementById('op-replay-seek'),
+        replayPos: () => document.getElementById('op-replay-pos'),
+        replayPlay: () => document.getElementById('op-replay-play'),
     };
 
     const state = {
@@ -76,10 +95,637 @@
         _artifactSeq: 0,
         /** @type {Record<string, unknown[]>} */
         _artifactBlobs: {},
+        // Phase 1: trace timeline
+        /** @type {Record<string, Array<{type:string, label:string, ts:number, icon:string, sessionId:string}>>} */
+        traceEvents: {},
+        _traceSeq: 0,
+        // Phase 2: diff review status
+        /** @type {Record<string, 'accepted'|'rejected'>} */
+        diffReviews: {},
+        // Phase 2: error center
+        lastError: null,
+        // Phase 3: session memory
+        /** @type {Record<string, {goal:string, touchedFiles:string[], decisions:string[]}>>} */
+        sessionMemory: {},
+        // Phase 3: session tags
+        /** @type {Record<string, string[]>} */
+        sessionTags: {},
+        // Phase 3: replay
+        replayActive: false,
+        replayStep: 0,
+        replayTimer: null,
+        // Phase 3: active tag filter
+        activeTagFilter: null,
     };
 
     function escapeHtml(s) {
         return global.escapeHtml ? global.escapeHtml(s) : String(s ?? '');
+    }
+
+    // ── Trace timeline helpers ────────────────────────────────────────────────
+
+    const TRACE_ICONS = {
+        'message-sent': '↑',
+        'ack-received': '✓',
+        'polling-start': '⟳',
+        'polling-tick': '·',
+        'polling-done': '⊙',
+        'tool-call': '▶',
+        'hydrate': '⬇',
+        'gray-room': '◈',
+        'waiting-input': '⬡',
+        'waiting-approval': '⏸',
+        'form-submit': '↑',
+        'choice': '↗',
+        'done': '✓',
+        'error': '✕',
+        'retry': '↺',
+        'session-created': '＋',
+        'session-switch': '⇄',
+    };
+
+    /**
+     * Record a trace event for the active session.
+     * @param {string} type
+     * @param {string} label
+     */
+    function addTraceEvent(type, label) {
+        const sid = state.activeSessionId;
+        if (!sid) return;
+        if (!state.traceEvents[sid]) state.traceEvents[sid] = [];
+        const events = state.traceEvents[sid];
+        const prev = events.length > 0 ? events[events.length - 1] : null;
+        const now = Date.now();
+        const elapsedMs = prev ? now - prev.ts : 0;
+        events.push({ type, label, ts: now, icon: TRACE_ICONS[type] || '•', elapsedMs, sessionId: sid });
+        // Persist last 200 events per session
+        if (events.length > 200) events.splice(0, events.length - 200);
+        renderTracePane();
+        renderArtifactsPane();
+    }
+
+    /** Render the vertical timeline in the Trace pane. */
+    function renderTracePane() {
+        const pane = els.tracePane();
+        if (!pane) return;
+        const sid = state.activeSessionId;
+        const events = sid ? (state.traceEvents[sid] || []) : [];
+        if (events.length === 0) {
+            pane.innerHTML = '<div class="op-empty">Waiting for trace steps…</div>';
+            return;
+        }
+        const isReplaying = state.replayActive;
+        const showCount = isReplaying ? state.replayStep + 1 : events.length;
+        const visible = events.slice(0, showCount);
+        const html = visible.map((ev, i) => {
+            const isLast = i === visible.length - 1;
+            const elapsed = ev.elapsedMs > 0 ? `+${ev.elapsedMs}ms` : '';
+            const tsStr = new Date(ev.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const isError = ev.type === 'error';
+            const isActive = isLast && !isReplaying && (
+                state.uiState === UI_STATES.POLLING ||
+                state.uiState === UI_STATES.SENDING ||
+                state.uiState === UI_STATES.TOOL_RUNNING
+            );
+            return `<div class="op-trace-row${isError ? ' is-error' : ''}${isActive ? ' is-active' : ''}" data-type="${escapeHtml(ev.type)}">` +
+                `<div class="op-trace-icon" aria-hidden="true">${escapeHtml(ev.icon)}</div>` +
+                `<div class="op-trace-body">` +
+                `<div class="op-trace-label">${escapeHtml(ev.label)}</div>` +
+                `<div class="op-trace-meta">${escapeHtml(tsStr)}${elapsed ? ' · ' + escapeHtml(elapsed) : ''}</div>` +
+                `</div>` +
+                (isActive ? `<div class="op-trace-spinner" aria-hidden="true"></div>` : '') +
+                `</div>`;
+        }).join('');
+        pane.innerHTML = `<div class="op-trace-list">${html}</div>`;
+        // Auto-scroll to bottom when not replaying
+        if (!isReplaying) pane.scrollTop = pane.scrollHeight;
+    }
+
+    // ── Diff rendering helpers ────────────────────────────────────────────────
+
+    /**
+     * Parse a unified diff string into file blocks.
+     * @param {string} text
+     * @returns {Array<{filename:string, added:number, removed:number, lines:Array<{type:string,text:string}>}>}
+     */
+    function parseDiff(text) {
+        const lines = String(text || '').split('\n');
+        const files = [];
+        let cur = null;
+        for (const line of lines) {
+            if (line.startsWith('diff --git ') || line.startsWith('--- ') && !cur) {
+                if (cur) files.push(cur);
+                const fname = line.startsWith('diff --git ')
+                    ? (line.split(' b/')[1] || line).trim()
+                    : line.replace(/^--- [ab]\//, '').trim();
+                cur = { filename: fname, added: 0, removed: 0, lines: [] };
+            } else if (cur && line.startsWith('+++ ')) {
+                // Update filename from +++ line (more reliable)
+                const fname = line.replace(/^\+\+\+ [ab]\//, '').replace(/^\+\+\+ /, '').trim();
+                if (fname && fname !== '/dev/null') cur.filename = fname;
+            } else if (line.startsWith('--- ') && !cur) {
+                if (cur) files.push(cur);
+                cur = { filename: line.replace(/^--- [ab]\//, '').trim(), added: 0, removed: 0, lines: [] };
+            } else if (cur && line.startsWith('@@')) {
+                cur.lines.push({ type: 'hunk', text: line });
+            } else if (cur && line.startsWith('+')) {
+                cur.lines.push({ type: 'add', text: line.slice(1) });
+                cur.added++;
+            } else if (cur && line.startsWith('-')) {
+                cur.lines.push({ type: 'del', text: line.slice(1) });
+                cur.removed++;
+            } else if (cur) {
+                cur.lines.push({ type: 'ctx', text: line.startsWith(' ') ? line.slice(1) : line });
+            }
+        }
+        if (cur) files.push(cur);
+        return files.filter((f) => f.lines.length > 0);
+    }
+
+    /**
+     * Render a list of diff file blocks as HTML.
+     * @param {Array} files
+     * @param {string} groupKey - used as key prefix for accept/reject state
+     * @param {number} turnIdx
+     */
+    function renderDiffFiles(files, groupKey, turnIdx) {
+        if (!files || files.length === 0) return '';
+        return files.map((f, fi) => {
+            const key = `${groupKey}:${fi}`;
+            const review = state.diffReviews[key];
+            const reviewClass = review === 'accepted' ? ' is-accepted' : review === 'rejected' ? ' is-rejected' : '';
+            const reviewLabel = review === 'accepted' ? '✓ Accepted' : review === 'rejected' ? '✕ Rejected' : '';
+            const linesHtml = f.lines.map((l) => {
+                if (l.type === 'hunk') {
+                    return `<div class="op-diff-hunk">${escapeHtml(l.text)}</div>`;
+                }
+                const cls = l.type === 'add' ? 'op-diff-add' : l.type === 'del' ? 'op-diff-del' : 'op-diff-ctx';
+                const prefix = l.type === 'add' ? '+' : l.type === 'del' ? '−' : ' ';
+                return `<div class="${cls}"><span class="op-diff-prefix">${prefix}</span>${escapeHtml(l.text)}</div>`;
+            }).join('');
+            const turnBadge = typeof turnIdx === 'number' ? `<span class="op-diff-turn">turn ${turnIdx + 1}</span>` : '';
+            return `<details class="op-diff-file${reviewClass}" data-diff-key="${escapeHtml(key)}" open>` +
+                `<summary class="op-diff-summary">` +
+                `<span class="op-diff-fname">${escapeHtml(f.filename)}</span>` +
+                `${turnBadge}` +
+                `<span class="op-diff-stat op-diff-stat-add">+${f.added}</span>` +
+                `<span class="op-diff-stat op-diff-stat-del">−${f.removed}</span>` +
+                (review ? `<span class="op-diff-review-badge">${reviewLabel}</span>` : '') +
+                `</summary>` +
+                `<div class="op-diff-lines">${linesHtml}</div>` +
+                `<div class="op-diff-actions">` +
+                `<button type="button" class="op-btn op-btn-accept" data-diff-accept="${escapeHtml(key)}">✓ Accept</button>` +
+                `<button type="button" class="op-btn op-btn-reject" data-diff-reject="${escapeHtml(key)}">✕ Reject</button>` +
+                `</div>` +
+                `</details>`;
+        }).join('');
+    }
+
+    /** Wire accept/reject buttons in a container. */
+    function wireDiffReviewButtons(container) {
+        if (!container) return;
+        container.querySelectorAll('[data-diff-accept]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const key = btn.getAttribute('data-diff-accept');
+                if (!key) return;
+                state.diffReviews[key] = 'accepted';
+                refreshWorkbenchDiff();
+            });
+        });
+        container.querySelectorAll('[data-diff-reject]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const key = btn.getAttribute('data-diff-reject');
+                if (!key) return;
+                state.diffReviews[key] = 'rejected';
+                refreshWorkbenchDiff();
+            });
+        });
+    }
+
+    // ── Artifacts pane ────────────────────────────────────────────────────────
+
+    /** Render the Artifacts pane — all artifact blobs grouped by sequence. */
+    function renderArtifactsPane() {
+        const pane = els.artifactsPane();
+        if (!pane) return;
+        const blobKeys = Object.keys(state._artifactBlobs);
+        if (blobKeys.length === 0) {
+            pane.innerHTML = '<div class="op-empty">No artifacts yet — agent activity will appear here.</div>';
+            return;
+        }
+        const rows = blobKeys.flatMap((blobId) => {
+            const arts = state._artifactBlobs[blobId];
+            if (!Array.isArray(arts)) return [];
+            return arts.map((a, i) => {
+                const label = (a && (a.title || a.name || a.label)) || `artifact-${i + 1}`;
+                const type = (a && (a.type || a.kind)) || 'file';
+                const iconMap = { file: '📄', command: '⚡', 'test-result': '✅', log: '📋', evidence: '🔬', patch: '📝' };
+                const icon = iconMap[type] || '📄';
+                return { blobId, index: i, label, type, icon };
+            });
+        });
+        const html = rows.map((r) => (
+            `<div class="op-artifact-row" data-artifact-blob="${escapeHtml(r.blobId)}" data-artifact-index="${r.index}" role="button" tabindex="0">` +
+            `<span class="op-artifact-row-icon" aria-hidden="true">${r.icon}</span>` +
+            `<span class="op-artifact-row-label">${escapeHtml(r.label)}</span>` +
+            `<span class="op-artifact-row-type">${escapeHtml(r.type)}</span>` +
+            `</div>`
+        )).join('');
+        pane.innerHTML = `<div class="op-artifact-list">${html}</div>`;
+        pane.querySelectorAll('.op-artifact-row').forEach((row) => {
+            const activate = () => {
+                const blobId = row.getAttribute('data-artifact-blob');
+                const arts = blobId ? state._artifactBlobs[blobId] : null;
+                const idx = parseInt(row.getAttribute('data-artifact-index') || '0', 10);
+                if (!Array.isArray(arts)) return;
+                openArtifactModal(arts[idx], idx);
+            };
+            row.addEventListener('click', activate);
+            row.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') activate(); });
+        });
+    }
+
+    // ── Evidence pane ─────────────────────────────────────────────────────────
+
+    /** Render the Evidence pane — artifact blobs tagged type=evidence. */
+    function renderEvidencePane() {
+        const pane = els.evidencePane();
+        if (!pane) return;
+        const evidenceItems = [];
+        Object.entries(state._artifactBlobs).forEach(([blobId, arts]) => {
+            if (!Array.isArray(arts)) return;
+            arts.forEach((a, i) => {
+                const type = (a && (a.type || a.kind)) || '';
+                if (type !== 'evidence') return;
+                evidenceItems.push({ blobId, index: i, artifact: a });
+            });
+        });
+        if (evidenceItems.length === 0) {
+            pane.innerHTML = '<div class="op-empty">No evidence recorded — build/test results will appear here.</div>';
+            return;
+        }
+        const html = evidenceItems.map(({ blobId, index, artifact: a }) => {
+            const label = (a.title || a.name || a.label || 'Evidence');
+            const status = a.status || 'unknown';
+            const statusClass = status === 'pass' ? 'ev-pass' : status === 'fail' ? 'ev-fail' : 'ev-warn';
+            const statusIcon = status === 'pass' ? '✅' : status === 'fail' ? '❌' : '⚠';
+            const detail = a.detail || a.message || '';
+            return `<div class="op-evidence-card ${statusClass}" data-artifact-blob="${escapeHtml(blobId)}" data-artifact-index="${index}">` +
+                `<div class="op-evidence-header">` +
+                `<span class="op-evidence-icon" aria-hidden="true">${statusIcon}</span>` +
+                `<span class="op-evidence-label">${escapeHtml(label)}</span>` +
+                `<span class="op-evidence-status">${escapeHtml(status)}</span>` +
+                `</div>` +
+                (detail ? `<div class="op-evidence-detail">${escapeHtml(String(detail).slice(0, 200))}</div>` : '') +
+                `</div>`;
+        }).join('');
+        pane.innerHTML = `<div class="op-evidence-list">${html}</div>`;
+        pane.querySelectorAll('[data-artifact-blob]').forEach((card) => {
+            card.addEventListener('click', () => {
+                const blobId = card.getAttribute('data-artifact-blob');
+                const arts = blobId ? state._artifactBlobs[blobId] : null;
+                const idx = parseInt(card.getAttribute('data-artifact-index') || '0', 10);
+                if (!Array.isArray(arts)) return;
+                openArtifactModal(arts[idx], idx);
+            });
+        });
+    }
+
+    // ── Error center ─────────────────────────────────────────────────────────
+
+    function clearErrorCenter() {
+        const ec = els.errorCenter();
+        if (ec) { ec.hidden = true; ec.innerHTML = ''; }
+        const bar = els.retryBar();
+        if (bar) { bar.hidden = true; bar.innerHTML = ''; }
+    }
+
+    function showErrorCenter(message, opts) {
+        clearErrorCenter();
+        const ec = els.errorCenter();
+        if (!ec) { showRetryBar(message); return; }
+        const code = (opts && opts.code) || '';
+        const stack = (opts && opts.stack) || '';
+        const ts = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        state.lastError = { message, code, stack, ts };
+        const stackHtml = stack
+            ? `<details class="op-ec-stack"><summary>Stack trace</summary><pre class="op-ec-stack-pre">${escapeHtml(stack.slice(0, 1000))}</pre></details>`
+            : '';
+        ec.hidden = false;
+        ec.innerHTML =
+            `<div class="op-ec-header">` +
+            `<span class="op-ec-icon" aria-hidden="true">✕</span>` +
+            `<span class="op-ec-title">${escapeHtml(message)}</span>` +
+            `<span class="op-ec-ts">${escapeHtml(ts)}</span>` +
+            `</div>` +
+            (code ? `<div class="op-ec-code">Code: ${escapeHtml(String(code))}</div>` : '') +
+            stackHtml +
+            `<div class="op-ec-actions">` +
+            `<button type="button" class="op-btn op-btn-primary op-ec-retry">↺ Retry</button>` +
+            `<button type="button" class="op-btn op-btn-ghost op-ec-dismiss">Dismiss</button>` +
+            `</div>`;
+        ec.querySelector('.op-ec-retry')?.addEventListener('click', () => {
+            const ctx = state.lastSubmitCtx;
+            if (!ctx?.sid || !ctx.body) return;
+            clearErrorCenter();
+            void sendSecondBeat(ctx.body, { label: 'retry' });
+        });
+        ec.querySelector('.op-ec-dismiss')?.addEventListener('click', clearErrorCenter);
+        addTraceEvent('error', message.slice(0, 80));
+    }
+
+    // ── Session memory ────────────────────────────────────────────────────────
+
+    function getOrInitMemory(sid) {
+        if (!sid) return null;
+        if (!state.sessionMemory[sid]) {
+            state.sessionMemory[sid] = { goal: '', touchedFiles: [], decisions: [] };
+        }
+        return state.sessionMemory[sid];
+    }
+
+    function updateSessionMemory(sid, msgs, execute) {
+        if (!sid) return;
+        const mem = getOrInitMemory(sid);
+        // Set goal from first user message if not yet set
+        if (!mem.goal && Array.isArray(msgs)) {
+            const first = msgs.find((m) => m.role === 'user');
+            if (first) mem.goal = String(first.content || '').slice(0, 200);
+        }
+        // Extract touched files from artifact blobs
+        Object.values(state._artifactBlobs).forEach((arts) => {
+            if (!Array.isArray(arts)) return;
+            arts.forEach((a) => {
+                const fname = a && (a.filename || a.name || a.path || a.file);
+                if (fname && typeof fname === 'string' && !mem.touchedFiles.includes(fname)) {
+                    mem.touchedFiles.push(fname);
+                }
+            });
+        });
+        renderSessionMemoryCard(sid);
+    }
+
+    function renderSessionMemoryCard(sid) {
+        const card = els.memoryCard();
+        if (!card) return;
+        if (!sid) { card.hidden = true; return; }
+        const mem = state.sessionMemory[sid];
+        if (!mem || (!mem.goal && mem.touchedFiles.length === 0)) {
+            card.hidden = true;
+            return;
+        }
+        card.hidden = false;
+        const filesHtml = mem.touchedFiles.length > 0
+            ? `<div class="op-mem-section"><div class="op-mem-label">Touched files</div>` +
+              mem.touchedFiles.slice(0, 10).map((f) => `<div class="op-mem-file">${escapeHtml(f)}</div>`).join('') +
+              `</div>`
+            : '';
+        card.innerHTML =
+            `<div class="op-mem-header">` +
+            `<span class="op-mem-title">Session memory</span>` +
+            `<button type="button" class="op-btn op-btn-ghost op-mem-toggle" aria-label="Toggle memory">▾</button>` +
+            `</div>` +
+            `<div class="op-mem-body">` +
+            (mem.goal ? `<div class="op-mem-section"><div class="op-mem-label">Goal</div><div class="op-mem-goal">${escapeHtml(mem.goal)}</div></div>` : '') +
+            filesHtml +
+            `</div>`;
+        const toggle = card.querySelector('.op-mem-toggle');
+        const body = card.querySelector('.op-mem-body');
+        if (toggle && body) {
+            toggle.addEventListener('click', () => {
+                const collapsed = body.classList.toggle('is-collapsed');
+                toggle.textContent = collapsed ? '▸' : '▾';
+            });
+        }
+    }
+
+    // ── Session tagging ───────────────────────────────────────────────────────
+
+    const ALL_TAGS = ['bugfix', 'refactor', 'research', 'audit', 'hotfix', 'experiment'];
+
+    function loadSessionTags() {
+        try {
+            const raw = localStorage.getItem('a2a_session_tags');
+            if (raw) Object.assign(state.sessionTags, JSON.parse(raw));
+        } catch (e) {
+            console.warn('[operator-ui] session tags load failed', e);
+        }
+    }
+
+    function saveSessionTags() {
+        try {
+            localStorage.setItem('a2a_session_tags', JSON.stringify(state.sessionTags));
+        } catch (e) {
+            console.warn('[operator-ui] session tags save failed', e);
+        }
+    }
+
+    function toggleSessionTag(sid, tag) {
+        if (!sid || !tag) return;
+        if (!state.sessionTags[sid]) state.sessionTags[sid] = [];
+        const tags = state.sessionTags[sid];
+        const idx = tags.indexOf(tag);
+        if (idx >= 0) tags.splice(idx, 1);
+        else tags.push(tag);
+        saveSessionTags();
+        renderSessionList();
+        renderTagFilter();
+    }
+
+    function renderTagFilter() {
+        const host = els.tagFilter();
+        if (!host) return;
+        const active = state.activeTagFilter;
+        const html = ALL_TAGS.map((t) => {
+            const isOn = t === active;
+            return `<button type="button" class="op-tag-chip${isOn ? ' is-on' : ''}" data-tag="${escapeHtml(t)}">${escapeHtml(t)}</button>`;
+        }).join('');
+        host.innerHTML = html + (active ? `<button type="button" class="op-tag-chip op-tag-clear" data-tag-clear>✕ clear</button>` : '');
+        host.querySelectorAll('[data-tag]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const tag = btn.getAttribute('data-tag');
+                state.activeTagFilter = state.activeTagFilter === tag ? null : tag;
+                renderTagFilter();
+                renderSessionList();
+            });
+        });
+        host.querySelector('[data-tag-clear]')?.addEventListener('click', () => {
+            state.activeTagFilter = null;
+            renderTagFilter();
+            renderSessionList();
+        });
+    }
+
+    // ── Turn summary card ─────────────────────────────────────────────────────
+
+    /**
+     * Build a turn summary from message content and artifact context.
+     * @param {object} msg - message object from store
+     * @param {number} turnIdx
+     * @returns {string} HTML
+     */
+    function buildTurnSummaryHtml(msg, turnIdx) {
+        if (!msg || msg.role !== 'assistant') return '';
+        // Use explicit summary field if present
+        const summaryText = msg.summary || '';
+        // Count artifacts for this turn
+        const artCount = Array.isArray(msg.artifacts) ? msg.artifacts.length : 0;
+        if (!summaryText && artCount === 0) return '';
+        const parts = [];
+        if (summaryText) parts.push(escapeHtml(String(summaryText).slice(0, 300)));
+        if (artCount > 0) parts.push(`${artCount} artifact${artCount > 1 ? 's' : ''} produced`);
+        return `<div class="op-turn-summary" aria-label="Turn summary">` +
+            `<span class="op-turn-summary-icon" aria-hidden="true">◈</span>` +
+            `<span class="op-turn-summary-text">${parts.join(' · ')}</span>` +
+            `</div>`;
+    }
+
+    // ── Replay mode ───────────────────────────────────────────────────────────
+
+    function startReplay(sid) {
+        const events = state.traceEvents[sid || state.activeSessionId] || [];
+        if (events.length === 0) return;
+        state.replayActive = true;
+        state.replayStep = 0;
+        const overlay = els.replayOverlay();
+        const seek = els.replaySeek();
+        const pos = els.replayPos();
+        if (overlay) overlay.hidden = false;
+        if (seek) { seek.max = String(events.length - 1); seek.value = '0'; }
+        updateReplayPos();
+        renderTracePane();
+    }
+
+    function stopReplay() {
+        if (state.replayTimer) { clearInterval(state.replayTimer); state.replayTimer = null; }
+        state.replayActive = false;
+        const overlay = els.replayOverlay();
+        if (overlay) overlay.hidden = true;
+        renderTracePane();
+    }
+
+    function updateReplayPos() {
+        const sid = state.activeSessionId;
+        const events = sid ? (state.traceEvents[sid] || []) : [];
+        const pos = els.replayPos();
+        if (pos) pos.textContent = `${state.replayStep + 1} / ${events.length}`;
+        const seek = els.replaySeek();
+        if (seek) seek.value = String(state.replayStep);
+    }
+
+    function replaySeekTo(step) {
+        const sid = state.activeSessionId;
+        const events = sid ? (state.traceEvents[sid] || []) : [];
+        state.replayStep = Math.max(0, Math.min(step, events.length - 1));
+        updateReplayPos();
+        renderTracePane();
+    }
+
+    function initReplay() {
+        const overlay = els.replayOverlay();
+        if (!overlay) return;
+        document.getElementById('op-replay-prev')?.addEventListener('click', () => {
+            replaySeekTo(state.replayStep - 1);
+        });
+        document.getElementById('op-replay-next')?.addEventListener('click', () => {
+            replaySeekTo(state.replayStep + 1);
+        });
+        document.getElementById('op-replay-play')?.addEventListener('click', () => {
+            const btn = document.getElementById('op-replay-play');
+            if (state.replayTimer) {
+                clearInterval(state.replayTimer);
+                state.replayTimer = null;
+                if (btn) btn.textContent = '▶';
+            } else {
+                if (btn) btn.textContent = '⏸';
+                state.replayTimer = setInterval(() => {
+                    const sid = state.activeSessionId;
+                    const events = sid ? (state.traceEvents[sid] || []) : [];
+                    if (state.replayStep >= events.length - 1) {
+                        clearInterval(state.replayTimer);
+                        state.replayTimer = null;
+                        if (btn) btn.textContent = '▶';
+                    } else {
+                        replaySeekTo(state.replayStep + 1);
+                    }
+                }, 600);
+            }
+        });
+        document.getElementById('op-replay-close')?.addEventListener('click', stopReplay);
+        els.replaySeek()?.addEventListener('input', (e) => {
+            replaySeekTo(parseInt(e.target.value, 10));
+        });
+    }
+
+    // ── Keyboard shortcuts ────────────────────────────────────────────────────
+
+    function jumpToLastError() {
+        const pane = els.tracePane();
+        if (!pane) return;
+        // Switch to trace tab
+        const traceTab = Array.from(document.querySelectorAll('.op-tab')).find((t) => t.getAttribute('data-tab') === 'trace');
+        traceTab?.click();
+        // Scroll to last error row
+        setTimeout(() => {
+            const errorRows = pane.querySelectorAll('.op-trace-row.is-error');
+            if (errorRows.length > 0) {
+                errorRows[errorRows.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }, 50);
+    }
+
+    function copyTraceId() {
+        const sid = state.activeSessionId;
+        if (!sid) return;
+        navigator.clipboard?.writeText(sid).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = sid;
+            document.body.appendChild(ta);
+            ta.select();
+            document.execCommand('copy');
+            document.body.removeChild(ta);
+        });
+    }
+
+    function initKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            // Skip if user is typing in an input
+            const tag = (e.target?.tagName || '').toLowerCase();
+            if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+            if (e.ctrlKey || e.metaKey || e.altKey) return;
+            switch (e.key.toUpperCase()) {
+                case 'N':
+                    e.preventDefault();
+                    startNewSession().catch(console.error);
+                    break;
+                case 'P':
+                    e.preventDefault();
+                    if (state.uiState === UI_STATES.POLLING || state.uiState === UI_STATES.SENDING) {
+                        setState(UI_STATES.IDLE);
+                        setThinkingVisible(false);
+                        setInputBlocked(false, 'Ready');
+                    }
+                    break;
+                case 'R':
+                    e.preventDefault();
+                    {
+                        const ctx = state.lastSubmitCtx;
+                        if (ctx?.sid && ctx.body) {
+                            clearErrorCenter();
+                            void sendSecondBeat(ctx.body, { label: 'retry' });
+                        }
+                    }
+                    break;
+                case 'E':
+                    e.preventDefault();
+                    jumpToLastError();
+                    break;
+                case 'C':
+                    e.preventDefault();
+                    copyTraceId();
+                    break;
+            }
+        });
     }
 
     function setState(newState) {
@@ -95,7 +741,13 @@
             const busy =
                 newState === UI_STATES.CREATING ||
                 newState === UI_STATES.SENDING ||
-                newState === UI_STATES.POLLING;
+                newState === UI_STATES.POLLING ||
+                newState === UI_STATES.PLANNING ||
+                newState === UI_STATES.GENERATING ||
+                newState === UI_STATES.TOOL_RUNNING ||
+                newState === UI_STATES.RETRYING ||
+                newState === UI_STATES.COMPRESSING ||
+                newState === UI_STATES.RECOVERING;
             spin.hidden = !busy;
             spin.classList.toggle('is-on', busy);
         }
@@ -104,14 +756,21 @@
         if (label) {
             const map = {
                 [UI_STATES.IDLE]: 'Ready',
-                [UI_STATES.CREATING]: 'Creating…',
-                [UI_STATES.SENDING]: 'Sending…',
-                [UI_STATES.POLLING]: 'Polling…',
-                [UI_STATES.WAITING_INPUT]: 'Choose',
-                [UI_STATES.WAITING_TEXT]: 'Form',
-                [UI_STATES.WAITING_APPROVAL]: 'Approval',
-                [UI_STATES.ERROR]: 'Error',
-                [UI_STATES.DONE]: 'Done',
+                [UI_STATES.CREATING]: '⚙ Creating…',
+                [UI_STATES.SENDING]: '↑ Sending…',
+                [UI_STATES.POLLING]: '⟳ Polling…',
+                [UI_STATES.WAITING_INPUT]: '⬡ Choose',
+                [UI_STATES.WAITING_TEXT]: '✎ Form',
+                [UI_STATES.WAITING_APPROVAL]: '⏸ Approval',
+                [UI_STATES.ERROR]: '✕ Error',
+                [UI_STATES.DONE]: '✓ Done',
+                [UI_STATES.PLANNING]: '◈ Planning…',
+                [UI_STATES.GENERATING]: '✦ Generating…',
+                [UI_STATES.TOOL_RUNNING]: '▶ Tool running…',
+                [UI_STATES.RETRYING]: '↺ Retrying…',
+                [UI_STATES.COMPRESSING]: '⊙ Compressing…',
+                [UI_STATES.RECOVERING]: '⟳ Recovering…',
+                [UI_STATES.BLOCKED]: '⊘ Blocked',
             };
             label.textContent = map[newState] || newState;
         }
@@ -133,6 +792,11 @@
             s === UI_STATES.SENDING ||
             s === UI_STATES.POLLING ||
             s === UI_STATES.WAITING_APPROVAL ||
+            s === UI_STATES.TOOL_RUNNING ||
+            s === UI_STATES.RETRYING ||
+            s === UI_STATES.COMPRESSING ||
+            s === UI_STATES.RECOVERING ||
+            s === UI_STATES.BLOCKED ||
             s === UI_STATES.ERROR ||
             !!state.pendingChoices;
         const input = els.input();
@@ -495,7 +1159,30 @@
         const st = store.getState?.() || {};
         const msgs = st.messages || [];
         if (!Array.isArray(msgs) || msgs.length === 0) {
-            container.innerHTML = `<div class="op-empty">Start a conversation — type a message below or create a new session.</div>`;
+            // Better empty state with example prompts and backend status
+            const dot = els.connDot();
+            const backendStatus = dot?.dataset.status || 'unknown';
+            const statusIcon = backendStatus === 'Ready' ? '🟢' : backendStatus === 'Error' ? '🔴' : '🟡';
+            container.innerHTML =
+                `<div class="op-welcome">` +
+                `<div class="op-welcome-icon" aria-hidden="true">⬡</div>` +
+                `<div class="op-welcome-title">Start a conversation</div>` +
+                `<div class="op-welcome-subtitle">Type a message below or choose an example to get started.</div>` +
+                `<div class="op-welcome-examples">` +
+                `<button type="button" class="op-welcome-example" data-prompt="Analyse the current codebase and suggest improvements.">Analyse codebase</button>` +
+                `<button type="button" class="op-welcome-example" data-prompt="Run tests and report the results.">Run tests</button>` +
+                `<button type="button" class="op-welcome-example" data-prompt="Fix any failing tests in the project.">Fix failing tests</button>` +
+                `<button type="button" class="op-welcome-example" data-prompt="Refactor the main module for clarity.">Refactor module</button>` +
+                `</div>` +
+                `<div class="op-welcome-status">${statusIcon} Backend: ${escapeHtml(backendStatus)}</div>` +
+                `</div>`;
+            container.querySelectorAll('[data-prompt]').forEach((btn) => {
+                btn.addEventListener('click', async () => {
+                    const prompt = btn.getAttribute('data-prompt') || '';
+                    const input = els.input();
+                    if (input) { input.value = prompt; input.focus(); }
+                });
+            });
             const stE = store.getState?.() || {};
             const ex0 = stE.execute;
             if (Array.isArray(ex0?.artifacts) && ex0.artifacts.length > 0) {
@@ -508,7 +1195,8 @@
             return;
         }
         const frag = document.createDocumentFragment();
-        for (const m of msgs) {
+        for (let mi = 0; mi < msgs.length; mi++) {
+            const m = msgs[mi];
             const role = String(m.role || 'assistant');
             const content = String(m.content || '');
             const av = role === 'user' ? 'U' : role === 'assistant' ? 'A' : role === 'error' ? '!' : '•';
@@ -556,6 +1244,15 @@
                 if (node) col.appendChild(node);
             }
 
+            // Turn summary card
+            const summaryHtml = buildTurnSummaryHtml(m, mi);
+            if (summaryHtml) {
+                const summaryEl = document.createElement('div');
+                summaryEl.innerHTML = summaryHtml;
+                const node = summaryEl.firstElementChild;
+                if (node) col.appendChild(node);
+            }
+
             inner.appendChild(avatar);
             inner.appendChild(col);
             row.appendChild(inner);
@@ -581,26 +1278,72 @@
         if (!pane) return;
         const st = store.getState?.() || {};
         const ex = st.execute;
-        if (!ex || typeof ex !== 'object') {
+
+        // Collect diff candidates: from artifact blobs and from execute message
+        let allFiles = [];
+        let groupKey = 'exec';
+
+        // Check artifact blobs for unified diffs
+        const blobKeys = Object.keys(state._artifactBlobs);
+        blobKeys.forEach((blobId) => {
+            const arts = state._artifactBlobs[blobId];
+            if (!Array.isArray(arts)) return;
+            arts.forEach((a, i) => {
+                const content = typeof a === 'string' ? a : (a && (a.content || a.diff || a.patch || ''));
+                if (typeof content === 'string' && messageBodyLooksLikeDiff(content)) {
+                    const files = parseDiff(content);
+                    if (files.length > 0) {
+                        allFiles = allFiles.concat(files.map((f) => ({ ...f, _key: `${blobId}:${i}` })));
+                    }
+                }
+            });
+        });
+
+        // Also check execute.message / execute.attachments
+        if (ex && typeof ex === 'object') {
+            const parts = [];
+            if (typeof ex.message === 'string' && ex.message.trim()) parts.push(ex.message.trim());
+            const a = ex.attachments;
+            if (a && typeof a === 'object') {
+                try { parts.push(JSON.stringify(a, null, 2)); } catch (_) { parts.push(String(a)); }
+            }
+            const text = parts.join('\n\n');
+            if (messageBodyLooksLikeDiff(text)) {
+                const files = parseDiff(text);
+                if (files.length > 0) {
+                    allFiles = allFiles.concat(files.map((f) => ({ ...f, _key: `${groupKey}:exec` })));
+                }
+            }
+        }
+
+        if (allFiles.length === 0) {
+            // Fallback: if execute has plain content but no diff, show it as before
+            if (ex && typeof ex === 'object') {
+                const parts = [];
+                if (typeof ex.message === 'string' && ex.message.trim()) parts.push(ex.message.trim());
+                const a = ex.attachments;
+                if (a && typeof a === 'object') {
+                    try { parts.push(JSON.stringify(a, null, 2)); } catch (_) { parts.push(String(a)); }
+                }
+                if (parts.length > 0) {
+                    const pre = document.createElement('pre');
+                    pre.className = 'op-diff-pre';
+                    pre.textContent = parts.join('\n\n---\n\n');
+                    pane.innerHTML = '';
+                    pane.appendChild(pre);
+                    return;
+                }
+            }
             pane.innerHTML = '<div class="op-empty">Waiting for agent changes…</div>';
             return;
         }
-        const parts = [];
-        if (typeof ex.message === 'string' && ex.message.trim()) parts.push(ex.message.trim());
-        const a = ex.attachments;
-        if (a && typeof a === 'object') {
-            try {
-                parts.push(JSON.stringify(a, null, 2));
-            } catch (e) {
-                parts.push(String(a));
-            }
-        }
-        const text = parts.length ? parts.join('\n\n---\n\n') : '(no projection)';
-        const pre = document.createElement('pre');
-        pre.className = 'op-diff-pre';
-        pre.textContent = text;
-        pane.innerHTML = '';
-        pane.appendChild(pre);
+
+        // Group unique file keys into "virtual" turn groups
+        const html = renderDiffFiles(allFiles, groupKey, 0);
+        pane.innerHTML = `<div class="op-diff-container">${html}</div>`;
+        wireDiffReviewButtons(pane);
+        renderArtifactsPane();
+        renderEvidencePane();
     }
 
     function renderGrayRoomFromContext() {
@@ -622,33 +1365,11 @@
     }
 
     function clearRetryBar() {
-        const bar = els.retryBar();
-        if (bar) {
-            bar.hidden = true;
-            bar.innerHTML = '';
-        }
+        clearErrorCenter();
     }
 
     function showRetryBar(message) {
-        const bar = els.retryBar();
-        if (!bar) return;
-        bar.hidden = false;
-        bar.innerHTML = '';
-        const span = document.createElement('span');
-        span.className = 'op-retry-text';
-        span.textContent = String(message || 'Request failed');
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'op-btn op-btn-primary';
-        btn.textContent = 'Retry';
-        btn.addEventListener('click', () => {
-            const ctx = state.lastSubmitCtx;
-            if (!ctx?.sid || !ctx.body) return;
-            clearRetryBar();
-            void sendSecondBeat(ctx.body, { label: 'retry' });
-        });
-        bar.appendChild(span);
-        bar.appendChild(btn);
+        showErrorCenter(message || 'Request failed', {});
     }
 
     function renderFormError(message) {
@@ -746,9 +1467,16 @@
     function renderSessionList() {
         const list = els.sessionList();
         if (!list) return;
-        const rows = loadSessionListFromStorage();
+        let rows = loadSessionListFromStorage();
+        // Apply tag filter
+        if (state.activeTagFilter) {
+            rows = rows.filter((s) => {
+                const tags = state.sessionTags[s.id] || [];
+                return tags.includes(state.activeTagFilter);
+            });
+        }
         if (rows.length === 0) {
-            list.innerHTML = `<div class="op-empty-small">No sessions yet — press ＋ New to start.</div>`;
+            list.innerHTML = `<div class="op-empty-small">${state.activeTagFilter ? `No sessions tagged "${escapeHtml(state.activeTagFilter)}".` : 'No sessions yet — press ＋ New to start.'}</div>`;
             return;
         }
         list.innerHTML = rows
@@ -759,21 +1487,93 @@
                 const tsStr = s.ts
                     ? new Date(s.ts).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
                     : '';
+                const sessionTags = state.sessionTags[s.id] || [];
+                const tagsHtml = sessionTags.length > 0
+                    ? `<div class="op-session-tags">${sessionTags.map((t) => `<span class="op-session-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+                    : '';
+                const hasTrace = (state.traceEvents[s.id] || []).length > 0;
+                const replayBtn = hasTrace
+                    ? `<button type="button" class="op-session-replay" data-replay-sid="${id}" title="Replay session trace" aria-label="Replay">↺</button>`
+                    : '';
+                const addTagBtn = `<button type="button" class="op-session-add-tag" data-tag-sid="${id}" title="Add tag" aria-label="Tag session">🏷</button>`;
                 return (
+                    `<div class="op-session-row${isActive ? ' is-on' : ''}" data-sid="${id}">` +
                     `<button class="op-session-item${isActive ? ' is-on' : ''}" type="button" data-sid="${id}" title="${id}">` +
                     `<div class="op-session-title">${title}</div>` +
                     (tsStr ? `<div class="op-session-ts">${escapeHtml(tsStr)}</div>` : '') +
-                    `</button>`
+                    tagsHtml +
+                    `</button>` +
+                    `<div class="op-session-row-actions">${addTagBtn}${replayBtn}</div>` +
+                    `</div>`
                 );
             })
             .join('');
-        list.querySelectorAll('[data-sid]').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                const sid = btn.getAttribute('data-sid');
+        list.querySelectorAll('[data-sid]').forEach((el) => {
+            if (el.tagName === 'BUTTON' && el.classList.contains('op-session-item')) {
+                el.addEventListener('click', () => {
+                    const sid = el.getAttribute('data-sid');
+                    if (!sid) return;
+                    void switchSession(sid);
+                });
+            }
+        });
+        list.querySelectorAll('[data-replay-sid]').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const sid = btn.getAttribute('data-replay-sid');
                 if (!sid) return;
-                void switchSession(sid);
+                // Switch to trace tab and start replay
+                const traceTab = Array.from(document.querySelectorAll('.op-tab')).find((t) => t.getAttribute('data-tab') === 'trace');
+                traceTab?.click();
+                if (sid !== state.activeSessionId) {
+                    void switchSession(sid).then(() => startReplay(sid));
+                } else {
+                    startReplay(sid);
+                }
             });
         });
+        list.querySelectorAll('[data-tag-sid]').forEach((btn) => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const sid = btn.getAttribute('data-tag-sid');
+                if (!sid) return;
+                showTagPicker(sid, btn);
+            });
+        });
+    }
+
+    function showTagPicker(sid, anchorEl) {
+        // Remove any existing picker
+        document.querySelectorAll('.op-tag-picker').forEach((p) => p.remove());
+        const picker = document.createElement('div');
+        picker.className = 'op-tag-picker';
+        picker.setAttribute('role', 'menu');
+        const currentTags = state.sessionTags[sid] || [];
+        picker.innerHTML = ALL_TAGS.map((t) => {
+            const on = currentTags.includes(t);
+            return `<button type="button" class="op-tag-picker-item${on ? ' is-on' : ''}" data-pick="${escapeHtml(t)}">${on ? '✓ ' : ''}${escapeHtml(t)}</button>`;
+        }).join('');
+        picker.querySelectorAll('[data-pick]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const tag = btn.getAttribute('data-pick');
+                toggleSessionTag(sid, tag);
+                picker.remove();
+            });
+        });
+        // Position near anchor
+        const rect = anchorEl.getBoundingClientRect();
+        picker.style.position = 'fixed';
+        picker.style.top = `${rect.bottom + 4}px`;
+        picker.style.left = `${rect.left}px`;
+        document.body.appendChild(picker);
+        // Close on outside click
+        const close = (ev) => {
+            if (!picker.contains(ev.target)) {
+                picker.remove();
+                document.removeEventListener('click', close, true);
+            }
+        };
+        setTimeout(() => document.addEventListener('click', close, true), 0);
     }
 
     function setActiveSession(sessionId, hydrate = true) {
@@ -782,6 +1582,8 @@
         const el = els.activeSession();
         if (el) el.textContent = `Session: ${sessionId ? sessionId.slice(0, 8) : '—'}`;
         renderSessionList();
+        renderTracePane();
+        renderSessionMemoryCard(sessionId);
         if (hydrate) void hydrateFromServer();
     }
 
@@ -814,10 +1616,13 @@
         renderSessionList();
         setActiveSession(sid, true);
         setState(UI_STATES.IDLE);
+        addTraceEvent('session-created', `Session ${sid.slice(0, 8)} created`);
+        renderTagFilter();
     }
 
     async function runPollAfterAck(sid) {
         state.lastPollAttempts = 0;
+        addTraceEvent('polling-start', 'Polling started');
         try {
             const pollRes = await api.pollUntilDone(sid, 60, 500, {
                 onTick: (r) => {
@@ -825,6 +1630,11 @@
                     state.lastPollAttempts++;
                     if (state.lastPollAttempts % 4 === 0) {
                         setConn(`Polling… (${state.lastPollAttempts})`);
+                    }
+                    // Detect tool calls from execute context
+                    if (r?.execute?.tool || r?.execute?.action?.tool) {
+                        setState(UI_STATES.TOOL_RUNNING);
+                        addTraceEvent('tool-call', `Tool: ${r.execute?.tool || r.execute?.action?.tool}`);
                     }
                 },
                 shouldStop: (r) => {
@@ -836,6 +1646,7 @@
                 },
             });
             if (pollRes && pollRes.timedOut === true) {
+                addTraceEvent('error', 'Polling timed out');
                 if (pollRes.snapshot) {
                     applySessionSnapshot(pollRes.snapshot);
                 } else {
@@ -847,11 +1658,15 @@
                     (pollRes.error && pollRes.error.message) ||
                     pollRes.message ||
                     'Async step failed';
+                addTraceEvent('error', String(em).slice(0, 80));
                 store.pushMessage?.(String(em), 'error');
                 renderMessagesFromStore();
+            } else {
+                addTraceEvent('polling-done', `Polling done (${state.lastPollAttempts} ticks)`);
             }
         } catch (pe) {
             console.error('[operator-ui] pollUntilDone', pe);
+            addTraceEvent('error', pe?.message || 'Async polling failed');
             renderFormError(pe?.message || 'Async polling failed');
         }
     }
@@ -868,18 +1683,21 @@
         setState(UI_STATES.SENDING);
         setThinkingVisible(true);
         clearRetryBar();
+        const label = (meta && meta.label) || 'form-submit';
+        addTraceEvent('form-submit', `Submitting: ${label}`);
         let ack;
         try {
             ack = await api.postNext(sid, body);
         } catch (e) {
             console.error('[operator-ui] postNext failed', e);
             setState(UI_STATES.ERROR);
-            renderFormError(e?.payload?.message || e?.message || 'Submit failed');
-            showRetryBar(e?.payload?.message || e?.message || 'Submit failed');
+            const errMsg = e?.payload?.message || e?.message || 'Submit failed';
+            showErrorCenter(errMsg, { code: e?.status, stack: e?.stack });
             setThinkingVisible(false);
             await hydrateFromServer();
             return;
         }
+        addTraceEvent('ack-received', 'Ack received');
         setState(UI_STATES.POLLING);
         const shouldPoll = ack?.asyncPending === true || ack?.promiseId || ack?.accepted === true;
         if (shouldPoll) {
@@ -888,6 +1706,7 @@
         await hydrateFromServer();
         setThinkingVisible(false);
         setState(UI_STATES.IDLE);
+        addTraceEvent('done', 'Turn complete');
     }
 
     /**
@@ -953,6 +1772,7 @@
             setState(UI_STATES.SENDING);
             setThinkingVisible(true);
             clearRetryBar();
+            addTraceEvent('message-sent', `Sent: ${(text || '').slice(0, 60)}`);
 
             let ack;
             try {
@@ -960,13 +1780,14 @@
             } catch (e) {
                 console.error('[operator-ui] postNext', e);
                 setState(UI_STATES.ERROR);
-                renderFormError(e?.payload?.message || e?.message || 'Submit failed');
-                showRetryBar(e?.payload?.message || e?.message || 'Submit failed');
+                const errMsg = e?.payload?.message || e?.message || 'Submit failed';
+                showErrorCenter(errMsg, { code: e?.status, stack: e?.stack });
                 setThinkingVisible(false);
                 await hydrateFromServer();
                 return;
             }
 
+            addTraceEvent('ack-received', 'Ack received');
             setState(UI_STATES.POLLING);
             const shouldPoll = ack?.asyncPending === true || ack?.promiseId || ack?.accepted === true;
             if (shouldPoll) {
@@ -975,6 +1796,10 @@
             await hydrateFromServer();
             setThinkingVisible(false);
             setState(UI_STATES.IDLE);
+            addTraceEvent('done', 'Turn complete');
+            // Update session memory after each turn
+            const stPost = store.getState?.() || {};
+            updateSessionMemory(sid, stPost.messages, stPost.execute);
         };
 
         state._sendChain = (state._sendChain || Promise.resolve()).then(run).catch((err) => {
@@ -1091,6 +1916,7 @@
                 state.sessions = loadSessionListFromStorage().map((x) => ({ id: x.id, title: x.title }));
                 renderSessionList();
                 setActiveSession(id, true);
+                addTraceEvent('session-switch', `Resumed session ${id.slice(0, 8)}`);
                 if (session.asyncPending === true) {
                     setThinkingVisible(true);
                     setState(UI_STATES.POLLING);
@@ -1110,10 +1936,14 @@
     }
 
     function initUI() {
+        loadSessionTags();
         initTabs();
         initMonitor();
         initArtifactModal();
+        initReplay();
+        initKeyboardShortcuts();
         renderSessionList();
+        renderTagFilter();
         wireEvents();
         setState(UI_STATES.IDLE);
 
@@ -1151,8 +1981,7 @@
             } catch (err) {
                 console.error('[operator-ui] submit error', err);
                 setState(UI_STATES.ERROR);
-                renderFormError(err?.payload?.message || err?.message || 'Submit error');
-                showRetryBar(err?.message || 'Submit error');
+                showErrorCenter(err?.payload?.message || err?.message || 'Submit error', { stack: err?.stack });
                 setThinkingVisible(false);
                 setInputBlocked(false, 'Ready');
             }
