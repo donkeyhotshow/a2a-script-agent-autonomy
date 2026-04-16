@@ -6,7 +6,7 @@ import { logger } from "./utils/logger.js";
 import {
   startRequestProcessor,
   stopRequestProcessor,
-} from "../../daemon/src/daemon/request-processor-daemon.js";
+} from "./request-processor/request-processor.service.js";
 import { actionRegistry } from "../../actions/src/action-registry.js";
 import { algorithmRegistry } from "./services/core/black-room/algorithm-registry.js";
 import { getPromptsTransformsPath } from "../../transform/index.js";

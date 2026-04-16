@@ -1,4 +1,4 @@
-import { crypto } from 'node:crypto';
+import { createHash } from "node:crypto";
 import { LoopSignal, SafetySignalSeverity } from './types.js';
 
 /**
@@ -57,7 +57,7 @@ export class LoopDetector {
         try {
             // Simplified hash: we only care about workbench and parts of execution
             const relevantData = JSON.stringify(data);
-            return crypto.createHash('sha256').update(relevantData).digest('hex');
+            return createHash("sha256").update(relevantData).digest("hex");
         } catch (e) {
             // Fallback for circular structures or encoding errors
             return `error-hash-${Date.now()}`;

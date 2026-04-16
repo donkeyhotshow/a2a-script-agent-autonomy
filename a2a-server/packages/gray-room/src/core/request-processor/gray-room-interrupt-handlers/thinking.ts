@@ -3,10 +3,10 @@ import {
     extractLlmTextFromHubResponseBody,
     initAiHubChatPromise,
     pollReadyThenFetch,
-} from '@a2a/server-daemon';
+} from '../../../../../daemon/src/daemon/llm-hub-poll.js';
 import {logger, tryParseJsonFromLlmText, resolveA2aTraceId} from '@a2a/server-utils';
 import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils.js';
-import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '@a2a/server-transform';
+import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../../../transform/src/types.js';
 import {BaseGrayRoomHandler} from './base-handler.js';
 
 /**

@@ -1,28 +1,32 @@
 import * as path from "path";
-import { logger, resolveA2aTraceId } from "@a2a/server-utils";
+import {
+  logger,
+  resolveA2aTraceId,
+  resolveAiHubBaseUrl,
+} from "@a2a/server-utils";
 import {
   runPromptsTransform,
   syncLiveContextHistoryFromResultMessage,
   mergeGrayRoomSlotIntoContext,
   mergeInterruptTraceIntoContext,
-} from "@a2a/server-transform";
+} from "../../../../transform/index.js";
 import type {
   GrayRoomControlEnvelope,
   InterruptDirective,
   ServerInterruptTraceEvent,
-} from "@a2a/server-transform";
-import { executeReadFile } from "@a2a/server-actions";
-import { mergeServerRagPageIntoContext } from "@a2a/server-llm";
+} from "../../../../transform/index.js";
+import { executeReadFile } from "../../../../actions/src/handlers/file-operations/read-file.js";
+import { mergeServerRagPageIntoContext } from "../../../../llm/src/rag/auto-rag-page-server.js";
 import {
   extractLlmTextFromHubResponseBody,
   initAiHubChatPromise,
   pollReadyThenFetch,
-} from "@a2a/server-daemon";
-import { BlackRoomOrchestrator } from "../black-room/black-room-orchestrator.js";
+} from "../../../../daemon/src/daemon/llm-hub-poll.js";
+import { BlackRoomOrchestrator } from "../../../../server/src/services/core/black-room/black-room-orchestrator.js";
 import type {
   AlgorithmContext,
   AlgorithmData,
-} from "../black-room/types.js";
+} from "../../../../server/src/services/core/black-room/types.js";
 import type { ProcessResult } from "../../../../server/src/request-processor/request-processor.interfaces.js";
 import {
   validateExecuteShapeForSchema,
@@ -42,7 +46,7 @@ import {
 import { globalArtifactStore } from "../../../../server/src/artifact-store.js";
 import { DedicatedAnalyzer } from "../../../../server/src/analyzer.js";
 import { globalExperienceBank } from "../../memory/experience-bank.js";
-import { globalMcpRegistry } from "../mcp/registry.js";
+import { globalMcpRegistry } from "../../mcp/registry.js";
 
 // Import trigger detection logic
 import {
@@ -78,7 +82,6 @@ import { globalIntentGate } from "../../../../server/src/intent-gate.js";
 import { bugFixer } from "../../llm/bug-fixer.js";
 import { repoMapService } from "../../context/repo-map.service.js";
 import { contextDiscoveryService } from "../../context/context-discovery.service.js";
-import { resolveAiHubBaseUrl } from "@a2a/server-utils";
 import { mkdtempOsTmp } from "../../../../lib/mkdtemp-os-tmp.js";
 import { prepareLlmMessages } from "../../../../server/src/request-processor/llm-orchestration.js";
 

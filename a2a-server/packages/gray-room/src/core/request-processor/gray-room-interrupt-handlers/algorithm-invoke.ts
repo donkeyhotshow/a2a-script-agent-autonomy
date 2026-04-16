@@ -1,6 +1,6 @@
-import type {AlgorithmContext, AlgorithmData} from '../../../black-room/types.js';
+import type {AlgorithmContext, AlgorithmData} from '../../../../../server/src/services/core/black-room/types.js';
 import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../../../transform/src/types.js';
-import {BlackRoomOrchestrator} from '../../../black-room/black-room-orchestrator.js';
+import {BlackRoomOrchestrator} from '../../../../../server/src/services/core/black-room/black-room-orchestrator.js';
 import {mergeSlotIntoWorkbenchContext} from '../gray-room-utils.js';
 import {BaseGrayRoomHandler} from './base-handler.js';
 

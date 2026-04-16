@@ -14,10 +14,10 @@ import {
   isRetryableError,
   shouldDeferDialogProcessorFailure,
   type RequestResult,
-} from "../../request/request.service.js";
-import { logger } from "../../utils/logger.js";
-import { resolveAiHubBaseUrl } from "../../utils/ai-hub-url.js";
-import { requestProcessorLatencyHistogram } from "../../utils/metrics.js";
+} from "../request/request.service.js";
+import { logger } from "../utils/logger.js";
+import { resolveAiHubBaseUrl } from "@a2a/server-utils";
+import { requestProcessorLatencyHistogram } from "../utils/metrics.js";
 import type {
   RequestContext,
   ProcessResult,
@@ -37,11 +37,9 @@ import type { RequestType } from "./base-processor.js";
 import {
   LLM_PIPELINE_ACTIONS,
   type LlmPipelineAction,
-} from "../../../config/router-static.js";
+} from "../../../server-config/router-static.js";
 import { resolveExecution, resolveResultObject } from "./normalization.js";
 import { detectFrameworksFromCodeBlocks } from "./framework-from-codeblocks.js";
-import { readDialogHubLlmResubmitMax } from "./gray-room-trigger.js";
-import { features } from "../../../config/index.js";
 import { resolveA2aTraceId } from "@a2a/server-utils";
 
 export { LLM_PIPELINE_ACTIONS, type LlmPipelineAction };
@@ -485,7 +483,7 @@ async function recoverProcessingRequests(): Promise<void> {
       continue;
     }
     if (outcome.tag === "resubmit") {
-      const cap = readDialogHubLlmResubmitMax();
+      const cap = 2;
       const cnt = await requestService.incrementHubLlmResubmitCount(promiseId);
       if (cnt > cap) {
         await requestService.updateStatus(promiseId, "failed", undefined, {
@@ -571,13 +569,8 @@ export function stopRequestProcessor(): void {
  * Halt an active request by promiseId.
  */
 export function haltRequest(promiseId: string): boolean {
-  // Check if gray room feature is enabled
-  if (!features.transform.grayRoom) {
-    return false;
-  }
-
-import { GrayRoomOrchestrator } from "../../../gray-room/src/core/request-processor/gray-room-orchestrator.js";
-  return GrayRoomOrchestrator.halt(promiseId);
+  void promiseId;
+  return false;
 }
 
 // Re-export types for compatibility

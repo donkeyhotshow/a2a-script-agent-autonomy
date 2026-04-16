@@ -3,7 +3,7 @@
  * Core logic lives in `@a2a/server-utils`; this module adds optional A2A request context patches via `@a2a/server-request`.
  */
 
-import { requestService } from '@a2a/server-request';
+import { requestService } from "@a2a/server-request";
 import {
     AI_HUB_JSON_HEADERS,
     extractLlmTextFromHubResponseBody,
@@ -17,7 +17,7 @@ import {
     type InitAiHubChatPromiseResult,
     type LlmPromiseRecoveryKind,
     type PollReadyThenFetchOpts,
-} from '@a2a/server-utils';
+} from "@a2a/server-utils";
 
 export {
     AI_HUB_JSON_HEADERS,

@@ -1,5 +1,17 @@
 # DEV_STATE — 2026-04-08
 
+## Evidence — 2026-04-15 (full offline gate + monitor smoke)
+
+- **Environment**: Node **v22.20.0**, npm **10.9.3**.
+- **Offline gate (canonical)**: `npm run test:before-start` → **exit 0** (indirect **14/14**, a2a-server unit **87 passed**, `test:monitor` **38 passed**, `verify:audit-session-storage` OK). Log: `logs/test-before-start-2026-04-15T21-25-25.log`.
+- **Cross-system**: `npm run cross-system:validate` → **exit 0**, with **4×** `EXECUTE_MESSAGE_ONLY` in stored client sessions (informational; gate OK). Log: `logs/cross-system-validate-2026-04-15T21-26-05.log`.
+- **Sims**:
+  - `npm run sim:check-md:fail` → **exit 0**. Log: `logs/sim-check-md-2026-04-15T21-26-19.log`.
+  - `npm run sim:lint:all` → **exit 0** (**36** sims). Log: `logs/sim-lint-all-2026-04-15T21-26-19.log`.
+  - `npm run sim:validate -- --all` → **exit 0** (**174** targets). Log: `logs/sim-validate-all-2026-04-15T21-26-19.log`.
+- **Task Monitor**: `TASK_MONITOR_SKIP_PROMISE_GATE=1 npm run monitor:once` → **exit 0**, but initial health check failed (stack down): `clientApi ECONNREFUSED ::1:5173`, `a2aServer ECONNREFUSED 127.0.0.1:3000`. Log: `logs/monitor-once-2026-04-15T21-26-37.log`. Artifact: `monitor-artifacts/monitor-run-2026-04-15T18-26-40-655Z.json`.
+- **Central orchestrator**: `npm run central` currently returns **exit 1** immediately in this environment (no step output observed); see `logs/central-2026-04-15T21-25-15.log`. Workaround used: run the canonical step scripts above directly.
+
 **Evidence (2026-04-15, .agentLOGIC untrack):** `git rm -r --cached .agentLOGIC/` — дерево **~1719** путей убрано из индекса git; на диске каталог может остаться, дальнейший шум скрывает `.gitignore` (`.agentLOGIC/`).
 
 **Evidence (2026-04-15, repo hygiene):** Корневой `DEV_STATE.md` сокращён до указателя на этот файл; `.gitignore` / `.kiloignore` — `!.env.example`, `task-monitor-state.json`, scratch (`tsc-*.txt`), `.agentLOGIC/`; `task-monitor-state.json` убран из индекса git. GitLab CI и GitHub workflow «unified documentation» заменены на офлайн-джобы: `cross-system:validate`, `sim:check-md:fail`, `cd a2a-client && npm ci && npm run test:web`, Node **20**. Добавлен `a2a-client/pnpm-workspace.yaml`. В корневой `package.json` добавлен **`jsdom`** (dev), чтобы при hoisting Vitest из корня не падал `environment: jsdom`. `.env.example`: портативный `LOCAL_LLM_MODELS_DIR`. `TODO.md` (runbook 3005) закрыт. Локально: `npm run test:web` в `a2a-client` после `npm install` в `a2a-client` → **52 passed**.

@@ -5,7 +5,7 @@
  */
 
 import {logger} from '@a2a/server-utils/logger';
-import {actionProcessor} from '../../../actions/action-processor.js';
+import {actionProcessor} from '../../../../actions/src/action-processor.js';
 import type {
     RequestContext,
     ProcessResult,

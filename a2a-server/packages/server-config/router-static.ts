@@ -3,12 +3,19 @@
  * Single source for action-request-processor, dialog schema map.
  */
 
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const jsonPath = path.resolve(__dirname, '../../../shared/router-static-choices.json');
+/** `a2a-server/shared/router-static-choices.json` — depth differs when this file runs from `dist/` vs `src/`. */
+const jsonPathCandidates = [
+  path.resolve(__dirname, "../../shared/router-static-choices.json"),
+  path.resolve(__dirname, "../../../shared/router-static-choices.json"),
+];
+const jsonPath: string =
+  jsonPathCandidates.find((p) => existsSync(p)) ??
+  jsonPathCandidates[jsonPathCandidates.length - 1]!;
 
 export interface RouterStaticChoice {
     id: string;

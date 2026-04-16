@@ -33,7 +33,9 @@ export class ActionRegistry {
      * Create a new ActionRegistry
      */
     constructor(directoryPath?: string) {
-        this.defaultDirectory = directoryPath || path.resolve(process.cwd(), 'src/actions/definitions');
+        this.defaultDirectory =
+            directoryPath ||
+            path.resolve(process.cwd(), 'packages/actions/src/definitions');
         logger.info(`[ActionRegistry] Initialized with directory: ${this.defaultDirectory}`);
     }
 

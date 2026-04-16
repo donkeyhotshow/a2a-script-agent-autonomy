@@ -285,9 +285,3 @@ export const getActionService = createSingleton(ActionService);
 
 // Экспорт синглтона по умолчанию
 export const actionService = getActionService();
-
-// Автоматическая инициализация при импорте
-// Запускаем асинхронную инициализацию, не блокируя импорт
-if (typeof process !== 'undefined') {
-    actionService.initialize().catch((e) => logger.error('[ActionService] Auto-init failed', e));
-}

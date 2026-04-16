@@ -18,8 +18,15 @@
 import { randomUUID } from 'node:crypto';
 import { promises as fs } from 'node:fs';
 import { join } from 'path';
-import { logger } from '@a2a/server-utils/logger';
-import type { Pool } from 'pg';
+import { logger } from "@a2a/server-utils/logger";
+
+/** Subset of `pg.Pool` used here — optional `pg` at runtime, no compile-time dep on `pg`. */
+interface PgPoolLike {
+  query<T = unknown>(
+    queryText: string,
+    values?: unknown[],
+  ): Promise<{ rows: T[] }>;
+}
 
 // ── Public types ──────────────────────────────────────────────────────────────
 
@@ -119,7 +126,7 @@ interface EpisodeRow {
  * to the JSON backend.
  */
 class PostgresBackend implements StorageBackend {
-  private pool: Pool;
+  private pool: PgPoolLike;
 
   /**
    * @throws if `pg` is not installed or DATABASE_URL is missing
@@ -127,7 +134,9 @@ class PostgresBackend implements StorageBackend {
   constructor(connectionString: string) {
     // Optional dep: load via require so it works in CommonJS output
     // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { Pool: PgPool } = require('pg') as { Pool: new (opts: object) => Pool };
+    const { Pool: PgPool } = require("pg") as {
+      Pool: new (opts: object) => PgPoolLike;
+    };
     this.pool = new PgPool({ connectionString });
   }
 

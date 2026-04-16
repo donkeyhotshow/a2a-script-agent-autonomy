@@ -1,1 +1,1 @@
-export * from '@a2a/request';
+export * from "@a2a/server-request";

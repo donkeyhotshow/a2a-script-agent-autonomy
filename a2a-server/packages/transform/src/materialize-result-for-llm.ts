@@ -4,7 +4,7 @@
  * Callers pass a clone if the original invoke payload must stay unchanged.
  */
 
-import { A2A_TRACE_CONTEXT_KEY, deepCloneJson } from '@a2a/server-utils';
+import { A2A_TRACE_CONTEXT_KEY, deepCloneJson } from "@a2a/server-utils";
 import { toInvokeShapeForPromptsTransform } from './invoke-shape.js';
 
 const MAX_TOOL_SUMMARY = 4000;
