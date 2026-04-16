@@ -271,6 +271,7 @@ body {
     color: #6b7280;
     margin-bottom: 6px;
 }
+.op-msg-col { flex: 1; min-width: 0; }
 .op-msg-body { white-space: pre-wrap; font-size: 13px; }
 
 .op-choices { padding: 10px; border-top: 1px solid #eef2f7; display: flex; flex-direction: column; gap: 8px; }
@@ -284,10 +285,14 @@ body {
     border: 1px solid #e5e7eb;
     background: #fff;
     cursor: pointer;
+    transition: background 120ms ease, border-color 120ms ease;
 }
-.op-choice:hover { background: #f9fafb; }
+.op-choice:hover { background: #f0f9ff; border-color: #bae6fd; }
+.op-choice:disabled { opacity: 0.5; cursor: not-allowed; }
 .op-choice-label { font-weight: 600; font-size: 13px; color: #111827; }
 .op-choice-desc { font-size: 12px; color: #6b7280; margin-top: 3px; }
+/* Form submit button (rendered inline in dynamic forms) */
+.op-form-submit { margin-top: 4px; width: 100%; }
 
 .op-grayroom { padding: 10px; border-top: 1px solid #eef2f7; }
 .op-grayroom:empty { display: none; }
@@ -759,3 +764,153 @@ body {
     border-color: #334155;
     color: #cbd5e1;
 }
+
+/* --- Missing classes referenced by operator-ui.js --- */
+
+/* Waiting card layout: icon + content column */
+.op-waiting-main {
+    flex: 1;
+    min-width: 0;
+}
+
+/* Message column (text side of avatar+col layout) */
+.op-msg-col { flex: 1; min-width: 0; }
+
+/* Timestamp shown below each message body */
+.op-msg-ts {
+    font-size: 10px;
+    color: #64748b;
+    margin-top: 5px;
+    letter-spacing: 0.02em;
+}
+
+/* Dark-theme overrides for trace / grayroom panels */
+.op-grayroom {
+    padding: 0 10px 10px;
+    border-top: 1px solid #1f2937;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+.op-grayroom:empty { display: none; }
+
+.op-grayroom-card {
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid #1e3a5f;
+    background: #0c1929;
+    font-size: 12px;
+    color: #93c5fd;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.op-grayroom-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #475569;
+    margin-bottom: 4px;
+}
+
+/* Retry bar uses op-retry-text (already in dark overrides) — add light fallback */
+.op-retry-bar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border-top: 1px solid #7f1d1d;
+    background: #450a0a;
+    color: #fecaca;
+    font-size: 13px;
+}
+.op-retry-text { flex: 1; }
+
+/* Choice selected state dark override */
+.op-choice {
+    background: #1e293b;
+    border-color: #334155;
+    color: #e2e8f0;
+}
+.op-choice:hover { background: #1e3a5f; border-color: #3b82f6; }
+.op-choice.is-selected { background: #0c4a6e; border-color: #38bdf8; }
+.op-choice-label { color: #f1f5f9; }
+.op-choice-desc { color: #94a3b8; }
+
+/* Form submit button dark overrides */
+.op-form-submit { margin-top: 4px; width: 100%; }
+
+/* Trace pane */
+.op-trace-event {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 11px;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid #1f2937;
+    background: #0f172a;
+    color: #94a3b8;
+    margin: 4px 0;
+}
+
+/* Session list item: compact two-line layout with timestamp */
+.op-session-title {
+    font-size: 12px;
+    color: #e2e8f0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.op-session-ts {
+    font-size: 10px;
+    color: #475569;
+    margin-top: 2px;
+}
+
+/* Connection dot pulse animation when processing */
+@keyframes op-dot-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+}
+.op-conn-dot[data-status="Processing…"],
+.op-conn-dot[data-status="Hydrating…"],
+.op-conn-dot[data-status="Polling…"] {
+    animation: op-dot-pulse 1.2s ease-in-out infinite;
+}
+
+/* Monitor body dark override */
+.op-table-head { color: #6b7280; }
+.op-table-row { border-bottom-color: #1f2937; color: #e2e8f0; }
+
+/* Panel footer (sessions sidebar bottom) dark override */
+.op-panel-footer {
+    border-top-color: #1f2937;
+    background: #111827;
+}
+
+/* Empty state in dark theme */
+.op-empty {
+    color: #475569;
+    border-color: #1f2937;
+    background: #0f172a;
+}
+.op-empty-small { color: #475569; }
+
+/* Workbench pane headers */
+.op-tabs { gap: 6px; }
+.op-tab {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+.op-tab.is-on { background: #f1f5f9; color: #111827; border-color: #f1f5f9; }
+
+/* Monitor badge dark */
+.op-badge {
+    background: #1e293b;
+    border-color: #334155;
+    color: #94a3b8;
+}
+.op-badge-accent { background: #1e3a5f; border-color: #2563eb; color: #93c5fd; }
+.op-badge-running { background: #1e3a5f; border-color: #2563eb; color: #93c5fd; }
+.op-badge-pending { background: #292524; border-color: #92400e; color: #fcd34d; }
+.op-badge-done { background: #052e16; border-color: #166534; color: #4ade80; }
+.op-badge-failed { background: #450a0a; border-color: #991b1b; color: #fca5a5; }

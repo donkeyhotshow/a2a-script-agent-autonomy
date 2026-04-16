@@ -495,7 +495,7 @@
         const st = store.getState?.() || {};
         const msgs = st.messages || [];
         if (!Array.isArray(msgs) || msgs.length === 0) {
-            container.innerHTML = `<div class="op-empty">No messages</div>`;
+            container.innerHTML = `<div class="op-empty">Start a conversation — type a message below or create a new session.</div>`;
             const stE = store.getState?.() || {};
             const ex0 = stE.execute;
             if (Array.isArray(ex0?.artifacts) && ex0.artifacts.length > 0) {
@@ -521,6 +521,7 @@
 
             const avatar = document.createElement('div');
             avatar.className = 'op-msg-avatar';
+            avatar.setAttribute('aria-hidden', 'true');
             avatar.textContent = av;
 
             const col = document.createElement('div');
@@ -528,7 +529,8 @@
 
             const meta = document.createElement('div');
             meta.className = 'op-msg-meta';
-            meta.textContent = role;
+            const tsStr = m.ts ? new Date(m.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+            meta.textContent = role + (tsStr ? ' · ' + tsStr : '');
 
             const bodyWrap = document.createElement('div');
             if (messageBodyLooksLikeDiff(content) && role !== 'user') {
@@ -746,7 +748,7 @@
         if (!list) return;
         const rows = loadSessionListFromStorage();
         if (rows.length === 0) {
-            list.innerHTML = `<div class="op-empty-small">No sessions yet</div>`;
+            list.innerHTML = `<div class="op-empty-small">No sessions yet — press ＋ New to start.</div>`;
             return;
         }
         list.innerHTML = rows
@@ -754,7 +756,15 @@
                 const id = escapeHtml(s.id);
                 const title = escapeHtml(s.title || s.id.slice(0, 8));
                 const isActive = s.id === state.activeSessionId;
-                return `<button class="op-session-item ${isActive ? 'is-on' : ''}" type="button" data-sid="${id}" title="${id}">${title}</button>`;
+                const tsStr = s.ts
+                    ? new Date(s.ts).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+                    : '';
+                return (
+                    `<button class="op-session-item${isActive ? ' is-on' : ''}" type="button" data-sid="${id}" title="${id}">` +
+                    `<div class="op-session-title">${title}</div>` +
+                    (tsStr ? `<div class="op-session-ts">${escapeHtml(tsStr)}</div>` : '') +
+                    `</button>`
+                );
             })
             .join('');
         list.querySelectorAll('[data-sid]').forEach((btn) => {
