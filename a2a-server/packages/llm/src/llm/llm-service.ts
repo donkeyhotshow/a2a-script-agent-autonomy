@@ -124,11 +124,15 @@ export class LlmService {
       throw new Error(`[LlmService] Groq API ${res.status}: ${text}`);
     }
 
-    const json = (await res.json()) as OpenAICompatResponse;
+    const groqJson = (await res.json()) as OpenAICompatResponse;
+    const groqContent = groqJson.choices[0]?.message.content;
+    if (groqContent === undefined || groqContent === null) {
+      throw new Error(`[LlmService] Groq returned empty choices. Response: ${JSON.stringify(groqJson).slice(0, 300)}`);
+    }
     return {
-      content: json.choices[0]?.message.content ?? "",
-      model: json.model,
-      usage: json.usage,
+      content: groqContent,
+      model: groqJson.model,
+      usage: groqJson.usage,
     };
   }
 
@@ -194,11 +198,15 @@ export class LlmService {
       throw new Error(`[LlmService] OpenAI API ${res.status}: ${text}`);
     }
 
-    const json = (await res.json()) as OpenAICompatResponse;
+    const openaiJson = (await res.json()) as OpenAICompatResponse;
+    const openaiContent = openaiJson.choices[0]?.message.content;
+    if (openaiContent === undefined || openaiContent === null) {
+      throw new Error(`[LlmService] OpenAI returned empty choices. Response: ${JSON.stringify(openaiJson).slice(0, 300)}`);
+    }
     return {
-      content: json.choices[0]?.message.content ?? "",
-      model: json.model,
-      usage: json.usage,
+      content: openaiContent,
+      model: openaiJson.model,
+      usage: openaiJson.usage,
     };
   }
 

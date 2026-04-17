@@ -71,8 +71,8 @@ setInterval(() => {
 
 // ── Session ID validation ─────────────────────────────────────────────────────
 
-/** Allowed characters for session IDs (alphanumeric, underscore, hyphen). */
-const SESSION_ID_RE = /^[\w-]{1,128}$/;
+/** Allowed characters for session IDs (alphanumeric, underscore, hyphen). Max 64 chars. */
+const SESSION_ID_RE = /^[\w-]{1,64}$/;
 
 function isValidSessionId(id: string): boolean {
     return SESSION_ID_RE.test(id);
@@ -149,7 +149,7 @@ router.post('/:id/stop', (req: Request, res: Response): void => {
 
     const body = req.body as Record<string, unknown> | undefined;
     const reason: string =
-        body !== null && typeof body === 'object' && typeof body['reason'] === 'string'
+        body !== undefined && typeof body['reason'] === 'string'
             ? body['reason']
             : 'user_requested';
 
