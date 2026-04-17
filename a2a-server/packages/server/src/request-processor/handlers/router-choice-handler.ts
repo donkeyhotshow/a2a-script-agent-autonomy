@@ -133,20 +133,23 @@ export function pickRouterSubmitChoice(ctx: Record<string, unknown>): string | u
 
     // Check result.choice (common in form submissions)
     const result = ctx['result'];
-    if (result && typeof result === 'object' && 'choice' in result && typeof (result as any)['choice'] === 'string') {
-        return (result as any)['choice'];
+    if (result && typeof result === 'object' && !Array.isArray(result) && 'choice' in result) {
+        const choice = (result as Record<string, unknown>)['choice'];
+        if (typeof choice === 'string') return choice;
     }
 
     // Check message.choice
     const message = ctx['message'];
-    if (message && typeof message === 'object' && 'choice' in message && typeof (message as any)['choice'] === 'string') {
-        return (message as any)['choice'];
+    if (message && typeof message === 'object' && !Array.isArray(message) && 'choice' in message) {
+        const choice = (message as Record<string, unknown>)['choice'];
+        if (typeof choice === 'string') return choice;
     }
 
     // Check execute.choice
     const execute = ctx['execute'];
-    if (execute && typeof execute === 'object' && 'choice' in execute && typeof (execute as any)['choice'] === 'string') {
-        return (execute as any)['choice'];
+    if (execute && typeof execute === 'object' && !Array.isArray(execute) && 'choice' in execute) {
+        const choice = (execute as Record<string, unknown>)['choice'];
+        if (typeof choice === 'string') return choice;
     }
 
     // Check task as shorthand for choice (when form had choices)

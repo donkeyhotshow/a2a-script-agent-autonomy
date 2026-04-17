@@ -8,6 +8,7 @@ import {errorHandler} from './middleware/error.middleware.js';
 import {registryAuth} from './middleware/registry-auth.middleware.js';
 import routes from './routes/index.js';
 import sessionsRouter from './routes/sessions.routes.js';
+import sessionEventsRouter from './routes/session-events.js';
 import {register} from './utils/metrics.js';
 import registryRegisterRouter from './api/registry/register.js';
 import registryRouteRouter from './api/registry/route.js';
@@ -73,6 +74,7 @@ app.get('/metrics', registryAuth, async (_req: Request, res: Response) => {
 
 app.use('/api/v1', routes);
 app.use('/api/a2a/sessions', sessionsRouter);
+app.use('/api/a2a/sessions', sessionEventsRouter);
 app.use('/api/registry/register', registryAuth, registryRegisterRouter);
 app.use('/api/registry/route', registryAuth, registryRouteRouter);
 app.use('/api/registry', registryAuth, registryHealthRouter);

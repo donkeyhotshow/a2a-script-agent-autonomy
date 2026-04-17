@@ -1,6 +1,15 @@
 # DEV_STATE — 2026-04-08
 
-## Evidence — 2026-04-15 (full offline gate + monitor smoke)
+## Evidence — 2026-04-17 (code hygiene + client-server data separation)
+
+- **Environment**: Node **v24.14.1** (sandbox).
+- **Fixes shipped:**
+  - `a2a-client/packages/shared/a2a-invoke-builders.mjs/.js`: `sanitizeContextForServer` now strips `session_id`/`sessionId`/`projectId`/`projectRoot` before context is written to `request-to-server.json` or sent upstream; `mergeResponseContext` strips same fields from base before merging into `server-response.json`; `sanitizeInvokeBodyForA2aUpstream` also strips client-scope keys from the top-level invoke body.
+  - `a2a-server/packages/server/src/request-processor/handlers/task-request-handler.ts`: removed server echo-back of client `session_id` into response context; added `stripMarkdownNoise()` and applied to choice `label`/`description` in `rankedChoices`.
+  - `a2a-server/packages/server/src/request-processor/handlers/router-choice-handler.ts`: replaced `as any` casts with proper `Record<string, unknown>` narrowing in `pickRouterSubmitChoice`.
+  - `a2a-client/storage/sessions/sess_1775611280997/session-index.json`: corrected drifted index (phantom steps 2+3 removed, `currentStep=1`).
+- **Session audit (post-fix):** `node scripts/audit-session-storage-to-tasks.mjs` → **15 sessions, 14 with issues, 2 cluster files** — all remaining findings are in historical pre-fix session data; code fix prevents recurrence in new sessions.
+- **Tasks:** `tasks/pending/` — empty after moving 20 historical session-audit + 2 cluster task files to `tasks/completed/`.
 
 - **Environment**: Node **v22.20.0**, npm **10.9.3**.
 - **Offline gate (canonical)**: `npm run test:before-start` → **exit 0** (indirect **14/14**, a2a-server unit **87 passed**, `test:monitor` **38 passed**, `verify:audit-session-storage` OK). Log: `logs/test-before-start-2026-04-15T21-25-25.log`.

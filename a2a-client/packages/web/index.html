@@ -15,7 +15,9 @@
                         <div class="op-panel-title">Sessions</div>
                         <button id="op-new-session" class="op-btn op-btn-primary" type="button">＋ New</button>
                     </div>
+                    <div id="op-tag-filter" class="op-tag-filter" aria-label="Filter by tag"></div>
                     <div id="op-session-list" class="op-session-list"></div>
+                    <div id="op-memory-card" class="op-memory-card" hidden aria-label="Session memory"></div>
                     <div class="op-panel-footer">
                         <span class="op-conn-dot" id="op-conn-dot" aria-hidden="true"></span>
                         <span id="op-conn-label" class="op-conn-label">Idle</span>
@@ -33,6 +35,7 @@
                     <div id="op-waiting" class="op-waiting" hidden></div>
                     <div id="op-choices" class="op-choices"></div>
                     <div id="op-grayroom" class="op-grayroom"></div>
+                    <div id="op-error-center" class="op-error-center" hidden aria-live="assertive"></div>
                     <div id="op-retry-bar" class="op-retry-bar" hidden></div>
                     <form id="op-input-form" class="op-input" autocomplete="off">
                         <div id="op-form-fields" class="op-form-fields"></div>
@@ -42,6 +45,13 @@
                             <button id="op-stop" class="op-btn op-btn-danger" type="button">Stop</button>
                         </div>
                     </form>
+                    <div id="op-shortcut-bar" class="op-shortcut-bar" aria-label="Keyboard shortcuts">
+                        <span class="op-shortcut-hint"><kbd>N</kbd> New</span>
+                        <span class="op-shortcut-hint"><kbd>P</kbd> Pause</span>
+                        <span class="op-shortcut-hint"><kbd>R</kbd> Retry</span>
+                        <span class="op-shortcut-hint"><kbd>E</kbd> Last error</span>
+                        <span class="op-shortcut-hint"><kbd>C</kbd> Copy ID</span>
+                    </div>
                 </section>
 
                 <section id="operator-workbench" aria-label="Workbench">
@@ -50,7 +60,14 @@
                         <div class="op-tabs" role="tablist" aria-label="Workbench tabs">
                             <button class="op-tab is-on" type="button" data-tab="diff" role="tab" aria-selected="true">Diff</button>
                             <button class="op-tab" type="button" data-tab="trace" role="tab" aria-selected="false">Trace</button>
+                            <button class="op-tab" type="button" data-tab="artifacts" role="tab" aria-selected="false">Artifacts</button>
+                            <button class="op-tab" type="button" data-tab="evidence" role="tab" aria-selected="false">Evidence</button>
                         </div>
+                    </div>
+                    <div id="op-workbench-status" class="op-workbench-status" hidden aria-label="Session status">
+                        <span class="op-wb-session-id" id="op-wb-session-id"></span>
+                        <span class="op-wb-goal" id="op-wb-goal"></span>
+                        <span class="op-wb-state-badge" id="op-wb-state-badge"></span>
                     </div>
                     <div class="op-workbench-body">
                         <div class="op-pane is-on" data-pane="diff">
@@ -58,6 +75,22 @@
                         </div>
                         <div class="op-pane" data-pane="trace">
                             <div class="op-empty">Waiting for trace steps…</div>
+                        </div>
+                        <div class="op-pane" data-pane="artifacts">
+                            <div class="op-empty">No artifacts yet — agent activity will appear here.</div>
+                        </div>
+                        <div class="op-pane" data-pane="evidence">
+                            <div class="op-empty">No evidence recorded — build/test results will appear here.</div>
+                        </div>
+                    </div>
+                    <div id="op-replay-overlay" class="op-replay-overlay" hidden aria-label="Replay controls">
+                        <div class="op-replay-bar">
+                            <button type="button" class="op-btn op-btn-ghost" id="op-replay-prev" aria-label="Previous step">◀</button>
+                            <button type="button" class="op-btn op-btn-ghost" id="op-replay-play" aria-label="Play/Pause">▶</button>
+                            <button type="button" class="op-btn op-btn-ghost" id="op-replay-next" aria-label="Next step">▶▶</button>
+                            <input type="range" id="op-replay-seek" class="op-replay-seek" min="0" max="0" value="0" aria-label="Seek">
+                            <span id="op-replay-pos" class="op-replay-pos">0 / 0</span>
+                            <button type="button" class="op-btn op-btn-ghost" id="op-replay-close" aria-label="Close replay">✕</button>
                         </div>
                     </div>
                 </section>
