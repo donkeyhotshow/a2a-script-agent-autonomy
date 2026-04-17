@@ -5,21 +5,11 @@
       "step": 1,
       "hasServerResponse": true,
       "hasClientResult": false
-    },
-    {
-      "step": 2,
-      "hasServerResponse": true,
-      "hasClientResult": true
-    },
-    {
-      "step": 3,
-      "hasServerResponse": true,
-      "hasClientResult": true
     }
   ],
-  "updatedAt": "2026-04-09T11:12:31.084Z",
+  "updatedAt": "2026-04-17T12:55:34.437Z",
   "createdAt": "2026-04-08T01:21:21.001Z",
-  "currentStep": 3,
+  "currentStep": 1,
   "mode": "agent",
   "promiseId": null,
   "promiseStatus": null,

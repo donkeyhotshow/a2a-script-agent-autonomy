@@ -11,8 +11,15 @@ export function extractA2aExecute(serverResponse) {
     return inner?.execute || null;
 }
 
+/** Fields that belong only to the client scope and must never be sent to the A2A server or written to disk snapshots. */
+const CLIENT_SCOPE_KEYS = ['sessionId', 'session_id', 'projectId', 'projectRoot'];
+
 export function mergeResponseContext(fallbackContext = {}, serverResponse = null) {
     const base = { ...(fallbackContext || {}) };
+    // Strip client-internal fields that must not appear in persisted server-response.json
+    for (const k of CLIENT_SCOPE_KEYS) {
+        delete base[k];
+    }
     if (serverResponse?.context) {
         const patch = pickInvokeContextPatch(serverResponse.context);
         return { ...base, ...patch };
@@ -25,7 +32,9 @@ export function sanitizeContextForServer(context) {
         return {};
     }
     const out = { ...context };
-    // Remove sensitive fields if any
+    for (const k of CLIENT_SCOPE_KEYS) {
+        delete out[k];
+    }
     return out;
 }
 

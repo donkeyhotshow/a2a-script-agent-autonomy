@@ -17,8 +17,24 @@ import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} 
 import {dialogRequestProcessor} from '../dialog-request-processor.js';
 
 /**
- * Parse task text from various context formats
+ * Strip markdown noise from a choice label or description.
+ * Action definitions may contain markdown-formatted metadata lines (e.g. "**ID:** `foo`",
+ * "**Description:** ...") that leak into router form choices when used verbatim.
+ * This sanitizer removes those patterns to keep labels/descriptions plain text.
  */
+function stripMarkdownNoise(text: string): string {
+    if (!text) return text;
+    // Remove bold key-value prefix patterns like "**ID:** " or "*ID:** "
+    let out = text.replace(/^\*{1,2}[A-Za-z ]+:\*{1,2}\s*/u, '');
+    // Remove trailing source annotation like "**Source:** `path`"
+    out = out.replace(/\s+\*{1,2}Source:\*{1,2}\s+`[^`]+`\s*$/u, '');
+    // Remove inline backtick code spans
+    out = out.replace(/`([^`]+)`/gu, '$1');
+    // Collapse extra whitespace
+    return out.replace(/\s+/g, ' ').trim();
+}
+
+
 export function parseTaskText(ctx: Record<string, unknown>): string {
     const toStr = (v: unknown): string | null => {
         if (!v) return null;
@@ -154,8 +170,8 @@ export async function handleTaskRequest(
         // Use keyword-matched actions as choices, sorted by score
         rankedChoices = actionsToUse.map(action => ({
             id: action.id,
-            label: action.title || action.id,
-            description: action.description || ''
+            label: stripMarkdownNoise(action.title || action.id),
+            description: stripMarkdownNoise(action.description || '')
         }));
         logger.info('[TaskRequestHandler] Found keyword-matched actions', {
             count: rankedChoices.length,
@@ -183,11 +199,6 @@ export async function handleTaskRequest(
         execution,
         task: taskText
     };
-    // Include sessionId in context if it exists in input
-    const sessionIdValue = ctx['session_id'];
-    if (sessionIdValue && typeof sessionIdValue === 'string') {
-        (resultContext as Record<string, unknown>)['session_id'] = sessionIdValue;
-    }
 
     return {
         outcome: 'completed',
