@@ -78,6 +78,21 @@ function isValidSessionId(id: string): boolean {
     return SESSION_ID_RE.test(id);
 }
 
+// ── Path safety helper ────────────────────────────────────────────────────────
+
+/**
+ * Resolve the session directory and verify it stays within SESSION_STORAGE_PATH.
+ * Returns `null` when traversal is detected.
+ */
+function resolveSessionDir(sessionId: string): string | null {
+    const storageRoot = path.resolve(SESSION_STORAGE_PATH);
+    const candidate = path.resolve(storageRoot, sessionId);
+    if (!candidate.startsWith(storageRoot + path.sep) && candidate !== storageRoot) {
+        return null;
+    }
+    return candidate;
+}
+
 // ── TASK 1: SSE event stream ────────────────────────────────────────────────
 
 /**
@@ -88,6 +103,15 @@ function isValidSessionId(id: string): boolean {
  * - Sends `:heartbeat` comments every 30 s to keep the connection alive.
  */
 router.get('/:id/events', (req: Request, res: Response): void => {
+    const clientIp = String(req.ip ?? req.socket.remoteAddress ?? 'unknown');
+    if (!checkRateLimit(clientIp)) {
+        res.status(429).json({
+            success: false,
+            error: {code: 'RATE_LIMITED', message: 'Too many requests — please slow down'},
+        });
+        return;
+    }
+
     const sessionId = String(req.params['id'] ?? '');
 
     if (!isValidSessionId(sessionId)) {
@@ -140,6 +164,15 @@ router.get('/:id/events', (req: Request, res: Response): void => {
  * react (e.g. OrchestratorKernel can abort mid-turn).
  */
 router.post('/:id/stop', (req: Request, res: Response): void => {
+    const clientIp = String(req.ip ?? req.socket.remoteAddress ?? 'unknown');
+    if (!checkRateLimit(clientIp)) {
+        res.status(429).json({
+            success: false,
+            error: {code: 'RATE_LIMITED', message: 'Too many requests — please slow down'},
+        });
+        return;
+    }
+
     const sessionId = String(req.params['id'] ?? '');
 
     if (!isValidSessionId(sessionId)) {
@@ -197,10 +230,15 @@ router.get('/:id/messages', (req: Request, res: Response): void => {
         return;
     }
 
-    // path.join + path.resolve prevent directory traversal: SESSION_STORAGE_PATH is an
-    // absolute directory and sessionId is validated to contain only [\w-] characters,
-    // so joining them cannot escape the storage root.
-    const sessionDir = path.join(SESSION_STORAGE_PATH, sessionId);
+    // Resolve session directory with path-traversal protection.
+    const sessionDir = resolveSessionDir(sessionId);
+    if (sessionDir === null) {
+        res.status(400).json({
+            success: false,
+            error: {code: 'INVALID_SESSION_ID', message: 'Invalid session path'},
+        });
+        return;
+    }
 
     if (!fs.existsSync(sessionDir)) {
         res.status(404).json({

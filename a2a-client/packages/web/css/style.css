@@ -139,7 +139,7 @@ body {
     flex: 1;
     min-height: 0;
     display: grid;
-    grid-template-columns: 200px 1fr 1fr;
+    grid-template-columns: 300px 1fr 1fr;
     gap: 8px;
     padding: 10px;
 }
@@ -432,7 +432,7 @@ body {
 .op-table-row { font-size: 12px; padding: 6px 0; border-bottom: 1px solid #f3f4f6; }
 
 @media (max-width: 1100px) {
-    #operator-main { grid-template-columns: 200px 1fr; grid-template-rows: 1fr 1fr; }
+    #operator-main { grid-template-columns: 240px 1fr; grid-template-rows: 1fr 1fr; }
     #operator-workbench { grid-column: 1 / -1; }
 }
 
@@ -1597,3 +1597,155 @@ body {
     white-space: nowrap;
 }
 
+
+/* ─── Phase 4: Per-tag color coding ─────────────────────────────────────── */
+
+/* Tag chip colors — used in filter bar, session row tags, and tag picker */
+.op-tag-chip[data-tag="bugfix"],
+.op-session-tag[data-tag="bugfix"]     { color: #f87171; border-color: #7f1d1d; }
+.op-tag-chip[data-tag="bugfix"].is-on  { background: #450a0a; border-color: #ef4444; color: #fca5a5; }
+
+.op-tag-chip[data-tag="refactor"],
+.op-session-tag[data-tag="refactor"]   { color: #94a3b8; border-color: #475569; }
+.op-tag-chip[data-tag="refactor"].is-on { background: #1e293b; border-color: #64748b; color: #cbd5e1; }
+
+.op-tag-chip[data-tag="research"],
+.op-session-tag[data-tag="research"]   { color: #60a5fa; border-color: #1d4ed8; }
+.op-tag-chip[data-tag="research"].is-on { background: #1e3a5f; border-color: #3b82f6; color: #93c5fd; }
+
+.op-tag-chip[data-tag="audit"],
+.op-session-tag[data-tag="audit"]      { color: #fbbf24; border-color: #92400e; }
+.op-tag-chip[data-tag="audit"].is-on   { background: #292524; border-color: #d97706; color: #fde68a; }
+
+.op-tag-chip[data-tag="hotfix"],
+.op-session-tag[data-tag="hotfix"]     { color: #fb923c; border-color: #7c2d12; }
+.op-tag-chip[data-tag="hotfix"].is-on  { background: #1c0a00; border-color: #ea580c; color: #fed7aa; }
+
+.op-tag-chip[data-tag="experiment"],
+.op-session-tag[data-tag="experiment"] { color: #c084fc; border-color: #6b21a8; }
+.op-tag-chip[data-tag="experiment"].is-on { background: #1a0a2e; border-color: #9333ea; color: #e9d5ff; }
+
+/* Tag picker item colors */
+.op-tag-picker-item[data-pick="bugfix"]     { color: #f87171; }
+.op-tag-picker-item[data-pick="refactor"]   { color: #94a3b8; }
+.op-tag-picker-item[data-pick="research"]   { color: #60a5fa; }
+.op-tag-picker-item[data-pick="audit"]      { color: #fbbf24; }
+.op-tag-picker-item[data-pick="hotfix"]     { color: #fb923c; }
+.op-tag-picker-item[data-pick="experiment"] { color: #c084fc; }
+
+/* ─── Phase 4: Evidence filter bar ──────────────────────────────────────── */
+
+.op-evidence-filter {
+    display: flex;
+    gap: 4px;
+    padding: 6px 0 8px;
+    border-bottom: 1px solid #1f2937;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.op-evidence-filter-btn {
+    font-size: 10px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    border: 1px solid #334155;
+    background: #1e293b;
+    color: #64748b;
+    cursor: pointer;
+    transition: background 120ms, color 120ms;
+}
+.op-evidence-filter-btn:hover { background: #1f2937; color: #e2e8f0; }
+.op-evidence-filter-btn.is-on { background: #1e293b; border-color: #64748b; color: #f1f5f9; }
+.op-evidence-filter-btn[data-ef="pass"].is-on  { background: #052e16; border-color: #166534; color: #4ade80; }
+.op-evidence-filter-btn[data-ef="fail"].is-on  { background: #450a0a; border-color: #991b1b; color: #fca5a5; }
+.op-evidence-filter-btn[data-ef="warn"].is-on  { background: #1c1400; border-color: #92400e; color: #fde68a; }
+
+.op-evidence-empty-filter {
+    padding: 12px 0;
+    font-size: 12px;
+    color: #475569;
+    text-align: center;
+}
+
+/* ─── Phase 4: Session goal chip in session row ──────────────────────────── */
+
+.op-session-goal {
+    font-size: 10px;
+    color: #475569;
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    font-style: italic;
+}
+
+/* ─── Phase 4: Workbench session status bar ──────────────────────────────── */
+
+.op-workbench-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 10px;
+    border-bottom: 1px solid #1f2937;
+    background: #0b0f17;
+    min-height: 28px;
+    flex-wrap: wrap;
+}
+
+.op-workbench-status[hidden] { display: none !important; }
+
+.op-wb-session-id {
+    font-size: 10px;
+    font-family: ui-monospace, monospace;
+    color: #334155;
+}
+
+.op-wb-goal {
+    flex: 1;
+    font-size: 11px;
+    color: #64748b;
+    font-style: italic;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.op-wb-state-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    border: 1px solid #1f2937;
+    background: #1e293b;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+}
+
+.op-wb-state-badge[data-wbstate="POLLING"],
+.op-wb-state-badge[data-wbstate="SENDING"],
+.op-wb-state-badge[data-wbstate="PLANNING"],
+.op-wb-state-badge[data-wbstate="GENERATING"],
+.op-wb-state-badge[data-wbstate="TOOL_RUNNING"],
+.op-wb-state-badge[data-wbstate="RETRYING"],
+.op-wb-state-badge[data-wbstate="RECOVERING"],
+.op-wb-state-badge[data-wbstate="COMPRESSING"] {
+    background: #1e3a5f;
+    border-color: #2563eb;
+    color: #93c5fd;
+}
+
+.op-wb-state-badge[data-wbstate="ERROR"],
+.op-wb-state-badge[data-wbstate="BLOCKED"] {
+    background: #450a0a;
+    border-color: #991b1b;
+    color: #fca5a5;
+}
+
+.op-wb-state-badge[data-wbstate="DONE"],
+.op-wb-state-badge[data-wbstate="IDLE"] {
+    background: #052e16;
+    border-color: #166534;
+    color: #4ade80;
+}

@@ -62,6 +62,36 @@ interface OllamaChatResponse {
 
 // ── LlmService ───────────────────────────────────────────────────────────────
 
+/**
+ * Validate that a base URL is safe (https scheme, no private/loopback addresses).
+ * Throws when the URL is structurally invalid or uses a disallowed scheme.
+ * Private IP ranges are blocked to prevent SSRF when the env var is user-supplied.
+ */
+function assertSafeBaseUrl(raw: string, name: string): void {
+  let parsed: URL;
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error(`[LlmService] ${name} is not a valid URL: "${raw}"`);
+  }
+  if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+    throw new Error(`[LlmService] ${name} must use http or https protocol, got: "${parsed.protocol}"`);
+  }
+  // Block private/loopback hostnames when running in a cloud context.
+  const host = parsed.hostname;
+  const isLoopback = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+  const isPrivate =
+    /^10\./.test(host) ||
+    /^192\.168\./.test(host) ||
+    /^172\.(1[6-9]|2\d|3[01])\./.test(host);
+  // Ollama is intentionally allowed on localhost; Groq and OpenAI are external.
+  if ((isLoopback || isPrivate) && name !== 'OLLAMA_BASE_URL') {
+    throw new Error(
+      `[LlmService] ${name} must not point to a private/loopback address: "${raw}"`,
+    );
+  }
+}
+
 export class LlmService {
   /**
    * Call the configured LLM provider and return the completion text.
@@ -101,6 +131,7 @@ export class LlmService {
         /\/+$/,
         "",
       );
+    assertSafeBaseUrl(base, 'GROQ_BASE_URL');
 
     const res = await fetch(`${base}/chat/completions`, {
       method: "POST",
@@ -140,6 +171,7 @@ export class LlmService {
     const base = (
       process.env["OLLAMA_BASE_URL"] ?? "http://localhost:11434"
     ).replace(/\/+$/, "");
+    assertSafeBaseUrl(base, 'OLLAMA_BASE_URL');
     const model =
       request.model ?? process.env["OLLAMA_MODEL"] ?? "llama3";
 

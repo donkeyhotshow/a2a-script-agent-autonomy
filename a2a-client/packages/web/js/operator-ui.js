@@ -75,6 +75,8 @@
         replaySeek: () => document.getElementById('op-replay-seek'),
         replayPos: () => document.getElementById('op-replay-pos'),
         replayPlay: () => document.getElementById('op-replay-play'),
+        // Phase 4 additions
+        workbenchStatus: () => document.getElementById('op-workbench-status'),
     };
 
     const state = {
@@ -116,6 +118,9 @@
         replayTimer: null,
         // Phase 3: active tag filter
         activeTagFilter: null,
+        // Phase 4: evidence status filter (null = all)
+        /** @type {'pass'|'fail'|'warn'|null} */
+        evidenceFilter: null,
     };
 
     function escapeHtml(s) {
@@ -360,26 +365,58 @@
                 evidenceItems.push({ blobId, index: i, artifact: a });
             });
         });
+
+        // Filter bar (All / Pass / Fail / Warn)
+        const filterOptions = [
+            { key: null, label: 'All' },
+            { key: 'pass', label: '✅ Pass' },
+            { key: 'fail', label: '❌ Fail' },
+            { key: 'warn', label: '⚠ Warn' },
+        ];
+        const filterBarHtml = filterOptions
+            .map(({ key, label }) => {
+                const isOn = state.evidenceFilter === key;
+                const ef = key === null ? 'all' : key;
+                return `<button type="button" class="op-evidence-filter-btn${isOn ? ' is-on' : ''}" data-ef="${escapeHtml(ef)}">${escapeHtml(label)}</button>`;
+            })
+            .join('');
+
         if (evidenceItems.length === 0) {
-            pane.innerHTML = '<div class="op-empty">No evidence recorded — build/test results will appear here.</div>';
+            pane.innerHTML =
+                `<div class="op-evidence-filter">${filterBarHtml}</div>` +
+                '<div class="op-empty">No evidence recorded — build/test results will appear here.</div>';
+            wireEvidenceFilterButtons(pane);
             return;
         }
-        const html = evidenceItems.map(({ blobId, index, artifact: a }) => {
-            const label = (a.title || a.name || a.label || 'Evidence');
-            const status = a.status || 'unknown';
-            const statusClass = status === 'pass' ? 'ev-pass' : status === 'fail' ? 'ev-fail' : 'ev-warn';
-            const statusIcon = status === 'pass' ? '✅' : status === 'fail' ? '❌' : '⚠';
-            const detail = a.detail || a.message || '';
-            return `<div class="op-evidence-card ${statusClass}" data-artifact-blob="${escapeHtml(blobId)}" data-artifact-index="${index}">` +
-                `<div class="op-evidence-header">` +
-                `<span class="op-evidence-icon" aria-hidden="true">${statusIcon}</span>` +
-                `<span class="op-evidence-label">${escapeHtml(label)}</span>` +
-                `<span class="op-evidence-status">${escapeHtml(status)}</span>` +
-                `</div>` +
-                (detail ? `<div class="op-evidence-detail">${escapeHtml(String(detail).slice(0, 200))}</div>` : '') +
-                `</div>`;
-        }).join('');
-        pane.innerHTML = `<div class="op-evidence-list">${html}</div>`;
+
+        // Apply filter
+        const filtered = state.evidenceFilter
+            ? evidenceItems.filter(({ artifact: a }) => (a.status || 'unknown') === state.evidenceFilter)
+            : evidenceItems;
+
+        const cardsHtml = filtered.length > 0
+            ? filtered.map(({ blobId, index, artifact: a }) => {
+                const label = (a.title || a.name || a.label || 'Evidence');
+                const status = a.status || 'unknown';
+                const statusClass = status === 'pass' ? 'ev-pass' : status === 'fail' ? 'ev-fail' : 'ev-warn';
+                const statusIcon = status === 'pass' ? '✅' : status === 'fail' ? '❌' : '⚠';
+                const detail = a.detail || a.message || '';
+                return `<div class="op-evidence-card ${statusClass}" data-artifact-blob="${escapeHtml(blobId)}" data-artifact-index="${index}">` +
+                    `<div class="op-evidence-header">` +
+                    `<span class="op-evidence-icon" aria-hidden="true">${statusIcon}</span>` +
+                    `<span class="op-evidence-label">${escapeHtml(label)}</span>` +
+                    `<span class="op-evidence-status">${escapeHtml(status)}</span>` +
+                    `</div>` +
+                    (detail ? `<div class="op-evidence-detail">${escapeHtml(String(detail).slice(0, 200))}</div>` : '') +
+                    `</div>`;
+            }).join('')
+            : `<div class="op-evidence-empty-filter">No ${escapeHtml(state.evidenceFilter || '')} evidence items.</div>`;
+
+        pane.innerHTML =
+            `<div class="op-evidence-filter">${filterBarHtml}</div>` +
+            `<div class="op-evidence-list">${cardsHtml}</div>`;
+
+        wireEvidenceFilterButtons(pane);
         pane.querySelectorAll('[data-artifact-blob]').forEach((card) => {
             card.addEventListener('click', () => {
                 const blobId = card.getAttribute('data-artifact-blob');
@@ -387,6 +424,18 @@
                 const idx = parseInt(card.getAttribute('data-artifact-index') || '0', 10);
                 if (!Array.isArray(arts)) return;
                 openArtifactModal(arts[idx], idx);
+            });
+        });
+    }
+
+    /** Wire the evidence filter buttons inside a container. */
+    function wireEvidenceFilterButtons(container) {
+        if (!container) return;
+        container.querySelectorAll('[data-ef]').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const ef = btn.getAttribute('data-ef');
+                state.evidenceFilter = ef === 'all' ? null : /** @type {'pass'|'fail'|'warn'} */ (ef);
+                renderEvidencePane();
             });
         });
     }
@@ -497,6 +546,7 @@
                 toggle.textContent = collapsed ? '▸' : '▾';
             });
         }
+        updateWorkbenchStatusBar();
     }
 
     // ── Session tagging ───────────────────────────────────────────────────────
@@ -539,8 +589,7 @@
         const html = ALL_TAGS.map((t) => {
             const isOn = t === active;
             return `<button type="button" class="op-tag-chip${isOn ? ' is-on' : ''}" data-tag="${escapeHtml(t)}">${escapeHtml(t)}</button>`;
-        }).join('');
-        host.innerHTML = html + (active ? `<button type="button" class="op-tag-chip op-tag-clear" data-tag-clear>✕ clear</button>` : '');
+        }).join('');        host.innerHTML = html + (active ? `<button type="button" class="op-tag-chip op-tag-clear" data-tag-clear>✕ clear</button>` : '');
         host.querySelectorAll('[data-tag]').forEach((btn) => {
             btn.addEventListener('click', () => {
                 const tag = btn.getAttribute('data-tag');
@@ -728,6 +777,32 @@
         });
     }
 
+    // ── Workbench status bar ───────────────────────────────────────────────────
+
+    function updateWorkbenchStatusBar() {
+        const bar = document.getElementById('op-workbench-status');
+        if (!bar) return;
+        const sid = state.activeSessionId;
+        if (!sid) {
+            bar.hidden = true;
+            return;
+        }
+        bar.hidden = false;
+        const idEl = document.getElementById('op-wb-session-id');
+        const goalEl = document.getElementById('op-wb-goal');
+        const stateEl = document.getElementById('op-wb-state-badge');
+        if (idEl) idEl.textContent = sid.slice(0, 12) + '…';
+        if (goalEl) {
+            const mem = state.sessionMemory[sid];
+            goalEl.textContent = (mem && mem.goal) ? mem.goal.slice(0, 80) : '';
+        }
+        if (stateEl) {
+            stateEl.textContent = state.uiState;
+            stateEl.dataset.wbstate = state.uiState;
+        }
+    }
+
+
     function setState(newState) {
         if (!UI_STATES[newState] && !Object.values(UI_STATES).includes(newState)) {
             console.warn('[operator-ui] unknown UI state', newState);
@@ -783,6 +858,7 @@
         }
 
         syncInputDisabledForFsm();
+        updateWorkbenchStatusBar();
     }
 
     function syncInputDisabledForFsm() {
@@ -1489,8 +1565,12 @@
                     : '';
                 const sessionTags = state.sessionTags[s.id] || [];
                 const tagsHtml = sessionTags.length > 0
-                    ? `<div class="op-session-tags">${sessionTags.map((t) => `<span class="op-session-tag">${escapeHtml(t)}</span>`).join('')}</div>`
+                    ? `<div class="op-session-tags">${sessionTags.map((t) => `<span class="op-session-tag" data-tag="${escapeHtml(t)}">${escapeHtml(t)}</span>`).join('')}</div>`
                     : '';
+                // Goal preview from session memory
+                const mem = state.sessionMemory[s.id];
+                const goalSnippet = mem && mem.goal ? mem.goal.slice(0, 60) + (mem.goal.length > 60 ? '…' : '') : '';
+                const goalHtml = goalSnippet ? `<div class="op-session-goal">${escapeHtml(goalSnippet)}</div>` : '';
                 const hasTrace = (state.traceEvents[s.id] || []).length > 0;
                 const replayBtn = hasTrace
                     ? `<button type="button" class="op-session-replay" data-replay-sid="${id}" title="Replay session trace" aria-label="Replay">↺</button>`
@@ -1501,6 +1581,7 @@
                     `<button class="op-session-item${isActive ? ' is-on' : ''}" type="button" data-sid="${id}" title="${id}">` +
                     `<div class="op-session-title">${title}</div>` +
                     (tsStr ? `<div class="op-session-ts">${escapeHtml(tsStr)}</div>` : '') +
+                    goalHtml +
                     tagsHtml +
                     `</button>` +
                     `<div class="op-session-row-actions">${addTagBtn}${replayBtn}</div>` +
@@ -1584,6 +1665,7 @@
         renderSessionList();
         renderTracePane();
         renderSessionMemoryCard(sessionId);
+        updateWorkbenchStatusBar();
         if (hydrate) void hydrateFromServer();
     }
 
