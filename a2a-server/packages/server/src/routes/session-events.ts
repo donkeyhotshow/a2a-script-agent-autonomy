@@ -37,6 +37,47 @@ const SESSION_STORAGE_PATH: string =
     process.env['SESSION_STORAGE_PATH'] ??
     path.join(process.cwd(), '..', 'a2a-client', 'storage', 'sessions');
 
+// ── Simple in-process rate limiter (no new dependencies) ─────────────────────
+
+interface RateBucket {
+    count: number;
+    resetAt: number;
+}
+
+const rateBuckets = new Map<string, RateBucket>();
+const RATE_WINDOW_MS = 60_000;   // 1 minute window
+const RATE_MAX_REQUESTS = 60;    // max 60 reads per IP per minute
+
+/** Returns true when the caller is within their quota, false when rate-limited. */
+function checkRateLimit(ip: string): boolean {
+    const now = Date.now();
+    let bucket = rateBuckets.get(ip);
+    if (!bucket || now >= bucket.resetAt) {
+        bucket = {count: 1, resetAt: now + RATE_WINDOW_MS};
+        rateBuckets.set(ip, bucket);
+        return true;
+    }
+    bucket.count++;
+    return bucket.count <= RATE_MAX_REQUESTS;
+}
+
+// Periodically evict expired buckets to avoid unbounded memory growth.
+setInterval(() => {
+    const now = Date.now();
+    for (const [key, bucket] of rateBuckets) {
+        if (now >= bucket.resetAt) rateBuckets.delete(key);
+    }
+}, RATE_WINDOW_MS).unref();
+
+// ── Session ID validation ─────────────────────────────────────────────────────
+
+/** Allowed characters for session IDs (alphanumeric, underscore, hyphen). */
+const SESSION_ID_RE = /^[\w-]{1,128}$/;
+
+function isValidSessionId(id: string): boolean {
+    return SESSION_ID_RE.test(id);
+}
+
 // ── TASK 1: SSE event stream ────────────────────────────────────────────────
 
 /**
@@ -48,6 +89,11 @@ const SESSION_STORAGE_PATH: string =
  */
 router.get('/:id/events', (req: Request, res: Response): void => {
     const sessionId = String(req.params['id'] ?? '');
+
+    if (!isValidSessionId(sessionId)) {
+        res.status(400).json({success: false, error: {code: 'INVALID_SESSION_ID', message: 'Invalid session ID'}});
+        return;
+    }
 
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
@@ -95,8 +141,17 @@ router.get('/:id/events', (req: Request, res: Response): void => {
  */
 router.post('/:id/stop', (req: Request, res: Response): void => {
     const sessionId = String(req.params['id'] ?? '');
-    const body = req.body as {reason?: string} | undefined;
-    const reason: string = typeof body?.reason === 'string' ? body.reason : 'user_requested';
+
+    if (!isValidSessionId(sessionId)) {
+        res.status(400).json({success: false, error: {code: 'INVALID_SESSION_ID', message: 'Invalid session ID'}});
+        return;
+    }
+
+    const body = req.body as Record<string, unknown> | undefined;
+    const reason: string =
+        body !== null && typeof body === 'object' && typeof body['reason'] === 'string'
+            ? body['reason']
+            : 'user_requested';
 
     globalEventBus.publish({
         type: 'OPERATOR_STOP',
@@ -122,9 +177,29 @@ interface MessageEntry {
  * Reads all numeric step directories under SESSION_STORAGE_PATH/{sessionId}/,
  * extracts `execute.message` (agent) and the last role:'user' entry from
  * `context.messages` in each server-response.json, and returns them in order.
+ *
+ * Rate-limited: 60 requests / minute per IP.
  */
 router.get('/:id/messages', (req: Request, res: Response): void => {
+    const clientIp = String(req.ip ?? req.socket.remoteAddress ?? 'unknown');
+    if (!checkRateLimit(clientIp)) {
+        res.status(429).json({
+            success: false,
+            error: {code: 'RATE_LIMITED', message: 'Too many requests — please slow down'},
+        });
+        return;
+    }
+
     const sessionId = String(req.params['id'] ?? '');
+
+    if (!isValidSessionId(sessionId)) {
+        res.status(400).json({success: false, error: {code: 'INVALID_SESSION_ID', message: 'Invalid session ID'}});
+        return;
+    }
+
+    // path.join + path.resolve prevent directory traversal: SESSION_STORAGE_PATH is an
+    // absolute directory and sessionId is validated to contain only [\w-] characters,
+    // so joining them cannot escape the storage root.
     const sessionDir = path.join(SESSION_STORAGE_PATH, sessionId);
 
     if (!fs.existsSync(sessionDir)) {
@@ -204,3 +279,4 @@ router.get('/:id/messages', (req: Request, res: Response): void => {
 });
 
 export default router;
+
