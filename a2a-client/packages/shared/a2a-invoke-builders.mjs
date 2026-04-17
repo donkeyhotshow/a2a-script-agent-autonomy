@@ -43,6 +43,9 @@ export function sanitizeInvokeBodyForA2aUpstream(body) {
         return {};
     }
     const out = { ...body };
-    // Sanitize for upstream
+    // Also strip any client-internal fields that may have escaped to the top-level body
+    for (const k of CLIENT_SCOPE_KEYS) {
+        delete out[k];
+    }
     return out;
 }

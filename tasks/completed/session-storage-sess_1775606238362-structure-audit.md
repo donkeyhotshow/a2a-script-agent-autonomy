@@ -29,7 +29,7 @@
 - [ ] step 2: choice[1] description contains markdown noise: "*Description:** Extract patches from AI response, store them using PatchStorage, and return modified response with patch file paths. **Source:** `laravel-agent-workspace-tools/scripts/process-response-patches.js`"
 - [ ] step 2: choice[1] label contains markdown noise: "*ID:** `process-response-patches`"
 - [ ] step 2: choice[20] description contains markdown noise: "*Priority:** 5 **Context:** Contains standard handlers for scaffolding and editing frontend layers."
-- [ ] step 2: choice[21] description contains markdown noise: "*Priority:** 10 **Планы:** [ai-integration docs](../../../../ai-integration/docs/README.md)."
+- [ ] step 2: choice[21] description contains markdown noise: "*Priority:** 10 **Планы:** [a2a-ai-hub docs](../../../../a2a-ai-hub/docs/README.md)."
 - [ ] step 2: choice[2] description contains markdown noise: "*Description:** Migrate PHP business logic components (Services, Models, Controllers, Validators, DTOs) through the AI agent ticket system. Validates PHP syntax, creates backups, and categorizes files. **Source:** `laravel-agent-workspace-tools/scripts/migrate-php-components.js`"
 - [ ] step 2: choice[2] label contains markdown noise: "*ID:** `migrate-php-components`"
 - [ ] step 2: choice[3] description contains markdown noise: "*Description:** Dispatch CLI commands to the Laravel agent system core. Acts as a hub for routing commands to appropriate handlers. **Source:** `laravel-agent-workspace-tools/scripts/cli-hub.js`"
