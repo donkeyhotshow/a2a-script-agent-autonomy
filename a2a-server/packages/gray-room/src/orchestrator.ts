@@ -1,4 +1,6 @@
 import { logger } from "./logger.js";
+import { llmService } from "@a2a/server-llm";
+import type { LLMRequest } from "@a2a/server-llm";
 
 export class GrayRoomOrchestrator {
   constructor(_options: any) {
@@ -35,17 +37,48 @@ export class GrayRoomOrchestrator {
     };
   }
 
-  private async executeAnalyze(params: any, _context: any): Promise<any> {
+  private async executeAnalyze(params: any, context: any): Promise<any> {
     logger.info("[GrayRoomOrchestrator] Executing analyze", {
       type: params.type,
     });
 
-    // Implementation for analysis logic
-    return {
-      type: "analyze",
-      analysisType: params.type,
-      result: "analysis_complete",
+    const contextSummary =
+      context && typeof context === "object"
+        ? JSON.stringify(context).slice(0, 800)
+        : String(context ?? "");
+
+    const request: LLMRequest = {
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a gray-room analysis agent. Analyze the provided context and return a concise structured assessment.",
+        },
+        {
+          role: "user",
+          content: `Analysis type: ${String(params.type ?? "general")}\n\nContext:\n${contextSummary}`,
+        },
+      ],
+      temperature: 0.3,
+      maxTokens: 512,
     };
+
+    try {
+      const response = await llmService.complete(request);
+      return {
+        type: "analyze",
+        analysisType: params.type,
+        result: response.content,
+        model: response.model,
+      };
+    } catch (err) {
+      logger.warn("[GrayRoomOrchestrator] LLM analyze failed, returning stub", { err });
+      return {
+        type: "analyze",
+        analysisType: params.type,
+        result: "analysis_unavailable",
+      };
+    }
   }
 
   private async executeRagPage(_params: any, _context: any): Promise<any> {

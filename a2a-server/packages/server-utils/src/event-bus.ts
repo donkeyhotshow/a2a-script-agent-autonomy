@@ -15,7 +15,8 @@ export type AgentEventType =
   | "DECISION_MADE"
   | "TOOL_RESULT"
   | "SAFETY_INTERCEPT"
-  | "SESSION_ENDED";
+  | "SESSION_ENDED"
+  | "OPERATOR_STOP";
 
 export interface AgentEvent<T = unknown> {
   id: string;
