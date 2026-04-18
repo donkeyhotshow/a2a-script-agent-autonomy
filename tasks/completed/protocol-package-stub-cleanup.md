@@ -27,3 +27,15 @@ The protocol package appears to be an unmaintained duplicate of `@a2a-client/sha
 ## Evidence required
 
 Workspace grep confirms 0 consumers before deletion. `npm run test:before-start` exit 0 after change.
+
+---
+
+## Completion record
+
+**Status:** COMPLETED  
+**Date:** 2026-04-18  
+**Evidence:**  
+- `grep -r "from.*@a2a-client/protocol" ...` — 0 runtime consumers found  
+- `a2a-client/packages/protocol` moved to `a2a-client/_deprecated/protocol`  
+- `DEPRECATED.md` written with reason, what was wrong, and correct future approach  
+- Workspace glob `packages/*` now skips the removed directory automatically  

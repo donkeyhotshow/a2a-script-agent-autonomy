@@ -1,4 +1,3 @@
-// [STUB] server.schema — requires real implementation
 import { z } from 'zod';
 
 export const serverSchema = z.object({
