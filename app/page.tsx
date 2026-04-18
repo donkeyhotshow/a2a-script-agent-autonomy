@@ -22,6 +22,7 @@ export default function Home() {
     isLoading,
     error,
     sessionsLoaded,
+    lastPollResult,
     loadSessions,
     handleNewSession,
     handleSelectSession,
@@ -66,15 +67,8 @@ export default function Home() {
 
         <div className="w-[400px] flex-shrink-0">
           <Workbench
-            traces={[]}
-            artifacts={[]}
-            diffs={[]}
-            logs={messages
-              .filter((m) => m.role !== "user")
-              .map(
-                (m) =>
-                  `[${m.timestamp}] ${m.agent ?? m.role.toUpperCase()}: ${m.content.slice(0, 120)}${m.content.length > 120 ? "…" : ""}`
-              )}
+            lastPollResult={lastPollResult}
+            isLoading={isLoading}
           />
         </div>
       </main>

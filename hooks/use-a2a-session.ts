@@ -11,6 +11,8 @@ import {
   type AsyncPollResult,
 } from "@/lib/api-client"
 
+export type { AsyncPollResult }
+
 export interface Message {
   id: string
   role: "user" | "assistant" | "system"
@@ -62,6 +64,7 @@ export function useA2ASession() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sessionsLoaded, setSessionsLoaded] = useState(false)
+  const [lastPollResult, setLastPollResult] = useState<AsyncPollResult | null>(null)
   const pollingRef = useRef(false)
   const abortRef = useRef(false)
 
@@ -94,6 +97,7 @@ export function useA2ASession() {
         attempts++
         try {
           lastResult = await pollAsync(sessionId)
+          setLastPollResult(lastResult)
         } catch (err) {
           appendMessage({
             role: "assistant",
@@ -142,6 +146,7 @@ export function useA2ASession() {
 
   const handleNewSession = useCallback(async () => {
     setError(null)
+    setLastPollResult(null)
     const title = `Session ${new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`
     try {
       const session = await createSession(title)
@@ -181,6 +186,7 @@ export function useA2ASession() {
     setActiveSessionId(id)
     setMessages([])
     setError(null)
+    setLastPollResult(null)
   }, [])
 
   const handleStopSession = useCallback(async () => {
@@ -261,6 +267,7 @@ export function useA2ASession() {
     isLoading,
     error,
     sessionsLoaded,
+    lastPollResult,
     loadSessions,
     handleNewSession,
     handleSelectSession,
