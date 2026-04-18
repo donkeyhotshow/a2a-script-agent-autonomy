@@ -2,8 +2,9 @@
  * EpisodicMemory — ADR-0062: Persistent episodic memory with semantic recall.
  *
  * Stores session outcomes (success/partial/failure) together with a
- * 384-dimensional task embedding (cosine-similarity placeholder — real
- * embeddings are injected at runtime by the AI-proxy layer).
+ * 384-dimensional task embedding.  Real vectors are obtained from the AI hub
+ * via EmbeddingClient; falls back to a deterministic char-code placeholder
+ * when the hub is unreachable so recall still works in offline/test contexts.
  *
  * Storage backends (in priority order):
  *   1. Postgres — table `episodic_memory`; used when DATABASE_URL is set and
@@ -287,7 +288,7 @@ export class EpisodicMemory {
     const all = await this.backend.loadAll();
     if (all.length === 0) return [];
 
-    const queryEmbedding = _dummyEmbedding(taskDescription);
+    const queryEmbedding = await _computeEmbedding(taskDescription);
     const queryIsZero = _isZeroVector(queryEmbedding);
 
     const scored = all.map((ep) => {
@@ -321,8 +322,23 @@ export class EpisodicMemory {
 // ── Vector / similarity utilities ─────────────────────────────────────────────
 
 /**
+ * Obtain a real embedding from the AI hub, or fall back to _dummyEmbedding
+ * when the hub is unreachable (offline / cold-start / test contexts).
+ */
+async function _computeEmbedding(text: string): Promise<number[]> {
+  try {
+    const { globalEmbeddingClient } = await import(
+      '../../../server/src/memory/EmbeddingClient.js'
+    );
+    return globalEmbeddingClient.embed(text);
+  } catch {
+    return _dummyEmbedding(text);
+  }
+}
+
+/**
  * Produce a 384-dim placeholder embedding from a string.
- * This is replaced at runtime by the AI-proxy layer (Local LLM upstream nomic-embed-text).
+ * Used as fallback when the AI hub is unreachable.
  * The placeholder uses character-code bucketing so short strings still produce
  * a non-zero vector that can be compared for unit tests.
  */
