@@ -1011,6 +1011,56 @@ export class GrayRoomOrchestrator {
   }
 
   /**
+   * Run this task through the v2 AgentGraph (PLAN→EXECUTE→VERIFY→RETRY).
+   *
+   * Use this method when the task can be decomposed into independent subtasks.
+   * Falls back gracefully when the graph returns an error.
+   *
+   * @param task       Natural-language task description.
+   * @param ctx        Working context from the current session.
+   * @param promiseId  A2A promise ID for correlation.
+   */
+  async runWithAgentGraph(
+    task: string,
+    ctx: Record<string, unknown>,
+    promiseId: string,
+  ): Promise<ProcessResult> {
+    logger.info("[GrayRoom] runWithAgentGraph", { promiseId, task: task.slice(0, 120) });
+
+    // Lazily import to avoid circular deps at module-load time
+    const { AgentGraph } = await import(
+      "../../../../server/src/orchestration/AgentGraph.js"
+    );
+
+    const graphCtx = {
+      sessionId:
+        ((ctx["context"] as Record<string, unknown>)?.["session_id"] as string) ??
+        promiseId,
+      promiseId,
+      aiHubUrl: this.aiHubUrl,
+      model: this.model,
+      task,
+      history: (ctx["history"] as unknown[]) ?? [],
+      workingContext: (ctx["context"] as Record<string, unknown>) ?? {},
+    };
+
+    const graph = new AgentGraph({ maxRetries: 3, maxParallelExecutors: 4 });
+    const result = await graph.run(task, graphCtx);
+
+    if (result.outcome === "completed") {
+      return {
+        outcome: "completed",
+        context: { ...ctx, agent_graph_result: result },
+      };
+    }
+
+    return {
+      outcome: "failed",
+      error: result.error ?? "AgentGraph execution failed",
+    };
+  }
+
+  /**
    * Halt an active gray room loop by promiseId.
    */
   static halt(promiseId: string): boolean {
