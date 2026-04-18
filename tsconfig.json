@@ -38,6 +38,12 @@
   "exclude": [
     "node_modules",
     "a2a-client",
-    "ai_hub"
+    "ai_hub",
+    "a2a-server",
+    "_deprecated",
+    "etalon",
+    "scripts",
+    "tests",
+    "tools"
   ]
 }

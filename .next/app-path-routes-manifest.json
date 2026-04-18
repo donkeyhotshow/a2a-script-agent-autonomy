@@ -1,0 +1,6 @@
+{
+  "/_global-error/page": "/_global-error",
+  "/_not-found/page": "/_not-found",
+  "/api/a2a/[...path]/route": "/api/a2a/[...path]",
+  "/page": "/"
+}
