@@ -1,6 +1,6 @@
 import express from 'express';
 import fs from 'node:fs';
-import path from 'path';
+import path from 'node:path';
 import { logger } from '@a2a/server-utils/logger';
 import { SkillRegistry } from '../skills/SkillRegistry.js';
 import { config } from '@a2a/config';
@@ -10,7 +10,19 @@ import {
 } from '../tools-evolve-sandbox.js';
 
 const router = express.Router();
-const registry = new SkillRegistry(path.join(process.cwd(), 'a2a-server/src/skills/custom'));
+
+/**
+ * Resolved allowed root for custom skills.
+ * All writes are confined to this directory — path traversal is prevented at construction
+ * time (toolName is validated by regex) and additionally checked via path.resolve guard.
+ *
+ * NOTE: This endpoint is disabled by default (config.allowToolsEvolve = false).
+ * See a2a-orchestrator/tasks/cancelled/server-skill-evolution-endpoint.md for the
+ * architectural rationale and the correct plugin-runtime replacement.
+ */
+const CUSTOM_SKILLS_ROOT = path.resolve(process.cwd(), 'a2a-server', 'src', 'skills', 'custom');
+
+const registry = new SkillRegistry(CUSTOM_SKILLS_ROOT);
 
 router.post('/evolve', async (req, res) => {
   if (!config.allowToolsEvolve) {
@@ -32,13 +44,18 @@ router.post('/evolve', async (req, res) => {
   try {
     validateSkillToolCodeForDeploy(toolCode);
 
-    // 2. Write to custom tools directory
-    const targetPath = path.join(process.cwd(), 'a2a-server/src/skills/custom', `${toolName}.skill.ts`);
-    await fs.promises.mkdir(path.dirname(targetPath), { recursive: true });
+    // Resolve the target path and verify it remains within CUSTOM_SKILLS_ROOT.
+    const targetPath = path.resolve(CUSTOM_SKILLS_ROOT, `${toolName}.skill.ts`);
+    if (!targetPath.startsWith(CUSTOM_SKILLS_ROOT + path.sep) && targetPath !== CUSTOM_SKILLS_ROOT) {
+      logger.warn('[Self-Evolve] Path traversal attempt blocked', { toolName, targetPath });
+      return res.status(400).json({ error: 'Invalid toolName — path traversal detected' });
+    }
+
+    await fs.promises.mkdir(CUSTOM_SKILLS_ROOT, { recursive: true });
     await fs.promises.writeFile(targetPath, toolCode);
 
-    // 3. Hot reload registry
-    await registry.init(); 
+    // Hot reload registry (stub — no-op until real plugin runtime is wired).
+    await registry.init();
 
     return res.json({ status: 'deployed', path: targetPath });
   } catch (err) {

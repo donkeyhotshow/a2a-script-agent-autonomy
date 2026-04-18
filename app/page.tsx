@@ -1,0 +1,77 @@
+"use client"
+
+import { useEffect } from "react"
+import { Sidebar } from "@/components/sidebar"
+import { ChatPanel } from "@/components/chat-panel"
+import { Workbench } from "@/components/workbench"
+import { useA2ASession } from "@/hooks/use-a2a-session"
+import type { SessionDTO } from "@/lib/api-client"
+
+const VALID_SIDEBAR_STATUSES = new Set(["active", "completed", "error", "idle", "stopped"])
+
+function toSidebarStatus(s: SessionDTO["status"]): "active" | "completed" | "error" | "idle" | "stopped" {
+  if (s && VALID_SIDEBAR_STATUSES.has(s)) return s as "active" | "completed" | "error" | "idle" | "stopped"
+  return "idle"
+}
+
+export default function Home() {
+  const {
+    sessions,
+    activeSessionId,
+    messages,
+    isLoading,
+    error,
+    sessionsLoaded,
+    lastPollResult,
+    loadSessions,
+    handleNewSession,
+    handleSelectSession,
+    handleStopSession,
+    handleSendMessage,
+  } = useA2ASession()
+
+  // Load sessions from backend on mount
+  useEffect(() => {
+    loadSessions()
+  }, [loadSessions])
+
+  // Map SessionDTO to the shape expected by Sidebar
+  const sidebarSessions = sessions.map((s) => ({
+    id: s.id,
+    name: s.title ?? s.id,
+    status: toSidebarStatus(s.status),
+    timestamp: s.updatedAt ? new Date(s.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "",
+  }))
+
+  return (
+    <div className="flex h-screen bg-background">
+      <Sidebar
+        sessions={sidebarSessions}
+        activeSession={activeSessionId}
+        onSelectSession={handleSelectSession}
+        onNewSession={handleNewSession}
+        isLoading={!sessionsLoaded}
+      />
+
+      <main className="flex flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden">
+          <ChatPanel
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            onStop={handleStopSession}
+            isLoading={isLoading}
+            error={error}
+            hasSession={!!activeSessionId}
+          />
+        </div>
+
+        <div className="w-[400px] flex-shrink-0">
+          <Workbench
+            lastPollResult={lastPollResult}
+            isLoading={isLoading}
+          />
+        </div>
+      </main>
+    </div>
+  )
+}

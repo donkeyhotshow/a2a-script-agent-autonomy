@@ -1,0 +1,32 @@
+[telegram]
+bot_token = ""              # required — obtain from @BotFather
+allowed_chat_ids = []       # empty = allow all; e.g. [123456789, 987654321]
+require_auth_code = false   # one-time pairing code for new users (future feature)
+
+[a2a]
+api_url = "http://localhost:3001"
+poll_interval_ms = 800
+poll_max_attempts = 60
+
+[session]
+persist_backend = "redis"   # "redis" | "memory"
+redis_url = "redis://localhost:6379"
+ttl_days = 7
+
+[rate_limit]
+requests_per_minute = 20
+per_chat = true
+
+[features]
+voice_transcription = false  # requires OPENAI_API_KEY
+photo_notifications = true
+memory_injection = true
+verbose_tool_calls = true
+
+[permissions]
+# admin_ids = [123456789]
+# operator_ids = [987654321]
+
+[watchdog]
+timeout_seconds = 120
+notify_on_timeout = true
