@@ -21,10 +21,21 @@ export interface Message {
 }
 
 const POLL_INTERVAL_MS = 800
-const MAX_POLL_ATTEMPTS = 120 // ~96 seconds
+const MAX_POLL_ATTEMPTS = 120 // 96 seconds (120 × 800ms)
 
 function formatTime() {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+}
+
+const VALID_STATUSES = new Set(["idle", "active", "completed", "error", "stopped"])
+
+function toSessionStatus(raw: string | undefined): SessionDTO["status"] {
+  if (raw && VALID_STATUSES.has(raw)) return raw as SessionDTO["status"]
+  return "idle"
+}
+
+function isPollingComplete(result: AsyncPollResult): boolean {
+  return !result.asyncPending || result.completed === true || result.status === "idle"
 }
 
 function extractMessage(result: AsyncPollResult): string {
@@ -54,9 +65,9 @@ export function useA2ASession() {
   const pollingRef = useRef(false)
   const abortRef = useRef(false)
 
-  const appendMessage = useCallback((msg: Omit<Message, "id">) => {
-    setMessages((prev) => [...prev, { ...msg, id: Date.now().toString() + Math.random() }])
-  }, [])
+  function appendMessage(msg: Omit<Message, "id">) {
+    setMessages((prev) => [...prev, { ...msg, id: `${Date.now()}-${Math.random()}` }])
+  }
 
   const loadSessions = useCallback(async () => {
     try {
@@ -93,7 +104,7 @@ export function useA2ASession() {
           break
         }
 
-        if (!lastResult.asyncPending || lastResult.completed || lastResult.status === "idle") {
+        if (isPollingComplete(lastResult)) {
           const content = extractMessage(lastResult)
           appendMessage({
             role: "assistant",

@@ -34,10 +34,9 @@ async function proxyRequest(req: NextRequest, path: string): Promise<NextRespons
       status: upstream.status,
       headers: { "Content-Type": "application/json" },
     })
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err)
+  } catch {
     return NextResponse.json(
-      { error: "Backend unreachable", detail: message },
+      { error: "Backend unreachable" },
       { status: 502 }
     )
   }

@@ -40,7 +40,7 @@ async function request<T>(
   try {
     data = text ? JSON.parse(text) : null
   } catch {
-    throw new Error(`Invalid JSON from ${path}: ${text.slice(0, 200)}`)
+    throw new Error(`Invalid JSON from ${path}: ${text.slice(0, 50)}`)
   }
   if (!res.ok) {
     const payload = data as Record<string, unknown> | null

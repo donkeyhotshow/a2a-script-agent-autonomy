@@ -189,7 +189,7 @@ export function ChatPanel({ messages, onSendMessage, onStop, isLoading, error, h
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder={hasSession ? "Send a message… (Enter to send, Shift+Enter for new line)" : "Select or create a session first"}
+            placeholder={hasSession ? "Send a message... (Enter to send, Shift+Enter for new line)" : "Select or create a session first"}
             rows={1}
             disabled={!hasSession || isLoading}
             className="max-h-[200px] min-h-[36px] flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"

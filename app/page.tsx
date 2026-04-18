@@ -5,6 +5,14 @@ import { Sidebar } from "@/components/sidebar"
 import { ChatPanel } from "@/components/chat-panel"
 import { Workbench } from "@/components/workbench"
 import { useA2ASession } from "@/hooks/use-a2a-session"
+import type { SessionDTO } from "@/lib/api-client"
+
+const VALID_SIDEBAR_STATUSES = new Set(["active", "completed", "error", "idle", "stopped"])
+
+function toSidebarStatus(s: SessionDTO["status"]): "active" | "completed" | "error" | "idle" | "stopped" {
+  if (s && VALID_SIDEBAR_STATUSES.has(s)) return s as "active" | "completed" | "error" | "idle" | "stopped"
+  return "idle"
+}
 
 export default function Home() {
   const {
@@ -30,7 +38,7 @@ export default function Home() {
   const sidebarSessions = sessions.map((s) => ({
     id: s.id,
     name: s.title ?? s.id,
-    status: (s.status ?? "idle") as "active" | "completed" | "error" | "idle" | "stopped",
+    status: toSidebarStatus(s.status),
     timestamp: s.updatedAt ? new Date(s.updatedAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "",
   }))
 
