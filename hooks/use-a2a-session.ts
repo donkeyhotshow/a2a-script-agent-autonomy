@@ -65,9 +65,9 @@ export function useA2ASession() {
   const pollingRef = useRef(false)
   const abortRef = useRef(false)
 
-  function appendMessage(msg: Omit<Message, "id">) {
+  const appendMessage = useCallback((msg: Omit<Message, "id">) => {
     setMessages((prev) => [...prev, { ...msg, id: `${Date.now()}-${Math.random()}` }])
-  }
+  }, [])
 
   const loadSessions = useCallback(async () => {
     try {
