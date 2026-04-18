@@ -63,8 +63,8 @@ class RedisMemoryStore implements MemoryStore {
 
   async recent(chatId: number, limit = 10): Promise<MemoryEntry[]> {
     const key = this.key(chatId)
-    // zrange with BYSCORE REV returns entries in descending score (newest first)
-    const items = await this.redis.zrange(key, "+inf", "-inf", "BYSCORE", "REV", "LIMIT", 0, limit)
+    // zrevrangebyscore returns entries in descending score (newest first), capped by limit
+    const items = await this.redis.zrevrangebyscore(key, "+inf", "-inf", "LIMIT", 0, limit)
     return items.map((s: string) => JSON.parse(s) as MemoryEntry)
   }
 

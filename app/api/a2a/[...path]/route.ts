@@ -6,8 +6,11 @@ const CLIENT_API_URL = process.env["CLIENT_API_URL"] ?? "http://localhost:3001"
  * Proxy all /api/a2a/* requests to the A2A Client API backend.
  * This allows the Next.js frontend to talk to the backend without CORS issues.
  */
-async function proxyRequest(req: NextRequest, path: string): Promise<NextResponse> {
-  const targetUrl = `${CLIENT_API_URL}/api/a2a/${path}`
+async function proxyRequest(req: NextRequest, path: string[]): Promise<NextResponse> {
+  if (path.length === 0) {
+    return NextResponse.json({ error: "Invalid path" }, { status: 400 })
+  }
+  const targetUrl = `${CLIENT_API_URL}/api/a2a/${path.join("/")}`
 
   const headers = new Headers()
   headers.set("Content-Type", "application/json")
@@ -47,7 +50,7 @@ export async function GET(
   { params }: { params: Promise<{ path: string[] }> }
 ): Promise<NextResponse> {
   const { path } = await params
-  return proxyRequest(req, path.join("/"))
+  return proxyRequest(req, path)
 }
 
 export async function POST(
@@ -55,7 +58,7 @@ export async function POST(
   { params }: { params: Promise<{ path: string[] }> }
 ): Promise<NextResponse> {
   const { path } = await params
-  return proxyRequest(req, path.join("/"))
+  return proxyRequest(req, path)
 }
 
 export async function DELETE(
@@ -63,7 +66,7 @@ export async function DELETE(
   { params }: { params: Promise<{ path: string[] }> }
 ): Promise<NextResponse> {
   const { path } = await params
-  return proxyRequest(req, path.join("/"))
+  return proxyRequest(req, path)
 }
 
 export async function PATCH(
@@ -71,5 +74,5 @@ export async function PATCH(
   { params }: { params: Promise<{ path: string[] }> }
 ): Promise<NextResponse> {
   const { path } = await params
-  return proxyRequest(req, path.join("/"))
+  return proxyRequest(req, path)
 }

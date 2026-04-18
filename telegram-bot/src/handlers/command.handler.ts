@@ -86,7 +86,7 @@ export function registerCommandHandlers(bot: Bot, manager: SessionManager): void
     }
     const lines = all.map(
       ({ chatId, state }, i) =>
-        `${i + 1}\\. Chat ${chatId} — stage: \\\`${escapeMarkdownV2(state.stage)}\\\``
+        `${i + 1}\\. Chat ${chatId} — stage: *${escapeMarkdownV2(state.stage)}*`
     )
     await ctx.reply(["*Active Sessions*", ...lines].join("\n"), {
       parse_mode: "MarkdownV2",

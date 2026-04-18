@@ -4,7 +4,7 @@
  */
 import { MiddlewareFn, Context } from "grammy"
 
-const BOT_START_TIME = Math.floor(Date.now() / 1000)
+const BOT_START_TIME = Math.floor(Date.now() / 1000) // Unix seconds, same unit as Telegram message.date
 const STALE_THRESHOLD_SECONDS = 30
 
 export const staleMiddleware: MiddlewareFn<Context> = async (ctx, next) => {
