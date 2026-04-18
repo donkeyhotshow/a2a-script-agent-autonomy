@@ -9,12 +9,13 @@ import {
   History,
   Plus,
   ChevronRight,
+  Loader2,
 } from "lucide-react"
 
 interface Session {
   id: string
   name: string
-  status: "active" | "completed" | "error"
+  status: "active" | "completed" | "error" | "idle" | "stopped"
   timestamp: string
 }
 
@@ -23,6 +24,7 @@ interface SidebarProps {
   activeSession: string | null
   onSelectSession: (id: string) => void
   onNewSession: () => void
+  isLoading?: boolean
 }
 
 export function Sidebar({
@@ -30,6 +32,7 @@ export function Sidebar({
   activeSession,
   onSelectSession,
   onNewSession,
+  isLoading = false,
 }: SidebarProps) {
   return (
     <aside className="flex h-full w-64 flex-col border-r border-border bg-card">
@@ -52,32 +55,44 @@ export function Sidebar({
         <div className="mb-2 px-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
           Sessions
         </div>
-        <ul className="space-y-1">
-          {sessions.map((session) => (
-            <li key={session.id}>
-              <button
-                onClick={() => onSelectSession(session.id)}
-                className={cn(
-                  "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
-                  activeSession === session.id
-                    ? "bg-accent text-accent-foreground"
-                    : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
-                )}
-              >
-                <MessageSquare className="h-4 w-4 flex-shrink-0" />
-                <span className="flex-1 truncate text-left">{session.name}</span>
-                <span
+        {isLoading ? (
+          <div className="flex items-center justify-center py-8">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : sessions.length === 0 ? (
+          <p className="px-3 py-4 text-xs text-muted-foreground">
+            No sessions yet. Click &ldquo;New Session&rdquo; to start.
+          </p>
+        ) : (
+          <ul className="space-y-1">
+            {sessions.map((session) => (
+              <li key={session.id}>
+                <button
+                  onClick={() => onSelectSession(session.id)}
                   className={cn(
-                    "h-2 w-2 rounded-full",
-                    session.status === "active" && "bg-green-500",
-                    session.status === "completed" && "bg-blue-500",
-                    session.status === "error" && "bg-red-500"
+                    "flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors",
+                    activeSession === session.id
+                      ? "bg-accent text-accent-foreground"
+                      : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                   )}
-                />
-              </button>
-            </li>
-          ))}
-        </ul>
+                >
+                  <MessageSquare className="h-4 w-4 flex-shrink-0" />
+                  <span className="flex-1 truncate text-left">{session.name}</span>
+                  <span
+                    className={cn(
+                      "h-2 w-2 rounded-full flex-shrink-0",
+                      session.status === "active" && "bg-yellow-500 animate-pulse",
+                      session.status === "completed" && "bg-blue-500",
+                      session.status === "error" && "bg-red-500",
+                      session.status === "stopped" && "bg-orange-400",
+                      session.status === "idle" && "bg-green-500",
+                    )}
+                  />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </nav>
 
       <div className="border-t border-border p-2">

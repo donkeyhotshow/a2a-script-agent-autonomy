@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { Send, Bot, User, Loader2, Paperclip } from "lucide-react"
+import { Send, Bot, User, Loader2, Paperclip, Square, AlertCircle } from "lucide-react"
 
 interface Message {
   id: string
@@ -10,15 +10,19 @@ interface Message {
   content: string
   timestamp: string
   agent?: string
+  isError?: boolean
 }
 
 interface ChatPanelProps {
   messages: Message[]
   onSendMessage: (message: string) => void
+  onStop?: () => void
   isLoading?: boolean
+  error?: string | null
+  hasSession?: boolean
 }
 
-export function ChatPanel({ messages, onSendMessage, isLoading }: ChatPanelProps) {
+export function ChatPanel({ messages, onSendMessage, onStop, isLoading, error, hasSession = true }: ChatPanelProps) {
   const [input, setInput] = useState("")
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -57,13 +61,39 @@ export function ChatPanel({ messages, onSendMessage, isLoading }: ChatPanelProps
     <div className="flex h-full flex-col">
       <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <h2 className="font-medium text-foreground">Agent Chat</h2>
-        <span className="text-xs text-muted-foreground">
-          {messages.length} messages
-        </span>
+        <div className="flex items-center gap-3">
+          {isLoading && onStop && (
+            <button
+              onClick={onStop}
+              className="flex items-center gap-1.5 rounded-md border border-border px-2 py-1 text-xs text-muted-foreground transition-colors hover:border-red-500 hover:text-red-500"
+            >
+              <Square className="h-3 w-3" />
+              Stop
+            </button>
+          )}
+          <span className="text-xs text-muted-foreground">
+            {messages.length} messages
+          </span>
+        </div>
       </div>
 
+      {error && (
+        <div className="flex items-center gap-2 border-b border-border bg-destructive/10 px-4 py-2 text-xs text-red-400">
+          <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+          <span className="truncate">{error}</span>
+        </div>
+      )}
+
       <div className="flex-1 overflow-y-auto p-4">
-        {messages.length === 0 ? (
+        {!hasSession ? (
+          <div className="flex h-full flex-col items-center justify-center text-center">
+            <Bot className="mb-4 h-12 w-12 text-muted-foreground/50" />
+            <h3 className="text-lg font-medium text-foreground">No session selected</h3>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              Create a new session from the sidebar to start talking to the agent.
+            </p>
+          </div>
+        ) : messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
             <Bot className="mb-4 h-12 w-12 text-muted-foreground/50" />
             <h3 className="text-lg font-medium text-foreground">
@@ -83,26 +113,34 @@ export function ChatPanel({ messages, onSendMessage, isLoading }: ChatPanelProps
                   message.role === "user" && "flex-row-reverse"
                 )}
               >
+                {message.role !== "system" && (
+                  <div
+                    className={cn(
+                      "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full",
+                      message.role === "user"
+                        ? "bg-primary text-primary-foreground"
+                        : message.isError
+                        ? "bg-red-900 text-red-300"
+                        : "bg-accent text-accent-foreground"
+                    )}
+                  >
+                    {message.role === "user" ? (
+                      <User className="h-4 w-4" />
+                    ) : (
+                      <Bot className="h-4 w-4" />
+                    )}
+                  </div>
+                )}
                 <div
                   className={cn(
-                    "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full",
+                    "rounded-lg px-4 py-2",
                     message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-accent text-accent-foreground"
-                  )}
-                >
-                  {message.role === "user" ? (
-                    <User className="h-4 w-4" />
-                  ) : (
-                    <Bot className="h-4 w-4" />
-                  )}
-                </div>
-                <div
-                  className={cn(
-                    "max-w-[80%] rounded-lg px-4 py-2",
-                    message.role === "user"
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-accent text-foreground"
+                      ? "max-w-[80%] bg-primary text-primary-foreground"
+                      : message.role === "system"
+                      ? "max-w-full w-full bg-muted/50 text-muted-foreground text-xs italic"
+                      : message.isError
+                      ? "max-w-[80%] bg-red-950 text-red-300"
+                      : "max-w-[80%] bg-accent text-foreground"
                   )}
                 >
                   {message.agent && (
@@ -120,8 +158,11 @@ export function ChatPanel({ messages, onSendMessage, isLoading }: ChatPanelProps
                 <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
                   <Bot className="h-4 w-4" />
                 </div>
-                <div className="rounded-lg bg-accent px-4 py-2">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                <div className="rounded-lg bg-accent px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">Agent is thinking…</span>
+                  </div>
                 </div>
               </div>
             )}
@@ -138,6 +179,8 @@ export function ChatPanel({ messages, onSendMessage, isLoading }: ChatPanelProps
           <button
             type="button"
             className="flex h-8 w-8 items-center justify-center rounded text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            title="Attach file (coming soon)"
+            disabled
           >
             <Paperclip className="h-4 w-4" />
           </button>
@@ -146,13 +189,14 @@ export function ChatPanel({ messages, onSendMessage, isLoading }: ChatPanelProps
             value={input}
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
-            placeholder="Send a message..."
+            placeholder={hasSession ? "Send a message... (Enter to send, Shift+Enter for new line)" : "Select or create a session first"}
             rows={1}
-            className="max-h-[200px] min-h-[36px] flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+            disabled={!hasSession || isLoading}
+            className="max-h-[200px] min-h-[36px] flex-1 resize-none bg-transparent text-sm text-foreground placeholder:text-muted-foreground focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={!input.trim() || isLoading}
+            disabled={!input.trim() || isLoading || !hasSession}
             className="flex h-8 w-8 items-center justify-center rounded bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
           >
             <Send className="h-4 w-4" />

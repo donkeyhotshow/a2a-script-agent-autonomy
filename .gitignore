@@ -42,3 +42,6 @@ hooks/CURSOR_AGENT_SIGNAL.md
 
 # Vitest JSON scratch from human-review runners
 **/tests/human-review/.last-vitest.json
+
+# Next.js build output
+.next/
