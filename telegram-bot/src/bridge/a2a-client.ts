@@ -1,8 +1,8 @@
 /**
- * a2a-client.ts — HTTP client for the A2A server (same protocol as the web UI).
- * All functions are async and throw on non-2xx responses.
+ * bridge/a2a-client.ts — HTTP client for the A2A server.
+ * All functions async, throw on non-2xx responses.
  */
-import { env } from "./env.js"
+import { config } from "../config.js"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -36,6 +36,7 @@ export interface PollResult {
     }
   }
   artifacts?: Array<{ type: string; name?: string }>
+  error?: string
 }
 
 export interface SessionSnapshot {
@@ -53,7 +54,7 @@ async function apiFetch<T>(
   path: string,
   body?: Record<string, unknown>
 ): Promise<T> {
-  const url = `${env.A2A_API_URL}${path}`
+  const url = `${config.a2a.apiUrl}${path}`
   const init: RequestInit = {
     method,
     headers: { "Content-Type": "application/json" },
@@ -66,7 +67,9 @@ async function apiFetch<T>(
   try {
     data = text ? JSON.parse(text) : null
   } catch {
-    throw new Error(`[a2a-client] Non-JSON response from ${method} ${url}: ${text.slice(0, 100)}`)
+    throw new Error(
+      `[a2a-client] Non-JSON response from ${method} ${url}: ${text.slice(0, 100)}`
+    )
   }
 
   if (!res.ok) {
@@ -81,28 +84,36 @@ async function apiFetch<T>(
 
 export async function createSession(): Promise<string> {
   const raw = await apiFetch<Record<string, unknown>>("POST", "/api/a2a/sessions", {})
-  // Handle various envelope shapes: { session: { id } } | { data: { id } } | { id }
   const inner =
     (raw.session as Record<string, unknown> | undefined) ??
     (raw.data as Record<string, unknown> | undefined) ??
     raw
   const id = inner.id ?? inner.sessionId
   if (typeof id !== "string")
-    throw new Error(`[a2a-client] createSession: could not extract session ID from response`)
+    throw new Error(`[a2a-client] createSession: could not extract session ID`)
   return id
 }
 
-export async function sendTask(sessionId: string, task: string): Promise<Record<string, unknown>> {
+export async function sendTask(
+  sessionId: string,
+  task: string
+): Promise<Record<string, unknown>> {
   return apiFetch("POST", `/api/a2a/sessions/${encodeURIComponent(sessionId)}/next`, { task })
 }
 
-export async function sendChoice(sessionId: string, choice: string): Promise<Record<string, unknown>> {
+export async function sendChoice(
+  sessionId: string,
+  choice: string
+): Promise<Record<string, unknown>> {
   return apiFetch("POST", `/api/a2a/sessions/${encodeURIComponent(sessionId)}/next`, {
     result: { choice },
   })
 }
 
-export async function sendMessage(sessionId: string, message: string): Promise<Record<string, unknown>> {
+export async function sendMessage(
+  sessionId: string,
+  message: string
+): Promise<Record<string, unknown>> {
   return apiFetch("POST", `/api/a2a/sessions/${encodeURIComponent(sessionId)}/next`, {
     result: { message },
   })

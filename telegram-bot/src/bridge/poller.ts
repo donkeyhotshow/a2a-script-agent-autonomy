@@ -1,15 +1,15 @@
 /**
- * poller.ts — Polls GET /sessions/:id/async until the agent response is ready.
- * Calls onPartial on every tick so callers can show "typing" status.
+ * bridge/poller.ts — Polls GET /sessions/:id/async until the agent response is ready.
+ * Calls onPartial on every non-terminal tick so callers can show "typing" status.
  */
-import { env } from "./env.js"
+import { config } from "../config.js"
 import { pollAsync, getSession, type PollResult } from "./a2a-client.js"
 
 function sleep(ms: number): Promise<void> {
   return new Promise((r) => setTimeout(r, ms))
 }
 
-function isComplete(result: PollResult): boolean {
+export function isComplete(result: PollResult): boolean {
   return (
     result.asyncPending === false ||
     result.status === "error" ||
@@ -21,8 +21,8 @@ export async function pollUntilDone(
   sessionId: string,
   onPartial?: (result: PollResult) => void
 ): Promise<PollResult> {
-  const maxAttempts = env.POLL_MAX_ATTEMPTS
-  const interval = env.POLL_INTERVAL_MS
+  const maxAttempts = config.a2a.pollMaxAttempts
+  const interval = config.a2a.pollIntervalMs
 
   let lastResult: PollResult | null = null
 
@@ -42,16 +42,17 @@ export async function pollUntilDone(
     }
   }
 
-  // Timeout — hydrate from session snapshot
+  // Timeout — hydrate from session snapshot for best available state
   console.warn(`[poller] Timeout after ${maxAttempts} attempts for session ${sessionId}`)
   try {
     const snapshot = await getSession(sessionId)
     return {
       asyncPending: false,
-      status: snapshot.status,
+      status: snapshot.status ?? "timeout",
       stage: snapshot.stage,
       execute: {
-        message: "⏱ The agent took too long to respond. Try /status for current state.",
+        message:
+          "⏱ The agent took too long to respond. Use /status to check the current state.",
       },
     }
   } catch {

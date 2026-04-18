@@ -14,7 +14,8 @@
   "dependencies": {
     "dotenv": "^16.4.5",
     "grammy": "^1.30.0",
-    "ioredis": "^5.4.1"
+    "ioredis": "^5.4.1",
+    "smol-toml": "^1.6.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
