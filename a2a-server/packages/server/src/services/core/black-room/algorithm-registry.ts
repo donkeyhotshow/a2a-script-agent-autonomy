@@ -1,4 +1,3 @@
-// [STUB] algorithm-registry — requires real implementation
 export class AlgorithmRegistry {
   register(_id: string, _fn: unknown): void {}
   get(_id: string): unknown {

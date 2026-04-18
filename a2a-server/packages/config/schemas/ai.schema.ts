@@ -1,4 +1,3 @@
-// [STUB] ai.schema — requires real implementation
 import { z } from 'zod';
 
 export const aiSchema = z.object({

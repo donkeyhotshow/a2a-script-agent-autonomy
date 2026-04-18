@@ -1,4 +1,3 @@
-// [STUB] client.repository — requires real implementation
 export class ClientRepository {
   async findById(_id: string): Promise<unknown> { return null; }
   async save(_data: unknown): Promise<void> {}

@@ -1,5 +1,3 @@
-// [STUB] mcp/registry — requires real implementation
-// TODO: implement actual MCP tool registry
 import { logger } from '@a2a/server-utils/logger';
 
 export interface McpTool {
