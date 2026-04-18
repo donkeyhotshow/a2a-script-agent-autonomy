@@ -1,5 +1,6 @@
 import { createLogger } from "@a2a/server-utils";
 import { tryParseJsonFromLlmText } from "@a2a/server-utils";
+import { resolveAiHubBaseUrl } from "@a2a/server-utils";
 
 const logger = createLogger("IntentGate");
 
@@ -111,12 +112,34 @@ export class IntentGate {
     });
 
     try {
-      // TODO: Replace with invoke mechanism
-      throw new Error(
-        "Intent gate LLM functionality disabled - use invoke mechanism",
-      );
+      const aiHubUrl = resolveAiHubBaseUrl().replace(/\/$/, '');
+      const model = process.env['A2A_MODEL'] ?? 'llama3';
+      const driftPrompt = `You are a semantic drift detector. Compare the original intent with the current plan and determine if the agent has drifted from its goal.
 
-      const content = response.content?.trim() || "";
+Original intent: ${this.originalIntent}
+
+Current plan: ${currentPlan}
+
+Respond ONLY with valid JSON: {"hasDrift": boolean, "confidence": 0.0-1.0, "reason": "string"}`;
+
+      const res = await fetch(`${aiHubUrl}/v1/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model,
+          messages: [{ role: 'user', content: driftPrompt }],
+          stream: false,
+          max_tokens: 200,
+        }),
+        signal: AbortSignal.timeout(15_000),
+      });
+
+      const rawContent = res.ok
+        ? ((await res.json()) as { choices?: Array<{ message?: { content?: string } }> })
+            .choices?.[0]?.message?.content ?? ''
+        : '';
+
+      const content = rawContent.trim();
       const parsed = tryParseJsonFromLlmText(content);
       const result = parsed !== null ? validateDriftResult(parsed) : null;
       if (result === null && content.length > 0) {

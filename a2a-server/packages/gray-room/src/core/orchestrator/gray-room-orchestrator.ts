@@ -181,10 +181,36 @@ export class GrayRoomOrchestrator {
     ) {
       logger.info("[GrayRoom] Running ADR-0093 Internal Debate");
       try {
-        // TODO: Replace with invoke mechanism
-        throw new Error(
-          "Gray room debate LLM functionality disabled - use invoke mechanism",
+        // ADR-0093: Call the hub for a single debate turn to refine the primary output.
+        // Uses a short prompt asking the model to critique and improve `md`.
+        const debatePrompt = `You are a critical reviewer. Below is a plan/response from an AI agent. Identify flaws, gaps, or improvements and output a revised, improved version.\n\n---\n${md.slice(0, 3_000)}\n---\n\nRespond with ONLY the improved plan/response, no meta-commentary.`;
+        const debateRes = await fetch(
+          `${this.aiHubUrl.replace(/\/$/, '')}/v1/chat/completions`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              model: this.model,
+              messages: [{ role: 'user', content: debatePrompt }],
+              stream: false,
+              max_tokens: 1_024,
+            }),
+            signal: AbortSignal.timeout(25_000),
+          },
         );
+        if (debateRes.ok) {
+          const debateBody = (await debateRes.json()) as {
+            choices?: Array<{ message?: { content?: string } }>;
+          };
+          const improved = debateBody.choices?.[0]?.message?.content?.trim();
+          if (improved && improved.length > 50) {
+            md = improved;
+            logger.info("[GrayRoom] Internal debate improved plan", {
+              originalLen: md.length,
+              improvedLen: improved.length,
+            });
+          }
+        }
       } catch (e) {
         logger.warn(
           "[GrayRoom] Internal debate skipped — using primary LLM output",
