@@ -177,6 +177,11 @@ export const config = {
     ),
   },
   openaiApiKey: process.env["OPENAI_API_KEY"] ?? null,
-  verboseLevel: num("VERBOSE_LEVEL", undefined, 1) as 0 | 1 | 2,
+  verboseLevel: (() => {
+    const level = num("VERBOSE_LEVEL", undefined, 1)
+    if (![0, 1, 2].includes(level))
+      throw new Error(`[config] VERBOSE_LEVEL must be 0, 1, or 2; got ${level}`)
+    return level as 0 | 1 | 2
+  })(),
   port: num("PORT", undefined, 4000),
 } as const

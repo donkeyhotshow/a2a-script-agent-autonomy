@@ -4,7 +4,9 @@
  * Fallback: in-memory Map (resets on process restart).
  */
 import { config } from "../config.js"
-import Redis from "ioredis"
+import { Redis as IoRedis } from "ioredis"
+
+type RedisClient = IoRedis
 
 export interface SessionStore {
   get(chatId: number): Promise<string | null>
@@ -37,7 +39,7 @@ class MemoryStore implements SessionStore {
 class RedisStore implements SessionStore {
   private ttlSeconds: number
 
-  constructor(private redis: Redis, ttlDays: number) {
+  constructor(private redis: RedisClient, ttlDays: number) {
     this.ttlSeconds = ttlDays * 24 * 60 * 60
   }
 
@@ -61,7 +63,7 @@ class RedisStore implements SessionStore {
 export async function createStore(): Promise<SessionStore> {
   const url = config.session.redisUrl
   if (url) {
-    const redis = new Redis(url, { lazyConnect: true })
+    const redis = new IoRedis(url, { lazyConnect: true })
     try {
       await redis.connect()
       console.log(

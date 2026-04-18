@@ -3,8 +3,10 @@
  * Stores past task/response pairs so they can be retrieved as context.
  * Primary: Redis sorted set scored by timestamp. Fallback: in-memory array.
  */
-import Redis from "ioredis"
+import { Redis as IoRedis } from "ioredis"
 import { config } from "../config.js"
+
+type RedisClient = IoRedis
 
 export interface MemoryEntry {
   role: "user" | "agent"
@@ -45,7 +47,7 @@ class MemoryMemoryStore implements MemoryStore {
 // ── Redis sorted-set store ────────────────────────────────────────────────────
 
 class RedisMemoryStore implements MemoryStore {
-  constructor(private redis: Redis) {}
+  constructor(private redis: RedisClient) {}
 
   private key(chatId: number): string {
     return `tg:memory:${chatId}`
@@ -61,8 +63,9 @@ class RedisMemoryStore implements MemoryStore {
 
   async recent(chatId: number, limit = 10): Promise<MemoryEntry[]> {
     const key = this.key(chatId)
-    const items = await this.redis.zrangebyscore(key, "-inf", "+inf", "LIMIT", 0, limit)
-    return items.map((s) => JSON.parse(s) as MemoryEntry).reverse()
+    // zrange with BYSCORE REV returns entries in descending score (newest first)
+    const items = await this.redis.zrange(key, "+inf", "-inf", "BYSCORE", "REV", "LIMIT", 0, limit)
+    return items.map((s: string) => JSON.parse(s) as MemoryEntry)
   }
 
   async clear(chatId: number): Promise<void> {
@@ -79,7 +82,7 @@ export async function getMemoryStore(): Promise<MemoryStore> {
   const url = config.session.redisUrl
   if (url) {
     try {
-      const redis = new Redis(url, { lazyConnect: true })
+      const redis = new IoRedis(url, { lazyConnect: true })
       await redis.connect()
       _store = new RedisMemoryStore(redis)
       return _store

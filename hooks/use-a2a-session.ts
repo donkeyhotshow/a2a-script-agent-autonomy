@@ -117,7 +117,7 @@ export function useA2ASession() {
           setSessions((prev) =>
             prev.map((s) =>
               s.id === sessionId
-                ? { ...s, status: lastResult?.error ? "error" : "completed" }
+                ? { ...s, status: lastResult && lastResult.error ? "error" : "completed" }
                 : s
             )
           )

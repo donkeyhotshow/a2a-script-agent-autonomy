@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Telegram bot bridge for the A2A agent orchestrator",
   "private": true,
-  "type": "commonjs",
+  "type": "module",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc --noEmit false --outDir dist",
