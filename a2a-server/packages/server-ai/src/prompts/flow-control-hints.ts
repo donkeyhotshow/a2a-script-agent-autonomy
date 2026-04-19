@@ -1,6 +1,9 @@
 /**
  * Phase-specific instructions for the LLM, keyed by `context.execution.action` + `context.execution.step`.
  * Injected into request templates as `${flowControlHint}` (see `attachFlowControlHintToInvokePayload`).
+ *
+ * NOTE: This module is owned by `@a2a/server-transform` to avoid package cycles
+ * (`transform` must not depend on `llm`).
  */
 
 export type ExecutionRef = { action: string; step: string };
@@ -30,8 +33,7 @@ const BY_ACTION_STEP: Record<string, string> = {
   'agent:completed':
     'Set `completed: true`. Summarize what was accomplished in `message`. Empty `execute`.',
 
-  'agent:*':
-    'Use exactly one tool key in `execute`. Advance `step` when the current goal is satisfied.',
+  'agent:*': 'Use exactly one tool key in `execute`. Advance `step` when the current goal is satisfied.',
 
   // --- dialog ---
   'dialog:request':
@@ -42,14 +44,12 @@ const BY_ACTION_STEP: Record<string, string> = {
     'Ground answers in `context.history`. Prefer chat + form; use a single tool key in `execute` only when the codebase must be consulted. Stay concise.',
 
   'dialog:*':
-    'Reply in the user\'s language. Optional RAG/tools when necessary — see system prompt patterns A/B. Output only the JSON block.',
+    "Reply in the user's language. Optional RAG/tools when necessary — see system prompt patterns A/B. Output only the JSON block.",
 
   // --- router / task ---
-  'task:router':
-    'Return the ranked-choices JSON shape. Do not call tools.',
+  'task:router': 'Return the ranked-choices JSON shape. Do not call tools.',
 
-  'task:new':
-    'Set up the chosen mode. Follow the response schema for this action.',
+  'task:new': 'Set up the chosen mode. Follow the response schema for this action.',
 };
 
 function normalizeToken(x: string | undefined): string {
@@ -71,8 +71,8 @@ const FLOW_HINT_ACTION_ALIASES: Record<string, string> = {
   'auto-ai-v2': 'agent',
   'coder-smart': 'agent',
   'coder-smart-v2': 'agent',
-  'analyze': 'agent',
-  'coder': 'agent',
+  analyze: 'agent',
+  coder: 'agent',
   'auto-ai': 'agent',
 };
 
@@ -91,3 +91,4 @@ export function resolveFlowControlHintMarkdown(ref: ExecutionRef): string {
 export function attachFlowControlHintToInvokePayload(root: Record<string, unknown>): void {
   root['flowControlHint'] = resolveFlowControlHintMarkdown(readExecutionRef(root));
 }
+

@@ -17,7 +17,7 @@ import {
     getPromptsTransformsPath,
     SIMULATION_TO_SCHEMA,
     loadPromptsTransform,
-} from '../../../transform/src/index.js';
+} from '../../../server-ai/src/index.js';
 import type {
     RequestContext,
     ProcessResult

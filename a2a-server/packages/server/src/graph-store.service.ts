@@ -10,7 +10,7 @@ import type {
     RecognizedEntity,
     RecognizedRelation,
     EntityTypeName
-} from '../protocol/src/types/entity.types.js';
+} from '@a2a/server-protocol';
 
 // ============================================
 // Types

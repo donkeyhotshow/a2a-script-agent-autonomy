@@ -40,7 +40,7 @@
     "sim:contract-report": "tsx scripts/sim-contract-report.ts",
     "gate:cleanup": "tsx scripts/cleanup-gate.ts",
     "build:parallel": "npm run build --workspaces --if-present",
-    "build:deps": "npm run build --workspace=@a2a/config && npm run build --workspace=@a2a/server-utils && npm run build --workspace=@a2a/server-protocol",
+    "build:deps": "npm run build --workspace=@a2a/config && npm run build --workspace=@a2a/server-utils && npm run build --workspace=@a2a/server-protocol && npm run build --workspace=@a2a/server-ai",
     "build:services": "npm run build --workspace=@a2a/server-daemon && npm run build --workspace=@a2a/server-features",
     "build:app": "npm run build --workspace=@a2a/server-request",
     "clean": "npm run clean --workspaces --if-present && rm -rf dist/"
@@ -49,16 +49,13 @@
     "packages": [
       "packages/server",
       "packages/actions",
-      "packages/llm",
-      "packages/transform",
+      "packages/server-ai",
       "packages/gray-room",
       "packages/server-config",
       "packages/server-protocol",
       "packages/server-utils",
       "packages/daemon",
       "packages/request",
-      "packages/config",
-      "packages/protocol",
       "packages/features",
       "packages/services"
     ]
@@ -78,6 +75,7 @@
     "@a2a/config": "file:packages/server-config",
     "@a2a/server-features": "file:packages/features",
     "@a2a/server-daemon": "file:packages/daemon",
+    "@a2a/server-ai": "file:packages/server-ai",
     "bcrypt": "^5.1.1",
     "bullmq": "^5.72.1",
     "commander": "^11.1.0",
@@ -93,7 +91,6 @@
     "js-yaml": "^4.1.1",
     "jsonpath-plus": "^10.4.0",
     "jsonwebtoken": "^9.0.2",
-    "litellm": "^0.12.0",
     "loro-crdt": "^1.10.8",
     "multer": "^1.4.5-lts.1",
     "picomatch": "^4.0.4",

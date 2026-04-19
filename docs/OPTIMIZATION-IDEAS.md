@@ -63,7 +63,7 @@ doc:
 
 ---
 
-## 5. Снизить количество пакетов `a2a-server` путём группировки (P2, L) — частично ✅
+## 5. Снизить количество пакетов `a2a-server` путём группировки (P2, L) ✅
 
 **Было:** 18 физических директорий в `packages/`, 12 официальных workspace-пакетов + 6 "ghost"
  директорий без `package.json` или регистрации в workspaces.
@@ -76,16 +76,28 @@ doc:
 - `packages/memory/` (3 .ts с двойным `src/src/` путём) → `_deprecated/packages/memory/`
 - `packages/features` — зарегистрирован в workspaces (package.json уже был)
 - `packages/services` — создан `package.json` + зарегистрирован в workspaces
-- Добавлены `ioredis`, `playwright`, `litellm` в `a2a-server/package.json`
-- `litellm` добавлен в `packages/llm/package.json`
 
-**Итог:** 14 физических пакетов, 14 зарегистрированных workspace-пакетов (было 12), 0 ghost dirs.
+**Сделано второй волной (2026-04-19):**
+- `packages/config` (`@a2a/config-legacy`) — не импортировался нигде → `_deprecated/packages/config-legacy`
+- `packages/protocol` (`@a2a/server-protocol-legacy`, 11 .ts) → типы влиты в `packages/server-protocol`
+  `server-protocol/src/index.ts` переписан с minimal-stub → полноценный экспорт всех типов.
+  Два файла в server (error.middleware.ts, graph-store.service.ts) мигрированы на `@a2a/server-protocol`
+- `packages/llm` (9 файлов) + `packages/transform` (18 файлов) → новый пакет `packages/server-ai`
+  (`@a2a/server-ai`). 19 файлов импортов во всём проекте переписаны автоматически.
+  `litellm` перемещён как dep в `server-ai/package.json`.
 
-**Оставшаяся P2/L работа (требует миграции импортов):**
-- `daemon` (10 файлов) + `features` (6 файлов) → `server-runtime`
-- `llm` (9 файлов) + `transform` (18 файлов) → `server-ai`
-- `config` (legacy) + `server-config` → слияние в `server-config`
-- `protocol` (legacy, 11 файлов) + `server-protocol` (1 файл) → слияние в `server-protocol`
+**`daemon` + `features` — не объединяются (осознанное решение):**
+- `features/package.json` объявляет `@a2a/server-core` (packages/server) как dep
+- `packages/server/src/` импортирует из `features/src/` напрямую → циклическая зависимость.
+  Объединение в `server-runtime` распространило бы цикл дальше. Оба пакета остаются отдельными.
+
+**Итог:** 11 workspace-пакетов (было 14 → 12 → 11), 0 ghost dirs.
+
+| Пакет | До | После |
+|---|---|---|
+| Пакетов в workspaces | 12 | 11 |
+| Ghost-директорий (без package.json) | 6 | 0 |
+| Дублирующихся/legacy пакетов | 3 (config-legacy, protocol-legacy, llm/transform split) | 0 |
 
 ---
 
@@ -176,5 +188,7 @@ root-level tools. `npm install` больше не тащит сотни MB не�
 | Root `dependencies` — неиспользуемые/чужие пакеты | 24 | ✅ Удалены (8 неиспользуемых + 16 из a2a-server) |
 | `@types/commander` в dependencies | — | ✅ Перемещён в devDependencies |
 | `ioredis`, `playwright`, `litellm` не задекларированы в a2a-server | 3 | ✅ Добавлены |
-| `litellm` не задекларирован в llm/package.json | — | ✅ Добавлен |
-| Слияние мелких пакетов (`daemon`+`features`, `llm`+`transform`, `config`+`server-config`, `protocol`+`server-protocol`) | 4 пары | ⏳ P2/L, требует миграции импортов |
+| `packages/config` (`@a2a/config-legacy`) нигде не импортируется | — | ✅ → `_deprecated/packages/config-legacy` |
+| `packages/protocol` (legacy, 11 типов-файлов) дублирует типы | — | ✅ Влит в `server-protocol` |
+| `packages/llm` + `packages/transform` (27 файлов) — 2 пакета одной цепочки | — | ✅ → `packages/server-ai` (`@a2a/server-ai`), 19 import-сайтов исправлено |
+| `daemon` + `features` — осознанно не объединяются | — | ✅ Задокументировано (циклическая зависимость) |

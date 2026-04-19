@@ -1,5 +1,9 @@
 /**
- * @a2a/server-protocol — minimal stub
+ * @a2a/server-protocol — canonical protocol types and validation
+ *
+ * Previously split across `protocol` (legacy rich types) and `server-protocol` (minimal stubs).
+ * Merged as of 2026-04-19 — this is now the single source of truth.
+ *
  * Full validation is handled by AJV schema in routes/index.ts.
  */
 export function validateInvokeRequest(body: unknown): { valid: boolean; errors?: string[] } {
@@ -9,42 +13,9 @@ export function validateInvokeRequest(body: unknown): { valid: boolean; errors?:
   return { valid: true };
 }
 
-// Protocol types — minimal stubs for type-checking
-export interface ContextBlock {
-  type: string;
-  content: unknown;
-}
-
-export interface ServerMessage {
-  role: 'system' | 'user' | 'assistant';
-  content: string;
-}
-
-export interface Task {
-  id: string;
-  type: string;
-  status: TaskStatus;
-  payload?: unknown;
-}
-
-export type TaskStatus = 'pending' | 'running' | 'completed' | 'failed';
-export type TaskType = 'dialog' | 'agent' | 'form' | 'script';
-
-export interface RequestContextBlock {
-  sessionId?: string;
-  requestId?: string;
-  context?: Record<string, unknown>;
-}
-
-export interface ApiResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: string;
-}
-
-export interface FileBlock {
-  path: string;
-  content: string;
-  startLine?: number;
-  endLine?: number;
-}
+// Re-export all canonical types from the types sub-module
+export * from './types/index.js';
+export * from './types/errors.js';
+export * from './types/entity.types.js';
+export * from './types/entity.guards.js';
+export * from './types/knowledge.types.js';

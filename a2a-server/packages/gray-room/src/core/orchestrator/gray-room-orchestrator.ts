@@ -16,7 +16,7 @@ import type {
   ServerInterruptTraceEvent,
 } from "../../../../transform/index.js";
 import { executeReadFile } from "../../../../actions/src/handlers/file-operations/read-file.js";
-import { mergeServerRagPageIntoContext } from "../../../../llm/src/rag/auto-rag-page-server.js";
+import { mergeServerRagPageIntoContext } from "../../../../server-ai/src/rag/auto-rag-page-server.js";
 import {
   extractLlmTextFromHubResponseBody,
   initAiHubChatPromise,

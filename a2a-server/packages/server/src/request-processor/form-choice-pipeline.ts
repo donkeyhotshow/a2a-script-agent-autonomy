@@ -4,7 +4,7 @@
 
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { runTransformPipelineFromFile } from '../../../transform/src/pipeline.js';
+import { runTransformPipelineFromFile } from '../../../server-ai/src/pipeline.js';
 import type { ProcessOutcome, ProcessResult } from './request-processor.interfaces';
 import {logger} from "@a2a/server-utils/logger";
 import {

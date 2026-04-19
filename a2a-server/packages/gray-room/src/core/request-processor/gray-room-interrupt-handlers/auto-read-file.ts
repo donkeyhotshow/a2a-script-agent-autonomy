@@ -1,5 +1,5 @@
 import {executeReadFile} from '../../../../../actions/src/handlers/file-operations/read-file.js';
-import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../../../transform/src/types.js';
+import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../../../server-ai/src/types.js';
 import {BaseGrayRoomHandler} from './base-handler.js';
 
 /**

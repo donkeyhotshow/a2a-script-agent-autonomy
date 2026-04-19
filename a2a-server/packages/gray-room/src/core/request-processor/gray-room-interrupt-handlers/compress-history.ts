@@ -2,7 +2,7 @@ import {resolveGrayRoomLlmModelFromContext} from '../../../../../server/src/requ
 import { AgentSwing } from '../../../../../server/src/agent-swing.js';
 import { pollReadyThenFetch } from '../../../../../daemon/src/daemon/llm-hub-poll.js';
 import { logger } from '@a2a/server-utils/logger';
-import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../../../transform/src/types.js';
+import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../../../server-ai/src/types.js';
 import {BaseGrayRoomHandler} from './base-handler.js';
 
 /**

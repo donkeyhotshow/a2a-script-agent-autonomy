@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { fetchAiHubGenerateText } from "../../../llm/src/llm/ai-hub-generate";
+import { fetchAiHubGenerateText } from "../../server-ai/src/llm/ai-hub-generate";
 
 describe("fetchAiHubGenerateText", () => {
   afterEach(() => {
