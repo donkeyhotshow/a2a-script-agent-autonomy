@@ -83,7 +83,7 @@ import { globalIntentGate } from "../../../../server/src/intent-gate.js";
 import { bugFixer } from "../../llm/bug-fixer.js";
 import { repoMapService } from "../../context/repo-map.service.js";
 import { contextDiscoveryService } from "../../context/context-discovery.service.js";
-import { mkdtempOsTmp } from "../../../../lib/mkdtemp-os-tmp.js";
+import { mkdtempOsTmp } from "../../../../server-utils/src/mkdtemp-os-tmp.js";
 import { prepareLlmMessages } from "../../../../server/src/request-processor/llm-orchestration.js";
 
 export class GrayRoomOrchestrator {

@@ -17,7 +17,8 @@
   "dependencies": {
     "@a2a/server-utils": "file:../server-utils",
     "@a2a/server-protocol": "file:../server-protocol",
-    "@a2a/server-transform": "file:../transform"
+    "@a2a/server-transform": "file:../transform",
+    "litellm": "^0.12.0"
   },
   "devDependencies": {
     "@types/node": "^20.19.39",

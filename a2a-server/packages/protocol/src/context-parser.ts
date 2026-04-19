@@ -11,7 +11,7 @@ import {
     TaskStatus,
     ProtocolError,
 } from './types/index.js';
-import {logger} from '../../lib/logger.js';
+import {logger} from '../../server-utils/src/logger.js';
 
 const VALID_TASK_TYPES: TaskType[] = ['analyze', 'refactor', 'test', 'document', 'fix', 'create', 'delete'];
 const VALID_TASK_STATUSES: TaskStatus[] = ['pending', 'in_progress', 'completed', 'failed', 'cancelled'];

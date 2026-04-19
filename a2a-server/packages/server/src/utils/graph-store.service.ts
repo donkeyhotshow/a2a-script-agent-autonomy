@@ -1,1 +1,1 @@
-export * from '../../../lib/graph-store.service.js'
+export * from '../../../server-utils/src/graph-store.service.js'

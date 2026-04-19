@@ -1,1 +1,1 @@
-export * from '../../../lib/strip-markdown-json-fence.js'
+export * from '../../../server-utils/src/strip-markdown-json-fence.js'

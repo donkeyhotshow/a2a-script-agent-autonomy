@@ -8,9 +8,9 @@ export {
     CircuitBreakerOpenError,
     withCircuitBreaker,
     DEFAULT_CIRCUIT_BREAKER_OPTIONS,
-} from '../../../lib/circuit-breaker.js';
+} from '../../../server-utils/src/circuit-breaker.js';
 
 export type {
     CircuitBreakerOptions,
     RetryMetrics,
-} from '../../../lib/circuit-breaker.js';
+} from '../../../server-utils/src/circuit-breaker.js';

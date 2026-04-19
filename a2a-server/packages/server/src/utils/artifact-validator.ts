@@ -1,1 +1,1 @@
-export * from '../../../lib/artifact-validator.js'
+export * from '../../server-utils/src/artifact-validator.js'

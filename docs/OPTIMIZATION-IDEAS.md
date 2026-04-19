@@ -63,27 +63,50 @@ doc:
 
 ---
 
-## 5. Снизить количество пакетов `a2a-server` путём группировки (P2, L)
+## 5. Снизить количество пакетов `a2a-server` путём группировки (P2, L) — частично ✅
 
-**Проблема:** `a2a-server/packages/` содержит ~19 пакетов, часть из которых (daemon, features,
-lib, llm, memory, transform) имеют минимальный объём. Это увеличивает сложность граф зависимостей
-и времени сборки.
+**Было:** 18 физических директорий в `packages/`, 12 официальных workspace-пакетов + 6 "ghost"
+ директорий без `package.json` или регистрации в workspaces.
 
-**Предложение:** Рассмотреть слияние мелких пакетов:
-- `daemon` + `features` → `server-runtime`
-- `llm` + `transform` → `server-ai`
-- `lib` + `server-utils` → `server-utils`
+**Сделано (2026-04-19):**
+- `packages/artifact-validator/` (пустая) — удалена
+- `packages/agents/` (только .md-файлы, 0 .ts) → `_deprecated/packages/agents/`
+- `packages/lib/` (build artifacts, дубликат `server-utils/src/`) → `_deprecated/packages/lib/`
+  Все импорты `../lib/X.js` → `../server-utils/src/X.js` исправлены автоматически (28 файлов)
+- `packages/memory/` (3 .ts с двойным `src/src/` путём) → `_deprecated/packages/memory/`
+- `packages/features` — зарегистрирован в workspaces (package.json уже был)
+- `packages/services` — создан `package.json` + зарегистрирован в workspaces
+- Добавлены `ioredis`, `playwright`, `litellm` в `a2a-server/package.json`
+- `litellm` добавлен в `packages/llm/package.json`
+
+**Итог:** 14 физических пакетов, 14 зарегистрированных workspace-пакетов (было 12), 0 ghost dirs.
+
+**Оставшаяся P2/L работа (требует миграции импортов):**
+- `daemon` (10 файлов) + `features` (6 файлов) → `server-runtime`
+- `llm` (9 файлов) + `transform` (18 файлов) → `server-ai`
+- `config` (legacy) + `server-config` → слияние в `server-config`
+- `protocol` (legacy, 11 файлов) + `server-protocol` (1 файл) → слияние в `server-protocol`
 
 ---
 
-## 6. Тип зависимостей в корневом `package.json` (P1, S)
+## 6. Тип зависимостей в корневом `package.json` (P1, S) ✅ исправлено
 
-**Проблема:** В корневом `package.json` часть библиотек (например `express`, `bullmq`, `bcrypt`,
-`libp2p`, `loro-crdt`, `langchain`) находится в `dependencies`, хотя фактически используются
-только в дочерних пакетах (`a2a-server`, `a2a-client`).
+~~В корневом `package.json` часть библиотек находилась в `dependencies`, хотя использовалась
+только в `a2a-server` или нигде.~~
 
-**Предложение:** Проверить и перенести реально используемые в корне пакеты в `devDependencies`
-или вовсе убрать из корня, оставив их только в конкретных workspace-пакетах.
+**Сделано (2026-04-19):** Корень НЕ является npm workspace — каждый суб-пакет (`a2a-server`,
+`a2a-client`, `telegram-bot`) управляет зависимостями самостоятельно.
+
+- **Удалены** из root `dependencies` (не используются нигде в активном коде):
+  `libp2p`, `@chainsafe/libp2p-gossipsub`, `@chainsafe/libp2p-noise`, `@libp2p/mplex`,
+  `@libp2p/tcp`, `@langchain/langgraph`, `typescript-json`, `a2a-js`
+- **Удалены** из root (принадлежат `a2a-server`, у которого свой `package.json`):
+  `express`, `express-async-errors`, `cors`, `helmet`, `compression`, `bcrypt`, `bullmq`,
+  `multer`, `jsonwebtoken`, `ioredis`, `litellm`, `playwright`, `winston`,
+  `winston-daily-rotate-file`, `prom-client`, `loro-crdt`
+- **Перемещён** `@types/commander` из `dependencies` → `devDependencies`
+- **Оставлены** в root (используются в корневом коде):
+  `next`, `react`, `react-dom`, `@tailwindcss/postcss`, `axios`, `commander`, `glob`, `zod`
 
 ---
 
@@ -112,14 +135,14 @@ lib, llm, memory, transform) имеют минимальный объём. Эт�
 
 ---
 
-## 10. Оптимизация граф зависимостей (P2, M)
+## 10. Оптимизация граф зависимостей (P2, M) ✅ исправлено
 
-**Проблема:** Корневой `package.json` перечисляет тяжёлые зависимости (`@langchain/langgraph`,
-`libp2p`, `loro-crdt`), которые вероятно нужны только в `a2a-server`. Hoisting этих пакетов
-в корень замедляет `npm install` для всех разработчиков.
+~~Корневой `package.json` перечислял тяжёлые зависимости (`@langchain/langgraph`, `libp2p`,
+`loro-crdt`), которые не использовались нигде в активном коде.~~
 
-**Предложение:** Провести аудит реального использования этих пакетов через `npm ls <pkg>` и
-переместить в соответствующие workspace-пакеты.
+Исправлено как часть п.6: все неиспользуемые и неправильно размещённые зависимости удалены
+из корневого `package.json`. Корень имеет только 8 зависимостей для Next.js shell и
+root-level tools. `npm install` больше не тащит сотни MB неиспользуемых пакетов.
 
 ---
 
@@ -146,5 +169,12 @@ lib, llm, memory, transform) имеют минимальный объём. Эт�
 | `src/rateLimiter.js` в корне | — | ✅ → `server-utils/src/rate-limiter.ts` |
 | `pnpm-lock.yaml` в git | 2 | ✅ Удалены из git, добавлены в `.gitignore` |
 | Next.js shell в корне | — | ✅ Проанализирован, активно используется |
-| Снизить кол-во `a2a-server` пакетов | ~19 пакетов | ⏳ P2/L, требует ручного рефакторинга |
-| Тяжёлые dep в корне `package.json` | libp2p, langchain и др. | ⏳ P2/M, требует аудита `npm ls` |
+| Ghost-директории в `a2a-server/packages/` | 4 (artifact-validator, agents, lib, memory) | ✅ → `_deprecated/packages/` |
+| Импорты `../lib/X.js` в 28 файлах | — | ✅ → `../server-utils/src/X.js` |
+| `packages/features` не в workspaces | — | ✅ Зарегистрирован |
+| `packages/services` без package.json | — | ✅ Создан + зарегистрирован |
+| Root `dependencies` — неиспользуемые/чужие пакеты | 24 | ✅ Удалены (8 неиспользуемых + 16 из a2a-server) |
+| `@types/commander` в dependencies | — | ✅ Перемещён в devDependencies |
+| `ioredis`, `playwright`, `litellm` не задекларированы в a2a-server | 3 | ✅ Добавлены |
+| `litellm` не задекларирован в llm/package.json | — | ✅ Добавлен |
+| Слияние мелких пакетов (`daemon`+`features`, `llm`+`transform`, `config`+`server-config`, `protocol`+`server-protocol`) | 4 пары | ⏳ P2/L, требует миграции импортов |

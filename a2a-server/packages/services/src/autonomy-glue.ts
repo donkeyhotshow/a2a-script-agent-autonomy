@@ -18,7 +18,7 @@
  */
 
 import type { OrchestratorState } from '../../../server/src/orchestrator-kernel.js';
-import { globalEventBus } from '../../../lib/event-bus.js';
+import { globalEventBus } from '../../server-utils/src/event-bus.js';
 import { toolTracker } from '../daemon/src/monitoring/tool-tracker.js';
 
 // ── Public types ──────────────────────────────────────────────────────────────

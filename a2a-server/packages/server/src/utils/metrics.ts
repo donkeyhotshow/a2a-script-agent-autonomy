@@ -1,1 +1,1 @@
-export * from '../../../lib/metrics.js'
+export * from '../../../server-utils/src/metrics.js'
