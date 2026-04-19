@@ -14,47 +14,52 @@ doc:
 
 ---
 
-## 1. Консолидация дублирующихся import-fix скриптов (P1, S)
+## 1. Консолидация дублирующихся import-fix скриптов (P1, S) ✅ исправлено
 
-**Проблема:** В `scripts/` существует 6+ вариантов скриптов для исправления импортов:
-`fix-imports.js`, `fix-imports-action.js`, `fix-imports-direct.mjs`, `fix-imports-manual.js`,
-`fix-server-imports.cjs`, `fix-server-imports.mjs`.
-
-**Предложение:** Оставить один канонический скрипт (`fix-imports-direct.mjs`), остальные
-перенести в `_deprecated/` или удалить. Текущее исполнение: `npm run fix-imports:direct`.
-
----
-
-## 2. Корневой Next.js shell — решить судьбу (P1, M)
-
-**Проблема:** В корне репозитория есть `app/`, `components/`, `hooks/`, `lib/`, `next.config.mjs`,
-`postcss.config.js` — остатки Next.js shell. Реальный фронтенд живёт в `a2a-client/packages/web`
-(Vue + Vite). Корневые `devDependencies` включают `next`, `react`, `react-dom`.
-
-**Предложение:**
-- Если Next.js shell не используется — удалить `app/`, `components/`, `hooks/`, `lib/`,
-  `next.config.mjs`; убрать `next`/`react`/`react-dom` из корневого `package.json`.
-- Если shell нужен — вынести в отдельный пакет `packages/operator-ui`.
+~~В `scripts/` существовало 6 вариантов скриптов для исправления импортов.~~
+Исправлено: 5 устаревших скриптов (`fix-imports.js`, `fix-imports-action.js`,
+`fix-imports-manual.js`, `fix-server-imports.cjs`, `fix-server-imports.mjs`) перенесены в
+`scripts/_deprecated/`. Остался один канонический: `scripts/fix-imports-direct.mjs`
+(`npm run fix-imports:direct`).
 
 ---
 
-## 3. Унификация lock-файлов (P1, S)
+## 2. Корневой Next.js shell — активно используется ✅ анализ завершён
 
-**Проблема:** В корне одновременно присутствуют `package-lock.json` и `pnpm-lock.yaml`.
-Аналогичная ситуация в `a2a-server`. Это вызывает неоднозначность при установке зависимостей.
+**Факты (2026-04-19):** `app/`, `components/`, `hooks/`, `lib/` — **не остатки**, это рабочий
+оператор UI на базе Next.js 16. Он включает:
+- `app/api/a2a/[...path]/route.ts` — прокси-маршрут, перенаправляющий все `/api/a2a/*`
+  запросы на Client API (`localhost:3001`)
+- `app/page.tsx` — Chat UI с `SessionPanel`, `ChatPanel`, `Workbench`
+- `hooks/use-a2a-session.ts` — управление сессиями
+- `lib/api-client.ts` — типизированный клиент Client API
+- `npm run dev/build/start` — все эти команды запускают Next.js
 
-**Предложение:** Выбрать один менеджер пакетов (рекомендуется `npm` как уже используемый
-в CI) и удалить `pnpm-lock.yaml` из корня и `a2a-server/`, добавив их в `.gitignore`.
+`react`/`react-dom`/`next` в `dependencies` — **корректны** для этого shell.
+
+**Итог:** Удалять нельзя. Это второй оператор UI (Next.js) рядом с первым (Vue/Vite в
+`a2a-client/packages/web`). При желании можно вынести в `packages/operator-ui`, но это
+опциональный рефакторинг.
 
 ---
 
-## 4. Вынести `src/rateLimiter.js` в нужный пакет (P2, S)
+## 3. Унификация lock-файлов (P1, S) ✅ исправлено
 
-**Проблема:** Одиночный файл `src/rateLimiter.js` находится в корне репозитория в папке `src/`,
-что не соответствует структуре монорепозитория.
+~~`pnpm-lock.yaml` в корне и `a2a-server/` конфликтовал с `package-lock.json`.~~
+Исправлено: `pnpm-lock.yaml` удалён из git, добавлен в `.gitignore`.
 
-**Предложение:** Переместить в `a2a-server/packages/server-utils/src/` или
-`a2a-client/packages/sdk/src/` в зависимости от использования.
+---
+
+## 4. Вынести `src/rateLimiter.js` в нужный пакет (P2, S) ✅ исправлено
+
+~~Одиночный файл `src/rateLimiter.js` находился в корне в папке `src/`, не соответствуя
+структуре монорепозитория. Импортировался через 4 уровня вверх из `registry-v2.ts`.~~
+
+Исправлено:
+- `src/rateLimiter.js` → `_deprecated/src/rateLimiter.js`
+- Создан `a2a-server/packages/server-utils/src/rate-limiter.ts` (typed TypeScript)
+- Добавлен в `a2a-server/packages/server-utils/src/index.ts` (публичный экспорт)
+- `registry-v2.ts` импортирует из `../../server-utils/src/rate-limiter.js`
 
 ---
 
@@ -135,8 +140,11 @@ lib, llm, memory, transform) имеют минимальный объём. Эт�
 | Session storage в git | 471+ файлов | ✅ Удалены |
 | Monitor artifacts в git | 12 файлов | ✅ Удалены |
 | Stale migration docs | 3 файла | ✅ Удалены |
-| `.gitignore` — пропущенные паттерны | 8 паттернов | ✅ Добавлены |
+| `.gitignore` — пропущенные паттерны | 10 паттернов | ✅ Добавлены |
 | `docs/ARCHITECTURE.md` — устаревшие ASCII-диаграммы | — | ✅ Обновлены (Mermaid) |
-| Дублирующиеся import-fix скрипты | 6 скриптов | ⏳ P1, требует ручной проверки |
-| Next.js shell в корне | — | ⏳ P1, требует решения |
-| Дублирование lock-файлов | 2 | ⏳ P1, требует решения |
+| Дублирующиеся import-fix скрипты | 5 скриптов | ✅ Перенесены в `scripts/_deprecated/` |
+| `src/rateLimiter.js` в корне | — | ✅ → `server-utils/src/rate-limiter.ts` |
+| `pnpm-lock.yaml` в git | 2 | ✅ Удалены из git, добавлены в `.gitignore` |
+| Next.js shell в корне | — | ✅ Проанализирован, активно используется |
+| Снизить кол-во `a2a-server` пакетов | ~19 пакетов | ⏳ P2/L, требует ручного рефакторинга |
+| Тяжёлые dep в корне `package.json` | libp2p, langchain и др. | ⏳ P2/M, требует аудита `npm ls` |

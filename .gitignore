@@ -65,3 +65,7 @@ hooks/CURSOR_AGENT_SIGNAL.md
 
 # Next.js build output
 .next/
+
+# pnpm lock files — npm is the canonical package manager for this repo
+# pnpm-workspace.yaml config files are intentionally kept
+pnpm-lock.yaml

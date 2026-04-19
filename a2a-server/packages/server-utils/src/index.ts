@@ -13,6 +13,7 @@ export * from "./logger.js";
 export * from "./metrics.js";
 export * from "./mkdtemp-os-tmp.js";
 export * from "./path-containment.js";
+export * from "./rate-limiter.js";
 export * from "./session-compaction.js";
 export * from "./strip-markdown-json-fence.js";
 export * from "./task-detail-analyzer.js";

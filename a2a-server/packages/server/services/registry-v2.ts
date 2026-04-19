@@ -14,7 +14,7 @@
  */
 
 import { logger } from '../../lib/logger.js';
-import { RateLimiter } from '../../../../src/rateLimiter.js';
+import { RateLimiter } from '../../server-utils/src/rate-limiter.js';
 
 // ── Public interfaces ─────────────────────────────────────────────────────────
 
