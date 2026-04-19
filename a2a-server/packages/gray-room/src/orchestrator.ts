@@ -1,6 +1,6 @@
 import { logger } from "./logger.js";
-import { llmService } from "@a2a/server-llm";
-import type { LLMRequest } from "@a2a/server-llm";
+import { llmService } from '@a2a/server-ai';
+import type { LLMRequest } from '@a2a/server-ai';
 
 export class GrayRoomOrchestrator {
   constructor(_options: any) {

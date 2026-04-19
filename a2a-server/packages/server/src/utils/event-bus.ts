@@ -1,1 +1,1 @@
-export * from '../../../lib/event-bus.js'
+export * from '../../../server-utils/src/event-bus.js'

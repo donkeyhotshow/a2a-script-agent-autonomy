@@ -1,6 +1,6 @@
 import {describe, expect, it} from 'vitest';
-import {mergeGrayRoomSlotIntoContext} from '@a2a/server-transform';
-import type {GrayRoomControlEnvelope} from '@a2a/server-transform';
+import {mergeGrayRoomSlotIntoContext} from '@a2a/server-ai';
+import type {GrayRoomControlEnvelope} from '@a2a/server-ai';
 
 describe('mergeGrayRoomSlotIntoContext', () => {
     it('merges grayRoom under workbench.slots and preserves interruptTrace', () => {

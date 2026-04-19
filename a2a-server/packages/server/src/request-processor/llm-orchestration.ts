@@ -7,8 +7,8 @@
 import * as path from 'path';
 import {logger} from "@a2a/server-utils/logger";
 import {resolveAiHubBaseUrl} from '@a2a/server-utils';
-import {mkdtempOsTmp} from '../../../lib/mkdtemp-os-tmp.js';
-import {runPromptsTransform} from '../../../transform/src/index.js';
+import {mkdtempOsTmp} from '@a2a/server-utils';
+import {runPromptsTransform} from '@a2a/server-ai';
 import {
     extractLlmTextFromHubResponseBody,
     initAiHubChatPromise,

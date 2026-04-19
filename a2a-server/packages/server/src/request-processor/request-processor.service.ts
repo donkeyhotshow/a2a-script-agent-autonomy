@@ -37,7 +37,7 @@ import type { RequestType } from "./base-processor.js";
 import {
   LLM_PIPELINE_ACTIONS,
   type LlmPipelineAction,
-} from "../../../server-config/router-static.js";
+} from "@a2a/config";
 import { resolveExecution, resolveResultObject } from "./normalization.js";
 import { detectFrameworksFromCodeBlocks } from "./framework-from-codeblocks.js";
 import { resolveA2aTraceId } from "@a2a/server-utils";

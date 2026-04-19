@@ -1,9 +1,0 @@
-{
-  "result": {
-    "rag-search": {
-      "query": "ADR-0035 backlog client modal waiting approval DEV_STATE",
-      "results": [],
-      "files": []
-    }
-  }
-}

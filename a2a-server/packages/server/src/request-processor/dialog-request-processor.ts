@@ -35,11 +35,11 @@ import { requestService } from "@a2a/server-request";
 import { CognitionBase } from "../cognition-base.js";
 
 import { globalDesignReasoner } from "../hierarchical-design-reasoner.js";
-import { getPromptsTransformsPath } from "../../../transform/index.js";
+import { getPromptsTransformsPath } from "@a2a/server-ai";
 import {
   isAgentSchemaName,
   lastAssistantMessageFromContext,
-} from '../../../server-utils/src/agent-utils.js';
+} from '@a2a/server-utils';
 
 export { isDialogToolExecutePayload };
 export { resolveTransformSchema, normalizeContext, extractSchemaName };

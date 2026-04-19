@@ -5,7 +5,7 @@
  */
 
 import {logger, resolveAiHubBaseUrl, resolveLlmPromiseRecovery} from '@a2a/server-utils';
-import {getPromptsTransformsPath} from '../../../transform/src/index.js';
+import {getPromptsTransformsPath} from '@a2a/server-ai';
 import {GrayRoomOrchestrator} from '../../../gray-room/src/core/request-processor/gray-room-orchestrator.js';
 import {readGrayRoomInterruptBudget, shouldUseGrayRoom} from '../../../gray-room/src/core/request-processor/gray-room-trigger.js';
 import {resolveTransformSchema, extractSchemaName} from './normalization.js';

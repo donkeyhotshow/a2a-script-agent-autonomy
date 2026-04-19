@@ -1,7 +1,0 @@
-[
-  {
-    "role": "assistant",
-    "content": "I will read the ADR-0036 document to understand the current status of Phase 1 and the pending decisions regarding reviewers and task splitting.",
-    "step": 28
-  }
-]

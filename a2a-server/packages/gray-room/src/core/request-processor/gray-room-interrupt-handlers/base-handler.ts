@@ -1,4 +1,4 @@
-import type {InterruptDirective, ServerInterruptTraceEvent} from '../../../../../transform/src/types.js';
+import type {InterruptDirective, ServerInterruptTraceEvent} from '@a2a/server-ai';
 import type {GrayRoomContext} from '../gray-room-utils.js';
 
 /**

@@ -1,5 +1,0 @@
-{
-  "result": {
-    "message": "Implement or explicitly defer each ⏳ row: client modal behavior for waiting/approval states; session/create or persistence path for `conversation_id` if still required. Update ADR-0035 table (✅/deferred) and `DEV_STATE` for touched modules."
-  }
-}

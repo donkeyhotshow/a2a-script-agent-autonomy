@@ -27,7 +27,7 @@
  */
 
 import { logger } from '@a2a/server-utils/logger';
-import type { InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext } from '../../../../../transform/src/types.js';
+import type { InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext } from '@a2a/server-ai';
 import { BaseGrayRoomHandler } from './base-handler.js';
 
 // ── A2A Client API types ───────────────────────────────────────────────────────

@@ -1,1 +1,1 @@
-export * from '../../../lib/artifact-store.js'
+export * from '../../../server-utils/src/artifact-store.js'

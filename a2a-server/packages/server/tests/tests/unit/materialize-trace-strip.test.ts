@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { prepareInvokePayloadForLlmPrompt } from "../../../../transform/src/materialize-result-for-llm.js";
+import { prepareInvokePayloadForLlmPrompt } from "../../../../server-ai/src/materialize-result-for-llm.js";
 
 const A2A_TRACE_CONTEXT_KEY = "a2aTraceId";
 

@@ -1,1 +1,1 @@
-export * from '../../../lib/fs-access.js'
+export * from '../../../server-utils/src/fs-access.js'

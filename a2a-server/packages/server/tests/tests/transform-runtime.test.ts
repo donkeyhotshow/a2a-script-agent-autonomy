@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { runTransformPipeline, loadTransformPipeline, runPromptsTransform, getPromptsTransformsPath } from '../src/transform/index.js';
+import { runTransformPipeline, loadTransformPipeline, runPromptsTransform, getPromptsTransformsPath } from '@a2a/server-ai';
 import * as fs from 'fs';
 import * as path from 'path';
 import { tmpdir } from 'node:os';

@@ -1,1 +1,1 @@
-export * from '../../../lib/session-compaction.js'
+export * from '../../../server-utils/src/session-compaction.js'

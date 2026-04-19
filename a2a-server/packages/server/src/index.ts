@@ -9,7 +9,7 @@ import {
 } from "./request-processor/request-processor.service.js";
 import { actionRegistry } from "../../actions/src/action-registry.js";
 import { algorithmRegistry } from "./services/core/black-room/algorithm-registry.js";
-import { getPromptsTransformsPath } from "../../transform/index.js";
+import { getPromptsTransformsPath } from "@a2a/server-ai";
 import { globalArtifactStore } from "./artifact-store.js";
 
 import { ultraContextService } from "./services/context/ultracontext.service.js";
