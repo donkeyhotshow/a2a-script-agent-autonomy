@@ -47,6 +47,11 @@ export interface AgentGraphOptions {
     maxRetries?: number;
     maxParallelExecutors?: number;
     retryDelayMs?: number;
+    /** Minimum confidence score [0..1] required to accept a passing verdict.
+     *  When verdict.passed but confidence < threshold, the graph enters a
+     *  low-confidence retry so the Planner can improve the result.
+     *  Defaults to 0 (disabled). */
+    confidenceThreshold?: number;
 }
 
 // ── AgentGraph ─────────────────────────────────────────────────────────────────
@@ -56,12 +61,14 @@ export class AgentGraph {
     private readonly maxRetries: number;
     private readonly maxParallelExecutors: number;
     private readonly baseRetryDelayMs: number;
+    private readonly confidenceThreshold: number;
     private readonly loopDetector = new LoopDetector();
 
     constructor(opts: AgentGraphOptions = {}) {
         this.maxRetries           = opts.maxRetries           ?? Number(process.env['A2A_GRAPH_MAX_RETRIES']     ?? 3);
         this.maxParallelExecutors = opts.maxParallelExecutors ?? Number(process.env['A2A_GRAPH_MAX_EXECUTORS']   ?? 4);
         this.baseRetryDelayMs     = opts.retryDelayMs         ?? Number(process.env['A2A_GRAPH_RETRY_DELAY_MS'] ?? 1_000);
+        this.confidenceThreshold  = opts.confidenceThreshold  ?? Number(process.env['A2A_GRAPH_CONFIDENCE_THRESHOLD'] ?? 0);
     }
 
     get currentState(): GraphState { return this.state; }
@@ -70,8 +77,17 @@ export class AgentGraph {
         this.state = GraphState.IDLE;
         this.loopDetector.reset();
 
-        let retries = 0;
-        let currentTask = task;
+        // ── Restore persisted state (survives server restart) ─────────────────
+        const snap = await restoreAgentGraphState(ctx.sessionId).catch(() => null);
+        let retries = snap?.retries ?? 0;
+        let currentTask = snap?.currentTask ?? task;
+        if (snap) {
+            logger.info('[AgentGraph] Resuming from persisted state', {
+                sessionId: ctx.sessionId,
+                state: snap.state,
+                retries,
+            });
+        }
         let lastVerdict: Verdict | null = null;
 
         while (retries <= this.maxRetries) {
@@ -84,6 +100,7 @@ export class AgentGraph {
                 plan = await globalAgentFactory.getPlanner().decompose(currentTask, ctx);
             } catch (err: unknown) {
                 this.state = GraphState.FAILED;
+                void clearAgentGraphState(ctx.sessionId);
                 return { outcome: 'failed', state: this.state, error: `Planning failed: ${String(err)}`, retries };
             }
 
@@ -99,16 +116,38 @@ export class AgentGraph {
             lastVerdict = verdict;
 
             if (verdict.passed) {
-                this.state = GraphState.DONE;
-                logger.info('[AgentGraph] → DONE', { confidence: verdict.confidence });
-                return { outcome: 'completed', state: this.state, artifacts: verdict.artifacts, retries, plan };
+                // Accept the result only if confidence meets the configured threshold.
+                if (this.confidenceThreshold > 0 && verdict.confidence < this.confidenceThreshold) {
+                    // Low-confidence pass — treat as a soft failure so the Planner
+                    // can produce a higher-quality result on the next iteration.
+                    logger.warn('[AgentGraph] Low-confidence pass, forcing retry', {
+                        confidence: verdict.confidence,
+                        threshold: this.confidenceThreshold,
+                    });
+                    lastVerdict = {
+                        ...verdict,
+                        passed: false,
+                        critique: verdict.critique
+                            ?? `Low confidence ${verdict.confidence.toFixed(2)} < threshold ${this.confidenceThreshold.toFixed(2)}. Please improve output quality.`,
+                    };
+                    // Continue to RETRY path below
+                } else {
+                    this.state = GraphState.DONE;
+                    logger.info('[AgentGraph] → DONE', { confidence: verdict.confidence });
+                    void clearAgentGraphState(ctx.sessionId);
+                    return { outcome: 'completed', state: this.state, artifacts: verdict.artifacts, retries, plan };
+                }
+            } else {
+                lastVerdict = verdict;
             }
+            const effectiveVerdict = lastVerdict!;
 
             // ── RETRY or FAIL ─────────────────────────────────────────────────
             if (retries >= this.maxRetries) {
                 this.state = GraphState.FAILED;
-                logger.warn('[AgentGraph] → FAILED', { retries, critique: verdict.critique });
-                return { outcome: 'failed', state: this.state, error: verdict.critique, retries, plan };
+                logger.warn('[AgentGraph] → FAILED', { retries, critique: effectiveVerdict.critique });
+                void clearAgentGraphState(ctx.sessionId);
+                return { outcome: 'failed', state: this.state, error: effectiveVerdict.critique, retries, plan };
             }
 
             this.state = GraphState.RETRY;
@@ -117,18 +156,27 @@ export class AgentGraph {
             logger.warn('[AgentGraph] → RETRY', { retries, delayMs: delay });
 
             // Loop guard
-            const loopKey = `${task.slice(0, 60)}|${verdict.critique?.slice(0, 30) ?? ''}`;
+            const loopKey = `${task.slice(0, 60)}|${effectiveVerdict.critique?.slice(0, 30) ?? ''}`;
             const loopSig = this.loopDetector.check(loopKey, 'retry', String(retries));
             if (loopSig?.severity === 'critical') {
                 this.state = GraphState.FAILED;
+                void clearAgentGraphState(ctx.sessionId);
                 return { outcome: 'failed', state: this.state, error: 'Loop detected in retry cycle', retries, plan };
             }
 
-            currentTask = `[Retry ${retries}] ${verdict.critique ?? ''}\n\nOriginal: ${task}`;
+            currentTask = `[Retry ${retries}] ${effectiveVerdict.critique ?? ''}\n\nOriginal: ${task}`;
+            // Persist current state so the run can be resumed after a restart.
+            void persistAgentGraphState(ctx.sessionId, {
+                state: this.state,
+                retries,
+                currentTask,
+                savedAt: Date.now(),
+            });
             await _sleep(delay);
         }
 
         this.state = GraphState.FAILED;
+        void clearAgentGraphState(ctx.sessionId);
         return { outcome: 'failed', state: this.state, error: lastVerdict?.critique ?? 'Max retries exceeded', retries };
     }
 
@@ -173,6 +221,96 @@ export class AgentGraph {
         }
 
         return [...done.values()];
+    }
+}
+
+// ── Redis state persistence ────────────────────────────────────────────────────
+
+/** Serialisable snapshot of an in-progress AgentGraph run. */
+export interface AgentGraphSnapshot {
+    state: GraphState;
+    retries: number;
+    currentTask: string;
+    savedAt: number;
+}
+
+const REDIS_TTL_SECONDS = 86_400; // 24 h
+
+interface MinimalRedis {
+    set(key: string, value: string, expiryMode: string, time: number): Promise<unknown>;
+    get(key: string): Promise<string | null>;
+    del(key: string): Promise<unknown>;
+}
+
+let _redisClient: MinimalRedis | null | undefined; // undefined = not yet attempted
+
+async function getRedisClient(): Promise<MinimalRedis | null> {
+    if (_redisClient !== undefined) return _redisClient;
+    const url = process.env['REDIS_URL'];
+    if (!url) { _redisClient = null; return null; }
+    try {
+        const mod = await import('ioredis');
+        const Redis = (mod.default ?? mod) as unknown as new (url: string) => MinimalRedis;
+        _redisClient = new Redis(url);
+        return _redisClient;
+    } catch {
+        _redisClient = null;
+        return null;
+    }
+}
+
+/**
+ * Persist an AgentGraph run state to Redis under `graph:state:{sessionId}`.
+ * No-ops silently when Redis is unavailable.
+ */
+export async function persistAgentGraphState(
+    sessionId: string,
+    snapshot: AgentGraphSnapshot,
+): Promise<void> {
+    const client = await getRedisClient();
+    if (!client) return;
+    try {
+        await client.set(
+            `graph:state:${sessionId}`,
+            JSON.stringify(snapshot),
+            'EX',
+            REDIS_TTL_SECONDS,
+        );
+        logger.debug('[AgentGraph] State persisted', { sessionId, state: snapshot.state });
+    } catch (err) {
+        logger.warn('[AgentGraph] Redis persist error', { error: String(err) });
+    }
+}
+
+/**
+ * Restore a previously persisted AgentGraph run state from Redis.
+ * Returns `null` when nothing is stored or Redis is unavailable.
+ */
+export async function restoreAgentGraphState(sessionId: string): Promise<AgentGraphSnapshot | null> {
+    const client = await getRedisClient();
+    if (!client) return null;
+    try {
+        const raw = await client.get(`graph:state:${sessionId}`);
+        if (!raw) return null;
+        const snap = JSON.parse(raw) as AgentGraphSnapshot;
+        logger.info('[AgentGraph] State restored', { sessionId, state: snap.state });
+        return snap;
+    } catch (err) {
+        logger.warn('[AgentGraph] Redis restore error', { error: String(err) });
+        return null;
+    }
+}
+
+/**
+ * Delete a persisted state entry (call after the graph reaches DONE or FAILED).
+ */
+export async function clearAgentGraphState(sessionId: string): Promise<void> {
+    const client = await getRedisClient();
+    if (!client) return;
+    try {
+        await client.del(`graph:state:${sessionId}`);
+    } catch {
+        // best-effort cleanup
     }
 }
 

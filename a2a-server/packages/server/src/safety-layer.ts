@@ -3,6 +3,30 @@ import { LoopDetector } from './safety-layer/LoopDetector.js';
 
 const logger = createLogger('SafetyLayer');
 
+// Lazily resolved to avoid circular-dep at module load time
+async function recordFailureExperience(
+    sessionId: string,
+    turnId: string,
+    contextJson: string,
+    action: string,
+): Promise<void> {
+    try {
+        const { globalExperienceBank } = await import(
+            '../../gray-room/src/memory/experience-bank.js'
+        );
+        await globalExperienceBank.recordTurn(
+            sessionId,
+            turnId,
+            contextJson,
+            { type: action, payload: null },
+            -1,
+            'failure',
+        );
+    } catch {
+        // best-effort — never throw from safety path
+    }
+}
+
 export interface SafetyInterceptResult {
     halt: boolean;
     reason?: string;
@@ -36,6 +60,15 @@ export class SafetyLayer {
 
         if (signal?.severity === 'critical') {
             logger.error('[Safety] Loop detected!', { action: currentAction });
+            // Record the repeating action as a failure experience so future
+            // sessions can learn to avoid this pattern via getRelevantExperiences().
+            const sessionId = String(ctx['session_id'] ?? 'unknown');
+            void recordFailureExperience(
+                sessionId,
+                `turn-${this.turnCounter}`,
+                JSON.stringify(ctx).slice(0, 2_000),
+                currentAction,
+            );
             return {
                 halt: true,
                 reason: 'Infinite loop detected: agent is repeating the same action and outcome.',

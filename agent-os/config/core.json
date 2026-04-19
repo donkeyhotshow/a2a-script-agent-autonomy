@@ -1,0 +1,12 @@
+{
+  "max_revisions": 3,
+  "judge_threshold": 7.0,
+  "redis_url": "redis://localhost:6379/0",
+  "sqlite_path": "memory_store/episodic.db",
+  "solutions_path": "memory_store/solutions.json",
+  "behaviour_path": "memory_store/behaviour.md",
+  "artifacts_dir": "artifacts",
+  "skills_dir": "skills",
+  "openai_model": "gpt-4o-mini",
+  "log_level": "INFO"
+}
