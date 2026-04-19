@@ -9,19 +9,19 @@ import {
   syncLiveContextHistoryFromResultMessage,
   mergeGrayRoomSlotIntoContext,
   mergeInterruptTraceIntoContext,
-} from "../../../../transform/index.js";
+  mergeServerRagPageIntoContext,
+} from "@a2a/server-ai";
 import type {
   GrayRoomControlEnvelope,
   InterruptDirective,
   ServerInterruptTraceEvent,
-} from "../../../../transform/index.js";
+} from "@a2a/server-ai";
 import { executeReadFile } from "../../../../actions/src/handlers/file-operations/read-file.js";
-import { mergeServerRagPageIntoContext } from "../../../../server-ai/src/rag/auto-rag-page-server.js";
 import {
   extractLlmTextFromHubResponseBody,
   initAiHubChatPromise,
   pollReadyThenFetch,
-} from "../../../../daemon/src/daemon/llm-hub-poll.js";
+} from "@a2a/server-daemon";
 import { BlackRoomOrchestrator } from "../../../../server/src/services/core/black-room/black-room-orchestrator.js";
 import type {
   AlgorithmContext,
@@ -83,7 +83,7 @@ import { globalIntentGate } from "../../../../server/src/intent-gate.js";
 import { bugFixer } from "../../llm/bug-fixer.js";
 import { repoMapService } from "../../context/repo-map.service.js";
 import { contextDiscoveryService } from "../../context/context-discovery.service.js";
-import { mkdtempOsTmp } from "../../../../server-utils/src/mkdtemp-os-tmp.js";
+import { mkdtempOsTmp } from "@a2a/server-utils";
 import { prepareLlmMessages } from "../../../../server/src/request-processor/llm-orchestration.js";
 
 export class GrayRoomOrchestrator {

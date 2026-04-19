@@ -10,8 +10,8 @@ import {
   readGrayRoomInterruptBudget,
   shouldUseGrayRoom,
 } from './core/request-processor/gray-room-trigger.js';
-import { getPromptsTransformsPath } from '../../transform/index.js';
-import { features } from '../../config/index.js';
+import { getPromptsTransformsPath } from '@a2a/server-ai';
+import { features } from '@a2a/config';
 
 /** Minimal feature event interface */
 export interface FeatureEvent {
