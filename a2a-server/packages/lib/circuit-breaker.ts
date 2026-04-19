@@ -16,6 +16,12 @@ export interface CircuitBreakerOptions {
     resetTimeout: number;
     /** Number of successful calls to close circuit */
     successThreshold: number;
+    /**
+     * Per-call timeout in ms. When set, each execute() call races against a
+     * timer so that a hung LLM / network call never blocks indefinitely.
+     * Default: undefined (no timeout enforced by the breaker itself).
+     */
+    timeoutMs?: number;
 }
 
 export interface RetryMetrics {
@@ -77,9 +83,23 @@ export class CircuitBreaker {
         }
         
         this.metrics.totalAttempts++;
+
+        const timeoutMs = this.options.timeoutMs;
+        const guarded: Promise<T> = timeoutMs !== undefined
+            ? new Promise<T>((resolve, reject) => {
+                const timer = setTimeout(
+                    () => reject(new Error(`CircuitBreaker timeout after ${timeoutMs}ms`)),
+                    timeoutMs,
+                );
+                fn().then(
+                    (v) => { clearTimeout(timer); resolve(v); },
+                    (e: unknown) => { clearTimeout(timer); reject(e); },
+                );
+            })
+            : fn();
         
         try {
-            const result = await fn();
+            const result = await guarded;
             this.onSuccess();
             return result;
         } catch (error) {

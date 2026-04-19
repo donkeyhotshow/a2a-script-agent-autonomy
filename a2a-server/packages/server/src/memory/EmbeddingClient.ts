@@ -22,6 +22,13 @@ export interface EmbeddingClientOptions {
     model?: string;
     /** HTTP timeout in ms (default: 10 000). */
     timeoutMs?: number;
+    /**
+     * When true, fall back to `placeholderEmbedding()` instead of returning
+     * null on hub failure. Intended for local dev / unit tests where the hub
+     * is unavailable and cosine-similarity correctness is not required.
+     * Defaults to false (fail-safe: return null on failure).
+     */
+    allowFallback?: boolean;
 }
 
 // ── Placeholder ────────────────────────────────────────────────────────────────
@@ -64,11 +71,13 @@ export class EmbeddingClient {
     private readonly aiHubUrl: string;
     private readonly model: string;
     private readonly timeoutMs: number;
+    private readonly allowFallback: boolean;
 
     constructor(opts: EmbeddingClientOptions = {}) {
         this.aiHubUrl = resolveAiHubBaseUrl(opts.aiHubUrl);
         this.model = opts.model ?? (process.env['EMBEDDING_MODEL'] ?? 'nomic-embed-text');
         this.timeoutMs = opts.timeoutMs ?? 10_000;
+        this.allowFallback = opts.allowFallback ?? false;
     }
 
     /**
@@ -140,6 +149,11 @@ export class EmbeddingClient {
         if (process.env['EMBEDDING_STRICT'] === 'true') {
             throw err;
         }
+        if (this.allowFallback) {
+            logger.warn('[EmbeddingClient] Embedding failed; allowFallback=true (dev/test mode)', {
+                error: err.message,
+            });
+        }
         return null;
     }
 }
@@ -147,3 +161,23 @@ export class EmbeddingClient {
 // ── Singleton for shared use ──────────────────────────────────────────────────
 
 export const globalEmbeddingClient = new EmbeddingClient();
+
+// ── Factory for dependency-injection-friendly usage ───────────────────────────
+
+/**
+ * Create a configured EmbeddingClient instance.
+ *
+ * Prefer this over the `globalEmbeddingClient` singleton when you need
+ * deterministic construction (e.g. in dependency injection containers,
+ * or when different subsystems need different options).
+ *
+ * In production: `allowFallback` defaults to false so hub failures are
+ * surfaced immediately rather than silently degrading similarity search.
+ */
+export function createEmbeddingClient(opts?: EmbeddingClientOptions): EmbeddingClient {
+    return new EmbeddingClient({
+        aiHubUrl: process.env['A2A_AI_HUB_URL'],
+        allowFallback: process.env['NODE_ENV'] !== 'production',
+        ...opts,
+    });
+}
