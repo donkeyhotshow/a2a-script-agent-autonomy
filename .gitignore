@@ -28,6 +28,9 @@ simulations/**/invoke-capture.json
 # Task Monitor runtime state (machine-local)
 task-monitor-state.json
 
+# Monitor run artifacts (runtime output, not source)
+monitor-artifacts/
+
 # TypeScript / tooling scratch dumps (regenerate locally if needed)
 tsc-errors.txt
 tsc-out.txt
@@ -35,6 +38,23 @@ tsc-out2.txt
 git_status_full.txt
 diff_summary.txt
 dedup_report_remote.md
+
+# Build artifacts
+**/tsconfig.tsbuildinfo
+**/next-env.d.ts
+a2a-server/build_errors.txt
+a2a-server/$log
+
+# SHA checksum tracking files (generated, not source)
+root-sha.txt
+shared-sha.txt
+src-sha.txt
+
+# Test / debug scratch files
+a2a-ai-hub/response.json
+a2a-ai-hub/test_output.txt
+tests/**/_tmp-*.json
+tests/**/_debug-*.mjs
 
 # Cursor hook ticker (regenerated every N minutes locally)
 hooks/CURSOR_AGENT_SIGNAL.json

@@ -2,146 +2,189 @@
 
 ---
 doc:
-  id: new-request-flow/architecture
+  id: architecture
   type: spec
   machine_readable: true
-  tags: [architecture, client, server, web, ports]
+  updated: 2026-04-19
+  tags: [architecture, client, server, web, ports, mermaid]
   references:
     - docs/DOCUMENTATION-MACHINE-READABLE.md
-    - docs/new-request-flow/PROTOCOL.md
+    - docs/PROTOCOL.md
+    - docs/DATA-FLOW.md
 ---
 
 ## Обзор
 
-Система состоит из трёх основных компонентов:
+Система A2A Script Agent — **автономная рабочая станция оператора**. Работа ведётся через **долгоживущие async-сессии** (`/next` + polling `/async`), а не через одиночные HTTP-запросы к LLM.
 
 > **Транспорт:** Web ↔ Client API ↔ Server — **async flow с `promiseId`**. Server возвращает `promiseId`,
 > Client API опрашивает статус до `completed`, затем возвращает `execute.*` в Web.
-> 
-> **См.:** [PROTOCOL.md](PROTOCOL.md). Полная диаграмма слоёв и портов — [DATA-FLOW.md](DATA-FLOW.md) (здесь — только блок-схема ролей).
+>
+> **Canonical references:** [PROTOCOL.md](PROTOCOL.md) · [DATA-FLOW.md](DATA-FLOW.md) · [SESSION-FLOW.md](SESSION-FLOW.md)
 
+---
+
+## Диаграмма компонентов (Mermaid)
+
+```mermaid
+graph TB
+    subgraph WEB["WEB UI — a2a-client/web  :5173"]
+        UI[Browser / Vue SPA]
+    end
+
+    subgraph CLIENT["CLIENT API — a2a-client  :5173/api/a2a or SDK :3001"]
+        SDK[packages/sdk]
+        RAG[packages/rag]
+        EXEC[packages/execution]
+        STORE[packages/storage]
+        SHARED[packages/shared]
+        SDK --> SHARED
+        SDK --> STORE
+    end
+
+    subgraph SERVER["A2A SERVER — a2a-server  :3000  (stateless)"]
+        SRV[packages/server]
+        ACT[packages/actions]
+        CFG[packages/config]
+        GR[packages/gray-room]
+        PROTO[packages/protocol]
+        SRV --> ACT
+        SRV --> CFG
+        SRV --> GR
+        SRV --> PROTO
+    end
+
+    subgraph HUB["AI HUB — a2a-ai-hub  :11434  (Python/FastAPI)"]
+        ROUTER[LLM Router]
+        PROMISE[Promise Daemon]
+        ROUTER --> PROMISE
+    end
+
+    subgraph LLM["Local LLM Upstream  :11435"]
+        OLLAMA[Ollama / LiteLLM]
+    end
+
+    subgraph INFRA["Infrastructure (Docker)"]
+        PG[(PostgreSQL)]
+        REDIS[(Redis / BullMQ)]
+    end
+
+    subgraph BOT["Telegram Bot  (optional)"]
+        TG[telegram-bot]
+    end
+
+    UI -->|HTTP /api/a2a/*| CLIENT
+    CLIENT -->|HTTP /api/v1/invoke| SERVER
+    SERVER -->|async promiseId| HUB
+    HUB -->|LLM API| LLM
+    SERVER --> REDIS
+    SERVER --> PG
+    TG -->|HTTP| CLIENT
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│                         WEB (a2a-client/web)                    │
-│  - Пользовательский интерфейс                                     │
-│  - Управление сессиями через UI                                   │
-│  - НЕ знает адрес сервера                                        │
-│  - Общается только с Client API (Vite 5173 `/api/a2a/*` или SDK :3001) │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    CLIENT (a2a-client)                          │
-│  - Хранит конфигурацию (provider, projects)                      │
-│  - Управляет сессиями                                            │
-│  - Знает адрес сервера                                           │
-│  - API: см. выше (не ходит на a2a-server напрямую)                │
-│  - Содержит пакеты:                                              │
-│    - sdk - Основной SDK                                           │
-│    - rag - RAG функциональность                                   │
-│    - execution - выполнение скриптов                              │
-│    - embedding - эмбеддинги                                       │
-│    - history - история                                            │
-│    - json - JSON утилиты                                          │
-│    - types - общие типы                                           │
-└─────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      SERVER (a2a-server) - STATELESS               │
-│  - НЕ хранит сессии (stateless)                                  │
-│  - Только обрабатывает запросы и возвращает результаты          │
-│  - HTTP сервер: localhost:3000                                   │
-│  - API: /api/v1/*                                               │
-│  - Обрабатывает задачи                                          │
-│  - Возвращает предложения действий (actions)             │
-│  - Выполняет steps                                         │
-└─────────────────────────────────────────────────────────────────┘
+
+---
+
+## Диаграмма потока запроса (sequence)
+
+```mermaid
+sequenceDiagram
+    participant W as Web UI :5173
+    participant C as Client API
+    participant S as A2A Server :3000
+    participant H as AI Hub :11434
+    participant L as LLM :11435
+
+    W->>C: POST /api/a2a/sessions (create session)
+    C-->>W: { sessionId }
+
+    W->>C: POST /api/a2a/sessions/:id/next { task }
+    C->>S: POST /api/v1/invoke
+    S-->>C: { promiseId }
+    C-->>W: { asyncPending: true, step }
+
+    loop Poll until terminal
+        W->>C: GET /api/a2a/sessions/:id/async
+        C->>S: GET /api/v1/requests/:promiseId/status
+        S->>H: resolve promise (async)
+        H->>L: LLM call
+        L-->>H: response
+        H-->>S: store result
+        S-->>C: { status: "completed", result }
+        C-->>W: { execute: { form: { choices } } }
+    end
+
+    W->>C: POST /next { result: { choice } }
+    Note over C,S: router-submit beat → next step
 ```
 
-## Текущая проблема (НЕПРАВИЛЬНО)
+---
 
-В текущей реализации web напрямую обращается к серверу:
+## Пакетная структура
 
-```javascript
+```mermaid
+graph LR
+    subgraph ROOT["Root (монорепо)"]
+        PKG[package.json — orchestrator scripts]
+        APP[app/ — Next.js shell]
+        SCRIPTS[scripts/ — CLI tooling]
+        DOCS[docs/]
+        TASKS[tasks/]
+        SIMS[simulations/]
+        TESTS[tests/]
+    end
 
+    subgraph SERVER_WS["a2a-server workspace"]
+        S_SRV[packages/server — HTTP entry]
+        S_ACT[packages/actions — executor]
+        S_CFG[packages/config — Zod config]
+        S_GR[packages/gray-room — session rooms]
+        S_PROTO[packages/server-protocol]
+        S_UTILS[packages/server-utils]
+        S_DAEMON[packages/daemon — promise daemon]
+        S_FEAT[packages/features]
+        S_LLM[packages/llm]
+        S_MEM[packages/memory]
+        S_TRANS[packages/transform]
+    end
+
+    subgraph CLIENT_WS["a2a-client workspace"]
+        C_SDK[packages/sdk — main API client]
+        C_WEB[packages/web — Vue SPA]
+        C_RAG[packages/rag — retrieval]
+        C_EXEC[packages/execution — script runner]
+        C_EMBED[packages/embedding]
+        C_HIST[packages/history]
+        C_STORE[packages/storage]
+        C_SHARED[packages/shared — builders/envelopes]
+        C_TYPES[packages/types]
+        C_FS[packages/fs-utils]
+    end
+
+    subgraph PYTHON["Python services"]
+        HUB[a2a-ai-hub — FastAPI LLM router]
+        AGENT_OS[agent-os — bootstrap]
+    end
+
+    ROOT --> SERVER_WS
+    ROOT --> CLIENT_WS
+    ROOT --> PYTHON
 ```
 
-Это **НЕПРАВИЛЬНО** по следующим причинам:
+---
 
-1. Web не должен знать о существовании сервера
-2. Web не может обрабатывать ответы сервера (actions, execute)
-3. Нарушается принцип разделения ответственности
+## Порты и эндпоинты (сводка)
 
-## Правильная архитектура
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│  WEB                                                            │
-│  ┌────────────────┐    ┌────────────────┐    ┌───────────────┐  │
-│  │ TaskInput      │    │ SessionPanel   │    │ ConfigPanel  │  │
-│  │ (новая задача) │    │ (панель сессии)│    │ (настройки)  │  │
-│  └───────┬────────┘    └───────┬────────┘    └───────┬───────┘  │
-│          │                    │                     │           │
-│          ▼                    ▼                     ▼           │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │  WEB STATE (client-side)                                    ││
-│  │  - sessions[] - массив сессий                               ││
-│  │  - activeSessionId                                          ││
-│  │  - projectId                                                ││
-│  │  - provider                                                ││
-│  └─────────────────────────────────────────────────────────────┘│
-│          │                                                       │
-│          │ HTTP к Client API (5173 /api/a2a или SDK :3001)        │
-│          ▼                                                       │
-└──────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────────┐
-│  CLIENT API (a2a-client)                                         │
-│                                                                          │
-│  Эндпоинты (Web / Vite — префикс /api/a2a):                        │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │ POST /api/a2a/sessions        - создать сессию               ││
-│  │ GET  /api/a2a/sessions        - список сессий                 ││
-│  │ GET  /api/a2a/sessions/:id   - получить сессию               ││
-│  │ POST /api/a2a/sessions/:id/next - следующий шаг             ││
-│  │ GET  /api/a2a/sessions/:id/async - опрос async (web UI)       ││
-│  │ GET  /api/a2a/projects       - список проектов                 ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                              │                                   │
-│                              ▼                                   │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │ ApiClient (a2a-client/packages/sdk)                             ││
-│  │ - Знает адрес сервера (localhost:3000)                      ││
-│  │ - Создает сессии на сервере                                  ││
-│  │ - Отправляет задачи                                          ││
-│  │ - Обрабатывает ответы (actions, execute)           ││
-│  └─────────────────────────────────────────────────────────────┘│
-└──────────────────────────────────────────────────────────────────┘
-                              │
-                              ▼
-┌──────────────────────────────────────────────────────────────────┐
-│  SERVER (a2a-server)                                             │
-│                                                                          │
-│  HTTP сервер (порт 3000) - STATELESS:                               │
-│  ┌─────────────────────────────────────────────────────────────┐│
-│  │ POST /api/v1/invoke          - основной эндпоинт            ││
-│  │ POST /api/v1/requests       - создать запрос                ││
-│  │ GET  /api/v1/requests/:id/status   - статус запроса         ││
-│  │ GET  /api/v1/requests/:id/result   - результат запроса      ││
-│  │ DELETE /api/v1/requests/:id - отменить запрос              ││
-│  │ GET  /api/v1/actions/:id   - получить действие             ││
-│  └─────────────────────────────────────────────────────────────┘│
-│                                                                          │
-│  Сервер НЕ хранит сессии - только обрабатывает запросы и возвращает    │
-│  результаты. Вся логика сессий находится на Client API.                │
-└──────────────────────────────────────────────────────────────────┘
-```
+| Сервис | Порт | Основные маршруты |
+|--------|------|-------------------|
+| Web UI / Client API (Vite) | **5173** | `GET /api/a2a/projects`, `POST /api/a2a/sessions`, `POST /api/a2a/sessions/:id/next`, `GET /api/a2a/sessions/:id/async` |
+| Client API SDK (standalone) | **3001** | те же пути |
+| A2A Server (stateless) | **3000** | `POST /api/v1/invoke`, `GET /api/v1/requests/:id/status`, `GET /health` |
+| AI Hub | **11434** | `POST /api/promise`, `GET /api/promise/:id`, `GET /health` |
+| Local LLM upstream | **11435** | `POST /api/generate` (Ollama) |
 
 ## External AI Hub
 
-Прокси **ai-integration** (**:11434** → Local LLM upstream **:11435**), async через **`promiseId`**. Поток и таблица endpoint’ов: [PROTOCOL.md → Async flow](PROTOCOL.md#async-flow-promiseid); интеграция на стороне сервера: [SERVER-ARCHITECTURE.md → External AI Hub Integration](SERVER-ARCHITECTURE.md#external-ai-hub-integration).
+Прокси **a2a-ai-hub** (**:11434** → Local LLM upstream **:11435**), async через **`promiseId`**. Поток и таблица endpoint'ов: [PROTOCOL.md → Async flow](PROTOCOL.md#async-flow-promiseid).
 
 ## Потоки данных
 
@@ -151,31 +194,17 @@ doc:
 
 Дерево каталогов и назначение модулей: [FILES.md](FILES.md).
 
-## Порты
-
-Сводная таблица: [DATA-FLOW.md → компоненты и порты](DATA-FLOW.md#component-ports); краткий перечень: [AGENTS-REFERENCE.md → Ports](../AGENTS-REFERENCE.md#ports).
-
 ## Переменные окружения
 
-Сервер, клиент, ключи, AI: [AGENTS-REFERENCE.md → Environment Variables](../AGENTS-REFERENCE.md#environment-variables).
-
-## Следующие шаги
-
-1. Поднять Client API (Vite plugin на 5173 или SDK на 3001)
-2. Переписать web-api-client.js для обращения к Client API
-3. Добавить sessionId и projectId во все запросы
-4. Реализовать хранение сессий на стороне клиента
-5. Обновить UI для работы с панелями сессий
+Сервер, клиент, ключи, AI: [AGENTS-REFERENCE.md → Environment Variables](AGENTS-REFERENCE.md#environment-variables).
 
 ## Перекрёстные ссылки
 
-- [SERVER-ARCHITECTURE.md](SERVER-ARCHITECTURE.md) — Server-centric documentation
-- [DATA-FLOW.md](DATA-FLOW.md) — Полная диаграмма потока данных
-- [WEB-UI.md](WEB-UI.md) — Web UI документация
-- [API-SERVER.md](API-SERVER.md) — Client API Server документация
-- [API-CLIENT.md](API-CLIENT.md) — API Client документация
-- [PROTOCOL.md](PROTOCOL.md) — Протокол взаимодействия
+- [DATA-FLOW.md](DATA-FLOW.md) — Полная диаграмма потока данных с портами
+- [PROTOCOL.md](PROTOCOL.md) — Протокол взаимодействия (action-key shapes, async flow)
 - [SESSION-FLOW.md](SESSION-FLOW.md) — Поток сессий
-- [SCHEMAS.md](SCHEMAS.md) — JSON схемы
+- [SCHEMAS.md](SCHEMAS.md) — JSON схемы запросов/ответов
 - [SIMULATION-FORMAT.md](SIMULATION-FORMAT.md) — Формат симуляций
-- [simulations/SCHEMA.md](../../simulations/SCHEMA.md) — Каноничная схема симуляций
+- [FILES.md](FILES.md) — Дерево каталогов и назначение модулей
+- [AGENTS-REFERENCE.md](AGENTS-REFERENCE.md) — Порты, переменные окружения, debugging
+- [OPTIMIZATION-IDEAS.md](OPTIMIZATION-IDEAS.md) — Идеи оптимизации
