@@ -48,7 +48,7 @@ export class MuSE {
             const { globalEmbeddingClient } = await import(
                 '../../../../server/src/memory/EmbeddingClient.js'
             );
-            return globalEmbeddingClient.embed(text);
+            return (await globalEmbeddingClient.embed(text)) ?? [];
         } catch {
             return []; // fallback to lexical similarity
         }

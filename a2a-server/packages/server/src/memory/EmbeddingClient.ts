@@ -73,9 +73,15 @@ export class EmbeddingClient {
 
     /**
      * Embed a single text string.
-     * Returns a real vector from the hub; falls back to placeholder on error.
+     *
+     * Returns a real vector from the hub, or `null` when the hub is
+     * unavailable. Callers must guard against `null` before using the
+     * vector in similarity comparisons.
+     *
+     * Set EMBEDDING_STRICT=true to throw instead of returning null, which
+     * is useful in integration tests where a silent null would hide failures.
      */
-    async embed(text: string): Promise<number[]> {
+    async embed(text: string): Promise<number[] | null> {
         try {
             const url = `${this.aiHubUrl.replace(/\/$/, '')}/v1/embeddings`;
             const controller = new AbortController();
@@ -94,10 +100,10 @@ export class EmbeddingClient {
             }
 
             if (!res.ok) {
-                logger.warn('[EmbeddingClient] Hub returned non-200, using placeholder', {
+                logger.error('[EmbeddingClient] Hub returned non-200', {
                     status: res.status,
                 });
-                return placeholderEmbedding(text);
+                return this._handleFailure(new Error(`Hub HTTP ${res.status}`));
             }
 
             const body = (await res.json()) as {
@@ -105,24 +111,36 @@ export class EmbeddingClient {
             };
             const embedding = body.data?.[0]?.embedding;
             if (!Array.isArray(embedding) || embedding.length === 0) {
-                logger.warn('[EmbeddingClient] Missing embedding in hub response, using placeholder');
-                return placeholderEmbedding(text);
+                logger.error('[EmbeddingClient] Invalid embedding response shape');
+                return this._handleFailure(new Error('Invalid embedding response shape'));
             }
 
             return embedding;
         } catch (err: unknown) {
-            logger.debug('[EmbeddingClient] Hub unreachable, using placeholder', {
+            logger.error('[EmbeddingClient] Hub unreachable', {
                 error: err instanceof Error ? err.message : String(err),
             });
-            return placeholderEmbedding(text);
+            return this._handleFailure(err instanceof Error ? err : new Error(String(err)));
         }
     }
 
     /**
-     * Embed multiple texts in parallel (order preserved).
+     * Embed multiple texts in parallel.
+     * Entries whose embedding failed (null) are excluded from the result;
+     * the returned array may be shorter than the input.
      */
     async embedBatch(texts: string[]): Promise<number[][]> {
-        return Promise.all(texts.map((t) => this.embed(t)));
+        const results = await Promise.all(texts.map((t) => this.embed(t)));
+        return results.filter((r): r is number[] => r !== null);
+    }
+
+    // ── Private helpers ────────────────────────────────────────────────────────
+
+    private _handleFailure(err: Error): null {
+        if (process.env['EMBEDDING_STRICT'] === 'true') {
+            throw err;
+        }
+        return null;
     }
 }
 

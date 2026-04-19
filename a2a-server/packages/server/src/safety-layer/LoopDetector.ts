@@ -48,6 +48,7 @@ export class LoopDetector {
         outcomeClass: string,
         context: Record<string, unknown>,
     ): LoopSignal | null {
+        console.warn('[LoopDetector] detect() is deprecated. Use check() with a pre-computed hash instead.');
         const ctxHash = this._computeHash(context);
         return this._checkByHash(reason, outcomeClass, ctxHash);
     }

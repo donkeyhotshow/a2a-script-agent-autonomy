@@ -80,22 +80,15 @@ class ExperienceBank {
 
     // ── Embed helper ─────────────────────────────────────────────────────────
 
-    private async embed(text: string): Promise<number[]> {
+    private async embed(text: string): Promise<number[] | null> {
         try {
             const { globalEmbeddingClient } = await import(
                 '../../../server/src/memory/EmbeddingClient.js'
             );
-            return globalEmbeddingClient.embed(text);
+            return await globalEmbeddingClient.embed(text);
         } catch {
-            // Inline placeholder when EmbeddingClient is not accessible
-            const dim = 384;
-            const vec = new Array<number>(dim).fill(0);
-            for (let i = 0; i < text.length; i++) {
-                const bucket = (text.charCodeAt(i) * 7 + i) % dim;
-                vec[bucket] = (vec[bucket] ?? 0) + 1;
-            }
-            const norm = Math.sqrt(vec.reduce((s, v) => s + v * v, 0)) || 1;
-            return vec.map((v) => v / norm);
+            logger.warn('[ExperienceBank] EmbeddingClient unavailable');
+            return null;
         }
     }
 
@@ -110,6 +103,11 @@ class ExperienceBank {
     ): Promise<void> {
         const all = await this.load();
         const embedding = await this.embed(contextJson.slice(0, 512));
+
+        if (!embedding) {
+            logger.warn('[ExperienceBank] Embedding unavailable, skipping turn record', { sessionId, turnId });
+            return;
+        }
 
         const entry: Experience = {
             id: `exp-${randomUUID()}`,
@@ -138,7 +136,12 @@ class ExperienceBank {
         if (all.length === 0) return [];
 
         const queryVec = await this.embed(query.slice(0, 512));
+        if (!queryVec) {
+            logger.warn('[ExperienceBank] Embedding unavailable, skipping recall');
+            return [];
+        }
         return all
+            .filter((e) => Array.isArray(e.embedding) && e.embedding.length > 0)
             .map((e) => ({ e, sim: cosineSim(queryVec, e.embedding) }))
             .sort((a, b) => b.sim - a.sim)
             .slice(0, topK)

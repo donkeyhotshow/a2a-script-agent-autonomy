@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { LoopDetector } from './LoopDetector.js';
 import { ContextValidator } from './ContextValidator.js';
 import { SafetySignalSeverity, SafetyInterceptResult, LoopSignal } from './types.js';
@@ -30,7 +31,10 @@ export class SafetyLayer {
         context: Record<string, unknown>
     ): Promise<SafetyInterceptResult> {
         // 1. Check for loops
-        const loopSignal = this.loopDetector.detect(action, outcomeClass, context);
+        const ctxHash = createHash('sha256')
+            .update(JSON.stringify(context))
+            .digest('hex');
+        const loopSignal = this.loopDetector.check(action, outcomeClass, ctxHash);
         
         if (loopSignal) {
             if (loopSignal.severity === 'critical') {
