@@ -39,7 +39,7 @@ import { getPromptsTransformsPath } from "@a2a/server-ai";
 import {
   isAgentSchemaName,
   lastAssistantMessageFromContext,
-} from '../../../server-utils/src/agent-utils.js';
+} from '@a2a/server-utils';
 
 export { isDialogToolExecutePayload };
 export { resolveTransformSchema, normalizeContext, extractSchemaName };

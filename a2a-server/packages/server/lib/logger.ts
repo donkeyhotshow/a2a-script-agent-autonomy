@@ -2,7 +2,7 @@ import winston from "winston";
 import DailyRotateFile from "winston-daily-rotate-file";
 import * as fs from "node:fs/promises";
 import * as path from "path";
-import { config } from "../../server-config/index";
+import { config } from "@a2a/config";
 
 const logsDir = path.join(process.cwd(), "logs");
 

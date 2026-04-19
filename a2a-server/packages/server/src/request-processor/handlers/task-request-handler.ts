@@ -13,7 +13,7 @@ import type {
     ProcessResult,
     ProcessOutcome,
 } from '../request-processor.interfaces';
-import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '../../../../server-config/router-static.js';
+import {buildRouterForm, LLM_PIPELINE_ACTIONS, ROUTER_CONFIG, ACTION_TO_SCHEMA} from '@a2a/config';
 import {dialogRequestProcessor} from '../dialog-request-processor.js';
 
 /**

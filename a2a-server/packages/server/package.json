@@ -16,8 +16,10 @@
   },
   "dependencies": {
     "@a2a/config": "file:../server-config",
+    "@a2a/server-ai": "file:../server-ai",
     "@a2a/server-protocol": "file:../server-protocol",
     "@a2a/server-request": "file:../request",
+    "@a2a/server-services": "file:../services",
     "@a2a/server-utils": "file:../server-utils"
   },
   "devDependencies": {

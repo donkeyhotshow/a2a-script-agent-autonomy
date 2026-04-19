@@ -4,7 +4,7 @@
 
 import type {Request, Response, NextFunction} from 'express';
 import * as clientRepo from '../repositories/client.repository.js';
-import {hashPassword, verifyPassword, generateApiKey} from '../../../../server-utils/src/crypto.js';
+import {hashPassword, verifyPassword, generateApiKey} from '@a2a/server-utils';
 
 function requiredString(v: unknown): v is string {
     return typeof v === 'string' && v.trim().length > 0;

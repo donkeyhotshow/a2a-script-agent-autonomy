@@ -7,6 +7,7 @@
   "types": "dist/index.d.ts",
   "exports": {
     ".": "./dist/index.js",
+    "./circuit-breaker": "./dist/circuit-breaker.js",
     "./logger": "./dist/logger.js",
     "./logger.js": "./dist/logger.js",
     "./strip-markdown-json-fence": "./dist/strip-markdown-json-fence.js",

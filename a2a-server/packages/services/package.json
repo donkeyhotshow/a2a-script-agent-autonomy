@@ -14,6 +14,7 @@
     "build": "tsc -p tsconfig.json"
   },
   "dependencies": {
+    "@a2a/server-daemon": "file:../daemon",
     "@a2a/server-utils": "file:../server-utils",
     "@a2a/server-protocol": "file:../server-protocol"
   },

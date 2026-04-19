@@ -2,6 +2,7 @@ export * from "./agent-utils.js";
 export * from "./artifact-store.js";
 export * from "./artifact-validator.js";
 export * from "./backoff.js";
+export * from "./circuit-breaker.js";
 export * from "./crypto.js";
 export * from "./deep-clone-json.js";
 export * from "./env-utils.js";

@@ -1,5 +1,5 @@
-import {ProgressiveRetriever} from '../../../../../server-ai/src/rag/progressive-retriever.js';
-import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '../../../../../server-ai/src/types.js';
+import {ProgressiveRetriever} from '@a2a/server-ai';
+import type {InterruptDirective, ServerInterruptTraceEvent, GrayRoomContext} from '@a2a/server-ai';
 import {BaseGrayRoomHandler} from './base-handler.js';
 
 /**

@@ -2,7 +2,7 @@
  * Client-visible context: drop server-internal workbench slots before persistence and poll responses.
  */
 
-import {SERVER_OWNED_WORKBENCH_SLOT_KEYS} from '../../../server-ai/src/interrupt-trace-contract.js';
+import {SERVER_OWNED_WORKBENCH_SLOT_KEYS} from '@a2a/server-ai';
 
 /** Remove server-only workbench slots (gray room, interrupt trace, internal tool slots) — not for client API or disk. */
 export function clientSafeWorkbench(wb: unknown): unknown {
