@@ -75,6 +75,7 @@ import { handleAutoReadFile } from "../request-processor/gray-room-interrupt-han
 import { handleAutoRagPage } from "../request-processor/gray-room-interrupt-handlers/auto-rag-page.js";
 import { handleClarify } from "../request-processor/gray-room-interrupt-handlers/clarify.js";
 import { handleAlgorithmInvoke } from "../request-processor/gray-room-interrupt-handlers/algorithm-invoke.js";
+import { handleAgentBridge } from "../request-processor/gray-room-interrupt-handlers/agent-bridge.js";
 import { globalVisionTester } from "../../../../server/src/vision-tester.js";
 import { globalRoleRegistry, AgentRole } from "../../../../server/src/agent-role-registry.js";
 import { globalSafetyLayer } from "../../../../server/src/safety-layer.js";
@@ -1022,6 +1023,16 @@ export class GrayRoomOrchestrator {
       }
       case "algorithm_invoke": {
         return await handleAlgorithmInvoke(
+          interrupt,
+          ctx,
+          promiseId,
+          this.aiHubUrl,
+          this.model,
+          trace,
+        );
+      }
+      case "agent_bridge": {
+        return await handleAgentBridge(
           interrupt,
           ctx,
           promiseId,
