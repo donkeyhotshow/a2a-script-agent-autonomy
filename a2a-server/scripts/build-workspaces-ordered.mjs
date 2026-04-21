@@ -29,10 +29,11 @@ function runBuild(workspace) {
  */
 const waves = [
     ['@a2a/config', '@a2a/server-protocol', '@a2a/server-utils'],
-    ['@a2a/server-request'],
+    ['@a2a/server-request', '@a2a/server-ai'],
     ['@a2a/server-daemon'],
+    ['@a2a/server-services'],
     ['@a2a/server-core'],
-    ['@a2a/server-actions', '@a2a/server-llm', '@a2a/server-transform'],
+    ['@a2a/server-actions', '@a2a/server-features'],
     ['@a2a/server-gray-room'],
 ];
 
